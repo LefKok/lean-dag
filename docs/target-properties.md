@@ -381,10 +381,14 @@ directory, hence the one flat module.
   protocol with `Persist` inherits it. Ordered before garbage
   collection deliberately, since persistence needs no `Reindex` and so
   banks one mechanism before the uncertain part is attempted.
-- **G3** Discharge them for Hydrozoan, and re-derive `decided_chopHZ`
-  and `decided_fillHZ` through the generic route. Two existing theorems
-  re-obtained with no new induction is the test that the abstraction is
-  real.
+- **G3** Discharge them for Hydrozoan. **Persistence done** — HZ9
+  (`Hydrozoan/Properties/`) proves the *unconditional* grade, as §3.2
+  predicts for a rule whose skip counts blames at the slot. The test
+  passed: `Integration/Hydrozoan/ViaProperties.lean` re-derives
+  `decided_fillHZ` — a six-constructor induction in `FillDecided.lean`
+  — from HZ9 **with no induction of its own**, the fill being an
+  extension by two of the arc's own simp lemmas. `decided_chopHZ` waits
+  on `Local` and `Reindex`.
 - **G4** Discharge them for the core, giving the second instance.
   **Reassess here.**
 - **G5** The schedule family: the slot domain, collapsing both the

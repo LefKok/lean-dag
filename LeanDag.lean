@@ -76,9 +76,13 @@ import LeanDag.Integration.Hydrozoan.FillDecided
 import LeanDag.Integration.Hydrozoan.Simulation
 import LeanDag.Integration.Hydrozoan.OptimalTransport
 import LeanDag.Integration.Hydrozoan.OptimalChopDecided
+import LeanDag.Integration.Hydrozoan.ViaProperties
 import LeanDag.Properties.Carrier
 import LeanDag.Properties.Persist
 import LeanDag.Properties.Arcs.SafeSkip
+import LeanDag.Hydrozoan.Helpers.Carrier
+import LeanDag.Hydrozoan.Properties.Statement
+import LeanDag.Hydrozoan.Properties.Proof
 import LeanDag.Barnacle.Helpers.DagRule
 import LeanDag.Integration.Hydrozoan.Stack
 import LeanDag.Integration.Hydrozoan.Liveness

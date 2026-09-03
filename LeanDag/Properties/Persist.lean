@@ -85,6 +85,43 @@ theorem not_novel_of_mem_refs (hc : Causal R) (he : Extends R U U')
     ¬ Novel R U U' j :=
   fun hn => hn.2 (old_refs_old hc he hb hj)
 
+/-- **Nothing an old block reaches is new.** The reference lemma
+propagated along causal history: an extension can add blocks, but none
+of them enters the history of a block that was already there.
+
+This is what every protocol's persistence proof turns on. A rung test
+asks whether something is in reach of the *anchor*, and the anchor of a
+derivation over the old universe is old — so the extension cannot
+supply a new certificate, a new vote, or a new candidate to any rung,
+and the negative premises that would otherwise be destroyed survive. -/
+theorem reaches_old (hc : Causal R) (he : Extends R U U')
+    {A B : BlockId} (hA : A ∈ R.ids U) (h : ReachesFrom (R.block U') A B) :
+    ReachesFrom (R.block U) A B ∧ B ∈ R.ids U := by
+  induction h with
+  | refl => exact ⟨Relation.ReflTransGen.refl, hA⟩
+  | @tail c b _ hstep ih =>
+      have hc' : c ∈ R.ids U := ih.2
+      have hb : b ∈ R.ids U := old_refs_old hc he hc' hstep
+      refine ⟨ih.1.tail ?_, hb⟩
+      have hstep' : b ∈ (R.block U' c).refs := hstep
+      rw [he.block c hc'] at hstep'
+      exact hstep'
+
+/-- And so reachability from an old block is the same relation in both
+universes. -/
+theorem reaches_iff (hc : Causal R) (he : Extends R U U')
+    {A B : BlockId} (hA : A ∈ R.ids U) :
+    ReachesFrom (R.block U') A B ↔ ReachesFrom (R.block U) A B := by
+  refine ⟨fun h => (reaches_old hc he hA h).1, fun h => ?_⟩
+  induction h with
+  | refl => exact Relation.ReflTransGen.refl
+  | @tail c b hAc hstep ih =>
+      have hc' : c ∈ R.ids U := (hc U).mem_ids_of_reaches hA hAc
+      refine ih.tail ?_
+      have hstep' : b ∈ (R.block U c).refs := hstep
+      show b ∈ (R.block U' c).refs
+      rw [he.block c hc']; exact hstep'
+
 /-- Extension is reflexive. -/
 theorem refl {U : R.Universe} : Extends R U U :=
   { subset := fun _ h => h, block := fun _ _ => rfl }
