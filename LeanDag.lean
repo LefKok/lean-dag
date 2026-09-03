@@ -77,6 +77,7 @@ import LeanDag.Integration.Hydrozoan.Simulation
 import LeanDag.Integration.Hydrozoan.OptimalTransport
 import LeanDag.Integration.Hydrozoan.OptimalChopDecided
 import LeanDag.Properties.Carrier
+import LeanDag.Barnacle.Helpers.DagRule
 import LeanDag.Integration.Hydrozoan.Stack
 import LeanDag.Integration.Hydrozoan.Liveness
 import LeanDag.Integration.Hydrozoan.Deployment

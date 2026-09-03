@@ -283,6 +283,25 @@ properties directly. Nothing depends on the schema being adequate.
 
 ## 8. Layout
 
+**The layering rule.** Mechanisms depend on properties; properties
+depend on nothing but the core block and schedule vocabulary. Protocols
+show conformance to the properties. **No mechanism refers to another.**
+
+This is why the carrier is `Properties.DagRule` and not
+`Barnacle.BaseRule`, though the two have the same shape and Barnacle
+discovered it first. Barnacle is a mechanism — the adaptive leader
+count — so a `Properties` importing it would tie garbage collection,
+crash recovery and chain quality to the leader count for no reason.
+`Barnacle/Helpers/DagRule.lean` supplies `BaseRule.toDagRule`, so the
+six existing instantiations serve as carriers without being restated,
+and the dependency runs from the mechanism to the properties. The
+tidier form is for `BaseRule` to `extend DagRule`; that edits a frozen
+`Model/` file and is deferred.
+
+The rule is checkable: `Properties.Carrier` currently reaches nine
+modules transitively and none of them belongs to a mechanism. A guard
+script could enforce it if the arc grows.
+
 Interfaces and their consequences in one place; conformance stated
 beside each protocol, under whatever discipline that directory already
 keeps.
@@ -320,13 +339,14 @@ directory, hence the one flat module.
 
 ## 9. Phases
 
-- **G0** `Carrier.lean` (**done**). The carrier already exists and it
-  is `Barnacle.BaseRule`, which projects any protocol's universe into
-  the shared `Block` vocabulary and carries the decision relation as a
-  field; six protocols instantiate it. `Carrier.lean` adds only what
-  `BaseRule` and `Laws` omit — `Causal`, the structural facts stated
-  for views and not for universes, and `AgreeAbove`, the agreement
-  notion locality is stated against.
+- **G0** `Carrier.lean` (**done**). `DagRule` — a universe type, views
+  over it, projections into the shared `Block` vocabulary, and the
+  decision relation as a field — with `Causal`, the structural facts
+  `Barnacle.Laws` states for views and not for universes, and
+  `AgreeAbove`, the agreement notion locality is stated against. The
+  shape was discovered by `Barnacle.BaseRule`, and
+  `Barnacle/Helpers/DagRule.lean` coerces its six instantiations into
+  the carrier, so no protocol restates anything.
 - **G1** State `Local`, `Persist` with `Novel`, and `Reindex`.
 - **G2** Prove garbage collection and crash recovery once from them,
   and `Compose`.
