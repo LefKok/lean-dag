@@ -1,18 +1,21 @@
 # Target properties: mechanisms that apply to any conforming protocol
 
-A design record for an arc not yet built. The aim is to state a small
+A design record for an arc in progress. The aim is to state a small
 number of properties of a DAG consensus rule such that **a protocol
 proving them inherits the mechanisms** — garbage collection, crash
 recovery, adaptive leader counts, adaptive leader schedules, reactive
 scheduling, chain quality — instead of each mechanism being redeveloped
-against each rule.
+against each rule, and such that **the mechanisms compose** through the
+same properties.
 
 This supersedes §2 and §3 of `transformer-interface.md`, which posed the
 same question in a narrower and, in one respect, wrong way. That
 document's §1 remains the record of what is built.
 
-Nothing here is proved. Every claim below is a conjecture until
-instantiated, and the sections say which checks have been made.
+Sections 3 and 4 were written before the properties they describe were
+built and revised as each was instantiated; each says which checks have
+been made. **§11 is the summary**: where the arc stands against the
+goal, what it does not cover, and the next steps in order.
 
 ---
 
@@ -23,15 +26,15 @@ one pair at a time. Seven mechanisms need something from a commit rule,
 and seven rules carry a decision relation, so there are **49 pairs**.
 About fifteen exist:
 
-| Mechanism | Where | Rules covered |
-|---|---|---|
-| Garbage collection (`chop`) | `GC/` | Mysticeti, Hydrozoan, Optimal |
-| Crash recovery (`skipFill`, `liftView`) | `SafeSkip/` | Mysticeti, Hydrozoan |
-| Re-genesis | `Integration/ReGenesis.lean` | none |
-| Adaptive leader schedule (Hammerhead) | `Adaptive/` | Mysticeti, Odontoceti |
-| Adaptive leader count (Barnacle) | `Barnacle/` | six |
-| Reactive schedule | `Reactive/` | Mysticeti, Odontoceti |
-| Chain quality | `Quality/` | Mysticeti |
+| Mechanism | Where | Rules covered (bespoke) | Through the properties |
+|---|---|---|---|
+| Garbage collection (`chop`) | `GC/` | Mysticeti, Hydrozoan, Optimal | Hydrozoan (safety); core (liveness) |
+| Crash recovery (`skipFill`, `liftView`) | `SafeSkip/` | Mysticeti, Hydrozoan | Hydrozoan, core |
+| Re-genesis | `Integration/ReGenesis.lean` | none | **none** |
+| Adaptive leader schedule (Hammerhead) | `Adaptive/` | Mysticeti, Odontoceti | core, reactive core |
+| Adaptive leader count (Barnacle) | `Barnacle/` | six | **none** |
+| Reactive schedule | `Reactive/` | Mysticeti, Odontoceti | as a second `Live` for the core |
+| Chain quality | `Quality/` | Mysticeti | **none** |
 
 The distribution is the argument. **Barnacle covers six rules and every
 other mechanism covers one or two, and Barnacle is the only one with a
@@ -721,7 +724,7 @@ directory, hence the one flat module.
   two findings on `Persist` in §3.3 and, in §3.4, the vacuity that
   replaced the re-indexing property with a combined one.
 - **G2** Prove garbage collection and crash recovery once from them,
-  and `Compose`. **Crash recovery done**
+  and `Compose` (**not built**, §11). **Crash recovery done**
   (`Properties/Arcs/SafeSkip.lean`): the fill is an extension, so any
   protocol with `Persist` inherits it. Ordered before garbage
   collection deliberately, since persistence needs no `Reindex` and so
@@ -785,3 +788,124 @@ directory, hence the one flat module.
 - **Agreement cannot be generic.** Uniqueness of verdicts turns on
   quorum intersection in a protocol's own fault model. No property here
   will produce it, and no mechanism below should be expected to.
+- **Composition is the goal least served** (§11). One composition
+  theorem exists, and it was possible only because both sides were
+  already stated over the same carrier; `Truncates` and `Sustains`
+  have not been composed with anything, and the shift of settling
+  rounds under a stack is unstated.
+- **Satisfiability beyond two protocols is untested.** `Descends` is
+  shaped by an indirect rule with an anchoring descent, and `Live` by
+  Mysticeti's preconditions. Six protocols have no instance of any
+  property.
+
+---
+
+## 11. Where the arc stands
+
+The goal, restated in three parts:
+
+1. a set of properties that DAG consensus rules, and mechanisms, must
+   show;
+2. once a rule shows them, it composes safely and live with each
+   mechanism, with no further proof;
+3. the mechanisms compose with one another through the same
+   properties, automatically.
+
+### 11.1 Against part 1: the properties exist
+
+Fourteen, in `LeanDag/Properties/`, in the two directions §3.6 argues
+for. The protocol proves the safety side and one graded liveness
+residue; the mechanism owes one liveness property.
+
+| Direction | Property | Content |
+|---|---|---|
+| protocol, safety | `Causal` | universes are block DAGs |
+| | `Persist R Ok` | a verdict survives extension of the DAG, at grade `Ok` |
+| | `Local` | a verdict at round ≥ r reads the DAG only above r |
+| | `LocalTruncate` | a verdict survives restriction with renumbering, both ways |
+| | `Agree` | two views decide alike |
+| | `Bounded`, `SchedLocal` | a bounded derivation family; verdicts read leaders only below the bound |
+| protocol, liveness | `SkipsUnsupported R Ok` | an unsupported slot is skipped, at grade `Ok` |
+| | `LeaderCommits R Live`, `Descends R S c` | a reliable leader commits; a committed run decides everything below |
+| mechanism, liveness | `Sustains R U U' G R₀` | above the settling round the transformed DAG holds the same blocks |
+
+Two were stated wrongly first and corrected once a witness was
+demanded (`Reindex`, §3.4; `Sustains` v1, §3.6). Chain quality has no
+property (§5).
+
+### 11.2 Against part 2: two protocols, three mechanisms
+
+| | Hydrozoan | core Mysticeti | reactive Mysticeti | Odontoceti, Nemo, Mahi-Mahi, Hybrid, Optimal-Hydrozoan, FinWhale |
+|---|---|---|---|---|
+| `Causal` | ✓ | ✓ | inherited | — |
+| `Persist` | ✓ unconditional | ✓ at `Quorate` | inherited | — |
+| `Local`, `LocalTruncate` | ✓ | **missing** | — | — |
+| `SkipsUnsupported` | ✓ at `qFast ≤ |T|` | ✓ at a correct quorum | — | — |
+| `Agree`, `Bounded`, `SchedLocal` | **missing** | ✓ | inherited | — |
+| `LeaderCommits`, `Descends` | **missing** | ✓ | ✓, a second `Live` | — |
+| `Sustains` witnesses | chop, fill | chop; **fill missing** | — | — |
+
+The consumer tests passed. Each is a former bespoke induction
+re-derived with none: `decided_fillHZ`, `decided_chopHZ`,
+`SafeSkip.decided_fill`, SS3 as a verdict (`decided_none_fresh`),
+`directCommit_chop` for liveness, and the adaptive arc entire, AL3 and
+AL5 standing verbatim as corollaries. One result the bespoke
+development did not have: Hammerhead over reactive Mysticeti
+(`adaptiveRun_exists_reactive`, `adaptiveRun_commits_reactive`).
+
+What part 2 does not yet deliver:
+
+- **No protocol has the full set.** Hydrozoan cannot take adaptive
+  leaders; the core cannot take garbage collection through the
+  properties. Hydrozoan is closer, by a bounded relation.
+- **Six protocols have no instance of any property.** Whether
+  `Descends` and `Live` are generic or Mysticeti's shape with the name
+  removed is unknown until the Odontoceti mirror is collapsed.
+- **"Safe and live" here means the mechanism's own theorems**, at any
+  rule with the properties. Ledger validity and chain quality are not
+  among the properties, and the liveness preconditions — `PlacesRuns`,
+  the staged `Live` — are hypotheses the deployment meets, not things
+  the properties discharge.
+
+### 11.3 Against part 3: composition is not covered
+
+One composition theorem exists: `run_agree_extends` (§4.4), the
+adaptive fixpoint under `Extends`, so adaptive leaders compose with
+anything that extends the DAG as far as agreement goes. Nothing else
+composes through the properties. `Compose.lean` is not built:
+`Extends` after `Extends`, `Truncates` after `Extends`, `Sustains`
+after `Sustains` with the settling rounds shifted, are each unstated,
+and `Integration/Hydrozoan/Stack.lean` (chop after fill) remains
+bespoke, as does adaptive leaders under garbage collection (I5). This
+is the part of the goal least served, and it is the first item below.
+
+### 11.4 Not covered at all
+
+- **Composition**, beyond the one theorem above.
+- **Chain quality** (§5, G6): no property, nothing built.
+- **Barnacle**: six bespoke instances of its own interface, and no
+  connection to the properties beyond `BaseRule.toDagRule`. The shared
+  `Agree` is the natural first bridge and has not been made.
+- **DoS and rate limiting** (`DoS/`, `Novelty.lean`): declared
+  rule-independent in §1 and untouched; whether that survives contact
+  with `Sustains` — the novelty budget removes blocks — has not been
+  asked.
+- **Re-genesis**: §1 says it should be an `Extends` and would then
+  inherit `Persist` and `Sustains`; nothing has been proved.
+
+### 11.5 Next steps, in order
+
+1. **`Compose.lean`.** The three composition lemmas, then
+   `Stack.lean`'s theorem re-derived from them. Small, and the direct
+   test of part 3.
+2. **Core `Local` and `LocalTruncate`**, so one protocol has every
+   property and every mechanism.
+3. **Collapse the Odontoceti mirrors** (`Adaptive/`, `Reactive/`) onto
+   instances, to learn whether `Live` and `Descends` are generic before
+   more instances are written.
+4. **Hydrozoan's bounded relation**, giving the second protocol
+   adaptive leaders.
+5. **Re-genesis as an `Extends`**, the cheapest of the uncovered
+   mechanisms.
+6. **Chain quality** from fairness and self-reference (§5).
+7. **Barnacle**, starting from `Agree`.
