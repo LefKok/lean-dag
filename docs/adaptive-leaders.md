@@ -7,6 +7,13 @@
 > and whether the surrounding prose is faithful to what is proved, has
 > only human-plus-LLM review behind it. Read critically.
 
+> **Status (September 2026).** Built, and since generalised. The
+> mechanism planned below is now stated over `Properties.BoundedRule`
+> and five properties (`target-properties.md` §4); the core's bounded
+> relation `DecidedWithin` lives in `MysticetiProperties.lean`, and every
+> statement planned here stands verbatim in `Adaptive/Mysticeti.lean` as
+> a corollary of the generic theorem.
+
 This document is the design record for the **adaptive-leaders** arc,
 written before the development rather than after it: the definitions and
 theorems below are a plan, and the Lean signatures are proposals. The

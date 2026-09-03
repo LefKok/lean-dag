@@ -40,10 +40,13 @@ import LeanDag.Odontoceti.Liveness
 import LeanDag.Network.Quorum
 import LeanDag.Reactive.Mysticeti
 import LeanDag.Reactive.Odontoceti
+import LeanDag.Reactive.MysticetiProperties
+import LeanDag.Integration.AdaptiveReactive
 import LeanDag.Adaptive.Basic
 import LeanDag.Adaptive.Policy
 import LeanDag.Adaptive.Run
 import LeanDag.Adaptive.Liveness
+import LeanDag.Adaptive.Mysticeti
 import LeanDag.Adaptive.Odontoceti
 import LeanDag.Hybrid.Faults
 import LeanDag.Hybrid.Rules
@@ -83,6 +86,9 @@ import LeanDag.Properties.Local
 import LeanDag.Properties.Truncate
 import LeanDag.Properties.Sustain
 import LeanDag.Properties.Skip
+import LeanDag.Properties.Agree
+import LeanDag.Properties.Bounded
+import LeanDag.Properties.Commit
 import LeanDag.MysticetiProperties
 import LeanDag.Properties.Arcs.SafeSkip
 import LeanDag.Properties.Arcs.GC

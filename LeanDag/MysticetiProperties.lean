@@ -1,6 +1,7 @@
 import LeanDag.Properties.Sustain
 import LeanDag.Properties.Persist
 import LeanDag.Properties.Skip
+import LeanDag.Properties.Commit
 import LeanDag.Liveness
 
 /-!
@@ -375,6 +376,279 @@ theorem skipsUnsupported :
       le_trans hq (Finset.card_le_card (subset_blamers (S := S) hpres huns hL))
 
 end Skip
+
+end MysticetiProperties
+
+/-! ## The core's bounded decision relation
+
+`Decided`, with every slot the derivation mentions — the decided slot,
+the anchor, the eligible intermediates — strictly below a bound `B`.
+This is what `Properties.BoundedRule` asks a protocol for, and it lives
+with the protocol because it is *its* relation: the adaptive mechanism
+reads only the properties proved of it below.
+
+The bound lives in the relation because it cannot live anywhere else: a
+`Decided` derivation is a proof of a `Prop` and its anchors cannot be
+recovered from it. -/
+
+section BoundedRelation
+
+variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable [F : Faults Validator]
+variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
+variable {U : BlockUniverse Validator BlockId Payload}
+variable [S : Slots Validator]
+
+/-- **The bounded decision relation.** `Decided`, with every slot the
+derivation mentions strictly below `B`. -/
+inductive DecidedWithin (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (B : ℕ) : ℕ → Option BlockId → Prop
+  /-- The direct rule commits a candidate outright. -/
+  | directCommit {k : ℕ} {L : BlockId} :
+      k < B → IsLeaderBlock U k L → DirectCommitIn U V L (S.slotRound k) →
+      DecidedWithin U V B k (some L)
+  /-- The direct rule blames every candidate. -/
+  | directSkip {k : ℕ} :
+      k < B → (∀ L, IsLeaderBlock U k L → DirectSkipIn U V L (S.slotRound k)) →
+      DecidedWithin U V B k none
+  /-- Anchored on the nearest eligible committed slot below the bound. -/
+  | indirectCommit {k j : ℕ} {A L : BlockId} :
+      k < j → j < B → Eligible Validator k j → DecidedWithin U V B j (some A) →
+      (∀ i, k < i → i < j → Eligible Validator k i → DecidedWithin U V B i none) →
+      IsLeaderBlock U k L → CertifiedIn U A L (S.slotRound k) →
+      DecidedWithin U V B k (some L)
+  /-- Anchored likewise, no candidate is in reach. -/
+  | indirectSkip {k j : ℕ} {A : BlockId} :
+      k < j → j < B → Eligible Validator k j → DecidedWithin U V B j (some A) →
+      (∀ i, k < i → i < j → Eligible Validator k i → DecidedWithin U V B i none) →
+      (∀ L, IsLeaderBlock U k L → ¬ CertifiedIn U A L (S.slotRound k)) →
+      DecidedWithin U V B k none
+
+namespace DecidedWithin
+
+variable {V : View Validator BlockId Payload U} {B B' k : ℕ} {v : Option BlockId}
+
+/-- Forgetting the bound: every bounded derivation is a `Decided`
+derivation, so the base safety development — M1–M6 in particular —
+applies to bounded verdicts without restatement. -/
+theorem toDecided (h : DecidedWithin U V B k v) : Decided U V k v := by
+  induction h with
+  | directCommit _ hL hdc => exact Decided.directCommit hL hdc
+  | directSkip _ hall => exact Decided.directSkip hall
+  | indirectCommit hkj _ helig _ _ hL hcert ihj ihmid =>
+      exact Decided.indirectCommit hkj helig ihj ihmid hL hcert
+  | indirectSkip hkj _ helig _ _ hnone ihj ihmid =>
+      exact Decided.indirectSkip hkj helig ihj ihmid hnone
+
+/-- The decided slot lies below the bound. -/
+theorem lt_bound (h : DecidedWithin U V B k v) : k < B := by
+  cases h with
+  | directCommit hk _ _ => exact hk
+  | directSkip hk _ => exact hk
+  | indirectCommit hkj hj _ _ _ _ _ => omega
+  | indirectSkip hkj hj _ _ _ _ => omega
+
+/-- The bound relaxes upward. -/
+theorem mono (h : DecidedWithin U V B k v) (hBB : B ≤ B') :
+    DecidedWithin U V B' k v := by
+  induction h with
+  | directCommit hk hL hdc => exact directCommit (by omega) hL hdc
+  | directSkip hk hall => exact directSkip (by omega) hall
+  | indirectCommit hkj hj helig _ _ hL hcert ihj ihmid =>
+      exact indirectCommit hkj (by omega) helig ihj (fun i h1 h2 h3 => ihmid i h1 h2 h3)
+        hL hcert
+  | indirectSkip hkj hj helig _ _ hnone ihj ihmid =>
+      exact indirectSkip hkj (by omega) helig ihj (fun i h1 h2 h3 => ihmid i h1 h2 h3)
+        hnone
+
+/-- Two bounded verdicts agree — M6, through the embedding. -/
+theorem agree {V₁ V₂ : View Validator BlockId Payload U} {B₁ B₂ k : ℕ}
+    {v₁ v₂ : Option BlockId} (h₁ : DecidedWithin U V₁ B₁ k v₁)
+    (h₂ : DecidedWithin U V₂ B₂ k v₂) : v₁ = v₂ :=
+  decided_agree h₁.toDecided h₂.toDecided
+
+end DecidedWithin
+
+omit [DecidableEq BlockId] S in
+/-- Only the leader clause of `IsLeaderBlock` consults the schedule's
+leaders, at the slot itself. -/
+theorem isLeaderBlock_congr {S₁ S₂ : Slots Validator} {k : ℕ} {L : BlockId}
+    (hround : S₁.slotRound k = S₂.slotRound k) (hk : S₁.leader k = S₂.leader k)
+    (h : IsLeaderBlock (S := S₁) U k L) : IsLeaderBlock (S := S₂) U k L := by
+  obtain ⟨h1, h2, h3⟩ := h
+  exact ⟨h1, by rw [← hround]; exact h2, by rw [← hk]; exact h3⟩
+
+omit S in
+/-- **Congruence below the bound**, for any two schedules with one round
+structure. Only `IsLeaderBlock` consults the leaders, and only at slots
+below `B`; eligibility, decision rounds and every counting predicate
+read the rounds, which are shared. This is the core's
+`Properties.SchedLocal`. -/
+theorem decidedWithin_congr_of_slotRound {S₁ S₂ : Slots Validator}
+    (hround : S₁.slotRound = S₂.slotRound) {V : View Validator BlockId Payload U}
+    {B k : ℕ} {v : Option BlockId} (ha : ∀ m, m < B → S₁.leader m = S₂.leader m)
+    (h : DecidedWithin (S := S₁) U V B k v) : DecidedWithin (S := S₂) U V B k v := by
+  obtain ⟨sr, ld, hmono, hunb, hkeyed⟩ := S₁
+  obtain ⟨sr', ld', hmono', hunb', hkeyed'⟩ := S₂
+  simp only at hround
+  subst hround
+  induction h with
+  | @directCommit k L hk hL hdc =>
+      exact DecidedWithin.directCommit (S := ⟨sr, ld', hmono', hunb', hkeyed'⟩) hk
+        (isLeaderBlock_congr (S₁ := ⟨sr, ld, hmono, hunb, hkeyed⟩)
+          (S₂ := ⟨sr, ld', hmono', hunb', hkeyed'⟩) rfl (ha k hk) hL) hdc
+  | @directSkip k hk hall =>
+      exact DecidedWithin.directSkip (S := ⟨sr, ld', hmono', hunb', hkeyed'⟩) hk
+        (fun L hL => hall L (isLeaderBlock_congr (S₁ := ⟨sr, ld', hmono', hunb', hkeyed'⟩)
+          (S₂ := ⟨sr, ld, hmono, hunb, hkeyed⟩) rfl (ha k hk).symm hL))
+  | @indirectCommit k j A L hkj hj helig _ _ hL hcert ihj ihmid =>
+      exact DecidedWithin.indirectCommit (S := ⟨sr, ld', hmono', hunb', hkeyed'⟩) hkj hj helig
+        ihj (fun i h1 h2 h3 => ihmid i h1 h2 h3)
+        (isLeaderBlock_congr (S₁ := ⟨sr, ld, hmono, hunb, hkeyed⟩)
+          (S₂ := ⟨sr, ld', hmono', hunb', hkeyed'⟩) rfl (ha k (by omega)) hL) hcert
+  | @indirectSkip k j A hkj hj helig _ _ hnone ihj ihmid =>
+      exact DecidedWithin.indirectSkip (S := ⟨sr, ld', hmono', hunb', hkeyed'⟩) hkj hj helig
+        ihj (fun i h1 h2 h3 => ihmid i h1 h2 h3)
+        (fun L hL => hnone L (isLeaderBlock_congr (S₁ := ⟨sr, ld', hmono', hunb', hkeyed'⟩)
+          (S₂ := ⟨sr, ld, hmono, hunb, hkeyed⟩) rfl (ha k (by omega)).symm hL))
+
+/-- **The committed-run descent, bounded.** The base
+`decided_below_of_committed_run`, restated with the anchors' bound in
+the conclusion: the derivation the base proof builds already anchors at
+or below the run's top, so carrying `n + 1` through is a restatement,
+not a new argument. -/
+theorem decidedWithin_below_of_committed_run
+    {V : View Validator BlockId Payload U} {b n : ℕ} (hbn : b ≤ n)
+    (hspan : ∀ i, i < b → Eligible Validator i n)
+    (hrun : ∀ j, b ≤ j → j ≤ n → ∃ B', DecidedWithin U V (n + 1) j (some B')) :
+    ∀ i, i < b → ∃ v, DecidedWithin U V (n + 1) i v := by
+  classical
+  have key : ∀ d i, i < b → b - i ≤ d → ∃ v, DecidedWithin U V (n + 1) i v := by
+    intro d
+    induction d with
+    | zero => intro i hi hd; omega
+    | succ d ih =>
+      intro i hi hd
+      have hex : ∃ j, Eligible Validator i j ∧
+          ∃ B', DecidedWithin U V (n + 1) j (some B') :=
+        ⟨n, hspan i hi, hrun n hbn (le_refl n)⟩
+      have hle : Nat.find hex ≤ n :=
+        Nat.find_le ⟨hspan i hi, hrun n hbn (le_refl n)⟩
+      obtain ⟨helig, B', hB⟩ := Nat.find_spec hex
+      have hmid : ∀ i', i < i' → i' < Nat.find hex → Eligible Validator i i' →
+          DecidedWithin U V (n + 1) i' none := by
+        intro i' h1 h2 h3
+        have hnc : ¬ ∃ C, DecidedWithin U V (n + 1) i' (some C) :=
+          fun hc => Nat.find_min hex h2 ⟨h3, hc⟩
+        have hi'b : i' < b := by
+          by_contra hge
+          exact hnc (hrun i' (by omega) (by omega))
+        obtain ⟨v, hv⟩ := ih i' hi'b (by omega)
+        cases v with
+        | none => exact hv
+        | some C => exact absurd ⟨C, hv⟩ hnc
+      by_cases hc : ∃ L, IsLeaderBlock U i L ∧ CertifiedIn U B' L (S.slotRound i)
+      · obtain ⟨L, hL, hcert⟩ := hc
+        exact ⟨some L, DecidedWithin.indirectCommit (lt_of_eligible helig)
+          (by omega) helig hB hmid hL hcert⟩
+      · push Not at hc
+        exact ⟨none, DecidedWithin.indirectSkip (lt_of_eligible helig)
+          (by omega) helig hB hmid hc⟩
+  intro i hi
+  exact key (b - i) i hi (le_refl _)
+
+end BoundedRelation
+
+/-! ## Conformance to the schedule family
+
+The core as a `BoundedRule`, and the five properties the adaptive
+mechanism reads: `Agree`, `Bounded`, `SchedLocal` for safety;
+`LeaderCommits` under the timed precondition `coreLive`, and `Descends`
+under `SpansEligible`, for liveness. -/
+
+namespace MysticetiProperties
+
+open Properties
+
+section Bounded
+
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator] [Faults Validator]
+variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
+
+/-- The core rule with its bounded relation. -/
+def mysticetiBounded : BoundedRule Validator BlockId Payload where
+  toDagRule := mysticetiRule
+  DecidedWithin := fun S B {U} V k v => DecidedWithin (S := S) U V B k v
+
+/-- **M6 as a property.** -/
+theorem agree :
+    Agree (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) := by
+  intro S U V₁ V₂ k v₁ v₂ h₁ h₂
+  exact decided_agree (S := S) (U := U) h₁ h₂
+
+theorem bounded :
+    Bounded (mysticetiBounded (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) := by
+  refine ⟨?_, ?_, ?_⟩
+  · intro S B U V k v h
+    exact DecidedWithin.toDecided (S := S) (U := U) h
+  · intro S B U V k v h
+    exact DecidedWithin.lt_bound (S := S) (U := U) h
+  · intro S B B' U V k v h hBB
+    exact DecidedWithin.mono (S := S) (U := U) h hBB
+
+/-- **The core reads the schedule only below the bound.** -/
+theorem schedLocal :
+    SchedLocal (mysticetiBounded (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) := by
+  intro S₁ S₂ hround B ha U V k v h
+  exact decidedWithin_congr_of_slotRound (S₁ := S₁) (S₂ := S₂) (U := U) hround ha h
+
+/-- **The timed core's liveness precondition**, over a slot window: a
+quorum `T` synchronised from some round `R₀` at or below the window's
+first slot, the DAG populated by `T` from `R₀` to a horizon `N`, the
+view caught up to `N`, and every slot of the window two rounds under
+`N`. It reads no leader, so it holds under every schedule with the same
+rounds. -/
+def coreLive (S : Slots Validator) {U : BlockUniverse Validator BlockId Payload}
+    (V : View Validator BlockId Payload U) (T : Finset Validator) (lo K : ℕ) : Prop :=
+  quorumCard Validator ≤ T.card ∧
+    ∃ R₀ N, SynchronisedOn U T R₀ ∧ R₀ ≤ S.slotRound lo ∧
+      (∀ r, R₀ ≤ r → r ≤ N → PopulatedOn U T r) ∧ V.CoversUpto N ∧
+      ∀ k, k < K → S.slotRound k + 2 ≤ N
+
+/-- **L4 as a property**: a `T`-led slot in the window commits, within
+a bound one above it. -/
+theorem leaderCommits :
+    LeaderCommits (mysticetiBounded (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) (fun S {U} V T lo K => coreLive S (U := U) V T lo K) := by
+  intro S U V T lo K hlive k hlo hK hlead
+  obtain ⟨hcard, R₀, N, hs, hR, hpop, hcov, hN⟩ := hlive
+  have hRk : R₀ ≤ S.slotRound k := le_trans hR (S.mono hlo)
+  have hNk := hN k hK
+  obtain ⟨L, hL, hdc⟩ := directCommit_of_leader_mem (S := S) (U := U) hcard hs hRk
+    (hpop _ hRk (by omega)) (hpop _ (by omega) (by omega)) (hpop _ (by omega) (by omega)) hlead
+  exact ⟨L, DecidedWithin.directCommit (S := S) (U := U) (by omega) hL
+    (directCommitIn_of_coversUpto hdc (hcov.mono hNk))⟩
+
+/-- **The descent as a property**, under the spanning hypothesis on the
+round structure. -/
+theorem descends {S : Slots Validator} {c : ℕ} (hc : 0 < c)
+    (hspans : SpansEligible (Validator := Validator) (S := S) c) :
+    Descends (mysticetiBounded (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) S c := by
+  intro U V b hrun i hi
+  have hbc : b + c - 1 + 1 = b + c := by omega
+  have hrun' : ∀ j, b ≤ j → j ≤ b + c - 1 →
+      ∃ B', DecidedWithin (S := S) (U := U) V (b + c - 1 + 1) j (some B') := by
+    intro j hj1 hj2
+    obtain ⟨L, hL⟩ := hrun j hj1 (by omega)
+    exact ⟨L, by rw [hbc]; exact hL⟩
+  obtain ⟨v, hv⟩ := decidedWithin_below_of_committed_run (S := S) (U := U) (V := V) (b := b)
+    (n := b + c - 1) (by omega) (fun i hi => hspans b i hi) hrun' i hi
+  exact ⟨v, by rw [← hbc]; exact hv⟩
+
+end Bounded
 
 end MysticetiProperties
 

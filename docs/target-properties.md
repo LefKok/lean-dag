@@ -401,22 +401,107 @@ rather than left to be discovered.
 
 ## 4. Properties for the schedule mechanisms
 
-`Barnacle.BaseRule` and its `Laws` are the working interface: any two
+`Barnacle.BaseRule` and its `Laws` are one working interface: any two
 verdicts agree, a direct commit yields a verdict, candidates are
 identified. `LiveRule` and `Descent` add the liveness side. Six rules
-instantiate it.
+instantiate it. It has no bounded relation, and it cannot host a
+reactive execution, whose clauses read the schedule; the adaptive
+fixpoint needs both, so the family below is stated separately and
+shares `Agree` with it.
 
-The work here is not to design an interface but to bring two
-mechanisms to the one that exists:
+### 4.1 What the adaptive fixpoint consumes
 
-- **Hammerhead / `Adaptive`.** Its bounded relation `DecidedWithin`
-  exists in two copies differing only in the indirect test, of which
-  `Adaptive/Odontoceti.lean` repeats 285 of its 362 non-blank lines.
-  The bound is a **slot domain** — a predicate the decided slot and its
-  anchor satisfy — and the two copies collapse if the relation is
-  parameterised by one.
-- **Reactive.** `Reactive/{Mysticeti,Odontoceti}.lean` is the same
-  duplication a second time, and the same interface fixes both.
+Read off the proof bodies of `Adaptive/Run.lean` and
+`Adaptive/Liveness.lean` before the generalisation, the fixpoint used
+five facts about the underlying rule and nothing else. They are now the
+five properties, in `Properties/{Agree,Bounded,Commit}.lean`.
+
+Safety, proved by the protocol:
+
+- `Agree` — two views over one universe, under one schedule, decide
+  alike. M6 as a property. Nothing before the schedule family needed
+  it: `Persist`, `Local` and `Truncates` compare a verdict with a
+  verdict, never two views at one slot.
+- `Bounded` — the protocol supplies a bounded family `DecidedWithin S B`
+  alongside `Decided`, embedding in it, deciding only slots under `B`,
+  monotone in `B`. The bound cannot be derived from `Decided`: an
+  indirect verdict's anchors are hidden inside a proof of a `Prop`, so
+  `BoundedRule` extends `DagRule` with the family as a field.
+- `SchedLocal` — a verdict within `B` reads the schedule's leaders only
+  below `B`. The twin of `Local` on the other axis: `Local` bounds what
+  a verdict reads of the DAG from below, `SchedLocal` bounds what it
+  reads of the schedule from above.
+
+Liveness, provided by the protocol for the mechanism's existence
+theorem:
+
+- `LeaderCommits R Live` — under the protocol's precondition `Live`, a
+  slot led by a member of `T` commits within bound one above it. `Live`
+  is a **parameter**, not a field, because the same rule under two
+  execution models has two preconditions and one relation (§4.3).
+  `Live S V T lo K` is indexed by the schedule and by a slot window
+  `[lo, K)`.
+- `Descends R S c` — `c` consecutive slots committed within `b + c`
+  decide everything below `b` within `b + c`. The indirect rule's
+  descent; `c` and the round-structure hypothesis it needs are the
+  protocol's.
+
+`Adaptive/{Policy,Run,Liveness}.lean` are now stated over `BoundedRule`
+and these five, and name no protocol. `Adaptive.run_agree` uses the
+three safety properties and depends on `propext` and `Quot.sound`
+only; `Adaptive.run_exists` uses all five.
+
+### 4.2 The staged precondition
+
+The existence theorems ask for `Live` at every height `E`, under the
+schedule the policy computes from a height-`E` partial run's verdicts,
+over the slots `[W, W·(E+2))`. For the timed core this is a
+restatement: `coreLive` reads no leader, and the global hypotheses of
+the old `adaptiveRun_exists` produce it at every height, which is all
+`Adaptive/Mysticeti.lean` does. For a reactive execution it is the
+statement: `ReactiveM`'s `cert_or_wait` reads `S.leader k`, so its
+clauses hold only under the schedule the validators followed, and an
+adaptive schedule is only determined through epoch `E + 1` at height
+`E`. Any two height-`E` runs compute the same leaders on that window
+(`partialRun_agree` with `adapted`), so the hypothesis names one
+schedule prefix per height.
+
+What this does not yet say is that `reactiveLive` depends on the
+schedule *only* through the leaders below `K`. That is true of the two
+clauses by inspection and unproved. It is the congruence a deployment
+needs in order to read the staged hypothesis as one execution's clauses
+at increasing horizons, and it is a property of the reactive execution
+model, not of the rule.
+
+### 4.3 Instances
+
+- **Core Mysticeti** (`MysticetiProperties.lean`): `mysticetiBounded`,
+  with `DecidedWithin` moved there from `Adaptive/Basic.lean` — it is
+  the protocol's relation. `agree`, `bounded`, `schedLocal` (the
+  congruence proved for any two schedules with one round structure, by
+  destructuring both), `leaderCommits` under `coreLive`, `descends`
+  under `SpansEligible`.
+- **Reactive Mysticeti** (`Reactive/MysticetiProperties.lean`): the
+  same `mysticetiBounded`, so the three safety properties are
+  inherited, and `leaderCommits_reactive` under `reactiveLive`, from
+  `ReactiveM.directCommit`. This is the case `Live` was made a
+  parameter for.
+- **Consumers.** `Adaptive/Mysticeti.lean` restates every statement of
+  the arc before the generalisation verbatim — `AdaptivePolicy`,
+  `PartialRun`, `AdaptiveRun`, `partialRun_agree`, `adaptiveRun_agree`,
+  `epoch_closes`, `exists_partialRun`, `adaptiveRun_exists`,
+  `decidedWithin_congr` — each a corollary of the generic theorem at the
+  core instance. `Integration/AdaptiveReactive.lean` is the result the
+  bespoke development did not have: `adaptiveRun_exists_reactive`,
+  Hammerhead over reactive Mysticeti, from `Adaptive.run_exists` fed
+  with `leaderCommits_reactive` and nothing else changed.
+
+Not done: the Odontoceti mirror (`Adaptive/Odontoceti.lean`, 415
+lines) still stands, now importing the core instance for the shared
+names; collapsing it to an instance is the next step, and the first
+test of whether `Live`'s shape is Mysticeti's or generic. Hydrozoan has
+no bounded relation. `Reactive/Odontoceti.lean`'s duplication is
+untouched.
 
 **An open question worth stating.** Can a non-reactive protocol be made
 reactive by proving a property, rather than by a fresh development?
@@ -537,20 +622,32 @@ keeps.
 ```
 LeanDag/Properties/
   Carrier.lean     the abstract DAG the properties talk about
-  Local.lean  Persist.lean  Reindex.lean
-  Arcs/GC.lean          garbage collection, given Local and Reindex
+  Local.lean  Persist.lean  Truncate.lean  Sustain.lean  Skip.lean
+  Agree.lean  Bounded.lean  Commit.lean        the schedule family (§4)
+  Arcs/GC.lean          garbage collection, given LocalTruncate
   Arcs/SafeSkip.lean    crash recovery, given Persist
-  Arcs/Adaptive.lean    bounded relations, given the consumer laws
-  Arcs/Quality.lean     chain quality, given fairness and self-reference
-  Compose.lean          transport composes
+  Arcs/Quality.lean     chain quality, given fairness and self-reference  (planned)
+  Compose.lean          transport composes                               (planned)
+
+LeanDag/Adaptive/{Basic,Policy,Run,Liveness}.lean   the mechanism, over BoundedRule
+LeanDag/Adaptive/Mysticeti.lean          the core instance; the old statements as corollaries
+LeanDag/Integration/AdaptiveReactive.lean   Hammerhead over reactive Mysticeti
 
 LeanDag/Hydrozoan/Properties/{Statement,Proof}.lean
 LeanDag/OptimalHydrozoan/Properties/{Statement,Proof}.lean
 LeanDag/MahiMahi/Properties/{Statement,Proof}.lean
 LeanDag/FinWhale/Properties/{Statement,Proof}.lean
-LeanDag/{Odontoceti,Nemo,Hybrid,Adaptive}/Properties.lean
+LeanDag/{Odontoceti,Nemo,Hybrid}/Properties.lean
 LeanDag/MysticetiProperties.lean
+LeanDag/Reactive/MysticetiProperties.lean
 ```
+
+The adaptive mechanism has no `Arcs/` bridge file, unlike garbage
+collection and crash recovery: those mechanisms are stated over
+concrete universes and the bridge applies a property to them, whereas
+`Adaptive/{Policy,Run,Liveness}.lean` are themselves stated over
+`BoundedRule`, so the mechanism *is* the generic theorem and the bridge
+is the instance file.
 
 Conformance belongs with the protocol. For the six arcs in
 `check-arc-holes.py`'s `ARCS` the statement/proof partition applies, and
@@ -610,8 +707,13 @@ directory, hence the one flat module.
   attempted (§3.2). **`SkipsUnsupported` done** at grade
   `quorumCard ≤ |T|`, with SS3 re-derived as its consumer (§3.7).
   `Local` and `LocalTruncate` for the core remain.
-- **G5** The schedule family: the slot domain, collapsing both the
-  `Adaptive` and the `Reactive` duplications.
+- **G5** The schedule family (**built, for Mysticeti timed and
+  reactive**): `BoundedRule`, `Agree`, `Bounded`, `SchedLocal`,
+  `LeaderCommits`, `Descends`; `Adaptive/{Policy,Run,Liveness}` generic
+  over them with the old statements as corollaries; the core and
+  reactive instances; `adaptiveRun_exists_reactive`. Remaining: collapse
+  the `Adaptive` and `Reactive` Odontoceti mirrors onto instances;
+  Hydrozoan's bounded relation.
 - **G6** Chain quality from fairness and self-reference.
 - **G7** The remaining protocols, and FinWhale as the non-inductive
   test.

@@ -1,5 +1,5 @@
 import LeanDag.Integration.ScheduleShape
-import LeanDag.Adaptive.Run
+import LeanDag.Adaptive.Mysticeti
 
 /-!
 # I9 — the joiner and the adaptive schedule
@@ -39,9 +39,9 @@ namespace LeanDag
 
 namespace Integration
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator]
-variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
+variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 variable {U : BlockUniverse Validator BlockId Payload}
 variable [S : Slots Validator] {G d : ℕ}
 

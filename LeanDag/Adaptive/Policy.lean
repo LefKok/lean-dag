@@ -1,4 +1,5 @@
 import LeanDag.Adaptive.Basic
+import LeanDag.Properties.Carrier
 
 /-!
 # The adaptive policy
@@ -29,22 +30,27 @@ mathematical condition while the implementation owes the discipline.
 `base_prefix` pins epochs `0` and `1` to the base schedule: the first
 window from which `pick` has a two-epoch-old prefix to read is epoch
 `2`.
+
+The policy reads a protocol's *carrier* only — its universes and views
+— so it is stated over `Properties.DagRule`; the core's `AdaptivePolicy`
+is this structure at the core's carrier (`Adaptive/Mysticeti.lean`).
 -/
 
 namespace LeanDag
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
-variable [F : Faults Validator]
-variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
+namespace Adaptive
 
-/-- A Hammerhead-style reassignment policy: epoch length, the rule, and
-the clauses it owes. Fairness — the clause liveness will price — is
-deliberately *not* here: safety must hold for arbitrary, even
+open Properties
+
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
+variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
+
+/-- A Hammerhead-style reassignment policy over a carrier: epoch length,
+the rule, and the clauses it owes. Fairness — the clause liveness will
+price — is deliberately *not* here: safety must hold for arbitrary, even
 adversarial, adapted policies, and stating fairness where liveness
 consumes it keeps that separation visible. -/
-structure AdaptivePolicy (Validator : Type*) [Fintype Validator]
-    [DecidableEq Validator] [Faults Validator] (BlockId : Type*)
-    [DecidableEq BlockId] (Payload : Type*) [S : Slots Validator] where
+structure Policy (R : DagRule Validator BlockId Payload) [S : Slots Validator] where
   /-- The epoch length, in slots. -/
   W : ℕ
   W_pos : 0 < W
@@ -52,24 +58,23 @@ structure AdaptivePolicy (Validator : Type*) [Fintype Validator]
   inj : Function.Injective S.slotRound
   /-- The reassignment rule: from the universe, the validator's view of
   it and a verdict function, the leader of each slot. -/
-  pick : (U : BlockUniverse Validator BlockId Payload) →
-    View Validator BlockId Payload U → (ℕ → Option BlockId) → ℕ → Validator
+  pick : (U : R.Universe) → R.View U → (ℕ → Option BlockId) → ℕ → Validator
   /-- **Adaptedness.** The leader of slot `k` reads the verdicts of
   epochs `≤ epochOf k − 2` and nothing else — not the view either. -/
-  adapted : ∀ U (V₁ V₂ : View Validator BlockId Payload U) v w k,
+  adapted : ∀ (U : R.Universe) (V₁ V₂ : R.View U) v w k,
     (∀ j, epochOf W j + 2 ≤ epochOf W k → v j = w j) →
     pick U V₁ v k = pick U V₂ w k
   /-- Epochs `0` and `1` run the base schedule. -/
-  base_prefix : ∀ U V v k, epochOf W k < 2 → pick U V v k = S.leader k
+  base_prefix : ∀ (U : R.Universe) (V : R.View U) v k, epochOf W k < 2 →
+    pick U V v k = S.leader k
 
-namespace AdaptivePolicy
+namespace Policy
 
-variable [S : Slots Validator]
+variable {R : DagRule Validator BlockId Payload} [S : Slots Validator]
 
 /-- The constant policy: reassign nothing. The conservativity anchor —
 under it the adaptive development must collapse onto the base one. -/
-def const (W : ℕ) (hW : 0 < W) (hinj : Function.Injective S.slotRound) :
-    AdaptivePolicy Validator BlockId Payload where
+def const (W : ℕ) (hW : 0 < W) (hinj : Function.Injective S.slotRound) : Policy R where
   W := W
   W_pos := hW
   inj := hinj
@@ -77,11 +82,12 @@ def const (W : ℕ) (hW : 0 < W) (hinj : Function.Injective S.slotRound) :
   adapted _ _ _ _ _ _ _ := rfl
   base_prefix _ _ _ _ _ := rfl
 
-@[simp] theorem const_pick (W : ℕ) (hW : 0 < W)
-    (hinj : Function.Injective S.slotRound)
-    (U : BlockUniverse Validator BlockId Payload) (V : View Validator BlockId Payload U)
-    (v : ℕ → Option BlockId) (k : ℕ) : (const W hW hinj).pick U V v k = S.leader k := rfl
+@[simp] theorem const_pick (W : ℕ) (hW : 0 < W) (hinj : Function.Injective S.slotRound)
+    (U : R.Universe) (V : R.View U) (v : ℕ → Option BlockId) (k : ℕ) :
+    (const (R := R) W hW hinj).pick U V v k = S.leader k := rfl
 
-end AdaptivePolicy
+end Policy
+
+end Adaptive
 
 end LeanDag

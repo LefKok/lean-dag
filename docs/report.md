@@ -4176,21 +4176,21 @@ itself. The multi-leader obligation is recorded and not pursued.
 
 ### 13.2 The policy and the run
 
-`AdaptivePolicy` packages the reassignment rule with the clauses it
-owes:
+`Adaptive.Policy` packages the reassignment rule with the clauses it
+owes. It reads a protocol's carrier only — universes and views — so it
+is stated over any `Properties.DagRule`, and the core's `AdaptivePolicy`
+is this structure at the core's carrier:
 
 ```lean
-structure AdaptivePolicy (Validator : Type*) [Fintype Validator]
-    [DecidableEq Validator] [Faults Validator] (BlockId : Type*)
-    [DecidableEq BlockId] (Payload : Type*) [S : Slots Validator] where
+structure Policy (R : DagRule Validator BlockId Payload) [S : Slots Validator] where
   W : ℕ
   …
-  pick : (U : BlockUniverse Validator BlockId Payload) →
-    View Validator BlockId Payload U → (ℕ → Option BlockId) → ℕ → Validator
-  adapted : ∀ U (V₁ V₂ : View Validator BlockId Payload U) v w k,
+  pick : (U : R.Universe) → R.View U → (ℕ → Option BlockId) → ℕ → Validator
+  adapted : ∀ (U : R.Universe) (V₁ V₂ : R.View U) v w k,
     (∀ j, epochOf W j + 2 ≤ epochOf W k → v j = w j) →
     pick U V₁ v k = pick U V₂ w k
-  base_prefix : ∀ U V v k, epochOf W k < 2 → pick U V v k = S.leader k
+  base_prefix : ∀ (U : R.Universe) (V : R.View U) v k, epochOf W k < 2 →
+    pick U V v k = S.leader k
 ```
 
 `adapted` is the measurability clause and the heart of the safety
@@ -4264,10 +4264,9 @@ Existence consumes the standard interface — `SynchronisedOn` and
 leader — plus the one clause that prices the policy:
 
 ```lean
-def PlacesRuns (P : AdaptivePolicy Validator BlockId Payload)
+def PlacesRuns {R : DagRule Validator BlockId Payload} (P : Policy R)
     (T : Finset Validator) (c : ℕ) : Prop :=
-  ∀ (U : BlockUniverse Validator BlockId Payload) (V : View Validator BlockId Payload U)
-    (v : ℕ → Option BlockId) (e : ℕ),
+  ∀ (U : R.Universe) (V : R.View U) (v : ℕ → Option BlockId) (e : ℕ),
     ∃ b, P.W * (e + 1) ≤ b ∧ b + c ≤ P.W * (e + 2) ∧
       ∀ i, i < c → P.pick U V v (b + i) ∈ T
 ```
@@ -13890,47 +13889,12 @@ The epoch of slot `k` at width `W`: epoch `e` is slots `[W·e, W·(e+1))`.
 
 The `Slots` instance a leader assignment induces: the base round structure, the given leaders. `keyed` is where one-leader-per-round enters: with `slotRound` injective, distinct slots differ in round whatever the assignment names.
 
-#### `DecidedWithin`
-
-*inductive, `Adaptive.Basic.lean`*
-
-```lean
-inductive DecidedWithin (U : BlockUniverse Validator BlockId Payload)
-    (V : View Validator BlockId Payload U) (B : ℕ) : ℕ → Option BlockId → Prop
-  /-- The direct rule commits a candidate outright. -/
-  | directCommit {k : ℕ} {L : BlockId} :
-      k < B → IsLeaderBlock U k L → DirectCommitIn U V L (S.slotRound k) →
-      DecidedWithin U V B k (some L)
-  /-- The direct rule blames every candidate. -/
-  | directSkip {k : ℕ} :
-      k < B → (∀ L, IsLeaderBlock U k L → DirectSkipIn U V L (S.slotRound k)) →
-      DecidedWithin U V B k none
-  /-- Anchored on the nearest eligible committed slot below the bound. -/
-  | indirectCommit {k j : ℕ} {A L : BlockId} :
-      k < j → j < B → Eligible Validator k j → DecidedWithin U V B j (some A) →
-      (∀ i, k < i → i < j → Eligible Validator k i → DecidedWithin U V B i none) →
-      IsLeaderBlock U k L → CertifiedIn U A L (S.slotRound k) →
-      DecidedWithin U V B k (some L)
-  /-- Anchored likewise, no candidate is in reach. -/
-  | indirectSkip {k j : ℕ} {A : BlockId} :
-      k < j → j < B → Eligible Validator k j → DecidedWithin U V B j (some A) →
-      (∀ i, k < i → i < j → Eligible Validator k i → DecidedWithin U V B i none) →
-      (∀ L, IsLeaderBlock U k L → ¬ CertifiedIn U A L (S.slotRound k)) →
-      DecidedWithin U V B k none
-```
-
-**The bounded decision relation.** `Decided`, with every slot the derivation mentions — the decided slot, the anchor, the eligible intermediates — strictly below `B`.
-
-The bound lives in the relation because it cannot live anywhere else: a `Decided` derivation is a proof of a `Prop` and its anchors cannot be recovered from it. The adaptive fixpoint is stratified by exactly this bound — epoch `e`'s verdicts are `DecidedWithin` the start of epoch `e + 2`, which consults leaders the schedule has already determined.
-
-#### `AdaptivePolicy`
+#### `Policy`
 
 *structure, `Adaptive.Policy.lean`*
 
 ```lean
-structure AdaptivePolicy (Validator : Type*) [Fintype Validator]
-    [DecidableEq Validator] [Faults Validator] (BlockId : Type*)
-    [DecidableEq BlockId] (Payload : Type*) [S : Slots Validator] where
+structure Policy (R : DagRule Validator BlockId Payload) [S : Slots Validator] where
   /-- The epoch length, in slots. -/
   W : ℕ
   W_pos : 0 < W
@@ -13938,26 +13902,25 @@ structure AdaptivePolicy (Validator : Type*) [Fintype Validator]
   inj : Function.Injective S.slotRound
   /-- The reassignment rule: from the universe, the validator's view of
   it and a verdict function, the leader of each slot. -/
-  pick : (U : BlockUniverse Validator BlockId Payload) →
-    View Validator BlockId Payload U → (ℕ → Option BlockId) → ℕ → Validator
+  pick : (U : R.Universe) → R.View U → (ℕ → Option BlockId) → ℕ → Validator
   /-- **Adaptedness.** The leader of slot `k` reads the verdicts of
   epochs `≤ epochOf k − 2` and nothing else — not the view either. -/
-  adapted : ∀ U (V₁ V₂ : View Validator BlockId Payload U) v w k,
+  adapted : ∀ (U : R.Universe) (V₁ V₂ : R.View U) v w k,
     (∀ j, epochOf W j + 2 ≤ epochOf W k → v j = w j) →
     pick U V₁ v k = pick U V₂ w k
   /-- Epochs `0` and `1` run the base schedule. -/
-  base_prefix : ∀ U V v k, epochOf W k < 2 → pick U V v k = S.leader k
+  base_prefix : ∀ (U : R.Universe) (V : R.View U) v k, epochOf W k < 2 →
+    pick U V v k = S.leader k
 ```
 
-A Hammerhead-style reassignment policy: epoch length, the rule, and the clauses it owes. Fairness — the clause liveness will price — is deliberately *not* here: safety must hold for arbitrary, even adversarial, adapted policies, and stating fairness where liveness consumes it keeps that separation visible.
+A Hammerhead-style reassignment policy over a carrier: epoch length, the rule, and the clauses it owes. Fairness — the clause liveness will price — is deliberately *not* here: safety must hold for arbitrary, even adversarial, adapted policies, and stating fairness where liveness consumes it keeps that separation visible.
 
 #### `const`
 
 *def, `Adaptive.Policy.lean`*
 
 ```lean
-def const (W : ℕ) (hW : 0 < W) (hinj : Function.Injective S.slotRound) :
-    AdaptivePolicy Validator BlockId Payload where
+def const (W : ℕ) (hW : 0 < W) (hinj : Function.Injective S.slotRound) : Policy R where
   W := W
   W_pos := hW
   inj := hinj
@@ -13973,9 +13936,7 @@ The constant policy: reassign nothing. The conservativity anchor — under it th
 *structure, `Adaptive.Run.lean`*
 
 ```lean
-structure PartialRun (P : AdaptivePolicy Validator BlockId Payload)
-    (U : BlockUniverse Validator BlockId Payload)
-    (V : View Validator BlockId Payload U) (E : ℕ) where
+structure PartialRun (P : Policy R.toDagRule) (U : R.Universe) (V : R.View U) (E : ℕ) where
   /-- The leader assignment. -/
   assign : ℕ → Validator
   /-- The verdicts. -/
@@ -13983,8 +13944,7 @@ structure PartialRun (P : AdaptivePolicy Validator BlockId Payload)
   /-- Every slot of a closed epoch is decided inside its window: anchors
   strictly below the start of epoch `e + 2`. -/
   closed : ∀ k, epochOf P.W k < E →
-    DecidedWithin (S := slotsOf P.inj assign) U V
-      (P.W * (epochOf P.W k + 2)) k (vdct k)
+    R.DecidedWithin (slotsOf P.inj assign) (P.W * (epochOf P.W k + 2)) V k (vdct k)
   /-- The assignment is the policy's, computed on this view, as far as
   the derivations read it. -/
   coherent : ∀ m, epochOf P.W m < E + 1 → assign m = P.pick U V vdct m
@@ -13992,39 +13952,34 @@ structure PartialRun (P : AdaptivePolicy Validator BlockId Payload)
 
 A run closed up to epoch height `E`: verdicts derived for every slot of epochs `< E`, the schedule coherent as far as those derivations read it (epochs `< E + 1`). What a validator holds mid-execution.
 
-#### `AdaptiveRun`
+#### `Run`
 
 *structure, `Adaptive.Run.lean`*
 
 ```lean
-structure AdaptiveRun (P : AdaptivePolicy Validator BlockId Payload)
-    (U : BlockUniverse Validator BlockId Payload)
-    (V : View Validator BlockId Payload U) where
+structure Run (P : Policy R.toDagRule) (U : R.Universe) (V : R.View U) where
   /-- The leader assignment. -/
   assign : ℕ → Validator
   /-- The verdicts. -/
   vdct : ℕ → Option BlockId
   /-- Every slot is decided inside its epoch window. -/
-  closed : ∀ k, DecidedWithin (S := slotsOf P.inj assign) U V
-    (P.W * (epochOf P.W k + 2)) k (vdct k)
+  closed : ∀ k, R.DecidedWithin (slotsOf P.inj assign) (P.W * (epochOf P.W k + 2)) V k (vdct k)
   /-- The assignment is the policy's, computed on this view, everywhere. -/
   coherent : ∀ m, assign m = P.pick U V vdct m
 ```
 
 A total run: the adaptive fixpoint itself.
 
-#### `AdaptiveRun.toPartial`
+#### `Run.toPartial`
 
 *def, `Adaptive.Run.lean`*
 
 ```lean
-def AdaptiveRun.toPartial {P : AdaptivePolicy Validator BlockId Payload}
-    {V : View Validator BlockId Payload U} (R : AdaptiveRun P U V) (E : ℕ) :
-    PartialRun P U V E where
-  assign := R.assign
-  vdct := R.vdct
-  closed := fun k _ => R.closed k
-  coherent := fun m _ => R.coherent m
+def Run.toPartial {V : R.View U} (A : Run P U V) (E : ℕ) : PartialRun P U V E where
+  assign := A.assign
+  vdct := A.vdct
+  closed := fun k _ => A.closed k
+  coherent := fun m _ => A.coherent m
 ```
 
 A total run is partial at every height.
@@ -14034,15 +13989,14 @@ A total run is partial at every height.
 *def, `Adaptive.Liveness.lean`*
 
 ```lean
-def PlacesRuns (P : AdaptivePolicy Validator BlockId Payload)
+def PlacesRuns {R : DagRule Validator BlockId Payload} (P : Policy R)
     (T : Finset Validator) (c : ℕ) : Prop :=
-  ∀ (U : BlockUniverse Validator BlockId Payload) (V : View Validator BlockId Payload U)
-    (v : ℕ → Option BlockId) (e : ℕ),
+  ∀ (U : R.Universe) (V : R.View U) (v : ℕ → Option BlockId) (e : ℕ),
     ∃ b, P.W * (e + 1) ≤ b ∧ b + c ≤ P.W * (e + 2) ∧
       ∀ i, i < c → P.pick U V v (b + i) ∈ T
 ```
 
-**The adaptive fairness clause.** Every assignment the policy can emit places, in each epoch past the base prefix, a run of `c` consecutive `T`-led slots. The clause liveness prices and safety never sees: `adaptiveRun_agree` holds for policies that violate it.
+**The adaptive fairness clause.** Every assignment the policy can emit places, in each epoch past the base prefix, a run of `c` consecutive `T`-led slots. The clause liveness prices and safety never sees: `run_agree` holds for policies that violate it.
 
 #### `DecidedWithin`
 
@@ -22346,6 +22300,82 @@ The horizon universe as an `OptUniverse`: leader exclusion is inert because noth
 
 ### Not otherwise grouped
 
+#### `AdaptivePolicy`
+
+*abbrev, `Adaptive.Mysticeti.lean`*
+
+```lean
+abbrev AdaptivePolicy (Validator : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] (BlockId : Type) [DecidableEq BlockId] (Payload : Type)
+    [Slots Validator] : Type :=
+  Adaptive.Policy (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+```
+
+The adaptive policy over the core's carrier.
+
+#### `const`
+
+*def, `Adaptive.Mysticeti.lean`*
+
+```lean
+def const (W : ℕ) (hW : 0 < W) (hinj : Function.Injective S.slotRound) :
+    AdaptivePolicy Validator BlockId Payload :=
+  Adaptive.Policy.const W hW hinj
+```
+
+The constant policy: reassign nothing.
+
+#### `PartialRun`
+
+*abbrev, `Adaptive.Mysticeti.lean`*
+
+```lean
+abbrev PartialRun (P : AdaptivePolicy Validator BlockId Payload)
+    (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (E : ℕ) : Type :=
+  Adaptive.PartialRun (R := mysticetiBounded) P U V E
+```
+
+A run closed up to epoch height `E`, over the core.
+
+#### `AdaptiveRun`
+
+*abbrev, `Adaptive.Mysticeti.lean`*
+
+```lean
+abbrev AdaptiveRun (P : AdaptivePolicy Validator BlockId Payload)
+    (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) : Type :=
+  Adaptive.Run (R := mysticetiBounded) P U V
+```
+
+A total run: the adaptive fixpoint itself, over the core.
+
+#### `AdaptiveRun.toPartial`
+
+*def, `Adaptive.Mysticeti.lean`*
+
+```lean
+def AdaptiveRun.toPartial {P : AdaptivePolicy Validator BlockId Payload}
+    {V : View Validator BlockId Payload U} (R : AdaptiveRun P U V) (E : ℕ) :
+    PartialRun P U V E :=
+  Adaptive.Run.toPartial R E
+```
+
+A total run is partial at every height.
+
+#### `PlacesRuns`
+
+*abbrev, `Adaptive.Mysticeti.lean`*
+
+```lean
+abbrev PlacesRuns (P : AdaptivePolicy Validator BlockId Payload)
+    (T : Finset Validator) (c : ℕ) : Prop :=
+  Adaptive.PlacesRuns P T c
+```
+
+**The adaptive fairness clause**, for the core.
+
 #### `WindowHealthy`
 
 *def, `Barnacle.Healthy.Statement.lean`*
@@ -24140,6 +24170,124 @@ def Quorate (S : Slots Validator) (U U' : BlockUniverse Validator BlockId Payloa
 
 The core's grade: at every slot the extension gives a new candidate, the view holds a quorum at the voting round.
 
+#### `DecidedWithin`
+
+*inductive, `MysticetiProperties.lean`*
+
+```lean
+inductive DecidedWithin (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (B : ℕ) : ℕ → Option BlockId → Prop
+  /-- The direct rule commits a candidate outright. -/
+  | directCommit {k : ℕ} {L : BlockId} :
+      k < B → IsLeaderBlock U k L → DirectCommitIn U V L (S.slotRound k) →
+      DecidedWithin U V B k (some L)
+  /-- The direct rule blames every candidate. -/
+  | directSkip {k : ℕ} :
+      k < B → (∀ L, IsLeaderBlock U k L → DirectSkipIn U V L (S.slotRound k)) →
+      DecidedWithin U V B k none
+  /-- Anchored on the nearest eligible committed slot below the bound. -/
+  | indirectCommit {k j : ℕ} {A L : BlockId} :
+      k < j → j < B → Eligible Validator k j → DecidedWithin U V B j (some A) →
+      (∀ i, k < i → i < j → Eligible Validator k i → DecidedWithin U V B i none) →
+      IsLeaderBlock U k L → CertifiedIn U A L (S.slotRound k) →
+      DecidedWithin U V B k (some L)
+  /-- Anchored likewise, no candidate is in reach. -/
+  | indirectSkip {k j : ℕ} {A : BlockId} :
+      k < j → j < B → Eligible Validator k j → DecidedWithin U V B j (some A) →
+      (∀ i, k < i → i < j → Eligible Validator k i → DecidedWithin U V B i none) →
+      (∀ L, IsLeaderBlock U k L → ¬ CertifiedIn U A L (S.slotRound k)) →
+      DecidedWithin U V B k none
+```
+
+**The bounded decision relation.** `Decided`, with every slot the derivation mentions strictly below `B`.
+
+#### `mysticetiBounded`
+
+*def, `MysticetiProperties.lean`*
+
+```lean
+def mysticetiBounded : BoundedRule Validator BlockId Payload where
+  toDagRule := mysticetiRule
+  DecidedWithin := fun S B {U} V k v => DecidedWithin (S := S) U V B k v
+```
+
+The core rule with its bounded relation.
+
+#### `coreLive`
+
+*def, `MysticetiProperties.lean`*
+
+```lean
+def coreLive (S : Slots Validator) {U : BlockUniverse Validator BlockId Payload}
+    (V : View Validator BlockId Payload U) (T : Finset Validator) (lo K : ℕ) : Prop :=
+  quorumCard Validator ≤ T.card ∧
+    ∃ R₀ N, SynchronisedOn U T R₀ ∧ R₀ ≤ S.slotRound lo ∧
+      (∀ r, R₀ ≤ r → r ≤ N → PopulatedOn U T r) ∧ V.CoversUpto N ∧
+      ∀ k, k < K → S.slotRound k + 2 ≤ N
+```
+
+**The timed core's liveness precondition**, over a slot window: a quorum `T` synchronised from some round `R₀` at or below the window's first slot, the DAG populated by `T` from `R₀` to a horizon `N`, the view caught up to `N`, and every slot of the window two rounds under `N`. It reads no leader, so it holds under every schedule with the same rounds.
+
+#### `Agree`
+
+*def, `Properties.Agree.lean`*
+
+```lean
+def Agree (R : DagRule Validator BlockId Payload) : Prop :=
+  ∀ (S : Slots Validator) {U : R.Universe} (V₁ V₂ : R.View U) (k : ℕ)
+    (v₁ v₂ : Option BlockId), R.Decided S V₁ k v₁ → R.Decided S V₂ k v₂ → v₁ = v₂
+```
+
+**Agreement.** Under one schedule and over one universe, any two views' verdicts at a slot coincide.
+
+#### `BoundedRule`
+
+*structure, `Properties.Bounded.lean`*
+
+```lean
+structure BoundedRule (Validator : Type) [Fintype Validator] [DecidableEq Validator]
+    (BlockId : Type) [DecidableEq BlockId] (Payload : Type)
+    extends DagRule Validator BlockId Payload where
+  /-- The decision relation with a bound on the slots it mentions. -/
+  DecidedWithin : Slots Validator → ℕ → ∀ {U : Universe}, View U → ℕ → Option BlockId → Prop
+```
+
+**A rule with a bounded decision relation.** `DecidedWithin S B V k v` is meant as: the verdict `v` at slot `k` is derivable with every slot the derivation mentions strictly below `B`.
+
+#### `Bounded`
+
+*structure, `Properties.Bounded.lean`*
+
+```lean
+structure Bounded (R : BoundedRule Validator BlockId Payload) : Prop where
+  /-- Forgetting the bound yields an ordinary verdict. -/
+  toDecided : ∀ (S : Slots Validator) (B : ℕ) {U : R.Universe} (V : R.View U)
+    (k : ℕ) (v : Option BlockId), R.DecidedWithin S B V k v → R.Decided S V k v
+  /-- The decided slot lies below the bound. -/
+  lt_bound : ∀ (S : Slots Validator) (B : ℕ) {U : R.Universe} (V : R.View U)
+    (k : ℕ) (v : Option BlockId), R.DecidedWithin S B V k v → k < B
+  /-- The bound relaxes upward. -/
+  mono : ∀ (S : Slots Validator) (B B' : ℕ) {U : R.Universe} (V : R.View U)
+    (k : ℕ) (v : Option BlockId), R.DecidedWithin S B V k v → B ≤ B' →
+    R.DecidedWithin S B' V k v
+```
+
+**The bounded family is a family of derivations.**
+
+#### `SchedLocal`
+
+*def, `Properties.Bounded.lean`*
+
+```lean
+def SchedLocal (R : BoundedRule Validator BlockId Payload) : Prop :=
+  ∀ (S S' : Slots Validator), S.slotRound = S'.slotRound →
+    ∀ (B : ℕ), (∀ m, m < B → S.leader m = S'.leader m) →
+    ∀ {U : R.Universe} (V : R.View U) (k : ℕ) (v : Option BlockId),
+      R.DecidedWithin S B V k v → R.DecidedWithin S' B V k v
+```
+
+**Locality in the schedule.** Two schedules with the same round structure, agreeing on the leaders of every slot below `B`, derive the same verdicts within `B`.
+
 #### `DagRule`
 
 *structure, `Properties.Carrier.lean`*
@@ -24200,6 +24348,34 @@ structure AgreeAbove (R : DagRule Validator BlockId Payload)
 `mem` pairs presence with the round condition rather than stating them separately, which is what makes the relation symmetric: without it, "present and above `r`" could be read in one universe and not the other, and the definition would name a direction it does not mean.
 
 References are compared **strictly** above `r`: a truncation retains its bottom layer's blocks but empties their references, since what they referenced is gone. Every rule reads a vote from a *parent*, so a block at exactly `r` contributes its presence and its author but no vote, which is what the clause says.
+
+#### `LeaderCommits`
+
+*def, `Properties.Commit.lean`*
+
+```lean
+def LeaderCommits (R : BoundedRule Validator BlockId Payload)
+    (Live : Slots Validator → ∀ {U : R.Universe}, R.View U → Finset Validator → ℕ → ℕ → Prop) :
+    Prop :=
+  ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (T : Finset Validator) (lo K : ℕ),
+    Live S V T lo K → ∀ k, lo ≤ k → k < K → S.leader k ∈ T →
+      ∃ L, R.DecidedWithin S (k + 1) V k (some L)
+```
+
+**A reliable leader's slot commits**, within a bound one above it, wherever the protocol's precondition `Live` holds over a slot window containing the slot.
+
+#### `Descends`
+
+*def, `Properties.Commit.lean`*
+
+```lean
+def Descends (R : BoundedRule Validator BlockId Payload) (S : Slots Validator) (c : ℕ) : Prop :=
+  ∀ {U : R.Universe} (V : R.View U) (b : ℕ),
+    (∀ j, b ≤ j → j < b + c → ∃ L, R.DecidedWithin S (b + c) V j (some L)) →
+    ∀ i, i < b → ∃ v, R.DecidedWithin S (b + c) V i v
+```
+
+**A committed run decides everything below it.** `c` consecutive slots from `b`, each committed within `b + c`, decide every slot below `b` within `b + c`.
 
 #### `ViewAgreeAbove`
 
@@ -24443,6 +24619,21 @@ def LocalTruncate (R : DagRule Validator BlockId Payload) : Prop :=
 
 An `↔`, because both directions are consumed: a joiner needs verdicts to survive the cut, and cross-cut agreement needs them to come back.
 
+#### `reactiveLive`
+
+*def, `Reactive.MysticetiProperties.lean`*
+
+```lean
+def reactiveLive (S : Slots Validator) {U : BlockUniverse Validator BlockId Payload}
+    (V : View Validator BlockId Payload U) (T : Finset Validator) (lo K : ℕ) : Prop :=
+  T ⊆ (Correct : Finset Validator) ∧ quorumCard Validator ≤ T.card ∧
+    ∃ (N R₀ : ℕ) (rm : ReactiveM (S := S) U T N),
+      rm.gst ≤ R₀ ∧ (∀ n, R₀ ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n) ∧
+      R₀ ≤ S.slotRound lo ∧ V.CoversUpto N ∧ ∀ k, k < K → S.slotRound k + 2 ≤ N
+```
+
+**The reactive liveness precondition**, over a slot window: a correct quorum `T`, a reactive execution under the schedule with its GST at or below the window's first slot and its timeout clearing `2Δ + proc` from there, the view caught up to the horizon, and every slot of the window two rounds under it.
+
 #### `waveRobin`
 
 *def, `WaveRobin.lean`*
@@ -24461,7 +24652,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 822 theorems that either another module of the
+The 823 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -29340,177 +29531,63 @@ theorem slotsOf_base (hinj : Function.Injective S.slotRound) :
 
 The base schedule is its own induced instance — the anchor for conservativity: a constant policy reassigns nothing.
 
-#### `toDecided`
-
-*theorem, `Adaptive.Basic.lean`*
-
-```lean
-theorem toDecided (h : DecidedWithin U V B k v) : Decided U V k v
-```
-
-Forgetting the bound: every bounded derivation is a `Decided` derivation, so the base safety development — M1–M6 in particular — applies to bounded verdicts without restatement.
-
-#### `mono`
-
-*theorem, `Adaptive.Basic.lean`*
-
-```lean
-theorem mono (h : DecidedWithin U V B k v) (hBB : B ≤ B') :
-    DecidedWithin U V B' k v
-```
-
-The bound relaxes upward.
-
-#### `agree`
-
-*theorem, `Adaptive.Basic.lean`*
-
-```lean
-theorem agree {V₁ V₂ : View Validator BlockId Payload U} {B₁ B₂ k : ℕ}
-    {v₁ v₂ : Option BlockId} (h₁ : DecidedWithin U V₁ B₁ k v₁)
-    (h₂ : DecidedWithin U V₂ B₂ k v₂) : v₁ = v₂
-```
-
-Two bounded verdicts agree — M6, through the embedding.
-
-#### `isLeaderBlock_slotsOf_congr`
-
-*theorem, `Adaptive.Basic.lean`*
-
-```lean
-theorem isLeaderBlock_slotsOf_congr {hinj : Function.Injective S.slotRound}
-    {a₁ a₂ : ℕ → Validator} {k : ℕ} {L : BlockId} (hk : a₁ k = a₂ k)
-    (h : IsLeaderBlock (S := slotsOf hinj a₁) U k L) :
-    IsLeaderBlock (S := slotsOf hinj a₂) U k L
-```
-
-Only the leader clause of `IsLeaderBlock` consults the assignment, at the slot itself.
-
-#### `decidedWithin_congr`
-
-*theorem, `Adaptive.Basic.lean`*
-
-```lean
-theorem decidedWithin_congr {hinj : Function.Injective S.slotRound}
-    {a₁ a₂ : ℕ → Validator} {V : View Validator BlockId Payload U} {B k : ℕ}
-    {v : Option BlockId} (ha : ∀ m, m < B → a₁ m = a₂ m)
-    (h : DecidedWithin (S := slotsOf hinj a₁) U V B k v) :
-    DecidedWithin (S := slotsOf hinj a₂) U V B k v
-```
-
-**Congruence below the bound.** Only `IsLeaderBlock` consults the assignment, and only at slots below `B`; the round structure — and with it eligibility, decision rounds and every counting predicate — is the base instance's. So two assignments agreeing below `B` derive the same bounded verdicts, which is what permits judging an epoch against a schedule only determined so far.
-
 #### `partialRun_agree`
 
 *theorem, `Adaptive.Run.lean`*
 
 ```lean
-theorem partialRun_agree {P : AdaptivePolicy Validator BlockId Payload}
-    {V₁ V₂ : View Validator BlockId Payload U} {E₁ E₂ : ℕ}
-    (R₁ : PartialRun P U V₁ E₁) (R₂ : PartialRun P U V₂ E₂) :
-    ∀ k, epochOf P.W k < min E₁ E₂ → R₁.vdct k = R₂.vdct k
+theorem partialRun_agree {V₁ V₂ : R.View U} {E₁ E₂ : ℕ}
+    (A₁ : PartialRun P U V₁ E₁) (A₂ : PartialRun P U V₂ E₂) :
+    ∀ k, epochOf P.W k < min E₁ E₂ → A₁.vdct k = A₂.vdct k
 ```
 
 **The master agreement lemma.** Two partial runs over one universe — whatever views, each computing its schedule on its own, whatever heights — agree on the verdicts of their common epochs and on the assignments those verdicts determine.
 
-The strong induction the module docstring describes: verdict agreement below an epoch forces assignment agreement through the epoch above it (`adapted`), which forces verdict agreement at the epoch itself (`decidedWithin_congr`, then M6 through the embedding).
+The strong induction the module docstring describes: verdict agreement below an epoch forces assignment agreement through the epoch above it (`adapted`), which forces verdict agreement at the epoch itself (`SchedLocal`, then `Agree` through `Bounded`).
 
-#### `adaptiveRun_agree`
-
-*theorem, `Adaptive.Run.lean`*
-
-```lean
-theorem adaptiveRun_agree {P : AdaptivePolicy Validator BlockId Payload}
-    {V₁ V₂ : View Validator BlockId Payload U}
-    (R₁ : AdaptiveRun P U V₁) (R₂ : AdaptiveRun P U V₂) :
-    (∀ k, R₁.vdct k = R₂.vdct k) ∧ (∀ m, R₁.assign m = R₂.assign m)
-```
-
-**Safety: the adaptive fixpoint is unique.** Two total runs over one universe — derived from any two views, under no synchrony or fairness hypothesis — hold the same verdicts and run the same schedule. Adaptive validators cannot diverge, whatever the policy adapts to.
-
-#### `adaptive_commitSeq_agree`
+#### `Policy.const_run_decided`
 
 *theorem, `Adaptive.Run.lean`*
 
 ```lean
-theorem adaptive_commitSeq_agree {P : AdaptivePolicy Validator BlockId Payload}
-    {V₁ V₂ : View Validator BlockId Payload U}
-    (R₁ : AdaptiveRun P U V₁) (R₂ : AdaptiveRun P U V₂) (n : ℕ) :
-    commitSeq R₁.vdct n = commitSeq R₂.vdct n
+theorem Policy.const_run_decided (hb : Bounded R) (hl : SchedLocal R)
+    {W : ℕ} {hW : 0 < W} {hinj : Function.Injective S.slotRound} {V : R.View U}
+    (A : Run (Policy.const (R := R.toDagRule) W hW hinj) U V) (k : ℕ) :
+    R.Decided S V k (A.vdct k)
 ```
 
-**The adaptive ledger is agreed** — M7's shape: the committed-leader sequence read from any two runs' verdicts is the same list.
-
-#### `const_run_decided`
-
-*theorem, `Adaptive.Run.lean`*
-
-```lean
-theorem const_run_decided {W : ℕ} {hW : 0 < W}
-    {hinj : Function.Injective S.slotRound}
-    {V : View Validator BlockId Payload U}
-    (R : AdaptiveRun (const (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload) W hW hinj) U V) (k : ℕ) :
-    Decided U V k (R.vdct k)
-```
-
-**Conservativity.** Under the constant policy a run's verdicts are ordinary `Decided` verdicts of the base schedule — the adaptive development instantiates to the base one, per the house rule that a new relation must collapse onto the old. With M6 this also pins each `vdct k` to the unique base verdict.
+**Conservativity.** Under the constant policy a run's verdicts are ordinary `Decided` verdicts of the base schedule — the adaptive development instantiates to the base one, per the house rule that a new relation must collapse onto the old. With `Agree` this also pins each `vdct k` to the unique base verdict.
 
 #### `epoch_closes`
 
 *theorem, `Adaptive.Liveness.lean`*
 
 ```lean
-theorem epoch_closes (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : quorumCard Validator ≤ T.card)
-    (hc : 0 < c) (hruns : PlacesRuns P T c)
-    (hspans : SpansEligible (Validator := Validator) c)
-    (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
-    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r)
-    (V : View Validator BlockId Payload U) (hcov : V.CoversUpto N)
-    (v : ℕ → Option BlockId) (E : ℕ)
-    (hN : S.slotRound (P.W * (E + 2)) + 2 ≤ N) :
+theorem epoch_closes (hb : Bounded R) (hlc : LeaderCommits R Live)
+    (hd : ∀ a : ℕ → Validator, Descends R (slotsOf P.inj a) c)
+    (hruns : PlacesRuns P T c)
+    (V : R.View U) (v : ℕ → Option BlockId) (E : ℕ)
+    (hlive : Live (slotsOf P.inj (fun m => P.pick U V v m)) V T P.W (P.W * (E + 2))) :
     ∀ k, epochOf P.W k < E + 1 →
-      ∃ w, DecidedWithin (S := slotsOf P.inj (fun m => P.pick U V v m)) U
-        V (P.W * (E + 2)) k w
+      ∃ w, R.DecidedWithin (slotsOf P.inj (fun m => P.pick U V v m)) (P.W * (E + 2)) V k w
 ```
 
-**One epoch closes.** On a view caught up to the horizon, against the schedule an arbitrary verdict function induces, every slot of epoch `E` is decided inside its window: the run `PlacesRuns` puts in epoch `E + 1` commits directly — its certificates sit under the horizon, so the view holds them — and the bounded descent clears everything below it.
+**One epoch closes.** Against the schedule an arbitrary verdict function induces, with the protocol's precondition over the slots that schedule determines, every slot of epoch `E` is decided inside its window: the run `PlacesRuns` puts in epoch `E + 1` commits, and the descent clears everything below it.
 
 #### `exists_partialRun`
 
 *theorem, `Adaptive.Liveness.lean`*
 
 ```lean
-theorem exists_partialRun (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : quorumCard Validator ≤ T.card)
-    (hc : 0 < c) (hruns : PlacesRuns P T c)
-    (hspans : SpansEligible (Validator := Validator) c)
-    (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
-    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r)
-    (V : View Validator BlockId Payload U) (hcov : V.CoversUpto N) (E : ℕ)
-    (hN : S.slotRound (P.W * (E + 1)) + 2 ≤ N) :
+theorem exists_partialRun (hb : Bounded R) (hl : SchedLocal R) (hlc : LeaderCommits R Live)
+    (hd : ∀ a : ℕ → Validator, Descends R (slotsOf P.inj a) c)
+    (hruns : PlacesRuns P T c) (V : R.View U) (E : ℕ)
+    (hlive : ∀ (E' : ℕ), E' < E → ∀ (A : PartialRun P U V E'),
+      Live (slotsOf P.inj (fun m => P.pick U V A.vdct m)) V T P.W (P.W * (E' + 2))) :
     Nonempty (PartialRun P U V E)
 ```
 
-**Partial runs exist at every height** — the witnessable, finite- horizon form of existence, on a view caught up to the horizon, by induction on the height: each stage re-reads the schedule off the verdicts so far and closes one more epoch.
-
-#### `adaptiveRun_exists`
-
-*theorem, `Adaptive.Liveness.lean`*
-
-```lean
-theorem adaptiveRun_exists (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : quorumCard Validator ≤ T.card)
-    (hc : 0 < c) (hruns : PlacesRuns P T c)
-    (hspans : SpansEligible (Validator := Validator) c)
-    (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
-    (hpop : ∀ r, Populated U r)
-    (V : View Validator BlockId Payload U) (hcov : ∀ N, V.CoversUpto N) :
-    Nonempty (AdaptiveRun P U V)
-```
-
-**AL5: the adaptive fixpoint exists.** On a DAG synchronised over a quorum of reliable validators and populated at every round, under a policy that places runs, a total adaptive run exists on every view caught up to every horizon — the full view, up to naming, since a total run decides every slot there is — partial runs at every height glued along the diagonal, `partialRun_agree` making the stage-by-stage choices cohere. With `adaptiveRun_agree` it is THE fixpoint: adaptive Mysticeti decides every slot, and uniquely.
+**Partial runs exist at every height** — the witnessable, finite- horizon form of existence, by induction on the height: each stage re-reads the schedule off the verdicts so far and closes one more epoch, under the precondition for that stage's schedule.
 
 #### `toDecided`
 
@@ -34963,6 +35040,130 @@ theorem holds : Statement
 
 ### Not otherwise grouped
 
+#### `decidedWithin_congr`
+
+*theorem, `Adaptive.Mysticeti.lean`*
+
+```lean
+theorem decidedWithin_congr {hinj : Function.Injective S.slotRound}
+    {a₁ a₂ : ℕ → Validator} {V : View Validator BlockId Payload U} {B k : ℕ}
+    {v : Option BlockId} (ha : ∀ m, m < B → a₁ m = a₂ m)
+    (h : DecidedWithin (S := slotsOf hinj a₁) U V B k v) :
+    DecidedWithin (S := slotsOf hinj a₂) U V B k v
+```
+
+**Congruence below the bound.** Two assignments agreeing below `B` derive the same bounded verdicts — `decidedWithin_congr_of_slotRound` at two induced schedules.
+
+#### `partialRun_agree`
+
+*theorem, `Adaptive.Mysticeti.lean`*
+
+```lean
+theorem partialRun_agree {P : AdaptivePolicy Validator BlockId Payload}
+    {V₁ V₂ : View Validator BlockId Payload U} {E₁ E₂ : ℕ}
+    (R₁ : PartialRun P U V₁ E₁) (R₂ : PartialRun P U V₂ E₂) :
+    ∀ k, epochOf P.W k < min E₁ E₂ → R₁.vdct k = R₂.vdct k
+```
+
+**The master agreement lemma**, for the core.
+
+#### `adaptiveRun_agree`
+
+*theorem, `Adaptive.Mysticeti.lean`*
+
+```lean
+theorem adaptiveRun_agree {P : AdaptivePolicy Validator BlockId Payload}
+    {V₁ V₂ : View Validator BlockId Payload U}
+    (R₁ : AdaptiveRun P U V₁) (R₂ : AdaptiveRun P U V₂) :
+    (∀ k, R₁.vdct k = R₂.vdct k) ∧ (∀ m, R₁.assign m = R₂.assign m)
+```
+
+**AL3 — safety: the adaptive fixpoint is unique.**
+
+#### `adaptive_commitSeq_agree`
+
+*theorem, `Adaptive.Mysticeti.lean`*
+
+```lean
+theorem adaptive_commitSeq_agree {P : AdaptivePolicy Validator BlockId Payload}
+    {V₁ V₂ : View Validator BlockId Payload U}
+    (R₁ : AdaptiveRun P U V₁) (R₂ : AdaptiveRun P U V₂) (n : ℕ) :
+    commitSeq R₁.vdct n = commitSeq R₂.vdct n
+```
+
+**The adaptive ledger is agreed** — M7's shape.
+
+#### `AdaptivePolicy.const_run_decided`
+
+*theorem, `Adaptive.Mysticeti.lean`*
+
+```lean
+theorem AdaptivePolicy.const_run_decided {W : ℕ} {hW : 0 < W}
+    {hinj : Function.Injective S.slotRound}
+    {V : View Validator BlockId Payload U}
+    (R : AdaptiveRun (AdaptivePolicy.const (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) W hW hinj) U V) (k : ℕ) :
+    Decided U V k (R.vdct k)
+```
+
+**Conservativity.** Under the constant policy a run's verdicts are ordinary `Decided` verdicts of the base schedule.
+
+#### `epoch_closes`
+
+*theorem, `Adaptive.Mysticeti.lean`*
+
+```lean
+theorem epoch_closes (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : quorumCard Validator ≤ T.card)
+    (hc : 0 < c) (hruns : PlacesRuns P T c)
+    (hspans : SpansEligible (Validator := Validator) c)
+    (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
+    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r)
+    (V : View Validator BlockId Payload U) (hcov : V.CoversUpto N)
+    (v : ℕ → Option BlockId) (E : ℕ)
+    (hN : S.slotRound (P.W * (E + 2)) + 2 ≤ N) :
+    ∀ k, epochOf P.W k < E + 1 →
+      ∃ w, DecidedWithin (S := slotsOf P.inj (fun m => P.pick U V v m)) U
+        V (P.W * (E + 2)) k w
+```
+
+**One epoch closes** — the generic `Adaptive.epoch_closes` with `coreLive` assembled from the global hypotheses.
+
+#### `exists_partialRun`
+
+*theorem, `Adaptive.Mysticeti.lean`*
+
+```lean
+theorem exists_partialRun (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : quorumCard Validator ≤ T.card)
+    (hc : 0 < c) (hruns : PlacesRuns P T c)
+    (hspans : SpansEligible (Validator := Validator) c)
+    (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
+    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r)
+    (V : View Validator BlockId Payload U) (hcov : V.CoversUpto N) (E : ℕ)
+    (hN : S.slotRound (P.W * (E + 1)) + 2 ≤ N) :
+    Nonempty (PartialRun P U V E)
+```
+
+**Partial runs exist at every height** — the finite-horizon form.
+
+#### `adaptiveRun_exists`
+
+*theorem, `Adaptive.Mysticeti.lean`*
+
+```lean
+theorem adaptiveRun_exists (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : quorumCard Validator ≤ T.card)
+    (hc : 0 < c) (hruns : PlacesRuns P T c)
+    (hspans : SpansEligible (Validator := Validator) c)
+    (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
+    (hpop : ∀ r, Populated U r)
+    (V : View Validator BlockId Payload U) (hcov : ∀ N, V.CoversUpto N) :
+    Nonempty (AdaptiveRun P U V)
+```
+
+**AL5: the adaptive fixpoint exists.** On a DAG synchronised over a quorum of reliable validators and populated at every round, under a policy that places runs, a total adaptive run exists on every view caught up to every horizon. With `adaptiveRun_agree` it is THE fixpoint: adaptive Mysticeti decides every slot, and uniquely.
+
 #### `holds`
 
 *theorem, `Barnacle.Healthy.Proof.lean`*
@@ -35409,6 +35610,16 @@ theorem selfParenting_ofCore {Payload : Type}
 
 **Every core universe self-parents**, so the condition `toCore` consumes is re-supplied by `ofCore` without an argument: it is the fourth field of the core's `ValidWrt`, read back.
 
+#### `toDecided`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem toDecided (h : DecidedWithin U V B k v) : Decided U V k v
+```
+
+Forgetting the bound: every bounded derivation is a `Decided` derivation, so the base safety development — M1–M6 in particular — applies to bounded verdicts without restatement.
+
 #### `directCommit_chop`
 
 *theorem, `Properties.Arcs.GC.lean`*
@@ -35461,7 +35672,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 991 lemmas used only within the file that proves
+The 1010 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -36065,12 +36276,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `kTight_eq_of_fc_zero` | At `fc = 0` the tight threshold is the thesis's `2f + 1`. |
 | `q_eq_of_fc_zero` | At `fc = 0` the hybrid quorum is the Byzantine quorum. |
 
-### `Adaptive/Basic.lean` (3)
+### `Adaptive/Basic.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
 | `epochOf_mono` | — |
-| `lt_bound` | The decided slot lies below the bound. |
 | `slotsOf_slotRound` | — |
 
 ### `Adaptive/Policy.lean` (1)
@@ -36083,15 +36293,14 @@ subsection per module, in the layer order of Appendices B and C.
 
 | Lemma | Role |
 |:---|:---|
-| `adaptive_decided_agree` | The verdict form of uniqueness, in the shape of M6. |
 | `partialRun_assign_agree` | Assignments agree wherever the common verdicts determine them. |
+| `run_agree` | Safety: the adaptive fixpoint is unique. Two total runs over one universe — derived from any two views, … |
 
-### `Adaptive/Liveness.lean` (2)
+### `Adaptive/Liveness.lean` (1)
 
 | Lemma | Role |
 |:---|:---|
-| `decidedWithin_below_of_committed_run` | The committed-run descent, bounded. The base `decided_below_of_committed_run`, restated with the anchors' … |
-| `spansEligible_slotsOf` | Eligibility reads only the round structure, which reassignment fixes: the spanning property transfers to … |
+| `run_exists` | The adaptive fixpoint exists. Under a policy that places runs, with the protocol's precondition at every … |
 
 ### `Adaptive/Odontoceti.lean` (3)
 
@@ -36877,6 +37086,17 @@ subsection per module, in the layer order of Appendices B and C.
 | `horizonOptUniverse_toBlockUniverse` | — |
 | `horizonUniverse_noEquivocation` | No author of the horizon universe has two blocks in one round — Byzantine or not: block indices are … |
 
+### `Adaptive/Mysticeti.lean` (6)
+
+| Lemma | Role |
+|:---|:---|
+| `adaptive_decided_agree` | The verdict form of uniqueness, in the shape of M6. |
+| `const_pick` | — |
+| `descends_slotsOf` | The core's descent, at every induced schedule. |
+| `isLeaderBlock_slotsOf_congr` | Only the leader clause of `IsLeaderBlock` consults the assignment, at the slot itself. |
+| `partialRun_assign_agree` | Assignments agree wherever the common verdicts determine them. |
+| `spansEligible_slotsOf` | Eligibility reads only the round structure, which reassignment fixes: the spanning property transfers to … |
+
 ### `Barnacle/Helpers/DagRule.lean` (2)
 
 | Lemma | Role |
@@ -37060,6 +37280,13 @@ subsection per module, in the layer order of Appendices B and C.
 | `supportersInView_mono` | — |
 | `voteBlocks_old` | The votes an old block casts are the votes it cast. |
 | `weakLinked_old` | — |
+
+### `Integration/AdaptiveReactive.lean` (2)
+
+| Lemma | Role |
+|:---|:---|
+| `adaptiveRun_exists_reactive` | The adaptive fixpoint exists over reactive Mysticeti. Under a policy that places runs, with the reactive … |
+| `exists_partialRun_reactive` | Partial runs exist at every height, reactively. |
 
 ### `Integration/Hydrozoan/ChopDecided.lean` (37)
 
@@ -37267,26 +37494,36 @@ subsection per module, in the layer order of Appendices B and C.
 | `soundOn_skipFill` | The fill preserves it, above the gap. The synchrony round must clear the filled round: inside the gap the … |
 | `soundOn_stack` | The stack preserves it, the offsets composing exactly as the two statements above suggest: the fill … |
 
-### `MysticetiProperties.lean` (27)
+### `MysticetiProperties.lean` (38)
 
 | Lemma | Role |
 |:---|:---|
+| `agree` | Two bounded verdicts agree — M6, through the embedding. |
+| `agree` | M6 as a property. |
 | `blocksAt_subset` | — |
+| `bounded` | — |
 | `causal` | The core's universes are block DAGs. |
 | `certifiedIn_old` | — |
 | `certifiesAt_of_sustains` | Certification at a slot survives a sustaining mechanism, above its settling round. |
 | `certifies_of_sustains` | The core's certificate predicate transports. |
 | `certifies_old` | — |
 | `creatorsOf_old` | — |
+| `decidedWithin_below_of_committed_run` | The committed-run descent, bounded. The base `decided_below_of_committed_run`, restated with the anchors' … |
+| `decidedWithin_congr_of_slotRound` | Congruence below the bound, for any two schedules with one round structure. Only `IsLeaderBlock` consults … |
+| `descends` | The descent as a property, under the spanning hypothesis on the round structure. |
 | `directCommitIn_mono` | — |
 | `directCommit_of_sustains` | The reactive commit survives any sustaining mechanism. The hypotheses are exactly what … |
 | `directSkipIn_mono` | An old candidate blamed before is blamed still. |
 | `directSkipIn_novel` | A new candidate is blamed by every old block in view — and the grade supplies a quorum of them. This is … |
 | `ext_block` | — |
 | `ext_mem` | — |
+| `isLeaderBlock_congr` | Only the leader clause of `IsLeaderBlock` consults the schedule's leaders, at the slot itself. |
 | `isLeaderBlock_mono` | — |
 | `isLeaderBlock_old` | — |
+| `leaderCommits` | L4 as a property: a `T`-led slot in the window commits, within a bound one above it. |
+| `lt_bound` | The decided slot lies below the bound. |
 | `mem_certificates_old` | — |
+| `mono` | The bound relaxes upward. |
 | `not_certifiedIn_novel` | A new candidate is certified by nothing an old anchor can see. |
 | `not_mem_refs_novel` | An old block votes for nothing the extension added. |
 | `persist` | The core persists, at grade `Quorate`. |
@@ -37294,6 +37531,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `populatedOn_ofCore` | The carrier's production predicate and the core's are the same statement with the conjuncts in the other … |
 | `populatedOn_toCore` | — |
 | `quorumCard_pos` | Two quorums share a correct validator, so a quorum is not empty. |
+| `schedLocal` | The core reads the schedule only below the bound. |
 | `skipsUnsupported` | The core skips an unsupported slot from a correct quorum. |
 | `subset_blamers` | Every member of `T` blames every candidate of the slot. |
 | `votesIn_of_sustains` | The votes an old decision-round block counts are the votes it counted: its references are unchanged, and … |
@@ -37319,6 +37557,12 @@ subsection per module, in the layer order of Appendices B and C.
 | `extends_of_skipFill` | The fill is an extension. It holds every block the original held — `ids` is a union — and denotes each of … |
 | `presentAt_liftView` | Presence in the pre-crash view is presence in the lifted one: the ids are the same and old blocks are … |
 | `quorate_of_quorateOverGap` | Quorate over the gap is the core's grade, for the fill. A candidate the fill introduces is a fresh block, … |
+
+### `Properties/Bounded.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `Bounded.agree` | Two bounded verdicts agree, at any bounds — `Agree` through the embedding. |
 
 ### `Properties/Carrier.lean` (3)
 
@@ -37375,6 +37619,12 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `le_round` | And sits at or above the horizon there. |
 | `mem_of` | A retained block is a block of the original. |
+
+### `Reactive/MysticetiProperties.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `leaderCommits_reactive` | Reactive Mysticeti commits its reliable leaders — `ReactiveM.decided` as the property, on any view caught … |
 
 ### `WaveRobin.lean` (3)
 

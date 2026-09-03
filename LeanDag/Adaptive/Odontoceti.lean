@@ -1,4 +1,4 @@
-import LeanDag.Adaptive.Liveness
+import LeanDag.Adaptive.Mysticeti
 import LeanDag.Odontoceti.Liveness
 
 /-!
@@ -22,9 +22,9 @@ namespace LeanDag
 
 namespace Odontoceti
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults5 Validator]
-variable {BlockId : Type*} [LinearOrder BlockId] {Payload : Type*}
+variable {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
 variable {U : BlockUniverse Validator BlockId Payload}
 variable [S : Slots Validator]
 
