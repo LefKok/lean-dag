@@ -157,6 +157,22 @@ protects the indirect rungs, the quorum condition protects the direct
 skip. That is why the core's fill needs both and Hydrozoan's needs
 neither.
 
+**Two things changed when this was built.**
+
+`Novel` is not a parameter. It was one in `Simulates` because that
+interface covers truncations as well, where "novel" must be supplied as
+empty. For an *extension* it is determined — the identifiers the target
+has and the source lacks — so it is a definition, and one obligation
+disappears from every instance.
+
+Inertness is not an assumption either. `Extends` asks only that the
+target hold every block the source held and denote them unchanged;
+`Extends.old_refs_old` then **derives** that an old block references
+only old blocks, because an old block's references were already inside
+the source and causal completeness keeps them there. So "blocks nothing
+references cannot change a verdict" is a theorem about extensions
+rather than a condition on them, and no protocol pays for it.
+
 ### 3.4 Re-indexing
 
 A truncation does not only restrict; it rebases rounds to start at the
@@ -357,9 +373,14 @@ directory, hence the one flat module.
   shape was discovered by `Barnacle.BaseRule`, and
   `Barnacle/Helpers/DagRule.lean` coerces its six instantiations into
   the carrier, so no protocol restates anything.
-- **G1** State `Local`, `Persist` with `Novel`, and `Reindex`.
+- **G1** State `Local`, `Persist`, and `Reindex`. **`Persist` done**
+  (`Properties/Persist.lean`), with two findings recorded in §3.3.
 - **G2** Prove garbage collection and crash recovery once from them,
-  and `Compose`.
+  and `Compose`. **Crash recovery done**
+  (`Properties/Arcs/SafeSkip.lean`): the fill is an extension, so any
+  protocol with `Persist` inherits it. Ordered before garbage
+  collection deliberately, since persistence needs no `Reindex` and so
+  banks one mechanism before the uncertain part is attempted.
 - **G3** Discharge them for Hydrozoan, and re-derive `decided_chopHZ`
   and `decided_fillHZ` through the generic route. Two existing theorems
   re-obtained with no new induction is the test that the abstraction is
