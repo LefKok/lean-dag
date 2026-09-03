@@ -81,6 +81,7 @@ import LeanDag.Properties.Carrier
 import LeanDag.Properties.Persist
 import LeanDag.Properties.Local
 import LeanDag.Properties.Truncate
+import LeanDag.Properties.Sustain
 import LeanDag.Properties.Arcs.SafeSkip
 import LeanDag.Properties.Arcs.GC
 import LeanDag.Hydrozoan.Helpers.Carrier

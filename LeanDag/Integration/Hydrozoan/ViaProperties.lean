@@ -1,5 +1,6 @@
 import LeanDag.Hydrozoan.Properties.Proof
 import LeanDag.Integration.Hydrozoan.FillDecided
+import LeanDag.Properties.Sustain
 
 /-!
 # The fill, re-derived through the target properties
@@ -101,6 +102,88 @@ theorem decided_chopHZ_of_localTruncate [S : LeanDag.Hydrozoan.Slots Replica] {G
       have hbr := (mem_chopHZ_ids.mp hb).2
       show b ∈ (View.chopHZ V hsp G).ids ↔ b ∈ V.ids
       exact mem_viewChopHZ (V := V) hbr)).symm
+
+/-! ## What the two mechanisms sustain
+
+The satisfiability witnesses for `Properties.Sustains`, written before
+anything is proved from it. Both settling rounds are the ones the
+bespoke liveness transport already threads by hand. -/
+
+/-- **A truncation sustains from its horizon.** Above the cut every
+block is the block it was, with its author and its references, so no
+vote is lost and no producer silenced. Below the cut nothing is
+claimed, and nothing could be: the blocks are gone. -/
+theorem sustains_chopHZ [LeanDag.Hydrozoan.Slots Replica] {G : ℕ}
+    (T : Finset Replica) :
+    Sustains LeanDag.Hydrozoan.rule U (chopHZ U hsp G) T G G where
+  votes := by
+    intro r L hr hv v hvT c hc hcc hcr
+    have hv' : ∀ w ∈ T, ∀ c, c ∈ U.ids → (U.block c).author = w →
+        (U.block c).round = r + 1 → L ∈ (U.block c).parents := hv
+    have hc' : c ∈ (chopHZ U hsp G).ids := hc
+    have hcc' : ((chopHZ U hsp G).block c).author = v := hcc
+    have hcr' : ((chopHZ U hsp G).block c).round = r - G + 1 := hcr
+    show L ∈ ((chopHZ U hsp G).block c).parents
+    obtain ⟨hcU, hcG⟩ := mem_chopHZ_ids.mp hc'
+    rw [chopHZ_round] at hcr'
+    rw [chopHZ_author] at hcc'
+    rw [chopHZ_parents_of_lt (show G < (U.block c).round by omega)]
+    exact hv' v hvT c hcU hcc' (by omega)
+  produces := by
+    intro r hr hp v hvT
+    have hp' : ∀ w ∈ T, ∃ b, b ∈ U.ids ∧ (U.block b).round = r ∧
+        (U.block b).author = w := hp
+    obtain ⟨b, hb, hbr, hbc⟩ := hp' v hvT
+    refine ⟨b, ?_, ?_, ?_⟩
+    · show b ∈ (chopHZ U hsp G).ids
+      exact mem_chopHZ_ids.mpr ⟨hb, by omega⟩
+    · show ((chopHZ U hsp G).block b).round = r - G
+      rw [chopHZ_round, hbr]
+    · show ((chopHZ U hsp G).block b).author = v
+      rw [chopHZ_author]; exact hbc
+
+/-- **A fill sustains from the top of its gap.** Above it the fill has
+added nothing, so every vote and every producer is untouched. Below it
+nothing is claimed, and the claim would be false: the blocks a fill adds
+stand in for blocks that voted, and need not vote as they did. -/
+theorem sustains_skipFillHZ (sk : SkipMsg (toCore U hsp)) (T : Finset Replica) :
+    Sustains LeanDag.Hydrozoan.rule U (skipFillHZ U hsp sk) T 0 sk.r where
+  votes := by
+    intro r L hr hv v hvT c hc hcc hcr
+    have hv' : ∀ w ∈ T, ∀ c, c ∈ U.ids → (U.block c).author = w →
+        (U.block c).round = r + 1 → L ∈ (U.block c).parents := hv
+    have hc' : c ∈ (skipFillHZ U hsp sk).ids := hc
+    have hcc' : ((skipFillHZ U hsp sk).block c).author = v := hcc
+    have hcr' : ((skipFillHZ U hsp sk).block c).round = r - 0 + 1 := hcr
+    show L ∈ ((skipFillHZ U hsp sk).block c).parents
+    have hcU : c ∈ U.ids := by
+      by_contra hno
+      have hfresh : c ∈ sk.freshIds := by
+        have hu : c ∈ (toCore U hsp).ids ∪ sk.freshIds := hc'
+        rcases Finset.mem_union.mp hu with h | h
+        · exact absurd h hno
+        · exact h
+      obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hfresh
+      have hk : ((skipFillHZ U hsp sk).block (sk.fresh k)).round = k := by
+        show (sk.skipFill.block (sk.fresh k)).round = k
+        rw [sk.skipFill_block_fresh]; rfl
+      rw [hk] at hcr'
+      omega
+    rw [skipFillHZ_block_old hcU] at hcc' hcr' ⊢
+    exact hv' v hvT c hcU hcc' (by omega)
+  produces := by
+    intro r hr hp v hvT
+    have hp' : ∀ w ∈ T, ∃ b, b ∈ U.ids ∧ (U.block b).round = r ∧
+        (U.block b).author = w := hp
+    obtain ⟨b, hb, hbr, hbc⟩ := hp' v hvT
+    refine ⟨b, ?_, ?_, ?_⟩
+    · show b ∈ (skipFillHZ U hsp sk).ids
+      simp only [skipFillHZ, transport_ids, SkipMsg.skipFill]
+      exact Finset.mem_union_left _ hb
+    · show ((skipFillHZ U hsp sk).block b).round = r - 0
+      rw [skipFillHZ_block_old hb, hbr]; omega
+    · show ((skipFillHZ U hsp sk).block b).author = v
+      rw [skipFillHZ_block_old hb]; exact hbc
 
 end Hydrozoan
 

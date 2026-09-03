@@ -224,6 +224,61 @@ future transformer stacks with the existing ones without further work.
 
 ---
 
+## 3.6 Liveness: the obligations run the other way
+
+Safety transports a *derivation*, which is the protocol's inductive
+object, so the protocol owes the theorem and every mechanism consumes
+it. **Liveness transports a DAG**, which is the mechanism's doing, so
+the mechanism owes the guarantee and the protocol consumes it. The two
+interfaces point in opposite directions, and the existing code shows
+why: `commitLiveness_stackHZ` is one line — a protocol's liveness
+theorem is universally quantified over universes and applies to the
+transformed one unchanged — while `synchronisedOn_stackHZ` carries four
+side conditions.
+
+`Properties/Sustain.lean` names the mechanism's side. `Sustains R U U' T
+G R₀` says that above the settling round `R₀`, re-indexing rounds by
+`G`, the mechanism destroys no vote and silences no producer.
+
+**The interface is the votes, not the coverage**, and that choice is
+what makes it serve every pacing discipline. `LeanDag.VotesAt` exists in
+the core for exactly this reason: full coverage implies it
+(`votesAt_of_synchronisedOn`) and the reactive exit supplies it directly
+(`ReactivePace.votes`), so the commit arguments are stated against it,
+round-indexed and schedule-free. A reactive schedule has no
+`PopulatedOn` at all — the string does not occur in `LeanDag/Reactive/`
+— and `SynchronisedOn` is *false* there by construction, so an interface
+built on coverage would have served the timed arcs and excluded the
+reactive one. Built on votes, a mechanism never has to transport a
+pacing structure: what a reactive schedule produces is a vote like any
+other.
+
+Certification is deliberately absent: it names a protocol's own notion
+of a certificate, so a mechanism cannot owe it. The mechanism owes votes
+and production; the protocol derives its certificate layer from those,
+which is the core's own layering.
+
+**The settling round is where the content sits.** A truncation settles
+at its horizon. A fill settles at the top of its gap, because the blocks
+it adds stand in for blocks that voted and need not vote as they did.
+Both are witnessed in `Integration/Hydrozoan/ViaProperties.lean`, before
+anything is proved from the relation.
+
+**And this does not cover everything.** A mechanism can preserve every
+vote and every producer and still cost a protocol its progress, by
+adding a *candidate* the protocol can neither commit nor skip — which is
+what a fill does to Hydrozoan and not to Optimal-Hydrozoan (§5.1). That
+residue is protocol-side and graded, and is not stated yet. It predicts
+that re-genesis carries the same question, since it too adds a block
+with an author; nobody has looked.
+
+**The arithmetic of the two directions.** Safety costs one induction per
+protocol; liveness costs one obligation per mechanism, plus the small
+graded residue per protocol. That is `P + M + P` where the development
+currently pays `P × M`.
+
+---
+
 ## 4. Properties for the schedule mechanisms
 
 `Barnacle.BaseRule` and its `Laws` are the working interface: any two
