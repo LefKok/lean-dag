@@ -55,9 +55,18 @@ them as one problem was the earlier error.
 **Transformer mechanisms** change the DAG under a replica: garbage
 collection, crash recovery, re-genesis, `denote`. A verdict reached
 before the change must be reachable after it, and that is an induction
-over derivations — which is why no record of *uses* can serve, the
-argument `hydrozoan-integration.md` §9 makes. These want §3's
-properties.
+over derivations. These want §3's properties.
+
+`hydrozoan-integration.md` §9 argues that no record of *uses* can
+carry such a result, because `BaseRule.Decided` is a field with no
+constructors while the transport proof inducts over derivations.
+**That argument holds and does not obstruct this arc**, because nothing
+here inducts on the interface's relation: locality and persistence are
+*hypotheses*, discharged by each protocol over its own relation where
+the constructors are available, and the mechanism theorems consume them
+without induction. §9 blocks deriving the properties from a record of
+uses, not assuming them over one. This is what lets `BaseRule` serve as
+the carrier.
 
 **Schedule mechanisms** change who leads when: Barnacle, Hammerhead,
 reactive scheduling, pipelining, the wave-aligned rotation. They only
@@ -311,10 +320,13 @@ directory, hence the one flat module.
 
 ## 9. Phases
 
-- **G0** `Carrier.lean`. Locality cannot be stated without "two DAGs
-  agreeing above a round", and the carriers differ — the core's has a
-  payload, Hydrozoan's has none, Nemo's is a different structure.
-  Whether `CausalStructure` already suffices gates everything else.
+- **G0** `Carrier.lean` (**done**). The carrier already exists and it
+  is `Barnacle.BaseRule`, which projects any protocol's universe into
+  the shared `Block` vocabulary and carries the decision relation as a
+  field; six protocols instantiate it. `Carrier.lean` adds only what
+  `BaseRule` and `Laws` omit — `Causal`, the structural facts stated
+  for views and not for universes, and `AgreeAbove`, the agreement
+  notion locality is stated against.
 - **G1** State `Local`, `Persist` with `Novel`, and `Reindex`.
 - **G2** Prove garbage collection and crash recovery once from them,
   and `Compose`.
@@ -336,8 +348,9 @@ directory, hence the one flat module.
 
 - **Re-indexing may not generalise** (§3.4). The largest single risk.
 - **The persistence grading is predicted, not checked** (§3.2).
-- **`Carrier.lean` may need more than `CausalStructure` offers**, in
-  which case G0 grows.
+- ~~`Carrier.lean` may need more than `CausalStructure` offers.~~
+  **Retired at G0**: `BaseRule` already supplies the projection, and
+  the addition is two definitions.
 - **Locality is a property of the rule**, so each protocol pays one
   induction for it. The arc is worthwhile because that induction is
   paid once and serves every transformer, where today each pair of
