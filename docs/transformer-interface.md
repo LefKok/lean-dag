@@ -63,6 +63,16 @@ is what sections 2 and 3 address, from two different directions.
 
 ---
 
+> **Superseded.** Sections 2 and 3 below pose the question in a
+> narrower form than it deserves, and §2's proposal — a generic
+> inductive relation that every protocol proves an equivalence to —
+> cannot describe FinWhale, whose commitment is a decision function
+> constrained by laws rather than an inductive relation. The design
+> that replaces them is `docs/target-properties.md`, which keeps §3's
+> two semantic conditions as the foundation and demotes §2's schema to
+> an optional way of discharging them. Section 1 above stands: it is
+> the record of what is built.
+
 ## 2. Generalising over protocols
 
 ### 2.1 The population
