@@ -1,11 +1,13 @@
 import LeanDag.Hydrozoan.Helpers.Locality
 import LeanDag.Hydrozoan.Helpers.Truncation
+import LeanDag.Hydrozoan.Helpers.Skippability
 
 /-!
 # Hydrozoan conforms to the target properties — statement
 
-**HZ9.** Hydrozoan's universes are block DAGs, and its verdicts survive
-a growing DAG **unconditionally**, a truncation, and a renumbering.
+**HZ9.** Hydrozoan's universes are block DAGs; its verdicts survive a
+growing DAG **unconditionally** and a truncation; and it skips a slot
+whose candidates nobody in `T` supports — **at `qFast ≤ |T|`**.
 
 The second half is the claim `docs/target-properties.md` §3.2 predicts
 for this protocol and not for the core. Hydrozoan's direct skip counts
@@ -19,6 +21,13 @@ condition is needed here — `Persist.Unconditional` rather than
 and `Reindex` that verdicts move with a consistent renumbering of rounds
 and slots. Together they are what garbage collection consumes, at every
 admissible horizon rather than at one.
+
+**The last grade is the finding.** A quorum of correct replicas has
+`q = n − f − c` members and Hydrozoan's skip needs `qFast = n − p`, so a
+correct quorum skips an unsupported slot exactly when `f + c ≤ p` — the
+condition `docs/hydrozoan-integration.md` §5.1 found by hand, recovered
+here as the grade of a property. Optimal-Hydrozoan's skip is at
+`qCert ≤ q` and needs no such condition.
 
 What conformance is worth: any mechanism stated against these
 properties applies to Hydrozoan without further proof. Crash recovery
@@ -36,8 +45,8 @@ namespace Hydrozoan
 namespace Properties
 
 /-- **HZ9.** Hydrozoan is a lawful carrier; it persists under every
-extension, reads nothing below a slot's round, and commutes with a
-renumbering. -/
+extension, reads nothing below a slot's round, survives a truncation,
+and skips an unsupported slot given `qFast` blamers. -/
 def Statement : Prop :=
   ∀ (Replica : Type) [Fintype Replica] [DecidableEq Replica]
     (BlockId : Type) [DecidableEq BlockId] [LinearOrder BlockId]
@@ -46,7 +55,9 @@ def Statement : Prop :=
     LeanDag.Properties.Persist.Unconditional
       (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.Local (rule (Replica := Replica) (BlockId := BlockId)) ∧
-    LeanDag.Properties.LocalTruncate (rule (Replica := Replica) (BlockId := BlockId))
+    LeanDag.Properties.LocalTruncate (rule (Replica := Replica) (BlockId := BlockId)) ∧
+    LeanDag.Properties.SkipsUnsupported (rule (Replica := Replica) (BlockId := BlockId))
+      (fun T => LeanDag.Hydrozoan.qFast Replica ≤ T.card)
 
 end Properties
 

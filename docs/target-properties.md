@@ -268,9 +268,39 @@ anything is proved from the relation.
 vote and every producer and still cost a protocol its progress, by
 adding a *candidate* the protocol can neither commit nor skip — which is
 what a fill does to Hydrozoan and not to Optimal-Hydrozoan (§5.1). That
-residue is protocol-side and graded, and is not stated yet. It predicts
-that re-genesis carries the same question, since it too adds a block
-with an author; nobody has looked.
+residue is §3.7. It predicts that re-genesis carries the same question,
+since it too adds a block with an author; nobody has looked.
+
+## 3.7 Skippability: the residue, graded
+
+`Properties/Skip.lean`. The question the residue asks is about the
+**protocol's skip rule**, not about the mechanism, so the obligation sits
+on the protocol side and is graded, as `Persist` is by `Ok`: *if every
+block of `T` one round above a slot references none of that slot's
+candidates, does the protocol skip it, and what does it need of `T`?*
+
+`SkipsUnsupported R Ok` is that question. `unsupported_of_novel` is the
+bridge from the mechanism's side: after an extension, a slot all of
+whose candidates are novel is unsupported by any `T` whose voting-round
+blocks are old, because an old block references only old blocks. So a
+mechanism that adds candidates hands the protocol exactly this
+hypothesis, and the protocol's grade says whether it can use it.
+
+**Hydrozoan's grade is `qFast ≤ |T|`** (HZ9's fifth conjunct). Every
+unsupporting `T`-block is a blame, so the blamers in view include all of
+`T`, and the direct skip fires once `T` is large enough. A quorum of
+correct replicas has `q = n − f − c` members against `qFast = n − p`, so
+**a correct quorum skips an unsupported slot exactly when `f + c ≤ p`**
+— the condition `hydrozoan-integration.md` §5.1 found by hand,
+recovered here as the grade of a property rather than as a remark.
+Optimal-Hydrozoan's skip is at `qCert ≤ q` and OH5 discharges it from
+population alone; its grade should be `q ≤ |T|`, which a correct quorum
+meets. That instance is not yet built.
+
+With this the liveness account closes: `Sustains` (mechanism side) keeps
+votes and production; `SkipsUnsupported` (protocol side) decides the
+slots a mechanism may have poisoned; the protocol's own liveness
+theorem, universally quantified over universes, needs no transport.
 
 **The arithmetic of the two directions.** Safety costs one induction per
 protocol; liveness costs one obligation per mechanism, plus the small
@@ -480,9 +510,10 @@ directory, hence the one flat module.
   are each their own induction over the six constructors, in
   `Hydrozoan/Helpers/{Locality,Truncation}.lean`, and `LocalTruncate`
   yields `decided_chopHZ` with no induction of its own
-  (`ViaProperties.lean`). The protocol owes three inductions in total —
-  persistence, locality, truncation — and no more, whatever mechanisms
-  follow.
+  (`ViaProperties.lean`). HZ9 also carries `SkipsUnsupported` at grade
+  `qFast ≤ |T|` (§3.7), which is no induction at all. The protocol owes
+  three inductions in total — persistence, locality, truncation — and no
+  more, whatever mechanisms follow.
 - **G4** Discharge them for the core, giving the second instance.
   **Reassess here.**
 - **G5** The schedule family: the slot domain, collapsing both the

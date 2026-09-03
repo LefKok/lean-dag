@@ -1,0 +1,56 @@
+import LeanDag.Hydrozoan.Helpers.Carrier
+import LeanDag.Properties.Skip
+
+/-!
+# Hydrozoan skips an unsupported slot, at `qFast` blamers
+
+Not part of the audit surface. The discharge of
+`Properties.SkipsUnsupported` for this protocol, and the grade it lands
+at.
+
+A blame is a voting-round block referencing no candidate of the slot. If
+every `T`-authored block at the voting round supports no candidate, each
+of them is a blame, so the blamers in view include all of `T`, and
+Hydrozoan's direct skip fires as soon as `qFast ≤ |T|`. That is the
+grade — and it is not one a correct quorum reaches unaided, since a
+correct quorum has `q = n − f − c` members against `qFast = n − p`.
+-/
+
+namespace LeanDag
+
+namespace Hydrozoan
+
+variable {Replica : Type} [Fintype Replica] [DecidableEq Replica]
+variable {BlockId : Type} [DecidableEq BlockId] [LinearOrder BlockId]
+variable [LeanDag.Hydrozoan.Faults Replica] [S : LeanDag.Hydrozoan.Slots Replica]
+variable {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
+
+/-- Every member of `T` blames the slot. -/
+theorem subset_blamesInView {V : LeanDag.Hydrozoan.View U} {T : Finset Replica} {k : ℕ}
+    (hpres : ∀ v ∈ T, ∃ c ∈ V.ids, (U.block c).author = v ∧
+      (U.block c).round = S.slotRound k + 1)
+    (huns : ∀ c ∈ V.ids, (U.block c).author ∈ T → (U.block c).round = S.slotRound k + 1 →
+      ∀ L, LeanDag.Hydrozoan.IsLeaderBlock U k L → L ∉ (U.block c).parents) :
+    T ⊆ LeanDag.Hydrozoan.blamesInView U V k := by
+  intro v hv
+  obtain ⟨c, hcV, hca, hcr⟩ := hpres v hv
+  refine Finset.mem_image.mpr ⟨c, Finset.mem_inter.mpr ⟨Finset.mem_filter.mpr ⟨?_, ?_⟩, hcV⟩, hca⟩
+  · exact Finset.mem_filter.mpr ⟨V.subset_ids hcV, by
+      unfold LeanDag.Hydrozoan.votingRound; exact hcr⟩
+  · intro j hj hL
+    exact huns c hcV (by rw [hca]; exact hv) hcr j hL hj
+
+/-- **The skip fires at `qFast` blamers.** -/
+theorem decided_none_of_unsupported {V : LeanDag.Hydrozoan.View U} {T : Finset Replica} {k : ℕ}
+    (hq : LeanDag.Hydrozoan.qFast Replica ≤ T.card)
+    (hpres : ∀ v ∈ T, ∃ c ∈ V.ids, (U.block c).author = v ∧
+      (U.block c).round = S.slotRound k + 1)
+    (huns : ∀ c ∈ V.ids, (U.block c).author ∈ T → (U.block c).round = S.slotRound k + 1 →
+      ∀ L, LeanDag.Hydrozoan.IsLeaderBlock U k L → L ∉ (U.block c).parents) :
+    LeanDag.Hydrozoan.Decided U V k none :=
+  LeanDag.Hydrozoan.Decided.directSkip
+    (le_trans hq (Finset.card_le_card (subset_blamesInView hpres huns)))
+
+end Hydrozoan
+
+end LeanDag

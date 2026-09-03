@@ -328,7 +328,7 @@ theorem persist_aux (he : Extends rule U U') {V : LeanDag.Hydrozoan.View U}
 /-- **HZ9.** -/
 theorem holds : Statement := by
   intro Replica _ _ BlockId _ _ _
-  refine ⟨causal, ?_, ?_, ?_⟩
+  refine ⟨causal, ?_, ?_, ?_, ?_⟩
   · intro S U U' he _ V V' hV k v h
     exact persist_aux (S := ofCoreSlots S) he hV h
   · intro S U U' r h V V' hv k hk v hd
@@ -344,6 +344,16 @@ theorem holds : Statement := by
               slotRound := ht.slotRound, leader := ht.leader, base := ht.base }
     · intro b hb
       exact (hv b (ht.mem_of hb) (ht.le_round hb)).symm
+  · intro S U V T k hq hpres huns
+    have hpres' : ∀ v ∈ T, ∃ c ∈ V.ids, (U.block c).author = v ∧
+        (U.block c).round = S.slotRound k + 1 := fun v hv => by
+      obtain ⟨c, hcV, hca, hcr⟩ := hpres v hv
+      exact ⟨c, hcV, hca, hcr⟩
+    have huns' : ∀ c ∈ V.ids, (U.block c).author ∈ T → (U.block c).round = S.slotRound k + 1 →
+        ∀ L, @LeanDag.Hydrozoan.IsLeaderBlock _ _ _ _ _ (ofCoreSlots S) U k L →
+          L ∉ (U.block c).parents :=
+      fun c hcV hT hr L hL => huns c hcV hT hr L hL
+    exact decided_none_of_unsupported (S := ofCoreSlots S) hq hpres' huns'
 
 end Properties
 
