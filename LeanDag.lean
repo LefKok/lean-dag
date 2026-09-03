@@ -80,12 +80,12 @@ import LeanDag.Integration.Hydrozoan.ViaProperties
 import LeanDag.Properties.Carrier
 import LeanDag.Properties.Persist
 import LeanDag.Properties.Local
-import LeanDag.Properties.Reindex
+import LeanDag.Properties.Truncate
 import LeanDag.Properties.Arcs.SafeSkip
 import LeanDag.Properties.Arcs.GC
 import LeanDag.Hydrozoan.Helpers.Carrier
 import LeanDag.Hydrozoan.Helpers.Locality
-import LeanDag.Hydrozoan.Helpers.Reindexing
+import LeanDag.Hydrozoan.Helpers.Truncation
 import LeanDag.Hydrozoan.Properties.Statement
 import LeanDag.Hydrozoan.Properties.Proof
 import LeanDag.Barnacle.Helpers.DagRule

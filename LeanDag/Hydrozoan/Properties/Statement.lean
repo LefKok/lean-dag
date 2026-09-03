@@ -1,5 +1,5 @@
 import LeanDag.Hydrozoan.Helpers.Locality
-import LeanDag.Hydrozoan.Helpers.Reindexing
+import LeanDag.Hydrozoan.Helpers.Truncation
 
 /-!
 # Hydrozoan conforms to the target properties — statement
@@ -46,7 +46,7 @@ def Statement : Prop :=
     LeanDag.Properties.Persist.Unconditional
       (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.Local (rule (Replica := Replica) (BlockId := BlockId)) ∧
-    LeanDag.Properties.Reindex (rule (Replica := Replica) (BlockId := BlockId))
+    LeanDag.Properties.LocalTruncate (rule (Replica := Replica) (BlockId := BlockId))
 
 end Properties
 

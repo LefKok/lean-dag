@@ -333,11 +333,17 @@ theorem holds : Statement := by
     exact persist_aux (S := ofCoreSlots S) he hV h
   · intro S U U' r h V V' hv k hk v hd
     exact local_aux (S := ofCoreSlots S) h hv hd hk
-  · intro S S' U U' G d hs V V' hvids k v hd
-    refine ShiftedHZ.reindex_aux (S := ofCoreSlots S) (S' := ofCoreSlots S')
-      (G := G) (d := d) ?_ hvids hd k rfl
-    exact { mem := hs.mem, round := hs.round, author := hs.creator, parents := hs.refs,
-            slotRound := hs.slotRound, leader := hs.leader }
+  · intro S S' U U' G d ht V V' hv k v
+    refine TruncatesHZ.decided_iff (S := ofCoreSlots S) (S' := ofCoreSlots S')
+      (G := G) (d := d) ?_ ?_
+    · exact { mem := ht.mem, round := ht.round, author := ht.creator
+              parents := fun b hb hm => ht.refs b hb (by
+                have hr := ht.round b hb
+                simp only [rule_block_round] at hr ⊢
+                omega)
+              slotRound := ht.slotRound, leader := ht.leader, base := ht.base }
+    · intro b hb
+      exact (hv b (ht.mem_of hb) (ht.le_round hb)).symm
 
 end Properties
 

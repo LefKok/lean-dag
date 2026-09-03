@@ -173,37 +173,46 @@ the source and causal completeness keeps them there. So "blocks nothing
 references cannot change a verdict" is a theorem about extensions
 rather than a condition on them, and no protocol pays for it.
 
-### 3.4 Re-indexing
+### 3.4 Truncation
 
-A truncation does not only restrict; it rebases rounds to start at the
-cut. Locality covers the restriction, and the rebasing is a schedule
-shift. Every piece of arithmetic in `Integration/Hydrozoan/ChopDecided.lean`
-lives in the shift, and it needs its own property or the generic
-theorem will not close.
+A truncation does two things: it drops what lies below a horizon, and it
+renumbers what remains so the retained layer sits at round zero.
 
-**This was recorded as the least certain part, and stating it settled
-what the uncertainty was.** The shift generalises cleanly as a property
-— `Shifted` says the same blocks keep their authors and references
-while rounds fall by `G` and slots by `d`, and `Reindex` says verdicts
-move with them. Nothing about any rule appears.
+**They were stated as two properties, and that was wrong twice over.**
+The record is kept because the second error is the instructive one.
 
-What does *not* compose is the pair. `AgreeAbove` asks for equal
-rounds, and a truncation's rounds are not equal, so locality and
-re-indexing meet only at the universe that has been **restricted and
-not yet renumbered**. `Arcs/GC.lean` takes that universe as a
-parameter, and `Properties/` cannot construct it: `DagRule.Universe` is
-abstract, which is exactly what lets one schema serve carriers as
-different as Hydrozoan's and Nemo's.
+*The intermediate does not exist.* Locality asks for equal rounds, so a
+universe restricted but not yet renumbered keeps its bottom layer at
+round `G`; a renumbering asks for equal references, which at that layer
+are empty. A block with no references above round zero fails validity's
+quorum clause. So the two could not be composed.
 
-**No arc defines such an intermediate.** `GC.chop` restricts and
-renumbers in one step — its `ids` filters on the round while
-`chopBlock` lowers it. So a protocol reaching for garbage collection
-must first define the intermediate and relate it to `chop` on both
-sides. That is a definition and two agreements, not an induction: the
-inductions are `Local` and `Reindex`, each paid once per protocol and
-serving every horizon. The residual risk is therefore smaller than
-recorded and has moved — from "the shift may not generalise" to "each
-protocol owes a truncation that stops halfway".
+*And the renumbering half was vacuous.* A pure shift keeps every block,
+so the bottom layer lands at round zero carrying the references it had
+at round `G`, which validity forbids — and any non-empty valid universe
+has a round-zero block, by descending the predecessor condition. So a
+shift by a positive horizon has no non-empty model, and a property
+quantified over such shifts is vacuously true.
+`Hydrozoan/Helpers/Truncation.lean`'s `no_base_of_naive_shift` is the
+witness, and it is four lines. **It was not written until after the
+property had been stated, proved, and reported as retiring a risk.**
+
+**So restriction and renumbering are not separately realisable**, and
+only their combination has models. `Properties/Truncate.lean` states
+that combination. Two clauses carry the difference from a pure shift:
+membership keeps only what lies at or above the horizon, so what lies
+below is legitimately gone; and references are compared only *strictly*
+above the horizon, so the retained bottom layer may legitimately lose
+what pointed below it.
+
+`Local` survives unchanged, non-vacuous and proved. It states what a
+verdict reads, which is the property this arc set out to name. It is
+simply not what a mechanism that renumbers can consume.
+
+**The discipline that follows.** Exhibit a witness before proving
+anything about a relation. `truncatesHZ_chopHZ` does it for the
+combined form, and had the same been asked of the shift the vacuity
+would have surfaced in minutes rather than after 321 lines.
 
 ### 3.5 Composition
 
@@ -391,8 +400,9 @@ directory, hence the one flat module.
   shape was discovered by `Barnacle.BaseRule`, and
   `Barnacle/Helpers/DagRule.lean` coerces its six instantiations into
   the carrier, so no protocol restates anything.
-- **G1** State `Local`, `Persist`, and `Reindex` (**done**), with two
-  findings on `Persist` recorded in §3.3 and one on `Reindex` in §3.4.
+- **G1** State `Local`, `Persist`, and `LocalTruncate` (**done**), with
+  two findings on `Persist` in §3.3 and, in §3.4, the vacuity that
+  replaced the re-indexing property with a combined one.
 - **G2** Prove garbage collection and crash recovery once from them,
   and `Compose`. **Crash recovery done**
   (`Properties/Arcs/SafeSkip.lean`): the fill is an extension, so any
@@ -413,8 +423,11 @@ directory, hence the one flat module.
   — from HZ9 **with no induction of its own**, the fill being an
   extension by two of the arc's own simp lemmas. `Local` and `Reindex`
   are each their own induction over the six constructors, in
-  `Hydrozoan/Helpers/{Locality,Reindexing}.lean`; the protocol now owes
-  three inductions in total and no more, whatever mechanisms follow.
+  `Hydrozoan/Helpers/{Locality,Truncation}.lean`, and `LocalTruncate`
+  yields `decided_chopHZ` with no induction of its own
+  (`ViaProperties.lean`). The protocol owes three inductions in total —
+  persistence, locality, truncation — and no more, whatever mechanisms
+  follow.
 - **G4** Discharge them for the core, giving the second instance.
   **Reassess here.**
 - **G5** The schedule family: the slot domain, collapsing both the
@@ -427,10 +440,11 @@ directory, hence the one flat module.
 
 ## 10. Risks
 
-- ~~Re-indexing may not generalise.~~ **Retired at G1 and G3**: it
-  generalises as `Shifted`/`Reindex`, and Hydrozoan discharges it. What
-  replaces it is smaller — each protocol owes a restriction that does
-  not renumber, since `chop` does both at once (§3.4).
+- ~~Re-indexing may not generalise.~~ ~~Retired at G1 and G3.~~ **The
+  retirement was wrong**: the property was vacuous, so proving it
+  established nothing. What replaces it is `LocalTruncate`, whose
+  satisfiability is witnessed (§3.4). The lesson is procedural rather
+  than technical, and is recorded there.
 - **The persistence grading is predicted, not checked** (§3.2).
 - ~~`Carrier.lean` may need more than `CausalStructure` offers.~~
   **Retired at G0**: `BaseRule` already supplies the projection, and
