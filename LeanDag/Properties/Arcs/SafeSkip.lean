@@ -1,4 +1,5 @@
 import LeanDag.Properties.Persist
+import LeanDag.Properties.Skip
 import LeanDag.SafeSkip.Basic
 import LeanDag.SafeSkip.Invariance
 import LeanDag.MysticetiProperties
@@ -124,10 +125,62 @@ theorem decided_fill_of_persist [S : Slots Validator] (sk : SkipMsg U)
   decided_skipFill (R := MysticetiProperties.mysticetiRule) MysticetiProperties.persist sk
     rfl rfl rfl rfl (quorate_of_quorateOverGap sk hq) (fun _ hb => hb) h
 
+/-! ### The filled slot is decided, and SS3 falls out
+
+`SafeSkip.directSkip_fresh` (SS3) says the fill cannot conjure a
+commit: a filled block on a leader slot is blamed by every reliable
+block above it. Here the same conclusion is reached from the properties
+— the fill is an extension, so its candidates are unsupported by the
+old view (`unsupported_of_novel`), and the core skips an unsupported
+slot from a correct quorum (`skipsUnsupported`) — and it lands as a
+*verdict*, `Decided … k none`, rather than SS3's universe-level
+`DirectSkip`.
+
+SS3's hypothesis `v1 ∉ T` is not needed. Presence is asked of the
+pre-crash view, whose blocks are old, and `hgap` says the recovering
+replica authored nothing in the gap — so a `T` present at a gap round
+cannot contain it. -/
+
+/-- Presence in the pre-crash view is presence in the lifted one: the
+ids are the same and old blocks are unchanged. -/
+theorem presentAt_liftView [S : Slots Validator] (sk : SkipMsg U)
+    {V : View Validator BlockId Payload U} {T : Finset Validator} {r : ℕ}
+    (h : PresentAt MysticetiProperties.mysticetiRule V T r) :
+    PresentAt MysticetiProperties.mysticetiRule (sk.liftView V) T r := by
+  intro v hv
+  obtain ⟨c, hcV, hcc, hcr⟩ := h v hv
+  have hcU : c ∈ U.ids := V.subset_ids hcV
+  refine ⟨c, hcV, ?_, ?_⟩
+  · show (sk.skipFill.block c).creator = v
+    rw [sk.skipFill_block_old hcU]; exact hcc
+  · show (sk.skipFill.block c).round = r
+    rw [sk.skipFill_block_old hcU]; exact hcr
+
+/-- **Every candidate of a slot the recovering replica leads, at a gap
+round, is a filled block** — the replica authored nothing old there. -/
+theorem candidates_fresh [S : Slots Validator] (sk : SkipMsg U) {k : ℕ}
+    (hlead : S.leader k = sk.v1) (hk1 : sk.r0 < S.slotRound k) (hk2 : S.slotRound k ≤ sk.r)
+    {L : BlockId} (hL : IsLeaderBlock sk.skipFill k L) : L ∉ U.ids := by
+  intro hLU
+  obtain ⟨-, hLr, hLc⟩ := hL
+  rw [sk.skipFill_block_old hLU] at hLr hLc
+  exact sk.hgap L hLU (by rw [hLc, hlead]) (by change sk.r0 < _; omega) (by omega)
+
+/-- **SS3, as a verdict, from the properties.** The slot the recovering
+replica leads at a gap round is decided `none` on the lifted view, given
+a quorum of the pre-crash view present one round above it. No induction;
+the fill is an extension, and the core skips what nothing supports. -/
+theorem decided_none_fresh [S : Slots Validator] (sk : SkipMsg U)
+    {V : View Validator BlockId Payload U} {T : Finset Validator} {k : ℕ}
+    (hcard : quorumCard Validator ≤ T.card)
+    (hlead : S.leader k = sk.v1) (hk1 : sk.r0 < S.slotRound k) (hk2 : S.slotRound k ≤ sk.r)
+    (hpres : PresentAt MysticetiProperties.mysticetiRule V T (S.slotRound k + 1)) :
+    Decided sk.skipFill (sk.liftView V) k none :=
+  MysticetiProperties.skipsUnsupported S sk.skipFill (sk.liftView V) T k hcard
+    (presentAt_liftView sk hpres)
+    (unsupported_of_novel MysticetiProperties.causal
+      (extends_of_skipFill MysticetiProperties.mysticetiRule sk rfl rfl rfl rfl)
+      (fun L hL => ⟨hL.1, candidates_fresh sk hlead hk1 hk2 hL⟩)
+      (fun c hcV _ _ => V.subset_ids hcV))
+
 end Core
-
-end Arcs
-
-end Properties
-
-end LeanDag

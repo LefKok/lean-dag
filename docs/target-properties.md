@@ -26,7 +26,7 @@ About fifteen exist:
 | Mechanism | Where | Rules covered |
 |---|---|---|
 | Garbage collection (`chop`) | `GC/` | Mysticeti, Hydrozoan, Optimal |
-| Crash recovery (`skipFill`, `liftView`, `Jump.denote`) | `SafeSkip/` | Mysticeti, Hydrozoan |
+| Crash recovery (`skipFill`, `liftView`) | `SafeSkip/` | Mysticeti, Hydrozoan |
 | Re-genesis | `Integration/ReGenesis.lean` | none |
 | Adaptive leader schedule (Hammerhead) | `Adaptive/` | Mysticeti, Odontoceti |
 | Adaptive leader count (Barnacle) | `Barnacle/` | six |
@@ -45,6 +45,16 @@ not in scope: the denial-of-service arc (`DoS/`, including
 `Novelty.lean`, the novelty budget that rate-limits block production)
 and the pacing and delivery layers.
 
+**On two entries.** Re-genesis is not an orphan: `integration.md` gives
+it I10–I13, `Exposure.lean` consumes it, and it already composes with
+the cut, the fill and the DoS arc in its own file. What it lacks is
+verdict transport, and it should be an `Extends`, which would give it
+`Persist` and `Sustains` from the instances already proved.
+`SafeSkip/Jump.lean`'s `denote` was listed in this table before and does not
+belong: the model excludes round-jumping outright
+(report §4.1), and `denote` is the vehicle for showing a jump denotes a
+fill (SS10), not a deployed mechanism.
+
 ---
 
 ## 2. Three families, needing three different things
@@ -53,7 +63,7 @@ The mechanisms do not all want the same thing of a rule, and treating
 them as one problem was the earlier error.
 
 **Transformer mechanisms** change the DAG under a replica: garbage
-collection, crash recovery, re-genesis, `denote`. A verdict reached
+collection, crash recovery, re-genesis. A verdict reached
 before the change must be reachable after it, and that is an induction
 over derivations. These want §3's properties.
 
@@ -334,9 +344,41 @@ correct replicas has `q = n − f − c` members against `qFast = n − p`, so
 **a correct quorum skips an unsupported slot exactly when `f + c ≤ p`**
 — the condition `hydrozoan-integration.md` §5.1 found by hand,
 recovered here as the grade of a property rather than as a remark.
-Optimal-Hydrozoan's skip is at `qCert ≤ q` and OH5 discharges it from
-population alone; its grade should be `q ≤ |T|`, which a correct quorum
-meets. That instance is not yet built.
+**The core's grade is `quorumCard ≤ |T|` — a correct quorum**
+(`MysticetiProperties.skipsUnsupported`). Its skip counts, per
+candidate, the voting-round blocks that do *not* reference it; if every
+`T`-block references none of the slot's candidates, every one is a
+blamer for every candidate at once.
+
+**Set beside `Persist`, the grading inverts, from one root cause:**
+
+| | safety (`Persist`) | liveness (`SkipsUnsupported`) |
+|---|---|---|
+| core — per-candidate skip | conditional, `Quorate` | **correct quorum suffices** |
+| Hydrozoan — slot-level `qFast` count | **unconditional** | `qFast ≤ |T|`; a correct quorum does not |
+
+A rule that skips per candidate has fragile *vacuous* skips — a new
+candidate needs a quorum already in view to blame it — but any
+*specific* unsupported candidate is trivially blamed. A rule that
+counts blames at the slot has skips that survive any extension, and a
+bar to skip at all that a correct quorum does not reach. One mechanism,
+opposite grades on the two properties; four theorems of thirty lines.
+
+**The consumer.** `Arcs/SafeSkip.decided_none_fresh` reaches SS3's
+content from the properties: the fill is an extension, so its
+candidates are unsupported by the old view (`unsupported_of_novel`), and
+the core skips what nothing supports — so the slot the recovering
+replica leads at a gap round is decided `none` on the lifted view. No
+induction, and it lands as a *verdict* where SS3 (`directSkip_fresh`) is
+a universe-level `DirectSkip`. SS3's hypothesis `v1 ∉ T` is not needed:
+presence is asked of the pre-crash view, whose blocks are old, and
+`hgap` says the recovering replica authored nothing in the gap.
+
+Optimal-Hydrozoan's skip is `qCert` blames **and** a no-evidence quorum
+at the decision round — two rounds of presence where `SkipsUnsupported`
+supplies one. So its instance will likely reshape the property, as the
+core's reshaped `Persist.Ok`; that is the right order, and it is not yet
+built.
 
 With this the liveness account closes: `Sustains` (mechanism side) keeps
 votes and production; `SkipsUnsupported` (protocol side) decides the
@@ -565,8 +607,9 @@ directory, hence the one flat module.
 - **G4** Discharge them for the core (**`Persist` done**, at grade
   `Quorate`, with `SafeSkip.decided_fill` re-derived as the consumer
   test). The second instance reshaped `Persist.Ok` before any proof was
-  attempted (§3.2). `Local`, `LocalTruncate` and `SkipsUnsupported` for
-  the core remain.
+  attempted (§3.2). **`SkipsUnsupported` done** at grade
+  `quorumCard ≤ |T|`, with SS3 re-derived as its consumer (§3.7).
+  `Local` and `LocalTruncate` for the core remain.
 - **G5** The schedule family: the slot domain, collapsing both the
   `Adaptive` and the `Reactive` duplications.
 - **G6** Chain quality from fairness and self-reference.

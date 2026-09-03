@@ -1,5 +1,6 @@
 import LeanDag.Properties.Sustain
 import LeanDag.Properties.Persist
+import LeanDag.Properties.Skip
 import LeanDag.Liveness
 
 /-!
@@ -333,6 +334,47 @@ theorem persist : Persist (mysticetiRule (Validator := Validator) (BlockId := Bl
   fun S U U' he V V' hok hV k v hd => persist_aux (S := S) he hok hV hd
 
 end PersistProof
+
+/-! ## Skippability, at a correct quorum
+
+The core's direct skip quantifies over candidates and, for each, counts
+the voting-round blocks that do *not* reference it. If every `T`-block
+at the voting round references none of the slot's candidates, every one
+of them is a blamer for every candidate at once, so `quorumCard ≤ |T|`
+is enough — **a correct quorum skips an unsupported slot**.
+
+Set beside `Persist`, this inverts. The same per-candidate skip that
+needs `Quorate` to keep a *vacuous* skip alive under extension is what
+makes any *specific* unsupported candidate trivially blamed. Hydrozoan
+is the mirror image: its slot-level `qFast` count survives every
+extension unconditionally and reaches no skip from a correct quorum.
+One mechanism, opposite grades on the two properties. -/
+
+section Skip
+
+variable {U : BlockUniverse Validator BlockId Payload} [S : Slots Validator]
+
+/-- Every member of `T` blames every candidate of the slot. -/
+theorem subset_blamers {V : View Validator BlockId Payload U} {T : Finset Validator} {k : ℕ}
+    (hpres : PresentAt mysticetiRule V T (S.slotRound k + 1))
+    (huns : Unsupported mysticetiRule S U V T k) {L : BlockId} (hL : IsLeaderBlock U k L) :
+    T ⊆ creatorsOf U.block
+      (((blocksAt U (S.slotRound k + 1)).filter fun q => L ∉ (U.block q).refs) ∩ V.ids) := by
+  intro v hv
+  obtain ⟨c, hcV, hcc, hcr⟩ := hpres v hv
+  have hcU : c ∈ U.ids := V.subset_ids hcV
+  refine Finset.mem_image.mpr ⟨c, Finset.mem_inter.mpr ⟨Finset.mem_filter.mpr
+    ⟨mem_blocksAt.mpr ⟨hcU, hcr⟩, huns c hcV (by rw [hcc]; exact hv) hcr L hL⟩, hcV⟩, hcc⟩
+
+/-- **The core skips an unsupported slot from a correct quorum.** -/
+theorem skipsUnsupported :
+    SkipsUnsupported (mysticetiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) (fun T => quorumCard Validator ≤ T.card) :=
+  fun S U V T k hq hpres huns =>
+    Decided.directSkip fun L hL =>
+      le_trans hq (Finset.card_le_card (subset_blamers (S := S) hpres huns hL))
+
+end Skip
 
 end MysticetiProperties
 
