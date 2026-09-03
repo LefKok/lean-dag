@@ -49,6 +49,42 @@ def Local (R : DagRule Validator BlockId Payload) : Prop :=
     ∀ (k : ℕ), r ≤ S.slotRound k →
     ∀ (v : Option BlockId), R.Decided S V k v → R.Decided S V' k v
 
+namespace AgreeAbove
+
+variable {U U' : R.Universe} {r : ℕ}
+
+/-- **Causal history above the horizon is the same history.** A path
+from `A` descends one round at a time, so if it ends at or above `r`
+every block on it sits above `r` — strictly, except at the end, which
+is exactly where `AgreeAbove` stops comparing references. -/
+theorem reaches_of (hc : Causal R) (h : AgreeAbove R U U' r)
+    {A : BlockId} (hA : A ∈ R.ids U) :
+    ∀ {C : BlockId}, ReachesFrom (R.block U) A C → r ≤ (R.block U C).round →
+      ReachesFrom (R.block U') A C := by
+  intro C hre
+  induction hre with
+  | refl => intro _; exact Relation.ReflTransGen.refl
+  | @tail b c hAb hstep ih =>
+      intro hcr
+      have hb : b ∈ R.ids U := (hc U).mem_ids_of_reaches hA hAb
+      have hstep' : c ∈ (R.block U b).refs := hstep
+      have hround := (hc U).refs_round b hb c hstep'
+      refine (ih (by omega)).tail ?_
+      show c ∈ (R.block U' b).refs
+      rw [h.refs b hb (by omega)]
+      exact hstep'
+
+/-- And so it agrees in both directions. -/
+theorem reaches_iff (hc : Causal R) (h : AgreeAbove R U U' r)
+    {A C : BlockId} (hA : A ∈ R.ids U) (hAr : r ≤ (R.block U A).round)
+    (hC : C ∈ R.ids U) (hCr : r ≤ (R.block U C).round) :
+    ReachesFrom (R.block U') A C ↔ ReachesFrom (R.block U) A C := by
+  refine ⟨fun hre => ?_, fun hre => reaches_of hc h hA hre hCr⟩
+  exact reaches_of hc h.symm ((h.mem A).mp ⟨hA, hAr⟩).1 hre
+    (by rw [h.round C hC hCr]; exact hCr)
+
+end AgreeAbove
+
 namespace ViewAgreeAbove
 
 variable {U U' : R.Universe} {V : R.View U} {V' : R.View U'} {r : ℕ}

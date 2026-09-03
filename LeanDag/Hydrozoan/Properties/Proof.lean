@@ -328,9 +328,16 @@ theorem persist_aux (he : Extends rule U U') {V : LeanDag.Hydrozoan.View U}
 /-- **HZ9.** -/
 theorem holds : Statement := by
   intro Replica _ _ BlockId _ _ _
-  refine ⟨causal, ?_⟩
-  intro S U U' he _ V V' hV k v h
-  exact persist_aux (S := ofCoreSlots S) he hV h
+  refine ⟨causal, ?_, ?_, ?_⟩
+  · intro S U U' he _ V V' hV k v h
+    exact persist_aux (S := ofCoreSlots S) he hV h
+  · intro S U U' r h V V' hv k hk v hd
+    exact local_aux (S := ofCoreSlots S) h hv hd hk
+  · intro S S' U U' G d hs V V' hvids k v hd
+    refine ShiftedHZ.reindex_aux (S := ofCoreSlots S) (S' := ofCoreSlots S')
+      (G := G) (d := d) ?_ hvids hd k rfl
+    exact { mem := hs.mem, round := hs.round, author := hs.creator, parents := hs.refs,
+            slotRound := hs.slotRound, leader := hs.leader }
 
 end Properties
 

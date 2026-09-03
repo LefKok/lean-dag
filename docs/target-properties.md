@@ -403,14 +403,18 @@ directory, hence the one flat module.
   (`Properties/Arcs/GC.lean`): `decided_truncate` composes `Local` and
   `Reindex` in three lines, and takes the restricted-not-yet-renumbered
   universe as a parameter, which §3.4 explains.
-- **G3** Discharge them for Hydrozoan. **Persistence done** — HZ9
+- **G3** Discharge them for Hydrozoan (**done**) — HZ9 proves all
+  four: `Causal`, `Persist.Unconditional`, `Local` and `Reindex`.
+  Persistence
   (`Hydrozoan/Properties/`) proves the *unconditional* grade, as §3.2
   predicts for a rule whose skip counts blames at the slot. The test
   passed: `Integration/Hydrozoan/ViaProperties.lean` re-derives
   `decided_fillHZ` — a six-constructor induction in `FillDecided.lean`
   — from HZ9 **with no induction of its own**, the fill being an
-  extension by two of the arc's own simp lemmas. `decided_chopHZ` waits
-  on `Local` and `Reindex`.
+  extension by two of the arc's own simp lemmas. `Local` and `Reindex`
+  are each their own induction over the six constructors, in
+  `Hydrozoan/Helpers/{Locality,Reindexing}.lean`; the protocol now owes
+  three inductions in total and no more, whatever mechanisms follow.
 - **G4** Discharge them for the core, giving the second instance.
   **Reassess here.**
 - **G5** The schedule family: the slot domain, collapsing both the
@@ -423,10 +427,10 @@ directory, hence the one flat module.
 
 ## 10. Risks
 
-- ~~Re-indexing may not generalise.~~ **Retired at G1**: it
-  generalises as `Shifted`/`Reindex`. What replaces it is smaller — each
-  protocol owes a restriction that does not renumber, since `chop` does
-  both at once (§3.4).
+- ~~Re-indexing may not generalise.~~ **Retired at G1 and G3**: it
+  generalises as `Shifted`/`Reindex`, and Hydrozoan discharges it. What
+  replaces it is smaller — each protocol owes a restriction that does
+  not renumber, since `chop` does both at once (§3.4).
 - **The persistence grading is predicted, not checked** (§3.2).
 - ~~`Carrier.lean` may need more than `CausalStructure` offers.~~
   **Retired at G0**: `BaseRule` already supplies the projection, and

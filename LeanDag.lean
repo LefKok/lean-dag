@@ -84,6 +84,8 @@ import LeanDag.Properties.Reindex
 import LeanDag.Properties.Arcs.SafeSkip
 import LeanDag.Properties.Arcs.GC
 import LeanDag.Hydrozoan.Helpers.Carrier
+import LeanDag.Hydrozoan.Helpers.Locality
+import LeanDag.Hydrozoan.Helpers.Reindexing
 import LeanDag.Hydrozoan.Properties.Statement
 import LeanDag.Hydrozoan.Properties.Proof
 import LeanDag.Barnacle.Helpers.DagRule
