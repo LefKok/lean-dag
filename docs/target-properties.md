@@ -181,11 +181,29 @@ shift. Every piece of arithmetic in `Integration/Hydrozoan/ChopDecided.lean`
 lives in the shift, and it needs its own property or the generic
 theorem will not close.
 
-**This is the least certain part of the proposal.** Locality and
-persistence are statements about consensus; the shift is arithmetic
-threaded through each predicate, and whether it generalises is unknown.
-If it does not, crash recovery goes fully generic and garbage
-collection stays partly bespoke.
+**This was recorded as the least certain part, and stating it settled
+what the uncertainty was.** The shift generalises cleanly as a property
+— `Shifted` says the same blocks keep their authors and references
+while rounds fall by `G` and slots by `d`, and `Reindex` says verdicts
+move with them. Nothing about any rule appears.
+
+What does *not* compose is the pair. `AgreeAbove` asks for equal
+rounds, and a truncation's rounds are not equal, so locality and
+re-indexing meet only at the universe that has been **restricted and
+not yet renumbered**. `Arcs/GC.lean` takes that universe as a
+parameter, and `Properties/` cannot construct it: `DagRule.Universe` is
+abstract, which is exactly what lets one schema serve carriers as
+different as Hydrozoan's and Nemo's.
+
+**No arc defines such an intermediate.** `GC.chop` restricts and
+renumbers in one step — its `ids` filters on the round while
+`chopBlock` lowers it. So a protocol reaching for garbage collection
+must first define the intermediate and relate it to `chop` on both
+sides. That is a definition and two agreements, not an induction: the
+inductions are `Local` and `Reindex`, each paid once per protocol and
+serving every horizon. The residual risk is therefore smaller than
+recorded and has moved — from "the shift may not generalise" to "each
+protocol owes a truncation that stops halfway".
 
 ### 3.5 Composition
 
@@ -373,14 +391,18 @@ directory, hence the one flat module.
   shape was discovered by `Barnacle.BaseRule`, and
   `Barnacle/Helpers/DagRule.lean` coerces its six instantiations into
   the carrier, so no protocol restates anything.
-- **G1** State `Local`, `Persist`, and `Reindex`. **`Persist` done**
-  (`Properties/Persist.lean`), with two findings recorded in §3.3.
+- **G1** State `Local`, `Persist`, and `Reindex` (**done**), with two
+  findings on `Persist` recorded in §3.3 and one on `Reindex` in §3.4.
 - **G2** Prove garbage collection and crash recovery once from them,
   and `Compose`. **Crash recovery done**
   (`Properties/Arcs/SafeSkip.lean`): the fill is an extension, so any
   protocol with `Persist` inherits it. Ordered before garbage
   collection deliberately, since persistence needs no `Reindex` and so
   banks one mechanism before the uncertain part is attempted.
+  **Garbage collection done as far as the properties reach**
+  (`Properties/Arcs/GC.lean`): `decided_truncate` composes `Local` and
+  `Reindex` in three lines, and takes the restricted-not-yet-renumbered
+  universe as a parameter, which §3.4 explains.
 - **G3** Discharge them for Hydrozoan. **Persistence done** — HZ9
   (`Hydrozoan/Properties/`) proves the *unconditional* grade, as §3.2
   predicts for a rule whose skip counts blames at the slot. The test
@@ -401,7 +423,10 @@ directory, hence the one flat module.
 
 ## 10. Risks
 
-- **Re-indexing may not generalise** (§3.4). The largest single risk.
+- ~~Re-indexing may not generalise.~~ **Retired at G1**: it
+  generalises as `Shifted`/`Reindex`. What replaces it is smaller — each
+  protocol owes a restriction that does not renumber, since `chop` does
+  both at once (§3.4).
 - **The persistence grading is predicted, not checked** (§3.2).
 - ~~`Carrier.lean` may need more than `CausalStructure` offers.~~
   **Retired at G0**: `BaseRule` already supplies the projection, and
