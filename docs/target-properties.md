@@ -209,10 +209,15 @@ what pointed below it.
 verdict reads, which is the property this arc set out to name. It is
 simply not what a mechanism that renumbers can consume.
 
-**The discipline that follows.** Exhibit a witness before proving
-anything about a relation. `truncatesHZ_chopHZ` does it for the
-combined form, and had the same been asked of the shift the vacuity
-would have surfaced in minutes rather than after 321 lines.
+**The discipline that follows, in two halves.** Exhibit a witness
+before proving anything about a relation: `truncatesHZ_chopHZ` does it
+for the combined form, and had the same been asked of the shift the
+vacuity would have surfaced in minutes rather than after 321 lines. And
+**name a consumer and feed it before calling an obligation done**: the
+first `Sustains` had witnesses for both mechanisms and helped nobody,
+because the reactive commit consumes `CertifiesAt` and it transported
+`VotesAt` (§3.6). A witness catches a relation with no models; only a
+consumer catches one that has models and serves no theorem.
 
 ### 3.5 Composition
 
@@ -236,27 +241,40 @@ theorem is universally quantified over universes and applies to the
 transformed one unchanged — while `synchronisedOn_stackHZ` carries four
 side conditions.
 
-`Properties/Sustain.lean` names the mechanism's side. `Sustains R U U' T
-G R₀` says that above the settling round `R₀`, re-indexing rounds by
-`G`, the mechanism destroys no vote and silences no producer.
+`Properties/Sustain.lean` names the mechanism's side. `Sustains R U U' G
+R₀` says that at and above the settling round `R₀`, re-indexing rounds
+by `G`, the two universes hold the same blocks with the same authors,
+and strictly above it the same references. Nothing is said below `R₀`,
+which is where a mechanism does its work.
 
-**The interface is the votes, not the coverage**, and that choice is
-what makes it serve every pacing discipline. `LeanDag.VotesAt` exists in
-the core for exactly this reason: full coverage implies it
-(`votesAt_of_synchronisedOn`) and the reactive exit supplies it directly
-(`ReactivePace.votes`), so the commit arguments are stated against it,
-round-indexed and schedule-free. A reactive schedule has no
+**The interface is the blocks, not any predicate — and this was got
+wrong once.** The first statement transported `VotesAt` and
+`PopulatedOn` by name, and left certification out because each protocol
+has its own certificate predicate. It had a witness for both mechanisms,
+and it was useless: fed to the reactive commit
+(`Reactive/Mysticeti.directCommit`), which runs through
+`directCommit_of_certifiesAt`, it failed at the `CertifiesAt` argument
+that nothing transported. The repair is to promise less and get more.
+Above the settling round an old block keeps its membership, author,
+references and shifted round, and then **every** predicate computed
+from those transports — votes, production, the core's `Certifies`,
+Hydrozoan's `IsCertificate`, and whatever a later protocol defines.
+`Sustains.votesAt_of` and `populatedOn_of` are the two the mechanism
+side can state; `MysticetiProperties.certifiesAt_of_sustains` is the
+core deriving its own certificate layer in a few lines.
+
+**Why this serves the reactive discipline.** A reactive schedule has no
 `PopulatedOn` at all — the string does not occur in `LeanDag/Reactive/`
 — and `SynchronisedOn` is *false* there by construction, so an interface
 built on coverage would have served the timed arcs and excluded the
-reactive one. Built on votes, a mechanism never has to transport a
-pacing structure: what a reactive schedule produces is a vote like any
-other.
-
-Certification is deliberately absent: it names a protocol's own notion
-of a certificate, so a mechanism cannot owe it. The mechanism owes votes
-and production; the protocol derives its certificate layer from those,
-which is the core's own layering.
+reactive one. What the reactive exit produces is a certificate
+(`cert_or_wait`), and a certificate is made of references. So
+`MysticetiProperties.directCommit_of_sustains` takes exactly what the
+reactive theorem establishes on the original DAG — `CertifiesAt` and
+production — and returns the commit on the transformed one, **with no
+pacing structure transported**. `Properties/Arcs/GC.lean`'s
+`directCommit_chop` is that theorem fed from the cut's witness: the
+consumer test, from the obligation rather than from `chop` directly.
 
 **The settling round is where the content sits.** A truncation settles
 at its horizon. A fill settles at the top of its gap, because the blocks
@@ -303,9 +321,16 @@ slots a mechanism may have poisoned; the protocol's own liveness
 theorem, universally quantified over universes, needs no transport.
 
 **The arithmetic of the two directions.** Safety costs one induction per
-protocol; liveness costs one obligation per mechanism, plus the small
-graded residue per protocol. That is `P + M + P` where the development
-currently pays `P × M`.
+protocol; liveness costs one obligation per mechanism, plus a few lines
+per protocol to derive its certificate layer, plus the graded residue of
+§3.7. That is `P + M + P` where the development currently pays `P × M`.
+
+**A layering note.** `Arcs/GC.lean` imports the mechanism it is about
+and, to discharge the obligation against a real consumer, the core's
+carrier (`MysticetiProperties.lean`, which reaches no mechanism). Through
+`GC.Chop`'s own imports it also reaches `DoS`; that is the GC arc's
+existing dependency, not one this arc introduced, and it is recorded here
+rather than left to be discovered.
 
 ---
 
