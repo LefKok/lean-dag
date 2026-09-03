@@ -201,6 +201,51 @@ theorem run_exists (hb : Bounded R) (ha : Agree R.toDagRule) (hl : SchedLocal R)
   refine P.adapted U V V (As (epochOf P.W k + 1)).vdct vd m (fun j hj => ?_)
   exact hdiag _ j (by omega)
 
+/-! ## What the run commits
+
+Existence says every slot has a verdict. The two theorems below say
+which verdicts are commits: at a reliable-led slot inside a live window
+the run's verdict is `some L`, by `LeaderCommits` and `Agree` through
+`Bounded`, and under `PlacesRuns` every epoch past the first holds `c`
+consecutive commits. The precondition is asked for at the run's own
+schedule; `Run.live_of_staged` obtains it from the staged form. -/
+
+/-- The run's schedule is the policy's, as a function. -/
+theorem Run.assign_eq {V : R.View U} (A : Run P U V) :
+    (fun m => P.pick U V A.vdct m) = A.assign :=
+  funext fun m => (A.coherent m).symm
+
+/-- The staged precondition, read at a total run's own schedule. -/
+theorem Run.live_of_staged {V : R.View U} (A : Run P U V)
+    (hlive : ∀ (E : ℕ) (A' : PartialRun P U V E),
+      Live (slotsOf P.inj (fun m => P.pick U V A'.vdct m)) V T P.W (P.W * (E + 2)))
+    (e : ℕ) : Live (slotsOf P.inj A.assign) V T P.W (P.W * (e + 2)) := by
+  have h := hlive e (A.toPartial e)
+  change Live (slotsOf P.inj (fun m => P.pick U V A.vdct m)) V T P.W (P.W * (e + 2)) at h
+  rwa [A.assign_eq] at h
+
+/-- **A reliable leader's slot commits in the run.** -/
+theorem Run.commits (hb : Bounded R) (ha : Agree R.toDagRule) (hlc : LeaderCommits R Live)
+    {V : R.View U} (A : Run P U V) {lo K : ℕ}
+    (hlive : Live (slotsOf P.inj A.assign) V T lo K) {k : ℕ} (hlo : lo ≤ k) (hK : k < K)
+    (hlead : A.assign k ∈ T) : ∃ L, A.vdct k = some L := by
+  obtain ⟨L, hL⟩ := hlc (slotsOf P.inj A.assign) V T lo K hlive k hlo hK hlead
+  exact ⟨L, hb.agree ha (A.closed k) hL⟩
+
+/-- **Every epoch past the first carries `c` consecutive commits.** -/
+theorem Run.commits_in_epoch (hb : Bounded R) (ha : Agree R.toDagRule)
+    (hlc : LeaderCommits R Live) (hruns : PlacesRuns P T c) {V : R.View U} (A : Run P U V)
+    (e : ℕ) (hlive : Live (slotsOf P.inj A.assign) V T P.W (P.W * (e + 2))) :
+    ∃ b, P.W * (e + 1) ≤ b ∧ b + c ≤ P.W * (e + 2) ∧
+      ∀ i, i < c → ∃ L, A.vdct (b + i) = some L := by
+  obtain ⟨b, hb1, hb2, hbT⟩ := hruns U V A.vdct e
+  refine ⟨b, hb1, hb2, fun i hi => ?_⟩
+  have hlead : A.assign (b + i) ∈ T := by rw [A.coherent (b + i)]; exact hbT i hi
+  have hWle : P.W ≤ b + i := by
+    have := Nat.mul_le_mul_left P.W (show 1 ≤ e + 1 by omega)
+    omega
+  exact A.commits hb ha hlc hlive hWle (by omega) hlead
+
 end Existence
 
 end Adaptive

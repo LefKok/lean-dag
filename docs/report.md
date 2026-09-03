@@ -22300,6 +22300,18 @@ The horizon universe as an `OptUniverse`: leader exclusion is inert because noth
 
 ### Not otherwise grouped
 
+#### `Policy.Stable`
+
+*def, `Adaptive.Growth.lean`*
+
+```lean
+def Policy.Stable {R : DagRule Validator BlockId Payload} (P : Policy R) : Prop :=
+  ∀ (U U' : R.Universe), Extends R U U' → ∀ (V : R.View U) (V' : R.View U')
+    (v : ℕ → Option BlockId) (k : ℕ), P.pick U V v k = P.pick U' V' v k
+```
+
+**Stability under extension.** The rule returns the same leader for the same verdicts on an extended universe.
+
 #### `AdaptivePolicy`
 
 *abbrev, `Adaptive.Mysticeti.lean`*
@@ -24652,7 +24664,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 823 theorems that either another module of the
+The 824 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -29588,6 +29600,19 @@ theorem exists_partialRun (hb : Bounded R) (hl : SchedLocal R) (hlc : LeaderComm
 ```
 
 **Partial runs exist at every height** — the witnessable, finite- horizon form of existence, by induction on the height: each stage re-reads the schedule off the verdicts so far and closes one more epoch, under the precondition for that stage's schedule.
+
+#### `Run.commits`
+
+*theorem, `Adaptive.Liveness.lean`*
+
+```lean
+theorem Run.commits (hb : Bounded R) (ha : Agree R.toDagRule) (hlc : LeaderCommits R Live)
+    {V : R.View U} (A : Run P U V) {lo K : ℕ}
+    (hlive : Live (slotsOf P.inj A.assign) V T lo K) {k : ℕ} (hlo : lo ≤ k) (hK : k < K)
+    (hlead : A.assign k ∈ T) : ∃ L, A.vdct k = some L
+```
+
+**A reliable leader's slot commits in the run.**
 
 #### `toDecided`
 
@@ -35672,7 +35697,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 1010 lemmas used only within the file that proves
+The 1022 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -36296,10 +36321,13 @@ subsection per module, in the layer order of Appendices B and C.
 | `partialRun_assign_agree` | Assignments agree wherever the common verdicts determine them. |
 | `run_agree` | Safety: the adaptive fixpoint is unique. Two total runs over one universe — derived from any two views, … |
 
-### `Adaptive/Liveness.lean` (1)
+### `Adaptive/Liveness.lean` (4)
 
 | Lemma | Role |
 |:---|:---|
+| `Run.assign_eq` | The run's schedule is the policy's, as a function. |
+| `Run.commits_in_epoch` | Every epoch past the first carries `c` consecutive commits. |
+| `Run.live_of_staged` | The staged precondition, read at a total run's own schedule. |
 | `run_exists` | The adaptive fixpoint exists. Under a policy that places runs, with the protocol's precondition at every … |
 
 ### `Adaptive/Odontoceti.lean` (3)
@@ -37086,10 +37114,23 @@ subsection per module, in the layer order of Appendices B and C.
 | `horizonOptUniverse_toBlockUniverse` | — |
 | `horizonUniverse_noEquivocation` | No author of the horizon universe has two blocks in one round — Byzantine or not: block indices are … |
 
-### `Adaptive/Mysticeti.lean` (6)
+### `Adaptive/Growth.lean` (4)
 
 | Lemma | Role |
 |:---|:---|
+| `Policy.const_stable` | The constant policy is stable. |
+| `partialRun_agree_extends` | Partial runs agree across growth. A run on `U` and a run on an extension `U'`, from views one contained in … |
+| `partialRun_assign_agree_extends` | Assignments agree across growth wherever the common verdicts determine them. |
+| `run_agree_extends` | The fixpoint is a prefix of the fixpoint on any extension. Two total runs, on a universe and an extension … |
+
+### `Adaptive/Mysticeti.lean` (10)
+
+| Lemma | Role |
+|:---|:---|
+| `AdaptivePolicy.const_stable` | The constant policy is stable under extension. |
+| `adaptiveRun_agree_extends` | The adaptive fixpoint is a prefix of the fixpoint on any extension, under the core's persistence condition … |
+| `adaptiveRun_commits` | Every reliable-led slot past the first epoch commits, in every run, on a view caught up two rounds past it. |
+| `adaptiveRun_commits_in_epoch` | Every epoch past the first carries `c` consecutive commits, in every run — the liveness statement AL5 was … |
 | `adaptive_decided_agree` | The verdict form of uniqueness, in the shape of M6. |
 | `const_pick` | — |
 | `descends_slotsOf` | The core's descent, at every induced schedule. |
@@ -37281,10 +37322,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `voteBlocks_old` | The votes an old block casts are the votes it cast. |
 | `weakLinked_old` | — |
 
-### `Integration/AdaptiveReactive.lean` (2)
+### `Integration/AdaptiveReactive.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
+| `adaptiveRun_commits_reactive` | Reliable-led slots commit, reactively. In any run, a slot past the first epoch led by a member of `T` … |
 | `adaptiveRun_exists_reactive` | The adaptive fixpoint exists over reactive Mysticeti. Under a policy that places runs, with the reactive … |
 | `exists_partialRun_reactive` | Partial runs exist at every height, reactively. |
 

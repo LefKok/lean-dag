@@ -259,6 +259,9 @@ correspondences, take the union of the novel sets. Then a stack of
 mechanisms follows from its parts, which is what
 `Integration/Hydrozoan/Stack.lean` currently proves by hand, and any
 future transformer stacks with the existing ones without further work.
+That general form is not built. **One composition is**: the adaptive
+fixpoint under growth of the DAG, `Persist` composed with the schedule
+family (§4.4).
 
 ---
 
@@ -496,6 +499,47 @@ model, not of the rule.
   Hammerhead over reactive Mysticeti, from `Adaptive.run_exists` fed
   with `leaderCommits_reactive` and nothing else changed.
 
+### 4.4 Commits, and growth
+
+Two theorems close gaps the family left open when first built.
+
+**What the run commits.** Existence says every slot has a verdict.
+`Adaptive.Run.commits` says which are commits: at a `T`-led slot inside
+a live window of the run's own schedule the verdict is `some L`, by
+`LeaderCommits` and `Agree` through `Bounded`; `Run.commits_in_epoch`
+adds that under `PlacesRuns` every epoch past the first holds `c`
+consecutive commits. `Run.live_of_staged` reads the staged precondition
+at the total run's schedule, since that schedule is the policy's
+(`Run.assign_eq`). For the core, `adaptiveRun_commits_in_epoch` is the
+liveness statement AL5 was standing in for; for reactive Mysticeti,
+`adaptiveRun_commits_reactive`.
+
+**The fixpoint under growth** (`Adaptive/Growth.lean`). `run_agree` is
+agreement over one universe; a running system's DAG grows.
+`run_agree_extends`: a run on `U` and a run on an extension `U'`, from
+views one contained in the other, hold the same verdicts and the same
+schedule. This is the arc's first composition theorem — `Persist`
+composed with the schedule family — and the proof is the strong
+induction of `partialRun_agree` with one extra step per epoch: the
+smaller run's verdict is carried to the larger view by `Persist` at the
+smaller run's schedule, where the larger run's verdict also lives after
+`SchedLocal`, and `Agree` closes. So `Ok` is asked for at the smaller
+run's schedule; for the core that is `Quorate` there
+(`adaptiveRun_agree_extends`).
+
+It needed one clause the policy owes and nothing else does. `adapted`
+says the leader of a slot reads the verdict prefix and not the view,
+but it quantifies views over *one* universe; a policy that read the
+size of the universe would satisfy it and reassign differently at `U'`.
+`Policy.Stable` — the same leader for the same verdicts on an extension
+— closes this. A reputation rule reading committed blocks satisfies it,
+since extension preserves every old block (`Extends.block`); the
+constant policy does by `rfl`. It is a hypothesis of the theorem rather
+than a field of `Policy`, so no displayed statement changes and a
+policy that is not stable still has `run_agree`.
+
+Both are generic, and both depend on `propext` and `Quot.sound` only.
+
 Not done: the Odontoceti mirror (`Adaptive/Odontoceti.lean`, 415
 lines) still stands, now importing the core instance for the shared
 names; collapsing it to an instance is the next step, and the first
@@ -630,6 +674,7 @@ LeanDag/Properties/
   Compose.lean          transport composes                               (planned)
 
 LeanDag/Adaptive/{Basic,Policy,Run,Liveness}.lean   the mechanism, over BoundedRule
+LeanDag/Adaptive/Growth.lean             the fixpoint under Extends (§4.4)
 LeanDag/Adaptive/Mysticeti.lean          the core instance; the old statements as corollaries
 LeanDag/Integration/AdaptiveReactive.lean   Hammerhead over reactive Mysticeti
 
@@ -711,7 +756,8 @@ directory, hence the one flat module.
   reactive**): `BoundedRule`, `Agree`, `Bounded`, `SchedLocal`,
   `LeaderCommits`, `Descends`; `Adaptive/{Policy,Run,Liveness}` generic
   over them with the old statements as corollaries; the core and
-  reactive instances; `adaptiveRun_exists_reactive`. Remaining: collapse
+  reactive instances; `adaptiveRun_exists_reactive`; `Run.commits` and
+  `run_agree_extends` (§4.4). Remaining: collapse
   the `Adaptive` and `Reactive` Odontoceti mirrors onto instances;
   Hydrozoan's bounded relation.
 - **G6** Chain quality from fairness and self-reference.

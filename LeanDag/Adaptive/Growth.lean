@@ -1,0 +1,125 @@
+import LeanDag.Adaptive.Run
+import LeanDag.Properties.Persist
+
+/-!
+# The fixpoint under growth of the DAG
+
+`run_agree` is agreement over one universe. A running system's DAG
+grows, and the question a deployment asks is whether a validator's run
+at `U` is the prefix of another's at `U' ⊇ U`. This is the first
+composition theorem of the arc: `Persist` — the protocol's promise that
+a verdict survives extension — composed with the fixpoint.
+
+One clause is owed by the policy and by nothing else. `adapted` says
+the leader of a slot reads the verdict prefix and not the view, but it
+quantifies views over *one* universe; a policy that read the size of
+the universe would satisfy it and reassign differently at `U'`.
+`Policy.Stable` closes this: under extension the rule returns the same
+leader for the same verdicts. A reputation rule reading the committed
+blocks satisfies it, since extension preserves every old block
+(`Extends.block`); the constant policy satisfies it by `rfl`.
+
+The argument is the strong induction of `partialRun_agree` with one
+extra step at each epoch: the smaller run's verdict is carried to the
+larger view by `Persist`, at the smaller run's schedule, where the
+larger run's verdict also lives after `SchedLocal`, and the two agree
+by `Agree`. The persistence condition `Ok` is therefore asked for at
+the smaller run's schedule.
+-/
+
+namespace LeanDag
+
+namespace Adaptive
+
+open Properties
+
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
+variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
+variable [S : Slots Validator]
+
+/-- **Stability under extension.** The rule returns the same leader for
+the same verdicts on an extended universe. -/
+def Policy.Stable {R : DagRule Validator BlockId Payload} (P : Policy R) : Prop :=
+  ∀ (U U' : R.Universe), Extends R U U' → ∀ (V : R.View U) (V' : R.View U')
+    (v : ℕ → Option BlockId) (k : ℕ), P.pick U V v k = P.pick U' V' v k
+
+/-- The constant policy is stable. -/
+theorem Policy.const_stable {R : DagRule Validator BlockId Payload} (W : ℕ) (hW : 0 < W)
+    (hinj : Function.Injective S.slotRound) : (Policy.const (R := R) W hW hinj).Stable :=
+  fun _ _ _ _ _ _ _ => rfl
+
+section Growth
+
+variable {R : BoundedRule Validator BlockId Payload} {P : Policy R.toDagRule}
+variable {Ok : Slots Validator → ∀ (U _U' : R.Universe), R.View U → Prop}
+variable (hb : Bounded R) (ha : Agree R.toDagRule) (hl : SchedLocal R)
+variable (hp : Persist R.toDagRule Ok) (hst : P.Stable)
+include hb ha hl hp hst
+
+variable {U U' : R.Universe} {V : R.View U} {V' : R.View U'}
+
+/-- **Partial runs agree across growth.** A run on `U` and a run on an
+extension `U'`, from views one contained in the other, agree on the
+verdicts of their common epochs. -/
+theorem partialRun_agree_extends (hext : Extends R.toDagRule U U')
+    (hsub : R.viewIds V ⊆ R.viewIds V') {E E' : ℕ}
+    (A : PartialRun P U V E) (A' : PartialRun P U' V' E')
+    (hok : Ok (slotsOf P.inj A.assign) U U' V) :
+    ∀ k, epochOf P.W k < min E E' → A.vdct k = A'.vdct k := by
+  suffices main : ∀ e k, epochOf P.W k = e → epochOf P.W k < min E E' →
+      A.vdct k = A'.vdct k by
+    intro k hk; exact main _ k rfl hk
+  intro e
+  induction e using Nat.strong_induction_on with
+  | _ e ih =>
+    intro k hke hk
+    -- The assignments agree below this epoch's window: `Stable` carries
+    -- the smaller run's rule to `U'`, `adapted` the verdicts.
+    have hassign : ∀ m, m < P.W * (epochOf P.W k + 2) → A.assign m = A'.assign m := by
+      intro m hm
+      have hme : epochOf P.W m < epochOf P.W k + 2 := (epochOf_lt_iff P.W_pos).mpr hm
+      rw [A.coherent m (by omega), A'.coherent m (by omega), hst U U' hext V V' A.vdct m]
+      refine P.adapted U' V' V' A.vdct A'.vdct m (fun j hj => ?_)
+      exact ih (epochOf P.W j) (by omega) j rfl (by omega)
+    -- The smaller run's verdict, persisted to the larger view.
+    have h₁ : R.Decided (slotsOf P.inj A.assign) V' k (A.vdct k) :=
+      hp _ U U' hext V V' hok hsub k _ (hb.toDecided _ _ V k _ (A.closed k (by omega)))
+    -- The larger run's verdict, transported to the smaller run's schedule.
+    have h₂ : R.Decided (slotsOf P.inj A.assign) V' k (A'.vdct k) :=
+      hb.toDecided _ _ V' k _
+        (hl (slotsOf P.inj A'.assign) (slotsOf P.inj A.assign) rfl _
+          (fun m hm => (hassign m hm).symm) V' k _ (A'.closed k (by omega)))
+    exact ha _ V' V' k _ _ h₁ h₂
+
+/-- Assignments agree across growth wherever the common verdicts
+determine them. -/
+theorem partialRun_assign_agree_extends (hext : Extends R.toDagRule U U')
+    (hsub : R.viewIds V ⊆ R.viewIds V') {E E' : ℕ}
+    (A : PartialRun P U V E) (A' : PartialRun P U' V' E')
+    (hok : Ok (slotsOf P.inj A.assign) U U' V) :
+    ∀ m, epochOf P.W m < min E E' + 1 → A.assign m = A'.assign m := by
+  intro m hm
+  rw [A.coherent m (by omega), A'.coherent m (by omega), hst U U' hext V V' A.vdct m]
+  refine P.adapted U' V' V' A.vdct A'.vdct m (fun j hj => ?_)
+  exact partialRun_agree_extends hb ha hl hp hst hext hsub A A' hok j (by omega)
+
+/-- **The fixpoint is a prefix of the fixpoint on any extension.** Two
+total runs, on a universe and an extension of it, hold the same
+verdicts and run the same schedule. -/
+theorem run_agree_extends (hext : Extends R.toDagRule U U')
+    (hsub : R.viewIds V ⊆ R.viewIds V') (A : Run P U V) (A' : Run P U' V')
+    (hok : Ok (slotsOf P.inj A.assign) U U' V) :
+    (∀ k, A.vdct k = A'.vdct k) ∧ (∀ m, A.assign m = A'.assign m) := by
+  constructor
+  · intro k
+    exact partialRun_agree_extends hb ha hl hp hst hext hsub
+      (A.toPartial (epochOf P.W k + 1)) (A'.toPartial (epochOf P.W k + 1)) hok k (by omega)
+  · intro m
+    exact partialRun_assign_agree_extends hb ha hl hp hst hext hsub
+      (A.toPartial (epochOf P.W m + 1)) (A'.toPartial (epochOf P.W m + 1)) hok m (by omega)
+
+end Growth
+
+end Adaptive
+
+end LeanDag

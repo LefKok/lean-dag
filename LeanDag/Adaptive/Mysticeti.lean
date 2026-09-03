@@ -1,4 +1,5 @@
 import LeanDag.Adaptive.Liveness
+import LeanDag.Adaptive.Growth
 import LeanDag.MysticetiProperties
 
 /-!
@@ -228,6 +229,65 @@ theorem adaptiveRun_exists (hT : T ⊆ (Correct : Finset Validator))
         change S.slotRound k + 2 ≤ S.slotRound (P.W * (E + 2)) + 2
         omega⟩)
 
+/-! ## What the run commits, for the core -/
+
+/-- **Every reliable-led slot past the first epoch commits**, in every
+run, on a view caught up two rounds past it. -/
+theorem adaptiveRun_commits (hcard : quorumCard Validator ≤ T.card)
+    (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
+    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r)
+    {V : View Validator BlockId Payload U} (hcov : V.CoversUpto N) (A : AdaptiveRun P U V)
+    {k : ℕ} (hk : P.W ≤ k) (hN : S.slotRound k + 2 ≤ N) (hlead : A.assign k ∈ T) :
+    ∃ L, A.vdct k = some L :=
+  Adaptive.Run.commits bounded agree leaderCommits A (lo := P.W) (K := k + 1)
+    (show coreLive (slotsOf P.inj A.assign) V T P.W (k + 1) from
+      ⟨hcard, R, N, hs, hRW, hpop, hcov, fun j hj => by
+        have := S.mono (show j ≤ k by omega)
+        change S.slotRound j + 2 ≤ N
+        omega⟩)
+    hk (by omega) hlead
+
+/-- **Every epoch past the first carries `c` consecutive commits**, in
+every run — the liveness statement AL5 was standing in for. -/
+theorem adaptiveRun_commits_in_epoch (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : quorumCard Validator ≤ T.card) (hruns : PlacesRuns P T c)
+    (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
+    (hpop : ∀ r, Populated U r)
+    {V : View Validator BlockId Payload U} (hcov : ∀ N, V.CoversUpto N)
+    (A : AdaptiveRun P U V) (e : ℕ) :
+    ∃ b, P.W * (e + 1) ≤ b ∧ b + c ≤ P.W * (e + 2) ∧
+      ∀ i, i < c → ∃ L, A.vdct (b + i) = some L :=
+  Adaptive.Run.commits_in_epoch bounded agree leaderCommits hruns A e
+    (show coreLive (slotsOf P.inj A.assign) V T P.W (P.W * (e + 2)) from
+      ⟨hcard, R, S.slotRound (P.W * (e + 2)) + 2, hs, hRW,
+        fun r _ _ => PopulatedOn.mono hT (hpop r), hcov _, fun k hk => by
+          have := S.mono (le_of_lt hk)
+          change S.slotRound k + 2 ≤ S.slotRound (P.W * (e + 2)) + 2
+          omega⟩)
+
 end Existence
+
+/-! ## Growth, for the core -/
+
+/-- The constant policy is stable under extension. -/
+theorem AdaptivePolicy.const_stable (W : ℕ) (hW : 0 < W)
+    (hinj : Function.Injective S.slotRound) :
+    (AdaptivePolicy.const (Validator := Validator) (BlockId := BlockId) (Payload := Payload)
+      W hW hinj).Stable :=
+  Adaptive.Policy.const_stable W hW hinj
+
+/-- **The adaptive fixpoint is a prefix of the fixpoint on any
+extension**, under the core's persistence condition `Quorate` at the
+smaller run's schedule and a stable policy. -/
+theorem adaptiveRun_agree_extends {P : AdaptivePolicy Validator BlockId Payload}
+    {U' : BlockUniverse Validator BlockId Payload}
+    (hext : Extends (mysticetiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) U U')
+    {V : View Validator BlockId Payload U} {V' : View Validator BlockId Payload U'}
+    (hsub : V.ids ⊆ V'.ids) (hst : P.Stable)
+    (R₁ : AdaptiveRun P U V) (R₂ : AdaptiveRun P U' V')
+    (hok : Quorate (slotsOf P.inj R₁.assign) U U' V) :
+    (∀ k, R₁.vdct k = R₂.vdct k) ∧ (∀ m, R₁.assign m = R₂.assign m) :=
+  Adaptive.run_agree_extends bounded agree schedLocal persist hst hext hsub R₁ R₂ hok
 
 end LeanDag

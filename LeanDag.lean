@@ -46,6 +46,7 @@ import LeanDag.Adaptive.Basic
 import LeanDag.Adaptive.Policy
 import LeanDag.Adaptive.Run
 import LeanDag.Adaptive.Liveness
+import LeanDag.Adaptive.Growth
 import LeanDag.Adaptive.Mysticeti
 import LeanDag.Adaptive.Odontoceti
 import LeanDag.Hybrid.Faults
