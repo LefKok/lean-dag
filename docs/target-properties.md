@@ -261,10 +261,16 @@ semantic properties over the generic inductive relation that
 
 `transformer-interface.md` §2 proposed a generic inductive `Decided`
 with a `RuleSpec` of parameters, each protocol proving an equivalence
-to it. A partial build (`LeanDag/RuleSpec/Basic.lean`, four
-constructors, compiles) showed the schema is expressible and that
-`dom_of_decided` and `cand_of_decided` — the latter existing nine times
-in the repository — fall out of it.
+to it. A partial build — since removed — showed the schema is
+expressible in **four** constructors for all nine inductive relations,
+and that `dom_of_decided` and `cand_of_decided` fall out of it, the
+latter existing nine times in the repository. The shape, for the record
+should it be wanted again: `Dom` a slot domain, `Cand`, `Elig`,
+`Direct` as the disjunction of a protocol's commit paths, `Skip` as a
+predicate of the slot covering both the per-candidate and slot-level
+forms, `Rung : Fin m → …` ordered with a `Tie` flag per rung, and `lt`
+as a field rather than a `LinearOrder` instance so that a protocol
+whose rungs are unique need not carry one.
 
 It is nonetheless the wrong foundation:
 
@@ -274,10 +280,14 @@ It is nonetheless the wrong foundation:
 - The properties are what the mechanisms need. The schema is one way to
   discharge them, not a thing worth depending on.
 
-**The schema is therefore demoted, not discarded.** Prove the
-properties once for the generic relation, and a protocol that proves an
-equivalence inherits them; a protocol that does not fit proves the
-properties directly. Nothing depends on the schema being adequate.
+**The schema is therefore dropped, not merely demoted.** It was kept
+briefly as an optional shortcut — prove the properties once for the
+generic relation, and a conforming protocol inherits them — but nothing
+exercised it, and an unreferenced file asserting a role nothing plays
+is how a development rots. The idea survives here rather than in
+`LeanDag/`. If §9's per-protocol proofs turn heavy, the shape above
+reconstructs in an afternoon, and it should then be built against a
+worked instance rather than ahead of one.
 
 ---
 
