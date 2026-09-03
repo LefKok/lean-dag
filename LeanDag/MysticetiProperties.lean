@@ -1,4 +1,5 @@
 import LeanDag.Properties.Sustain
+import LeanDag.Properties.Persist
 import LeanDag.Liveness
 
 /-!
@@ -121,6 +122,217 @@ theorem directCommit_of_sustains (h : Sustains mysticetiRule U U' G R₀)
       rw [e] at this
       exact populatedOn_toCore this)
     (certifiesAt_of_sustains h hr hG hc)
+
+/-! ## Persistence, at the core's grade
+
+The second protocol to prove `Persist`, and the one that tests the
+grading. Hydrozoan needed no condition because its skip counts blames at
+the slot. The core's skip quantifies over candidates, so a slot with no
+candidate is skipped *vacuously* — and an extension can supply one. The
+condition below is what makes the new candidate skippable rather than
+merely present: the view already holds a quorum at the voting round of
+every slot the extension gives a candidate to, and every one of those
+blocks blames it, since old blocks reference only old blocks.
+
+This is `SafeSkip.QuorateOverGap`'s content, stated without the skip
+message: `QuorateOverGap` asks for the quorum at every gap round, and
+the gap rounds are exactly where a fill's candidates land. The condition
+is on the **view**, which is why `Persist`'s `Ok` had to see one. -/
+
+section Persist
+
+/-- The core's grade: at every slot the extension gives a new candidate,
+the view holds a quorum at the voting round. -/
+def Quorate (S : Slots Validator) (U U' : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) : Prop :=
+  ∀ k L, IsLeaderBlock (S := S) U' k L → L ∉ U.ids →
+    quorumCard Validator ≤ (creatorsOf U.block ((blocksAt U (S.slotRound k + 1)) ∩ V.ids)).card
+
+end Persist
+
+/-- The core's universes are block DAGs. -/
+theorem causal : Causal (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
+  fun U =>
+    { complete := fun i hi j hj => U.complete i hi j hj
+      refs_round := fun i hi j hj => U.round_of_mem_refs hi hj }
+
+/-- Two quorums share a correct validator, so a quorum is not empty. -/
+theorem quorumCard_pos : 0 < quorumCard Validator := by
+  have := (inferInstance : Faults Validator).card_validators; omega
+
+section PersistProof
+
+variable {U U' : BlockUniverse Validator BlockId Payload}
+
+theorem ext_block (he : Extends mysticetiRule U U') {b : BlockId} (hb : b ∈ U.ids) :
+    U'.block b = U.block b := he.block b hb
+
+theorem ext_mem (he : Extends mysticetiRule U U') {b : BlockId} (hb : b ∈ U.ids) :
+    b ∈ U'.ids := he.subset b hb
+
+/-- An old block votes for nothing the extension added. -/
+theorem not_mem_refs_novel (he : Extends mysticetiRule U U') {b L : BlockId}
+    (hb : b ∈ U.ids) (hL : L ∉ U.ids) : L ∉ (U'.block b).refs := by
+  rw [ext_block he hb]; exact fun hin => hL (U.complete b hb L hin)
+
+theorem blocksAt_subset (he : Extends mysticetiRule U U') (r : ℕ) :
+    blocksAt U r ⊆ blocksAt U' r := by
+  intro b hb
+  rw [mem_blocksAt] at hb ⊢
+  exact ⟨ext_mem he hb.1, by rw [ext_block he hb.1]; exact hb.2⟩
+
+theorem creatorsOf_old (he : Extends mysticetiRule U U') {s : Finset BlockId}
+    (hs : ∀ b ∈ s, b ∈ U.ids) : creatorsOf U'.block s = creatorsOf U.block s :=
+  Finset.image_congr fun i hi => by rw [ext_block he (hs i hi)]
+
+theorem isLeaderBlock_mono [S : Slots Validator] (he : Extends mysticetiRule U U') {k : ℕ} {L : BlockId}
+    (h : IsLeaderBlock U k L) : IsLeaderBlock U' k L := by
+  obtain ⟨hm, hr, hc⟩ := h
+  exact ⟨ext_mem he hm, by rw [ext_block he hm]; exact hr, by rw [ext_block he hm]; exact hc⟩
+
+theorem isLeaderBlock_old [S : Slots Validator] (he : Extends mysticetiRule U U') {k : ℕ} {L : BlockId}
+    (hL : L ∈ U.ids) (h : IsLeaderBlock U' k L) : IsLeaderBlock U k L := by
+  obtain ⟨_, hr, hc⟩ := h
+  rw [ext_block he hL] at hr hc
+  exact ⟨hL, hr, hc⟩
+
+/-- The votes an old certificate counts are the votes it counted. -/
+theorem votesIn_old (he : Extends mysticetiRule U U') {C L : BlockId} (hC : C ∈ U.ids) :
+    votesIn U' C L = votesIn U C L := by
+  unfold votesIn
+  rw [ext_block he hC]
+  refine Finset.filter_congr fun q hq => ?_
+  rw [ext_block he (U.complete C hC q hq)]
+
+theorem certifies_old (he : Extends mysticetiRule U U') {C L : BlockId} (hC : C ∈ U.ids) :
+    Certifies U' C L ↔ Certifies U C L := by
+  unfold Certifies
+  rw [votesIn_old he hC, creatorsOf_old he]
+  intro q hq
+  exact U.complete C hC q (Finset.mem_filter.mp hq).1
+
+theorem mem_certificates_old (he : Extends mysticetiRule U U') {C L : BlockId} {r : ℕ}
+    (hC : C ∈ U.ids) : C ∈ certificates U' L r ↔ C ∈ certificates U L r := by
+  simp only [certificates, Finset.mem_filter, mem_blocksAt]
+  rw [ext_block he hC, certifies_old he hC]
+  exact ⟨fun h => ⟨⟨hC, h.1.2⟩, h.2⟩, fun h => ⟨⟨ext_mem he hC, h.1.2⟩, h.2⟩⟩
+
+/-! ### The direct rules -/
+
+theorem directCommitIn_mono (he : Extends mysticetiRule U U')
+    {V : View Validator BlockId Payload U} {V' : View Validator BlockId Payload U'}
+    (hV : V.ids ⊆ V'.ids) {L : BlockId} {r : ℕ}
+    (h : DirectCommitIn U V L r) : DirectCommitIn U' V' L r := by
+  unfold DirectCommitIn at h ⊢
+  refine le_trans h (Finset.card_le_card ?_)
+  intro v hv
+  obtain ⟨C, hC, hvC⟩ := Finset.mem_image.mp hv
+  obtain ⟨hCc, hCV⟩ := Finset.mem_inter.mp hC
+  have hCU : C ∈ U.ids := (mem_blocksAt.mp (Finset.mem_filter.mp hCc).1).1
+  refine Finset.mem_image.mpr ⟨C, Finset.mem_inter.mpr
+    ⟨(mem_certificates_old he hCU).mpr hCc, hV hCV⟩, ?_⟩
+  rw [ext_block he hCU]; exact hvC
+
+/-- **An old candidate blamed before is blamed still.** -/
+theorem directSkipIn_mono (he : Extends mysticetiRule U U')
+    {V : View Validator BlockId Payload U} {V' : View Validator BlockId Payload U'}
+    (hV : V.ids ⊆ V'.ids) {L : BlockId} {r : ℕ}
+    (h : DirectSkipIn U V L r) : DirectSkipIn U' V' L r := by
+  unfold DirectSkipIn at h ⊢
+  refine le_trans h (Finset.card_le_card ?_)
+  intro v hv
+  obtain ⟨q, hq, hvq⟩ := Finset.mem_image.mp hv
+  obtain ⟨hqf, hqV⟩ := Finset.mem_inter.mp hq
+  obtain ⟨hqA, hqn⟩ := Finset.mem_filter.mp hqf
+  have hqU : q ∈ U.ids := (mem_blocksAt.mp hqA).1
+  refine Finset.mem_image.mpr ⟨q, Finset.mem_inter.mpr
+    ⟨Finset.mem_filter.mpr ⟨blocksAt_subset he _ hqA, ?_⟩, hV hqV⟩, ?_⟩
+  · rw [ext_block he hqU]; exact hqn
+  · rw [ext_block he hqU]; exact hvq
+
+/-- **A new candidate is blamed by every old block in view** — and the
+grade supplies a quorum of them. This is the one place the condition is
+consumed. -/
+theorem directSkipIn_novel (he : Extends mysticetiRule U U')
+    {V : View Validator BlockId Payload U} {V' : View Validator BlockId Payload U'}
+    (hV : V.ids ⊆ V'.ids) {L : BlockId} {r : ℕ} (hL : L ∉ U.ids)
+    (hq : quorumCard Validator ≤ (creatorsOf U.block ((blocksAt U (r + 1)) ∩ V.ids)).card) :
+    DirectSkipIn U' V' L r := by
+  unfold DirectSkipIn
+  refine le_trans hq (Finset.card_le_card ?_)
+  intro v hv
+  obtain ⟨q, hq', hvq⟩ := Finset.mem_image.mp hv
+  obtain ⟨hqA, hqV⟩ := Finset.mem_inter.mp hq'
+  have hqU : q ∈ U.ids := (mem_blocksAt.mp hqA).1
+  refine Finset.mem_image.mpr ⟨q, Finset.mem_inter.mpr
+    ⟨Finset.mem_filter.mpr ⟨blocksAt_subset he _ hqA, not_mem_refs_novel he hqU hL⟩, hV hqV⟩, ?_⟩
+  rw [ext_block he hqU]; exact hvq
+
+/-! ### The rung test -/
+
+theorem certifiedIn_old (he : Extends mysticetiRule U U') {A L : BlockId} {r : ℕ}
+    (hA : A ∈ U.ids) : CertifiedIn U' A L r ↔ CertifiedIn U A L r := by
+  unfold CertifiedIn
+  constructor
+  · rintro ⟨C, hC, hre⟩
+    obtain ⟨hreU, hCU⟩ := Extends.reaches_old causal he hA hre
+    exact ⟨C, (mem_certificates_old he hCU).mp hC, hreU⟩
+  · rintro ⟨C, hC, hre⟩
+    have hCU : C ∈ U.ids := (mem_blocksAt.mp (Finset.mem_filter.mp hC).1).1
+    exact ⟨C, (mem_certificates_old he hCU).mpr hC,
+      (Extends.reaches_iff causal he hA).mpr hre⟩
+
+/-- **A new candidate is certified by nothing an old anchor can see.** -/
+theorem not_certifiedIn_novel (he : Extends mysticetiRule U U') {A L : BlockId} {r : ℕ}
+    (hA : A ∈ U.ids) (hL : L ∉ U.ids) : ¬ CertifiedIn U' A L r := by
+  rintro ⟨C, hC, hre⟩
+  obtain ⟨-, hCU⟩ := Extends.reaches_old causal he hA hre
+  have hcert : Certifies U' C L := (Finset.mem_filter.mp hC).2
+  unfold Certifies at hcert
+  have hempty : votesIn U' C L = ∅ := by
+    rw [votesIn_old he hCU, Finset.eq_empty_iff_forall_notMem]
+    intro q hq
+    obtain ⟨hqref, hqv⟩ := Finset.mem_filter.mp hq
+    exact hL (U.complete q (U.complete C hCU q hqref) L hqv)
+  rw [hempty] at hcert
+  simp only [creatorsOf, Finset.image_empty, Finset.card_empty, Nat.le_zero] at hcert
+  exact absurd hcert (Nat.pos_iff_ne_zero.mp quorumCard_pos)
+
+/-! ### Persistence -/
+
+/-- **The core's verdicts survive an extension the grade admits.** Four
+cases; the condition is consumed in exactly one of them, for exactly the
+candidates the extension introduced. -/
+theorem persist_aux [S : Slots Validator] (he : Extends mysticetiRule U U')
+    {V : View Validator BlockId Payload U} {V' : View Validator BlockId Payload U'}
+    (hok : Quorate S U U' V) (hV : V.ids ⊆ V'.ids)
+    {k : ℕ} {v : Option BlockId} (hd : Decided U V k v) : Decided U' V' k v := by
+  induction hd with
+  | @directCommit k L hL hc =>
+      exact Decided.directCommit (isLeaderBlock_mono he hL) (directCommitIn_mono he hV hc)
+  | @directSkip k hs =>
+      refine Decided.directSkip fun L hL => ?_
+      by_cases hLo : L ∈ U.ids
+      · exact directSkipIn_mono he hV (hs L (isLeaderBlock_old he hLo hL))
+      · exact directSkipIn_novel he hV hLo (hok k L hL hLo)
+  | @indirectCommit k j A L hkj helig hanchor hmid hL hcert ihj ihmid =>
+      have hA : A ∈ U.ids := (isLeaderBlock_of_decided hanchor).1
+      exact Decided.indirectCommit hkj helig ihj (fun i h1 h2 he' => ihmid i h1 h2 he')
+        (isLeaderBlock_mono he hL) ((certifiedIn_old he hA).mpr hcert)
+  | @indirectSkip k j A hkj helig hanchor hmid hnocert ihj ihmid =>
+      have hA : A ∈ U.ids := (isLeaderBlock_of_decided hanchor).1
+      refine Decided.indirectSkip hkj helig ihj (fun i h1 h2 he' => ihmid i h1 h2 he') ?_
+      intro L hL hc
+      by_cases hLo : L ∈ U.ids
+      · exact hnocert L (isLeaderBlock_old he hLo hL) ((certifiedIn_old he hA).mp hc)
+      · exact not_certifiedIn_novel he hA hLo hc
+
+/-- **The core persists, at grade `Quorate`.** -/
+theorem persist : Persist (mysticetiRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)) (fun S U U' V => Quorate S U U' V) :=
+  fun S U U' he V V' hok hV k v hd => persist_aux (S := S) he hok hV hd
+
+end PersistProof
 
 end MysticetiProperties
 

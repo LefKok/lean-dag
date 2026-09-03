@@ -148,34 +148,37 @@ end Extends
 reached on `V` is reached again on any larger view of any extension the
 condition admits.
 
-`Ok` is where the grading lives. A protocol whose skip counts evidence
-at the slot proves this at `fun _ _ _ => True`; one whose skip
-quantifies over candidates cannot, and states the condition its
-vacuous skips need. -/
+`Ok` is where the grading lives, and it sees the **source view** as
+well as the two universes. The core's condition is on the view — a
+quorum of voting-round blocks *held*, to blame whatever candidate the
+extension adds — and a condition that could not see the view could not
+state it. A protocol whose skip counts evidence at the slot proves this
+at `fun _ _ _ _ => True`; one whose skip quantifies over candidates
+cannot, and states the condition its vacuous skips need. -/
 def Persist (R : DagRule Validator BlockId Payload)
-    (Ok : Slots Validator → R.Universe → R.Universe → Prop) : Prop :=
-  ∀ (S : Slots Validator) (U U' : R.Universe), Extends R U U' → Ok S U U' →
-    ∀ (V : R.View U) (V' : R.View U'), R.viewIds V ⊆ R.viewIds V' →
+    (Ok : Slots Validator → ∀ (U U' : R.Universe), R.View U → Prop) : Prop :=
+  ∀ (S : Slots Validator) (U U' : R.Universe), Extends R U U' →
+    ∀ (V : R.View U) (V' : R.View U'), Ok S U U' V → R.viewIds V ⊆ R.viewIds V' →
     ∀ (k : ℕ) (v : Option BlockId), R.Decided S V k v → R.Decided S V' k v
 
 namespace Persist
 
-variable {Ok Ok' : Slots Validator → R.Universe → R.Universe → Prop}
+variable {Ok Ok' : Slots Validator → ∀ (U U' : R.Universe), R.View U → Prop}
 
 /-- A protocol proving persistence under a weaker condition proves it
 under a stronger one, so the grades are comparable. -/
-theorem mono (h : Persist R Ok) (himp : ∀ S U U', Ok' S U U' → Ok S U U') :
+theorem mono (h : Persist R Ok) (himp : ∀ S U U' V, Ok' S U U' V → Ok S U U' V) :
     Persist R Ok' :=
-  fun S U U' he hok V V' hV k v hd => h S U U' he (himp S U U' hok) V V' hV k v hd
+  fun S U U' he V V' hok hV k v hd => h S U U' he V V' (himp S U U' V hok) hV k v hd
 
 /-- **The unconditional grade**, which is what an evidence-backed rule
 should reach: verdicts survive every extension. -/
 abbrev Unconditional (R : DagRule Validator BlockId Payload) : Prop :=
-  Persist R fun _ _ _ => True
+  Persist R fun _ _ _ _ => True
 
 /-- An unconditional rule persists under any condition whatsoever. -/
 theorem of_unconditional (h : Unconditional R) : Persist R Ok :=
-  mono h fun _ _ _ _ => trivial
+  mono h fun _ _ _ _ _ => trivial
 
 end Persist
 

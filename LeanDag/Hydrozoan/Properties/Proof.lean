@@ -329,7 +329,7 @@ theorem persist_aux (he : Extends rule U U') {V : LeanDag.Hydrozoan.View U}
 theorem holds : Statement := by
   intro Replica _ _ BlockId _ _ _
   refine ⟨causal, ?_, ?_, ?_, ?_⟩
-  · intro S U U' he _ V V' hV k v h
+  · intro S U U' he V V' _ hV k v h
     exact persist_aux (S := ofCoreSlots S) he hV h
   · intro S U U' r h V V' hv k hk v hd
     exact local_aux (S := ofCoreSlots S) h hv hd hk

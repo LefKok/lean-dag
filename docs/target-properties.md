@@ -137,7 +137,30 @@ predicts which protocols get the unconditional form — Hydrozoan,
 Optimal and Mahi-Mahi, whose skips are slot-level counts — and which
 need the condition — Mysticeti, Odontoceti, Hybrid and Adaptive, whose
 skips quantify over candidates. Nemo has no direct skip and nothing to
-break. The prediction is read off the survey and is not yet checked.
+break.
+
+**Two of those predictions are now theorems.** Hydrozoan proves
+`Persist.Unconditional` (HZ9). The core proves `Persist` at grade
+`Quorate` (`MysticetiProperties.persist`): at every slot the extension
+gives a new candidate, the view already holds a quorum at the voting
+round — and every one of those blocks blames the newcomer, since an old
+block references only old blocks. The condition is consumed in exactly
+one of the four cases, `directSkip`, for exactly the candidates the
+extension introduced. `SafeSkip.QuorateOverGap` implies it for the fill
+(`Arcs/SafeSkip.quorate_of_quorateOverGap`), and `SafeSkip.decided_fill`
+— a four-constructor induction — is re-derived from `persist` with none
+of its own (`decided_fill_of_persist`). The other five predictions
+remain read off the survey.
+
+**And the second instance found a defect in the property.** `Persist`'s
+side condition was `Ok : Slots → Universe → Universe → Prop`, and the
+core's actual condition, `QuorateOverGap`, is a condition on the
+**view** — a quorum of voting-round blocks *held*. The grade was not
+unproved for the core; it was unstatable. `Ok` now takes the source view.
+Hydrozoan's `Unconditional` ignores it and was unaffected. This is the
+third error the arc has caught, after the vacuous `Shifted` and the
+unfeedable `Sustains`, and the first caught by inspection rather than by
+a failed check — which is what a second instance is for.
 
 ### 3.3 Inertness, and what `Novel` is
 
@@ -539,8 +562,11 @@ directory, hence the one flat module.
   `qFast ≤ |T|` (§3.7), which is no induction at all. The protocol owes
   three inductions in total — persistence, locality, truncation — and no
   more, whatever mechanisms follow.
-- **G4** Discharge them for the core, giving the second instance.
-  **Reassess here.**
+- **G4** Discharge them for the core (**`Persist` done**, at grade
+  `Quorate`, with `SafeSkip.decided_fill` re-derived as the consumer
+  test). The second instance reshaped `Persist.Ok` before any proof was
+  attempted (§3.2). `Local`, `LocalTruncate` and `SkipsUnsupported` for
+  the core remain.
 - **G5** The schedule family: the slot domain, collapsing both the
   `Adaptive` and the `Reactive` duplications.
 - **G6** Chain quality from fairness and self-reference.
