@@ -24741,7 +24741,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 938 theorems that either another module of the
+The 941 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -26979,6 +26979,17 @@ theorem dos_resistance_of_pace {κ : ℕ}
 Production and the reference discipline are *derived* --- the first from genesis and the pacemaker's rules, the second from S5 through the induced layer --- so the only thing assumed beyond the pacing structure is the budget itself, which is the mechanism a validator runs. The two conclusions do not compete: liveness never needs a Byzantine block, and enforcing the budget never defers a correct one.
 
 ### Chain quality
+
+#### `mem_ids_of_decided`
+
+*theorem, `Quality.Coverage.lean`*
+
+```lean
+theorem mem_ids_of_decided {V : View Validator BlockId Payload U}
+    {k : ℕ} (h : Decided U V k (some L)) : L ∈ U.ids
+```
+
+**The arc's one rule-dependent step**: a committed block is a block. `Properties.CommitsCandidate` at the core, which is where the rest of this arc and `Quality/{Inclusion,Capstone}.lean` read it from.
 
 #### `card_coveredAt_ge_of_decided`
 
@@ -35775,6 +35786,17 @@ theorem descends {S : LeanDag.Slots Replica} {c : ℕ} (hc : 0 < c)
 
 **The descent as a property.**
 
+#### `commitsCandidate`
+
+*theorem, `Hydrozoan.Helpers.Commit.lean`*
+
+```lean
+theorem commitsCandidate :
+    CommitsCandidate (rule (Replica := Replica) (BlockId := BlockId))
+```
+
+**A commit names the slot's candidate.** Hydrozoan's `isLeaderBlock_of_decided` under the property's name. Four commit constructors, each carrying the premise; the discharge is the coercion.
+
 #### `decided_none_of_unsupported`
 
 *theorem, `Hydrozoan.Helpers.Skippability.lean`*
@@ -36596,6 +36618,17 @@ theorem banded : Banded
 
 **The core reads a band.**
 
+#### `commitsCandidate`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem commitsCandidate : CommitsCandidate
+    (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+```
+
+**A commit names the slot's candidate.** `isLeaderBlock_of_decided` under the property's name — one of seven such lemmas across the protocols, and the reason `Properties/Candidate.lean` exists.
+
 #### `persist`
 
 *theorem, `MysticetiProperties.lean`*
@@ -37118,7 +37151,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 925 lemmas used only within the file that proves
+The 929 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -37279,7 +37312,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `mem_heldOf` | — |
 | `toDelivery_held` | The induced layer reads the pacing structure's own holdings: what it records at round `n` is exactly what … |
 
-### `Quality/Coverage.lean` (5)
+### `Quality/Coverage.lean` (4)
 
 | Lemma | Role |
 |:---|:---|
@@ -37287,7 +37320,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `coveredAt_eq_sdiff` | Covered and missing partition the correct validators. |
 | `coveredAt_subset_correct` | — |
 | `mem_coveredAt` | — |
-| `mem_ids_of_decided` | The arc's one rule-dependent step: a committed block is a block. `Properties.CommitsCandidate` at the … |
 
 ### `Quality/Inclusion.lean` (1)
 
@@ -37624,18 +37656,24 @@ subsection per module, in the layer order of Appendices B and C.
 | `chopMsg_r0` | The rebased crash round: the truncation sees the gap starting `G` lower, as it sees every round. |
 | `chopMsg_v1` | The induced message keeps the anchor and the recovering validator, and its gap is the original's shifted — … |
 
-### `Integration/ReGenesis.lean` (8)
+### `Integration/ReGenesis.lean` (14)
 
 | Lemma | Role |
 |:---|:---|
 | `addGenesis_block_old` | — |
 | `addGenesis_sub_stack` | Re-genesis adds nothing the truncated fill lacks. Every block of the re-genesis universe over `chop U G` … |
+| `decided_addGenesis` | Verdicts survive re-genesis. The result this arc did not have: before the witnesses it said nothing about … |
+| `directCommit_addGenesis` | And the reactive commit survives it, from the rebase. |
+| `directCommit_rejoinChop` | And the reactive commit crosses the pair. A validator that restarted at the cut and then pruned again … |
+| `extends_addGenesis` | Re-genesis is an extension. It adds one block and touches no other, which is the whole of the safety side. |
 | `genesis_forced` | A restart is a genesis block, necessarily. If a validator has any block at all in a universe, it has one … |
 | `history_addGenesis` | Cones are unchanged, so every cone-based condition reads the same. |
 | `mem_addGenesis` | — |
 | `reaches_addGenesis` | Reachability is unchanged among old blocks: the new block references nothing, and nothing references it. |
 | `rejoin_populated` | — |
 | `stack_block_fresh_horizon` | The cut turns the boundary fill block into a genesis block. At a horizon inside the gap, `v1`'s filled … |
+| `sustains_addGenesis` | And it rebases from round one at no offset. The block it adds sits at round zero, so at and above round … |
+| `sustains_rejoinChop` | Rejoin, then prune. The two mechanisms compose without either knowing about the other: … |
 
 ### `Integration/Stack.lean` (4)
 
@@ -38667,11 +38705,10 @@ subsection per module, in the layer order of Appendices B and C.
 | `rule_ids` | — |
 | `rule_viewIds` | — |
 
-### `Hydrozoan/Helpers/Commit.lean` (4)
+### `Hydrozoan/Helpers/Commit.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
-| `commitsCandidate` | A commit names the slot's candidate. Hydrozoan's `isLeaderBlock_of_decided` under the property's name. … |
 | `decidedBelow_of_anchor` | The graded rule is total, at a bound. `decided_of_anchor` with the schedule dependence tracked: every rung … |
 | `decidedBelow_of_committed_run` | A committed run decides everything below it, at a bound. The existing descent with `DecidedBelow` in place … |
 | `eligibleAsAnchor_sched` | — |
@@ -38861,7 +38898,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `soundOn_skipFill` | The fill preserves it, above the gap. The synchrony round must clear the filled round: inside the gap the … |
 | `soundOn_stack` | The stack preserves it, the offsets composing exactly as the two statements above suggest: the fill … |
 
-### `MysticetiProperties.lean` (44)
+### `MysticetiProperties.lean` (43)
 
 | Lemma | Role |
 |:---|:---|
@@ -38878,7 +38915,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `certifies_band` | — |
 | `certifies_of_sustains` | The core's certificate predicate transports. |
 | `certifies_old` | — |
-| `commitsCandidate` | A commit names the slot's candidate. `isLeaderBlock_of_decided` under the property's name — one of seven … |
 | `creatorsOf_band` | — |
 | `creatorsOf_old` | — |
 | `decidedBelow_of_committed_run` | The committed-run descent. `c` consecutive commits decide every slot below them, and the derivations … |
@@ -39001,10 +39037,11 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `mono` | A protocol skipping under a weaker condition skips under a stronger one, so the grades compare. |
 
-### `Properties/Sustain.lean` (1)
+### `Properties/Sustain.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
+| `populatedOn_insert_of_extends` | An extension that seats one author seats the set. Given production by `T` in the source and a block by `v` … |
 | `votesAt_of` | Votes survive. A `T`-block one round above `r` is old, keeps its author and its references, so a vote it … |
 
 ### `WaveRobin.lean` (3)

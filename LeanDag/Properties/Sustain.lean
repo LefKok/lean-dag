@@ -1,4 +1,4 @@
-import LeanDag.Properties.Carrier
+import LeanDag.Properties.Extends
 
 /-!
 # What a mechanism owes a protocol, so liveness survives
@@ -64,6 +64,40 @@ def VotesAt (R : DagRule Validator BlockId Payload) (U : R.Universe)
 def PopulatedOn (R : DagRule Validator BlockId Payload) (U : R.Universe)
     (T : Finset Validator) (r : ℕ) : Prop :=
   ∀ v ∈ T, ∃ b, b ∈ R.ids U ∧ (R.block U b).round = r ∧ (R.block U b).creator = v
+
+/-! ## The additive half
+
+`Sustains` is a **negative** promise: above the settling round the
+mechanism changed nothing. Below it the relation is silent, and that is
+deliberate — it is where a fill substitutes for blocks that voted and a
+re-genesis seats a validator that had no chain at all.
+
+So a mechanism that repairs production owes a second thing, and it is
+not a second property. What each mechanism exhibits is one singleton —
+`PopulatedOn R U' {v} r`, the block it added — and the plumbing from
+there to the reliable set is derived from `Extends` alone. The fill and
+re-genesis each had their own copy of that plumbing before it was
+written down once. -/
+
+/-- **An extension that seats one author seats the set.** Given
+production by `T` in the source and a block by `v` in the target, the
+target has production by `T` with `v` added — old blocks survive an
+extension unchanged, and the new author is the singleton the mechanism
+supplies.
+
+`SafeSkip.skipFill_populatedOn` and `Integration.populatedOn_addGenesis`
+are this, at their own added blocks. -/
+theorem populatedOn_insert_of_extends {R : DagRule Validator BlockId Payload}
+    {U U' : R.Universe} {T : Finset Validator} {v : Validator} {r : ℕ}
+    (he : Extends R U U') (hnew : PopulatedOn R U' {v} r)
+    (hpop : PopulatedOn R U T r) :
+    PopulatedOn R U' (insert v T) r := by
+  intro w hw
+  rcases Finset.mem_insert.mp hw with rfl | hwT
+  · exact hnew w (Finset.mem_singleton_self w)
+  · obtain ⟨b, hb, hbr, hbc⟩ := hpop w hwT
+    exact ⟨b, he.subset b hb, by rw [he.block b hb]; exact hbr,
+      by rw [he.block b hb]; exact hbc⟩
 
 /-- **A mechanism sustains from round `R₀`**, re-indexing by `G`: this
 is `RebasedAbove`, under the name the obligation is owed in. The

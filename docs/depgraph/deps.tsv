@@ -818,6 +818,13 @@ EDGE	LeanDag.BlackMarlin.instDecidableSupported._aux_1	LeanDag.BlockUniverse
 EDGE	LeanDag.BlackMarlin.instDecidableSupported._aux_1	LeanDag.Faults.f
 EDGE	LeanDag.BlackMarlin.instDecidableSupported._aux_1	LeanDag.supporters
 EDGE	LeanDag.BlackMarlin.instDecidableSupported._aux_1	LeanDag.BlackMarlin.Supported
+NODE	LeanDag.Integration.sustains_addGenesis._proof_1_1	LeanDag.Integration.ReGenesis	thm
+EDGE	LeanDag.Integration.sustains_addGenesis._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.Integration.sustains_addGenesis._proof_1_1	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.Integration.sustains_addGenesis._proof_1_1	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.Integration.sustains_addGenesis._proof_1_1	LeanDag.BlockUniverse.block
+EDGE	LeanDag.Integration.sustains_addGenesis._proof_1_1	LeanDag.Block.round
+EDGE	LeanDag.Integration.sustains_addGenesis._proof_1_1	LeanDag.BlockUniverse
 NODE	LeanDag.CommitsAt	LeanDag.Liveness	def
 EDGE	LeanDag.CommitsAt	LeanDag.Faults
 EDGE	LeanDag.CommitsAt	LeanDag.View.full
@@ -1843,17 +1850,15 @@ EDGE	LeanDagTest.Hydrozoan.lk5	LeanDagTest.Hydrozoan.lk5._proof_12
 EDGE	LeanDagTest.Hydrozoan.lk5	LeanDagTest.Hydrozoan.lk5._proof_6
 EDGE	LeanDagTest.Hydrozoan.lk5	LeanDagTest.Hydrozoan.lk5._proof_9
 NODE	LeanDag.Integration.reaches_addGenesis	LeanDag.Integration.ReGenesis	thm
-EDGE	LeanDag.Integration.reaches_addGenesis	LeanDag.Block
-EDGE	LeanDag.Integration.reaches_addGenesis	LeanDag.Integration.addGenesis_block_old
-EDGE	LeanDag.Integration.reaches_addGenesis	LeanDag.RefStepFrom
 EDGE	LeanDag.Integration.reaches_addGenesis	LeanDag.Faults
-EDGE	LeanDag.Integration.reaches_addGenesis	LeanDag.BlockUniverse.complete
 EDGE	LeanDag.Integration.reaches_addGenesis	LeanDag.Integration.addGenesis
 EDGE	LeanDag.Integration.reaches_addGenesis	LeanDag.BlockUniverse.ids
-EDGE	LeanDag.Integration.reaches_addGenesis	LeanDag.Block.refs
+EDGE	LeanDag.Integration.reaches_addGenesis	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.Integration.reaches_addGenesis	LeanDag.Integration.extends_addGenesis
 EDGE	LeanDag.Integration.reaches_addGenesis	LeanDag.BlockUniverse.block
 EDGE	LeanDag.Integration.reaches_addGenesis	LeanDag.BlockUniverse
-EDGE	LeanDag.Integration.reaches_addGenesis	LeanDag.mem_ids_of_reaches
+EDGE	LeanDag.Integration.reaches_addGenesis	LeanDag.MysticetiProperties.causal
+EDGE	LeanDag.Integration.reaches_addGenesis	LeanDag.Properties.Extends.reaches_iff
 EDGE	LeanDag.Integration.reaches_addGenesis	LeanDag.Block.creator
 EDGE	LeanDag.Integration.reaches_addGenesis	LeanDag.Reaches
 NODE	LeanDag.Nemo.View	LeanDag.Nemo.Basic	ind
@@ -6176,6 +6181,9 @@ EDGE	LeanDag.Odontoceti.partialRun_agree._proof_1_2	LeanDag.Adaptive.Policy.W
 EDGE	LeanDag.Odontoceti.partialRun_agree._proof_1_2	LeanDag.AdaptivePolicy
 EDGE	LeanDag.Odontoceti.partialRun_agree._proof_1_2	LeanDag.Slots
 EDGE	LeanDag.Odontoceti.partialRun_agree._proof_1_2	LeanDag.Faults5.toFaults
+NODE	LeanDag.Integration.directCommit_addGenesis._proof_1_1	LeanDag.Integration.ReGenesis	thm
+EDGE	LeanDag.Integration.directCommit_addGenesis._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.Integration.directCommit_addGenesis._proof_1_1	LeanDag.Faults.f
 NODE	LeanDag.FinWhale.ofDoSValid_ids	LeanDag.FinWhale.DoSBridge	thm
 EDGE	LeanDag.FinWhale.ofDoSValid_ids	LeanDag.Faults
 EDGE	LeanDag.FinWhale.ofDoSValid_ids	LeanDag.FinWhale.Dag.ids
@@ -8176,6 +8184,18 @@ EDGE	LeanDag.DirectSkipSlotIn	LeanDag.Faults.f
 EDGE	LeanDag.DirectSkipSlotIn	LeanDag.Slots
 EDGE	LeanDag.DirectSkipSlotIn	LeanDag.View
 NODE	LeanDagTest.Hydrozoan.lk14._proof_6	LeanDagTest.Hydrozoan.LivenessHardening	thm
+NODE	LeanDag.Properties.populatedOn_insert_of_extends	LeanDag.Properties.Sustain	thm
+EDGE	LeanDag.Properties.populatedOn_insert_of_extends	LeanDag.Block
+EDGE	LeanDag.Properties.populatedOn_insert_of_extends	LeanDag.Properties.DagRule.ids
+EDGE	LeanDag.Properties.populatedOn_insert_of_extends	LeanDag.Properties.Extends.subset
+EDGE	LeanDag.Properties.populatedOn_insert_of_extends	LeanDag.Properties.PopulatedOn
+EDGE	LeanDag.Properties.populatedOn_insert_of_extends	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.Properties.populatedOn_insert_of_extends	LeanDag.Properties.Extends
+EDGE	LeanDag.Properties.populatedOn_insert_of_extends	LeanDag.Properties.Extends.block
+EDGE	LeanDag.Properties.populatedOn_insert_of_extends	LeanDag.Block.round
+EDGE	LeanDag.Properties.populatedOn_insert_of_extends	LeanDag.Properties.DagRule
+EDGE	LeanDag.Properties.populatedOn_insert_of_extends	LeanDag.Block.creator
+EDGE	LeanDag.Properties.populatedOn_insert_of_extends	LeanDag.Properties.DagRule.Universe
 NODE	LeanDagTest.FinWhale.fastValid	LeanDagTest.FinWhale.Model	thm
 EDGE	LeanDagTest.FinWhale.fastValid	LeanDag.FinWhale.ValidHere.mk
 EDGE	LeanDagTest.FinWhale.fastValid	LeanDagTest.FinWhale.fwLeader
@@ -19398,6 +19418,18 @@ NODE	LeanDag.Hydrozoan.EligibleAsAnchor	LeanDag.Hydrozoan.Model.IndirectRules	de
 EDGE	LeanDag.Hydrozoan.EligibleAsAnchor	LeanDag.Hydrozoan.Slots
 EDGE	LeanDag.Hydrozoan.EligibleAsAnchor	LeanDag.Hydrozoan.decisionRound
 EDGE	LeanDag.Hydrozoan.EligibleAsAnchor	LeanDag.Hydrozoan.Slots.slotRound
+NODE	LeanDag.Integration.extends_addGenesis	LeanDag.Integration.ReGenesis	thm
+EDGE	LeanDag.Integration.extends_addGenesis	LeanDag.Integration.addGenesis_block_old
+EDGE	LeanDag.Integration.extends_addGenesis	LeanDag.Properties.DagRule.ids
+EDGE	LeanDag.Integration.extends_addGenesis	LeanDag.Faults
+EDGE	LeanDag.Integration.extends_addGenesis	LeanDag.Integration.addGenesis
+EDGE	LeanDag.Integration.extends_addGenesis	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.Integration.extends_addGenesis	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.Integration.extends_addGenesis	LeanDag.Properties.Extends
+EDGE	LeanDag.Integration.extends_addGenesis	LeanDag.BlockUniverse.block
+EDGE	LeanDag.Integration.extends_addGenesis	LeanDag.BlockUniverse
+EDGE	LeanDag.Integration.extends_addGenesis	LeanDag.Properties.Extends.mk
+EDGE	LeanDag.Integration.extends_addGenesis	LeanDag.Block.creator
 NODE	LeanDag.BlackMarlin.Pace.concludesAt_of_sustained._proof_1_6	LeanDag.BlackMarlin.Helpers.Reactive	thm
 EDGE	LeanDag.BlackMarlin.Pace.concludesAt_of_sustained._proof_1_6	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.Pace.concludesAt_of_sustained._proof_1_6	LeanDag.BlockUniverse.block
@@ -27354,6 +27386,21 @@ EDGE	LeanDagTest.BlackMarlin.bmFullBlk	LeanDag.Block.mk
 EDGE	LeanDagTest.BlackMarlin.bmFullBlk	LeanDagTest.BlackMarlin.bmFullBlk._proof_1
 NODE	LeanDag.Minnow.CommittedAt.match_1.eq_1	LeanDag.Minnow.Blocking	thm
 EDGE	LeanDag.Minnow.CommittedAt.match_1.eq_1	LeanDag.Minnow.CommittedAt.match_1
+NODE	LeanDag.Integration.directCommit_addGenesis	LeanDag.Integration.ReGenesis	thm
+EDGE	LeanDag.Integration.directCommit_addGenesis	LeanDag.MysticetiProperties.directCommit_of_sustains
+EDGE	LeanDag.Integration.directCommit_addGenesis	LeanDag.Faults
+EDGE	LeanDag.Integration.directCommit_addGenesis	LeanDag.Integration.directCommit_addGenesis._proof_1_1
+EDGE	LeanDag.Integration.directCommit_addGenesis	LeanDag.DirectCommit
+EDGE	LeanDag.Integration.directCommit_addGenesis	LeanDag.Integration.addGenesis
+EDGE	LeanDag.Integration.directCommit_addGenesis	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.Integration.directCommit_addGenesis	LeanDag.DirectCommit.congr_simp
+EDGE	LeanDag.Integration.directCommit_addGenesis	LeanDag.BlockUniverse.block
+EDGE	LeanDag.Integration.directCommit_addGenesis	LeanDag.Integration.sustains_addGenesis
+EDGE	LeanDag.Integration.directCommit_addGenesis	LeanDag.PopulatedOn
+EDGE	LeanDag.Integration.directCommit_addGenesis	LeanDag.CertifiesAt
+EDGE	LeanDag.Integration.directCommit_addGenesis	LeanDag.BlockUniverse
+EDGE	LeanDag.Integration.directCommit_addGenesis	LeanDag.Faults.f
+EDGE	LeanDag.Integration.directCommit_addGenesis	LeanDag.Block.creator
 NODE	LeanDagTest.Barnacle.u44_commit2	LeanDagTest.Barnacle.Heads	thm
 EDGE	LeanDagTest.Barnacle.u44_commit2	LeanDag.Barnacle.BaseRule.Decided
 EDGE	LeanDagTest.Barnacle.u44_commit2	LeanDag.View.full
@@ -33721,6 +33768,19 @@ EDGE	LeanDag.BlackMarlin.Pace.concludesAt_of_holds._proof_1_2	LeanDag.BlockUnive
 EDGE	LeanDag.BlackMarlin.Pace.concludesAt_of_holds._proof_1_2	LeanDag.Block.round
 EDGE	LeanDag.BlackMarlin.Pace.concludesAt_of_holds._proof_1_2	LeanDag.BlockUniverse
 EDGE	LeanDag.BlackMarlin.Pace.concludesAt_of_holds._proof_1_2	LeanDag.Faults.f
+NODE	LeanDag.Integration.decided_addGenesis	LeanDag.Integration.ReGenesis	thm
+EDGE	LeanDag.Integration.decided_addGenesis	LeanDag.Faults
+EDGE	LeanDag.Integration.decided_addGenesis	LeanDag.MysticetiProperties.persist
+EDGE	LeanDag.Integration.decided_addGenesis	LeanDag.Integration.addGenesis
+EDGE	LeanDag.Integration.decided_addGenesis	LeanDag.Decided
+EDGE	LeanDag.Integration.decided_addGenesis	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.Integration.decided_addGenesis	LeanDag.Integration.extends_addGenesis
+EDGE	LeanDag.Integration.decided_addGenesis	LeanDag.BlockUniverse.block
+EDGE	LeanDag.Integration.decided_addGenesis	LeanDag.View.ids
+EDGE	LeanDag.Integration.decided_addGenesis	LeanDag.BlockUniverse
+EDGE	LeanDag.Integration.decided_addGenesis	LeanDag.Slots
+EDGE	LeanDag.Integration.decided_addGenesis	LeanDag.View
+EDGE	LeanDag.Integration.decided_addGenesis	LeanDag.Block.creator
 NODE	LeanDagTest.Uhyb9	LeanDagTest.Hybrid	def
 EDGE	LeanDagTest.Uhyb9	LeanDagTest.Uhyb9._proof_1
 EDGE	LeanDagTest.Uhyb9	LeanDag.HybridFaults.toFaults
@@ -44643,6 +44703,21 @@ EDGE	LeanDag.Properties.Causal	LeanDag.Properties.DagRule.block
 EDGE	LeanDag.Properties.Causal	LeanDag.CausalStructure
 EDGE	LeanDag.Properties.Causal	LeanDag.Properties.DagRule
 EDGE	LeanDag.Properties.Causal	LeanDag.Properties.DagRule.Universe
+NODE	LeanDag.Integration.directCommit_rejoinChop	LeanDag.Integration.ReGenesis	thm
+EDGE	LeanDag.Integration.directCommit_rejoinChop	LeanDag.MysticetiProperties.directCommit_of_sustains
+EDGE	LeanDag.Integration.directCommit_rejoinChop	LeanDag.Faults
+EDGE	LeanDag.Integration.directCommit_rejoinChop	LeanDag.DirectCommit
+EDGE	LeanDag.Integration.directCommit_rejoinChop	LeanDag.Integration.addGenesis
+EDGE	LeanDag.Integration.directCommit_rejoinChop	LeanDag.chop
+EDGE	LeanDag.Integration.directCommit_rejoinChop	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.Integration.directCommit_rejoinChop	LeanDag.Integration.sustains_rejoinChop
+EDGE	LeanDag.Integration.directCommit_rejoinChop	LeanDag.BlockUniverse.block
+EDGE	LeanDag.Integration.directCommit_rejoinChop	LeanDag.PopulatedOn
+EDGE	LeanDag.Integration.directCommit_rejoinChop	LeanDag.CertifiesAt
+EDGE	LeanDag.Integration.directCommit_rejoinChop	LeanDag.BlockUniverse
+EDGE	LeanDag.Integration.directCommit_rejoinChop	LeanDag.Faults.f
+EDGE	LeanDag.Integration.directCommit_rejoinChop	LeanDag.Integration.directCommit_rejoinChop._proof_1_1
+EDGE	LeanDag.Integration.directCommit_rejoinChop	LeanDag.Block.creator
 NODE	LeanDagTest.ugrowLag._proof_50	LeanDagTest.Collapse	thm
 EDGE	LeanDagTest.ugrowLag._proof_50	LeanDagTest.Ugrow
 EDGE	LeanDagTest.ugrowLag._proof_50	LeanDag.BlockUniverse.block
@@ -45498,6 +45573,9 @@ EDGE	LeanDag.ValidWrt.refs_nonempty._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.ValidWrt.refs_nonempty._proof_1_1	LeanDag.Block.refs
 EDGE	LeanDag.ValidWrt.refs_nonempty._proof_1_1	LeanDag.Block.round
 EDGE	LeanDag.ValidWrt.refs_nonempty._proof_1_1	LeanDag.Faults.f
+NODE	LeanDag.Integration.directCommit_rejoinChop._proof_1_1	LeanDag.Integration.ReGenesis	thm
+EDGE	LeanDag.Integration.directCommit_rejoinChop._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.Integration.directCommit_rejoinChop._proof_1_1	LeanDag.Faults.f
 NODE	LeanDag.Barnacle.everyHeight	LeanDag.Barnacle.Helpers.Progress	thm
 EDGE	LeanDag.Barnacle.everyHeight	LeanDag.Barnacle.Params.maxLeaders
 EDGE	LeanDag.Barnacle.everyHeight	LeanDag.Barnacle.BaseRule.Universe
@@ -55811,6 +55889,25 @@ EDGE	LeanDag.Odontoceti.decided_below_of_committed_run._proof_1_4	LeanDag.Odonto
 EDGE	LeanDag.Odontoceti.decided_below_of_committed_run._proof_1_4	LeanDag.View
 EDGE	LeanDag.Odontoceti.decided_below_of_committed_run._proof_1_4	LeanDag.Faults5.toFaults
 NODE	LeanDag.Hybrid.mem_coneSupports._simp_1_3	LeanDag.Hybrid.Rules	thm
+NODE	LeanDag.Integration.sustains_addGenesis	LeanDag.Integration.ReGenesis	thm
+EDGE	LeanDag.Integration.sustains_addGenesis	LeanDag.Integration.addGenesis_block_new
+EDGE	LeanDag.Integration.sustains_addGenesis	LeanDag.Block
+EDGE	LeanDag.Integration.sustains_addGenesis	LeanDag.Properties.Sustains
+EDGE	LeanDag.Integration.sustains_addGenesis	LeanDag.Integration.addGenesis_block_old
+EDGE	LeanDag.Integration.sustains_addGenesis	LeanDag.Properties.DagRule.ids
+EDGE	LeanDag.Integration.sustains_addGenesis	LeanDag.Faults
+EDGE	LeanDag.Integration.sustains_addGenesis	LeanDag.Properties.RebasedAbove.mk
+EDGE	LeanDag.Integration.sustains_addGenesis	LeanDag.Integration.addGenesis
+EDGE	LeanDag.Integration.sustains_addGenesis	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.Integration.sustains_addGenesis	LeanDag.Block.mk
+EDGE	LeanDag.Integration.sustains_addGenesis	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.Integration.sustains_addGenesis	LeanDag.Block.refs
+EDGE	LeanDag.Integration.sustains_addGenesis	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.Integration.sustains_addGenesis	LeanDag.BlockUniverse.block
+EDGE	LeanDag.Integration.sustains_addGenesis	LeanDag.Block.round
+EDGE	LeanDag.Integration.sustains_addGenesis	LeanDag.BlockUniverse
+EDGE	LeanDag.Integration.sustains_addGenesis	LeanDag.Integration.sustains_addGenesis._proof_1_1
+EDGE	LeanDag.Integration.sustains_addGenesis	LeanDag.Block.creator
 NODE	LeanDag.FinWhale.sees_of_commits_of_held._proof_1_4	LeanDag.FinWhale.View	thm
 EDGE	LeanDag.FinWhale.sees_of_commits_of_held._proof_1_4	LeanDag.Faults
 EDGE	LeanDag.FinWhale.sees_of_commits_of_held._proof_1_4	LeanDag.FinWhale.Dag.block
@@ -74551,17 +74648,23 @@ EDGE	LeanDagTest.Hydrozoan.lk6e	LeanDagTest.Hydrozoan.lk6e._proof_2
 NODE	LeanDag.Integration.populatedOn_addGenesis	LeanDag.Integration.ReGenesis	thm
 EDGE	LeanDag.Integration.populatedOn_addGenesis	LeanDag.Integration.addGenesis_block_new
 EDGE	LeanDag.Integration.populatedOn_addGenesis	LeanDag.Block
-EDGE	LeanDag.Integration.populatedOn_addGenesis	LeanDag.Integration.addGenesis_block_old
+EDGE	LeanDag.Integration.populatedOn_addGenesis	LeanDag.Properties.DagRule.ids
 EDGE	LeanDag.Integration.populatedOn_addGenesis	LeanDag.Faults
 EDGE	LeanDag.Integration.populatedOn_addGenesis	LeanDag.Integration.mem_addGenesis
+EDGE	LeanDag.Integration.populatedOn_addGenesis	LeanDag.Properties.populatedOn_insert_of_extends
 EDGE	LeanDag.Integration.populatedOn_addGenesis	LeanDag.Integration.addGenesis
+EDGE	LeanDag.Integration.populatedOn_addGenesis	LeanDag.Properties.DagRule.block
 EDGE	LeanDag.Integration.populatedOn_addGenesis	LeanDag.Block.mk
 EDGE	LeanDag.Integration.populatedOn_addGenesis	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.Integration.populatedOn_addGenesis	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.Integration.populatedOn_addGenesis	LeanDag.Integration.extends_addGenesis
 EDGE	LeanDag.Integration.populatedOn_addGenesis	LeanDag.BlockUniverse.block
 EDGE	LeanDag.Integration.populatedOn_addGenesis	LeanDag.Block.round
 EDGE	LeanDag.Integration.populatedOn_addGenesis	LeanDag.PopulatedOn
 EDGE	LeanDag.Integration.populatedOn_addGenesis	LeanDag.BlockUniverse
+EDGE	LeanDag.Integration.populatedOn_addGenesis	LeanDag.MysticetiProperties.populatedOn_ofCore
 EDGE	LeanDag.Integration.populatedOn_addGenesis	LeanDag.Block.creator
+EDGE	LeanDag.Integration.populatedOn_addGenesis	LeanDag.MysticetiProperties.populatedOn_toCore
 NODE	LeanDagTest.Barnacle.Majority.S3._proof_1	LeanDagTest.Barnacle.Majority	thm
 NODE	LeanDag.BlackMarlin.Pace.built_lt	LeanDag.BlackMarlin.Model.Round	thm
 EDGE	LeanDag.BlackMarlin.Pace.built_lt	LeanDag.Faults
@@ -75826,6 +75929,20 @@ EDGE	LeanDag.Hybrid.not_directSkip_of_directCommit	LeanDag.HybridFaults.fb
 EDGE	LeanDag.Hybrid.not_directSkip_of_directCommit	LeanDag.blames
 EDGE	LeanDag.Hybrid.not_directSkip_of_directCommit	LeanDag.HybridFaults.byzantine
 EDGE	LeanDag.Hybrid.not_directSkip_of_directCommit	LeanDag.HybridFaults.card_validators
+NODE	LeanDag.Integration.sustains_rejoinChop	LeanDag.Integration.ReGenesis	thm
+EDGE	LeanDag.Integration.sustains_rejoinChop	LeanDag.Properties.RebasedAbove.trans
+EDGE	LeanDag.Integration.sustains_rejoinChop	LeanDag.Properties.Sustains
+EDGE	LeanDag.Integration.sustains_rejoinChop	LeanDag.Properties.Arcs.sustains_chop
+EDGE	LeanDag.Integration.sustains_rejoinChop	LeanDag.Faults
+EDGE	LeanDag.Integration.sustains_rejoinChop	LeanDag.Integration.addGenesis
+EDGE	LeanDag.Integration.sustains_rejoinChop	LeanDag.chop
+EDGE	LeanDag.Integration.sustains_rejoinChop	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.Integration.sustains_rejoinChop	LeanDag.Properties.RebasedAbove
+EDGE	LeanDag.Integration.sustains_rejoinChop	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.Integration.sustains_rejoinChop	LeanDag.BlockUniverse.block
+EDGE	LeanDag.Integration.sustains_rejoinChop	LeanDag.Integration.sustains_addGenesis
+EDGE	LeanDag.Integration.sustains_rejoinChop	LeanDag.BlockUniverse
+EDGE	LeanDag.Integration.sustains_rejoinChop	LeanDag.Block.creator
 NODE	LeanDag.Adaptive.exists_partialRun._proof_1_10	LeanDag.Adaptive.Liveness	thm
 EDGE	LeanDag.Adaptive.exists_partialRun._proof_1_10	LeanDag.Adaptive.Policy
 EDGE	LeanDag.Adaptive.exists_partialRun._proof_1_10	LeanDag.epochOf
@@ -76424,6 +76541,10 @@ EDGE	LeanDag.Barnacle.Conservativity.ConstDecided	LeanDag.Barnacle.Keyed
 EDGE	LeanDag.Barnacle.Conservativity.ConstDecided	LeanDag.Barnacle.PartialRun.start
 EDGE	LeanDag.Barnacle.Conservativity.ConstDecided	LeanDag.Barnacle.constRule
 EDGE	LeanDag.Barnacle.Conservativity.ConstDecided	LeanDag.Barnacle.BaseRule
+NODE	LeanDag.DirectCommit.congr_simp	LeanDag.Integration.ReGenesis	thm
+EDGE	LeanDag.DirectCommit.congr_simp	LeanDag.Faults
+EDGE	LeanDag.DirectCommit.congr_simp	LeanDag.DirectCommit
+EDGE	LeanDag.DirectCommit.congr_simp	LeanDag.BlockUniverse
 NODE	LeanDag.OptimalHydrozoan.decidableSkippedLeaderOptInView	LeanDag.OptimalHydrozoan.Helpers.DirectRules	def
 EDGE	LeanDag.OptimalHydrozoan.decidableSkippedLeaderOptInView	LeanDag.Hydrozoan.BlockUniverse
 EDGE	LeanDag.OptimalHydrozoan.decidableSkippedLeaderOptInView	LeanDag.Hydrozoan.Slots

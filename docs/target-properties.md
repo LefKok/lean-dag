@@ -659,6 +659,58 @@ validity — that a block references a quorum of the round below — which
 would need that as a new law; this property is only its rule-dependent
 step, and the step was the part that was duplicated.
 
+## 3.10 Re-genesis, and what closure looks like
+
+Re-genesis restarts a validator whose whole history fell below a
+horizon, by seating it with a reference-free block at round zero
+(`Integration/ReGenesis.lean`). It was the fourth DAG-transforming
+mechanism to be put through the properties, and **it needed no new
+property.** That is the first evidence in this branch that the
+collection is complete for a class of mechanism rather than merely
+adequate to the cases that motivated it.
+
+What it owes is two witnesses, the same two any such mechanism owes:
+
+| | witness | why |
+|---|---|---|
+| safety | `Extends rule V (addGenesis …)` | it only adds a block |
+| liveness | `Sustains rule V (addGenesis …) 0 1` | the block it adds sits at round zero |
+
+Everything else followed.
+
+- **Verdicts survive re-genesis**, which this arc did not have in any
+  form: before the witnesses `ReGenesis.lean` mentioned `Decided` zero
+  times, so a validator that rejoined had no guarantee that what it had
+  already output still stood. One application of `Persist`.
+- **The reactive commit survives it**, from the rebase.
+- **`reaches_addGenesis` collapses.** It was two nested inductions over
+  `ReflTransGen`, twenty-nine lines, and it is
+  `Properties.Extends.reaches_iff` — a lemma every extension already
+  had, which this arc was re-proving for its own.
+- **Rejoin-then-prune composes**, by `RebasedAbove.trans` on the two
+  rebases, with the reactive commit crossing the pair. `chop_addGenesis`
+  proves a related fact by hand as an equality of universes; this is the
+  transportable form.
+
+**The one thing that looked like a gap, and was not.** `Sustains` is a
+*negative* promise — above the settling round the mechanism changed
+nothing — and it is silent below, which is exactly where a fill and a
+re-genesis do their work. The fill and re-genesis each carried their own
+copy of the additive plumbing (`skipFill_populatedOn`,
+`populatedOn_addGenesis`). That plumbing is derived from `Extends`
+alone: `populatedOn_insert_of_extends` takes an extension and one
+singleton `PopulatedOn U' {v} r` and gives the reliable set with the
+author added. What each mechanism supplies is the singleton — the gap
+block, the genesis block — which is its own content, not a property.
+
+**What no property reaches.** A re-genesis block is valid *in the
+truncation* and not in the universe it came from: at round `G > 0` of
+the original, a reference-free block violates the predecessor rule. So
+validators retaining more history must accept a block their own rules
+reject. That is an agreement problem about per-validator horizons, not a
+property of a rule or a promise of a mechanism, and the file header is
+right to record it rather than formalise it here.
+
 ## 4. Properties for the schedule mechanisms
 
 `Barnacle.BaseRule` and its `Laws` are one working interface: any two
@@ -1447,10 +1499,9 @@ slots when it means a dependence bound — *the verdict is settled by slot
    survived both, so the shape is no longer in doubt.
 4. **~~A commit names the slot's candidate~~** (**done**, §3.9).
    `CommitsCandidate`, which seven protocols had proved separately.
-5. **Re-genesis as an `Extends`**, the cheapest of the uncovered
-   mechanisms: `addGenesis` is `insert g V.ids` with old blocks
-   unchanged, so `Persist` transports verdicts once the witness is
-   written.
+5. **~~Re-genesis as an `Extends`~~** (**done**, §3.10). Two witnesses
+   and no new property — the first DAG-transforming mechanism added to
+   this development without one.
 6. **A view-level `Sustains`.** `DoS/` builds no universe — its only
    constructor is `View.ofAccepted` — so rate limiting and the joiner
    are view-level mechanisms and `Sustains` does not describe them.

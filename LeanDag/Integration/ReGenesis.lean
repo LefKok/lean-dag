@@ -1,5 +1,7 @@
 import LeanDag.Integration.Retention
 import LeanDag.GC.Horizon
+import LeanDag.Properties.Compose
+import LeanDag.Properties.Arcs.GC
 
 /-!
 # Re-genesis: restarting a severed chain at the cut
@@ -40,9 +42,9 @@ namespace LeanDag
 
 namespace Integration
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator]
-variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
+variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 
 /-- **Re-genesis.** A universe extended with one reference-free block at
 round `0`, for a validator that has none.
@@ -125,6 +127,116 @@ theorem mem_addGenesis {hg : g ∉ V.ids}
     {hsev : ∀ b ∈ V.ids, (V.block b).creator ≠ v} :
     g ∈ (addGenesis V v g p hg hsev).ids := Finset.mem_insert_self _ _
 
+/-! ## Re-genesis through the properties
+
+The mechanism owes two witnesses and nothing else. Everything this arc
+needs of a decision rule, and everything the next mechanism will need of
+this one, follows from them — which is the first time a
+DAG-transforming mechanism has been added to this development without a
+new obligation.
+
+`Extends` because re-genesis only adds a block, and `Sustains` from
+round one because the block it adds sits at round zero. -/
+
+section Properties
+
+variable {hg : g ∉ V.ids} {hsev : ∀ b ∈ V.ids, (V.block b).creator ≠ v}
+
+/-- **Re-genesis is an extension.** It adds one block and touches no
+other, which is the whole of the safety side. -/
+theorem extends_addGenesis :
+    Properties.Extends (MysticetiProperties.mysticetiRule (Payload := Payload))
+      V (addGenesis V v g p hg hsev) where
+  subset := fun b hb => Finset.mem_insert_of_mem hb
+  block := fun b hb =>
+    addGenesis_block_old (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev) hb
+
+/-- **And it rebases from round one at no offset.** The block it adds
+sits at round zero, so at and above round one the two universes hold the
+same blocks. Below that the relation says nothing, which is exactly
+where the mechanism does its work. -/
+theorem sustains_addGenesis :
+    Properties.Sustains (MysticetiProperties.mysticetiRule (Payload := Payload))
+      V (addGenesis V v g p hg hsev) 0 1 where
+  mem := fun b => by
+    show (b ∈ V.ids ∧ 1 ≤ (V.block b).round) ↔
+      (b ∈ (addGenesis V v g p hg hsev).ids ∧
+        1 ≤ ((addGenesis V v g p hg hsev).block b).round + 0)
+    constructor
+    · rintro ⟨hb, hr⟩
+      exact ⟨Finset.mem_insert_of_mem hb, by
+        rw [addGenesis_block_old (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev) hb]
+        omega⟩
+    · rintro ⟨hb, hr⟩
+      rcases Finset.mem_insert.mp hb with rfl | ho
+      · rw [addGenesis_block_new (v := v) (p := p) (hg := hg) (hsev := hsev)] at hr
+        simp at hr
+      · refine ⟨ho, ?_⟩
+        rw [addGenesis_block_old (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev) ho] at hr
+        omega
+  round := fun b hb _ => by
+    show ((addGenesis V v g p hg hsev).block b).round + 0 = (V.block b).round
+    rw [addGenesis_block_old (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev) hb]
+    omega
+  creator := fun b hb _ => by
+    show ((addGenesis V v g p hg hsev).block b).creator = (V.block b).creator
+    rw [addGenesis_block_old (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev) hb]
+  refs := fun b hb _ => by
+    show ((addGenesis V v g p hg hsev).block b).refs = (V.block b).refs
+    rw [addGenesis_block_old (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev) hb]
+
+/-- **Verdicts survive re-genesis.** The result this arc did not have:
+before the witnesses it said nothing about `Decided` at all, so a
+validator that rejoined had no guarantee that what it had already
+output still stood. One application of `Persist`, which is itself the
+band applied. -/
+theorem decided_addGenesis [S : Slots Validator]
+    {W : View Validator BlockId Payload V}
+    {W' : View Validator BlockId Payload (addGenesis V v g p hg hsev)}
+    (hsub : W.ids ⊆ W'.ids) {k : ℕ} {u : Option BlockId}
+    (h : Decided V W k u) :
+    Decided (addGenesis V v g p hg hsev) W' k u :=
+  MysticetiProperties.persist S V _ extends_addGenesis W W' hsub k u h
+
+/-- **And the reactive commit survives it**, from the rebase. -/
+theorem directCommit_addGenesis {T : Finset Validator} {r : ℕ} {L : BlockId}
+    (hr : 1 ≤ r) (hcard : quorumCard Validator ≤ T.card)
+    (hpop : PopulatedOn V T (r + 2)) (hc : CertifiesAt V T r L) :
+    DirectCommit (addGenesis V v g p hg hsev) L r := by
+  have h := MysticetiProperties.directCommit_of_sustains
+    (sustains_addGenesis (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev))
+    hr (by omega) hcard hpop hc
+  simpa using h
+
+/-- **Rejoin, then prune.** The two mechanisms compose without either
+knowing about the other: `RebasedAbove.trans` on the re-genesis rebase
+and the cut's. The composite settles at the later of round one and the
+horizon, and shifts by the horizon alone, since re-genesis shifts
+nothing.
+
+`chop_addGenesis` below proves a related fact by hand, as an equality of
+universes. This is the transportable form, and it is what a consumer of
+the *pair* needs. -/
+theorem sustains_rejoinChop {G : ℕ} :
+    Properties.Sustains (MysticetiProperties.mysticetiRule (Payload := Payload))
+      V (chop (addGenesis V v g p hg hsev) G) G (max 1 G) := by
+  have h := (sustains_addGenesis (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev)).trans
+    (Properties.Arcs.sustains_chop (U := addGenesis V v g p hg hsev) (G := G))
+  simpa using h
+
+/-- **And the reactive commit crosses the pair.** A validator that
+restarted at the cut and then pruned again still direct-commits what a
+quorum certified. -/
+theorem directCommit_rejoinChop {G : ℕ} {T : Finset Validator} {r : ℕ} {L : BlockId}
+    (hr : 1 ≤ r) (hG : G ≤ r) (hcard : quorumCard Validator ≤ T.card)
+    (hpop : PopulatedOn V T (r + 2)) (hc : CertifiesAt V T r L) :
+    DirectCommit (chop (addGenesis V v g p hg hsev) G) L (r - G) :=
+  MysticetiProperties.directCommit_of_sustains
+    (sustains_rejoinChop (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev) (G := G))
+    (by omega) hG hcard hpop hc
+
+end Properties
+
 /-- **The chain restarts.** After re-genesis the stranded validator has
 a block at round `0`, so it is no longer severed: `no_blocks_of_no_genesis`
 no longer applies to it, and an ordinary Safe Skip anchored on the new
@@ -136,14 +248,17 @@ in the genesis layer, which is the hypothesis P8 asks for at round
 theorem populatedOn_addGenesis {hg : g ∉ V.ids}
     {hsev : ∀ b ∈ V.ids, (V.block b).creator ≠ v} {T : Finset Validator}
     (hpop : PopulatedOn V T 0) :
-    PopulatedOn (addGenesis V v g p hg hsev) (insert v T) 0 := by
-  intro w hw
-  rcases Finset.mem_insert.mp hw with rfl | hwT
-  · exact ⟨g, mem_addGenesis, by rw [addGenesis_block_new], by rw [addGenesis_block_new]⟩
-  · obtain ⟨b, hb, hbc, hbr⟩ := hpop w hwT
-    exact ⟨b, Finset.mem_insert_of_mem hb,
-      by rw [addGenesis_block_old hb]; exact hbc,
-      by rw [addGenesis_block_old hb]; exact hbr⟩
+    PopulatedOn (addGenesis V v g p hg hsev) (insert v T) 0 :=
+  MysticetiProperties.populatedOn_toCore
+    (Properties.populatedOn_insert_of_extends extends_addGenesis
+      (fun w hw => by
+        obtain rfl := Finset.mem_singleton.mp hw
+        refine ⟨g, mem_addGenesis (v := w) (p := p) (hg := hg) (hsev := hsev), ?_, ?_⟩
+        · show ((addGenesis V w g p hg hsev).block g).round = 0
+          rw [addGenesis_block_new]
+        · show ((addGenesis V w g p hg hsev).block g).creator = w
+          rw [addGenesis_block_new])
+      (MysticetiProperties.populatedOn_ofCore hpop))
 
 /-- Re-genesis is available exactly to a stranded validator: the
 absence hypothesis it needs is what `severed_of_pruned_anchor`
@@ -271,35 +386,15 @@ variable {g : BlockId} {p : Payload}
 variable {hg : g ∉ V.ids} {hsev : ∀ b ∈ V.ids, (V.block b).creator ≠ v}
 
 /-- Reachability is unchanged among old blocks: the new block
-references nothing, and nothing references it. -/
+references nothing, and nothing references it.
+
+Was two nested inductions over `ReflTransGen`, twenty-nine lines. Both
+directions are `Properties.Extends.reaches_iff`, which every extension
+gets and which this arc was re-proving for its own. -/
 theorem reaches_addGenesis {b i : BlockId} (hb : b ∈ V.ids) :
-    Reaches (addGenesis V v g p hg hsev) b i ↔ Reaches V b i := by
-  constructor
-  · intro h
-    induction h with
-    | refl => exact Relation.ReflTransGen.refl
-    | @tail x y _ hstep ih =>
-        -- every block reached from an old one is old, so the step is `V`'s
-        have hxo : x ∈ V.ids := by
-          clear ih hstep
-          induction ‹Relation.ReflTransGen _ b x› with
-          | refl => exact hb
-          | @tail u w _ hs' ih' =>
-              unfold RefStepFrom at hs'
-              rw [addGenesis_block_old ih'] at hs'
-              exact V.complete _ ih' _ hs'
-        unfold RefStepFrom at hstep
-        rw [addGenesis_block_old hxo] at hstep
-        exact ih.tail hstep
-  · intro h
-    induction h with
-    | refl => exact Relation.ReflTransGen.refl
-    | @tail x y hr hstep ih =>
-        have hxo : x ∈ V.ids := mem_ids_of_reaches hb hr
-        refine ih.tail ?_
-        unfold RefStepFrom
-        rw [addGenesis_block_old hxo]
-        exact hstep
+    Reaches (addGenesis V v g p hg hsev) b i ↔ Reaches V b i :=
+  Properties.Extends.reaches_iff MysticetiProperties.causal
+    (extends_addGenesis (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev)) hb
 
 /-- Cones are unchanged, so every cone-based condition reads the same. -/
 theorem history_addGenesis {b : BlockId} (hb : b ∈ V.ids) :
