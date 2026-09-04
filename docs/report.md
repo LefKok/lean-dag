@@ -23733,6 +23733,22 @@ def rule : Properties.DagRule Replica BlockId Unit where
 
 **Hydrozoan as a carrier.**
 
+#### `hzLive`
+
+*def, `Hydrozoan.Helpers.Commit.lean`*
+
+```lean
+def hzLive (S : LeanDag.Slots Replica) {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
+    (V : LeanDag.Hydrozoan.View U) (T : Finset Replica) (lo K : ℕ) : Prop :=
+  T ⊆ (Correct : Finset Replica) ∧ LeanDag.Hydrozoan.q Replica ≤ T.card ∧
+    ∃ R₀ N, LeanDag.Hydrozoan.SynchronisedOn U T R₀ ∧ R₀ ≤ S.slotRound lo ∧
+      (∀ r, R₀ ≤ r → r ≤ N → LeanDag.Hydrozoan.PopulatedOn U T r) ∧
+      LeanDag.Hydrozoan.View.CoversUpto V N ∧
+      ∀ k, k < K → S.slotRound k + 2 ≤ N
+```
+
+**Hydrozoan's liveness precondition**, over a slot window: a correct DAG quorum synchronised from a round at or below the window's first slot, filling every round to a horizon the view is caught up to, with every slot of the window two rounds under it. It names no leader, so it holds under every schedule with the same rounds.
+
 #### `NaiveShift`
 
 *structure, `Hydrozoan.Helpers.Truncation.lean`*
@@ -23777,6 +23793,7 @@ def Statement : Prop :=
     [LeanDag.Hydrozoan.Faults Replica],
     LeanDag.Properties.Causal (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.Banded (rule (Replica := Replica) (BlockId := BlockId)) ∧
+    LeanDag.Properties.Agree (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.Persist.Unconditional
       (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.Local (rule (Replica := Replica) (BlockId := BlockId)) ∧
@@ -24747,7 +24764,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 927 theorems that either another module of the
+The 933 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -34107,6 +34124,19 @@ theorem lt_of_eligibleAsAnchor {k j : ℕ}
 
 An eligible anchor lies at a strictly later slot: if `j ≤ k` then monotonicity puts `slotRound j` at or below `slotRound k`, inside `k`'s decision window.
 
+#### `exists_least_weak_candidate`
+
+*theorem, `Hydrozoan.Helpers.IndirectLiveness.lean`*
+
+```lean
+theorem exists_least_weak_candidate {k r : ℕ} {A : BlockId}
+    (h : ∃ L, IsLeaderBlock U k L ∧ WeakLinked U A L r) :
+    ∃ L₀, IsLeaderBlock U k L₀ ∧ WeakLinked U A L₀ r ∧
+      ∀ L', IsLeaderBlock U k L' → WeakLinked U A L' r → ¬ L' < L₀
+```
+
+Among the candidates clearing the weak rung there is a least one — the deterministic tie-break `indirectWeak` demands. The candidates live inside the finite `U.ids` (a candidate is a universe block), so `Finset.min'` extracts the minimum.
+
 #### `decided_of_anchor`
 
 *theorem, `Hydrozoan.Helpers.IndirectLiveness.lean`*
@@ -35672,6 +35702,17 @@ theorem exists_recoveryCorrect_recorder {x : CheckpointData Value}
 
 A finality quorum yields a recovery-correct validator that recorded the concrete checkpoint certificate before emitting its witness.
 
+#### `isLeaderBlock_sched`
+
+*theorem, `Hydrozoan.Helpers.Banded.lean`*
+
+```lean
+theorem isLeaderBlock_sched {S₁ S₂ : LeanDag.Hydrozoan.Slots Replica} {k : ℕ} {L : BlockId}
+    (hround : S₁.slotRound k = S₂.slotRound k) (hk : S₁.leader k = S₂.leader k)
+    (h : LeanDag.Hydrozoan.IsLeaderBlock (S := S₁) U k L) :
+    LeanDag.Hydrozoan.IsLeaderBlock (S := S₂) U k L
+```
+
 #### `banded_aux`
 
 *theorem, `Hydrozoan.Helpers.Banded.lean`*
@@ -35720,6 +35761,41 @@ theorem causal : Properties.Causal (rule (Replica := Replica) (BlockId := BlockI
 ```
 
 **Hydrozoan's universes are block DAGs**, which is `HI3` in the shared vocabulary: the two fields are the universe's own `complete` and the `predecessor` half of its validity.
+
+#### `agree`
+
+*theorem, `Hydrozoan.Helpers.Commit.lean`*
+
+```lean
+theorem agree : Agree (rule (Replica := Replica) (BlockId := BlockId))
+```
+
+**Slot agreement as a property.**
+
+#### `leaderCommits`
+
+*theorem, `Hydrozoan.Helpers.Commit.lean`*
+
+```lean
+theorem leaderCommits :
+    LeaderCommits (rule (Replica := Replica) (BlockId := BlockId))
+      (fun S {U} V T lo K => hzLive S (U := U) V T lo K)
+```
+
+**Direct liveness as a property**: a slot led by a member of the reliable quorum commits, and the commit reads that one leader, so its bound is one above the slot.
+
+#### `descends`
+
+*theorem, `Hydrozoan.Helpers.Commit.lean`*
+
+```lean
+theorem descends {S : LeanDag.Slots Replica} {c : ℕ} (hc : 0 < c)
+    (hspans : LeanDag.Hydrozoan.IndirectLiveness.SpansEligible
+      (S := ofCoreSlots S) Replica c) :
+    Descends (rule (Replica := Replica) (BlockId := BlockId)) S c
+```
+
+**The descent as a property.**
 
 #### `decided_none_of_unsupported`
 
@@ -36764,6 +36840,21 @@ theorem of_unconditional (h : Unconditional R) : Persist R Ok
 
 An unconditional rule persists under any condition whatsoever.
 
+#### `decidedBelow_of_run`
+
+*theorem, `Properties.Derived.Progress.lean`*
+
+```lean
+theorem decidedBelow_of_run
+    {Live : Slots Validator → ∀ {U : R.Universe}, R.View U → Finset Validator → ℕ → ℕ → Prop}
+    (hlc : LeaderCommits R Live) {S : Slots Validator} {c : ℕ}
+    (hd : Descends R S c) {U : R.Universe} (V : R.View U) (T : Finset Validator) (b : ℕ)
+    (hlive : Live S V T b (b + c)) (hlead : ∀ i, i < c → S.leader (b + i) ∈ T) :
+    ∀ i, i < b → ∃ v, DecidedBelow R S (b + c) V i v
+```
+
+**Everything below a reliable-led run is decided.** The run's slots commit by `LeaderCommits`, and `Descends` settles the rest.
+
 #### `old_refs_old`
 
 *theorem, `Properties.Extends.lean`*
@@ -36988,7 +37079,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 942 lemmas used only within the file that proves
+The 948 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -38203,11 +38294,10 @@ subsection per module, in the layer order of Appendices B and C.
 | `fastLatency` | — |
 | `skipLatency` | — |
 
-### `Hydrozoan/Helpers/IndirectLiveness.lean` (3)
+### `Hydrozoan/Helpers/IndirectLiveness.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
-| `exists_least_weak_candidate` | Among the candidates clearing the weak rung there is a least one — the deterministic tie-break … |
 | `fastCommitInView_mono` | A larger view holds every supporter the smaller one does. |
 | `skippedLeaderInView_mono` | A larger view holds every blame the smaller one does. |
 
@@ -38495,7 +38585,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `mem_recoveryCorrect` | Recovery-correct membership excludes all three fault classes. |
 | `mem_reliableSigner` | Reliable signing excludes precisely the two classes allowed to equivocate. |
 
-### `Hydrozoan/Helpers/Banded.lean` (27)
+### `Hydrozoan/Helpers/Banded.lean` (26)
 
 | Lemma | Role |
 |:---|:---|
@@ -38516,7 +38606,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `isCertificate_bnd` | — |
 | `isLeaderBlock_bnd` | — |
 | `isLeaderBlock_bnd_old` | The other direction, for a candidate the band already had. Nothing says the larger universe has no fresh … |
-| `isLeaderBlock_sched` | — |
 | `isVote_bnd` | — |
 | `not_certifiedIn_bnd_novel` | — |
 | `not_weakLinked_bnd_novel` | — |
@@ -38536,6 +38625,14 @@ subsection per module, in the layer order of Appendices B and C.
 | `rule_block_round` | — |
 | `rule_ids` | — |
 | `rule_viewIds` | — |
+
+### `Hydrozoan/Helpers/Commit.lean` (3)
+
+| Lemma | Role |
+|:---|:---|
+| `decidedBelow_of_anchor` | The graded rule is total, at a bound. `decided_of_anchor` with the schedule dependence tracked: every rung … |
+| `decidedBelow_of_committed_run` | A committed run decides everything below it, at a bound. The existing descent with `DecidedBelow` in place … |
+| `eligibleAsAnchor_sched` | — |
 
 ### `Hydrozoan/Helpers/Skippability.lean` (1)
 
@@ -38573,6 +38670,15 @@ subsection per module, in the layer order of Appendices B and C.
 | `supportersInView_eq` | — |
 | `voteBlocks_eq` | — |
 | `weakLinked_eq` | — |
+
+### `Integration/AdaptiveHydrozoan.lean` (4)
+
+| Lemma | Role |
+|:---|:---|
+| `adaptiveRun_agree_hz` | Safety: the adaptive fixpoint over Hydrozoan is unique. Two total runs on one universe, from any two … |
+| `adaptiveRun_exists_hz` | Liveness: the adaptive fixpoint over Hydrozoan exists. Under a policy that places runs, with Hydrozoan's … |
+| `decidedBelow_of_run_hz` | Progress survives whatever a mechanism adds. Every slot below a run of `c` reliable-led slots has a … |
+| `spansEligible_slotsOf` | Anchoring reads the round structure, which reassignment fixes, so the spanning clause transfers to every … |
 
 ### `Integration/AdaptiveReactive.lean` (3)
 
@@ -38849,6 +38955,12 @@ subsection per module, in the layer order of Appendices B and C.
 | Lemma | Role |
 |:---|:---|
 | `mono` | A protocol proving persistence under a weaker condition proves it under a stronger one, so the grades are … |
+
+### `Properties/Derived/Progress.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `decidedBelow_run` | And the verdicts of the run itself. |
 
 ### `Properties/Extends.lean` (5)
 

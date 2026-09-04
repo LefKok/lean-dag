@@ -53,6 +53,7 @@ def Statement : Prop :=
     [LeanDag.Hydrozoan.Faults Replica],
     LeanDag.Properties.Causal (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.Banded (rule (Replica := Replica) (BlockId := BlockId)) ∧
+    LeanDag.Properties.Agree (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.Persist.Unconditional
       (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.Local (rule (Replica := Replica) (BlockId := BlockId)) ∧

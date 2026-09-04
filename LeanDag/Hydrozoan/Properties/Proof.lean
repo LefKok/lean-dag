@@ -1,5 +1,6 @@
 import LeanDag.Hydrozoan.Properties.Statement
 import LeanDag.Hydrozoan.Helpers.Banded
+import LeanDag.Hydrozoan.Helpers.Commit
 import LeanDag.Properties.Derived.FromBand
 import LeanDag.Hydrozoan.Helpers.SlotAgreement
 
@@ -69,7 +70,7 @@ theorem persist_aux [S : LeanDag.Hydrozoan.Slots Replica]
 
 theorem holds : Statement := by
   intro Replica _ _ BlockId _ _ _
-  refine ⟨causal, banded, ?_, ?_, ?_, ?_⟩
+  refine ⟨causal, banded, agree, ?_, ?_, ?_, ?_⟩
   · exact LeanDag.Properties.Persist.of_banded banded
   · exact LeanDag.Properties.Local.of_banded viewSound banded
   · intro S S' U U' G d ht V V' hv k v

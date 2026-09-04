@@ -367,6 +367,7 @@ theorem not_weakLinked_bnd_novel (h : AgreeBand rule U U' lo hi) {A L : BlockId}
 The direct rules consult the leaders only at the slot being decided, so
 two schedules naming the same round and leader there agree on them. -/
 
+omit S in
 theorem isLeaderBlock_sched {S₁ S₂ : LeanDag.Hydrozoan.Slots Replica} {k : ℕ} {L : BlockId}
     (hround : S₁.slotRound k = S₂.slotRound k) (hk : S₁.leader k = S₂.leader k)
     (h : LeanDag.Hydrozoan.IsLeaderBlock (S := S₁) U k L) :
@@ -374,6 +375,7 @@ theorem isLeaderBlock_sched {S₁ S₂ : LeanDag.Hydrozoan.Slots Replica} {k : �
   obtain ⟨h1, h2, h3⟩ := h
   exact ⟨h1, by rw [← hround]; exact h2, by rw [← hk]; exact h3⟩
 
+omit S in
 theorem blamesInView_sched {S₁ S₂ : LeanDag.Hydrozoan.Slots Replica}
     {V : LeanDag.Hydrozoan.View U} {k : ℕ}
     (hround : S₁.slotRound k = S₂.slotRound k) (hk : S₁.leader k = S₂.leader k) :

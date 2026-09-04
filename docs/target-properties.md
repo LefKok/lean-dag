@@ -650,6 +650,41 @@ test of whether `Live`'s shape is Mysticeti's or generic. Hydrozoan has
 no bounded relation. `Reactive/Odontoceti.lean`'s duplication is
 untouched.
 
+### 4.5 Adaptive leaders over Hydrozoan
+
+The arc's thesis at the point where it pays. Hydrozoan and the
+adaptive-leader mechanism were developed independently and never met.
+`Integration/AdaptiveHydrozoan.lean` marries them without either being
+told about the other, and proves nothing that is not an application.
+
+Hydrozoan supplies four properties. `Agree` is its slot-agreement arc
+result. `Banded` is the induction of `Helpers/Banded.lean`.
+`LeaderCommits` and `Descends` rest on its direct-liveness arc and on
+the graded rule's totality with the committed-run descent, each rebuilt
+at a **bound**, since an opaque verdict cannot say which leaders it
+depends on.
+
+| | Needs | Result |
+|---|---|---|
+| safety | `Agree` | `adaptiveRun_agree_hz` |
+| liveness | `Agree`, `LeaderCommits`, `Descends`, `PlacesRuns` | `adaptiveRun_exists_hz` |
+
+Safety holds under no synchrony, fairness or population hypothesis, for
+any adapted policy including adversarial ones. Liveness adds the policy
+clause that prices reassignment.
+
+**And progress survives whatever a mechanism adds.**
+`Properties/Derived/Progress.lean` composes `LeaderCommits` with
+`Descends` into `decidedBelow_of_run`: every slot below a run of `c`
+reliable-led slots has a verdict. That is the statement §11.4c said was
+missing. Applied to Hydrozoan it says a candidate a fill put on a slot
+nobody voted for does not stall the protocol, because the anchored rule
+disposes of it. Hydrozoan needs no direct skip for this, and neither the
+theorem nor its proof mentions the fill, which is the point: once the
+skip rule counted blockers, the fill stopped being a special case.
+
+---
+
 **An open question worth stating.** Can a non-reactive protocol be made
 reactive by proving a property, rather than by a fresh development?
 `Reactive/Basic.lean` states the discipline as *what survives is
@@ -774,6 +809,7 @@ LeanDag/Properties/
   Derived/Persist.lean  Derived/Local.lean   the two statements
   Derived/FromBand.lean   the routes, and view monotonicity and the bound
   Derived/Bounded.lean    the laws of DecidedBelow
+  Derived/Progress.lean   a committed run decides everything below it
   Optional/Skip.lean      SkipsUnsupported: promptness, not liveness
   Local.lean  Persist.lean  Truncate.lean  Sustain.lean  Skip.lean
   Agree.lean  Bounded.lean  Commit.lean        the schedule family (§4)
@@ -953,8 +989,8 @@ property (§5).
 | `Local` | ✓, from `Banded` | ✓, from `Banded` | inherited | — |
 | `LocalTruncate` | ✓ | **missing** | — | — |
 | `SkipsUnsupported` | ✓ at `qFast ≤ |T|` | ✓ at a correct quorum | — | — |
-| `Agree` | **missing** | ✓ | inherited | — |
-| `LeaderCommits`, `Descends` | **missing** | ✓ | ✓, a second `Live` | — |
+| `Agree` | ✓ | ✓ | inherited | — |
+| `LeaderCommits`, `Descends` | ✓ | ✓ | ✓, a second `Live` | — |
 | `Sustains` witnesses | chop, fill | chop; **fill missing** | — | — |
 
 The consumer tests passed. Each is a former bespoke induction
@@ -967,11 +1003,10 @@ development did not have: Hammerhead over reactive Mysticeti
 
 What part 2 does not yet deliver:
 
-- **No protocol has the full set.** Hydrozoan cannot take adaptive
-  leaders, lacking `LeaderCommits` and `Descends`; the core cannot take
-  garbage collection through the properties, `LocalTruncate` being the
-  one property it still lacks. Both now prove `Banded`, so `Persist` and
-  `Local` come the same way for both.
+- **Hydrozoan has the full set**, and takes adaptive leaders through
+  it (§4.5), safety and liveness both. The core still lacks
+  `LocalTruncate`, so it cannot take garbage collection through the
+  properties, which is the one remaining gap.
 - **Six protocols have no instance of any property.** Whether
   `Descends` and `Live` are generic or Mysticeti's shape with the name
   removed is unknown until the Odontoceti mirror is collapsed.
@@ -1084,13 +1119,13 @@ have. What `SkipsUnsupported` still gives is **promptness**: the slot is
 settled at once instead of when an anchor arrives, and the grade states
 a deployment condition, which is why it is kept rather than deleted.
 
-**What is not yet written** is the composition that states the
-requirement outright: after a fill, every slot below a committed run is
-decided, from `Sustains` for the run's preconditions, `LeaderCommits`
-for the run, and `Descends` for everything under it. The pieces are
-proved for the core and the composition is not. Hydrozoan has neither
-`LeaderCommits` nor `Descends`, so for Hydrozoan the claim is an
-argument rather than a theorem.
+**That statement is now written**, as `decidedBelow_of_run` in
+`Derived/Progress.lean`: `LeaderCommits` for the run, `Descends` for
+everything under it, and nothing else. It is not a composition of
+mechanisms, which is §11.3's subject and still largely open. It is a
+consequence of two properties, in the same sense that `Persist` is a
+consequence of `Banded`, and it names no mechanism at all. Hydrozoan
+instantiates it (§4.5).
 
 ### 11.5 Next steps, in order
 
@@ -1101,11 +1136,9 @@ argument rather than a theorem.
    one protocol has every property and every mechanism. `Local` is done,
    from `Banded` (§3.8).
 3. **Collapse the Odontoceti mirrors** (`Adaptive/`, `Reactive/`) onto
-   instances, to learn whether `Live` and `Descends` are generic before
-   more instances are written.
-4. **Hydrozoan's bounded relation**, giving the second protocol
-   adaptive leaders.
-5. **Re-genesis as an `Extends`**, the cheapest of the uncovered
+   instances. `Live` and `Descends` now have two instances each and
+   survived both, so the shape is no longer in doubt.
+4. **Re-genesis as an `Extends`**, the cheapest of the uncovered
    mechanisms.
 6. **Chain quality** from fairness and self-reference (§5).
 7. **Barnacle**, starting from `Agree`.

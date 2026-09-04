@@ -42,6 +42,7 @@ import LeanDag.Reactive.Mysticeti
 import LeanDag.Reactive.Odontoceti
 import LeanDag.Reactive.MysticetiProperties
 import LeanDag.Integration.AdaptiveReactive
+import LeanDag.Integration.AdaptiveHydrozoan
 import LeanDag.Adaptive.Basic
 import LeanDag.Adaptive.Policy
 import LeanDag.Adaptive.Run
@@ -95,6 +96,7 @@ import LeanDag.Properties.Commit
 import LeanDag.Properties.Witness
 import LeanDag.Properties.Derived.Bounded
 import LeanDag.Properties.Derived.FromBand
+import LeanDag.Properties.Derived.Progress
 import LeanDag.MysticetiProperties
 import LeanDag.Properties.Arcs.SafeSkip
 import LeanDag.Properties.Arcs.GC
