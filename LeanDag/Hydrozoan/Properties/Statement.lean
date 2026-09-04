@@ -44,9 +44,11 @@ namespace Hydrozoan
 
 namespace Properties
 
-/-- **HZ9.** Hydrozoan is a lawful carrier; it persists under every
-extension, reads nothing below a slot's round, survives a truncation,
-and skips an unsupported slot given `qFast` blamers. -/
+/-- **HZ9.** Hydrozoan is a lawful carrier; every verdict reads a band,
+two views agree, and it skips an unsupported slot given `qFast`
+blamers. Persistence and locality are the band applied, and truncation
+invariance follows from the band's offsets without being stated
+here. -/
 def Statement : Prop :=
   ∀ (Replica : Type) [Fintype Replica] [DecidableEq Replica]
     (BlockId : Type) [DecidableEq BlockId] [LinearOrder BlockId]
@@ -57,7 +59,6 @@ def Statement : Prop :=
     LeanDag.Properties.Persist.Unconditional
       (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.Local (rule (Replica := Replica) (BlockId := BlockId)) ∧
-    LeanDag.Properties.LocalTruncate (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.SkipsUnsupported (rule (Replica := Replica) (BlockId := BlockId))
       (fun T => LeanDag.Hydrozoan.qFast Replica ≤ T.card)
 

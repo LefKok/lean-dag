@@ -48,39 +48,56 @@ as `view_subset`; `DagRule` does not, so the derivations below take it. -/
 def ViewSound (R : DagRule Validator BlockId Payload) : Prop :=
   ∀ {U : R.Universe} (V : R.View U), R.viewIds V ⊆ R.ids U
 
-/-- **`U'` carries `U`'s band.** Every block `U` holds between `lo` and
-`hi` is a block of `U'`, at the same round and with the same author, and
-above the floor with the same references.
+/-- **`U'` carries `U`'s band, up to a shift.** Every block `U` holds
+whose round lies in `[lo, hi]` *once `g` is added* is a block of `U'`,
+at the round the shift names and with the same author, and above the
+floor with the same references.
 
-Deliberately **one-directional**: `U'` may hold blocks `U` does not, in
-the band or out of it, which is what a fill does. A rule proving
-`Banded` must therefore cope with candidates that appear from nowhere,
-and the core does, because nothing old references them.
+The two offsets put both universes in one frame: `b` sits at
+`round_U b + g` read from `U` and at `round_U' b + g'` read from `U'`,
+and the `block` clause says those agree. At `g = g' = 0` this is
+agreement on the nose, which is what an extension and an
+above-a-round agreement give. At `g = 0`, `g' = G` it is a truncation by
+`G`, whose survivors all moved down. Swapping `U` with `U'` swaps the
+offsets, so reading the relation backwards is another instance of it,
+which is what lets a two-directional consumer like `LocalTruncate` be
+served.
+
+Deliberately **one-directional** in membership: `U'` may hold blocks `U`
+does not, in the band or out of it, which is what a fill does.
 
 The references clause stops at the floor rather than including it. A
 truncation empties the references of its bottom layer, and a rule reads
 a vote from a *parent*, so the floor contributes presence and authorship
-but no vote. `AgreeAbove` draws the line in the same place. -/
+but no vote. -/
 structure AgreeBand (R : DagRule Validator BlockId Payload) (U U' : R.Universe)
-    (lo hi : ℕ) : Prop where
+    (lo hi g g' : ℕ) : Prop where
   /-- A block of the band is a block of `U'`. -/
-  mem : ∀ b, b ∈ R.ids U → lo ≤ (R.block U b).round → (R.block U b).round ≤ hi →
-    b ∈ R.ids U'
-  /-- A block sitting in the band on either side keeps its round and author. -/
+  mem : ∀ b, b ∈ R.ids U → lo ≤ (R.block U b).round + g →
+    (R.block U b).round + g ≤ hi → b ∈ R.ids U'
+  /-- A block sitting in the band on either side keeps its place in the
+  common frame, and its author. -/
   block : ∀ b, b ∈ R.ids U →
-    ((lo ≤ (R.block U b).round ∧ (R.block U b).round ≤ hi) ∨
-      (b ∈ R.ids U' ∧ lo ≤ (R.block U' b).round ∧ (R.block U' b).round ≤ hi)) →
-    (R.block U' b).round = (R.block U b).round ∧
+    ((lo ≤ (R.block U b).round + g ∧ (R.block U b).round + g ≤ hi) ∨
+      (b ∈ R.ids U' ∧ lo ≤ (R.block U' b).round + g' ∧
+        (R.block U' b).round + g' ≤ hi)) →
+    (R.block U' b).round + g' = (R.block U b).round + g ∧
       (R.block U' b).creator = (R.block U b).creator
   /-- Strictly above the floor, its references too. -/
-  refs : ∀ b, b ∈ R.ids U → lo < (R.block U b).round → (R.block U b).round ≤ hi →
-    (R.block U' b).refs = (R.block U b).refs
+  refs : ∀ b, b ∈ R.ids U → lo < (R.block U b).round + g →
+    (R.block U b).round + g ≤ hi → (R.block U' b).refs = (R.block U b).refs
 
 namespace AgreeBand
 
+/-- A universe carries its own bands, at any offset. -/
+theorem refl {U : R.Universe} {lo hi g : ℕ} : AgreeBand R U U lo hi g g where
+  mem := fun _ hb _ _ => hb
+  block := fun _ _ _ => ⟨rfl, rfl⟩
+  refs := fun _ _ _ _ => rfl
+
 /-- An extension carries every band, since it moves nothing. -/
 theorem of_extends {U U' : R.Universe} (he : Extends R U U') (lo hi : ℕ) :
-    AgreeBand R U U' lo hi where
+    AgreeBand R U U' lo hi 0 0 where
   mem := fun b hb _ _ => he.subset b hb
   block := fun b hb _ => by rw [he.block b hb]; exact ⟨rfl, rfl⟩
   refs := fun b hb _ _ => by rw [he.block b hb]
@@ -88,25 +105,19 @@ theorem of_extends {U U' : R.Universe} (he : Extends R U U') (lo hi : ℕ) :
 /-- Agreement above a round carries every band whose floor is at or
 above it. -/
 theorem of_agreeAbove {U U' : R.Universe} {r lo hi : ℕ} (h : AgreeAbove R U U' r)
-    (hr : r ≤ lo) : AgreeBand R U U' lo hi where
+    (hr : r ≤ lo) : AgreeBand R U U' lo hi 0 0 where
   mem := fun b hb hlo _ => ((h.mem b).mp ⟨hb, by omega⟩).1
   block := fun b hb hband => by
     have hU : r ≤ (R.block U b).round := by
       rcases hband with ⟨h1, -⟩ | ⟨hmem', h1, -⟩
       · omega
       · exact ((h.mem b).mpr ⟨hmem', by omega⟩).2
-    exact ⟨h.round b hb hU, h.creator b hb hU⟩
+    exact ⟨by rw [h.round b hb hU], h.creator b hb hU⟩
   refs := fun b hb hlo _ => h.refs b hb (by omega)
 
-/-- A universe carries its own bands. -/
-theorem refl {U : R.Universe} {lo hi : ℕ} : AgreeBand R U U lo hi where
-  mem := fun _ hb _ _ => hb
-  block := fun _ _ _ => ⟨rfl, rfl⟩
-  refs := fun _ _ _ _ => rfl
-
 /-- Agreement on a band gives agreement on any narrower one. -/
-theorem mono {U U' : R.Universe} {lo hi lo' hi' : ℕ} (h : AgreeBand R U U' lo hi)
-    (hlo : lo ≤ lo') (hhi : hi' ≤ hi) : AgreeBand R U U' lo' hi' where
+theorem mono {U U' : R.Universe} {lo hi lo' hi' g g' : ℕ} (h : AgreeBand R U U' lo hi g g')
+    (hlo : lo ≤ lo') (hhi : hi' ≤ hi) : AgreeBand R U U' lo' hi' g g' where
   mem := fun b hb h1 h2 => h.mem b hb (by omega) (by omega)
   block := fun b hb hband => by
     refine h.block b hb ?_
@@ -115,14 +126,12 @@ theorem mono {U U' : R.Universe} {lo hi lo' hi' : ℕ} (h : AgreeBand R U U' lo 
     · exact Or.inr ⟨hm, by omega, by omega⟩
   refs := fun b hb h1 h2 => h.refs b hb (by omega) (by omega)
 
-variable {U U' : R.Universe} {lo hi : ℕ}
+variable {U U' : R.Universe} {lo hi g g' : ℕ}
 
-/-- **Causal history inside the band is the same history.** A path that
-starts in the band and ends strictly above its floor keeps every step
-inside, since a reference sits one round below its referrer. -/
-theorem reaches_of (hc : Causal R) (h : AgreeBand R U U' lo hi)
-    {A : BlockId} (hA : A ∈ R.ids U) (hAhi : (R.block U A).round ≤ hi) :
-    ∀ {C : BlockId}, ReachesFrom (R.block U) A C → lo < (R.block U C).round →
+/-- **Causal history inside the band is the same history.** -/
+theorem reaches_of (hc : Causal R) (h : AgreeBand R U U' lo hi g g')
+    {A : BlockId} (hA : A ∈ R.ids U) (hAhi : (R.block U A).round + g ≤ hi) :
+    ∀ {C : BlockId}, ReachesFrom (R.block U) A C → lo < (R.block U C).round + g →
       ReachesFrom (R.block U') A C := by
   intro C hre
   induction hre with
@@ -132,24 +141,22 @@ theorem reaches_of (hc : Causal R) (h : AgreeBand R U U' lo hi)
       have hb : b ∈ R.ids U := (hc U).mem_ids_of_reaches hA hAb
       have hstep' : c ∈ (R.block U b).refs := hstep
       have hround := (hc U).refs_round b hb c hstep'
-      have hbhi : (R.block U b).round ≤ hi :=
-        le_trans ((hc U).round_le_of_reaches hA hAb) hAhi
+      have hbhi : (R.block U b).round + g ≤ hi := by
+        have := (hc U).round_le_of_reaches hA hAb
+        omega
       refine (ih (by omega)).tail ?_
       show c ∈ (R.block U' b).refs
       rw [h.refs b hb (by omega) hbhi]
       exact hstep'
 
-/-- **And a path of `U'` that stays above the floor is a path of `U`.**
-Nothing the band adds is reachable from a block the band already had:
-the references of an old block in the band are the references it had,
-and those are blocks of `U`. This is what lets a rule prove `Banded`
-without knowing whether the candidates it must rule out are new. -/
-theorem reaches_old (hc : Causal R) (h : AgreeBand R U U' lo hi)
-    {A : BlockId} (hA : A ∈ R.ids U) (hAlo : lo ≤ (R.block U A).round)
-    (hAhi : (R.block U A).round ≤ hi) :
-    ∀ {C : BlockId}, ReachesFrom (R.block U') A C → lo ≤ (R.block U' C).round →
+/-- **And a path of `U'` that stays above the floor is a path of `U`.** -/
+theorem reaches_old (hc : Causal R) (h : AgreeBand R U U' lo hi g g')
+    {A : BlockId} (hA : A ∈ R.ids U) (hAlo : lo ≤ (R.block U A).round + g)
+    (hAhi : (R.block U A).round + g ≤ hi) :
+    ∀ {C : BlockId}, ReachesFrom (R.block U') A C →
+      lo ≤ (R.block U' C).round + g' →
       C ∈ R.ids U ∧ ReachesFrom (R.block U) A C ∧
-        (R.block U C).round = (R.block U' C).round := by
+        (R.block U C).round + g = (R.block U' C).round + g' := by
   intro C hre
   induction hre with
   | refl =>
@@ -162,8 +169,9 @@ theorem reaches_old (hc : Causal R) (h : AgreeBand R U U' lo hi)
         (hc U').mem_ids_of_reaches (h.mem A hA hAlo hAhi) hAb
       have hround' := (hc U').refs_round b hbU' c hstep'
       obtain ⟨hbU, hbre, hbeq⟩ := ih (by omega)
-      have hbhi : (R.block U b).round ≤ hi :=
-        le_trans ((hc U).round_le_of_reaches hA hbre) hAhi
+      have hbhi : (R.block U b).round + g ≤ hi := by
+        have := (hc U).round_le_of_reaches hA hbre
+        omega
       have hrefs : (R.block U' b).refs = (R.block U b).refs :=
         h.refs b hbU (by omega) hbhi
       rw [hrefs] at hstep'
@@ -174,25 +182,32 @@ end AgreeBand
 
 /-- **Every verdict reads a band of rounds.** From the slot's own round
 up to some top, the blocks the view holds and the leaders of the slots
-sitting there already carry the verdict: any universe carrying the
-band, any view holding those blocks, and any schedule with the same
-round structure naming the same leaders inside the band, decides the
-slot the same way.
+sitting there already carry the verdict: any universe carrying the band
+**up to a shift**, any view holding those blocks, and any schedule whose
+slots correspond and whose leaders match inside the band, decides the
+corresponding slot the same way.
 
-Three axes, one top. The DAG axis gives `Persist` and `Local`, the view
-axis gives monotonicity, and the schedule axis gives the bound the
-adaptive fixpoint needs, since the slots sitting at or below a round are
-finitely many (`Slots.mono` with `Slots.unbounded`). -/
+Four naturals name the correspondence. `g` and `g'` put the two
+universes in one frame of rounds; `d` and `d'` put the two schedules in
+one frame of slots, slot `m` of `S` answering to slot `m'` of `S'` when
+`m + d' = m' + d`. All four are zero for persistence, locality and
+monotonicity in the view. The ceiling is read in the source's own frame,
+so the band always covers the rounds `[slotRound k, top]` of `U`
+whatever the offset, and a large shift cannot empty the hypothesis. A truncation by `G` from base slot `d` uses
+`g = 0`, `g' = G`, `d' = 0`, and reading it backwards swaps the pairs,
+which is why one property serves a two-directional consumer. -/
 def Banded (R : DagRule Validator BlockId Payload) : Prop :=
   ∀ (S : Slots Validator) (U : R.Universe) (V : R.View U) (k : ℕ) (v : Option BlockId),
     R.Decided S V k v →
-      ∃ top : ℕ, ∀ (S' : Slots Validator) (U' : R.Universe) (V' : R.View U'),
-        S'.slotRound = S.slotRound →
-        (∀ m, S.slotRound m ≤ top → S'.leader m = S.leader m) →
-        AgreeBand R U U' (S.slotRound k) top →
+      ∃ top : ℕ, ∀ (g g' d d' : ℕ) (S' : Slots Validator) (U' : R.Universe)
+        (V' : R.View U') (k' : ℕ),
+        k + d' = k' + d →
+        (∀ m m', m + d' = m' + d → S.slotRound m + g = S'.slotRound m' + g') →
+        (∀ m m', m + d' = m' + d → S.slotRound m ≤ top → S.leader m = S'.leader m') →
+        AgreeBand R U U' (S.slotRound k + g) (top + g) g g' →
         (∀ b, b ∈ R.viewIds V → S.slotRound k ≤ (R.block U b).round →
           (R.block U b).round ≤ top → b ∈ R.viewIds V') →
-        R.Decided S' V' k v
+        R.Decided S' V' k' v
 
 end Properties
 

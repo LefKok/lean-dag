@@ -39,106 +39,115 @@ open LeanDag.Properties
 variable {Replica : Type} [Fintype Replica] [DecidableEq Replica]
 variable {BlockId : Type} [DecidableEq BlockId] [LinearOrder BlockId]
 variable [LeanDag.Hydrozoan.Faults Replica]
-variable {U U' : LeanDag.Hydrozoan.BlockUniverse Replica BlockId} {lo hi : ℕ}
+variable {U U' : LeanDag.Hydrozoan.BlockUniverse Replica BlockId} {lo hi g g' : ℕ}
 
 /-! ## Blocks -/
 
-theorem bnd_mem (h : AgreeBand rule U U' lo hi) {b : BlockId} (hb : b ∈ U.ids)
-    (h1 : lo ≤ (U.block b).round) (h2 : (U.block b).round ≤ hi) : b ∈ U'.ids :=
+theorem bnd_mem (h : AgreeBand rule U U' lo hi g g') {b : BlockId} (hb : b ∈ U.ids)
+    (h1 : lo ≤ (U.block b).round + g) (h2 : (U.block b).round + g ≤ hi) : b ∈ U'.ids :=
   h.mem b hb h1 h2
 
-theorem bnd_round (h : AgreeBand rule U U' lo hi) {b : BlockId} (hb : b ∈ U.ids)
-    (h1 : lo ≤ (U.block b).round) (h2 : (U.block b).round ≤ hi) :
-    (U'.block b).round = (U.block b).round := (h.block b hb (Or.inl ⟨h1, h2⟩)).1
+theorem bnd_round (h : AgreeBand rule U U' lo hi g g') {b : BlockId} (hb : b ∈ U.ids)
+    (h1 : lo ≤ (U.block b).round + g) (h2 : (U.block b).round + g ≤ hi) :
+    (U'.block b).round + g' = (U.block b).round + g := (h.block b hb (Or.inl ⟨h1, h2⟩)).1
 
-theorem bnd_author (h : AgreeBand rule U U' lo hi) {b : BlockId} (hb : b ∈ U.ids)
-    (h1 : lo ≤ (U.block b).round) (h2 : (U.block b).round ≤ hi) :
+theorem bnd_author (h : AgreeBand rule U U' lo hi g g') {b : BlockId} (hb : b ∈ U.ids)
+    (h1 : lo ≤ (U.block b).round + g) (h2 : (U.block b).round + g ≤ hi) :
     (U'.block b).author = (U.block b).author := (h.block b hb (Or.inl ⟨h1, h2⟩)).2
 
-theorem bnd_parents (h : AgreeBand rule U U' lo hi) {b : BlockId} (hb : b ∈ U.ids)
-    (h1 : lo < (U.block b).round) (h2 : (U.block b).round ≤ hi) :
+theorem bnd_parents (h : AgreeBand rule U U' lo hi g g') {b : BlockId} (hb : b ∈ U.ids)
+    (h1 : lo < (U.block b).round + g) (h2 : (U.block b).round + g ≤ hi) :
     (U'.block b).parents = (U.block b).parents := h.refs b hb h1 h2
 
 /-- Read from the other side, for a block the band already had. -/
-theorem bnd_round' (h : AgreeBand rule U U' lo hi) {b : BlockId} (hb : b ∈ U.ids)
-    (hb' : b ∈ U'.ids) (h1 : lo ≤ (U'.block b).round) (h2 : (U'.block b).round ≤ hi) :
-    (U'.block b).round = (U.block b).round ∧ (U'.block b).author = (U.block b).author :=
+theorem bnd_round' (h : AgreeBand rule U U' lo hi g g') {b : BlockId} (hb : b ∈ U.ids)
+    (hb' : b ∈ U'.ids) (h1 : lo ≤ (U'.block b).round + g')
+    (h2 : (U'.block b).round + g' ≤ hi) :
+    (U'.block b).round + g' = (U.block b).round + g ∧
+      (U'.block b).author = (U.block b).author :=
   h.block b hb (Or.inr ⟨hb', h1, h2⟩)
 
 /-- A round layer inside the band is carried across. Containment, not
 equality: `U'` may hold blocks there that `U` did not. -/
-theorem blocksAt_bnd (h : AgreeBand rule U U' lo hi) {n : ℕ} (h1 : lo ≤ n) (h2 : n ≤ hi) :
-    LeanDag.Hydrozoan.blocksAt U n ⊆ LeanDag.Hydrozoan.blocksAt U' n := by
+theorem blocksAt_bnd (h : AgreeBand rule U U' lo hi g g') {n n' : ℕ}
+    (hnn : n + g = n' + g') (h1 : lo ≤ n + g) (h2 : n + g ≤ hi) :
+    LeanDag.Hydrozoan.blocksAt U n ⊆ LeanDag.Hydrozoan.blocksAt U' n' := by
   intro b hb
   simp only [LeanDag.Hydrozoan.blocksAt, Finset.mem_filter] at hb ⊢
-  exact ⟨bnd_mem h hb.1 (by omega) (by omega),
-    by rw [bnd_round h hb.1 (by omega) (by omega)]; exact hb.2⟩
+  have hbr := bnd_round h hb.1 (by omega) (by omega)
+  exact ⟨bnd_mem h hb.1 (by omega) (by omega), by omega⟩
 
-theorem isVote_bnd (h : AgreeBand rule U U' lo hi) {b L : BlockId} (hb : b ∈ U.ids)
-    (h1 : lo < (U.block b).round) (h2 : (U.block b).round ≤ hi) :
+theorem isVote_bnd (h : AgreeBand rule U U' lo hi g g') {b L : BlockId} (hb : b ∈ U.ids)
+    (h1 : lo < (U.block b).round + g) (h2 : (U.block b).round + g ≤ hi) :
     LeanDag.Hydrozoan.IsVote U' b L ↔ LeanDag.Hydrozoan.IsVote U b L := by
   unfold LeanDag.Hydrozoan.IsVote
   rw [bnd_parents h hb h1 h2]
 
-theorem authorsOf_bnd (h : AgreeBand rule U U' lo hi) {s : Finset BlockId}
-    (hs : ∀ b ∈ s, b ∈ U.ids ∧ lo ≤ (U.block b).round ∧ (U.block b).round ≤ hi) :
+theorem authorsOf_bnd (h : AgreeBand rule U U' lo hi g g') {s : Finset BlockId}
+    (hs : ∀ b ∈ s, b ∈ U.ids ∧ lo ≤ (U.block b).round + g ∧ (U.block b).round + g ≤ hi) :
     LeanDag.Hydrozoan.authorsOf U'.block s = LeanDag.Hydrozoan.authorsOf U.block s :=
   Finset.image_congr fun i hi' =>
     bnd_author h (hs i hi').1 (hs i hi').2.1 (hs i hi').2.2
 
 /-- What a block of `U'` at a band round supplies, when it is a block
 the band already had. -/
-theorem of_mem_blocksAt_old (h : AgreeBand rule U U' lo hi) {b : BlockId} {n : ℕ}
-    (h1 : lo ≤ n) (h2 : n ≤ hi) (hbU : b ∈ U.ids)
-    (hb : b ∈ LeanDag.Hydrozoan.blocksAt U' n) : (U.block b).round = n := by
+theorem of_mem_blocksAt_old (h : AgreeBand rule U U' lo hi g g') {b : BlockId} {n n' : ℕ}
+    (hnn : n + g = n' + g') (h1 : lo ≤ n + g) (h2 : n + g ≤ hi) (hbU : b ∈ U.ids)
+    (hb : b ∈ LeanDag.Hydrozoan.blocksAt U' n') : (U.block b).round = n := by
   obtain ⟨hbm, hbr⟩ := Finset.mem_filter.mp hb
-  rw [(bnd_round' h hbU hbm (by omega) (by omega)).1] at hbr
-  exact hbr
+  have := (bnd_round' h hbU hbm (by omega) (by omega)).1
+  omega
 
 
 variable [S : LeanDag.Hydrozoan.Slots Replica]
 
 /-! ## The slot's candidates -/
 
-theorem isLeaderBlock_bnd (h : AgreeBand rule U U' lo hi) {k : ℕ}
-    (h1 : lo ≤ S.slotRound k) (h2 : S.slotRound k ≤ hi) {L : BlockId}
-    (hL : LeanDag.Hydrozoan.IsLeaderBlock U k L) :
-    LeanDag.Hydrozoan.IsLeaderBlock U' k L := by
+theorem isLeaderBlock_bnd (h : AgreeBand rule U U' lo hi g g')
+    {S S' : LeanDag.Hydrozoan.Slots Replica} {k k' : ℕ}
+    (hkk : S.slotRound k + g = S'.slotRound k' + g') (hlead : S.leader k = S'.leader k')
+    (h1 : lo ≤ S.slotRound k + g) (h2 : S.slotRound k + g ≤ hi) {L : BlockId}
+    (hL : LeanDag.Hydrozoan.IsLeaderBlock (S := S) U k L) :
+    LeanDag.Hydrozoan.IsLeaderBlock (S := S') U' k' L := by
   obtain ⟨hm, hr, ha⟩ := hL
-  exact ⟨bnd_mem h hm (by omega) (by omega),
-    by rw [bnd_round h hm (by omega) (by omega)]; exact hr,
-    by rw [bnd_author h hm (by omega) (by omega)]; exact ha⟩
+  have hbr := bnd_round h hm (by omega) (by omega)
+  exact ⟨bnd_mem h hm (by omega) (by omega), by omega,
+    by rw [bnd_author h hm (by omega) (by omega), ha, hlead]⟩
 
 /-- The other direction, for a candidate the band already had. Nothing
 says the larger universe has no fresh candidates; the anchored skips
 below dispose of those separately. -/
-theorem isLeaderBlock_bnd_old (h : AgreeBand rule U U' lo hi) {k : ℕ}
-    (h1 : lo ≤ S.slotRound k) (h2 : S.slotRound k ≤ hi) {L : BlockId} (hLU : L ∈ U.ids)
-    (hL : LeanDag.Hydrozoan.IsLeaderBlock U' k L) :
-    LeanDag.Hydrozoan.IsLeaderBlock U k L := by
+theorem isLeaderBlock_bnd_old (h : AgreeBand rule U U' lo hi g g')
+    {S S' : LeanDag.Hydrozoan.Slots Replica} {k k' : ℕ}
+    (hkk : S.slotRound k + g = S'.slotRound k' + g') (hlead : S.leader k = S'.leader k')
+    (h1 : lo ≤ S.slotRound k + g) (h2 : S.slotRound k + g ≤ hi) {L : BlockId}
+    (hLU : L ∈ U.ids) (hL : LeanDag.Hydrozoan.IsLeaderBlock (S := S') U' k' L) :
+    LeanDag.Hydrozoan.IsLeaderBlock (S := S) U k L := by
   obtain ⟨hm, hr, ha⟩ := hL
   have hb := bnd_round' h hLU hm (by omega) (by omega)
-  exact ⟨hLU, by rw [← hb.1]; exact hr, by rw [← hb.2]; exact ha⟩
+  exact ⟨hLU, by omega, by rw [← hb.2, ha, ← hlead]⟩
 
 /-! ## The counting rules -/
 
-theorem votesSet_bnd (h : AgreeBand rule U U' lo hi) {L : BlockId} {n : ℕ}
-    (h1 : lo < n) (h2 : n ≤ hi) :
+theorem votesSet_bnd (h : AgreeBand rule U U' lo hi g g') {L : BlockId} {n n' : ℕ}
+    (hnn : n + g = n' + g') (h1 : lo < n + g) (h2 : n + g ≤ hi) :
     ((LeanDag.Hydrozoan.blocksAt U n).filter fun b => LeanDag.Hydrozoan.IsVote U b L)
-      ⊆ ((LeanDag.Hydrozoan.blocksAt U' n).filter fun b => LeanDag.Hydrozoan.IsVote U' b L) := by
+      ⊆ ((LeanDag.Hydrozoan.blocksAt U' n').filter fun b =>
+          LeanDag.Hydrozoan.IsVote U' b L) := by
   intro b hb
   obtain ⟨hbA, hbv⟩ := Finset.mem_filter.mp hb
   have hbU : b ∈ U.ids := (Finset.mem_filter.mp hbA).1
   have hbr : (U.block b).round = n := (Finset.mem_filter.mp hbA).2
-  exact Finset.mem_filter.mpr ⟨blocksAt_bnd h (by omega) h2 hbA,
+  exact Finset.mem_filter.mpr ⟨blocksAt_bnd h hnn (by omega) (by omega) hbA,
     (isVote_bnd h hbU (by omega) (by omega)).mpr hbv⟩
 
-theorem supportersInView_bnd (h : AgreeBand rule U U' lo hi)
+theorem supportersInView_bnd (h : AgreeBand rule U U' lo hi g g')
     {V : LeanDag.Hydrozoan.View U} {V' : LeanDag.Hydrozoan.View U'}
-    (hv : ∀ b, b ∈ V.ids → lo ≤ (U.block b).round → (U.block b).round ≤ hi → b ∈ V'.ids)
-    {L : BlockId} {n : ℕ} (h1 : lo < n) (h2 : n ≤ hi) :
+    (hv : ∀ b, b ∈ V.ids → lo ≤ (U.block b).round + g → (U.block b).round + g ≤ hi →
+      b ∈ V'.ids)
+    {L : BlockId} {n n' : ℕ} (hnn : n + g = n' + g') (h1 : lo < n + g) (h2 : n + g ≤ hi) :
     LeanDag.Hydrozoan.supportersInView U V L n
-      ⊆ LeanDag.Hydrozoan.supportersInView U' V' L n := by
+      ⊆ LeanDag.Hydrozoan.supportersInView U' V' L n' := by
   intro a ha
   unfold LeanDag.Hydrozoan.supportersInView LeanDag.Hydrozoan.authorsOf at ha ⊢
   obtain ⟨b, hb, hba⟩ := Finset.mem_image.mp ha
@@ -147,15 +156,16 @@ theorem supportersInView_bnd (h : AgreeBand rule U U' lo hi)
   have hbU : b ∈ U.ids := (Finset.mem_filter.mp hbA).1
   have hbr : (U.block b).round = n := (Finset.mem_filter.mp hbA).2
   refine Finset.mem_image.mpr ⟨b, Finset.mem_inter.mpr ⟨Finset.mem_filter.mpr
-    ⟨blocksAt_bnd h (by omega) h2 hbA,
+    ⟨blocksAt_bnd h hnn (by omega) (by omega) hbA,
       (isVote_bnd h hbU (by omega) (by omega)).mpr hbv⟩,
     hv b hbV (by omega) (by omega)⟩, ?_⟩
   rw [bnd_author h hbU (by omega) (by omega)]; exact hba
 
 /-- Two rounds of slack: a certificate counts votes cast by its own
 parents. -/
-theorem voteBlocks_bnd (h : AgreeBand rule U U' lo hi) {C L : BlockId}
-    (hC : C ∈ U.ids) (h1 : lo + 1 < (U.block C).round) (h2 : (U.block C).round ≤ hi) :
+theorem voteBlocks_bnd (h : AgreeBand rule U U' lo hi g g') {C L : BlockId}
+    (hC : C ∈ U.ids) (h1 : lo + 1 < (U.block C).round + g)
+    (h2 : (U.block C).round + g ≤ hi) :
     LeanDag.Hydrozoan.voteBlocks U' C L = LeanDag.Hydrozoan.voteBlocks U C L := by
   unfold LeanDag.Hydrozoan.voteBlocks
   rw [bnd_parents h hC (by omega) h2]
@@ -164,8 +174,9 @@ theorem voteBlocks_bnd (h : AgreeBand rule U U' lo hi) {C L : BlockId}
   have hbr := (U.valid C hC).predecessor b hb
   simpa using isVote_bnd h hbU (by omega) (by omega)
 
-theorem isCertificate_bnd (h : AgreeBand rule U U' lo hi) {C L : BlockId}
-    (hC : C ∈ U.ids) (h1 : lo + 1 < (U.block C).round) (h2 : (U.block C).round ≤ hi) :
+theorem isCertificate_bnd (h : AgreeBand rule U U' lo hi g g') {C L : BlockId}
+    (hC : C ∈ U.ids) (h1 : lo + 1 < (U.block C).round + g)
+    (h2 : (U.block C).round + g ≤ hi) :
     LeanDag.Hydrozoan.IsCertificate U' C L ↔ LeanDag.Hydrozoan.IsCertificate U C L := by
   unfold LeanDag.Hydrozoan.IsCertificate
   rw [voteBlocks_bnd h hC h1 h2, authorsOf_bnd h]
@@ -174,32 +185,35 @@ theorem isCertificate_bnd (h : AgreeBand rule U U' lo hi) {C L : BlockId}
   have := (U.valid C hC).predecessor b hbp
   exact ⟨U.complete C hC b hbp, by omega, by omega⟩
 
-theorem certificates_bnd (h : AgreeBand rule U U' lo hi) {L : BlockId} {n : ℕ}
-    (h1 : lo ≤ n) (h2 : n + 2 ≤ hi) :
-    LeanDag.Hydrozoan.certificates U L n ⊆ LeanDag.Hydrozoan.certificates U' L n := by
+theorem certificates_bnd (h : AgreeBand rule U U' lo hi g g') {L : BlockId} {n n' : ℕ}
+    (hnn : n + g = n' + g') (h1 : lo ≤ n + g) (h2 : n + 2 + g ≤ hi) :
+    LeanDag.Hydrozoan.certificates U L n ⊆ LeanDag.Hydrozoan.certificates U' L n' := by
   intro C hC
   obtain ⟨hCA, hCc⟩ := Finset.mem_filter.mp hC
   have hCU : C ∈ U.ids := (Finset.mem_filter.mp hCA).1
   have hCr : (U.block C).round = n + 2 := (Finset.mem_filter.mp hCA).2
-  exact Finset.mem_filter.mpr ⟨blocksAt_bnd h (by omega) (by omega) hCA,
+  exact Finset.mem_filter.mpr ⟨blocksAt_bnd h (by omega) (by omega) (by omega) hCA,
     (isCertificate_bnd h hCU (by omega) (by omega)).mpr hCc⟩
 
 /-- And back, for a certificate the band already had. -/
-theorem certificates_bnd_old (h : AgreeBand rule U U' lo hi) {L : BlockId} {n : ℕ}
-    (h1 : lo ≤ n) (h2 : n + 2 ≤ hi) {C : BlockId} (hCU : C ∈ U.ids)
-    (hC : C ∈ LeanDag.Hydrozoan.certificates U' L n) :
+theorem certificates_bnd_old (h : AgreeBand rule U U' lo hi g g') {L : BlockId} {n n' : ℕ}
+    (hnn : n + g = n' + g') (h1 : lo ≤ n + g) (h2 : n + 2 + g ≤ hi) {C : BlockId}
+    (hCU : C ∈ U.ids) (hC : C ∈ LeanDag.Hydrozoan.certificates U' L n') :
     C ∈ LeanDag.Hydrozoan.certificates U L n := by
   obtain ⟨hCA, hCc⟩ := Finset.mem_filter.mp hC
-  have hCr : (U.block C).round = n + 2 := of_mem_blocksAt_old h (by omega) (by omega) hCU hCA
+  have hCr : (U.block C).round = n + 2 :=
+    of_mem_blocksAt_old h (n := n + 2) (n' := n' + 2) (by omega) (by omega) (by omega) hCU hCA
   exact Finset.mem_filter.mpr ⟨Finset.mem_filter.mpr ⟨hCU, hCr⟩,
     (isCertificate_bnd h hCU (by omega) (by omega)).mp hCc⟩
 
-theorem certifiersInView_bnd (h : AgreeBand rule U U' lo hi)
+theorem certifiersInView_bnd (h : AgreeBand rule U U' lo hi g g')
     {V : LeanDag.Hydrozoan.View U} {V' : LeanDag.Hydrozoan.View U'}
-    (hv : ∀ b, b ∈ V.ids → lo ≤ (U.block b).round → (U.block b).round ≤ hi → b ∈ V'.ids)
-    {L : BlockId} {n : ℕ} (h1 : lo ≤ n) (h2 : n + 2 ≤ hi) :
+    (hv : ∀ b, b ∈ V.ids → lo ≤ (U.block b).round + g → (U.block b).round + g ≤ hi →
+      b ∈ V'.ids)
+    {L : BlockId} {n n' : ℕ} (hnn : n + g = n' + g') (h1 : lo ≤ n + g)
+    (h2 : n + 2 + g ≤ hi) :
     LeanDag.Hydrozoan.certifiersInView U V L n
-      ⊆ LeanDag.Hydrozoan.certifiersInView U' V' L n := by
+      ⊆ LeanDag.Hydrozoan.certifiersInView U' V' L n' := by
   intro a ha
   unfold LeanDag.Hydrozoan.certifiersInView LeanDag.Hydrozoan.certificatesInView
     LeanDag.Hydrozoan.authorsOf at ha ⊢
@@ -208,32 +222,40 @@ theorem certifiersInView_bnd (h : AgreeBand rule U U' lo hi)
   have hCU : C ∈ U.ids := (Finset.mem_filter.mp (Finset.mem_filter.mp hCc).1).1
   have hCr : (U.block C).round = n + 2 := (Finset.mem_filter.mp (Finset.mem_filter.mp hCc).1).2
   refine Finset.mem_image.mpr ⟨C, Finset.mem_inter.mpr
-    ⟨certificates_bnd h h1 h2 hCc, hv C hCV (by omega) (by omega)⟩, ?_⟩
+    ⟨certificates_bnd h hnn h1 h2 hCc, hv C hCV (by omega) (by omega)⟩, ?_⟩
   rw [bnd_author h hCU (by omega) (by omega)]; exact hCa
 
 /-- **The blame set is carried across.** A blamer references no
 candidate, its parents are the parents it had, and a candidate the band
 did not carry is not among them — so it blames the slot still. -/
-theorem blamesInView_bnd (h : AgreeBand rule U U' lo hi)
+theorem blamesInView_bnd (h : AgreeBand rule U U' lo hi g g')
     {V : LeanDag.Hydrozoan.View U} {V' : LeanDag.Hydrozoan.View U'}
-    (hv : ∀ b, b ∈ V.ids → lo ≤ (U.block b).round → (U.block b).round ≤ hi → b ∈ V'.ids)
-    {k : ℕ} (h1 : lo ≤ S.slotRound k) (h2 : S.slotRound k + 1 ≤ hi) :
-    LeanDag.Hydrozoan.blamesInView U V k ⊆ LeanDag.Hydrozoan.blamesInView U' V' k := by
+    (hv : ∀ b, b ∈ V.ids → lo ≤ (U.block b).round + g → (U.block b).round + g ≤ hi →
+      b ∈ V'.ids)
+    {S S' : LeanDag.Hydrozoan.Slots Replica} {k k' : ℕ}
+    (hkk : S.slotRound k + g = S'.slotRound k' + g') (hlead : S.leader k = S'.leader k')
+    (h1 : lo ≤ S.slotRound k + g) (h2 : S.slotRound k + 1 + g ≤ hi) :
+    LeanDag.Hydrozoan.blamesInView (S := S) U V k
+      ⊆ LeanDag.Hydrozoan.blamesInView (S := S') U' V' k' := by
   intro a ha
   unfold LeanDag.Hydrozoan.blamesInView LeanDag.Hydrozoan.authorsOf at ha ⊢
   obtain ⟨b, hb, hba⟩ := Finset.mem_image.mp ha
   obtain ⟨hbf, hbV⟩ := Finset.mem_inter.mp hb
   obtain ⟨hbA, hbn⟩ := Finset.mem_filter.mp hbf
   have hbU : b ∈ U.ids := (Finset.mem_filter.mp hbA).1
-  have hbr : (U.block b).round = LeanDag.Hydrozoan.votingRound Replica k :=
+  have hbr : (U.block b).round = LeanDag.Hydrozoan.votingRound (S := S) Replica k :=
     (Finset.mem_filter.mp hbA).2
-  have hvr : LeanDag.Hydrozoan.votingRound Replica k = S.slotRound k + 1 := rfl
+  have hvr : LeanDag.Hydrozoan.votingRound (S := S) Replica k = S.slotRound k + 1 := rfl
+  have hvr' : LeanDag.Hydrozoan.votingRound (S := S') Replica k' = S'.slotRound k' + 1 := rfl
   refine Finset.mem_image.mpr ⟨b, Finset.mem_inter.mpr ⟨Finset.mem_filter.mpr
-    ⟨blocksAt_bnd h (by omega) (by omega) hbA, ?_⟩, hv b hbV (by omega) (by omega)⟩, ?_⟩
+    ⟨blocksAt_bnd h (n := LeanDag.Hydrozoan.votingRound (S := S) Replica k)
+        (n' := LeanDag.Hydrozoan.votingRound (S := S') Replica k')
+        (by omega) (by omega) (by omega) hbA,
+      ?_⟩, hv b hbV (by omega) (by omega)⟩, ?_⟩
   · rw [bnd_parents h hbU (by omega) (by omega)]
     intro j hj hjL
     have hjU : j ∈ U.ids := U.complete b hbU j hj
-    exact hbn j hj (isLeaderBlock_bnd_old h h1 (by omega) hjU hjL)
+    exact hbn j hj (isLeaderBlock_bnd_old h hkk hlead (by omega) (by omega) hjU hjL)
   · rw [bnd_author h hbU (by omega) (by omega)]; exact hba
 
 /-! ## The two anchored tests
@@ -244,38 +266,41 @@ had, and — the clause a one-directional band forces and the earlier
 carry passes neither test, because the anchor's cone never leaves the
 blocks the band had and an old voter names only old blocks. -/
 
-theorem certifiedIn_bnd (h : AgreeBand rule U U' lo hi) {A L : BlockId} {n : ℕ}
-    (hA : A ∈ U.ids) (hAlo : lo ≤ (U.block A).round) (hAhi : (U.block A).round ≤ hi)
-    (h1 : lo ≤ n) (h2 : n + 2 ≤ hi)
+theorem certifiedIn_bnd (h : AgreeBand rule U U' lo hi g g') {A L : BlockId} {n n' : ℕ}
+    (hA : A ∈ U.ids) (hAlo : lo ≤ (U.block A).round + g)
+    (hAhi : (U.block A).round + g ≤ hi) (hnn : n + g = n' + g')
+    (h1 : lo ≤ n + g) (h2 : n + 2 + g ≤ hi)
     (hc : LeanDag.Hydrozoan.CertifiedIn U A L n) :
-    LeanDag.Hydrozoan.CertifiedIn U' A L n := by
+    LeanDag.Hydrozoan.CertifiedIn U' A L n' := by
   obtain ⟨C, hC, hre⟩ := hc
   have hCr : (U.block C).round = n + 2 := (Finset.mem_filter.mp (Finset.mem_filter.mp hC).1).2
   have hlink : (rule.block U C).round = (U.block C).round := rfl
-  exact ⟨C, certificates_bnd h h1 h2 hC,
+  exact ⟨C, certificates_bnd h hnn h1 h2 hC,
     AgreeBand.reaches_of causal h hA hAhi hre (by omega)⟩
 
-theorem certifiedIn_bnd_old (h : AgreeBand rule U U' lo hi) {A L : BlockId} {n : ℕ}
-    (hA : A ∈ U.ids) (hAlo : lo ≤ (U.block A).round) (hAhi : (U.block A).round ≤ hi)
-    (h1 : lo ≤ n) (h2 : n + 2 ≤ hi)
-    (hc : LeanDag.Hydrozoan.CertifiedIn U' A L n) :
+theorem certifiedIn_bnd_old (h : AgreeBand rule U U' lo hi g g') {A L : BlockId} {n n' : ℕ}
+    (hA : A ∈ U.ids) (hAlo : lo ≤ (U.block A).round + g)
+    (hAhi : (U.block A).round + g ≤ hi) (hnn : n + g = n' + g')
+    (h1 : lo ≤ n + g) (h2 : n + 2 + g ≤ hi)
+    (hc : LeanDag.Hydrozoan.CertifiedIn U' A L n') :
     LeanDag.Hydrozoan.CertifiedIn U A L n := by
   obtain ⟨C, hC, hre⟩ := hc
-  have hCr' : (U'.block C).round = n + 2 := (Finset.mem_filter.mp (Finset.mem_filter.mp hC).1).2
+  have hCr' : (U'.block C).round = n' + 2 := (Finset.mem_filter.mp (Finset.mem_filter.mp hC).1).2
   have hlink : (rule.block U' C).round = (U'.block C).round := rfl
   obtain ⟨hCU, hreU, -⟩ := AgreeBand.reaches_old causal h hA hAlo hAhi hre (by omega)
-  exact ⟨C, certificates_bnd_old h h1 h2 hCU hC, hreU⟩
+  exact ⟨C, certificates_bnd_old h hnn h1 h2 hCU hC, hreU⟩
 
-theorem not_certifiedIn_bnd_novel (h : AgreeBand rule U U' lo hi) {A L : BlockId} {n : ℕ}
-    (hA : A ∈ U.ids) (hAlo : lo ≤ (U.block A).round) (hAhi : (U.block A).round ≤ hi)
-    (h1 : lo ≤ n) (h2 : n + 2 ≤ hi) (hL : L ∉ U.ids) :
-    ¬ LeanDag.Hydrozoan.CertifiedIn U' A L n := by
+theorem not_certifiedIn_bnd_novel (h : AgreeBand rule U U' lo hi g g') {A L : BlockId}
+    {n n' : ℕ} (hA : A ∈ U.ids) (hAlo : lo ≤ (U.block A).round + g)
+    (hAhi : (U.block A).round + g ≤ hi) (hnn : n + g = n' + g')
+    (h1 : lo ≤ n + g) (h2 : n + 2 + g ≤ hi) (hL : L ∉ U.ids) :
+    ¬ LeanDag.Hydrozoan.CertifiedIn U' A L n' := by
   rintro ⟨C, hC, hre⟩
-  have hCr' : (U'.block C).round = n + 2 := (Finset.mem_filter.mp (Finset.mem_filter.mp hC).1).2
+  have hCr' : (U'.block C).round = n' + 2 := (Finset.mem_filter.mp (Finset.mem_filter.mp hC).1).2
   have hlink : (rule.block U' C).round = (U'.block C).round := rfl
   obtain ⟨hCU, -, hCeq⟩ := AgreeBand.reaches_old causal h hA hAlo hAhi hre (by omega)
   have hCr : (U.block C).round = n + 2 := by
-    have : (U.block C).round = (U'.block C).round := hCeq
+    have hce : (U.block C).round + g = (U'.block C).round + g' := hCeq
     omega
   have hcert : LeanDag.Hydrozoan.IsCertificate U' C L := (Finset.mem_filter.mp hC).2
   rw [isCertificate_bnd h hCU (by omega) (by omega)] at hcert
@@ -292,11 +317,12 @@ theorem not_certifiedIn_bnd_novel (h : AgreeBand rule U U' lo hi) {A L : BlockId
     unfold LeanDag.Hydrozoan.qCert; omega
   omega
 
-theorem weakLinked_bnd (h : AgreeBand rule U U' lo hi) {A L : BlockId} {n : ℕ}
-    (hA : A ∈ U.ids) (hAlo : lo ≤ (U.block A).round) (hAhi : (U.block A).round ≤ hi)
-    (h1 : lo ≤ n) (h2 : n + 1 ≤ hi)
+theorem weakLinked_bnd (h : AgreeBand rule U U' lo hi g g') {A L : BlockId} {n n' : ℕ}
+    (hA : A ∈ U.ids) (hAlo : lo ≤ (U.block A).round + g)
+    (hAhi : (U.block A).round + g ≤ hi) (hnn : n + g = n' + g')
+    (h1 : lo ≤ n + g) (h2 : n + 1 + g ≤ hi)
     (hw : LeanDag.Hydrozoan.WeakLinked U A L n) :
-    LeanDag.Hydrozoan.WeakLinked U' A L n := by
+    LeanDag.Hydrozoan.WeakLinked U' A L n' := by
   obtain ⟨s, hs, hcard⟩ := hw
   have hsU : ∀ b ∈ s, b ∈ U.ids ∧ (U.block b).round = n + 1 := fun b hb =>
     ⟨(Finset.mem_filter.mp (hs b hb).1).1, (Finset.mem_filter.mp (hs b hb).1).2⟩
@@ -304,32 +330,33 @@ theorem weakLinked_bnd (h : AgreeBand rule U U' lo hi) {A L : BlockId} {n : ℕ}
   · obtain ⟨hbA, hbv, hbre⟩ := hs b hb
     obtain ⟨hbU, hbr⟩ := hsU b hb
     have hlink : (rule.block U b).round = (U.block b).round := rfl
-    exact ⟨blocksAt_bnd h (by omega) (by omega) hbA,
+    exact ⟨blocksAt_bnd h (n := n + 1) (n' := n' + 1) (by omega) (by omega) (by omega) hbA,
       (isVote_bnd h hbU (by omega) (by omega)).mpr hbv,
       AgreeBand.reaches_of causal h hA hAhi hbre (by omega)⟩
   · rw [authorsOf_bnd h (fun b hb => ⟨(hsU b hb).1, by have := (hsU b hb).2; omega,
       by have := (hsU b hb).2; omega⟩)]
     exact hcard
 
-theorem weakLinked_bnd_old (h : AgreeBand rule U U' lo hi) {A L : BlockId} {n : ℕ}
-    (hA : A ∈ U.ids) (hAlo : lo ≤ (U.block A).round) (hAhi : (U.block A).round ≤ hi)
-    (h1 : lo ≤ n) (h2 : n + 1 ≤ hi)
-    (hw : LeanDag.Hydrozoan.WeakLinked U' A L n) :
+theorem weakLinked_bnd_old (h : AgreeBand rule U U' lo hi g g') {A L : BlockId} {n n' : ℕ}
+    (hA : A ∈ U.ids) (hAlo : lo ≤ (U.block A).round + g)
+    (hAhi : (U.block A).round + g ≤ hi) (hnn : n + g = n' + g')
+    (h1 : lo ≤ n + g) (h2 : n + 1 + g ≤ hi)
+    (hw : LeanDag.Hydrozoan.WeakLinked U' A L n') :
     LeanDag.Hydrozoan.WeakLinked U A L n := by
   obtain ⟨s, hs, hcard⟩ := hw
   have hsU : ∀ b ∈ s, b ∈ U.ids ∧ (U.block b).round = n + 1 := by
     intro b hb
     obtain ⟨hbA, -, hbre⟩ := hs b hb
-    have hbr' : (U'.block b).round = n + 1 := (Finset.mem_filter.mp hbA).2
+    have hbr' : (U'.block b).round = n' + 1 := (Finset.mem_filter.mp hbA).2
     have hlink : (rule.block U' b).round = (U'.block b).round := rfl
     obtain ⟨hbU, -, hbeq⟩ := AgreeBand.reaches_old causal h hA hAlo hAhi hbre (by omega)
-    have : (U.block b).round = (U'.block b).round := hbeq
+    have hbe : (U.block b).round + g = (U'.block b).round + g' := hbeq
     exact ⟨hbU, by omega⟩
   refine ⟨s, fun b hb => ?_, ?_⟩
   · obtain ⟨hbA, hbv, hbre⟩ := hs b hb
     obtain ⟨hbU, hbr⟩ := hsU b hb
     have hlink : (rule.block U' b).round = (U'.block b).round := rfl
-    have hbr'' : (U'.block b).round = n + 1 := (Finset.mem_filter.mp hbA).2
+    have hbr'' : (U'.block b).round = n' + 1 := (Finset.mem_filter.mp hbA).2
     obtain ⟨-, hbreU, -⟩ := AgreeBand.reaches_old causal h hA hAlo hAhi hbre (by omega)
     exact ⟨Finset.mem_filter.mpr ⟨hbU, hbr⟩,
       (isVote_bnd h hbU (by omega) (by omega)).mp hbv, hbreU⟩
@@ -337,20 +364,21 @@ theorem weakLinked_bnd_old (h : AgreeBand rule U U' lo hi) {A L : BlockId} {n : 
       by have := (hsU b hb).2; omega⟩)]
     exact hcard
 
-theorem not_weakLinked_bnd_novel (h : AgreeBand rule U U' lo hi) {A L : BlockId} {n : ℕ}
-    (hA : A ∈ U.ids) (hAlo : lo ≤ (U.block A).round) (hAhi : (U.block A).round ≤ hi)
-    (h1 : lo ≤ n) (h2 : n + 1 ≤ hi) (hL : L ∉ U.ids) :
-    ¬ LeanDag.Hydrozoan.WeakLinked U' A L n := by
+theorem not_weakLinked_bnd_novel (h : AgreeBand rule U U' lo hi g g') {A L : BlockId} {n n' : ℕ}
+    (hA : A ∈ U.ids) (hAlo : lo ≤ (U.block A).round + g)
+    (hAhi : (U.block A).round + g ≤ hi) (hnn : n + g = n' + g')
+    (h1 : lo ≤ n + g) (h2 : n + 1 + g ≤ hi) (hL : L ∉ U.ids) :
+    ¬ LeanDag.Hydrozoan.WeakLinked U' A L n' := by
   rintro ⟨s, hs, hcard⟩
   have hsempty : s = ∅ := by
     rw [Finset.eq_empty_iff_forall_notMem]
     intro b hb
     obtain ⟨hbA, hbv, hbre⟩ := hs b hb
-    have hbr' : (U'.block b).round = n + 1 := (Finset.mem_filter.mp hbA).2
+    have hbr' : (U'.block b).round = n' + 1 := (Finset.mem_filter.mp hbA).2
     have hlink : (rule.block U' b).round = (U'.block b).round := rfl
     obtain ⟨hbU, -, hbeq⟩ := AgreeBand.reaches_old causal h hA hAlo hAhi hbre (by omega)
     have hbr : (U.block b).round = n + 1 := by
-      have : (U.block b).round = (U'.block b).round := hbeq
+      have hbe : (U.block b).round + g = (U'.block b).round + g' := hbeq
       omega
     have hbvU : LeanDag.Hydrozoan.IsVote U b L :=
       (isVote_bnd h hbU (by omega) (by omega)).mp hbv
@@ -401,61 +429,59 @@ split from. -/
 theorem banded_aux {V : LeanDag.Hydrozoan.View U} {k : ℕ} {v : Option BlockId}
     (hd : LeanDag.Hydrozoan.Decided U V k v) :
     ∃ top, S.slotRound k + 2 ≤ top ∧
-      ∀ (S' : LeanDag.Hydrozoan.Slots Replica)
+      ∀ (g g' d d' : ℕ) (S' : LeanDag.Hydrozoan.Slots Replica)
         (U' : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
-        (V' : LeanDag.Hydrozoan.View U'),
-        S'.slotRound = S.slotRound →
-        (∀ m, S.slotRound m ≤ top → S'.leader m = S.leader m) →
-        AgreeBand rule U U' (S.slotRound k) top →
+        (V' : LeanDag.Hydrozoan.View U') (k' : ℕ),
+        k + d' = k' + d →
+        (∀ m m', m + d' = m' + d → S.slotRound m + g = S'.slotRound m' + g') →
+        (∀ m m', m + d' = m' + d → S.slotRound m ≤ top → S.leader m = S'.leader m') →
+        AgreeBand rule U U' (S.slotRound k + g) (top + g) g g' →
         (∀ b, b ∈ V.ids → S.slotRound k ≤ (U.block b).round →
           (U.block b).round ≤ top → b ∈ V'.ids) →
-        LeanDag.Hydrozoan.Decided (S := S') U' V' k v := by
+        LeanDag.Hydrozoan.Decided (S := S') U' V' k' v := by
   classical
   induction hd with
   | @directFast k L hL hc =>
       refine ⟨S.slotRound k + 2, le_refl _, ?_⟩
-      intro S' U' V' hround hlead hab hV
-      have hsk : ∀ x, S'.slotRound x = S.slotRound x := fun x => by rw [hround]
-      have hlk : S.leader k = S'.leader k := (hlead k (by omega)).symm
-      have hLb : LeanDag.Hydrozoan.IsLeaderBlock (S := S) U' k L :=
-        isLeaderBlock_bnd (S := S) hab (le_refl _) (by omega) hL
+      intro g g' d d' S' U' V' k' hkd hsch hlead hab hV
+      have hkk : S.slotRound k + g = S'.slotRound k' + g' := hsch k k' hkd
+      have hlk : S.leader k = S'.leader k' := hlead k k' hkd (by omega)
       refine LeanDag.Hydrozoan.Decided.directFast (S := S')
-        (isLeaderBlock_sched (S₁ := S) (S₂ := S') (hsk k).symm hlk hLb) ?_
-      rw [hsk k]
+        (isLeaderBlock_bnd hab hkk hlk (by omega) (by omega) hL) ?_
       exact le_trans hc (Finset.card_le_card
-        (supportersInView_bnd (S := S) hab hV (by omega) (by omega)))
+        (supportersInView_bnd hab (fun b hb h1 h2 => hV b hb (by omega) (by omega))
+          (n := S.slotRound k + 1) (n' := S'.slotRound k' + 1) (by omega) (by omega)
+          (by omega)))
   | @directSlow k L hL hc =>
       refine ⟨S.slotRound k + 2, le_refl _, ?_⟩
-      intro S' U' V' hround hlead hab hV
-      have hsk : ∀ x, S'.slotRound x = S.slotRound x := fun x => by rw [hround]
-      have hlk : S.leader k = S'.leader k := (hlead k (by omega)).symm
-      have hLb : LeanDag.Hydrozoan.IsLeaderBlock (S := S) U' k L :=
-        isLeaderBlock_bnd (S := S) hab (le_refl _) (by omega) hL
+      intro g g' d d' S' U' V' k' hkd hsch hlead hab hV
+      have hkk : S.slotRound k + g = S'.slotRound k' + g' := hsch k k' hkd
+      have hlk : S.leader k = S'.leader k' := hlead k k' hkd (by omega)
       refine LeanDag.Hydrozoan.Decided.directSlow (S := S')
-        (isLeaderBlock_sched (S₁ := S) (S₂ := S') (hsk k).symm hlk hLb) ?_
-      rw [hsk k]
+        (isLeaderBlock_bnd hab hkk hlk (by omega) (by omega) hL) ?_
       exact le_trans hc (Finset.card_le_card
-        (certifiersInView_bnd (S := S) hab hV (le_refl _) (by omega)))
+        (certifiersInView_bnd hab (fun b hb h1 h2 => hV b hb (by omega) (by omega))
+          (n := S.slotRound k) (n' := S'.slotRound k') (by omega) (by omega) (by omega)))
   | @directSkip k hs =>
       refine ⟨S.slotRound k + 2, le_refl _, ?_⟩
-      intro S' U' V' hround hlead hab hV
-      have hsk : ∀ x, S'.slotRound x = S.slotRound x := fun x => by rw [hround]
-      have hlk : S.leader k = S'.leader k := (hlead k (by omega)).symm
+      intro g g' d d' S' U' V' k' hkd hsch hlead hab hV
+      have hkk : S.slotRound k + g = S'.slotRound k' + g' := hsch k k' hkd
+      have hlk : S.leader k = S'.leader k' := hlead k k' hkd (by omega)
       refine LeanDag.Hydrozoan.Decided.directSkip (S := S') ?_
-      unfold LeanDag.Hydrozoan.SkippedLeaderInView at hs ⊢
-      rw [← blamesInView_sched (S₁ := S) (S₂ := S') (hsk k).symm hlk]
       exact le_trans hs (Finset.card_le_card
-        (blamesInView_bnd (S := S) hab hV (le_refl _) (by omega)))
+        (blamesInView_bnd hab (fun b hb h1 h2 => hV b hb (by omega) (by omega))
+          hkk hlk (by omega) (by omega)))
   | @indirectCert k j A L hkj helig hanchor hmid hL hcert ihj ihmid =>
       obtain ⟨topj, htopj, hjt⟩ := ihj
       set f : ℕ → ℕ := fun i =>
-        if hh : k < i ∧ i < j ∧ LeanDag.Hydrozoan.EligibleAsAnchor Replica k i then
+        if hh : k < i ∧ i < j ∧ LeanDag.Hydrozoan.EligibleAsAnchor (S := S) Replica k i then
           (ihmid i hh.1 hh.2.1 hh.2.2).choose else 0 with hf
       set top := max topj ((Finset.Ico (k + 1) j).sup f) with htop
       have hkj' : S.slotRound k ≤ S.slotRound j := S.mono (le_of_lt hkj)
-      have hA := LeanDag.Hydrozoan.isLeaderBlock_of_decided hanchor
+      have hAL : LeanDag.Hydrozoan.IsLeaderBlock (S := S) U j A :=
+        LeanDag.Hydrozoan.isLeaderBlock_of_decided hanchor
       have hkey : ∀ i (h1 : k < i) (h2 : i < j)
-          (h3 : LeanDag.Hydrozoan.EligibleAsAnchor Replica k i),
+          (h3 : LeanDag.Hydrozoan.EligibleAsAnchor (S := S) Replica k i),
           (ihmid i h1 h2 h3).choose ≤ top := by
         intro i h1 h2 h3
         have heqf : f i = (ihmid i h1 h2 h3).choose := by
@@ -465,43 +491,57 @@ theorem banded_aux {V : LeanDag.Hydrozoan.View U} {k : ℕ} {v : Option BlockId}
       have htj : topj ≤ top := by rw [htop]; exact le_max_left _ _
       have htopk : S.slotRound k + 2 ≤ top := by omega
       refine ⟨top, htopk, ?_⟩
-      intro S' U' V' hround hlead hab hV
-      have hsk : ∀ x, S'.slotRound x = S.slotRound x := fun x => by rw [hround]
-      have hlk : S.leader k = S'.leader k := (hlead k (by omega)).symm
-      have heq : ∀ x y, LeanDag.Hydrozoan.EligibleAsAnchor (S := S') Replica x y ↔
-          LeanDag.Hydrozoan.EligibleAsAnchor (S := S) Replica x y := by
-        intro x y
-        simp only [LeanDag.Hydrozoan.EligibleAsAnchor, LeanDag.Hydrozoan.decisionRound, hround]
-      have hAlo : S.slotRound k ≤ (U.block A).round := by rw [hA.2.1]; exact hkj'
-      have hAhi : (U.block A).round ≤ top := by rw [hA.2.1]; omega
-      have hanch : LeanDag.Hydrozoan.Decided (S := S') U' V' j (some A) :=
-        hjt S' U' V' hround (fun m hm => hlead m (by omega))
-          (hab.mono hkj' htj) (fun b hb h1 h2 => hV b hb (by omega) (by omega))
-      have hmid' : ∀ i, k < i → i < j →
-          LeanDag.Hydrozoan.EligibleAsAnchor (S := S') Replica k i →
-          LeanDag.Hydrozoan.Decided (S := S') U' V' i none := by
-        intro i h1 h2 h3
-        have h3' := (heq _ _).mp h3
-        have hki : S.slotRound k ≤ S.slotRound i := S.mono (by omega)
-        have hk2 := hkey i h1 h2 h3'
-        obtain ⟨htopi, hit⟩ := (ihmid i h1 h2 h3').choose_spec
-        exact hit S' U' V' hround (fun m hm => hlead m (by omega)) (hab.mono hki hk2)
+      intro g g' d d' S' U' V' k' hkd hsch hlead hab hV
+      have hkk : S.slotRound k + g = S'.slotRound k' + g' := hsch k k' hkd
+      have hlk : S.leader k = S'.leader k' := hlead k k' hkd (by omega)
+      have hjd : j + d' = (j - k + k') + d := by omega
+      have hjj : S.slotRound j + g = S'.slotRound (j - k + k') + g' := hsch j _ hjd
+      have hAhi : (U.block A).round + g ≤ top + g := by rw [hAL.2.1]; omega
+      have hAlo : S.slotRound k + g ≤ (U.block A).round + g := by rw [hAL.2.1]; omega
+      have helig' : LeanDag.Hydrozoan.EligibleAsAnchor (S := S') Replica k' (j - k + k') := by
+        have := helig
+        unfold LeanDag.Hydrozoan.EligibleAsAnchor LeanDag.Hydrozoan.decisionRound at this ⊢
+        omega
+      have hanch := hjt g g' d d' S' U' V' (j - k + k') hjd hsch
+        (fun m m' hm hb => hlead m m' hm (by omega))
+        (hab.mono (by omega) (by omega))
+        (fun b hb h1 h2 => hV b hb (by omega) (by omega))
+      have hmid' : ∀ i', k' < i' → i' < j - k + k' →
+          LeanDag.Hydrozoan.EligibleAsAnchor (S := S') Replica k' i' →
+          LeanDag.Hydrozoan.Decided (S := S') U' V' i' none := by
+        intro i' h1 h2 h3
+        have hi'd : (i' - k' + k) + d' = i' + d := by omega
+        have hii : S.slotRound (i' - k' + k) + g = S'.slotRound i' + g' := hsch _ i' hi'd
+        have hki : k < i' - k' + k := by omega
+        have hij : i' - k' + k < j := by omega
+        have helg : LeanDag.Hydrozoan.EligibleAsAnchor (S := S) Replica k (i' - k' + k) := by
+          have := h3
+          unfold LeanDag.Hydrozoan.EligibleAsAnchor LeanDag.Hydrozoan.decisionRound at this ⊢
+          omega
+        have hk2 := hkey _ hki hij helg
+        have hkr : S.slotRound k ≤ S.slotRound (i' - k' + k) := S.mono (by omega)
+        obtain ⟨htopi, hit⟩ := (ihmid _ hki hij helg).choose_spec
+        exact hit g g' d d' S' U' V' i' hi'd hsch
+          (fun m m' hm hb => hlead m m' hm (by omega))
+          (hab.mono (by omega) (by omega))
           (fun b hb ha1 ha2 => hV b hb (by omega) (by omega))
-      refine LeanDag.Hydrozoan.Decided.indirectCert (S := S') hkj ((heq _ _).mpr helig)
-        hanch hmid' (isLeaderBlock_sched (S₁ := S) (S₂ := S') (hsk k).symm hlk
-          (isLeaderBlock_bnd (S := S) hab (le_refl _) (by omega) hL)) ?_
-      rw [hsk k]
-      exact certifiedIn_bnd hab hA.1 hAlo hAhi (le_refl _) (by omega) hcert
+      have hlsOld : ∀ L', LeanDag.Hydrozoan.IsLeaderBlock (S := S') U' k' L' → L' ∈ U.ids →
+          LeanDag.Hydrozoan.IsLeaderBlock (S := S) U k L' := fun L' hL' hLo =>
+        isLeaderBlock_bnd_old hab hkk hlk (by omega) (by omega) hLo hL'
+      exact LeanDag.Hydrozoan.Decided.indirectCert (S := S') (by omega) helig' hanch hmid'
+        (isLeaderBlock_bnd hab hkk hlk (by omega) (by omega) hL)
+        (certifiedIn_bnd hab hAL.1 hAlo hAhi hkk (by omega) (by omega) hcert)
   | @indirectWeak k j A L hkj helig hanchor hmid hnocert hL hweak hmin ihj ihmid =>
       obtain ⟨topj, htopj, hjt⟩ := ihj
       set f : ℕ → ℕ := fun i =>
-        if hh : k < i ∧ i < j ∧ LeanDag.Hydrozoan.EligibleAsAnchor Replica k i then
+        if hh : k < i ∧ i < j ∧ LeanDag.Hydrozoan.EligibleAsAnchor (S := S) Replica k i then
           (ihmid i hh.1 hh.2.1 hh.2.2).choose else 0 with hf
       set top := max topj ((Finset.Ico (k + 1) j).sup f) with htop
       have hkj' : S.slotRound k ≤ S.slotRound j := S.mono (le_of_lt hkj)
-      have hA := LeanDag.Hydrozoan.isLeaderBlock_of_decided hanchor
+      have hAL : LeanDag.Hydrozoan.IsLeaderBlock (S := S) U j A :=
+        LeanDag.Hydrozoan.isLeaderBlock_of_decided hanchor
       have hkey : ∀ i (h1 : k < i) (h2 : i < j)
-          (h3 : LeanDag.Hydrozoan.EligibleAsAnchor Replica k i),
+          (h3 : LeanDag.Hydrozoan.EligibleAsAnchor (S := S) Replica k i),
           (ihmid i h1 h2 h3).choose ≤ top := by
         intro i h1 h2 h3
         have heqf : f i = (ihmid i h1 h2 h3).choose := by
@@ -511,60 +551,69 @@ theorem banded_aux {V : LeanDag.Hydrozoan.View U} {k : ℕ} {v : Option BlockId}
       have htj : topj ≤ top := by rw [htop]; exact le_max_left _ _
       have htopk : S.slotRound k + 2 ≤ top := by omega
       refine ⟨top, htopk, ?_⟩
-      intro S' U' V' hround hlead hab hV
-      have hsk : ∀ x, S'.slotRound x = S.slotRound x := fun x => by rw [hround]
-      have hlk : S.leader k = S'.leader k := (hlead k (by omega)).symm
-      have heq : ∀ x y, LeanDag.Hydrozoan.EligibleAsAnchor (S := S') Replica x y ↔
-          LeanDag.Hydrozoan.EligibleAsAnchor (S := S) Replica x y := by
-        intro x y
-        simp only [LeanDag.Hydrozoan.EligibleAsAnchor, LeanDag.Hydrozoan.decisionRound, hround]
-      have hAlo : S.slotRound k ≤ (U.block A).round := by rw [hA.2.1]; exact hkj'
-      have hAhi : (U.block A).round ≤ top := by rw [hA.2.1]; omega
-      have hanch : LeanDag.Hydrozoan.Decided (S := S') U' V' j (some A) :=
-        hjt S' U' V' hround (fun m hm => hlead m (by omega))
-          (hab.mono hkj' htj) (fun b hb h1 h2 => hV b hb (by omega) (by omega))
-      have hmid' : ∀ i, k < i → i < j →
-          LeanDag.Hydrozoan.EligibleAsAnchor (S := S') Replica k i →
-          LeanDag.Hydrozoan.Decided (S := S') U' V' i none := by
-        intro i h1 h2 h3
-        have h3' := (heq _ _).mp h3
-        have hki : S.slotRound k ≤ S.slotRound i := S.mono (by omega)
-        have hk2 := hkey i h1 h2 h3'
-        obtain ⟨htopi, hit⟩ := (ihmid i h1 h2 h3').choose_spec
-        exact hit S' U' V' hround (fun m hm => hlead m (by omega)) (hab.mono hki hk2)
+      intro g g' d d' S' U' V' k' hkd hsch hlead hab hV
+      have hkk : S.slotRound k + g = S'.slotRound k' + g' := hsch k k' hkd
+      have hlk : S.leader k = S'.leader k' := hlead k k' hkd (by omega)
+      have hjd : j + d' = (j - k + k') + d := by omega
+      have hjj : S.slotRound j + g = S'.slotRound (j - k + k') + g' := hsch j _ hjd
+      have hAhi : (U.block A).round + g ≤ top + g := by rw [hAL.2.1]; omega
+      have hAlo : S.slotRound k + g ≤ (U.block A).round + g := by rw [hAL.2.1]; omega
+      have helig' : LeanDag.Hydrozoan.EligibleAsAnchor (S := S') Replica k' (j - k + k') := by
+        have := helig
+        unfold LeanDag.Hydrozoan.EligibleAsAnchor LeanDag.Hydrozoan.decisionRound at this ⊢
+        omega
+      have hanch := hjt g g' d d' S' U' V' (j - k + k') hjd hsch
+        (fun m m' hm hb => hlead m m' hm (by omega))
+        (hab.mono (by omega) (by omega))
+        (fun b hb h1 h2 => hV b hb (by omega) (by omega))
+      have hmid' : ∀ i', k' < i' → i' < j - k + k' →
+          LeanDag.Hydrozoan.EligibleAsAnchor (S := S') Replica k' i' →
+          LeanDag.Hydrozoan.Decided (S := S') U' V' i' none := by
+        intro i' h1 h2 h3
+        have hi'd : (i' - k' + k) + d' = i' + d := by omega
+        have hii : S.slotRound (i' - k' + k) + g = S'.slotRound i' + g' := hsch _ i' hi'd
+        have hki : k < i' - k' + k := by omega
+        have hij : i' - k' + k < j := by omega
+        have helg : LeanDag.Hydrozoan.EligibleAsAnchor (S := S) Replica k (i' - k' + k) := by
+          have := h3
+          unfold LeanDag.Hydrozoan.EligibleAsAnchor LeanDag.Hydrozoan.decisionRound at this ⊢
+          omega
+        have hk2 := hkey _ hki hij helg
+        have hkr : S.slotRound k ≤ S.slotRound (i' - k' + k) := S.mono (by omega)
+        obtain ⟨htopi, hit⟩ := (ihmid _ hki hij helg).choose_spec
+        exact hit g g' d d' S' U' V' i' hi'd hsch
+          (fun m m' hm hb => hlead m m' hm (by omega))
+          (hab.mono (by omega) (by omega))
           (fun b hb ha1 ha2 => hV b hb (by omega) (by omega))
-      have hnocert' : ∀ L', LeanDag.Hydrozoan.IsLeaderBlock (S := S') U' k L' →
-          ¬ LeanDag.Hydrozoan.CertifiedIn U' A L' (S'.slotRound k) := by
-        intro L' hL' hc'
-        rw [hsk k] at hc'
-        have hL'S := isLeaderBlock_sched (S₁ := S') (S₂ := S) (hsk k) hlk.symm hL'
+      have hlsOld : ∀ L', LeanDag.Hydrozoan.IsLeaderBlock (S := S') U' k' L' → L' ∈ U.ids →
+          LeanDag.Hydrozoan.IsLeaderBlock (S := S) U k L' := fun L' hL' hLo =>
+        isLeaderBlock_bnd_old hab hkk hlk (by omega) (by omega) hLo hL'
+      refine LeanDag.Hydrozoan.Decided.indirectWeak (S := S') (by omega) helig' hanch hmid'
+        ?_ (isLeaderBlock_bnd hab hkk hlk (by omega) (by omega) hL)
+        (weakLinked_bnd hab hAL.1 hAlo hAhi hkk (by omega) (by omega) hweak) ?_
+      · intro L' hL' hc'
         by_cases hLo : L' ∈ U.ids
-        · exact hnocert L' (isLeaderBlock_bnd_old (S := S) hab (le_refl _) (by omega) hLo hL'S)
-            (certifiedIn_bnd_old hab hA.1 hAlo hAhi (le_refl _) (by omega) hc')
-        · exact not_certifiedIn_bnd_novel hab hA.1 hAlo hAhi (le_refl _) (by omega) hLo hc'
-      refine LeanDag.Hydrozoan.Decided.indirectWeak (S := S') hkj ((heq _ _).mpr helig)
-        hanch hmid' hnocert' (isLeaderBlock_sched (S₁ := S) (S₂ := S') (hsk k).symm hlk
-          (isLeaderBlock_bnd (S := S) hab (le_refl _) (by omega) hL)) ?_ ?_
-      · rw [hsk k]
-        exact weakLinked_bnd hab hA.1 hAlo hAhi (le_refl _) (by omega) hweak
+        · exact hnocert L' (hlsOld L' hL' hLo)
+            (certifiedIn_bnd_old hab hAL.1 hAlo hAhi hkk (by omega) (by omega) hc')
+        · exact not_certifiedIn_bnd_novel hab hAL.1 hAlo hAhi hkk (by omega) (by omega)
+            hLo hc'
       · intro L' hL' hw'
-        rw [hsk k] at hw'
-        have hL'S := isLeaderBlock_sched (S₁ := S') (S₂ := S) (hsk k) hlk.symm hL'
         by_cases hLo : L' ∈ U.ids
-        · exact hmin L' (isLeaderBlock_bnd_old (S := S) hab (le_refl _) (by omega) hLo hL'S)
-            (weakLinked_bnd_old hab hA.1 hAlo hAhi (le_refl _) (by omega) hw')
-        · exact absurd hw' (not_weakLinked_bnd_novel hab hA.1 hAlo hAhi (le_refl _)
+        · exact hmin L' (hlsOld L' hL' hLo)
+            (weakLinked_bnd_old hab hAL.1 hAlo hAhi hkk (by omega) (by omega) hw')
+        · exact absurd hw' (not_weakLinked_bnd_novel hab hAL.1 hAlo hAhi hkk (by omega)
             (by omega) hLo)
   | @indirectSkip k j A hkj helig hanchor hmid hnocert hnoweak ihj ihmid =>
       obtain ⟨topj, htopj, hjt⟩ := ihj
       set f : ℕ → ℕ := fun i =>
-        if hh : k < i ∧ i < j ∧ LeanDag.Hydrozoan.EligibleAsAnchor Replica k i then
+        if hh : k < i ∧ i < j ∧ LeanDag.Hydrozoan.EligibleAsAnchor (S := S) Replica k i then
           (ihmid i hh.1 hh.2.1 hh.2.2).choose else 0 with hf
       set top := max topj ((Finset.Ico (k + 1) j).sup f) with htop
       have hkj' : S.slotRound k ≤ S.slotRound j := S.mono (le_of_lt hkj)
-      have hA := LeanDag.Hydrozoan.isLeaderBlock_of_decided hanchor
+      have hAL : LeanDag.Hydrozoan.IsLeaderBlock (S := S) U j A :=
+        LeanDag.Hydrozoan.isLeaderBlock_of_decided hanchor
       have hkey : ∀ i (h1 : k < i) (h2 : i < j)
-          (h3 : LeanDag.Hydrozoan.EligibleAsAnchor Replica k i),
+          (h3 : LeanDag.Hydrozoan.EligibleAsAnchor (S := S) Replica k i),
           (ihmid i h1 h2 h3).choose ≤ top := by
         intro i h1 h2 h3
         have heqf : f i = (ihmid i h1 h2 h3).choose := by
@@ -574,47 +623,57 @@ theorem banded_aux {V : LeanDag.Hydrozoan.View U} {k : ℕ} {v : Option BlockId}
       have htj : topj ≤ top := by rw [htop]; exact le_max_left _ _
       have htopk : S.slotRound k + 2 ≤ top := by omega
       refine ⟨top, htopk, ?_⟩
-      intro S' U' V' hround hlead hab hV
-      have hsk : ∀ x, S'.slotRound x = S.slotRound x := fun x => by rw [hround]
-      have hlk : S.leader k = S'.leader k := (hlead k (by omega)).symm
-      have heq : ∀ x y, LeanDag.Hydrozoan.EligibleAsAnchor (S := S') Replica x y ↔
-          LeanDag.Hydrozoan.EligibleAsAnchor (S := S) Replica x y := by
-        intro x y
-        simp only [LeanDag.Hydrozoan.EligibleAsAnchor, LeanDag.Hydrozoan.decisionRound, hround]
-      have hAlo : S.slotRound k ≤ (U.block A).round := by rw [hA.2.1]; exact hkj'
-      have hAhi : (U.block A).round ≤ top := by rw [hA.2.1]; omega
-      have hanch : LeanDag.Hydrozoan.Decided (S := S') U' V' j (some A) :=
-        hjt S' U' V' hround (fun m hm => hlead m (by omega))
-          (hab.mono hkj' htj) (fun b hb h1 h2 => hV b hb (by omega) (by omega))
-      have hmid' : ∀ i, k < i → i < j →
-          LeanDag.Hydrozoan.EligibleAsAnchor (S := S') Replica k i →
-          LeanDag.Hydrozoan.Decided (S := S') U' V' i none := by
-        intro i h1 h2 h3
-        have h3' := (heq _ _).mp h3
-        have hki : S.slotRound k ≤ S.slotRound i := S.mono (by omega)
-        have hk2 := hkey i h1 h2 h3'
-        obtain ⟨htopi, hit⟩ := (ihmid i h1 h2 h3').choose_spec
-        exact hit S' U' V' hround (fun m hm => hlead m (by omega)) (hab.mono hki hk2)
+      intro g g' d d' S' U' V' k' hkd hsch hlead hab hV
+      have hkk : S.slotRound k + g = S'.slotRound k' + g' := hsch k k' hkd
+      have hlk : S.leader k = S'.leader k' := hlead k k' hkd (by omega)
+      have hjd : j + d' = (j - k + k') + d := by omega
+      have hjj : S.slotRound j + g = S'.slotRound (j - k + k') + g' := hsch j _ hjd
+      have hAhi : (U.block A).round + g ≤ top + g := by rw [hAL.2.1]; omega
+      have hAlo : S.slotRound k + g ≤ (U.block A).round + g := by rw [hAL.2.1]; omega
+      have helig' : LeanDag.Hydrozoan.EligibleAsAnchor (S := S') Replica k' (j - k + k') := by
+        have := helig
+        unfold LeanDag.Hydrozoan.EligibleAsAnchor LeanDag.Hydrozoan.decisionRound at this ⊢
+        omega
+      have hanch := hjt g g' d d' S' U' V' (j - k + k') hjd hsch
+        (fun m m' hm hb => hlead m m' hm (by omega))
+        (hab.mono (by omega) (by omega))
+        (fun b hb h1 h2 => hV b hb (by omega) (by omega))
+      have hmid' : ∀ i', k' < i' → i' < j - k + k' →
+          LeanDag.Hydrozoan.EligibleAsAnchor (S := S') Replica k' i' →
+          LeanDag.Hydrozoan.Decided (S := S') U' V' i' none := by
+        intro i' h1 h2 h3
+        have hi'd : (i' - k' + k) + d' = i' + d := by omega
+        have hii : S.slotRound (i' - k' + k) + g = S'.slotRound i' + g' := hsch _ i' hi'd
+        have hki : k < i' - k' + k := by omega
+        have hij : i' - k' + k < j := by omega
+        have helg : LeanDag.Hydrozoan.EligibleAsAnchor (S := S) Replica k (i' - k' + k) := by
+          have := h3
+          unfold LeanDag.Hydrozoan.EligibleAsAnchor LeanDag.Hydrozoan.decisionRound at this ⊢
+          omega
+        have hk2 := hkey _ hki hij helg
+        have hkr : S.slotRound k ≤ S.slotRound (i' - k' + k) := S.mono (by omega)
+        obtain ⟨htopi, hit⟩ := (ihmid _ hki hij helg).choose_spec
+        exact hit g g' d d' S' U' V' i' hi'd hsch
+          (fun m m' hm hb => hlead m m' hm (by omega))
+          (hab.mono (by omega) (by omega))
           (fun b hb ha1 ha2 => hV b hb (by omega) (by omega))
-      have hnocert' : ∀ L', LeanDag.Hydrozoan.IsLeaderBlock (S := S') U' k L' →
-          ¬ LeanDag.Hydrozoan.CertifiedIn U' A L' (S'.slotRound k) := by
-        intro L' hL' hc'
-        rw [hsk k] at hc'
-        have hL'S := isLeaderBlock_sched (S₁ := S') (S₂ := S) (hsk k) hlk.symm hL'
+      have hlsOld : ∀ L', LeanDag.Hydrozoan.IsLeaderBlock (S := S') U' k' L' → L' ∈ U.ids →
+          LeanDag.Hydrozoan.IsLeaderBlock (S := S) U k L' := fun L' hL' hLo =>
+        isLeaderBlock_bnd_old hab hkk hlk (by omega) (by omega) hLo hL'
+      refine LeanDag.Hydrozoan.Decided.indirectSkip (S := S') (by omega) helig' hanch hmid'
+        ?_ ?_
+      · intro L' hL' hc'
         by_cases hLo : L' ∈ U.ids
-        · exact hnocert L' (isLeaderBlock_bnd_old (S := S) hab (le_refl _) (by omega) hLo hL'S)
-            (certifiedIn_bnd_old hab hA.1 hAlo hAhi (le_refl _) (by omega) hc')
-        · exact not_certifiedIn_bnd_novel hab hA.1 hAlo hAhi (le_refl _) (by omega) hLo hc'
-      refine LeanDag.Hydrozoan.Decided.indirectSkip (S := S') hkj ((heq _ _).mpr helig)
-        hanch hmid' hnocert' ?_
-      intro L' hL' hw'
-      rw [hsk k] at hw'
-      have hL'S := isLeaderBlock_sched (S₁ := S') (S₂ := S) (hsk k) hlk.symm hL'
-      by_cases hLo : L' ∈ U.ids
-      · exact hnoweak L' (isLeaderBlock_bnd_old (S := S) hab (le_refl _) (by omega) hLo hL'S)
-          (weakLinked_bnd_old hab hA.1 hAlo hAhi (le_refl _) (by omega) hw')
-      · exact absurd hw' (not_weakLinked_bnd_novel hab hA.1 hAlo hAhi (le_refl _)
-          (by omega) hLo)
+        · exact hnocert L' (hlsOld L' hL' hLo)
+            (certifiedIn_bnd_old hab hAL.1 hAlo hAhi hkk (by omega) (by omega) hc')
+        · exact not_certifiedIn_bnd_novel hab hAL.1 hAlo hAhi hkk (by omega) (by omega)
+            hLo hc'
+      · intro L' hL' hw'
+        by_cases hLo : L' ∈ U.ids
+        · exact hnoweak L' (hlsOld L' hL' hLo)
+            (weakLinked_bnd_old hab hAL.1 hAlo hAhi hkk (by omega) (by omega) hw')
+        · exact absurd hw' (not_weakLinked_bnd_novel hab hAL.1 hAlo hAhi hkk (by omega)
+            (by omega) hLo)
 
 omit S in
 /-- **Hydrozoan reads a band.** The property stated at the core's
@@ -622,8 +681,8 @@ schedule vocabulary, which `ofCoreSlots` carries into Hydrozoan's. -/
 theorem banded : Banded (rule (Replica := Replica) (BlockId := BlockId)) := by
   intro S U V k v hd
   obtain ⟨top, -, ht⟩ := banded_aux (S := ofCoreSlots S) hd
-  refine ⟨top, fun S' U' V' hround hlead hab hV => ?_⟩
-  exact ht (ofCoreSlots S') U' V' hround (fun m hm => hlead m hm) hab hV
+  exact ⟨top, fun g g' d d' S' U' V' k' hkd hsch hlead hab hV =>
+    ht g g' d d' (ofCoreSlots S') U' V' k' hkd hsch hlead hab hV⟩
 
 omit S in
 /-- Views hold blocks of their universe. -/

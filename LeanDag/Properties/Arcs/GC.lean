@@ -4,9 +4,10 @@ import LeanDag.GC.Chop
 import LeanDag.GC.ChopDecided
 import LeanDag.MysticetiProperties
 import LeanDag.Properties.Witness
+import LeanDag.Properties.Derived.Truncate
 
 /-!
-# Garbage collection, for any protocol with `LocalTruncate`
+# Garbage collection, for any protocol with a band
 
 `docs/target-properties.md` G2, the garbage-collection half.
 
@@ -15,11 +16,15 @@ earlier version composed a locality property with a re-indexing one and
 looked like it was doing work; the composition had hypotheses nothing
 could satisfy, because restriction and renumbering are not separately
 realisable (`Properties/Truncate.lean` records why). What replaced it
-is a single property, so garbage collection *is* that property applied,
-and the two corollaries below are the directions a deployment uses.
+is a single statement, `LocalTruncate`, so garbage collection *is* that
+statement applied, and the two corollaries below are the directions a
+deployment uses.
 
-The depth sits in the per-protocol proof of `LocalTruncate`: one
-induction, paid once, serving every horizon and every base slot.
+A protocol no longer proves `LocalTruncate`. Once the band carries a
+round offset, `Properties.LocalTruncate.of_banded` derives it from
+`Banded` and `ViewSound`, so the depth sits in the band a protocol was
+already proving for persistence and locality. What a mechanism still
+owes is the witness that its cut stands in the `Truncates` relation.
 -/
 
 namespace LeanDag
@@ -94,136 +99,62 @@ theorem directCommit_chop {T : Finset Validator} {r : ℕ} {L : BlockId}
 end Core
 
 
-/-! ## The core's `LocalTruncate`, from the cut and the band
+/-! ## The canonical cut is a truncation, and the arc's theorems follow
 
-The last obligation the core was short of, and it lives here rather than
-in `MysticetiProperties.lean` because half of it is the mechanism's.
+With the band carrying an offset, truncation invariance is no longer an
+obligation: `Properties.LocalTruncate.of_banded` derives it for any rule
+with a band. What is left for this file is the **witness** — that the
+cut the mechanism builds stands in the `Truncates` relation — and the
+observation that the arc's own two transport theorems come back out of
+the property with no induction.
 
-The split is worth naming. `GC/ChopDecided.lean` already proves both
-directions for the **canonical** truncation, the one `chop` builds. What
-`LocalTruncate` asks for is any universe standing in the `Truncates`
-relation, and the gap between the two is pure agreement: such a universe
-holds exactly the blocks `chop` holds, at exactly the rounds and authors
-`chop` gives them, and above the horizon with the same references. So
-the band carries verdicts between them, and the schedule clauses of
-`Truncates` pin `S'` to be the chopped schedule outright.
-
-**The offset the band does not need.** A band compares rounds by
-equality, and a truncation moves them, so the natural thought is to give
-`AgreeBand` an offset and derive `LocalTruncate` generically. That is a
-real generalisation and it is not needed here: the *renumbering* is
-already done by `chop`, and what remains between `chop U G` and an
-arbitrary `Truncates` target is a shift of zero. The offset would buy a
-generic derivation, at the cost of threading a shift through every band
-lemma of every protocol; this buys the core's instance for thirty lines.
-`LocalTruncate` therefore stays an obligation, and is now discharged by
-both protocols. -/
+That is the consumer test the arc asks for, and it measures what the
+offset removed: `GC/ChopDecided.lean` proves those two by structural
+induction over the decision relation, and here they are again, from a
+property proved once for other reasons. -/
 
 section CoreTruncate
 
-variable [Faults Validator] {U W : BlockUniverse Validator BlockId Payload}
-variable {S S' : Slots Validator} {G d : ℕ}
+variable [Faults Validator] {U : BlockUniverse Validator BlockId Payload}
+variable {S : Slots Validator} {G d : ℕ}
 
-/-- The schedule clauses of `Truncates` determine the schedule: it is
-the chopped one, on the nose. -/
-theorem slots_eq_chop (ht : Truncates (MysticetiProperties.mysticetiRule (Payload := Payload))
-    U W S S' G d) (hbase : G ≤ S.slotRound d) : S' = S.chop G d hbase := by
-  obtain ⟨sr, ld, hm, hu, hk⟩ := S'
-  have h1 : sr = fun k => S.slotRound (d + k) - G := by
-    funext m
-    have := ht.slotRound m
-    simp only at this
-    omega
-  have h2 : ld = fun k => S.leader (d + k) := funext ht.leader
-  subst h1; subst h2
-  rfl
-
-/-- A `Truncates` target and the canonical cut agree on every band: the
-same blocks, at the same rounds, with the same authors, and above the
-horizon the same references. -/
-theorem agreeBand_chop (ht : Truncates (MysticetiProperties.mysticetiRule (Payload := Payload))
-    U W S S' G d) (lo hi : ℕ) :
-    AgreeBand MysticetiProperties.mysticetiRule (chop U G) W lo hi ∧
-      AgreeBand MysticetiProperties.mysticetiRule W (chop U G) lo hi := by
-  have hmem : ∀ b, b ∈ (chop U G).ids ↔ b ∈ W.ids := by
-    intro b
-    rw [mem_chop_ids]
-    exact (ht.mem b).symm
-  have hround : ∀ b, b ∈ W.ids → ((chop U G).block b).round = (W.block b).round := by
-    intro b hb
-    have h1 : (W.block b).round + G = (U.block b).round := ht.round b hb
-    have h2 : b ∈ U.ids ∧ G ≤ (U.block b).round := (ht.mem b).mp hb
-    show (chopBlock U G b).round = (W.block b).round
+/-- **The cut is a truncation.** The witness `Truncates` was written to
+have, exhibited before anything is proved from it. -/
+theorem truncates_chop (hd : G ≤ S.slotRound d) :
+    Truncates (MysticetiProperties.mysticetiRule (Payload := Payload))
+      U (chop U G) S (S.chop G d hd) G d where
+  mem := fun b => mem_chop_ids
+  round := fun b hb => by
+    have hb' := mem_chop_ids.mp hb
+    show (chopBlock U G b).round + G = (U.block b).round
     rw [chopBlock_round]; omega
-  have hcr : ∀ b, b ∈ W.ids → ((chop U G).block b).creator = (W.block b).creator := by
-    intro b hb
-    have h1 : (W.block b).creator = (U.block b).creator := ht.creator b hb
-    show (chopBlock U G b).creator = (W.block b).creator
-    rw [chopBlock_creator]; exact h1.symm
-  have hrefs : ∀ b, b ∈ W.ids → 0 < ((chop U G).block b).round →
-      ((chop U G).block b).refs = (W.block b).refs := by
-    intro b hb hpos
-    have h1 : (W.block b).round + G = (U.block b).round := ht.round b hb
-    have h2 : b ∈ U.ids ∧ G ≤ (U.block b).round := (ht.mem b).mp hb
-    have hr : ((chop U G).block b).round = (U.block b).round - G := by
-      show (chopBlock U G b).round = _; rw [chopBlock_round]
-    have hgt : G < (U.block b).round := by omega
-    have h3 : (W.block b).refs = (U.block b).refs := ht.refs b hb hgt
-    show (chopBlock U G b).refs = (W.block b).refs
-    rw [chopBlock_refs_of_lt hgt, h3]
-  constructor
-  · exact { mem := fun b hb _ _ => (hmem b).mp hb
-            block := fun b hb hband => by
-              have hb' : b ∈ W.ids := (hmem b).mp hb
-              exact ⟨(hround b hb').symm, (hcr b hb').symm⟩
-            refs := fun b hb h1 _ => by
-              have hb' : b ∈ W.ids := (hmem b).mp hb
-              have hlink : (MysticetiProperties.mysticetiRule.block (chop U G) b).round
-                  = ((chop U G).block b).round := rfl
-              exact (hrefs b hb' (by omega)).symm }
-  · exact { mem := fun b hb _ _ => (hmem b).mpr hb
-            block := fun b hb _ => ⟨hround b hb, hcr b hb⟩
-            refs := fun b hb h1 _ => by
-              have hlink : (MysticetiProperties.mysticetiRule.block W b).round
-                  = (W.block b).round := rfl
-              refine hrefs b hb ?_
-              rw [hround b hb]; omega }
+  creator := fun b hb => by
+    show (chopBlock U G b).creator = (U.block b).creator
+    rw [chopBlock_creator]
+  refs := fun b hb hgt => by
+    show (chopBlock U G b).refs = (U.block b).refs
+    rw [chopBlock_refs_of_lt hgt]
+  slotRound := fun k => by
+    have := horizon_le_slotRound hd k
+    show S.slotRound (d + k) - G + G = S.slotRound (d + k)
+    omega
+  leader := fun _ => rfl
+  base := hd
 
-/-- **The core truncates locally.** A verdict at slot `d + k` of the
-full DAG is a verdict at slot `k` of any truncation, and back. -/
-theorem localTruncate : LocalTruncate
-    (MysticetiProperties.mysticetiRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload)) := by
-  intro S S' U W G d ht V V' hv k v
-  have hbase : G ≤ S.slotRound d := ht.base
-  have hVeq : V'.ids = (V.chop G).ids := by
-    ext b
-    rw [View.chop_ids, Finset.mem_filter]
-    constructor
-    · intro hb
-      have hbW : b ∈ W.ids := V'.subset_ids hb
-      have h2 : b ∈ U.ids ∧ G ≤ (U.block b).round := (ht.mem b).mp hbW
-      exact ⟨(hv b h2.1 h2.2).mpr hb, h2.2⟩
-    · rintro ⟨hbV, hbr⟩
-      exact (hv b (V.subset_ids hbV) hbr).mp hbV
-  have hAB := fun lo hi => (agreeBand_chop ht lo hi).1
-  have hBA := fun lo hi => (agreeBand_chop ht lo hi).2
-  have hS := slots_eq_chop ht hbase
-  subst hS
-  constructor
-  · intro h
-    have h1 := decided_chop_of_decided hbase h k rfl
-    obtain ⟨top, htop⟩ := MysticetiProperties.banded _ (chop U G) (V.chop G) k v h1
-    refine htop _ W V' rfl (fun _ _ => rfl) (hAB _ _) (fun b hb _ _ => ?_)
-    show b ∈ V'.ids
-    rw [hVeq]; exact hb
-  · intro h
-    obtain ⟨top, htop⟩ := MysticetiProperties.banded _ W V' k v h
-    have h1 := htop _ (chop U G) (V.chop G) rfl (fun _ _ => rfl) (hBA _ _)
-      (fun b hb _ _ => show b ∈ (V.chop G).ids from by rw [← hVeq]; exact hb)
-    exact decided_of_decided_chop hbase h1
+/-- **G3 re-derived, with no induction of its own.** Both directions of
+the cut's verdict transport, from the band. -/
+theorem decided_chop_iff (hd : G ≤ S.slotRound d)
+    {V : View Validator BlockId Payload U} {k : ℕ} {v : Option BlockId} :
+    Decided U V (d + k) v ↔ Decided (S := S.chop G d hd) (chop U G) (V.chop G) k v :=
+  LocalTruncate.of_banded MysticetiProperties.viewSound MysticetiProperties.banded
+    S (S.chop G d hd) U (chop U G) G d (truncates_chop hd) V (V.chop G)
+    (fun b hb hr => by
+      show b ∈ V.ids ↔ b ∈ (V.chop G).ids
+      rw [View.chop_ids, Finset.mem_filter]
+      exact ⟨fun h => ⟨h, hr⟩, fun h => h.1⟩) k v
 
 end CoreTruncate
+
 
 end Arcs
 

@@ -62,28 +62,23 @@ theorem persist_aux [S : LeanDag.Hydrozoan.Slots Replica]
     {k : ℕ} {v : Option BlockId} (h : LeanDag.Hydrozoan.Decided U V k v) :
     LeanDag.Hydrozoan.Decided U' V' k v := by
   obtain ⟨top, -, ht⟩ := banded_aux (S := S) h
-  exact ht S U' V' rfl (fun _ _ => rfl) (AgreeBand.of_extends he _ _)
+  refine ht 0 0 0 0 S U' V' k (by omega) ?_ ?_ (AgreeBand.of_extends he _ _)
     (fun b hb _ _ => hV hb)
+  · intro m m' hm
+    have : m = m' := by omega
+    subst this; rfl
+  · intro m m' hm _
+    have : m = m' := by omega
+    subst this; rfl
 
 /-! ## The assembly -/
 
 
 theorem holds : Statement := by
   intro Replica _ _ BlockId _ _ _
-  refine ⟨causal, banded, agree, ?_, ?_, ?_, ?_⟩
+  refine ⟨causal, banded, agree, ?_, ?_, ?_⟩
   · exact LeanDag.Properties.Persist.of_banded banded
   · exact LeanDag.Properties.Local.of_banded viewSound banded
-  · intro S S' U U' G d ht V V' hv k v
-    refine TruncatesHZ.decided_iff (S := ofCoreSlots S) (S' := ofCoreSlots S')
-      (G := G) (d := d) ?_ ?_
-    · exact { mem := ht.mem, round := ht.round, author := ht.creator
-              parents := fun b hb hm => ht.refs b hb (by
-                have hr := ht.round b hb
-                simp only [rule_block_round] at hr ⊢
-                omega)
-              slotRound := ht.slotRound, leader := ht.leader, base := ht.base }
-    · intro b hb
-      exact (hv b (ht.mem_of hb) (ht.le_round hb)).symm
   · intro S U V T k hq hpres huns
     have hpres' : ∀ v ∈ T, ∃ c ∈ V.ids, (U.block c).author = v ∧
         (U.block c).round = S.slotRound k + 1 := fun v hv => by

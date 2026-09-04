@@ -361,61 +361,70 @@ inside the band or out of it. -/
 
 section Band
 
-variable {lo hi : ℕ}
+variable {lo hi g g' : ℕ}
 
-theorem band_mem (h : AgreeBand mysticetiRule U U' lo hi) {b : BlockId}
-    (hb : b ∈ U.ids) (h1 : lo ≤ (U.block b).round) (h2 : (U.block b).round ≤ hi) :
+theorem band_mem (h : AgreeBand mysticetiRule U U' lo hi g g') {b : BlockId}
+    (hb : b ∈ U.ids) (h1 : lo ≤ (U.block b).round + g) (h2 : (U.block b).round + g ≤ hi) :
     b ∈ U'.ids := h.mem b hb h1 h2
 
-theorem band_block (h : AgreeBand mysticetiRule U U' lo hi) {b : BlockId}
-    (hb : b ∈ U.ids) (h1 : lo ≤ (U.block b).round) (h2 : (U.block b).round ≤ hi) :
-    (U'.block b).round = (U.block b).round ∧ (U'.block b).creator = (U.block b).creator :=
+theorem band_block (h : AgreeBand mysticetiRule U U' lo hi g g') {b : BlockId}
+    (hb : b ∈ U.ids) (h1 : lo ≤ (U.block b).round + g) (h2 : (U.block b).round + g ≤ hi) :
+    (U'.block b).round + g' = (U.block b).round + g ∧
+      (U'.block b).creator = (U.block b).creator :=
   h.block b hb (Or.inl ⟨h1, h2⟩)
 
-theorem band_block' (h : AgreeBand mysticetiRule U U' lo hi) {b : BlockId}
+theorem band_block' (h : AgreeBand mysticetiRule U U' lo hi g g') {b : BlockId}
     (hb : b ∈ U.ids) (hb' : b ∈ U'.ids)
-    (h1 : lo ≤ (U'.block b).round) (h2 : (U'.block b).round ≤ hi) :
-    (U'.block b).round = (U.block b).round ∧ (U'.block b).creator = (U.block b).creator :=
+    (h1 : lo ≤ (U'.block b).round + g') (h2 : (U'.block b).round + g' ≤ hi) :
+    (U'.block b).round + g' = (U.block b).round + g ∧
+      (U'.block b).creator = (U.block b).creator :=
   h.block b hb (Or.inr ⟨hb', h1, h2⟩)
 
-theorem band_refs (h : AgreeBand mysticetiRule U U' lo hi) {b : BlockId}
-    (hb : b ∈ U.ids) (h1 : lo < (U.block b).round) (h2 : (U.block b).round ≤ hi) :
+theorem band_refs (h : AgreeBand mysticetiRule U U' lo hi g g') {b : BlockId}
+    (hb : b ∈ U.ids) (h1 : lo < (U.block b).round + g) (h2 : (U.block b).round + g ≤ hi) :
     (U'.block b).refs = (U.block b).refs := h.refs b hb h1 h2
 
-theorem blocksAt_band (h : AgreeBand mysticetiRule U U' lo hi) {r : ℕ}
-    (h1 : lo ≤ r) (h2 : r ≤ hi) : blocksAt U r ⊆ blocksAt U' r := by
+/-- A round layer of `U` lands on the layer of `U'` the shift names. -/
+theorem blocksAt_band (h : AgreeBand mysticetiRule U U' lo hi g g') {r r' : ℕ}
+    (hrr : r + g = r' + g') (h1 : lo ≤ r + g) (h2 : r + g ≤ hi) :
+    blocksAt U r ⊆ blocksAt U' r' := by
   intro b hb
   rw [mem_blocksAt] at hb ⊢
-  exact ⟨band_mem h hb.1 (by omega) (by omega),
-    by rw [(band_block h hb.1 (by omega) (by omega)).1]; exact hb.2⟩
+  have hbb := band_block h hb.1 (by omega) (by omega)
+  exact ⟨band_mem h hb.1 (by omega) (by omega), by omega⟩
 
-theorem creatorsOf_band (h : AgreeBand mysticetiRule U U' lo hi) {s : Finset BlockId}
-    (hs : ∀ b ∈ s, b ∈ U.ids ∧ lo ≤ (U.block b).round ∧ (U.block b).round ≤ hi) :
+theorem creatorsOf_band (h : AgreeBand mysticetiRule U U' lo hi g g') {s : Finset BlockId}
+    (hs : ∀ b ∈ s, b ∈ U.ids ∧ lo ≤ (U.block b).round + g ∧ (U.block b).round + g ≤ hi) :
     creatorsOf U'.block s = creatorsOf U.block s :=
   Finset.image_congr fun i hi' => (band_block h (hs i hi').1 (hs i hi').2.1 (hs i hi').2.2).2
 
-variable [S : Slots Validator]
+variable {S S' : Slots Validator}
 
-theorem isLeaderBlock_band (h : AgreeBand mysticetiRule U U' lo hi) {k : ℕ} {L : BlockId}
-    (h1 : lo ≤ S.slotRound k) (h2 : S.slotRound k ≤ hi) (hL : IsLeaderBlock U k L) :
-    IsLeaderBlock U' k L := by
+/-- A candidate of slot `k` is a candidate of the slot `k'` that answers
+to it: the shift carries its round, and the schedules name the same
+leader there. -/
+theorem isLeaderBlock_band (h : AgreeBand mysticetiRule U U' lo hi g g') {k k' : ℕ}
+    (hkk : S.slotRound k + g = S'.slotRound k' + g') (hlead : S.leader k = S'.leader k')
+    (h1 : lo ≤ S.slotRound k + g) (h2 : S.slotRound k + g ≤ hi) {L : BlockId}
+    (hL : IsLeaderBlock (S := S) U k L) : IsLeaderBlock (S := S') U' k' L := by
   obtain ⟨hm, hr, hc⟩ := hL
   have hb := band_block h hm (by omega) (by omega)
-  exact ⟨band_mem h hm (by omega) (by omega), by rw [hb.1]; exact hr, by rw [hb.2]; exact hc⟩
+  exact ⟨band_mem h hm (by omega) (by omega), by omega, by rw [hb.2, hc, hlead]⟩
 
-theorem isLeaderBlock_band_old (h : AgreeBand mysticetiRule U U' lo hi) {k : ℕ} {L : BlockId}
-    (h1 : lo ≤ S.slotRound k) (h2 : S.slotRound k ≤ hi) (hLU : L ∈ U.ids)
-    (hL : IsLeaderBlock U' k L) : IsLeaderBlock U k L := by
+/-- And back, for a candidate the band already had. -/
+theorem isLeaderBlock_band_old (h : AgreeBand mysticetiRule U U' lo hi g g') {k k' : ℕ}
+    (hkk : S.slotRound k + g = S'.slotRound k' + g') (hlead : S.leader k = S'.leader k')
+    (h1 : lo ≤ S.slotRound k + g) (h2 : S.slotRound k + g ≤ hi) {L : BlockId}
+    (hLU : L ∈ U.ids) (hL : IsLeaderBlock (S := S') U' k' L) :
+    IsLeaderBlock (S := S) U k L := by
   obtain ⟨hm, hr, hc⟩ := hL
   have hb := band_block' h hLU hm (by omega) (by omega)
-  exact ⟨hLU, by rw [← hb.1]; exact hr, by rw [← hb.2]; exact hc⟩
+  exact ⟨hLU, by omega, by rw [← hb.2, hc, ← hlead]⟩
 
-/-- The votes an in-band certificate counts are the votes it counted:
-the certificate's own references sit a round above the floor, and the
-voters they name sit exactly above it. -/
-theorem votesIn_band (h : AgreeBand mysticetiRule U U' lo hi) {C L : BlockId}
-    (hC : C ∈ U.ids) (h1 : lo + 1 < (U.block C).round) (h2 : (U.block C).round ≤ hi) :
-    votesIn U' C L = votesIn U C L := by
+/-- The votes an in-band certificate counts are the votes it counted. -/
+theorem votesIn_band (h : AgreeBand mysticetiRule U U' lo hi g g') {C L : BlockId}
+    (hC : C ∈ U.ids) (h1 : lo + 1 < (U.block C).round + g)
+    (h2 : (U.block C).round + g ≤ hi) : votesIn U' C L = votesIn U C L := by
   unfold votesIn
   rw [band_refs h hC (by omega) h2]
   refine Finset.filter_congr fun q hq => ?_
@@ -423,8 +432,9 @@ theorem votesIn_band (h : AgreeBand mysticetiRule U U' lo hi) {C L : BlockId}
   have hqr := U.round_of_mem_refs hC hq
   rw [band_refs h hqU (by omega) (by omega)]
 
-theorem certifies_band (h : AgreeBand mysticetiRule U U' lo hi) {C L : BlockId}
-    (hC : C ∈ U.ids) (h1 : lo + 1 < (U.block C).round) (h2 : (U.block C).round ≤ hi) :
+theorem certifies_band (h : AgreeBand mysticetiRule U U' lo hi g g') {C L : BlockId}
+    (hC : C ∈ U.ids) (h1 : lo + 1 < (U.block C).round + g)
+    (h2 : (U.block C).round + g ≤ hi) :
     Certifies U' C L ↔ Certifies U C L := by
   unfold Certifies
   rw [votesIn_band h hC h1 h2, creatorsOf_band h]
@@ -433,22 +443,24 @@ theorem certifies_band (h : AgreeBand mysticetiRule U U' lo hi) {C L : BlockId}
   have hqr := U.round_of_mem_refs hC (Finset.mem_filter.mp hq).1
   exact ⟨hqU, by omega, by omega⟩
 
-theorem mem_certificates_band (h : AgreeBand mysticetiRule U U' lo hi) {C L : BlockId}
-    {r : ℕ} (hC : C ∈ U.ids) (hr : (U.block C).round = r + 2)
-    (h1 : lo ≤ r) (h2 : r + 2 ≤ hi) :
-    C ∈ certificates U' L r ↔ C ∈ certificates U L r := by
+theorem mem_certificates_band (h : AgreeBand mysticetiRule U U' lo hi g g') {C L : BlockId}
+    {r r' : ℕ} (hC : C ∈ U.ids) (hr : (U.block C).round = r + 2) (hrr : r + g = r' + g')
+    (h1 : lo ≤ r + g) (h2 : r + 2 + g ≤ hi) :
+    C ∈ certificates U' L r' ↔ C ∈ certificates U L r := by
   simp only [certificates, Finset.mem_filter, mem_blocksAt]
-  rw [(band_block h hC (by omega) (by omega)).1, certifies_band h hC (by omega) (by omega)]
-  exact ⟨fun hx => ⟨⟨hC, hx.1.2⟩, hx.2⟩,
-    fun hx => ⟨⟨band_mem h hC (by omega) (by omega), hx.1.2⟩, hx.2⟩⟩
+  have hb := band_block h hC (by omega) (by omega)
+  rw [certifies_band h hC (by omega) (by omega)]
+  exact ⟨fun hx => ⟨⟨hC, hr⟩, hx.2⟩,
+    fun hx => ⟨⟨band_mem h hC (by omega) (by omega), by omega⟩, hx.2⟩⟩
 
-/-! ### The direct rules and the anchor test, across a band -/
+/-! ### The direct rules and the anchor test, across a shifted band -/
 
-theorem directCommitIn_band (h : AgreeBand mysticetiRule U U' lo hi)
+theorem directCommitIn_band (h : AgreeBand mysticetiRule U U' lo hi g g')
     {V : View Validator BlockId Payload U} {V' : View Validator BlockId Payload U'}
-    {r : ℕ} (hr : lo ≤ r) (hhi : r + 2 ≤ hi)
-    (hV : ∀ b, b ∈ V.ids → lo ≤ (U.block b).round → (U.block b).round ≤ hi → b ∈ V'.ids)
-    {L : BlockId} (hc : DirectCommitIn U V L r) : DirectCommitIn U' V' L r := by
+    {r r' : ℕ} (hrr : r + g = r' + g') (hr : lo ≤ r + g) (hhi : r + 2 + g ≤ hi)
+    (hV : ∀ b, b ∈ V.ids → lo ≤ (U.block b).round + g → (U.block b).round + g ≤ hi →
+      b ∈ V'.ids)
+    {L : BlockId} (hc : DirectCommitIn U V L r) : DirectCommitIn U' V' L r' := by
   unfold DirectCommitIn at hc ⊢
   refine le_trans hc (Finset.card_le_card ?_)
   intro w hw
@@ -458,67 +470,71 @@ theorem directCommitIn_band (h : AgreeBand mysticetiRule U U' lo hi)
   have hCU : C ∈ U.ids := (mem_blocksAt.mp hCA).1
   have hCr : (U.block C).round = r + 2 := (mem_blocksAt.mp hCA).2
   refine Finset.mem_image.mpr ⟨C, Finset.mem_inter.mpr
-    ⟨(mem_certificates_band h hCU hCr hr hhi).mpr hCc,
+    ⟨(mem_certificates_band h hCU hCr hrr hr hhi).mpr hCc,
       hV C hCV (by omega) (by omega)⟩, ?_⟩
   rw [(band_block h hCU (by omega) (by omega)).2]; exact hvC
 
-theorem directSkipSlotIn_band (h : AgreeBand mysticetiRule U U' lo hi)
+theorem directSkipSlotIn_band (h : AgreeBand mysticetiRule U U' lo hi g g')
     {V : View Validator BlockId Payload U} {V' : View Validator BlockId Payload U'}
-    {k : ℕ} (hlo : lo = S.slotRound k) (hhi : S.slotRound k + 1 ≤ hi)
-    (hV : ∀ b, b ∈ V.ids → lo ≤ (U.block b).round → (U.block b).round ≤ hi → b ∈ V'.ids)
-    (hs : DirectSkipSlotIn U V k) : DirectSkipSlotIn U' V' k := by
+    {k k' : ℕ} (hkk : S.slotRound k + g = S'.slotRound k' + g')
+    (hlead : S.leader k = S'.leader k') (hlo : lo = S.slotRound k + g)
+    (hhi : S.slotRound k + 1 + g ≤ hi)
+    (hV : ∀ b, b ∈ V.ids → lo ≤ (U.block b).round + g → (U.block b).round + g ≤ hi →
+      b ∈ V'.ids)
+    (hs : DirectSkipSlotIn (S := S) U V k) : DirectSkipSlotIn (S := S') U' V' k' := by
   unfold DirectSkipSlotIn at hs ⊢
   refine le_trans hs (Finset.card_le_card ?_)
   intro w hw
   obtain ⟨q, hq, hvq⟩ := Finset.mem_image.mp hw
   obtain ⟨hqf, hqV⟩ := Finset.mem_inter.mp hq
-  rw [slotBlamers, Finset.mem_filter] at hqf
+  simp only [slotBlamers, Finset.mem_filter] at hqf
   obtain ⟨hqA, hqn⟩ := hqf
   have hqU : q ∈ U.ids := (mem_blocksAt.mp hqA).1
   have hqr : (U.block q).round = S.slotRound k + 1 := (mem_blocksAt.mp hqA).2
   refine Finset.mem_image.mpr ⟨q, ?_, ?_⟩
-  · rw [Finset.mem_inter, slotBlamers, Finset.mem_filter]
-    refine ⟨⟨blocksAt_band h (by omega) (by omega) hqA, ?_⟩,
+  · simp only [Finset.mem_inter, slotBlamers, Finset.mem_filter]
+    refine ⟨⟨blocksAt_band h (by omega) (by omega) (by omega) hqA, ?_⟩,
       hV q hqV (by omega) (by omega)⟩
     rw [band_refs h hqU (by omega) (by omega)]
     intro j hj hjL
     have hjU : j ∈ U.ids := U.complete q hqU j hj
-    exact hqn j hj (isLeaderBlock_band_old h (by omega) (by omega) hjU hjL)
+    exact hqn j hj (isLeaderBlock_band_old h hkk hlead (by omega) (by omega) hjU hjL)
   · rw [(band_block h hqU (by omega) (by omega)).2]; exact hvq
 
-theorem certifiedIn_band (h : AgreeBand mysticetiRule U U' lo hi) {A L : BlockId} {r : ℕ}
-    (hA : A ∈ U.ids) (hAlo : lo ≤ (U.block A).round) (hAhi : (U.block A).round ≤ hi)
-    (hr : lo ≤ r) (hrhi : r + 2 ≤ hi) :
-    CertifiedIn U' A L r ↔ CertifiedIn U A L r := by
+theorem certifiedIn_band (h : AgreeBand mysticetiRule U U' lo hi g g') {A L : BlockId}
+    {r r' : ℕ} (hA : A ∈ U.ids) (hAlo : lo ≤ (U.block A).round + g)
+    (hAhi : (U.block A).round + g ≤ hi) (hrr : r + g = r' + g')
+    (hr : lo ≤ r + g) (hrhi : r + 2 + g ≤ hi) :
+    CertifiedIn U' A L r' ↔ CertifiedIn U A L r := by
   unfold CertifiedIn
   constructor
   · rintro ⟨C, hC, hre⟩
-    have hCr' : (U'.block C).round = r + 2 := (mem_blocksAt.mp (Finset.mem_filter.mp hC).1).2
-    have hCrR : (mysticetiRule.block U' C).round = r + 2 := hCr'
+    have hCr' : (U'.block C).round = r' + 2 := (mem_blocksAt.mp (Finset.mem_filter.mp hC).1).2
+    have hCrR : (mysticetiRule.block U' C).round = r' + 2 := hCr'
     obtain ⟨hCU, hreU, hCeq⟩ :=
       AgreeBand.reaches_old causal h hA hAlo hAhi hre (by omega)
-    have hCeq' : (U.block C).round = (U'.block C).round := hCeq
-    exact ⟨C, (mem_certificates_band h hCU (by omega) hr hrhi).mp hC, hreU⟩
+    have hCeq' : (U.block C).round + g = (U'.block C).round + g' := hCeq
+    exact ⟨C, (mem_certificates_band h hCU (by omega) hrr hr hrhi).mp hC, hreU⟩
   · rintro ⟨C, hC, hre⟩
     have hCA := (Finset.mem_filter.mp hC).1
     have hCU : C ∈ U.ids := (mem_blocksAt.mp hCA).1
     have hCr : (U.block C).round = r + 2 := (mem_blocksAt.mp hCA).2
     have hCrR : (mysticetiRule.block U C).round = r + 2 := hCr
-    exact ⟨C, (mem_certificates_band h hCU hCr hr hrhi).mpr hC,
+    exact ⟨C, (mem_certificates_band h hCU hCr hrr hr hrhi).mpr hC,
       AgreeBand.reaches_of causal h hA hAhi hre (by omega)⟩
 
-/-- **A candidate the band did not have is certified by nothing an old
-anchor can see.** The anchor's cone stays inside `U` (`reaches_old`), and
-an old voter references only old blocks. -/
-theorem not_certifiedIn_band_novel (h : AgreeBand mysticetiRule U U' lo hi)
-    {A L : BlockId} {r : ℕ} (hA : A ∈ U.ids) (hAlo : lo ≤ (U.block A).round)
-    (hAhi : (U.block A).round ≤ hi) (hr : lo ≤ r) (hrhi : r + 2 ≤ hi)
-    (hL : L ∉ U.ids) : ¬ CertifiedIn U' A L r := by
+/-- **A candidate the band did not carry is certified by nothing an old
+anchor can see.** -/
+theorem not_certifiedIn_band_novel (h : AgreeBand mysticetiRule U U' lo hi g g')
+    {A L : BlockId} {r r' : ℕ} (hA : A ∈ U.ids) (hAlo : lo ≤ (U.block A).round + g)
+    (hAhi : (U.block A).round + g ≤ hi) (hrr : r + g = r' + g')
+    (hr : lo ≤ r + g) (hrhi : r + 2 + g ≤ hi) (hL : L ∉ U.ids) :
+    ¬ CertifiedIn U' A L r' := by
   rintro ⟨C, hC, hre⟩
-  have hCr' : (U'.block C).round = r + 2 := (mem_blocksAt.mp (Finset.mem_filter.mp hC).1).2
-  have hCrR : (mysticetiRule.block U' C).round = r + 2 := hCr'
+  have hCr' : (U'.block C).round = r' + 2 := (mem_blocksAt.mp (Finset.mem_filter.mp hC).1).2
+  have hCrR : (mysticetiRule.block U' C).round = r' + 2 := hCr'
   obtain ⟨hCU, -, hCeq⟩ := AgreeBand.reaches_old causal h hA hAlo hAhi hre (by omega)
-  have hCeq' : (U.block C).round = (U'.block C).round := hCeq
+  have hCeq' : (U.block C).round + g = (U'.block C).round + g' := hCeq
   have hcert : Certifies U' C L := (Finset.mem_filter.mp hC).2
   rw [certifies_band h hCU (by omega) (by omega)] at hcert
   unfold Certifies at hcert
@@ -555,136 +571,143 @@ theorem banded_aux [S : Slots Validator] {U : BlockUniverse Validator BlockId Pa
     {V : View Validator BlockId Payload U} {k : ℕ} {v : Option BlockId}
     (hd : Decided U V k v) :
     ∃ top, S.slotRound k + 2 ≤ top ∧
-      ∀ (S' : Slots Validator) (U' : BlockUniverse Validator BlockId Payload)
-        (V' : View Validator BlockId Payload U'),
-        S'.slotRound = S.slotRound →
-        (∀ m, S.slotRound m ≤ top → S'.leader m = S.leader m) →
-        AgreeBand mysticetiRule U U' (S.slotRound k) top →
+      ∀ (g g' d d' : ℕ) (S' : Slots Validator)
+        (U' : BlockUniverse Validator BlockId Payload)
+        (V' : View Validator BlockId Payload U') (k' : ℕ),
+        k + d' = k' + d →
+        (∀ m m', m + d' = m' + d → S.slotRound m + g = S'.slotRound m' + g') →
+        (∀ m m', m + d' = m' + d → S.slotRound m ≤ top → S.leader m = S'.leader m') →
+        AgreeBand mysticetiRule U U' (S.slotRound k + g) (top + g) g g' →
         (∀ b, b ∈ V.ids → S.slotRound k ≤ (U.block b).round →
           (U.block b).round ≤ top → b ∈ V'.ids) →
-        Decided (S := S') U' V' k v := by
+        Decided (S := S') U' V' k' v := by
   classical
   induction hd with
   | @directCommit k L hL hc =>
       refine ⟨S.slotRound k + 2, le_refl _, ?_⟩
-      intro S' U' V' hround hlead hab hV
-      have hsk : ∀ x, S'.slotRound x = S.slotRound x := fun x => by rw [hround]
-      have hlk : S.leader k = S'.leader k := (hlead k (by omega)).symm
-      have hLb : IsLeaderBlock (S := S) U' k L :=
-        isLeaderBlock_band (S := S) (k := k) hab (le_refl _) (by omega) hL
+      intro g g' d d' S' U' V' k' hkd hsch hlead hab hV
+      have hkk : S.slotRound k + g = S'.slotRound k' + g' := hsch k k' hkd
+      have hlk : S.leader k = S'.leader k' := hlead k k' hkd (by omega)
       refine Decided.directCommit (S := S')
-        (isLeaderBlock_congr (S₁ := S) (S₂ := S') (hsk k).symm hlk hLb) ?_
-      rw [hsk k]
-      exact directCommitIn_band (S := S) (r := S.slotRound k) hab (le_refl _) (by omega) hV hc
+        (isLeaderBlock_band hab hkk hlk (by omega) (by omega) hL) ?_
+      exact directCommitIn_band hab hkk (by omega) (by omega)
+        (fun b hb h1 h2 => hV b hb (by omega) (by omega)) hc
   | @directSkip k hs =>
       refine ⟨S.slotRound k + 2, le_refl _, ?_⟩
-      intro S' U' V' hround hlead hab hV
-      have hsk : ∀ x, S'.slotRound x = S.slotRound x := fun x => by rw [hround]
-      have hlk : S.leader k = S'.leader k := (hlead k (by omega)).symm
-      have hsb : DirectSkipSlotIn (S := S) U' V' k :=
-        directSkipSlotIn_band (S := S) (k := k) hab rfl (by omega) hV hs
+      intro g g' d d' S' U' V' k' hkd hsch hlead hab hV
+      have hkk : S.slotRound k + g = S'.slotRound k' + g' := hsch k k' hkd
+      have hlk : S.leader k = S'.leader k' := hlead k k' hkd (by omega)
       exact Decided.directSkip (S := S')
-        (directSkipSlotIn_congr (S₁ := S) (S₂ := S') (hsk k).symm hlk hsb)
+        (directSkipSlotIn_band hab hkk hlk rfl (by omega)
+          (fun b hb h1 h2 => hV b hb (by omega) (by omega)) hs)
   | @indirectCommit k j A L hkj helig hanchor hmid hL hcert ihj ihmid =>
       obtain ⟨topj, htopj, hjt⟩ := ihj
       set f : ℕ → ℕ := fun i =>
-        if h : k < i ∧ i < j ∧ Eligible Validator k i then
-          (ihmid i h.1 h.2.1 h.2.2).choose else 0 with hf
+        if hh : k < i ∧ i < j ∧ Eligible Validator k i then
+          (ihmid i hh.1 hh.2.1 hh.2.2).choose else 0 with hf
       set top := max topj ((Finset.Ico (k + 1) j).sup f) with htop
       have hkj' : S.slotRound k ≤ S.slotRound j := S.mono (le_of_lt hkj)
       have hAL : IsLeaderBlock U j A := isLeaderBlock_of_decided hanchor
       have hkey : ∀ i (h1 : k < i) (h2 : i < j) (h3 : Eligible Validator k i),
           (ihmid i h1 h2 h3).choose ≤ top := by
         intro i h1 h2 h3
-        have heq : f i = (ihmid i h1 h2 h3).choose := by
+        have heqf : f i = (ihmid i h1 h2 h3).choose := by
           simp only [hf]; exact dif_pos ⟨h1, h2, h3⟩
-        rw [← heq, htop]
+        rw [← heqf, htop]
         exact le_trans (Finset.le_sup (Finset.mem_Ico.mpr ⟨by omega, h2⟩)) (le_max_right _ _)
-      have htopk : S.slotRound k + 2 ≤ top := by
-        have h1 : topj ≤ top := by rw [htop]; exact le_max_left _ _
-        omega
+      have htj : topj ≤ top := by rw [htop]; exact le_max_left _ _
+      have htopk : S.slotRound k + 2 ≤ top := by omega
       refine ⟨top, htopk, ?_⟩
-      intro S' U' V' hround hlead hab hV
-      have hsk : ∀ x, S'.slotRound x = S.slotRound x := fun x => by rw [hround]
-      have heq : ∀ x y, Eligible Validator (S := S') x y ↔ Eligible Validator (S := S) x y := by
-        intro x y; simp only [Eligible, decisionRound, hround]
-      have hlk : S.leader k = S'.leader k := (hlead k (by omega)).symm
-      have hAhi : (U.block A).round ≤ top := by
-        have h1 : topj ≤ top := by rw [htop]; exact le_max_left _ _
-        have h2 := hAL.2.1
-        omega
-      refine Decided.indirectCommit (S := S') hkj ((heq _ _).mpr helig)
-        (hjt S' U' V' hround (fun m hm => hlead m (by omega))
-          (hab.mono hkj' (by rw [htop]; exact le_max_left _ _))
+      intro g g' d d' S' U' V' k' hkd hsch hlead hab hV
+      have hkk : S.slotRound k + g = S'.slotRound k' + g' := hsch k k' hkd
+      have hlk : S.leader k = S'.leader k' := hlead k k' hkd (by omega)
+      have hjd : j + d' = (j - k + k') + d := by omega
+      have hjj : S.slotRound j + g = S'.slotRound (j - k + k') + g' := hsch j _ hjd
+      have hAhi : (U.block A).round + g ≤ top + g := by rw [hAL.2.1]; omega
+      have hAlo : S.slotRound k + g ≤ (U.block A).round + g := by rw [hAL.2.1]; omega
+      refine Decided.indirectCommit (S := S') (by omega) (by
+          have := helig; unfold Eligible decisionRound at this ⊢; omega)
+        (hjt g g' d d' S' U' V' (j - k + k') hjd hsch
+          (fun m m' hm hb => hlead m m' hm (by omega))
+          (hab.mono (by omega) (by omega))
           (fun b hb h1 h2 => hV b hb (by omega) (by omega))) ?_
-        (isLeaderBlock_congr (S₁ := S) (S₂ := S') (hsk k).symm hlk
-          (show IsLeaderBlock (S := S) U' k L from
-            isLeaderBlock_band (S := S) (k := k) hab (le_refl _) (by omega) hL)) ?_
-      · intro i h1 h2 h3
-        have h3' := (heq _ _).mp h3
-        have hki : S.slotRound k ≤ S.slotRound i := S.mono (by omega)
-        have hk2 := hkey i h1 h2 h3'
-        obtain ⟨htopi, hit⟩ := (ihmid i h1 h2 h3').choose_spec
-        exact hit S' U' V' hround (fun m hm => hlead m (by omega)) (hab.mono hki hk2)
+        (isLeaderBlock_band hab hkk hlk (by omega) (by omega) hL) ?_
+      · intro i' h1 h2 h3
+        have hi'd : (i' - k' + k) + d' = i' + d := by omega
+        have hii : S.slotRound (i' - k' + k) + g = S'.slotRound i' + g' :=
+          hsch _ i' hi'd
+        have hki : k < i' - k' + k := by omega
+        have hij : i' - k' + k < j := by omega
+        have helg : Eligible Validator (S := S) k (i' - k' + k) := by
+          have := h3; unfold Eligible decisionRound at this ⊢; omega
+        have hk2 := hkey _ hki hij helg
+        obtain ⟨htopi, hit⟩ := (ihmid _ hki hij helg).choose_spec
+        have hkr : S.slotRound k ≤ S.slotRound (i' - k' + k) := S.mono (by omega)
+        have := hit g g' d d' S' U' V' i' hi'd hsch
+          (fun m m' hm hb => hlead m m' hm (by omega))
+          (hab.mono (by omega) (by omega))
           (fun b hb ha1 ha2 => hV b hb (by omega) (by omega))
-      · rw [hsk k]
-        exact (certifiedIn_band (S := S) hab hAL.1 (by rw [hAL.2.1]; exact hkj') hAhi
-          (le_refl _) (by omega)).mpr hcert
+        exact this
+      · exact certifiedIn_band hab hAL.1 hAlo hAhi hkk (by omega) (by omega) |>.mpr hcert
   | @indirectSkip k j A hkj helig hanchor hmid hnone ihj ihmid =>
       obtain ⟨topj, htopj, hjt⟩ := ihj
       set f : ℕ → ℕ := fun i =>
-        if h : k < i ∧ i < j ∧ Eligible Validator k i then
-          (ihmid i h.1 h.2.1 h.2.2).choose else 0 with hf
+        if hh : k < i ∧ i < j ∧ Eligible Validator k i then
+          (ihmid i hh.1 hh.2.1 hh.2.2).choose else 0 with hf
       set top := max topj ((Finset.Ico (k + 1) j).sup f) with htop
       have hkj' : S.slotRound k ≤ S.slotRound j := S.mono (le_of_lt hkj)
       have hAL : IsLeaderBlock U j A := isLeaderBlock_of_decided hanchor
       have hkey : ∀ i (h1 : k < i) (h2 : i < j) (h3 : Eligible Validator k i),
           (ihmid i h1 h2 h3).choose ≤ top := by
         intro i h1 h2 h3
-        have heq : f i = (ihmid i h1 h2 h3).choose := by
+        have heqf : f i = (ihmid i h1 h2 h3).choose := by
           simp only [hf]; exact dif_pos ⟨h1, h2, h3⟩
-        rw [← heq, htop]
+        rw [← heqf, htop]
         exact le_trans (Finset.le_sup (Finset.mem_Ico.mpr ⟨by omega, h2⟩)) (le_max_right _ _)
-      have htopk : S.slotRound k + 2 ≤ top := by
-        have h1 : topj ≤ top := by rw [htop]; exact le_max_left _ _
-        omega
+      have htj : topj ≤ top := by rw [htop]; exact le_max_left _ _
+      have htopk : S.slotRound k + 2 ≤ top := by omega
       refine ⟨top, htopk, ?_⟩
-      intro S' U' V' hround hlead hab hV
-      have hsk : ∀ x, S'.slotRound x = S.slotRound x := fun x => by rw [hround]
-      have heq : ∀ x y, Eligible Validator (S := S') x y ↔ Eligible Validator (S := S) x y := by
-        intro x y; simp only [Eligible, decisionRound, hround]
-      have hlk : S.leader k = S'.leader k := (hlead k (by omega)).symm
-      have hAhi : (U.block A).round ≤ top := by
-        have h1 : topj ≤ top := by rw [htop]; exact le_max_left _ _
-        have h2 := hAL.2.1
-        omega
-      have hAlo : S.slotRound k ≤ (U.block A).round := by rw [hAL.2.1]; exact hkj'
-      refine Decided.indirectSkip (S := S') hkj ((heq _ _).mpr helig)
-        (hjt S' U' V' hround (fun m hm => hlead m (by omega))
-          (hab.mono hkj' (by rw [htop]; exact le_max_left _ _))
+      intro g g' d d' S' U' V' k' hkd hsch hlead hab hV
+      have hkk : S.slotRound k + g = S'.slotRound k' + g' := hsch k k' hkd
+      have hlk : S.leader k = S'.leader k' := hlead k k' hkd (by omega)
+      have hjd : j + d' = (j - k + k') + d := by omega
+      have hjj : S.slotRound j + g = S'.slotRound (j - k + k') + g' := hsch j _ hjd
+      have hAhi : (U.block A).round + g ≤ top + g := by rw [hAL.2.1]; omega
+      have hAlo : S.slotRound k + g ≤ (U.block A).round + g := by rw [hAL.2.1]; omega
+      refine Decided.indirectSkip (S := S') (by omega) (by
+          have := helig; unfold Eligible decisionRound at this ⊢; omega)
+        (hjt g g' d d' S' U' V' (j - k + k') hjd hsch
+          (fun m m' hm hb => hlead m m' hm (by omega))
+          (hab.mono (by omega) (by omega))
           (fun b hb h1 h2 => hV b hb (by omega) (by omega))) ?_ ?_
-      · intro i h1 h2 h3
-        have h3' := (heq _ _).mp h3
-        have hki : S.slotRound k ≤ S.slotRound i := S.mono (by omega)
-        have hk2 := hkey i h1 h2 h3'
-        obtain ⟨htopi, hit⟩ := (ihmid i h1 h2 h3').choose_spec
-        exact hit S' U' V' hround (fun m hm => hlead m (by omega)) (hab.mono hki hk2)
+      · intro i' h1 h2 h3
+        have hi'd : (i' - k' + k) + d' = i' + d := by omega
+        have hki : k < i' - k' + k := by omega
+        have hij : i' - k' + k < j := by omega
+        have helg : Eligible Validator (S := S) k (i' - k' + k) := by
+          have hii := hsch _ i' hi'd
+          have := h3; unfold Eligible decisionRound at this ⊢; omega
+        have hk2 := hkey _ hki hij helg
+        obtain ⟨htopi, hit⟩ := (ihmid _ hki hij helg).choose_spec
+        have hkr : S.slotRound k ≤ S.slotRound (i' - k' + k) := S.mono (by omega)
+        exact hit g g' d d' S' U' V' i' hi'd hsch
+          (fun m m' hm hb => hlead m m' hm (by omega))
+          (hab.mono (by omega) (by omega))
           (fun b hb ha1 ha2 => hV b hb (by omega) (by omega))
       · intro L hL' hc'
-        have hL : IsLeaderBlock (S := S) U' k L :=
-          isLeaderBlock_congr (S₁ := S') (S₂ := S) (hsk k) hlk.symm hL'
-        rw [hsk k] at hc'
         by_cases hLo : L ∈ U.ids
-        · exact hnone L (isLeaderBlock_band_old (S := S) (k := k) hab (le_refl _) (by omega) hLo hL)
-            ((certifiedIn_band (S := S) hab hAL.1 hAlo hAhi (le_refl _) (by omega)).mp hc')
-        · exact not_certifiedIn_band_novel (S := S) hab hAL.1 hAlo hAhi (le_refl _) (by omega) hLo hc' 
+        · exact hnone L (isLeaderBlock_band_old hab hkk hlk (by omega) (by omega) hLo hL')
+            ((certifiedIn_band hab hAL.1 hAlo hAhi hkk (by omega) (by omega)).mp hc')
+        · exact not_certifiedIn_band_novel hab hAL.1 hAlo hAhi hkk (by omega) (by omega)
+            hLo hc'
 
 /-- **The core reads a band.** -/
 theorem banded : Banded
     (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) := by
   intro S U V k v hd
   obtain ⟨top, -, ht⟩ := banded_aux (S := S) hd
-  exact ⟨top, fun S' U' V' hround hlead hab hV => ht S' U' V' hround hlead hab hV⟩
+  exact ⟨top, fun g g' d d' S' U' V' k' hkd hsch hlead hab hV =>
+    ht g g' d d' S' U' V' k' hkd hsch hlead hab hV⟩
 
 /-- Views hold blocks of their universe. -/
 theorem viewSound : ViewSound

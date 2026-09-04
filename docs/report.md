@@ -23797,7 +23797,6 @@ def Statement : Prop :=
     LeanDag.Properties.Persist.Unconditional
       (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.Local (rule (Replica := Replica) (BlockId := BlockId)) ∧
-    LeanDag.Properties.LocalTruncate (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.SkipsUnsupported (rule (Replica := Replica) (BlockId := BlockId))
       (fun T => LeanDag.Hydrozoan.qFast Replica ≤ T.card)
 ```
@@ -24484,6 +24483,22 @@ abbrev Unconditional (R : DagRule Validator BlockId Payload) : Prop :=
 
 **The unconditional grade**, which is what an evidence-backed rule should reach: verdicts survive every extension.
 
+#### `LocalTruncate`
+
+*def, `Properties.Derived.Truncate.lean`*
+
+```lean
+def LocalTruncate (R : DagRule Validator BlockId Payload) : Prop :=
+  ∀ (S S' : Slots Validator) (U U' : R.Universe) (G d : ℕ),
+    Truncates R U U' S S' G d →
+    ∀ (V : R.View U) (V' : R.View U'), ViewTruncates R V V' G →
+    ∀ (k : ℕ) (v : Option BlockId), R.Decided S V (d + k) v ↔ R.Decided S' V' k v
+```
+
+**Truncation invariance.** A replica that has pruned below the horizon reaches exactly the verdicts it would have reached with its whole history, at its own numbering.
+
+An `↔`, because both directions are consumed: a joiner needs verdicts to survive the cut, and cross-cut agreement needs them to come back.
+
 #### `DagRule.IsCandidate`
 
 *def, `Properties.Extends.lean`*
@@ -24656,22 +24671,6 @@ def ViewTruncates (R : DagRule Validator BlockId Payload) {U U' : R.Universe}
 
 **Two views correspond across a truncation.**
 
-#### `LocalTruncate`
-
-*def, `Properties.Truncate.lean`*
-
-```lean
-def LocalTruncate (R : DagRule Validator BlockId Payload) : Prop :=
-  ∀ (S S' : Slots Validator) (U U' : R.Universe) (G d : ℕ),
-    Truncates R U U' S S' G d →
-    ∀ (V : R.View U) (V' : R.View U'), ViewTruncates R V V' G →
-    ∀ (k : ℕ) (v : Option BlockId), R.Decided S V (d + k) v ↔ R.Decided S' V' k v
-```
-
-**Truncation invariance.** A replica that has pruned below the horizon reaches exactly the verdicts it would have reached with its whole history, at its own numbering.
-
-An `↔`, because both directions are consumed: a joiner needs verdicts to survive the cut, and cross-cut agreement needs them to come back.
-
 #### `ViewSound`
 
 *def, `Properties.Witness.lean`*
@@ -24689,26 +24688,30 @@ def ViewSound (R : DagRule Validator BlockId Payload) : Prop :=
 
 ```lean
 structure AgreeBand (R : DagRule Validator BlockId Payload) (U U' : R.Universe)
-    (lo hi : ℕ) : Prop where
+    (lo hi g g' : ℕ) : Prop where
   /-- A block of the band is a block of `U'`. -/
-  mem : ∀ b, b ∈ R.ids U → lo ≤ (R.block U b).round → (R.block U b).round ≤ hi →
-    b ∈ R.ids U'
-  /-- A block sitting in the band on either side keeps its round and author. -/
+  mem : ∀ b, b ∈ R.ids U → lo ≤ (R.block U b).round + g →
+    (R.block U b).round + g ≤ hi → b ∈ R.ids U'
+  /-- A block sitting in the band on either side keeps its place in the
+  common frame, and its author. -/
   block : ∀ b, b ∈ R.ids U →
-    ((lo ≤ (R.block U b).round ∧ (R.block U b).round ≤ hi) ∨
-      (b ∈ R.ids U' ∧ lo ≤ (R.block U' b).round ∧ (R.block U' b).round ≤ hi)) →
-    (R.block U' b).round = (R.block U b).round ∧
+    ((lo ≤ (R.block U b).round + g ∧ (R.block U b).round + g ≤ hi) ∨
+      (b ∈ R.ids U' ∧ lo ≤ (R.block U' b).round + g' ∧
+        (R.block U' b).round + g' ≤ hi)) →
+    (R.block U' b).round + g' = (R.block U b).round + g ∧
       (R.block U' b).creator = (R.block U b).creator
   /-- Strictly above the floor, its references too. -/
-  refs : ∀ b, b ∈ R.ids U → lo < (R.block U b).round → (R.block U b).round ≤ hi →
-    (R.block U' b).refs = (R.block U b).refs
+  refs : ∀ b, b ∈ R.ids U → lo < (R.block U b).round + g →
+    (R.block U b).round + g ≤ hi → (R.block U' b).refs = (R.block U b).refs
 ```
 
-**`U'` carries `U`'s band.** Every block `U` holds between `lo` and `hi` is a block of `U'`, at the same round and with the same author, and above the floor with the same references.
+**`U'` carries `U`'s band, up to a shift.** Every block `U` holds whose round lies in `[lo, hi]` *once `g` is added* is a block of `U'`, at the round the shift names and with the same author, and above the floor with the same references.
 
-Deliberately **one-directional**: `U'` may hold blocks `U` does not, in the band or out of it, which is what a fill does. A rule proving `Banded` must therefore cope with candidates that appear from nowhere, and the core does, because nothing old references them.
+The two offsets put both universes in one frame: `b` sits at `round_U b + g` read from `U` and at `round_U' b + g'` read from `U'`, and the `block` clause says those agree. At `g = g' = 0` this is agreement on the nose, which is what an extension and an above-a-round agreement give. At `g = 0`, `g' = G` it is a truncation by `G`, whose survivors all moved down. Swapping `U` with `U'` swaps the offsets, so reading the relation backwards is another instance of it, which is what lets a two-directional consumer like `LocalTruncate` be served.
 
-The references clause stops at the floor rather than including it. A truncation empties the references of its bottom layer, and a rule reads a vote from a *parent*, so the floor contributes presence and authorship but no vote. `AgreeAbove` draws the line in the same place.
+Deliberately **one-directional** in membership: `U'` may hold blocks `U` does not, in the band or out of it, which is what a fill does.
+
+The references clause stops at the floor rather than including it. A truncation empties the references of its bottom layer, and a rule reads a vote from a *parent*, so the floor contributes presence and authorship but no vote.
 
 #### `Banded`
 
@@ -24718,18 +24721,20 @@ The references clause stops at the floor rather than including it. A truncation 
 def Banded (R : DagRule Validator BlockId Payload) : Prop :=
   ∀ (S : Slots Validator) (U : R.Universe) (V : R.View U) (k : ℕ) (v : Option BlockId),
     R.Decided S V k v →
-      ∃ top : ℕ, ∀ (S' : Slots Validator) (U' : R.Universe) (V' : R.View U'),
-        S'.slotRound = S.slotRound →
-        (∀ m, S.slotRound m ≤ top → S'.leader m = S.leader m) →
-        AgreeBand R U U' (S.slotRound k) top →
+      ∃ top : ℕ, ∀ (g g' d d' : ℕ) (S' : Slots Validator) (U' : R.Universe)
+        (V' : R.View U') (k' : ℕ),
+        k + d' = k' + d →
+        (∀ m m', m + d' = m' + d → S.slotRound m + g = S'.slotRound m' + g') →
+        (∀ m m', m + d' = m' + d → S.slotRound m ≤ top → S.leader m = S'.leader m') →
+        AgreeBand R U U' (S.slotRound k + g) (top + g) g g' →
         (∀ b, b ∈ R.viewIds V → S.slotRound k ≤ (R.block U b).round →
           (R.block U b).round ≤ top → b ∈ R.viewIds V') →
-        R.Decided S' V' k v
+        R.Decided S' V' k' v
 ```
 
-**Every verdict reads a band of rounds.** From the slot's own round up to some top, the blocks the view holds and the leaders of the slots sitting there already carry the verdict: any universe carrying the band, any view holding those blocks, and any schedule with the same round structure naming the same leaders inside the band, decides the slot the same way.
+**Every verdict reads a band of rounds.** From the slot's own round up to some top, the blocks the view holds and the leaders of the slots sitting there already carry the verdict: any universe carrying the band **up to a shift**, any view holding those blocks, and any schedule whose slots correspond and whose leaders match inside the band, decides the corresponding slot the same way.
 
-Three axes, one top. The DAG axis gives `Persist` and `Local`, the view axis gives monotonicity, and the schedule axis gives the bound the adaptive fixpoint needs, since the slots sitting at or below a round are finitely many (`Slots.mono` with `Slots.unbounded`).
+Four naturals name the correspondence. `g` and `g'` put the two universes in one frame of rounds; `d` and `d'` put the two schedules in one frame of slots, slot `m` of `S` answering to slot `m'` of `S'` when `m + d' = m' + d`. All four are zero for persistence, locality and monotonicity in the view. The ceiling is read in the source's own frame, so the band always covers the rounds `[slotRound k, top]` of `U` whatever the offset, and a large shift cannot empty the hypothesis. A truncation by `G` from base slot `d` uses `g = 0`, `g' = G`, `d' = 0`, and reading it backwards swaps the pairs, which is why one property serves a two-directional consumer.
 
 #### `reactiveLive`
 
@@ -24764,7 +24769,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 933 theorems that either another module of the
+The 934 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -27811,6 +27816,17 @@ theorem certifiedIn_chop {A L : BlockId} (hA : A ∈ (chop U G).ids) (s : ℕ) :
 ```
 
 **The indirect test survives the cut**: an anchor above the horizon certifies a slot above the horizon in the truncation exactly when it did in the original. With `directCommit_chop`/`directSkip_chop` this is the per-slot decision invariance of `garbage.md` G3 — the indirect verdict is a property of the anchor's cone, and never consults the pruned prefix.
+
+#### `horizon_le_slotRound`
+
+*theorem, `GC.ChopDecided.lean`*
+
+```lean
+theorem horizon_le_slotRound (hd : G ≤ S.slotRound d) (k : ℕ) :
+    G ≤ S.slotRound (d + k)
+```
+
+Every slot from the base slot on clears the horizon.
 
 #### `decided_chop`
 
@@ -35721,15 +35737,16 @@ theorem isLeaderBlock_sched {S₁ S₂ : LeanDag.Hydrozoan.Slots Replica} {k : �
 theorem banded_aux {V : LeanDag.Hydrozoan.View U} {k : ℕ} {v : Option BlockId}
     (hd : LeanDag.Hydrozoan.Decided U V k v) :
     ∃ top, S.slotRound k + 2 ≤ top ∧
-      ∀ (S' : LeanDag.Hydrozoan.Slots Replica)
+      ∀ (g g' d d' : ℕ) (S' : LeanDag.Hydrozoan.Slots Replica)
         (U' : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
-        (V' : LeanDag.Hydrozoan.View U'),
-        S'.slotRound = S.slotRound →
-        (∀ m, S.slotRound m ≤ top → S'.leader m = S.leader m) →
-        AgreeBand rule U U' (S.slotRound k) top →
+        (V' : LeanDag.Hydrozoan.View U') (k' : ℕ),
+        k + d' = k' + d →
+        (∀ m m', m + d' = m' + d → S.slotRound m + g = S'.slotRound m' + g') →
+        (∀ m m', m + d' = m' + d → S.slotRound m ≤ top → S.leader m = S'.leader m') →
+        AgreeBand rule U U' (S.slotRound k + g) (top + g) g g' →
         (∀ b, b ∈ V.ids → S.slotRound k ≤ (U.block b).round →
           (U.block b).round ≤ top → b ∈ V'.ids) →
-        LeanDag.Hydrozoan.Decided (S := S') U' V' k v
+        LeanDag.Hydrozoan.Decided (S := S') U' V' k' v
 ```
 
 #### `banded`
@@ -35820,12 +35837,13 @@ theorem decided_none_of_unsupported {V : LeanDag.Hydrozoan.View U} {T : Finset R
 ```lean
 theorem decided_iff (h : TruncatesHZ U U' S S' G d)
     {V : LeanDag.Hydrozoan.View U} {V' : LeanDag.Hydrozoan.View U'}
-    (hv : ∀ b, b ∈ U'.ids → (b ∈ V'.ids ↔ b ∈ V.ids)) {k : ℕ} {v : Option BlockId} :
-    @LeanDag.Hydrozoan.Decided _ _ _ _ _ _ _ S U V (d + k) v
-      ↔ @LeanDag.Hydrozoan.Decided _ _ _ _ _ _ _ S' U' V' k v
+    (hv : ∀ b, b ∈ U.ids → G ≤ (U.block b).round → (b ∈ V.ids ↔ b ∈ V'.ids))
+    {k : ℕ} {v : Option BlockId} :
+    LeanDag.Hydrozoan.Decided (S := S) U V (d + k) v ↔
+      LeanDag.Hydrozoan.Decided (S := S') U' V' k v
 ```
 
-**Truncation invariance for Hydrozoan.**
+**Verdict transport across the cut**, in Hydrozoan's own schedule vocabulary. Was two inductions over the six constructors with a family of shifted transport lemmas beneath them, about 380 lines. The band now carries an offset (`Properties.AgreeBand`), so a truncation is one of its instances and reading it backwards is another, and both directions of this are `banded_aux` applied.
 
 #### `persist_aux`
 
@@ -36621,6 +36639,28 @@ theorem causal : Causal (mysticetiRule (Validator := Validator) (BlockId := Bloc
 
 The core's universes are block DAGs.
 
+#### `banded`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem banded : Banded
+    (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+```
+
+**The core reads a band.**
+
+#### `viewSound`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem viewSound : ViewSound
+    (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+```
+
+Views hold blocks of their universe.
+
 #### `persist`
 
 *theorem, `MysticetiProperties.lean`*
@@ -36931,27 +36971,16 @@ theorem populatedOn_of (h : Sustains R U U' G R₀) {T : Finset Validator} {r : 
 
 **Production survives.**
 
-#### `mem_of`
+#### `refl`
 
-*theorem, `Properties.Truncate.lean`*
-
-```lean
-theorem mem_of (h : Truncates R U U' S S' G d) {b : BlockId} (hb : b ∈ R.ids U') :
-    b ∈ R.ids U
-```
-
-A retained block is a block of the original.
-
-#### `le_round`
-
-*theorem, `Properties.Truncate.lean`*
+*theorem, `Properties.Witness.lean`*
 
 ```lean
-theorem le_round (h : Truncates R U U' S S' G d) {b : BlockId} (hb : b ∈ R.ids U') :
-    G ≤ (R.block U b).round
+theorem refl {U : R.Universe} {lo hi g : ℕ} : AgreeBand R U U lo hi g g where
+  mem
 ```
 
-And sits at or above the horizon there.
+A universe carries its own bands, at any offset.
 
 #### `of_extends`
 
@@ -36959,7 +36988,7 @@ And sits at or above the horizon there.
 
 ```lean
 theorem of_extends {U U' : R.Universe} (he : Extends R U U') (lo hi : ℕ) :
-    AgreeBand R U U' lo hi where
+    AgreeBand R U U' lo hi 0 0 where
   mem
 ```
 
@@ -36971,30 +37000,19 @@ An extension carries every band, since it moves nothing.
 
 ```lean
 theorem of_agreeAbove {U U' : R.Universe} {r lo hi : ℕ} (h : AgreeAbove R U U' r)
-    (hr : r ≤ lo) : AgreeBand R U U' lo hi where
+    (hr : r ≤ lo) : AgreeBand R U U' lo hi 0 0 where
   mem
 ```
 
 Agreement above a round carries every band whose floor is at or above it.
-
-#### `refl`
-
-*theorem, `Properties.Witness.lean`*
-
-```lean
-theorem refl {U : R.Universe} {lo hi : ℕ} : AgreeBand R U U lo hi where
-  mem
-```
-
-A universe carries its own bands.
 
 #### `mono`
 
 *theorem, `Properties.Witness.lean`*
 
 ```lean
-theorem mono {U U' : R.Universe} {lo hi lo' hi' : ℕ} (h : AgreeBand R U U' lo hi)
-    (hlo : lo ≤ lo') (hhi : hi' ≤ hi) : AgreeBand R U U' lo' hi' where
+theorem mono {U U' : R.Universe} {lo hi lo' hi' g g' : ℕ} (h : AgreeBand R U U' lo hi g g')
+    (hlo : lo ≤ lo') (hhi : hi' ≤ hi) : AgreeBand R U U' lo' hi' g g' where
   mem
 ```
 
@@ -37005,28 +37023,29 @@ Agreement on a band gives agreement on any narrower one.
 *theorem, `Properties.Witness.lean`*
 
 ```lean
-theorem reaches_of (hc : Causal R) (h : AgreeBand R U U' lo hi)
-    {A : BlockId} (hA : A ∈ R.ids U) (hAhi : (R.block U A).round ≤ hi) :
-    ∀ {C : BlockId}, ReachesFrom (R.block U) A C → lo < (R.block U C).round →
+theorem reaches_of (hc : Causal R) (h : AgreeBand R U U' lo hi g g')
+    {A : BlockId} (hA : A ∈ R.ids U) (hAhi : (R.block U A).round + g ≤ hi) :
+    ∀ {C : BlockId}, ReachesFrom (R.block U) A C → lo < (R.block U C).round + g →
       ReachesFrom (R.block U') A C
 ```
 
-**Causal history inside the band is the same history.** A path that starts in the band and ends strictly above its floor keeps every step inside, since a reference sits one round below its referrer.
+**Causal history inside the band is the same history.**
 
 #### `reaches_old`
 
 *theorem, `Properties.Witness.lean`*
 
 ```lean
-theorem reaches_old (hc : Causal R) (h : AgreeBand R U U' lo hi)
-    {A : BlockId} (hA : A ∈ R.ids U) (hAlo : lo ≤ (R.block U A).round)
-    (hAhi : (R.block U A).round ≤ hi) :
-    ∀ {C : BlockId}, ReachesFrom (R.block U') A C → lo ≤ (R.block U' C).round →
+theorem reaches_old (hc : Causal R) (h : AgreeBand R U U' lo hi g g')
+    {A : BlockId} (hA : A ∈ R.ids U) (hAlo : lo ≤ (R.block U A).round + g)
+    (hAhi : (R.block U A).round + g ≤ hi) :
+    ∀ {C : BlockId}, ReachesFrom (R.block U') A C →
+      lo ≤ (R.block U' C).round + g' →
       C ∈ R.ids U ∧ ReachesFrom (R.block U) A C ∧
-        (R.block U C).round = (R.block U' C).round
+        (R.block U C).round + g = (R.block U' C).round + g'
 ```
 
-**And a path of `U'` that stays above the floor is a path of `U`.** Nothing the band adds is reachable from a block the band already had: the references of an old block in the band are the references it had, and those are blocks of `U`. This is what lets a rule prove `Banded` without knowing whether the candidates it must rule out are new.
+**And a path of `U'` that stays above the floor is a path of `U`.**
 
 #### `leaderCommits_reactive`
 
@@ -37079,7 +37098,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 951 lemmas used only within the file that proves
+The 928 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -37432,7 +37451,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `supporters_chop` | — |
 | `votesIn_chop` | — |
 
-### `GC/ChopDecided.lean` (14)
+### `GC/ChopDecided.lean` (13)
 
 | Lemma | Role |
 |:---|:---|
@@ -37447,7 +37466,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `directSkipIn_chop` | — |
 | `directSkipSlotIn_chop` | The slot-level skip survives the cut. |
 | `eligible_chop` | — |
-| `horizon_le_slotRound` | Every slot from the base slot on clears the horizon. |
 | `isLeaderBlock_chop` | — |
 | `slotBlamersIn_chop` | The blamer set of a slot, in view, is the same on both sides of the cut: it is read at the voting round, … |
 
@@ -38640,36 +38658,14 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `subset_blamesInView` | Every member of `T` blames the slot. |
 
-### `Hydrozoan/Helpers/Truncation.lean` (26)
+### `Hydrozoan/Helpers/Truncation.lean` (4)
 
 | Lemma | Role |
 |:---|:---|
-| `anchor_mem` | The anchor of a derivation lies above the base slot, hence above the horizon, hence survives the cut. |
-| `authorsOf_eq` | — |
-| `blamesInView_eq` | — |
-| `blocksAt_eq` | Blocks of the truncation at round `n` are the original's at `n + G`. |
-| `certificates_eq` | — |
-| `certifiedIn_eq` | — |
-| `certifiersInView_eq` | — |
-| `decided_from` | — |
-| `decided_to` | — |
-| `eligible_eq` | — |
-| `fastCommitInView_eq` | — |
-| `isCertificate_eq` | — |
-| `isLeaderBlock_eq` | — |
-| `isVote_eq` | — |
 | `memU` | — |
 | `no_base_of_naive_shift` | A pure shift by a positive horizon admits no round-zero block, and a non-empty valid universe must have … |
 | `parents_empty_of_round_zero` | A block at round zero has no parents: the predecessor condition is unsatisfiable there. |
-| `reaches_eq` | — |
-| `reaches_of` | Causal history inside the truncation is the history it was. A path descends one round at a time, so every … |
-| `reaches_to` | — |
 | `roundU` | — |
-| `skippedLeaderInView_eq` | — |
-| `slowCommitInView_eq` | — |
-| `supportersInView_eq` | — |
-| `voteBlocks_eq` | — |
-| `weakLinked_eq` | — |
 
 ### `Integration/AdaptiveHydrozoan.lean` (4)
 
@@ -38843,7 +38839,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `soundOn_skipFill` | The fill preserves it, above the gap. The synchrony round must clear the filled round: inside the gap the … |
 | `soundOn_stack` | The stack preserves it, the offsets composing exactly as the two statements above suggest: the fill … |
 
-### `MysticetiProperties.lean` (47)
+### `MysticetiProperties.lean` (45)
 
 | Lemma | Role |
 |:---|:---|
@@ -38851,9 +38847,8 @@ subsection per module, in the layer order of Appendices B and C.
 | `band_block'` | — |
 | `band_mem` | — |
 | `band_refs` | — |
-| `banded` | The core reads a band. |
 | `banded_aux` | Every verdict of the core reads a band of rounds, from the slot's own round up to a top the derivation … |
-| `blocksAt_band` | — |
+| `blocksAt_band` | A round layer of `U` lands on the layer of `U'` the shift names. |
 | `blocksAt_subset` | — |
 | `certifiedIn_band` | — |
 | `certifiedIn_old` | — |
@@ -38873,15 +38868,15 @@ subsection per module, in the layer order of Appendices B and C.
 | `directSkipSlotIn_congr` | The count that reads it is therefore the same count. |
 | `ext_block` | — |
 | `ext_mem` | — |
-| `isLeaderBlock_band` | — |
-| `isLeaderBlock_band_old` | — |
+| `isLeaderBlock_band` | A candidate of slot `k` is a candidate of the slot `k'` that answers to it: the shift carries its round, … |
+| `isLeaderBlock_band_old` | And back, for a candidate the band already had. |
 | `isLeaderBlock_mono` | — |
 | `isLeaderBlock_old` | — |
 | `local_` | And it is local, from the same band: a verdict at a slot whose round is at or above `r` reads nothing … |
 | `lt_bound` | The decided slot lies below the bound. |
 | `mem_certificates_band` | — |
 | `mem_certificates_old` | — |
-| `not_certifiedIn_band_novel` | A candidate the band did not have is certified by nothing an old anchor can see. The anchor's cone stays … |
+| `not_certifiedIn_band_novel` | A candidate the band did not carry is certified by nothing an old anchor can see. |
 | `not_certifiedIn_novel` | A new candidate is certified by nothing an old anchor can see. |
 | `not_mem_refs_novel` | An old block votes for nothing the extension added. |
 | `persist_unconditional` | The core persists unconditionally, as an evidence-backed rule must — now a corollary of the band rather … |
@@ -38890,8 +38885,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `quorumCard_pos` | Two quorums share a correct validator, so a quorum is not empty. |
 | `slotBlamers_congr` | The slot-level skip reads the schedule only at its own slot, so two schedules naming the same round and … |
 | `subset_blamers` | Every member of `T` blames the slot: its voting-round block is in view and references no candidate, which … |
-| `viewSound` | Views hold blocks of their universe. |
-| `votesIn_band` | The votes an in-band certificate counts are the votes it counted: the certificate's own references sit a … |
+| `votesIn_band` | The votes an in-band certificate counts are the votes it counted. |
 | `votesIn_of_sustains` | The votes an old decision-round block counts are the votes it counted: its references are unchanged, and … |
 | `votesIn_old` | The votes an old certificate counts are the votes it counted. |
 
@@ -38902,16 +38896,15 @@ subsection per module, in the layer order of Appendices B and C.
 | `reaches_iff` | And so it agrees in both directions. |
 | `reaches_of` | Causal history above the horizon is the same history. A path from `A` descends one round at a time, so if … |
 
-### `Properties/Arcs/GC.lean` (6)
+### `Properties/Arcs/GC.lean` (5)
 
 | Lemma | Role |
 |:---|:---|
-| `agreeBand_chop` | A `Truncates` target and the canonical cut agree on every band: the same blocks, at the same rounds, with … |
+| `decided_chop_iff` | G3 re-derived, with no induction of its own. Both directions of the cut's verdict transport, from the band. |
 | `decided_of_truncate` | A verdict survives the cut, at the replica's own numbering. |
 | `decided_of_truncated` | And a verdict of the truncation is a verdict of the whole DAG, which is what lets a pruned replica be … |
-| `localTruncate` | The core truncates locally. A verdict at slot `d + k` of the full DAG is a verdict at slot `k` of any … |
-| `slots_eq_chop` | The schedule clauses of `Truncates` determine the schedule: it is the chopped one, on the nose. |
 | `sustains_chop` | The cut sustains the core from its horizon. |
+| `truncates_chop` | The cut is a truncation. The witness `Truncates` was written to have, exhibited before anything is proved … |
 
 ### `Properties/Arcs/SafeSkip.lean` (8)
 
@@ -38965,6 +38958,12 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `decidedBelow_run` | And the verdicts of the run itself. |
 
+### `Properties/Derived/Truncate.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `LocalTruncate.of_banded` | Truncation invariance falls out of the band. |
+
 ### `Properties/Extends.lean` (5)
 
 | Lemma | Role |
@@ -38988,6 +38987,13 @@ subsection per module, in the layer order of Appendices B and C.
 | `mono` | A mechanism that sustains from a round sustains from any later one. |
 | `refl` | Doing nothing sustains everything. |
 | `votesAt_of` | Votes survive. A `T`-block one round above `r` is old, keeps its author and its references, so a vote it … |
+
+### `Properties/Truncate.lean` (2)
+
+| Lemma | Role |
+|:---|:---|
+| `le_round` | And sits at or above the horizon there. |
+| `mem_of` | A retained block is a block of the original. |
 
 ### `WaveRobin.lean` (3)
 

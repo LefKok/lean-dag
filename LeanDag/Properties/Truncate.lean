@@ -82,18 +82,6 @@ def ViewTruncates (R : DagRule Validator BlockId Payload) {U U' : R.Universe}
   ∀ b, b ∈ R.ids U → G ≤ (R.block U b).round →
     (b ∈ R.viewIds V ↔ b ∈ R.viewIds V')
 
-/-- **Truncation invariance.** A replica that has pruned below the
-horizon reaches exactly the verdicts it would have reached with its
-whole history, at its own numbering.
-
-An `↔`, because both directions are consumed: a joiner needs verdicts
-to survive the cut, and cross-cut agreement needs them to come back. -/
-def LocalTruncate (R : DagRule Validator BlockId Payload) : Prop :=
-  ∀ (S S' : Slots Validator) (U U' : R.Universe) (G d : ℕ),
-    Truncates R U U' S S' G d →
-    ∀ (V : R.View U) (V' : R.View U'), ViewTruncates R V V' G →
-    ∀ (k : ℕ) (v : Option BlockId), R.Decided S V (d + k) v ↔ R.Decided S' V' k v
-
 namespace Truncates
 
 variable {U U' : R.Universe} {S S' : Slots Validator} {G d : ℕ}

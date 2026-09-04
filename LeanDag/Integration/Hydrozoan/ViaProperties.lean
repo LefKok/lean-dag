@@ -97,10 +97,9 @@ theorem decided_chopHZ_of_localTruncate [S : LeanDag.Hydrozoan.Slots Replica] {G
         (View.chopHZ V hsp G) k v
       ↔ LeanDag.Hydrozoan.Decided U V (d + k) v :=
   (LeanDag.Hydrozoan.TruncatesHZ.decided_iff (truncatesHZ_chopHZ (hsp := hsp) hd)
-    (fun b hb => by
-      have hbr := (mem_chopHZ_ids.mp hb).2
-      change b ∈ (View.chopHZ V hsp G).ids ↔ b ∈ V.ids
-      exact mem_viewChopHZ (V := V) hbr)).symm
+    (fun b hb hbr => by
+      change b ∈ V.ids ↔ b ∈ (View.chopHZ V hsp G).ids
+      exact (mem_viewChopHZ (V := V) hbr).symm)).symm
 
 /-! ## What the two mechanisms sustain
 

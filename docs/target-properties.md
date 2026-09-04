@@ -278,46 +278,57 @@ because the reactive commit consumes `CertifiesAt` and it transported
 `VotesAt` (§3.6). A witness catches a relation with no models; only a
 consumer catches one that has models and serves no theorem.
 
-#### 3.4b Why the band does not subsume truncation, and what closed the gap
+#### 3.4b How the band absorbed truncation
 
-The band tolerates more of a truncation than it looks. Its references
+The band tolerated more of a truncation than it looked. Its references
 clause is guarded **strictly** above the floor, so two universes may
 differ entirely on what the bottom layer of the band points at, which is
 exactly what a cut does to its base layer. Nothing above the horizon
 ever consults what the horizon points at, and the same holds of every
 later verdict, whose own band has a floor at least as high.
 
-What the band does not tolerate is the **renumbering**, and the
+What the band did not tolerate was the **renumbering**, and the
 renumbering is forced by the model rather than by the rule. Validity
 requires a block at a positive round to carry references from the round
 below, so a universe pruned below `G` with its survivors left where they
 sit has an invalid base layer. The cut must rebase to zero, and every
-clause of `AgreeBand` compares rounds by equality.
+clause of `AgreeBand` used to compare rounds by equality.
 
-**The generic fix, not taken.** Give `AgreeBand` an offset: `round' b +
-G = round b` instead of equality, with the matching shift on the
-schedule axis, which `Truncates` already states additively. At offset
-zero it is today's band, so nothing else changes; at the horizon it is
-the restriction-and-renumbering half of `LocalTruncate`. That would make
-truncation a corollary rather than an obligation. It was not done,
-because it threads a shift through every band lemma of both protocols
-and `LocalTruncate` is an *iff* where the band gives one direction, so
-the relation would have to be stated so that reading it backwards is
-another instance.
+**The generic fix, now taken.** `AgreeBand R U U' lo hi g g'` carries an
+offset on each side and compares `round_U' b + g' = round_U b + g`. Two
+offsets rather than one, because `LocalTruncate` is an *iff*: reading
+the relation backwards has to be another instance of the same statement,
+and it is, with the two offsets exchanged. `Banded` correspondingly
+carries four naturals — `g` and `g'` on the round axis, `d` and `d'` on
+the slot axis, with slots corresponding when `m + d' = m' + d`.
 
-**What was done instead.** The core's instance, for thirty lines
-(`Arcs/GC.lean`). `GC/ChopDecided.lean` already proves both directions
-for the *canonical* truncation. An arbitrary `Truncates` target holds
-exactly the blocks the cut holds, at the same rounds and authors, and
-above the horizon with the same references, so the band carries verdicts
-between them at offset zero; and the schedule clauses pin `S'` to be the
-chopped schedule outright, which `slots_eq_chop` proves as an equality
-of `Slots`. The core therefore has `LocalTruncate`, and both protocols
-now discharge every obligation.
+**Where the ceiling is read decided whether the statement was provable
+at all.** `Banded` fixes the ceiling `top` before the offsets are
+quantified, so the band's upper bound has to be stated in the source's
+frame, `hi = top + g`. Stated in the target's frame it is satisfiable by
+choosing a large `g`, which makes the hypothesis vacuous and the
+property unprovable. The view clause is bounded in the source's frame
+for the same reason.
 
-The property stays an obligation. It asks something the band does not:
-that the rule is invariant under a change of coordinates, which is a
-fact about its arithmetic rather than about what it reads.
+`LocalTruncate` is then two instances of the band: `(g, g', d, d') = (0,
+G, d, 0)` going down and `(G, 0, 0, d)` coming back.
+`Properties/Derived/Truncate.lean` holds both directions, at `[propext,
+Quot.sound]`, and the property has moved to `Derived/` with the rest of
+what a band implies.
+
+**What it removed.** Both protocols now prove the offset band and
+neither proves truncation. Hydrozoan's truncation file lost its
+induction and went from 528 lines to 176, keeping the `TruncatesHZ`
+witness and the `no_base_of_naive_shift` record. The garbage-collection
+arc's two transport theorems, which `GC/ChopDecided.lean` proves by
+structural induction over the decision relation, come back out of
+`LocalTruncate.of_banded` in one application. The cost was threading
+four naturals through every band lemma of both protocols, paid once.
+
+**What could still fail it.** A rule that reads an *absolute* round — a
+genesis special case, a hardcoded first slot — has no offset band, and
+would have to state its own truncation property or exclude the bottom of
+the DAG from the offset. Neither protocol has such a rule today.
 
 ## 3.5 Composition
 
@@ -538,8 +549,9 @@ round.
 
 **What stays outside.** `LocalTruncate` renumbers rounds and slots as
 well as restricting them, and no agreement hypothesis states a
-renumbering; §3.4 records why the renumbering cannot be isolated, so the
-combined property stays combined.
+renumbering; §3.4 records why the renumbering cannot be isolated. It is
+not derived from agreement, then, but from the band, whose offsets state
+the renumbering directly (§3.4b).
 
 ---
 
@@ -848,13 +860,14 @@ LeanDag/Properties/
   Witness.lean     the band, and the obligations' shared vocabulary
   Extends.lean  Agreement.lean   vocabulary the derived properties use
   Derived/Persist.lean  Derived/Local.lean   the two statements
+  Derived/Truncate.lean   LocalTruncate, and its route from the band
   Derived/FromBand.lean   the routes, and view monotonicity and the bound
   Derived/Bounded.lean    the laws of DecidedBelow
   Derived/Progress.lean   a committed run decides everything below it
   Optional/Skip.lean      SkipsUnsupported: promptness, not liveness
-  Local.lean  Persist.lean  Truncate.lean  Sustain.lean  Skip.lean
+  Truncate.lean  Sustain.lean   the two transport relations
   Agree.lean  Bounded.lean  Commit.lean        the schedule family (§4)
-  Arcs/GC.lean          garbage collection, given LocalTruncate
+  Arcs/GC.lean          garbage collection, given a band
   Arcs/SafeSkip.lean    crash recovery, given Persist
   Arcs/Quality.lean     chain quality, given fairness and self-reference  (planned)
   Compose.lean          transport composes                               (planned)
@@ -905,42 +918,43 @@ directory, hence the one flat module.
   the carrier, so no protocol restates anything.
 - **G1** State `Local`, `Persist`, and `LocalTruncate` (**done**), with
   two findings on `Persist` in §3.3 and, in §3.4, the vacuity that
-  replaced the re-indexing property with a combined one.
+  replaced the re-indexing property with a combined one. All three are
+  now consequences of the band rather than obligations (§3.8, §3.4b).
 - **G2** Prove garbage collection and crash recovery once from them,
   and `Compose` (**not built**, §11). **Crash recovery done**
   (`Properties/Arcs/SafeSkip.lean`): the fill is an extension, so any
   protocol with `Persist` inherits it. Ordered before garbage
-  collection deliberately, since persistence needs no `Reindex` and so
+  collection deliberately, since persistence needs no renumbering and so
   banks one mechanism before the uncertain part is attempted.
-  **Garbage collection done as far as the properties reach**
-  (`Properties/Arcs/GC.lean`): `decided_truncate` composes `Local` and
-  `Reindex` in three lines, and takes the restricted-not-yet-renumbered
-  universe as a parameter, which §3.4 explains.
-- **G3** Discharge them for Hydrozoan (**done**) — HZ9 proves all
-  four: `Causal`, `Persist.Unconditional`, `Local` and `Reindex`.
-  Persistence
-  (`Hydrozoan/Properties/`) proves the *unconditional* grade, as §3.2
-  predicts for a rule whose skip counts blames at the slot. The test
-  passed: `Integration/Hydrozoan/ViaProperties.lean` re-derives
-  `decided_fillHZ` — a six-constructor induction in `FillDecided.lean`
-  — from HZ9 **with no induction of its own**, the fill being an
-  extension by two of the arc's own simp lemmas. `Local` and `Reindex`
-  are each their own induction over the six constructors, in
-  `Hydrozoan/Helpers/{Locality,Truncation}.lean`, and `LocalTruncate`
-  yields `decided_chopHZ` with no induction of its own
-  (`ViaProperties.lean`). HZ9 also carries `SkipsUnsupported` at grade
-  `qFast ≤ |T|` (§3.7), which is no induction at all. The protocol owes
-  three inductions in total — persistence, locality, truncation — and no
-  more, whatever mechanisms follow.
+  **Garbage collection done**
+  (`Properties/Arcs/GC.lean`): both transport directions are
+  `LocalTruncate` applied, and `LocalTruncate` is the band applied, so
+  the arc holds the `Truncates` witness for the canonical cut and
+  nothing else. Its consumer test is `decided_chop_iff`, which
+  `GC/ChopDecided.lean` proves by induction and the arc re-derives in
+  one application.
+- **G3** Discharge them for Hydrozoan (**done**) — HZ9 states
+  `Causal`, `Banded`, `Agree`, `Persist.Unconditional`, `Local` and
+  `SkipsUnsupported` at grade `qFast ≤ |T|` (§3.7). Persistence holds at
+  the *unconditional* grade, as §3.2 predicts for a rule whose skip
+  counts blames at the slot. Two consumer tests passed with no induction
+  of their own, both in `Integration/Hydrozoan/ViaProperties.lean`:
+  `decided_fillHZ`, a six-constructor induction in `FillDecided.lean`,
+  and `decided_chopHZ`, an induction in `Truncation.lean`. **The
+  protocol owes one induction**, the band in
+  `Hydrozoan/Helpers/Banded.lean`, and no more, whatever mechanisms
+  follow. It began as three, one each for persistence, locality and
+  truncation.
 - **G4** Discharge them for the core (**`Persist` done**, and
   *unconditional* once the second instance turned up a defect in the
   core's skip rule — §3.2 — with `SafeSkip.decided_fill` re-derived as
   the consumer test and its counting hypothesis dropped). `Local` is
   done too, and both now fall out of `Banded` (§3.8), which also
   re-derives view monotonicity. The instance reshaped `Persist.Ok`
-  before any proof was attempted. `LocalTruncate` remains. **`SkipsUnsupported` done** at grade
-  `quorumCard ≤ |T|`, with SS3 re-derived as its consumer (§3.7).
-  `Local` and `LocalTruncate` for the core remain.
+  before any proof was attempted, and `LocalTruncate` came out of the
+  same band once it carried offsets (§3.4b). **`SkipsUnsupported`
+  done** at grade `quorumCard ≤ |T|`, with SS3 re-derived as its
+  consumer (§3.7). The core, like Hydrozoan, owes one induction.
 - **G5** The schedule family (**built, for Mysticeti timed and
   reactive**): `BoundedRule`, `Agree`, `Bounded`, `SchedLocal`,
   `LeaderCommits`, `Descends`; `Adaptive/{Policy,Run,Liveness}` generic
@@ -1009,7 +1023,7 @@ residue; the mechanism owes one liveness property.
 | | `Banded` | a verdict is carried by a range of rounds, and `Persist`, `Local` and view monotonicity are its corollaries |
 | | `Persist R Ok` | a verdict survives extension of the DAG, at grade `Ok` |
 | | `Local` | a verdict at round ≥ r reads the DAG only above r |
-| | `LocalTruncate` | a verdict survives restriction with renumbering, both ways |
+| | `LocalTruncate` | a verdict survives restriction with renumbering, both ways; a corollary of the band's offsets |
 | | `Agree` | two views decide alike |
 | | `DecidedBelow` | a verdict below a slot bound, surviving reassignment above it; a definition, so its laws are theorems |
 | protocol, optional | `SkipsUnsupported R Ok` | an unsupported slot is skipped without waiting for an anchor, at grade `Ok` |
@@ -1017,8 +1031,8 @@ residue; the mechanism owes one liveness property.
 | mechanism, liveness | `Sustains R U U' G R₀` | above the settling round the transformed DAG holds the same blocks |
 
 Two were stated wrongly first and corrected once a witness was
-demanded (`Reindex`, §3.4; `Sustains` v1, §3.6). Chain quality has no
-property (§5).
+demanded (the re-indexing property, §3.4; `Sustains` v1, §3.6). Chain
+quality has no property (§5).
 
 ### 11.2 Against part 2: two protocols, three mechanisms
 
@@ -1028,7 +1042,7 @@ property (§5).
 | `Persist` | ✓, from `Banded` | ✓, from `Banded` | inherited | — |
 | `Banded` | ✓ | ✓ | inherited | — |
 | `Local` | ✓, from `Banded` | ✓, from `Banded` | inherited | — |
-| `LocalTruncate` | ✓ | ✓, §3.4b | — | — |
+| `LocalTruncate` | ✓, from `Banded` | ✓, from `Banded` | inherited | — |
 | `SkipsUnsupported` | ✓ at `qFast ≤ |T|` | ✓ at a correct quorum | — | — |
 | `Agree` | ✓ | ✓ | inherited | — |
 | `LeaderCommits`, `Descends` | ✓ | ✓ | ✓, a second `Live` | — |
@@ -1044,10 +1058,13 @@ development did not have: Hammerhead over reactive Mysticeti
 
 What part 2 does not yet deliver:
 
-- **Both protocols now have the full set.** Hydrozoan takes adaptive
-  leaders through it (§4.5), safety and liveness both, and the core
-  takes garbage collection at any truncation rather than only at the
-  canonical cut (§3.4b). No protocol is short of an obligation.
+- **Both protocols now have the full set**, and the set they prove is
+  smaller than the set they satisfy: `Persist`, `Local`,
+  `LocalTruncate` and view monotonicity are all `Banded` applied, so
+  each protocol owes one induction (§3.8, §3.4b). Hydrozoan takes
+  adaptive leaders through it (§4.5), safety and liveness both, and
+  both protocols take garbage collection at any truncation rather than
+  only at the canonical cut. No protocol is short of an obligation.
 - **Six protocols have no instance of any property.** Whether
   `Descends` and `Live` are generic or Mysticeti's shape with the name
   removed is unknown until the Odontoceti mirror is collapsed.
@@ -1089,19 +1106,20 @@ The properties divide four ways, and the folder follows the division:
 `Properties/Derived/` holds theorems, never statements.
 
 **Obligations. Someone must prove these, per protocol or per mechanism.**
-`Causal`, `Agree`, `Banded`, `ViewSound`, `LocalTruncate`,
-`LeaderCommits` and `Descends` fall on the protocol; `Sustains` falls on
-the mechanism. Nothing derives them.
+`Causal`, `Agree`, `Banded`, `ViewSound`, `LeaderCommits` and `Descends`
+fall on the protocol; `Sustains` falls on the mechanism. Nothing derives
+them.
 
 **Optional. A protocol may show these and need not.**
 `Properties/Optional/` holds them. `SkipsUnsupported` is the only one
 so far, and §11.4c records why it was demoted.
 
-**Statements no protocol proves directly.** `Persist` and `Local` are
-read by mechanisms and reached by both instances through `Banded`, so
-they live in `Derived/` with their routes. They stay named properties
-because that is what the crash-recovery and garbage-collection arcs
-consume, and because a rule with no band could prove either on its own.
+**Statements no protocol proves directly.** `Persist`, `Local` and
+`LocalTruncate` are read by mechanisms and reached by both instances
+through `Banded`, so they live in `Derived/` with their routes. They
+stay named properties because that is what the crash-recovery and
+garbage-collection arcs consume, and because a rule with no band could
+prove any of them on its own.
 
 **Derived theorems. Nothing proves these per protocol.**
 
@@ -1111,6 +1129,7 @@ consume, and because a rule with no band could prove either on its own.
 | `Local`, `Local.of_banded` | `Derived/{Local,FromBand}.lean` | `Banded` |
 | `decided_mono_of_banded` | `Derived/FromBand.lean` | `Banded` |
 | `exists_decidedBelow` | `Derived/FromBand.lean` | `Banded` |
+| `LocalTruncate`, `LocalTruncate.of_banded` | `Derived/Truncate.lean` | `Banded`, `ViewSound` |
 | `DecidedBelow`'s five laws | `Derived/Bounded.lean` | the definition, and `Agree` |
 
 **Vocabulary. Statements the obligations are written in, proving
@@ -1173,8 +1192,11 @@ instantiates it (§4.5).
 1. **`Compose.lean`.** The three composition lemmas, then
    `Stack.lean`'s theorem re-derived from them. Small, and the direct
    test of part 3.
-2. **An offset for the band**, which would turn `LocalTruncate` from an
-   obligation into a corollary (§3.4b). Deferred, not blocked.
+2. **Audit the rules for absolute round reads.** The offset band
+   (§3.4b) is the one obligation a genesis special case would break,
+   and neither protocol has one today. A protocol that acquires one
+   loses `LocalTruncate` silently, since the band would simply be
+   unprovable rather than wrong.
 3. **Collapse the Odontoceti mirrors** (`Adaptive/`, `Reactive/`) onto
    instances. `Live` and `Descends` now have two instances each and
    survived both, so the shape is no longer in doubt.
