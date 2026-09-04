@@ -1649,7 +1649,8 @@ the mechanism's own content.
 
 Every mechanism in this development now has both directions through the
 properties, and nothing is proved by hand. What remains is of four
-kinds, and only the first is large.
+kinds, and only the first is large. §11.4a records a fifth that was
+looked for and is not there.
 
 - **Instances.** Seven rules have none: Barnacle's six, Odontoceti,
   Nemo, Mahi-Mahi, Optimal-Hydrozoan, Hybrid and FinWhale. Hybrid's
@@ -1676,6 +1677,66 @@ kinds, and only the first is large.
   compares two views of one universe. The carrier has no join. The model
   does not pose the case: `U` is the global DAG and validators are
   views (§11.3b).
+
+### 11.4a Why the additive side has no property
+
+`Sustains` is a purely *negative* promise: above the settling round the
+mechanism changed nothing. Nothing in the collection says what a
+mechanism does *below* it — what it adds. Two facts are proved twice
+over, once for the fill and once for re-genesis, which is the
+duplication signature that produced `CommitsCandidate` and
+`CommitsDirect`:
+
+| | fill | re-genesis |
+|---|---|---|
+| what the added blocks supply | `skipFill_populatedOn` | `populatedOn_addGenesis` |
+| that they do not break the fault model | `honestNoEquiv_skipFill` | `hB1uniq_of_addGenesis` |
+
+**No property was added, and the reason is general.** `Sustains` can be
+one because *changed nothing above `R₀`* is uniform across mechanisms.
+*Added exactly these blocks* is not: what a mechanism adds **is** the
+mechanism, so any statement faithful to it is that mechanism with the
+quantifiers rearranged. A four-clause obligation was drafted —
+everything new is `v`'s, in a window; `v` was silent there; one block per
+round; `v` seated at every round — and it had exactly two models, each
+discharged by unfolding a definition. It named nothing the definitions
+did not already say.
+
+**Production needed no property.** The shared half is
+`populatedOn_insert_of_extends` (`Properties/Sustain.lean`): an
+extension plus one singleton `PopulatedOn U' {v} r` gives the reliable
+set with the author added. What is left is the singleton — the gap
+block, the genesis block — which is the mechanism's own content and has
+nowhere else to live.
+
+**Non-equivocation is a real obligation, and a narrow one.**
+`PreservesNoEquiv R U U' T`, the implication `NoEquivOn R U T →
+NoEquivOn R U' T`, is uniform: it names no validator and no window, and
+each mechanism meets it however it can — the cut because it only
+removes (`noEquivOn_of_truncates`), the fill because its validator was
+silent in the gap, re-genesis because its validator had no block at all.
+
+It is also **vacuous under the base fault model**. `BlockUniverse`
+carries `no_equivocation` as a *field*, for `Correct`, so every universe
+a mechanism constructs discharges it at construction. The three bespoke
+lemmas exist only because the hybrid model widens the honest class to
+`Honest = byzantineᶜ`, which includes the crash-prone validators the
+carrier's field says nothing about. So the obligation is owed by a
+mechanism **to a fault model**, not to a protocol, and only when that
+model trusts more validators than the carrier does.
+
+Naming it would replace three statements with one and make
+`honestNoEquiv_stack` a composition rather than a chain. That is a small
+gain against a line in the obligation list, and it has not been taken.
+The three lemmas stay where they are.
+
+**Two wrong turnings, since the method is the point.** The first
+proposal was the four-clause structure above, written from the two
+mechanisms rather than from their consumers — which is how `Reindex`
+(§3.4) and `Sustains` v1 (§3.6) went wrong, and the third time the
+pattern has appeared. The second was billing what survived as *the
+additive counterpart to `Sustains`*; it is not a counterpart to
+anything, being vacuous wherever the fault model and the carrier agree.
 
 ### 11.4b Obligation or consequence
 
