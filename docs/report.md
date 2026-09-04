@@ -24439,6 +24439,21 @@ def odontocetiRule : DagRule Validator BlockId Payload where
 
 **Odontoceti as a carrier**, at its own namespace rather than through `Barnacle.odontocetiRule`: a protocol's conformance should not route through a mechanism (`docs/target-properties.md` §8).
 
+#### `odontocetiLive`
+
+*def, `OdontocetiProperties.lean`*
+
+```lean
+def odontocetiLive (S : Slots Validator) {U : BlockUniverse Validator BlockId Payload}
+    (V : View Validator BlockId Payload U) (T : Finset Validator) (lo K : ℕ) : Prop :=
+  quorumCard Validator ≤ T.card ∧
+    ∃ R₀ N, SynchronisedOn U T R₀ ∧ R₀ ≤ S.slotRound lo ∧
+      (∀ r, R₀ ≤ r → r ≤ N → PopulatedOn U T r) ∧ V.CoversUpto N ∧
+      ∀ k, k < K → S.slotRound k + 1 ≤ N
+```
+
+**What Odontoceti's liveness route asks of a deployment**, at its own wavelength: the horizon is one round above the slot, where the core's is two.
+
 #### `Agree`
 
 *def, `Properties.Agree.lean`*
@@ -24971,7 +24986,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 954 theorems that either another module of the
+The 965 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -30047,6 +30062,16 @@ theorem Run.commits (ha : Agree R) (hlc : LeaderCommits R Live)
 
 **A reliable leader's slot commits in the run.**
 
+#### `lt_bound`
+
+*theorem, `Adaptive.Odontoceti.lean`*
+
+```lean
+theorem lt_bound (h : DecidedWithin U V B k v) : k < B
+```
+
+The bound is what it says: a derivation only names slots under it.
+
 #### `toDecided`
 
 *theorem, `Adaptive.Odontoceti.lean`*
@@ -30056,6 +30081,19 @@ theorem toDecided (h : DecidedWithin U V B k v) : Decided U V k v
 ```
 
 Forgetting the bound: agreement for the bounded relation *is* O5.
+
+#### `decidedWithin_congr_of_slotRound`
+
+*theorem, `Adaptive.Odontoceti.lean`*
+
+```lean
+theorem decidedWithin_congr_of_slotRound {S₁ S₂ : Slots Validator}
+    (hround : S₁.slotRound = S₂.slotRound) {V : View Validator BlockId Payload U}
+    {B k : ℕ} {v : Option BlockId} (ha : ∀ m, m < B → S₁.leader m = S₂.leader m)
+    (h : DecidedWithin (S := S₁) U V B k v) : DecidedWithin (S := S₂) U V B k v
+```
+
+**The bounded relation moves with the schedule**, for any two schedules naming the same rounds and the same leaders below the bound — the general form `DecidedBelow` reads, where `decidedWithin_congr` below is the `slotsOf` special case the adaptive fixpoint uses.
 
 #### `decidedWithin_congr`
 
@@ -36877,6 +36915,19 @@ theorem isLeaderBlock_congr {S₁ S₂ : Slots Validator} {k : ℕ} {L : BlockId
 
 Only the leader clause of `IsLeaderBlock` consults the schedule's leaders, at the slot itself.
 
+#### `directSkipSlotIn_congr`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem directSkipSlotIn_congr {S₁ S₂ : Slots Validator}
+    {V : View Validator BlockId Payload U} {k : ℕ}
+    (hround : S₁.slotRound k = S₂.slotRound k) (hk : S₁.leader k = S₂.leader k)
+    (h : DirectSkipSlotIn (S := S₁) U V k) : DirectSkipSlotIn (S := S₂) U V k
+```
+
+The count that reads it is therefore the same count.
+
 #### `populatedOn_ofCore`
 
 *theorem, `MysticetiProperties.lean`*
@@ -36931,6 +36982,101 @@ theorem causal : Causal (mysticetiRule (Validator := Validator) (BlockId := Bloc
 ```
 
 The core's universes are block DAGs.
+
+#### `band_mem`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem band_mem (h : AgreeBand mysticetiRule U U' lo hi g g') {b : BlockId}
+    (hb : b ∈ U.ids) (h1 : lo ≤ (U.block b).round + g) (h2 : (U.block b).round + g ≤ hi) :
+    b ∈ U'.ids
+```
+
+#### `band_block`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem band_block (h : AgreeBand mysticetiRule U U' lo hi g g') {b : BlockId}
+    (hb : b ∈ U.ids) (h1 : lo ≤ (U.block b).round + g) (h2 : (U.block b).round + g ≤ hi) :
+    (U'.block b).round + g' = (U.block b).round + g ∧
+      (U'.block b).creator = (U.block b).creator
+```
+
+#### `band_refs`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem band_refs (h : AgreeBand mysticetiRule U U' lo hi g g') {b : BlockId}
+    (hb : b ∈ U.ids) (h1 : lo < (U.block b).round + g) (h2 : (U.block b).round + g ≤ hi) :
+    (U'.block b).refs = (U.block b).refs
+```
+
+#### `blocksAt_band`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem blocksAt_band (h : AgreeBand mysticetiRule U U' lo hi g g') {r r' : ℕ}
+    (hrr : r + g = r' + g') (h1 : lo ≤ r + g) (h2 : r + g ≤ hi) :
+    blocksAt U r ⊆ blocksAt U' r'
+```
+
+A round layer of `U` lands on the layer of `U'` the shift names.
+
+#### `creatorsOf_band`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem creatorsOf_band (h : AgreeBand mysticetiRule U U' lo hi g g') {s : Finset BlockId}
+    (hs : ∀ b ∈ s, b ∈ U.ids ∧ lo ≤ (U.block b).round + g ∧ (U.block b).round + g ≤ hi) :
+    creatorsOf U'.block s = creatorsOf U.block s
+```
+
+#### `isLeaderBlock_band`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem isLeaderBlock_band (h : AgreeBand mysticetiRule U U' lo hi g g') {k k' : ℕ}
+    (hkk : S.slotRound k + g = S'.slotRound k' + g') (hlead : S.leader k = S'.leader k')
+    (h1 : lo ≤ S.slotRound k + g) (h2 : S.slotRound k + g ≤ hi) {L : BlockId}
+    (hL : IsLeaderBlock (S := S) U k L) : IsLeaderBlock (S := S') U' k' L
+```
+
+A candidate of slot `k` is a candidate of the slot `k'` that answers to it: the shift carries its round, and the schedules name the same leader there.
+
+#### `isLeaderBlock_band_old`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem isLeaderBlock_band_old (h : AgreeBand mysticetiRule U U' lo hi g g') {k k' : ℕ}
+    (hkk : S.slotRound k + g = S'.slotRound k' + g') (hlead : S.leader k = S'.leader k')
+    (h1 : lo ≤ S.slotRound k + g) (h2 : S.slotRound k + g ≤ hi) {L : BlockId}
+    (hLU : L ∈ U.ids) (hL : IsLeaderBlock (S := S') U' k' L) :
+    IsLeaderBlock (S := S) U k L
+```
+
+And back, for a candidate the band already had.
+
+#### `directSkipSlotIn_band`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem directSkipSlotIn_band (h : AgreeBand mysticetiRule U U' lo hi g g')
+    {V : View Validator BlockId Payload U} {V' : View Validator BlockId Payload U'}
+    {k k' : ℕ} (hkk : S.slotRound k + g = S'.slotRound k' + g')
+    (hlead : S.leader k = S'.leader k') (hlo : lo = S.slotRound k + g)
+    (hhi : S.slotRound k + 1 + g ≤ hi)
+    (hV : ∀ b, b ∈ V.ids → lo ≤ (U.block b).round + g → (U.block b).round + g ≤ hi →
+      b ∈ V'.ids)
+    (hs : DirectSkipSlotIn (S := S) U V k) : DirectSkipSlotIn (S := S') U' V' k'
+```
 
 #### `banded`
 
@@ -37555,7 +37701,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 964 lemmas used only within the file that proves
+The 968 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -39333,16 +39479,12 @@ subsection per module, in the layer order of Appendices B and C.
 | `soundOn_skipFill` | The fill preserves it, above the gap. The synchrony round must clear the filled round: inside the gap the … |
 | `soundOn_stack` | The stack preserves it, the offsets composing exactly as the two statements above suggest: the fill … |
 
-### `MysticetiProperties.lean` (44)
+### `MysticetiProperties.lean` (35)
 
 | Lemma | Role |
 |:---|:---|
-| `band_block` | — |
 | `band_block'` | — |
-| `band_mem` | — |
-| `band_refs` | — |
 | `banded_aux` | Every verdict of the core reads a band of rounds, from the slot's own round up to a top the derivation … |
-| `blocksAt_band` | A round layer of `U` lands on the layer of `U'` the shift names. |
 | `blocksAt_subset` | — |
 | `certifiedIn_band` | — |
 | `certifiedIn_old` | — |
@@ -39352,7 +39494,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `certifies_old` | — |
 | `commitsDirect` | A direct commit is a verdict, at the core's own direct-commit predicate. `Decided.directCommit` under the … |
 | `coversUpto_eq` | The carrier's coverage predicate is the core's, on the nose. |
-| `creatorsOf_band` | — |
 | `creatorsOf_old` | — |
 | `decidedBelow_of_committed_run` | The committed-run descent. `c` consecutive commits decide every slot below them, and the derivations … |
 | `decided_mono_of_band` | L2 re-derived, with no induction of its own. View monotonicity (`decided_mono`, four cases in … |
@@ -39360,13 +39501,9 @@ subsection per module, in the layer order of Appendices B and C.
 | `directCommitIn_mono` | — |
 | `directSkipIn_mono` | An old candidate blamed before is blamed still. |
 | `directSkipIn_novel` | A new candidate is blamed by every old block in view — and the grade supplies a quorum of them. This is … |
-| `directSkipSlotIn_band` | — |
-| `directSkipSlotIn_congr` | The count that reads it is therefore the same count. |
 | `exists_coversUpto_decides` | A caught-up validator reaches every verdict. Whatever any view decides, a view covering far enough decides … |
 | `ext_block` | — |
 | `ext_mem` | — |
-| `isLeaderBlock_band` | A candidate of slot `k` is a candidate of the slot `k'` that answers to it: the shift carries its round, … |
-| `isLeaderBlock_band_old` | And back, for a candidate the band already had. |
 | `isLeaderBlock_mono` | — |
 | `isLeaderBlock_old` | — |
 | `lt_bound` | The decided slot lies below the bound. |
@@ -39382,14 +39519,27 @@ subsection per module, in the layer order of Appendices B and C.
 | `votesIn_of_sustains` | The votes an old decision-round block counts are the votes it counted: its references are unchanged, and … |
 | `votesIn_old` | The votes an old certificate counts are the votes it counted. |
 
-### `OdontocetiProperties.lean` (4)
+### `OdontocetiProperties.lean` (17)
 
 | Lemma | Role |
 |:---|:---|
 | `agree` | Two views decide alike. O5 under the property's name. |
+| `banded` | Odontoceti reads a band. |
+| `banded_aux` | Every verdict of Odontoceti reads a band of rounds. One induction, four cases. The direct cases read one … |
 | `causal` | Odontoceti's universes are block DAGs — the same argument as the core's, the universe type being the same. |
 | `commitsCandidate` | A commit names the slot's candidate. |
 | `commitsDirect` | And a direct commit is a verdict, at Odontoceti's own direct predicate. |
+| `coneSupports_band` | The anchor's cone of supporters is the cone it was. Both inclusions at once: a supporter inside an old … |
+| `decidedBelow_of_committed_run` | The committed-run descent, at the derived bound. The same argument as … |
+| `decidedBelow_of_decidedWithin` | Odontoceti's bounded relation lands in the derived one. |
+| `descends` | And a committed run decides everything below it. |
+| `directCommitIn_band` | And so does the direct commit. |
+| `leaderCommits` | A reliably-led slot commits, at a bound one above the slot: a direct commit reads that slot's leader and … |
+| `not_thickLink_band_novel` | A candidate the band did not carry is thick-linked from no old anchor. Its supporters would have to sit in … |
+| `supportersIn_band` | Supporters survive the band. A block one round above the slot that referenced the candidate references it … |
+| `thickLink_band` | So the indirect test reads the same. |
+| `thickLink_threshold_pos` | The thick-link threshold is positive: `Faults5` asks for `5f + 1` validators, so `card − 3f ≥ 2f + 1`. |
+| `toCore` | The two carriers project identically, so a band for one is a band for the other. |
 
 ### `Properties/Arcs/GC.lean` (7)
 

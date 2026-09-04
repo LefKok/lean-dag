@@ -60,6 +60,14 @@ namespace DecidedWithin
 
 variable {V : View Validator BlockId Payload U} {B B' k : ℕ} {v : Option BlockId}
 
+/-- The bound is what it says: a derivation only names slots under it. -/
+theorem lt_bound (h : DecidedWithin U V B k v) : k < B := by
+  cases h with
+  | directCommit hk _ _ => exact hk
+  | directSkip hk _ => exact hk
+  | indirectCommit _ hj _ _ _ _ _ _ => omega
+  | indirectSkip _ hj _ _ _ _ => omega
+
 /-- Forgetting the bound: agreement for the bounded relation *is* O5. -/
 theorem toDecided (h : DecidedWithin U V B k v) : Decided U V k v := by
   induction h with
@@ -90,6 +98,41 @@ theorem agree {V₁ V₂ : View Validator BlockId Payload U} {B₁ B₂ k : ℕ}
   decided_unique h₁.toDecided V₂ v₂ h₂.toDecided
 
 end DecidedWithin
+
+/-- **The bounded relation moves with the schedule**, for any two
+schedules naming the same rounds and the same leaders below the bound —
+the general form `DecidedBelow` reads, where `decidedWithin_congr` below
+is the `slotsOf` special case the adaptive fixpoint uses. -/
+theorem decidedWithin_congr_of_slotRound {S₁ S₂ : Slots Validator}
+    (hround : S₁.slotRound = S₂.slotRound) {V : View Validator BlockId Payload U}
+    {B k : ℕ} {v : Option BlockId} (ha : ∀ m, m < B → S₁.leader m = S₂.leader m)
+    (h : DecidedWithin (S := S₁) U V B k v) : DecidedWithin (S := S₂) U V B k v := by
+  obtain ⟨sr, ld, hmono, hunb, hkeyed⟩ := S₁
+  obtain ⟨sr', ld', hmono', hunb', hkeyed'⟩ := S₂
+  simp only at hround
+  subst hround
+  induction h with
+  | @directCommit k L hk hL hdc =>
+      exact DecidedWithin.directCommit (S := ⟨sr, ld', hmono', hunb', hkeyed'⟩) hk
+        (isLeaderBlock_congr (S₁ := ⟨sr, ld, hmono, hunb, hkeyed⟩)
+          (S₂ := ⟨sr, ld', hmono', hunb', hkeyed'⟩) rfl (ha k hk) hL) hdc
+  | @directSkip k hk hall =>
+      exact DecidedWithin.directSkip (S := ⟨sr, ld', hmono', hunb', hkeyed'⟩) hk
+        (directSkipSlotIn_congr (S₁ := ⟨sr, ld, hmono, hunb, hkeyed⟩)
+          (S₂ := ⟨sr, ld', hmono', hunb', hkeyed'⟩) rfl (ha k hk) hall)
+  | @indirectCommit k j A L hkj hj helig _ _ hL ht hmin ihj ihmid =>
+      exact DecidedWithin.indirectCommit (S := ⟨sr, ld', hmono', hunb', hkeyed'⟩) hkj hj helig
+        ihj (fun i h1 h2 h3 => ihmid i h1 h2 h3)
+        (isLeaderBlock_congr (S₁ := ⟨sr, ld, hmono, hunb, hkeyed⟩)
+          (S₂ := ⟨sr, ld', hmono', hunb', hkeyed'⟩) rfl (ha k (by omega)) hL) ht
+        (fun L' hL' ht' => hmin L'
+          (isLeaderBlock_congr (S₁ := ⟨sr, ld', hmono', hunb', hkeyed'⟩)
+            (S₂ := ⟨sr, ld, hmono, hunb, hkeyed⟩) rfl (ha k (by omega)).symm hL') ht')
+  | @indirectSkip k j A hkj hj helig _ _ hnone ihj ihmid =>
+      exact DecidedWithin.indirectSkip (S := ⟨sr, ld', hmono', hunb', hkeyed'⟩) hkj hj helig
+        ihj (fun i h1 h2 h3 => ihmid i h1 h2 h3)
+        (fun L hL => hnone L (isLeaderBlock_congr (S₁ := ⟨sr, ld', hmono', hunb', hkeyed'⟩)
+          (S₂ := ⟨sr, ld, hmono, hunb, hkeyed⟩) rfl (ha k (by omega)).symm hL))
 
 /-- Congruence below the bound, canonicity clause included: the
 candidate set reads the schedule only through `IsLeaderBlock`, which

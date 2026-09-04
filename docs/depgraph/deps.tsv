@@ -865,6 +865,14 @@ EDGE	LeanDag.FinWhale.Run.undecided_of_gt	LeanDag.FinWhale.Params
 EDGE	LeanDag.FinWhale.Run.undecided_of_gt	LeanDag.FinWhale.Run
 EDGE	LeanDag.FinWhale.Run.undecided_of_gt	LeanDag.FinWhale.Run.verdicts
 EDGE	LeanDag.FinWhale.Run.undecided_of_gt	LeanDag.FinWhale.Run.view
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_6	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_6	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_6	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_6	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_6	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_6	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_6	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_6	LeanDag.Faults5.toFaults
 NODE	LeanDag.correctBlocksAt_admissible_quorum	LeanDag.DoS.Exclusion	thm
 EDGE	LeanDag.correctBlocksAt_admissible_quorum	LeanDag.creatorsOf
 EDGE	LeanDag.correctBlocksAt_admissible_quorum	LeanDag.Faults
@@ -1719,6 +1727,12 @@ EDGE	LeanDag.Barnacle.orcaella	LeanDag.Barnacle.orcaella._proof_1
 EDGE	LeanDag.Barnacle.orcaella	LeanDag.View
 EDGE	LeanDag.Barnacle.orcaella	LeanDag.Barnacle.BaseRule.mk
 EDGE	LeanDag.Barnacle.orcaella	LeanDag.Barnacle.BaseRule
+NODE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_5	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_5	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_5	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_5	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_5	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_5	LeanDag.Faults5.toFaults
 NODE	LeanDag.Hydrozoan.ValidWrt.mk	LeanDag.Hydrozoan.Model.Block	ctor
 EDGE	LeanDag.Hydrozoan.ValidWrt.mk	LeanDag.Hydrozoan.Block.parents
 EDGE	LeanDag.Hydrozoan.ValidWrt.mk	LeanDag.Hydrozoan.Block.author
@@ -1843,6 +1857,9 @@ EDGE	LeanDag.exposedIn_of_exposedIn_chop._proof_1_1	LeanDag.history
 EDGE	LeanDag.exposedIn_of_exposedIn_chop._proof_1_1	LeanDag.Block.round
 EDGE	LeanDag.exposedIn_of_exposedIn_chop._proof_1_1	LeanDag.BlockUniverse
 NODE	LeanDagTest.Barnacle.real_runs._proof_1_1	LeanDagTest.Barnacle.Real	thm
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_3	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_3	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_3	LeanDag.Slots
 NODE	LeanDag.Hybrid.Checkpoint.Model.Execution.genesis	LeanDag.Hybrid.Checkpoint.BaseSpec	def
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.genesis	LeanDag.HybridFaults
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.genesis	LeanDag.Hybrid.Checkpoint.History
@@ -2856,6 +2873,22 @@ EDGE	LeanDag.Nemo.Eligible	LeanDag.Slots.slotRound
 EDGE	LeanDag.Nemo.Eligible	LeanDag.Nemo.decisionRound
 EDGE	LeanDag.Nemo.Eligible	LeanDag.Slots
 NODE	LeanDag.FinWhale.anchorVerdict_congr._simp_1_2	LeanDag.FinWhale.Pass	thm
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_20	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_20	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_20	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_20	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_20	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_20	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_20	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_20	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_20	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_20	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_20	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_20	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_20	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_20	LeanDag.Odontoceti.Decided
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_20	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_20	LeanDag.Faults5.toFaults
 NODE	LeanDagTest.lky	LeanDagTest.DoS.TwoFaults	def
 EDGE	LeanDagTest.lky	LeanDag.Block
 EDGE	LeanDagTest.lky	LeanDagTest.lky._proof_4
@@ -2870,6 +2903,22 @@ EDGE	LeanDag.viewUpto_chopD._proof_1_6	LeanDag.Faults
 EDGE	LeanDag.viewUpto_chopD._proof_1_6	LeanDag.BlockUniverse.block
 EDGE	LeanDag.viewUpto_chopD._proof_1_6	LeanDag.Block.round
 EDGE	LeanDag.viewUpto_chopD._proof_1_6	LeanDag.BlockUniverse
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_12	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_12	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_12	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_12	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_12	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_12	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_12	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_12	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_12	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_12	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_12	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_12	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_12	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_12	LeanDag.Odontoceti.Decided
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_12	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_12	LeanDag.Faults5.toFaults
 NODE	LeanDag.Adaptive.Policy	LeanDag.Adaptive.Policy	ind
 EDGE	LeanDag.Adaptive.Policy	LeanDag.Properties.DagRule
 EDGE	LeanDag.Adaptive.Policy	LeanDag.Slots
@@ -3471,6 +3520,22 @@ EDGE	LeanDag.BlackMarlin.descentUpto_self_gen	LeanDag.BlockUniverse
 EDGE	LeanDag.BlackMarlin.descentUpto_self_gen	LeanDag.BlackMarlin.Rotation
 EDGE	LeanDag.BlackMarlin.descentUpto_self_gen	LeanDag.BlackMarlin.descendS
 EDGE	LeanDag.BlackMarlin.descentUpto_self_gen	LeanDag.BlackMarlin.descentSUpto
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_18	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_18	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_18	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_18	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_18	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_18	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_18	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_18	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_18	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_18	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_18	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_18	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_18	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_18	LeanDag.Odontoceti.Decided
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_18	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_18	LeanDag.Faults5.toFaults
 NODE	LeanDag.FinWhale.spSkip_restrict	LeanDag.FinWhale.View	thm
 EDGE	LeanDag.FinWhale.spSkip_restrict	LeanDag.FinWhale.restrict
 EDGE	LeanDag.FinWhale.spSkip_restrict	LeanDag.FinWhale.nonVoters
@@ -4590,6 +4655,9 @@ EDGE	LeanDagTest.Integration.Vcr	LeanDagTest.Hydrozoan.fourReplicas
 EDGE	LeanDagTest.Integration.Vcr	LeanDag.Hydrozoan.View.full
 EDGE	LeanDagTest.Integration.Vcr	LeanDag.Hydrozoan.View
 EDGE	LeanDagTest.Integration.Vcr	LeanDagTest.Integration.Ucr
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_2	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_2	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_2	LeanDag.Slots
 NODE	LeanDag.card_joinIds_le	LeanDag.GC.Bootstrap	thm
 EDGE	LeanDag.card_joinIds_le	LeanDag.Delivery
 EDGE	LeanDag.card_joinIds_le	LeanDag.ByzBudget
@@ -4782,9 +4850,26 @@ EDGE	LeanDag.BlackMarlin.Ledger.AgreeStep	LeanDag.BlackMarlin.Flush
 EDGE	LeanDag.BlackMarlin.Ledger.AgreeStep	LeanDag.BlockUniverse
 EDGE	LeanDag.BlackMarlin.Ledger.AgreeStep	LeanDag.BlackMarlin.Flush.block
 EDGE	LeanDag.BlackMarlin.Ledger.AgreeStep	LeanDag.BlackMarlin.Rotation
+NODE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_3	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_3	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_3	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_3	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_3	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_3	LeanDag.Faults5.toFaults
 NODE	LeanDag.Integration.Hydrozoan.decidedOpt_of_decidedOpt_chopHZ._proof_1_6	LeanDag.Integration.Hydrozoan.OptimalChopDecided	thm
 EDGE	LeanDag.Integration.Hydrozoan.decidedOpt_of_decidedOpt_chopHZ._proof_1_6	LeanDag.Hydrozoan.Slots
 EDGE	LeanDag.Integration.Hydrozoan.decidedOpt_of_decidedOpt_chopHZ._proof_1_6	LeanDag.Hydrozoan.Slots.slotRound
+NODE	LeanDag.OdontocetiProperties.toCore	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.toCore	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.toCore	LeanDag.Properties.AgreeBand.mem
+EDGE	LeanDag.OdontocetiProperties.toCore	LeanDag.Properties.AgreeBand.refs
+EDGE	LeanDag.OdontocetiProperties.toCore	LeanDag.Properties.AgreeBand.block
+EDGE	LeanDag.OdontocetiProperties.toCore	LeanDag.Properties.AgreeBand.mk
+EDGE	LeanDag.OdontocetiProperties.toCore	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.OdontocetiProperties.toCore	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.toCore	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.toCore	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.toCore	LeanDag.Faults5.toFaults
 NODE	LeanDag.BlackMarlin.anchorGap	LeanDag.BlackMarlin.Model.Descent	def
 EDGE	LeanDag.BlackMarlin.anchorGap	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.anchorGap	LeanDag.BlackMarlin.strongOf
@@ -5182,6 +5267,17 @@ EDGE	LeanDag.Hydrozoan.BlockUniverse.mk.noConfusion	LeanDag.Hydrozoan.NonByzanti
 EDGE	LeanDag.Hydrozoan.BlockUniverse.mk.noConfusion	LeanDag.Hydrozoan.ValidWrt
 EDGE	LeanDag.Hydrozoan.BlockUniverse.mk.noConfusion	LeanDag.Hydrozoan.BlockUniverse.noConfusion
 EDGE	LeanDag.Hydrozoan.BlockUniverse.mk.noConfusion	LeanDag.Hydrozoan.Faults
+NODE	LeanDag.OdontocetiProperties.odontocetiLive	LeanDag.OdontocetiProperties	def
+EDGE	LeanDag.OdontocetiProperties.odontocetiLive	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.odontocetiLive	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.odontocetiLive	LeanDag.PopulatedOn
+EDGE	LeanDag.OdontocetiProperties.odontocetiLive	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.odontocetiLive	LeanDag.Faults.f
+EDGE	LeanDag.OdontocetiProperties.odontocetiLive	LeanDag.View.CoversUpto
+EDGE	LeanDag.OdontocetiProperties.odontocetiLive	LeanDag.SynchronisedOn
+EDGE	LeanDag.OdontocetiProperties.odontocetiLive	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.odontocetiLive	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.odontocetiLive	LeanDag.Faults5.toFaults
 NODE	LeanDagTest.Barnacle.OrcaellaBase.ohyb4_commit._proof_1_4	LeanDagTest.Barnacle.Orcaella	thm
 EDGE	LeanDagTest.Barnacle.OrcaellaBase.ohyb4_commit._proof_1_4	LeanDag.HybridFaults.fc
 EDGE	LeanDagTest.Barnacle.OrcaellaBase.ohyb4_commit._proof_1_4	LeanDag.Slots.slotRound
@@ -5220,6 +5316,12 @@ EDGE	LeanDag.Integration.card_novelty_le_of_donor	LeanDag.viewGap
 EDGE	LeanDag.Integration.card_novelty_le_of_donor	LeanDag.viewUpto
 EDGE	LeanDag.Integration.card_novelty_le_of_donor	LeanDag.card_viewGap_succ_le
 EDGE	LeanDag.Integration.card_novelty_le_of_donor	LeanDag.Block.creator
+NODE	LeanDag.OdontocetiProperties.leaderCommits._proof_1_3	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.leaderCommits._proof_1_3	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.leaderCommits._proof_1_3	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.leaderCommits._proof_1_3	LeanDag.Faults.f
+EDGE	LeanDag.OdontocetiProperties.leaderCommits._proof_1_3	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.leaderCommits._proof_1_3	LeanDag.Faults5.toFaults
 NODE	LeanDag.Hydrozoan.certifiersInView_bnd._proof_1_1	LeanDag.Hydrozoan.Helpers.Banded	thm
 EDGE	LeanDag.Hydrozoan.certifiersInView_bnd._proof_1_1	LeanDag.Hydrozoan.BlockUniverse
 EDGE	LeanDag.Hydrozoan.certifiersInView_bnd._proof_1_1	LeanDag.Hydrozoan.Block.round
@@ -5861,6 +5963,16 @@ EDGE	LeanDag.card_authorsAt_of_succ._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.card_authorsAt_of_succ._proof_1_1	LeanDag.BlockUniverse.block
 EDGE	LeanDag.card_authorsAt_of_succ._proof_1_1	LeanDag.Block.round
 EDGE	LeanDag.card_authorsAt_of_succ._proof_1_1	LeanDag.BlockUniverse
+NODE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_3	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_3	LeanDag.Properties.DecidedBelow
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_3	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_3	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_3	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_3	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_3	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_3	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_3	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_3	LeanDag.Faults5.toFaults
 NODE	LeanDagTest.Barnacle.hallSk	LeanDagTest.Barnacle.Progress	thm
 EDGE	LeanDagTest.Barnacle.hallSk	LeanDag.Barnacle.BaseRule.instDecidableIsLeaderBlock
 EDGE	LeanDagTest.Barnacle.hallSk	LeanDagTest.Barnacle.sched1
@@ -7534,6 +7646,14 @@ EDGE	LeanDagTest.ucrashMsg._proof_15	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.ucrashMsg._proof_15	LeanDag.Block.round
 EDGE	LeanDagTest.ucrashMsg._proof_15	LeanDagTest.Ucrash
 EDGE	LeanDagTest.ucrashMsg._proof_15	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+NODE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_8	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_8	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_8	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_8	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_8	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_8	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_8	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_8	LeanDag.Faults5.toFaults
 NODE	LeanDag.Integration.Hydrozoan.decided_of_decided_chopHZ._proof_1_6	LeanDag.Integration.Hydrozoan.ChopDecided	thm
 EDGE	LeanDag.Integration.Hydrozoan.decided_of_decided_chopHZ._proof_1_6	LeanDag.Hydrozoan.Slots
 EDGE	LeanDag.Integration.Hydrozoan.decided_of_decided_chopHZ._proof_1_6	LeanDag.Hydrozoan.Slots.slotRound
@@ -7789,6 +7909,12 @@ NODE	LeanDagTest.Barnacle.Vsun._proof_2	LeanDagTest.Barnacle.Agreement	thm
 EDGE	LeanDagTest.Barnacle.Vsun._proof_2	LeanDag.Block.refs
 EDGE	LeanDagTest.Barnacle.Vsun._proof_2	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.Barnacle.Vsun._proof_2	LeanDagTest.Barnacle.Usun
+NODE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_1	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_1	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_1	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_1	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_1	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_1	LeanDag.Faults5.toFaults
 NODE	LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.EpochTransition.casesOn	LeanDag.Hybrid.Checkpoint.RecoverySpec	def
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.EpochTransition.casesOn	LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.EpochTransition.mk
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.EpochTransition.casesOn	LeanDag.HybridFaults
@@ -8724,6 +8850,22 @@ EDGE	LeanDag.Hydrozoan.NaiveShift.casesOn	LeanDag.Hydrozoan.BlockUniverse.block
 EDGE	LeanDag.Hydrozoan.NaiveShift.casesOn	LeanDag.Hydrozoan.Faults
 EDGE	LeanDag.Hydrozoan.NaiveShift.casesOn	LeanDag.Hydrozoan.NaiveShift.mk
 EDGE	LeanDag.Hydrozoan.NaiveShift.casesOn	LeanDag.Hydrozoan.BlockUniverse.ids
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_29	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_29	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_29	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_29	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_29	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_29	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_29	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_29	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_29	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_29	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_29	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_29	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_29	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_29	LeanDag.Odontoceti.Decided
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_29	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_29	LeanDag.Faults5.toFaults
 NODE	LeanDagTest.tightABlk._proof_7	LeanDagTest.HybridTight	thm
 EDGE	LeanDagTest.tightABlk._proof_7	LeanDagTest.tightABlk._proof_3
 NODE	LeanDag.exposedTo.eq_1	LeanDag.DoS.Exposure	thm
@@ -9573,6 +9715,14 @@ EDGE	LeanDagTest.ugrowReactive_fast._proof_1_3	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.ugrowReactive_fast._proof_1_3	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ugrowReactive_fast._proof_1_3	LeanDagTest.ugrowReactive_fast._proof_1_2
 EDGE	LeanDagTest.ugrowReactive_fast._proof_1_3	LeanDag.Block.creator
+NODE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_10	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_10	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_10	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_10	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_10	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_10	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_10	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_10	LeanDag.Faults5.toFaults
 NODE	LeanDagTest.uomit_not_synchronisedOn._proof_1_3	LeanDagTest.Unbounded	thm
 NODE	LeanDagTest.Barnacle.rr_headsRun_data._proof_1	LeanDagTest.Barnacle.Heads	thm
 NODE	LeanDagTest.hyb9Blk._proof_1	LeanDagTest.Hybrid	thm
@@ -10527,6 +10677,13 @@ EDGE	LeanDag.exists_partialRun._proof_1_1	LeanDag.Faults.f
 EDGE	LeanDag.exists_partialRun._proof_1_1	LeanDag.Adaptive.Policy.W
 EDGE	LeanDag.exists_partialRun._proof_1_1	LeanDag.AdaptivePolicy
 EDGE	LeanDag.exists_partialRun._proof_1_1	LeanDag.Slots
+NODE	LeanDag.OdontocetiProperties.not_thickLink_band_novel._proof_1_2	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.not_thickLink_band_novel._proof_1_2	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.not_thickLink_band_novel._proof_1_2	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.not_thickLink_band_novel._proof_1_2	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.not_thickLink_band_novel._proof_1_2	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.not_thickLink_band_novel._proof_1_2	LeanDag.Faults.f
+EDGE	LeanDag.OdontocetiProperties.not_thickLink_band_novel._proof_1_2	LeanDag.Faults5.toFaults
 NODE	LeanDagTest.Barnacle.bnLive_liveOn_all	LeanDagTest.Barnacle.Progress	thm
 EDGE	LeanDagTest.Barnacle.bnLive_liveOn_all	LeanDagTest.Barnacle.bnLive_liveOn_all._proof_1_4
 EDGE	LeanDagTest.Barnacle.bnLive_liveOn_all	LeanDag.Barnacle.BaseRule.Decided
@@ -11001,6 +11158,12 @@ EDGE	LeanDag.historyBlocksOf	LeanDag.history
 EDGE	LeanDag.historyBlocksOf	LeanDag.Block.round
 EDGE	LeanDag.historyBlocksOf	LeanDag.BlockUniverse
 EDGE	LeanDag.historyBlocksOf	LeanDag.Block.creator
+NODE	LeanDag.OdontocetiProperties.leaderCommits._proof_1_2	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.leaderCommits._proof_1_2	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.leaderCommits._proof_1_2	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.leaderCommits._proof_1_2	LeanDag.Faults.f
+EDGE	LeanDag.OdontocetiProperties.leaderCommits._proof_1_2	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.leaderCommits._proof_1_2	LeanDag.Faults5.toFaults
 NODE	LeanDagTest.Hydrozoan.instSlotsFinOfNatNat_leanDagTest_1._proof_4	LeanDagTest.Hydrozoan.DirectLiveness	thm
 EDGE	LeanDagTest.Hydrozoan.instSlotsFinOfNatNat_leanDagTest_1._proof_4	LeanDagTest.Hydrozoan.instSlotsFinOfNatNat_leanDagTest_1._proof_2
 NODE	LeanDag.correct_subset_honest	LeanDag.Hybrid.Faults	thm
@@ -11162,6 +11325,22 @@ EDGE	LeanDag.FinWhale.reaches_fpEvidence_quorum	LeanDag.FinWhale.FastCommit
 EDGE	LeanDag.FinWhale.reaches_fpEvidence_quorum	LeanDag.FinWhale.parent_round
 EDGE	LeanDag.FinWhale.reaches_fpEvidence_quorum	LeanDag.FinWhale.Dag
 EDGE	LeanDag.FinWhale.reaches_fpEvidence_quorum	LeanDag.Block.creator
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_22	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_22	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_22	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_22	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_22	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_22	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_22	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_22	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_22	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_22	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_22	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_22	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_22	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_22	LeanDag.Odontoceti.Decided
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_22	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_22	LeanDag.Faults5.toFaults
 NODE	LeanDag.ConvergesEventually	LeanDag.ViewPace	def
 NODE	LeanDagTest.Minnow.Dk._proof_3	LeanDagTest.Minnow.Skip	thm
 EDGE	LeanDagTest.Minnow.Dk._proof_3	LeanDag.Correct
@@ -12021,6 +12200,14 @@ EDGE	LeanDag.Hydrozoan.DirectSafety.FastSlowAgreement	LeanDag.Hydrozoan.View
 EDGE	LeanDag.Hydrozoan.DirectSafety.FastSlowAgreement	LeanDag.Hydrozoan.Slots.slotRound
 EDGE	LeanDag.Hydrozoan.DirectSafety.FastSlowAgreement	LeanDag.Hydrozoan.Faults
 EDGE	LeanDag.Hydrozoan.DirectSafety.FastSlowAgreement	LeanDag.Hydrozoan.SlowCommitInView
+NODE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_9	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_9	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_9	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_9	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_9	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_9	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_9	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_9	LeanDag.Faults5.toFaults
 NODE	LeanDag.reaches_pred_of_round_le._proof_1_2	LeanDag.Support	thm
 EDGE	LeanDag.reaches_pred_of_round_le._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.reaches_pred_of_round_le._proof_1_2	LeanDag.BlockUniverse.block
@@ -12086,6 +12273,14 @@ EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.PaceCore.proc
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.ViewPace
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.SynchronisedOn
 EDGE	LeanDag.ViewPace.synchronisedOn_of_converges	LeanDag.PaceCore.delay
+NODE	LeanDag.OdontocetiProperties.coneSupports_band._simp_1_2	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._simp_1_2	LeanDag.Faults
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._simp_1_2	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._simp_1_2	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._simp_1_2	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._simp_1_2	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._simp_1_2	LeanDag.blocksAt
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._simp_1_2	LeanDag.mem_blocksAt
 NODE	LeanDag.directSkipIn_chop._proof_1_5	LeanDag.GC.ChopDecided	thm
 EDGE	LeanDag.directSkipIn_chop._proof_1_5	LeanDag.Faults
 EDGE	LeanDag.directSkipIn_chop._proof_1_5	LeanDag.BlockUniverse.block
@@ -12491,6 +12686,11 @@ EDGE	LeanDag.card_coveredAt_ge._proof_1_1	LeanDag.BlockUniverse.block
 EDGE	LeanDag.card_coveredAt_ge._proof_1_1	LeanDag.Block.round
 EDGE	LeanDag.card_coveredAt_ge._proof_1_1	LeanDag.BlockUniverse
 EDGE	LeanDag.card_coveredAt_ge._proof_1_1	LeanDag.Faults.f
+NODE	LeanDag.OdontocetiProperties.descends._proof_1_1	LeanDag.OdontocetiProperties	thm
+NODE	LeanDag.OdontocetiProperties.thickLink_threshold_pos._proof_1_1	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.thickLink_threshold_pos._proof_1_1	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.thickLink_threshold_pos._proof_1_1	LeanDag.Faults.f
+EDGE	LeanDag.OdontocetiProperties.thickLink_threshold_pos._proof_1_1	LeanDag.Faults5.toFaults
 NODE	LeanDagTest.Hydrozoan.lk	LeanDagTest.Hydrozoan.BlockUniverse	def
 EDGE	LeanDagTest.Hydrozoan.lk	LeanDag.Hydrozoan.Block.mk
 EDGE	LeanDagTest.Hydrozoan.lk	LeanDagTest.Hydrozoan.lk._proof_4
@@ -19345,6 +19545,14 @@ EDGE	LeanDag.Hydrozoan.banded_aux._proof_1_44	LeanDag.Hydrozoan.BlockUniverse.id
 NODE	LeanDagTest.Barnacle.runSk._proof_2	LeanDagTest.Barnacle.Progress	thm
 EDGE	LeanDagTest.Barnacle.runSk._proof_2	LeanDag.Barnacle.Params.interval
 EDGE	LeanDagTest.Barnacle.runSk._proof_2	LeanDagTest.Barnacle.bnP1
+NODE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_3	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_3	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_3	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_3	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_3	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_3	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_3	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_3	LeanDag.Faults5.toFaults
 NODE	LeanDagTest.mmAimBlk._proof_8	LeanDagTest.MahiMahi.Counting	thm
 EDGE	LeanDagTest.mmAimBlk._proof_8	LeanDagTest.mmAimBlk._proof_3
 NODE	LeanDagTest.FinWhalePace.fwCreation._proof_27	LeanDagTest.FinWhale.Pace	thm
@@ -25630,6 +25838,25 @@ EDGE	LeanDagTest.Dtwin._proof_5	LeanDag.Block.round
 EDGE	LeanDagTest.Dtwin._proof_5	LeanDagTest.twinAcc
 EDGE	LeanDagTest.Dtwin._proof_5	LeanDagTest.Dtwin._proof_1
 EDGE	LeanDagTest.Dtwin._proof_5	LeanDag.Block.creator
+NODE	LeanDag.Odontoceti.DecidedWithin.lt_bound	LeanDag.Adaptive.Odontoceti	thm
+EDGE	LeanDag.Odontoceti.DecidedWithin.lt_bound	LeanDag.Faults5
+EDGE	LeanDag.Odontoceti.DecidedWithin.lt_bound	LeanDag.Odontoceti.DecidedWithin.directSkip
+EDGE	LeanDag.Odontoceti.DecidedWithin.lt_bound	LeanDag.Odontoceti.DecidedWithin.indirectCommit
+EDGE	LeanDag.Odontoceti.DecidedWithin.lt_bound	LeanDag.Slots.slotRound
+EDGE	LeanDag.Odontoceti.DecidedWithin.lt_bound	LeanDag.Odontoceti.DecidedWithin.indirectSkip
+EDGE	LeanDag.Odontoceti.DecidedWithin.lt_bound	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.Odontoceti.DecidedWithin.lt_bound	LeanDag.Odontoceti.DecidedWithin.casesOn
+EDGE	LeanDag.Odontoceti.DecidedWithin.lt_bound	LeanDag.Odontoceti.DirectCommitIn
+EDGE	LeanDag.Odontoceti.DecidedWithin.lt_bound	LeanDag.BlockUniverse
+EDGE	LeanDag.Odontoceti.DecidedWithin.lt_bound	LeanDag.Odontoceti.ThickLink
+EDGE	LeanDag.Odontoceti.DecidedWithin.lt_bound	LeanDag.DirectSkipSlotIn
+EDGE	LeanDag.Odontoceti.DecidedWithin.lt_bound	LeanDag.IsLeaderBlock
+EDGE	LeanDag.Odontoceti.DecidedWithin.lt_bound	LeanDag.Odontoceti.DecidedWithin.directCommit
+EDGE	LeanDag.Odontoceti.DecidedWithin.lt_bound	LeanDag.Slots
+EDGE	LeanDag.Odontoceti.DecidedWithin.lt_bound	LeanDag.View
+EDGE	LeanDag.Odontoceti.DecidedWithin.lt_bound	LeanDag.Odontoceti.DecidedWithin.lt_bound._proof_1_1
+EDGE	LeanDag.Odontoceti.DecidedWithin.lt_bound	LeanDag.Faults5.toFaults
+EDGE	LeanDag.Odontoceti.DecidedWithin.lt_bound	LeanDag.Odontoceti.DecidedWithin
 NODE	LeanDagTest.FinWhale.Dequiv._proof_1	LeanDagTest.FinWhale.Model	thm
 EDGE	LeanDagTest.FinWhale.Dequiv._proof_1	LeanDagTest.FinWhale.eqBlk
 EDGE	LeanDagTest.FinWhale.Dequiv._proof_1	LeanDag.Block.refs
@@ -27747,6 +27974,12 @@ EDGE	LeanDag.supporters.eq_1	LeanDag.BlockUniverse.block
 EDGE	LeanDag.supporters.eq_1	LeanDag.BlockUniverse
 EDGE	LeanDag.supporters.eq_1	LeanDag.blocksAt
 EDGE	LeanDag.supporters.eq_1	LeanDag.supporters
+NODE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_4	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_4	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_4	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_4	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_4	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_4	LeanDag.Faults5.toFaults
 NODE	LeanDagTest.Hydrozoan.eightReplicas._proof_5	LeanDagTest.Hydrozoan.LivenessHardening	thm
 NODE	LeanDag.FinWhale.held_of_pace._simp_1_1	LeanDag.FinWhale.Holdings	thm
 NODE	LeanDag.Integration.Hydrozoan.toCore_block	LeanDag.Integration.Hydrozoan.Universe	thm
@@ -28722,6 +28955,22 @@ EDGE	LeanDagTest.Hydrozoan.U8	LeanDagTest.Hydrozoan.U8._proof_1
 EDGE	LeanDagTest.Hydrozoan.U8	LeanDagTest.Hydrozoan.U8._proof_2
 EDGE	LeanDagTest.Hydrozoan.U8	LeanDagTest.Hydrozoan.lk8
 EDGE	LeanDagTest.Hydrozoan.U8	LeanDagTest.Hydrozoan.U8._proof_3
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_9	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_9	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_9	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_9	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_9	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_9	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_9	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_9	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_9	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_9	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_9	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_9	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_9	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_9	LeanDag.Odontoceti.Decided
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_9	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_9	LeanDag.Faults5.toFaults
 NODE	LeanDag.card_historyBlocksOf_of_mem_refs._proof_1_1	LeanDag.DoS.SelfParent	thm
 EDGE	LeanDag.card_historyBlocksOf_of_mem_refs._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.card_historyBlocksOf_of_mem_refs._proof_1_1	LeanDag.BlockUniverse.block
@@ -29924,6 +30173,22 @@ EDGE	LeanDag.Integration.Hydrozoan.extends_skipFillHZ	LeanDag.Hydrozoan.BlockUni
 NODE	LeanDag.FinWhale.three_correct_window._proof_1_6	LeanDag.FinWhale.Rotation	thm
 EDGE	LeanDag.FinWhale.three_correct_window._proof_1_6	LeanDag.Faults
 EDGE	LeanDag.FinWhale.three_correct_window._proof_1_6	LeanDag.Faults.f
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_7	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_7	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_7	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_7	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_7	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_7	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_7	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_7	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_7	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_7	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_7	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_7	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_7	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_7	LeanDag.Odontoceti.Decided
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_7	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_7	LeanDag.Faults5.toFaults
 NODE	LeanDag.isLeaderBlock_congr	LeanDag.MysticetiProperties	thm
 EDGE	LeanDag.isLeaderBlock_congr	LeanDag.Faults
 EDGE	LeanDag.isLeaderBlock_congr	LeanDag.Slots.slotRound
@@ -30436,6 +30701,37 @@ EDGE	LeanDag.Integration.Hydrozoan.decidedOpt_of_decidedOpt_chopHZ	LeanDag.Integ
 EDGE	LeanDag.Integration.Hydrozoan.decidedOpt_of_decidedOpt_chopHZ	LeanDag.Integration.Hydrozoan.SelfParenting
 EDGE	LeanDag.Integration.Hydrozoan.decidedOpt_of_decidedOpt_chopHZ	LeanDag.Hydrozoan.SlowCommitInView
 EDGE	LeanDag.Integration.Hydrozoan.decidedOpt_of_decidedOpt_chopHZ	LeanDag.Hydrozoan.BlockUniverse.ids
+NODE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.Properties.DagRule.Decided
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.Properties.DecidedBelow
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.Odontoceti.Decided.indirectCommit
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_4
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_5
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.Odontoceti.decisionRound
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.Odontoceti.Decided.indirectSkip
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.Odontoceti.lt_of_eligible
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.Odontoceti.instDecidableThickLink
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_2
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.decidableIsLeaderBlock
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.Properties.DecidedBelow.toDecided
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.Odontoceti.ThickLink
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_1
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.IsLeaderBlock
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.Faults5.toFaults
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.Block.creator
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_3
 NODE	LeanDag.Odontoceti.AdaptiveRun.vdct	LeanDag.Adaptive.Odontoceti	def
 EDGE	LeanDag.Odontoceti.AdaptiveRun.vdct	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.AdaptiveRun.vdct	LeanDag.BlockUniverse
@@ -32381,6 +32677,7 @@ EDGE	LeanDagTest.FinWhaleEquiv.eqPace._proof_3	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.FinWhaleEquiv.eqPace._proof_3	LeanDag.Block.round
 EDGE	LeanDagTest.FinWhaleEquiv.eqPace._proof_3	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.FinWhaleEquiv.eqPace._proof_3	LeanDag.Block.creator
+NODE	LeanDag.Odontoceti.DecidedWithin.lt_bound._proof_1_1	LeanDag.Adaptive.Odontoceti	thm
 NODE	LeanDag.mem_authorsIn._simp_1_2	LeanDag.Support	thm
 EDGE	LeanDag.mem_authorsIn._simp_1_2	LeanDag.Block
 EDGE	LeanDag.mem_authorsIn._simp_1_2	LeanDag.creatorsOf
@@ -33577,6 +33874,48 @@ NODE	LeanDagTest.ugrowLag._proof_16	LeanDagTest.Collapse	thm
 EDGE	LeanDagTest.ugrowLag._proof_16	LeanDagTest.ugrowLag._proof_14
 EDGE	LeanDagTest.ugrowLag._proof_16	LeanDagTest.lagBuilt
 EDGE	LeanDagTest.ugrowLag._proof_16	LeanDagTest.lagStamp
+NODE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.creatorsOf
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_10
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.Properties.DagRule.ids
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_6
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.mem_history_iff
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_8
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_3
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_4
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.OdontocetiProperties.coneSupports_band._simp_1_2
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.MysticetiProperties.creatorsOf_band
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.Block.refs
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.Properties.AgreeBand.reaches_old
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.Properties.AgreeBand.reaches_of
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.MysticetiProperties.band_mem
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.ReachesFrom
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.OdontocetiProperties.toCore
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.history
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_12
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.blocksAt
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.MysticetiProperties.causal
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.OdontocetiProperties.coneSupports_band._simp_1_1
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.Odontoceti.coneSupports
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_7
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.MysticetiProperties.blocksAt_band
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.MysticetiProperties.band_refs
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_9
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_13
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_5
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.Faults5.toFaults
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_11
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.mem_blocksAt
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band	LeanDag.Reaches
 NODE	LeanDag.Adaptive.partialRun_agree._proof_1_6	LeanDag.Adaptive.Run	thm
 EDGE	LeanDag.Adaptive.partialRun_agree._proof_1_6	LeanDag.Adaptive.Policy
 EDGE	LeanDag.Adaptive.partialRun_agree._proof_1_6	LeanDag.epochOf
@@ -36256,6 +36595,22 @@ EDGE	LeanDag.Hybrid.instDecidableDirectSkip	LeanDag.HybridFaults.toFaults
 EDGE	LeanDag.Hybrid.instDecidableDirectSkip	LeanDag.Hybrid.DirectSkip
 EDGE	LeanDag.Hybrid.instDecidableDirectSkip	LeanDag.BlockUniverse
 NODE	LeanDag.Hydrozoan.Slots.uniform._proof_1	LeanDag.Hydrozoan.Helpers.Schedule	thm
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_15	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_15	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_15	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_15	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_15	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_15	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_15	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_15	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_15	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_15	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_15	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_15	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_15	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_15	LeanDag.Odontoceti.Decided
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_15	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_15	LeanDag.Faults5.toFaults
 NODE	LeanDagTest.Hydrozoan.instSlotsFinOfNatNat_leanDagTest._proof_2	LeanDagTest.Hydrozoan.DirectRules	thm
 NODE	LeanDagTest.twoFaults._proof_1	LeanDagTest.DoS.TwoFaults	thm
 NODE	LeanDag.Hybrid.Checkpoint.Model.Execution.mk.congr_simp	LeanDagTest.HybridCheckpoint	thm
@@ -37334,6 +37689,12 @@ NODE	LeanDagTest.OptimalHydrozoan.gDbad	LeanDagTest.OptimalHydrozoan.PrefixAgree
 EDGE	LeanDagTest.OptimalHydrozoan.gDbad	LeanDagTest.OptimalHydrozoan.gDbad.match_1
 EDGE	LeanDagTest.OptimalHydrozoan.gDbad	LeanDagTest.OptimalHydrozoan.gD._proof_1
 NODE	LeanDagTest.Barnacle.S7._proof_2	LeanDagTest.Barnacle.Hydrozoan	thm
+NODE	LeanDag.OdontocetiProperties.thickLink_threshold_pos	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.thickLink_threshold_pos	LeanDag.Faults5.card_validators5
+EDGE	LeanDag.OdontocetiProperties.thickLink_threshold_pos	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.thickLink_threshold_pos	LeanDag.Faults.f
+EDGE	LeanDag.OdontocetiProperties.thickLink_threshold_pos	LeanDag.OdontocetiProperties.thickLink_threshold_pos._proof_1_1
+EDGE	LeanDag.OdontocetiProperties.thickLink_threshold_pos	LeanDag.Faults5.toFaults
 NODE	LeanDagTest.BlackMarlin.vBlockFull.eq_3	LeanDagTest.BlackMarlin.Divergence	thm
 EDGE	LeanDagTest.BlackMarlin.vBlockFull.eq_3	LeanDagTest.BlackMarlin.vBlockFull.match_1.eq_3
 EDGE	LeanDagTest.BlackMarlin.vBlockFull.eq_3	LeanDagTest.BlackMarlin.vBlockFull
@@ -38624,6 +38985,16 @@ EDGE	LeanDagTest.OptimalHydrozoan.VDm._proof_2	LeanDagTest.OptimalHydrozoan.lkD.
 EDGE	LeanDagTest.OptimalHydrozoan.VDm._proof_2	LeanDag.OptimalHydrozoan.OptimalFaults.toFaults
 EDGE	LeanDagTest.OptimalHydrozoan.VDm._proof_2	LeanDag.Hydrozoan.BlockUniverse.block
 EDGE	LeanDagTest.OptimalHydrozoan.VDm._proof_2	LeanDagTest.OptimalHydrozoan.UD
+NODE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_2	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_2	LeanDag.Properties.DecidedBelow
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_2	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_2	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_2	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_2	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_2	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_2	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_2	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_2	LeanDag.Faults5.toFaults
 NODE	LeanDag.FinWhale.Trigger.rec	LeanDag.FinWhale.Model.Creation	rec
 EDGE	LeanDag.FinWhale.Trigger.rec	LeanDag.FinWhale.Trigger.roundQuorum
 EDGE	LeanDag.FinWhale.Trigger.rec	LeanDag.FinWhale.Trigger.timeout
@@ -39196,6 +39567,22 @@ EDGE	LeanDag.FinWhale.slotBlocks_restrict	LeanDag.FinWhale.blocksAt_restrict
 EDGE	LeanDag.FinWhale.slotBlocks_restrict	LeanDag.FinWhale.Dag
 EDGE	LeanDag.FinWhale.slotBlocks_restrict	LeanDag.FinWhale.Dag.leader
 EDGE	LeanDag.FinWhale.slotBlocks_restrict	LeanDag.Block.creator
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_17	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_17	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_17	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_17	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_17	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_17	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_17	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_17	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_17	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_17	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_17	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_17	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_17	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_17	LeanDag.Odontoceti.Decided
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_17	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_17	LeanDag.Faults5.toFaults
 NODE	LeanDagTest.Barnacle.Majority.rr3._proof_1	LeanDagTest.Barnacle.Majority	thm
 NODE	LeanDagTest.BlackMarlin.ugrowBM._proof_11	LeanDagTest.BlackMarlin.Reactive	thm
 NODE	LeanDag.FinWhale.Creation._sizeOf_1	LeanDag.FinWhale.Model.Creation	def
@@ -39232,6 +39619,14 @@ EDGE	LeanDagTest.urecover._proof_4	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.urecover._proof_4	LeanDag.Block.round
 EDGE	LeanDagTest.urecover._proof_4	LeanDagTest.Ucrash
 EDGE	LeanDagTest.urecover._proof_4	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+NODE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_11	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_11	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_11	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_11	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_11	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_11	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_11	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_11	LeanDag.Faults5.toFaults
 NODE	LeanDag.lineOf_round._proof_1_1	LeanDag.SafeSkip.Jump	thm
 EDGE	LeanDag.lineOf_round._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.lineOf_round._proof_1_1	LeanDag.BlockUniverse.block
@@ -40047,6 +40442,39 @@ EDGE	LeanDagTest.OptimalHydrozoan.OS'	LeanDag.OptimalHydrozoan.OptimalFaults.toF
 EDGE	LeanDagTest.OptimalHydrozoan.OS'	LeanDag.OptimalHydrozoan.OptUniverse
 EDGE	LeanDagTest.OptimalHydrozoan.OS'	LeanDagTest.OptimalHydrozoan.fourSlotsOpt
 EDGE	LeanDagTest.OptimalHydrozoan.OS'	LeanDagTest.OptimalHydrozoan.US'
+NODE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.Properties.DagRule.Decided
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.Properties.DecidedBelow
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.OdontocetiProperties.leaderCommits._proof_1_3
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.OdontocetiProperties.leaderCommits._proof_1_2
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.Properties.LeaderCommits
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.Odontoceti.directCommitIn_of_coversUpto
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.View.CoversUpto.mono
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.OdontocetiProperties.leaderCommits._proof_1_4
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.Odontoceti.directCommit_of_leader_mem
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.OdontocetiProperties.odontocetiLive
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.Odontoceti.DirectCommitIn
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.PopulatedOn
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.Faults.f
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.IsLeaderBlock
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.View.CoversUpto
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.Odontoceti.Decided.directCommit
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.SynchronisedOn
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.Odontoceti.DirectCommit
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.Slots.mono
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.OdontocetiProperties.leaderCommits._proof_1_1
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.Faults5.toFaults
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.Properties.DagRule.View
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.Block.creator
+EDGE	LeanDag.OdontocetiProperties.leaderCommits	LeanDag.Properties.DagRule.Universe
 NODE	LeanDag.Barnacle.HydrozoanLive.RoundRobinLive	LeanDag.Barnacle.HydrozoanLive.Statement	def
 EDGE	LeanDag.Barnacle.HydrozoanLive.RoundRobinLive	LeanDag.Hydrozoan.Faults.c
 EDGE	LeanDag.Barnacle.HydrozoanLive.RoundRobinLive	LeanDag.Barnacle.LiveRule.LiveOn
@@ -40961,6 +41389,22 @@ EDGE	LeanDag.OptimalHydrozoan.ThresholdArithmetic.Statement	LeanDag.OptimalHydro
 EDGE	LeanDag.OptimalHydrozoan.ThresholdArithmetic.Statement	LeanDag.OptimalHydrozoan.OptimalFaults.toFaults
 NODE	LeanDag.FinWhale.commitSeq.match_3.eq_1	LeanDag.FinWhale.Order	thm
 EDGE	LeanDag.FinWhale.commitSeq.match_3.eq_1	LeanDag.FinWhale.commitSeq.match_3
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_31	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_31	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_31	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_31	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_31	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_31	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_31	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_31	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_31	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_31	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_31	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_31	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_31	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_31	LeanDag.Odontoceti.Decided
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_31	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_31	LeanDag.Faults5.toFaults
 NODE	LeanDag.BlackMarlin.nxt_inj._proof_1_2	LeanDag.BlackMarlin.Helpers.Liveness	thm
 EDGE	LeanDag.BlackMarlin.nxt_inj._proof_1_2	LeanDag.BlackMarlin.nxt
 NODE	LeanDag.Hybrid.Checkpoint.Model.Execution.CertificatePayload.mk	LeanDag.Hybrid.Checkpoint.BaseSpec	ctor
@@ -41153,6 +41597,16 @@ EDGE	LeanDag.PedigreeVia.step	LeanDag.topsOf
 EDGE	LeanDag.PedigreeVia.step	LeanDag.BlockUniverse
 EDGE	LeanDag.PedigreeVia.step	LeanDag.AdoptedUnder
 EDGE	LeanDag.PedigreeVia.step	LeanDag.Block.creator
+NODE	LeanDag.OdontocetiProperties.leaderCommits._proof_1_4	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.leaderCommits._proof_1_4	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.leaderCommits._proof_1_4	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.leaderCommits._proof_1_4	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.leaderCommits._proof_1_4	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.leaderCommits._proof_1_4	LeanDag.Faults.f
+EDGE	LeanDag.OdontocetiProperties.leaderCommits._proof_1_4	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.leaderCommits._proof_1_4	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.leaderCommits._proof_1_4	LeanDag.Faults5.toFaults
+EDGE	LeanDag.OdontocetiProperties.leaderCommits._proof_1_4	LeanDag.Properties.DagRule.Universe
 NODE	LeanDag.Hybrid.Checkpoint.Model.Execution.ChkWitness.noConfusionType	LeanDag.Hybrid.Checkpoint.BaseSpec	def
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.ChkWitness.noConfusionType	LeanDag.HybridFaults
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.ChkWitness.noConfusionType	LeanDag.Hybrid.Checkpoint.CheckpointData
@@ -41444,6 +41898,31 @@ EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.validateCertificate	LeanDag.Hybri
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.validateCertificate	LeanDag.Hybrid.Checkpoint.Model
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.validateCertificate	LeanDag.Hybrid.Checkpoint.Model.Execution.CertificatePayload.checkpoint
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.validateCertificate	LeanDag.Hybrid.Checkpoint.Model.Execution
+NODE	LeanDag.OdontocetiProperties.supportersIn_band	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_5
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_4
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_2
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band	LeanDag.Block.refs
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band	LeanDag.OdontocetiProperties.toCore
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band	LeanDag.blocksAt
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_1
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band	LeanDag.Odontoceti.supportersIn
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band	LeanDag.MysticetiProperties.blocksAt_band
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band	LeanDag.MysticetiProperties.band_refs
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band	LeanDag.MysticetiProperties.band_block
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_3
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band	LeanDag.Faults5.toFaults
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band	LeanDag.Block.creator
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band	LeanDag.mem_blocksAt
 NODE	LeanDag.Properties.Rebases.base	LeanDag.Properties.Truncate	thm
 EDGE	LeanDag.Properties.Rebases.base	LeanDag.Slots.slotRound
 EDGE	LeanDag.Properties.Rebases.base	LeanDag.Properties.Rebases
@@ -42094,6 +42573,7 @@ EDGE	LeanDag.Properties.RebasedAbove.mono	LeanDag.Properties.DagRule.Universe
 NODE	LeanDagTest.FinWhalePace.fwCreation._proof_21	LeanDagTest.FinWhale.Pace	thm
 NODE	LeanDagTest.BlackMarlin.vBlockFull.eq_2	LeanDagTest.BlackMarlin.Divergence	thm
 EDGE	LeanDagTest.BlackMarlin.vBlockFull.eq_2	LeanDagTest.BlackMarlin.vBlockFull
+NODE	LeanDag.OdontocetiProperties.descends._proof_1_2	LeanDag.OdontocetiProperties	thm
 NODE	LeanDag.Hybrid.Checkpoint.Model.Execution.ChkWitness._sizeOf_1	LeanDag.Hybrid.Checkpoint.BaseSpec	def
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.ChkWitness._sizeOf_1	LeanDag.HybridFaults
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.ChkWitness._sizeOf_1	LeanDag.Hybrid.Checkpoint.CheckpointData
@@ -44702,6 +45182,22 @@ EDGE	LeanDag.exists_correct_of_card	LeanDag.Correct
 EDGE	LeanDag.exists_correct_of_card	LeanDag.Faults.f
 EDGE	LeanDag.exists_correct_of_card	LeanDag.mem_correct._simp_1
 EDGE	LeanDag.exists_correct_of_card	LeanDag.Faults.card_byzantine
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_19	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_19	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_19	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_19	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_19	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_19	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_19	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_19	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_19	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_19	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_19	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_19	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_19	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_19	LeanDag.Odontoceti.Decided
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_19	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_19	LeanDag.Faults5.toFaults
 NODE	LeanDag.Barnacle.Healthy.WindowHealthy	LeanDag.Barnacle.Healthy.Statement	def
 EDGE	LeanDag.Barnacle.Healthy.WindowHealthy	LeanDag.Barnacle.Params.maxLeaders
 EDGE	LeanDag.Barnacle.Healthy.WindowHealthy	LeanDag.Barnacle.BaseRule.Universe
@@ -46330,6 +46826,22 @@ EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution._sizeOf_1	LeanDag.Hybrid.Checkpoi
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution._sizeOf_1	LeanDag.Hybrid.Checkpoint.Model.ReliableSigner
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution._sizeOf_1	LeanDag.Hybrid.Checkpoint.Model.Execution
 NODE	LeanDagTest.Barnacle.skBlk._proof_1	LeanDagTest.Barnacle.Progress	thm
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_23	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_23	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_23	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_23	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_23	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_23	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_23	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_23	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_23	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_23	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_23	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_23	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_23	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_23	LeanDag.Odontoceti.Decided
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_23	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_23	LeanDag.Faults5.toFaults
 NODE	LeanDag.Integration.not_refsAccepted_skipFillD._proof_1_2	LeanDag.Integration.DeliveryFill	thm
 EDGE	LeanDag.Integration.not_refsAccepted_skipFillD._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.Integration.not_refsAccepted_skipFillD._proof_1_2	LeanDag.BlockUniverse.block
@@ -48743,6 +49255,14 @@ EDGE	LeanDag.Hydrozoan.Decided.below.indirectSkip	LeanDag.Hydrozoan.Slots.slotRo
 EDGE	LeanDag.Hydrozoan.Decided.below.indirectSkip	LeanDag.Hydrozoan.Decided.below
 EDGE	LeanDag.Hydrozoan.Decided.below.indirectSkip	LeanDag.Hydrozoan.Faults
 EDGE	LeanDag.Hydrozoan.Decided.below.indirectSkip	LeanDag.Hydrozoan.EligibleAsAnchor
+NODE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_4	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_4	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_4	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_4	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_4	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_4	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_4	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_4	LeanDag.Faults5.toFaults
 NODE	LeanDag.Slots.recOn	LeanDag.Mysticeti	def
 EDGE	LeanDag.Slots.recOn	LeanDag.Slots.mk
 EDGE	LeanDag.Slots.recOn	LeanDag.Slots.rec
@@ -49185,6 +49705,16 @@ EDGE	LeanDag.OptimalHydrozoan.OptUniverse.mk.sizeOf_spec	LeanDag.OptimalHydrozoa
 EDGE	LeanDag.OptimalHydrozoan.OptUniverse.mk.sizeOf_spec	LeanDag.Hydrozoan.Slots.leader
 EDGE	LeanDag.OptimalHydrozoan.OptUniverse.mk.sizeOf_spec	LeanDag.Hydrozoan.Faults
 EDGE	LeanDag.OptimalHydrozoan.OptUniverse.mk.sizeOf_spec	LeanDag.Hydrozoan.BlockUniverse.ids
+NODE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_4	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_4	LeanDag.Properties.DecidedBelow
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_4	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_4	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_4	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_4	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_4	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_4	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_4	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_4	LeanDag.Faults5.toFaults
 NODE	LeanDagTest.FinWhalePace.fwReactive._proof_4	LeanDagTest.FinWhale.Pace	thm
 EDGE	LeanDagTest.FinWhalePace.fwReactive._proof_4	LeanDagTest.FinWhalePace.fwSlots
 EDGE	LeanDagTest.FinWhalePace.fwReactive._proof_4	LeanDagTest.Ugrow
@@ -49779,6 +50309,22 @@ EDGE	LeanDag.Integration.hybrid_agree_of_soundOn	LeanDag.Integration.SoundOn.hon
 EDGE	LeanDag.Integration.hybrid_agree_of_soundOn	LeanDag.Slots
 EDGE	LeanDag.Integration.hybrid_agree_of_soundOn	LeanDag.SkipMsg
 EDGE	LeanDag.Integration.hybrid_agree_of_soundOn	LeanDag.View
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_14	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_14	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_14	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_14	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_14	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_14	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_14	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_14	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_14	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_14	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_14	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_14	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_14	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_14	LeanDag.Odontoceti.Decided
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_14	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_14	LeanDag.Faults5.toFaults
 NODE	LeanDag.OptimalHydrozoan.evidenceLinked_of_fastCommitOpt_base._proof_1_3	LeanDag.OptimalHydrozoan.Helpers.SlotAgreement	thm
 EDGE	LeanDag.OptimalHydrozoan.evidenceLinked_of_fastCommitOpt_base._proof_1_3	LeanDag.OptimalHydrozoan.OptUniverse.toBlockUniverse
 EDGE	LeanDag.OptimalHydrozoan.evidenceLinked_of_fastCommitOpt_base._proof_1_3	LeanDag.Hydrozoan.Block.parents
@@ -50495,6 +51041,22 @@ NODE	LeanDag.Hydrozoan.decidedBelow_of_committed_run._proof_1_1	LeanDag.Hydrozoa
 NODE	LeanDag.MysticetiProperties.directCommit_of_sustains._proof_1_1	LeanDag.MysticetiProperties	thm
 EDGE	LeanDag.MysticetiProperties.directCommit_of_sustains._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.MysticetiProperties.directCommit_of_sustains._proof_1_1	LeanDag.Faults.f
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_24	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_24	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_24	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_24	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_24	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_24	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_24	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_24	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_24	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_24	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_24	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_24	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_24	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_24	LeanDag.Odontoceti.Decided
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_24	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_24	LeanDag.Faults5.toFaults
 NODE	LeanDag.Hydrozoan.weakLinked_of_fastCommit_base._proof_1_3	LeanDag.Hydrozoan.Helpers.SlotAgreement	thm
 EDGE	LeanDag.Hydrozoan.weakLinked_of_fastCommit_base._proof_1_3	LeanDag.Hydrozoan.Block.parents
 EDGE	LeanDag.Hydrozoan.weakLinked_of_fastCommit_base._proof_1_3	LeanDag.Hydrozoan.BlockUniverse
@@ -50602,6 +51164,22 @@ EDGE	LeanDag.ReactiveM.cert_or_wait	LeanDag.Slots
 EDGE	LeanDag.ReactiveM.cert_or_wait	LeanDag.Block.creator
 NODE	LeanDagTest.BlackMarlin.vBlockFull.match_1.eq_2	LeanDagTest.BlackMarlin.Divergence	thm
 EDGE	LeanDagTest.BlackMarlin.vBlockFull.match_1.eq_2	LeanDagTest.BlackMarlin.vBlockFull.match_1
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_27	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_27	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_27	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_27	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_27	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_27	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_27	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_27	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_27	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_27	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_27	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_27	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_27	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_27	LeanDag.Odontoceti.Decided
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_27	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_27	LeanDag.Faults5.toFaults
 NODE	LeanDag.BlackMarlin.exists_adjacent_correct	LeanDag.BlackMarlin.Helpers.Liveness	thm
 EDGE	LeanDag.BlackMarlin.exists_adjacent_correct	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.exists_adjacent_correct	LeanDag.BlackMarlin.nxt_inj
@@ -52369,6 +52947,19 @@ EDGE	LeanDagTest.Barnacle.OrcaellaLive.UL	LeanDag.BlockUniverse.mk
 EDGE	LeanDagTest.Barnacle.OrcaellaLive.UL	LeanDag.BlockUniverse
 EDGE	LeanDagTest.Barnacle.OrcaellaLive.UL	LeanDagTest.Barnacle.OrcaellaLive.UL._proof_1
 EDGE	LeanDagTest.Barnacle.OrcaellaLive.UL	LeanDagTest.hyb4
+NODE	LeanDag.OdontocetiProperties.thickLink_band	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.thickLink_band	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.thickLink_band	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.OdontocetiProperties.thickLink_band	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.thickLink_band	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.thickLink_band	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.thickLink_band	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.thickLink_band	LeanDag.Faults.f
+EDGE	LeanDag.OdontocetiProperties.thickLink_band	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.thickLink_band	LeanDag.Odontoceti.ThickLink
+EDGE	LeanDag.OdontocetiProperties.thickLink_band	LeanDag.Odontoceti.coneSupports
+EDGE	LeanDag.OdontocetiProperties.thickLink_band	LeanDag.OdontocetiProperties.coneSupports_band
+EDGE	LeanDag.OdontocetiProperties.thickLink_band	LeanDag.Faults5.toFaults
 NODE	LeanDagTest.Barnacle.OrcaellaLive.ul_sync	LeanDagTest.Barnacle.OrcaellaLive	thm
 EDGE	LeanDagTest.Barnacle.OrcaellaLive.ul_sync	LeanDag.HybridFaults.toFaults
 EDGE	LeanDagTest.Barnacle.OrcaellaLive.ul_sync	LeanDagTest.Barnacle.OrcaellaLive.UL
@@ -54950,6 +55541,7 @@ NODE	LeanDag.FinWhale.lemma23._proof_1_4	LeanDag.FinWhale.Decided	thm
 EDGE	LeanDag.FinWhale.lemma23._proof_1_4	LeanDag.FinWhale.Verdict.undecided
 EDGE	LeanDag.FinWhale.lemma23._proof_1_4	LeanDag.FinWhale.instDecidableEqVerdict
 EDGE	LeanDag.FinWhale.lemma23._proof_1_4	LeanDag.FinWhale.Verdict
+NODE	LeanDag.OdontocetiProperties.descends._proof_1_3	LeanDag.OdontocetiProperties	thm
 NODE	LeanDagTest.lkt	LeanDagTest.DoS.Density	def
 EDGE	LeanDagTest.lkt	LeanDag.Block
 EDGE	LeanDagTest.lkt	LeanDag.Block.mk
@@ -55073,6 +55665,9 @@ EDGE	LeanDag.Hydrozoan.banded_aux._proof_1_71	LeanDag.Hydrozoan.Slots.leader
 EDGE	LeanDag.Hydrozoan.banded_aux._proof_1_71	LeanDag.Hydrozoan.Faults
 EDGE	LeanDag.Hydrozoan.banded_aux._proof_1_71	LeanDag.Hydrozoan.EligibleAsAnchor
 EDGE	LeanDag.Hydrozoan.banded_aux._proof_1_71	LeanDag.Hydrozoan.BlockUniverse.ids
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_1	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_1	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_1	LeanDag.Slots
 NODE	LeanDag.instDecidableHonestNoEquivOfDecidableEq	LeanDag.Hybrid.Faults	def
 EDGE	LeanDag.instDecidableHonestNoEquivOfDecidableEq	LeanDag.HybridFaults
 EDGE	LeanDag.instDecidableHonestNoEquivOfDecidableEq	LeanDag.HybridFaults.toFaults
@@ -56594,6 +57189,9 @@ EDGE	LeanDag.BlackMarlin.Reactive.ExitSustained	LeanDag.Faults.f
 EDGE	LeanDag.BlackMarlin.Reactive.ExitSustained	LeanDag.BlackMarlin.Pace.toPaceCore
 EDGE	LeanDag.BlackMarlin.Reactive.ExitSustained	LeanDag.BlackMarlin.Rotation
 EDGE	LeanDag.BlackMarlin.Reactive.ExitSustained	LeanDag.Block.creator
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_4	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_4	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_4	LeanDag.Slots
 NODE	LeanDagTest.Uexcl._proof_2	LeanDagTest.DoS.Exclusion	thm
 EDGE	LeanDagTest.Uexcl._proof_2	LeanDagTest.lkx
 EDGE	LeanDagTest.Uexcl._proof_2	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
@@ -58317,6 +58915,22 @@ NODE	LeanDag.BlackMarlin.strongOf	LeanDag.BlackMarlin.Model.Descent	def
 EDGE	LeanDag.BlackMarlin.strongOf	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.strongOf	LeanDag.history
 EDGE	LeanDag.BlackMarlin.strongOf	LeanDag.BlockUniverse
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_25	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_25	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_25	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_25	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_25	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_25	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_25	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_25	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_25	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_25	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_25	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_25	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_25	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_25	LeanDag.Odontoceti.Decided
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_25	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_25	LeanDag.Faults5.toFaults
 NODE	LeanDag.mem_creatorsOf._simp_1	LeanDag.Block	thm
 EDGE	LeanDag.mem_creatorsOf._simp_1	LeanDag.Block
 EDGE	LeanDag.mem_creatorsOf._simp_1	LeanDag.creatorsOf
@@ -58472,6 +59086,19 @@ EDGE	LeanDagTest.UtightA._proof_3	LeanDag.Correct
 EDGE	LeanDagTest.UtightA._proof_3	LeanDag.Block.round
 EDGE	LeanDagTest.UtightA._proof_3	LeanDag.Block.creator
 NODE	LeanDagTest.hyb9Blk._proof_2	LeanDagTest.Hybrid	thm
+NODE	LeanDag.OdontocetiProperties.descends	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.descends	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run
+EDGE	LeanDag.OdontocetiProperties.descends	LeanDag.Properties.DecidedBelow
+EDGE	LeanDag.OdontocetiProperties.descends	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.descends	LeanDag.OdontocetiProperties.descends._proof_1_3
+EDGE	LeanDag.OdontocetiProperties.descends	LeanDag.Properties.Descends
+EDGE	LeanDag.OdontocetiProperties.descends	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.descends	LeanDag.OdontocetiProperties.descends._proof_1_2
+EDGE	LeanDag.OdontocetiProperties.descends	LeanDag.Odontoceti.SpansEligible
+EDGE	LeanDag.OdontocetiProperties.descends	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.descends	LeanDag.Properties.DagRule.View
+EDGE	LeanDag.OdontocetiProperties.descends	LeanDag.OdontocetiProperties.descends._proof_1_1
+EDGE	LeanDag.OdontocetiProperties.descends	LeanDag.Properties.DagRule.Universe
 NODE	LeanDag.OptimalHydrozoan.DirectSafety.holds._proof_1_1	LeanDag.OptimalHydrozoan.DirectSafety.Proof	thm
 EDGE	LeanDag.OptimalHydrozoan.DirectSafety.holds._proof_1_1	LeanDag.OptimalHydrozoan.OptUniverse.toBlockUniverse
 EDGE	LeanDag.OptimalHydrozoan.DirectSafety.holds._proof_1_1	LeanDag.Hydrozoan.Slots
@@ -59239,6 +59866,22 @@ EDGE	LeanDagTest.OptimalHydrozoan.VD	LeanDag.OptimalHydrozoan.OptimalFaults.toFa
 EDGE	LeanDagTest.OptimalHydrozoan.VD	LeanDag.Hydrozoan.View
 EDGE	LeanDagTest.OptimalHydrozoan.VD	LeanDagTest.OptimalHydrozoan.UD
 EDGE	LeanDagTest.OptimalHydrozoan.VD	LeanDagTest.OptimalHydrozoan.fourSlotsOpt
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_26	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_26	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_26	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_26	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_26	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_26	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_26	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_26	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_26	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_26	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_26	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_26	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_26	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_26	LeanDag.Odontoceti.Decided
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_26	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_26	LeanDag.Faults5.toFaults
 NODE	LeanDag.Nemo.View.mk	LeanDag.Nemo.Basic	ctor
 EDGE	LeanDag.Nemo.View.mk	LeanDag.Nemo.Universe
 EDGE	LeanDag.Nemo.View.mk	LeanDag.Nemo.Universe.block
@@ -59293,6 +59936,7 @@ EDGE	LeanDag.BlackMarlin.le_maxAnchorRound	LeanDag.BlockUniverse.block
 EDGE	LeanDag.BlackMarlin.le_maxAnchorRound	LeanDag.Block.round
 EDGE	LeanDag.BlackMarlin.le_maxAnchorRound	LeanDag.BlockUniverse
 EDGE	LeanDag.BlackMarlin.le_maxAnchorRound	LeanDag.BlackMarlin.Rotation
+NODE	LeanDag.OdontocetiProperties.coneSupports_band._simp_1_1	LeanDag.OdontocetiProperties	thm
 NODE	LeanDagTest.Barnacle.runP1v._proof_3	LeanDagTest.Barnacle.Progress	thm
 NODE	LeanDagTest.Integration.skx._proof_15	LeanDagTest.Integration.HydrozoanOptimal	thm
 EDGE	LeanDagTest.Integration.skx._proof_15	LeanDagTest.Integration.selfParenting_Ux
@@ -60086,6 +60730,26 @@ EDGE	LeanDag.Integration.fill_cone_subset	LeanDag.SkipMsg.line
 EDGE	LeanDag.Integration.fill_cone_subset	LeanDag.Integration.fill_cone_subset._proof_1_3
 EDGE	LeanDag.Integration.fill_cone_subset	LeanDag.SkipMsg.B1
 EDGE	LeanDag.Integration.fill_cone_subset	LeanDag.Reaches
+NODE	LeanDag.OdontocetiProperties.not_thickLink_band_novel	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.not_thickLink_band_novel	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.not_thickLink_band_novel	LeanDag.creatorsOf
+EDGE	LeanDag.OdontocetiProperties.not_thickLink_band_novel	LeanDag.BlockUniverse.complete
+EDGE	LeanDag.OdontocetiProperties.not_thickLink_band_novel	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.OdontocetiProperties.not_thickLink_band_novel	LeanDag.Block.refs
+EDGE	LeanDag.OdontocetiProperties.not_thickLink_band_novel	LeanDag.OdontocetiProperties.thickLink_band
+EDGE	LeanDag.OdontocetiProperties.not_thickLink_band_novel	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.not_thickLink_band_novel	LeanDag.history
+EDGE	LeanDag.OdontocetiProperties.not_thickLink_band_novel	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.not_thickLink_band_novel	LeanDag.OdontocetiProperties.not_thickLink_band_novel._proof_1_2
+EDGE	LeanDag.OdontocetiProperties.not_thickLink_band_novel	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.not_thickLink_band_novel	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.not_thickLink_band_novel	LeanDag.blocksAt
+EDGE	LeanDag.OdontocetiProperties.not_thickLink_band_novel	LeanDag.Faults.f
+EDGE	LeanDag.OdontocetiProperties.not_thickLink_band_novel	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.not_thickLink_band_novel	LeanDag.Odontoceti.ThickLink
+EDGE	LeanDag.OdontocetiProperties.not_thickLink_band_novel	LeanDag.Faults5.toFaults
+EDGE	LeanDag.OdontocetiProperties.not_thickLink_band_novel	LeanDag.mem_blocksAt
+EDGE	LeanDag.OdontocetiProperties.not_thickLink_band_novel	LeanDag.OdontocetiProperties.not_thickLink_band_novel._simp_1_1
 NODE	LeanDag.BlackMarlin.mem_suppAnchorsOf_of_committed	LeanDag.BlackMarlin.Helpers.Repair	thm
 EDGE	LeanDag.BlackMarlin.mem_suppAnchorsOf_of_committed	LeanDag.BlackMarlin.Linked
 EDGE	LeanDag.BlackMarlin.mem_suppAnchorsOf_of_committed	LeanDag.BlackMarlin.suppAnchorsOf
@@ -61167,6 +61831,12 @@ EDGE	LeanDag.PaceCore.coversOn_viewAt._proof_1_3	LeanDag.BlockUniverse.block
 EDGE	LeanDag.PaceCore.coversOn_viewAt._proof_1_3	LeanDag.Block.round
 EDGE	LeanDag.PaceCore.coversOn_viewAt._proof_1_3	LeanDag.BlockUniverse
 NODE	LeanDagTest.Hydrozoan.g5b.match_1	LeanDagTest.Hydrozoan.PrefixAgreement	def
+NODE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_13	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_13	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_13	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_13	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_13	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_13	LeanDag.Faults5.toFaults
 NODE	LeanDag.FinWhale.Run.agreement	LeanDag.FinWhale.Protocol	thm
 EDGE	LeanDag.FinWhale.Run.agreement	LeanDag.Faults
 EDGE	LeanDag.FinWhale.Run.agreement	LeanDag.FinWhale.histOf
@@ -62194,6 +62864,7 @@ EDGE	LeanDag.BlackMarlin.Descent.RecordIsFlush	LeanDag.BlockUniverse
 EDGE	LeanDag.BlackMarlin.Descent.RecordIsFlush	LeanDag.BlackMarlin.flushRecord
 EDGE	LeanDag.BlackMarlin.Descent.RecordIsFlush	LeanDag.BlackMarlin.Rotation
 EDGE	LeanDag.BlackMarlin.Descent.RecordIsFlush	LeanDag.BlackMarlin.coneAnchors
+NODE	LeanDag.Odontoceti.decidedWithin_congr_of_slotRound._proof_1_1	LeanDag.Adaptive.Odontoceti	thm
 NODE	LeanDag.SkipMsg.hline_round	LeanDag.SafeSkip.Basic	thm
 EDGE	LeanDag.SkipMsg.hline_round	LeanDag.Faults
 EDGE	LeanDag.SkipMsg.hline_round	LeanDag.BlockUniverse.block
@@ -62521,6 +63192,27 @@ EDGE	LeanDag.Properties.exists_coversUpto_decides	LeanDag.Slots
 EDGE	LeanDag.Properties.exists_coversUpto_decides	LeanDag.Properties.AgreeBand.refl
 EDGE	LeanDag.Properties.exists_coversUpto_decides	LeanDag.Properties.DagRule.View
 EDGE	LeanDag.Properties.exists_coversUpto_decides	LeanDag.Properties.DagRule.Universe
+NODE	LeanDag.OdontocetiProperties.banded	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded	LeanDag.Properties.DagRule.Decided
+EDGE	LeanDag.OdontocetiProperties.banded	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.banded	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.OdontocetiProperties.banded	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.banded	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.banded	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.banded	LeanDag.Properties.Banded
+EDGE	LeanDag.OdontocetiProperties.banded	LeanDag.OdontocetiProperties.banded_aux
+EDGE	LeanDag.OdontocetiProperties.banded	LeanDag.Properties.DagRule.viewIds
+EDGE	LeanDag.OdontocetiProperties.banded	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded	LeanDag.Odontoceti.Decided
+EDGE	LeanDag.OdontocetiProperties.banded	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.banded	LeanDag.Faults5.toFaults
+EDGE	LeanDag.OdontocetiProperties.banded	LeanDag.Properties.DagRule.View
+EDGE	LeanDag.OdontocetiProperties.banded	LeanDag.Properties.DagRule.Universe
 NODE	LeanDag.FinWhale.mem_view_of_voters._proof_1_4	LeanDag.FinWhale.View	thm
 EDGE	LeanDag.FinWhale.mem_view_of_voters._proof_1_4	LeanDag.Faults
 EDGE	LeanDag.FinWhale.mem_view_of_voters._proof_1_4	LeanDag.Faults.byzantine
@@ -62610,6 +63302,30 @@ EDGE	LeanDag.OptimalHydrozoan.IndirectLiveness.AnchoredTotality	LeanDag.Hydrozoa
 EDGE	LeanDag.OptimalHydrozoan.IndirectLiveness.AnchoredTotality	LeanDag.OptimalHydrozoan.DecidedOpt
 EDGE	LeanDag.OptimalHydrozoan.IndirectLiveness.AnchoredTotality	LeanDag.OptimalHydrozoan.OptUniverse
 EDGE	LeanDag.OptimalHydrozoan.IndirectLiveness.AnchoredTotality	LeanDag.Hydrozoan.EligibleAsAnchor
+NODE	LeanDag.Odontoceti.decidedWithin_congr_of_slotRound	LeanDag.Adaptive.Odontoceti	thm
+EDGE	LeanDag.Odontoceti.decidedWithin_congr_of_slotRound	LeanDag.isLeaderBlock_congr
+EDGE	LeanDag.Odontoceti.decidedWithin_congr_of_slotRound	LeanDag.Odontoceti.DecidedWithin.rec
+EDGE	LeanDag.Odontoceti.decidedWithin_congr_of_slotRound	LeanDag.Faults5
+EDGE	LeanDag.Odontoceti.decidedWithin_congr_of_slotRound	LeanDag.Odontoceti.DecidedWithin.directSkip
+EDGE	LeanDag.Odontoceti.decidedWithin_congr_of_slotRound	LeanDag.Slots.casesOn
+EDGE	LeanDag.Odontoceti.decidedWithin_congr_of_slotRound	LeanDag.Slots.mk
+EDGE	LeanDag.Odontoceti.decidedWithin_congr_of_slotRound	LeanDag.Odontoceti.DecidedWithin.indirectCommit
+EDGE	LeanDag.Odontoceti.decidedWithin_congr_of_slotRound	LeanDag.Slots.slotRound
+EDGE	LeanDag.Odontoceti.decidedWithin_congr_of_slotRound	LeanDag.Odontoceti.DecidedWithin.indirectSkip
+EDGE	LeanDag.Odontoceti.decidedWithin_congr_of_slotRound	LeanDag.Slots.leader
+EDGE	LeanDag.Odontoceti.decidedWithin_congr_of_slotRound	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.Odontoceti.decidedWithin_congr_of_slotRound	LeanDag.Odontoceti.decidedWithin_congr_of_slotRound._proof_1_1
+EDGE	LeanDag.Odontoceti.decidedWithin_congr_of_slotRound	LeanDag.Odontoceti.DirectCommitIn
+EDGE	LeanDag.Odontoceti.decidedWithin_congr_of_slotRound	LeanDag.directSkipSlotIn_congr
+EDGE	LeanDag.Odontoceti.decidedWithin_congr_of_slotRound	LeanDag.BlockUniverse
+EDGE	LeanDag.Odontoceti.decidedWithin_congr_of_slotRound	LeanDag.Odontoceti.ThickLink
+EDGE	LeanDag.Odontoceti.decidedWithin_congr_of_slotRound	LeanDag.DirectSkipSlotIn
+EDGE	LeanDag.Odontoceti.decidedWithin_congr_of_slotRound	LeanDag.IsLeaderBlock
+EDGE	LeanDag.Odontoceti.decidedWithin_congr_of_slotRound	LeanDag.Odontoceti.DecidedWithin.directCommit
+EDGE	LeanDag.Odontoceti.decidedWithin_congr_of_slotRound	LeanDag.Slots
+EDGE	LeanDag.Odontoceti.decidedWithin_congr_of_slotRound	LeanDag.View
+EDGE	LeanDag.Odontoceti.decidedWithin_congr_of_slotRound	LeanDag.Faults5.toFaults
+EDGE	LeanDag.Odontoceti.decidedWithin_congr_of_slotRound	LeanDag.Odontoceti.DecidedWithin
 NODE	LeanDag.FinWhale.SPSkip.eq_1	LeanDag.FinWhale.Skip	thm
 EDGE	LeanDag.FinWhale.SPSkip.eq_1	LeanDag.FinWhale.nonVoters
 EDGE	LeanDag.FinWhale.SPSkip.eq_1	LeanDag.Faults
@@ -63010,6 +63726,22 @@ NODE	LeanDagTest.demote_placesRuns._proof_1_3	LeanDagTest.Adaptive	thm
 EDGE	LeanDagTest.demote_placesRuns._proof_1_3	LeanDag.MysticetiProperties.mysticetiRule
 EDGE	LeanDagTest.demote_placesRuns._proof_1_3	LeanDag.Adaptive.Policy.W
 EDGE	LeanDagTest.demote_placesRuns._proof_1_3	LeanDagTest.demotePolicy
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_16	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_16	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_16	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_16	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_16	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_16	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_16	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_16	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_16	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_16	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_16	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_16	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_16	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_16	LeanDag.Odontoceti.Decided
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_16	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_16	LeanDag.Faults5.toFaults
 NODE	LeanDag.FinWhale.slotVerdict_congr	LeanDag.FinWhale.Pass	thm
 EDGE	LeanDag.FinWhale.slotVerdict_congr	LeanDag.Faults
 EDGE	LeanDag.FinWhale.slotVerdict_congr	LeanDag.FinWhale.DirectSkip
@@ -63507,6 +64239,20 @@ EDGE	LeanDag.Accepted.recOn	LeanDag.Block.round
 EDGE	LeanDag.Accepted.recOn	LeanDag.BlockUniverse
 EDGE	LeanDag.Accepted.recOn	LeanDag.Accepted.rec
 EDGE	LeanDag.Accepted.recOn	LeanDag.Block.creator
+NODE	LeanDag.OdontocetiProperties.directCommitIn_band	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.directCommitIn_band	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.directCommitIn_band	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.directCommitIn_band	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.directCommitIn_band	LeanDag.Odontoceti.DirectCommitIn
+EDGE	LeanDag.OdontocetiProperties.directCommitIn_band	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.directCommitIn_band	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.directCommitIn_band	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.directCommitIn_band	LeanDag.Faults.f
+EDGE	LeanDag.OdontocetiProperties.directCommitIn_band	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.directCommitIn_band	LeanDag.Odontoceti.supportersIn
+EDGE	LeanDag.OdontocetiProperties.directCommitIn_band	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.directCommitIn_band	LeanDag.Faults5.toFaults
+EDGE	LeanDag.OdontocetiProperties.directCommitIn_band	LeanDag.OdontocetiProperties.supportersIn_band
 NODE	LeanDag.Properties.RebasedAbove.populatedOn_of._proof_1_2	LeanDag.Properties.Sustain	thm
 EDGE	LeanDag.Properties.RebasedAbove.populatedOn_of._proof_1_2	LeanDag.Properties.DagRule.block
 EDGE	LeanDag.Properties.RebasedAbove.populatedOn_of._proof_1_2	LeanDag.Block.round
@@ -63640,6 +64386,22 @@ EDGE	LeanDag.MahiMahi.Safety.DirectSkipConservative	LeanDag.Block.round
 EDGE	LeanDag.MahiMahi.Safety.DirectSkipConservative	LeanDag.BlockUniverse
 EDGE	LeanDag.MahiMahi.Safety.DirectSkipConservative	LeanDag.DirectSkip
 EDGE	LeanDag.MahiMahi.Safety.DirectSkipConservative	LeanDag.Block.creator
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_8	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_8	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_8	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_8	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_8	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_8	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_8	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_8	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_8	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_8	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_8	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_8	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_8	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_8	LeanDag.Odontoceti.Decided
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_8	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_8	LeanDag.Faults5.toFaults
 NODE	LeanDag.OptimalHydrozoan.isFastEvidence_of_fastCommitOpt._proof_1_1	LeanDag.OptimalHydrozoan.Helpers.SlotAgreement	thm
 EDGE	LeanDag.OptimalHydrozoan.isFastEvidence_of_fastCommitOpt._proof_1_1	LeanDag.OptimalHydrozoan.OptUniverse.toBlockUniverse
 EDGE	LeanDag.OptimalHydrozoan.isFastEvidence_of_fastCommitOpt._proof_1_1	LeanDag.Hydrozoan.Block.author
@@ -65292,6 +66054,14 @@ EDGE	LeanDag.Minnow.Dag.mk.injEq	LeanDag.Minnow.Dag
 EDGE	LeanDag.Minnow.Dag.mk.injEq	LeanDag.Block.round
 EDGE	LeanDag.Minnow.Dag.mk.injEq	LeanDag.Minnow.ValidHere
 EDGE	LeanDag.Minnow.Dag.mk.injEq	LeanDag.Block.creator
+NODE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_5	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_5	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_5	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_5	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_5	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_5	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_5	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_5	LeanDag.Faults5.toFaults
 NODE	LeanDagTest.Hydrozoan.U._proof_3	LeanDagTest.Hydrozoan.BlockUniverse	thm
 EDGE	LeanDagTest.Hydrozoan.U._proof_3	LeanDagTest.Hydrozoan.lk
 EDGE	LeanDagTest.Hydrozoan.U._proof_3	LeanDag.Hydrozoan.Block.author
@@ -67072,6 +67842,12 @@ EDGE	LeanDagTest.Hydrozoan.Vfull3	LeanDagTest.Hydrozoan.Vfull3._proof_2
 EDGE	LeanDagTest.Hydrozoan.Vfull3	LeanDag.Hydrozoan.View
 EDGE	LeanDagTest.Hydrozoan.Vfull3	LeanDagTest.Hydrozoan.sevenReplicas
 EDGE	LeanDagTest.Hydrozoan.Vfull3	LeanDagTest.Hydrozoan.U3
+NODE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_2	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_2	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_2	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_2	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_2	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.supportersIn_band._proof_1_2	LeanDag.Faults5.toFaults
 NODE	LeanDagTest.FinWhale.chooseW	LeanDagTest.FinWhale.Model	def
 EDGE	LeanDagTest.FinWhale.chooseW	LeanDagTest.FinWhale.decA._proof_1
 NODE	LeanDagTest.gcens	LeanDagTest.Quality.Model	def
@@ -67633,6 +68409,22 @@ EDGE	LeanDag.Barnacle.HydrozoanLive.descent._proof_1_3	LeanDag.Barnacle.LiveRule
 EDGE	LeanDag.Barnacle.HydrozoanLive.descent._proof_1_3	LeanDag.Barnacle.hydrozoanLive
 EDGE	LeanDag.Barnacle.HydrozoanLive.descent._proof_1_3	LeanDag.Slots
 EDGE	LeanDag.Barnacle.HydrozoanLive.descent._proof_1_3	LeanDag.Hydrozoan.Faults
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_11	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_11	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_11	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_11	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_11	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_11	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_11	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_11	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_11	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_11	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_11	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_11	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_11	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_11	LeanDag.Odontoceti.Decided
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_11	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_11	LeanDag.Faults5.toFaults
 NODE	LeanDagTest.ugrowReactive._proof_53	LeanDagTest.Reactive	thm
 EDGE	LeanDagTest.ugrowReactive._proof_53	LeanDagTest.ugrowReactive._simp_1
 EDGE	LeanDagTest.ugrowReactive._proof_53	LeanDagTest.ugrowReactive._proof_32
@@ -68840,6 +69632,7 @@ EDGE	LeanDagTest.waveFaults	LeanDagTest.waveFaults._proof_1
 EDGE	LeanDagTest.waveFaults	LeanDag.Faults.mk
 EDGE	LeanDagTest.waveFaults	LeanDagTest.waveFaults._proof_2
 EDGE	LeanDagTest.waveFaults	LeanDagTest.waveFaults._proof_3
+NODE	LeanDag.OdontocetiProperties.not_thickLink_band_novel._simp_1_1	LeanDag.OdontocetiProperties	thm
 NODE	LeanDag.card_missingAt_le_aux._proof_1_4	LeanDag.DoS.Density	thm
 EDGE	LeanDag.card_missingAt_le_aux._proof_1_4	LeanDag.Faults
 EDGE	LeanDag.card_missingAt_le_aux._proof_1_4	LeanDag.creators
@@ -70146,6 +70939,22 @@ EDGE	LeanDag.Hydrozoan.banded_aux._proof_1_11	LeanDag.Hydrozoan.Block.round
 EDGE	LeanDag.Hydrozoan.banded_aux._proof_1_11	LeanDag.Hydrozoan.BlockUniverse.block
 EDGE	LeanDag.Hydrozoan.banded_aux._proof_1_11	LeanDag.Hydrozoan.Slots.slotRound
 EDGE	LeanDag.Hydrozoan.banded_aux._proof_1_11	LeanDag.Hydrozoan.Faults
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_10	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_10	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_10	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_10	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_10	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_10	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_10	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_10	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_10	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_10	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_10	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_10	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_10	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_10	LeanDag.Odontoceti.Decided
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_10	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_10	LeanDag.Faults5.toFaults
 NODE	LeanDag.MahiMahi.Safety.Agreement	LeanDag.MahiMahi.Safety.Statement	def
 EDGE	LeanDag.MahiMahi.Safety.Agreement	LeanDag.Faults
 EDGE	LeanDag.MahiMahi.Safety.Agreement	LeanDag.BlockUniverse
@@ -70655,6 +71464,22 @@ EDGE	LeanDag.BlackMarlin.instDecidableIsAnchorBlock	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.instDecidableIsAnchorBlock	LeanDag.BlackMarlin.IsAnchorBlock
 EDGE	LeanDag.BlackMarlin.instDecidableIsAnchorBlock	LeanDag.BlockUniverse
 EDGE	LeanDag.BlackMarlin.instDecidableIsAnchorBlock	LeanDag.BlackMarlin.Rotation
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_21	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_21	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_21	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_21	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_21	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_21	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_21	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_21	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_21	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_21	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_21	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_21	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_21	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_21	LeanDag.Odontoceti.Decided
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_21	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_21	LeanDag.Faults5.toFaults
 NODE	LeanDag.card_le_of_equivFree	LeanDag.DoS.Counting	thm
 EDGE	LeanDag.card_le_of_equivFree	LeanDag.Faults
 EDGE	LeanDag.card_le_of_equivFree	LeanDag.EquivFree
@@ -72006,6 +72831,14 @@ EDGE	LeanDag.Nemo.Universe.noConfusionType	LeanDag.Nemo.Universe.casesOn
 EDGE	LeanDag.Nemo.Universe.noConfusionType	LeanDag.Block.refs
 EDGE	LeanDag.Nemo.Universe.noConfusionType	LeanDag.Block.round
 EDGE	LeanDag.Nemo.Universe.noConfusionType	LeanDag.Block.creator
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_5	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_5	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_5	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_5	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_5	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_5	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_5	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_5	LeanDag.Faults5.toFaults
 NODE	LeanDag.Properties.decidedBelow_of_run	LeanDag.Properties.Derived.Progress	thm
 EDGE	LeanDag.Properties.decidedBelow_of_run	LeanDag.Properties.DecidedBelow
 EDGE	LeanDag.Properties.decidedBelow_of_run	LeanDag.Properties.decidedBelow_of_run._proof_1_3
@@ -72263,6 +73096,22 @@ EDGE	LeanDag.FinWhale.Creation.lemma18._proof_1_2	LeanDag.BlockUniverse
 EDGE	LeanDag.FinWhale.Creation.lemma18._proof_1_2	LeanDag.Faults.f
 EDGE	LeanDag.FinWhale.Creation.lemma18._proof_1_2	LeanDag.FinWhale.Params.p
 EDGE	LeanDag.FinWhale.Creation.lemma18._proof_1_2	LeanDag.FinWhale.Creation
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_28	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_28	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_28	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_28	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_28	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_28	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_28	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_28	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_28	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_28	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_28	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_28	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_28	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_28	LeanDag.Odontoceti.Decided
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_28	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_28	LeanDag.Faults5.toFaults
 NODE	LeanDag.Minnow.ValidHere.rec	LeanDag.Minnow.Model.Rule	rec
 EDGE	LeanDag.Minnow.ValidHere.rec	LeanDag.Block
 EDGE	LeanDag.Minnow.ValidHere.rec	LeanDag.Faults
@@ -73043,6 +73892,12 @@ EDGE	LeanDag.Hydrozoan.Grounding.waveRobinFair	LeanDag.Hydrozoan.Grounding.corre
 EDGE	LeanDag.Hydrozoan.Grounding.waveRobinFair	LeanDag.Hydrozoan.Grounding.waveRobinFair._proof_1_1
 EDGE	LeanDag.Hydrozoan.Grounding.waveRobinFair	LeanDag.Hydrozoan.Slots.leader
 EDGE	LeanDag.Hydrozoan.Grounding.waveRobinFair	LeanDag.Hydrozoan.Faults
+NODE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_12	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_12	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_12	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_12	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_12	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_12	LeanDag.Faults5.toFaults
 NODE	LeanDagTest.Barnacle.vdP1	LeanDagTest.Barnacle.Agreement	def
 NODE	LeanDag.FinWhale.spCertificate_round._simp_1_3	LeanDag.FinWhale.Propagation	thm
 NODE	LeanDagTest.Hydrozoan.lk4._proof_10	LeanDagTest.Hydrozoan.DirectSafety	thm
@@ -75254,6 +76109,76 @@ NODE	LeanDag.JumpMsg.v1	LeanDag.SafeSkip.Jump	def
 EDGE	LeanDag.JumpMsg.v1	LeanDag.Faults
 EDGE	LeanDag.JumpMsg.v1	LeanDag.JumpMsg
 EDGE	LeanDag.JumpMsg.v1	LeanDag.BlockUniverse
+NODE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.MysticetiProperties.directSkipSlotIn_band
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_25
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.Properties.AgreeBand.mono
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_27
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_23
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_1
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.Odontoceti.Decided.indirectCommit
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.directCommitIn_band
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_21
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.MysticetiProperties.isLeaderBlock_band_old
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_14
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.Odontoceti.decisionRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_11
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_6
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.Odontoceti.isLeaderBlock_of_decided
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.thickLink_threshold_pos
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_5
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.Odontoceti.Decided.rec
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_7
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.Odontoceti.Decided.indirectSkip
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_24
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_8
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_4
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_18
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.thickLink_band
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_17
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_10
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.Odontoceti.DirectCommitIn
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.toCore
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_30
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_31
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_16
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_2
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.Odontoceti.ThickLink
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_13
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.DirectSkipSlotIn
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_3
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_29
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_12
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_19
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_9
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.not_thickLink_band_novel
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.IsLeaderBlock
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_28
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_15
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.Odontoceti.Decided.directCommit
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.Odontoceti.Decided
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.Slots.mono
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_20
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.Faults5.toFaults
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.Odontoceti.Decided.directSkip
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_22
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.OdontocetiProperties.banded_aux._proof_1_26
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.MysticetiProperties.isLeaderBlock_band
+EDGE	LeanDag.OdontocetiProperties.banded_aux	LeanDag.Block.creator
 NODE	LeanDag.Barnacle.Params.interval_pos	LeanDag.Barnacle.Model.Window	thm
 EDGE	LeanDag.Barnacle.Params.interval_pos	LeanDag.Barnacle.Params
 EDGE	LeanDag.Barnacle.Params.interval_pos	LeanDag.Barnacle.Params.interval
@@ -75726,6 +76651,16 @@ NODE	LeanDag.Honest.eq_1	LeanDag.Hybrid.Faults	thm
 EDGE	LeanDag.Honest.eq_1	LeanDag.HybridFaults
 EDGE	LeanDag.Honest.eq_1	LeanDag.Honest
 EDGE	LeanDag.Honest.eq_1	LeanDag.HybridFaults.byzantine
+NODE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_5	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_5	LeanDag.Properties.DecidedBelow
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_5	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_5	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_5	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_5	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_5	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_5	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_5	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_5	LeanDag.Faults5.toFaults
 NODE	LeanDagTest.hyb4Slots._proof_2	LeanDagTest.Hybrid	thm
 NODE	LeanDag.Integration.Hydrozoan.toCore._proof_2	LeanDag.Integration.Hydrozoan.Universe	thm
 EDGE	LeanDag.Integration.Hydrozoan.toCore._proof_2	LeanDag.Hydrozoan.Block.author
@@ -78118,6 +79053,22 @@ EDGE	LeanDag.Hydrozoan.ThresholdArithmetic.holds._proof_1_15	LeanDag.Hydrozoan.F
 EDGE	LeanDag.Hydrozoan.ThresholdArithmetic.holds._proof_1_15	LeanDag.Hydrozoan.Faults.f
 EDGE	LeanDag.Hydrozoan.ThresholdArithmetic.holds._proof_1_15	LeanDag.Hydrozoan.Faults
 NODE	LeanDagTest.Uomit._proof_5	LeanDagTest.Unbounded	thm
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_30	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_30	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_30	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_30	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_30	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_30	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_30	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_30	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_30	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_30	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_30	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_30	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_30	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_30	LeanDag.Odontoceti.Decided
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_30	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_30	LeanDag.Faults5.toFaults
 NODE	LeanDag.creator_injOn_correctBlocksAt	LeanDag.CommonCore	thm
 EDGE	LeanDag.creator_injOn_correctBlocksAt	LeanDag.mem_correctBlocksAt
 EDGE	LeanDag.creator_injOn_correctBlocksAt	LeanDag.Faults
@@ -78874,6 +79825,22 @@ EDGE	LeanDag.Minnow.Dag.mk.noConfusion	LeanDag.Minnow.Dag
 EDGE	LeanDag.Minnow.Dag.mk.noConfusion	LeanDag.Block.round
 EDGE	LeanDag.Minnow.Dag.mk.noConfusion	LeanDag.Minnow.ValidHere
 EDGE	LeanDag.Minnow.Dag.mk.noConfusion	LeanDag.Block.creator
+NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_13	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_13	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_13	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_13	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_13	LeanDag.Odontoceti.Eligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_13	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_13	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_13	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_13	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_13	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_13	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_13	LeanDag.Odontoceti.decidableEligible
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_13	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_13	LeanDag.Odontoceti.Decided
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_13	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_13	LeanDag.Faults5.toFaults
 NODE	LeanDagTest.BlackMarlin.fullFlush.match_1	LeanDagTest.BlackMarlin.Ledger	def
 EDGE	LeanDagTest.BlackMarlin.fullFlush.match_1	LeanDagTest.BlackMarlin.fullBlock
 NODE	LeanDag.BlackMarlin.Pace.recOn	LeanDag.BlackMarlin.Model.Round	def
@@ -80791,6 +81758,21 @@ EDGE	LeanDag.BlackMarlin.Reactive.Statement	LeanDag.BlockUniverse
 EDGE	LeanDag.BlackMarlin.Reactive.Statement	LeanDag.BlackMarlin.Rotation
 EDGE	LeanDag.BlackMarlin.Reactive.Statement	LeanDag.BlackMarlin.Reactive.Exit
 EDGE	LeanDag.BlackMarlin.Reactive.Statement	LeanDag.BlackMarlin.Reactive.Latency
+NODE	LeanDag.OdontocetiProperties.decidedBelow_of_decidedWithin	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_decidedWithin	LeanDag.Properties.DagRule.Decided
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_decidedWithin	LeanDag.Properties.DecidedBelow
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_decidedWithin	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_decidedWithin	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_decidedWithin	LeanDag.Odontoceti.decidedWithin_congr_of_slotRound
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_decidedWithin	LeanDag.Odontoceti.DecidedWithin.toDecided
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_decidedWithin	LeanDag.Slots.leader
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_decidedWithin	LeanDag.Odontoceti.DecidedWithin.lt_bound
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_decidedWithin	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_decidedWithin	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_decidedWithin	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_decidedWithin	LeanDag.View
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_decidedWithin	LeanDag.Faults5.toFaults
+EDGE	LeanDag.OdontocetiProperties.decidedBelow_of_decidedWithin	LeanDag.Odontoceti.DecidedWithin
 NODE	LeanDag.BlackMarlin.Reactive.Latency	LeanDag.BlackMarlin.Reactive.Statement	def
 EDGE	LeanDag.BlackMarlin.Reactive.Latency	LeanDag.VotesAt
 EDGE	LeanDag.BlackMarlin.Reactive.Latency	LeanDag.Faults
@@ -81010,6 +81992,14 @@ EDGE	LeanDag.Hybrid.decided_unique	LeanDag.Slots
 EDGE	LeanDag.Hybrid.decided_unique	LeanDag.Hybrid.not_directSkipIn_of_directCommitIn
 EDGE	LeanDag.Hybrid.decided_unique	LeanDag.View
 EDGE	LeanDag.Hybrid.decided_unique	LeanDag.Hybrid.DirectSkipIn
+NODE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_6	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_6	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_6	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_6	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_6	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_6	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_6	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_6	LeanDag.Faults5.toFaults
 NODE	LeanDagTest.Barnacle.Majority.U3._proof_1	LeanDagTest.Barnacle.Majority	thm
 EDGE	LeanDagTest.Barnacle.Majority.U3._proof_1	LeanDagTest.Barnacle.Majority.blk3
 EDGE	LeanDagTest.Barnacle.Majority.U3._proof_1	LeanDag.Block.refs
@@ -81220,6 +82210,7 @@ EDGE	LeanDag.FinWhale.no_indirectCommit_of_directCommit	LeanDag.FinWhale.FastCom
 EDGE	LeanDag.FinWhale.no_indirectCommit_of_directCommit	LeanDag.FinWhale.Dag
 EDGE	LeanDag.FinWhale.no_indirectCommit_of_directCommit	LeanDag.FinWhale.Dag.leader
 EDGE	LeanDag.FinWhale.no_indirectCommit_of_directCommit	LeanDag.Block.creator
+NODE	LeanDag.OdontocetiProperties.decidedBelow_of_committed_run._proof_1_1	LeanDag.OdontocetiProperties	thm
 NODE	LeanDagTest.Barnacle.OrcaellaIndirect.blkX._proof_8	LeanDagTest.Barnacle.OrcaellaIndirect	thm
 EDGE	LeanDagTest.Barnacle.OrcaellaIndirect.blkX._proof_8	LeanDagTest.Barnacle.OrcaellaIndirect.blkX._proof_4
 NODE	LeanDagTest.ugrow_directCommit	LeanDagTest.Growth	thm
@@ -81679,6 +82670,14 @@ EDGE	LeanDag.Hydrozoan.decided_mono	LeanDag.Hydrozoan.EligibleAsAnchor
 EDGE	LeanDag.Hydrozoan.decided_mono	LeanDag.Hydrozoan.Decided.directSlow
 EDGE	LeanDag.Hydrozoan.decided_mono	LeanDag.Hydrozoan.Decided.directFast
 EDGE	LeanDag.Hydrozoan.decided_mono	LeanDag.Hydrozoan.SlowCommitInView
+NODE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_7	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_7	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_7	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_7	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_7	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_7	LeanDag.Block.round
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_7	LeanDag.BlockUniverse
+EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_7	LeanDag.Faults5.toFaults
 NODE	LeanDag.Slots.mk.noConfusion	LeanDag.Mysticeti	def
 EDGE	LeanDag.Slots.mk.noConfusion	LeanDag.Slots.mk
 EDGE	LeanDag.Slots.mk.noConfusion	LeanDag.Slots.noConfusion
@@ -81749,6 +82748,12 @@ NODE	LeanDag.Hydrozoan.Block.mk.sizeOf_spec	LeanDag.Hydrozoan.Model.Block	thm
 EDGE	LeanDag.Hydrozoan.Block.mk.sizeOf_spec	LeanDag.Hydrozoan.Block.mk
 EDGE	LeanDag.Hydrozoan.Block.mk.sizeOf_spec	LeanDag.Hydrozoan.Block._sizeOf_inst
 EDGE	LeanDag.Hydrozoan.Block.mk.sizeOf_spec	LeanDag.Hydrozoan.Block
+NODE	LeanDag.OdontocetiProperties.leaderCommits._proof_1_1	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.leaderCommits._proof_1_1	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.leaderCommits._proof_1_1	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.leaderCommits._proof_1_1	LeanDag.Faults.f
+EDGE	LeanDag.OdontocetiProperties.leaderCommits._proof_1_1	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.leaderCommits._proof_1_1	LeanDag.Faults5.toFaults
 NODE	LeanDagTest.rrUniverse_populatedOn	LeanDagTest.Growth	thm
 EDGE	LeanDagTest.rrUniverse_populatedOn	LeanDagTest.rrUniverse_populatedOn._simp_1_1
 EDGE	LeanDagTest.rrUniverse_populatedOn	LeanDag.creators

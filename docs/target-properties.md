@@ -367,7 +367,7 @@ making that rule's band unprovable.
 | core Mysticeti | `slotRound k`, `+1`, `+2` | proved |
 | Hydrozoan | `slotRound k`, `+1`, `+2` | proved |
 | reactive Mysticeti | the core's relation, unchanged | inherited |
-| Odontoceti | `slotRound k`, `+1` | reachable |
+| Odontoceti | `slotRound k`, `+1` | proved (§3.12) |
 | Nemo | `slotRound k`, `+1` | reachable |
 | Hybrid | `slotRound k`, `+1` | reachable |
 | Optimal-Hydrozoan | `slotRound k`, `+1`, `+2` | reachable |
@@ -855,6 +855,9 @@ candidate of the slot — which is a fact about blocks `U` already holds,
 so it transports. Odontoceti's `DirectSkipIn` counts blames against one
 candidate and has the shape the core's had.
 
+**All six now hold**, and the rest of the section records what the
+attempt cost and found.
+
 **The repair, and what it cost.** Nothing new had to be defined.
 Odontoceti's `DirectSkipIn` and the core's are the *same predicate* —
 both count, against `quorumCard`, the creators of blocks at
@@ -893,10 +896,26 @@ was the first protocol's, reused without change. That is the strongest
 evidence so far that `Banded` carries real content rather than
 restating what each rule already knew.
 
-What remains for Odontoceti is the band's *induction*: four constructors
-and their transport lemmas, of which `directSkip` is now the settled
-one. `Causal`, `Agree`, `CommitsCandidate` and `CommitsDirect` are
-proved (`LeanDag/OdontocetiProperties.lean`).
+**And then the six went through.** The band's induction is four
+constructors, and what Odontoceti needed beyond the core's was transport
+for its own two predicates: `supportersIn`, since the direct rule counts
+supporters at `slotRound k + 1` where the core counts certificates two
+rounds up, and `coneSupports`/`ThickLink`, the indirect test. The
+minimality premise on `indirectCommit`, which the core has no analogue
+of, needed `not_thickLink_band_novel` — a fresh candidate is
+thick-linked from no old anchor, so it cannot undercut the least one.
+That premise is the same *shape* as the skip rule that failed, a
+negative clause quantified over candidates, and it transports for the
+reason the skip rule did not: it is about what an old anchor can see,
+not about what the universe happens to hold.
+
+`LeaderCommits` and `Descends` followed from Odontoceti's own liveness
+results and its bounded relation, with `decidedWithin_congr_of_slotRound`
+added to `Adaptive/Odontoceti.lean` — the general schedule congruence
+`DecidedBelow` reads, where the file had only the `slotsOf` case the
+adaptive fixpoint uses.
+
+**Four rules now show the six**, and the band has three instances.
 
 ## 4. Properties for the schedule mechanisms
 
@@ -1428,7 +1447,7 @@ conformance `Statement` lists it.
 | reactive Mysticeti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Hydrozoan | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — | ✓ |
 | Optimal-Hydrozoan | — | — | ✓ | ✓ | — | — | — | — |
-| Odontoceti | ✓ | — | ✓ | ✓ | — | — | ✓ | — |
+| Odontoceti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
 | Nemo | — | — | ✓ | ✓ | — | — | ✓ | — |
 | Hybrid / Orcaella | — | — | ✓ | ✓ | — | — | — | — |
 | Mahi-Mahi | — | — | — | — | — | — | — | — |
@@ -1442,12 +1461,10 @@ anchor. A dash there is not a gap.
 `Persist` and `LocalTruncate` are not columns: they follow from `Banded`
 for every rule that has it, so there is nothing per protocol to record.
 
-**Three rules show the six.** Everything else this arc contributes rests
-on `Banded`, and `Banded` has two instances — reactive Mysticeti shares
-the core's rule. That is the number to watch: Barnacle's `Laws` are
-validated against six rules and supply `Agree` and `CommitsCandidate`
-for four more, but the band, and therefore `Persist`, `LocalTruncate`, view
-monotonicity, the composition lemmas and the view axis, rest on two.
+**Four rules show the six**, and `Banded` has three instances —
+reactive Mysticeti shares the core's rule. Odontoceti is the third
+(§3.12) and the first that was not written with the properties in view;
+what it cost, and the defect it found on the way, are recorded there.
 
 **Four carriers came at once, from `Barnacle.BaseRule.toDagRule`**
 (`Barnacle/Conformance.lean`). Barnacle's instances are not further
@@ -1860,13 +1877,11 @@ slots when it means a dependence bound — *the verdict is settled by slot
    Six of the eight rules can carry an offset band as they stand;
    Mahi-Mahi can under `2 ≤ w`, and FinWhale cannot until it has a
    `Slots` layer. `scripts/audit-rounds.py` keeps the result.
-3. **`Banded` for a third rule.** Odontoceti or Nemo — both now have
-   carriers and two of the six properties (§11.2), so what is left is
-   the induction. Same `IsLeaderBlock`, same `Eligible`,
-   `decisionRound + 1` where the core has `+ 2`. `Banded` is the
-   obligation everything else follows from, so a third instance of it
-   is the real test of whether the six are the right six; collapsing
-   the Odontoceti mirrors (`Adaptive/`, `Reactive/`) falls out of it.
+3. **~~`Banded` for a third rule~~** (**done**, §3.12). Odontoceti has
+   all six, and the attempt found a defect in its skip rule first — the
+   core's own, repaired with the core's fix. Nemo is the natural fourth,
+   and now the cheapest: it has a carrier and two properties, and its
+   `Decided` mirrors Odontoceti's at the same wavelength.
 4. **~~A commit names the slot's candidate~~** (**done**, §3.9).
    `CommitsCandidate`, which seven protocols had proved separately.
 5. **~~Re-genesis as an `Extends`~~** (**done**, §3.10). Two witnesses

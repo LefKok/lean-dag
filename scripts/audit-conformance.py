@@ -39,7 +39,7 @@ RULES = [
     ("Hydrozoan",          ["Hydrozoan.rule"],                   None),
     ("Optimal-Hydrozoan",  ["Barnacle.optimalHydrozoanRule"],    "carrier via Barnacle"),
     ("Odontoceti",         ["OdontocetiProperties.odontocetiRule",
-                            "Barnacle.odontocetiRule"], "two carriers; band blocked (3.12)"),
+                            "Barnacle.odontocetiRule"], "two carriers"),
     ("Nemo",               ["Barnacle.nemoRule"],                "carrier via Barnacle"),
     ("Mahi-Mahi",          [], "no carrier; band conditional on `2 <= w` (3.4c)"),
     ("Hybrid / Orcaella",  ["Barnacle.orcaellaRule"],
