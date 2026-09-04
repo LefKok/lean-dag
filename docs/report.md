@@ -37432,7 +37432,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 946 lemmas used only within the file that proves
+The 950 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -37918,14 +37918,17 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `mem_ids_of_round_gt` | Above the fill every block is an old one: the fresh identifiers occupy gap rounds only. |
 
-### `Integration/Joiner.lean` (4)
+### `Integration/Joiner.lean` (7)
 
 | Lemma | Role |
 |:---|:---|
 | `horizonStable_const_zero` | The constant policy is horizon-stable exactly when the base slot is the origin — which is the degenerate … |
 | `injective_slotRound_chop` | Truncation preserves one-leader-per-round. Injectivity of the rebased rounds needs the base-slot … |
+| `joiner_decided_agree` | I9's verdict half. The joiner and the network agree on every shared slot, from an *arbitrary* view of the … |
 | `joiner_leader_agree` | The joiner's schedule *is* the network's, seen from another origin: combining the assignment agreement … |
+| `joiner_run_decided_agree` | I9, whole. A joiner that computed its own schedule from its own truncated view, under a horizon-stable … |
 | `slotsChop_slotsOf` | The transformers commute. Truncating an adaptive schedule and adapting a truncated one give the same … |
+| `slotsChop_slotsOf_eq` | The transformers commute as schedules, not only field by field. Both sides are rebases of `slotsOf hinj a` … |
 
 ### `Integration/Retention.lean` (4)
 
@@ -39277,13 +39280,14 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `Causal.refs_above` | What a block above the cut references is itself above the cut — a fact about causal structure alone, and … |
 
-### `Properties/Compose.lean` (3)
+### `Properties/Compose.lean` (4)
 
 | Lemma | Role |
 |:---|:---|
 | `Truncates.trans` | A stack of truncations is a truncation. Both halves compose, and the settling round of the composite is … |
 | `mono` | A mechanism that rebases from a round rebases from any later one, which is what lets two settling rounds … |
 | `refl` | Doing nothing rebases by nothing, from round zero. |
+| `unique` | A rebase determines the schedule it produces. Both fields are pinned — rounds by the offset, leaders by … |
 
 ### `Properties/Deliver.lean` (4)
 

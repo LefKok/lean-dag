@@ -1,5 +1,7 @@
 import LeanDag.Integration.ScheduleShape
 import LeanDag.Adaptive.Mysticeti
+import LeanDag.Properties.Arcs.GC
+import LeanDag.Properties.Compose
 
 /-!
 # I9 — the joiner and the adaptive schedule
@@ -15,6 +17,15 @@ universe, under a re-indexed schedule.
 
 The question has a deployment analogue: Hammerhead recomputes its
 schedule from committed sub-DAGs, which a pruned node lacks.
+
+**The answer, in three parts.** The schedule halves say the two
+validators do not disagree about who leads, which is the *premise* an
+agreement argument needs. `joiner_decided_agree` is the argument, and it
+comes from outside this arc: `Properties.Arcs.decided_agree_chop`, the
+generic cross-cut agreement, instantiated at the adaptive schedule.
+Nothing about adaptivity enters — `Agree` and `LocalTruncate` hold at
+every schedule, so one that varies with the verdicts is no harder than a
+fixed one. `joiner_run_decided_agree` puts the two together.
 
 The decomposition here follows the shape the question forces. Two
 schedule transformers are in play — `Slots.chop` (re-index from a base
@@ -80,6 +91,44 @@ theorem slotsChop_slotsOf (hd : G ≤ S.slotRound d)
         = (slotsOf (S := S.chop G d hd)
             (injective_slotRound_chop hd hinj) (fun m => a (d + m))).leader k :=
   ⟨rfl, rfl⟩
+
+/-- **The transformers commute as schedules**, not only field by field.
+Both sides are rebases of `slotsOf hinj a` by the same offset from the
+same base slot, so `Properties.Rebases.unique` settles it; here the two
+constructions are definitionally equal and `rfl` does. -/
+theorem slotsChop_slotsOf_eq (hd : G ≤ S.slotRound d)
+    (hinj : Function.Injective S.slotRound) (a : ℕ → Validator)
+    (hd' : G ≤ (slotsOf hinj a).slotRound d) :
+    (slotsOf hinj a).chop G d hd'
+      = slotsOf (S := S.chop G d hd) (injective_slotRound_chop hd hinj)
+          (fun m => a (d + m)) := rfl
+
+/-- **I9's verdict half.** The joiner and the network agree on every
+shared slot, from an *arbitrary* view of the truncation.
+
+This is the question the file opens with, and it was not answered: the
+schedule halves above say the two validators do not disagree about who
+leads, which is the premise an agreement argument needs, not the
+argument. `adaptiveRun_agree` cannot supply it — it quantifies over runs
+of one policy over **one** universe, and the joiner's run is over
+another under a re-indexed schedule.
+
+What supplies it is `Properties.Arcs.decided_agree_chop`, the generic
+cross-cut agreement, instantiated at the adaptive schedule. Nothing
+about adaptivity enters: `Agree` and `LocalTruncate` hold at every
+schedule, so a schedule that varies with the verdicts is no harder than
+a fixed one. -/
+theorem joiner_decided_agree (hd : G ≤ S.slotRound d)
+    (hinj : Function.Injective S.slotRound) (a : ℕ → Validator)
+    (hd' : G ≤ (slotsOf hinj a).slotRound d)
+    {W : View Validator BlockId Payload (chop U G)}
+    {V : View Validator BlockId Payload U} {k : ℕ} {w v : Option BlockId}
+    (hW : Decided (S := slotsOf (S := S.chop G d hd)
+            (injective_slotRound_chop hd hinj) (fun m => a (d + m)))
+          (chop U G) W k w)
+    (hV : Decided (S := slotsOf hinj a) U V (d + k) v) : w = v :=
+  Properties.Arcs.decided_agree_chop (S := slotsOf hinj a) hd'
+    (slotsChop_slotsOf_eq hd hinj a hd' ▸ hW) hV
 
 /-! ## The policy half
 
@@ -147,6 +196,34 @@ theorem joiner_leader_agree {V : View Validator BlockId Payload U}
       = (slotsOf hinj R.assign).leader (d + k) := by
   simp only [slotsOf_leader]
   exact joiner_assign_agree hs R V' k
+
+/-- **I9, whole.** A joiner that computed its own schedule from its own
+truncated view, under a horizon-stable rule, agrees with the network's
+run on every shared slot.
+
+The assignment half says the two compute the same leaders; the verdict
+half says that having done so they reach the same verdicts. Together
+they are the statement garbage collection threatened: *pruning does not
+split the ledger, even when the schedule is derived from it.* -/
+theorem joiner_run_decided_agree (hd : G ≤ S.slotRound d)
+    (hinj : Function.Injective S.slotRound)
+    {pick' : (U' : BlockUniverse Validator BlockId Payload) →
+      View Validator BlockId Payload U' → (ℕ → Option BlockId) → ℕ → Validator}
+    (hs : HorizonStable P d G pick')
+    {V : View Validator BlockId Payload U} (R : AdaptiveRun P U V)
+    (V' : View Validator BlockId Payload (chop U G))
+    (hd' : G ≤ (slotsOf hinj R.assign).slotRound d)
+    {W : View Validator BlockId Payload (chop U G)} {k : ℕ} {w v : Option BlockId}
+    (hW : Decided (S := slotsOf (S := S.chop G d hd)
+            (injective_slotRound_chop hd hinj)
+            (fun m => pick' (chop U G) V' (fun j => R.vdct (d + j)) m))
+          (chop U G) W k w)
+    (hV : Decided (S := slotsOf hinj R.assign) U V (d + k) v) : w = v := by
+  have hassign : (fun m => pick' (chop U G) V' (fun j => R.vdct (d + j)) m)
+      = fun m => R.assign (d + m) := by
+    funext m; exact joiner_assign_agree hs R V' m
+  rw [hassign] at hW
+  exact joiner_decided_agree hd hinj R.assign hd' hW hV
 
 /-- The constant policy is horizon-stable exactly when the base slot is
 the origin — which is the degenerate case, and the point is the

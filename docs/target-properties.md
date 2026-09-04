@@ -1359,11 +1359,21 @@ transport per invariant. I16a–c remain as the hand-written comparison.
 `run_agree_extends` (§4.4) is the other composition: the adaptive
 fixpoint under `Extends`.
 
-**What is still bespoke.** The schedule axis composes as arithmetic but
-has no consumer yet, and adaptive leaders under garbage collection (I5)
-is still proved by hand. A view-level mechanism — rate limiting, the
-joiner — has no transport obligation at all, since `Sustains` is about
-universes; §11.5 records it.
+**Adaptive leaders under garbage collection (I5) closed too.** The
+joiner arc proved that a pruned validator computes the same *leaders* as
+the network — the premise an agreement argument needs — and stopped
+there. `adaptiveRun_agree` could not supply the argument, since it
+quantifies over runs of one policy over **one** universe and the
+joiner's run is over another under a re-indexed schedule.
+`joiner_decided_agree` supplies it from `decided_agree_chop`,
+instantiated at the adaptive schedule; nothing about adaptivity enters,
+because `Agree` and `LocalTruncate` hold at every schedule.
+`joiner_run_decided_agree` is the whole of I9: pruning does not split
+the ledger, even when the schedule is derived from it.
+
+`Rebases.unique` — a rebase determines the schedule it produces — is
+what says the two schedule constructions agree without unfolding
+either.
 
 ### 11.3b The agreement half, and why it was bespoke
 

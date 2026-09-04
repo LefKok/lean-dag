@@ -122,6 +122,26 @@ theorem trans (h : Rebases S S' G₁ d₁) (h' : Rebases S' S'' G₂ d₂) :
     have h2 := h'.base
     omega
 
+/-- **A rebase determines the schedule it produces.** Both fields are
+pinned — rounds by the offset, leaders by the base slot — so two
+schedules rebased alike from one original are the same schedule.
+
+What this is for: a mechanism that re-indexes a schedule can be built in
+more than one way, and the ways have to be shown to agree.
+`Integration/Joiner.lean` compares truncating an adaptive schedule with
+adapting a truncated one; both are rebases of the original by the same
+offset, so this settles it without unfolding either construction. -/
+theorem unique {S S₁ S₂ : Slots Validator} {G d : ℕ}
+    (h₁ : Rebases S S₁ G d) (h₂ : Rebases S S₂ G d) : S₁ = S₂ := by
+  have hr : S₁.slotRound = S₂.slotRound := by
+    funext k
+    have a := h₁.slotRound k
+    have b := h₂.slotRound k
+    omega
+  have hl : S₁.leader = S₂.leader := by
+    funext k; rw [h₁.leader k, h₂.leader k]
+  cases S₁; cases S₂; congr
+
 end Rebases
 
 /-- **A stack of truncations is a truncation.** Both halves compose, and

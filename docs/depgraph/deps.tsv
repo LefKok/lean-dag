@@ -25436,6 +25436,16 @@ EDGE	LeanDag.Hydrozoan.banded_aux._proof_1_1	LeanDag.Hydrozoan.Block.round
 EDGE	LeanDag.Hydrozoan.banded_aux._proof_1_1	LeanDag.Hydrozoan.BlockUniverse.block
 EDGE	LeanDag.Hydrozoan.banded_aux._proof_1_1	LeanDag.Hydrozoan.Slots.slotRound
 EDGE	LeanDag.Hydrozoan.banded_aux._proof_1_1	LeanDag.Hydrozoan.Faults
+NODE	LeanDag.Properties.Rebases.unique	LeanDag.Properties.Compose	thm
+EDGE	LeanDag.Properties.Rebases.unique	LeanDag.Slots.casesOn
+EDGE	LeanDag.Properties.Rebases.unique	LeanDag.Slots.mk
+EDGE	LeanDag.Properties.Rebases.unique	LeanDag.Slots.slotRound
+EDGE	LeanDag.Properties.Rebases.unique	LeanDag.Properties.Rebases.slotRound
+EDGE	LeanDag.Properties.Rebases.unique	LeanDag.Properties.Rebases
+EDGE	LeanDag.Properties.Rebases.unique	LeanDag.Slots.leader
+EDGE	LeanDag.Properties.Rebases.unique	LeanDag.Properties.Rebases.leader
+EDGE	LeanDag.Properties.Rebases.unique	LeanDag.Properties.Rebases.unique._proof_1_1
+EDGE	LeanDag.Properties.Rebases.unique	LeanDag.Slots
 NODE	LeanDag.pedigree_spec	LeanDag.DoS.Pedigree	thm
 EDGE	LeanDag.pedigree_spec	LeanDag.Faults
 EDGE	LeanDag.pedigree_spec	LeanDag.pedigree_spec._proof_1_2
@@ -46705,6 +46715,13 @@ NODE	LeanDag.Hydrozoan.Block.noConfusion	LeanDag.Hydrozoan.Model.Block	def
 EDGE	LeanDag.Hydrozoan.Block.noConfusion	LeanDag.Hydrozoan.Block
 EDGE	LeanDag.Hydrozoan.Block.noConfusion	LeanDag.Hydrozoan.Block.noConfusionType
 EDGE	LeanDag.Hydrozoan.Block.noConfusion	LeanDag.Hydrozoan.Block.casesOn
+NODE	LeanDag.Integration.slotsChop_slotsOf_eq	LeanDag.Integration.Joiner	thm
+EDGE	LeanDag.Integration.slotsChop_slotsOf_eq	LeanDag.Faults
+EDGE	LeanDag.Integration.slotsChop_slotsOf_eq	LeanDag.Slots.slotRound
+EDGE	LeanDag.Integration.slotsChop_slotsOf_eq	LeanDag.Integration.injective_slotRound_chop
+EDGE	LeanDag.Integration.slotsChop_slotsOf_eq	LeanDag.slotsOf
+EDGE	LeanDag.Integration.slotsChop_slotsOf_eq	LeanDag.Slots.chop
+EDGE	LeanDag.Integration.slotsChop_slotsOf_eq	LeanDag.Slots
 NODE	LeanDag.Odontoceti.instDecidableDirectCommit	LeanDag.Odontoceti.Rules	def
 EDGE	LeanDag.Odontoceti.instDecidableDirectCommit	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.instDecidableDirectCommit	LeanDag.Odontoceti.instDecidableDirectCommit._aux_1
@@ -56038,6 +56055,25 @@ EDGE	LeanDag.BlackMarlin.Repair.holds	LeanDag.BlackMarlin.Repair.LivenessUntouch
 EDGE	LeanDag.BlackMarlin.Repair.holds	LeanDag.Block.creator
 EDGE	LeanDag.BlackMarlin.Repair.holds	LeanDag.BlackMarlin.Repair.SupportInView
 EDGE	LeanDag.BlackMarlin.Repair.holds	LeanDag.BlackMarlin.Repair.StrongAgreesCommitted
+NODE	LeanDag.Integration.joiner_run_decided_agree	LeanDag.Integration.Joiner	thm
+EDGE	LeanDag.Integration.joiner_run_decided_agree	LeanDag.AdaptiveRun
+EDGE	LeanDag.Integration.joiner_run_decided_agree	LeanDag.Faults
+EDGE	LeanDag.Integration.joiner_run_decided_agree	LeanDag.Slots.slotRound
+EDGE	LeanDag.Integration.joiner_run_decided_agree	LeanDag.Integration.injective_slotRound_chop
+EDGE	LeanDag.Integration.joiner_run_decided_agree	LeanDag.Adaptive.Run.vdct
+EDGE	LeanDag.Integration.joiner_run_decided_agree	LeanDag.slotsOf
+EDGE	LeanDag.Integration.joiner_run_decided_agree	LeanDag.Decided
+EDGE	LeanDag.Integration.joiner_run_decided_agree	LeanDag.chop
+EDGE	LeanDag.Integration.joiner_run_decided_agree	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.Integration.joiner_run_decided_agree	LeanDag.BlockUniverse
+EDGE	LeanDag.Integration.joiner_run_decided_agree	LeanDag.Integration.joiner_assign_agree
+EDGE	LeanDag.Integration.joiner_run_decided_agree	LeanDag.Slots.chop
+EDGE	LeanDag.Integration.joiner_run_decided_agree	LeanDag.Integration.HorizonStable
+EDGE	LeanDag.Integration.joiner_run_decided_agree	LeanDag.AdaptivePolicy
+EDGE	LeanDag.Integration.joiner_run_decided_agree	LeanDag.Slots
+EDGE	LeanDag.Integration.joiner_run_decided_agree	LeanDag.Adaptive.Run.assign
+EDGE	LeanDag.Integration.joiner_run_decided_agree	LeanDag.View
+EDGE	LeanDag.Integration.joiner_run_decided_agree	LeanDag.Integration.joiner_decided_agree
 NODE	LeanDag.Integration.Hydrozoan.isCandidateAt_of_chopHZ._proof_1_1	LeanDag.Integration.Hydrozoan.OptimalTransport	thm
 EDGE	LeanDag.Integration.Hydrozoan.isCandidateAt_of_chopHZ._proof_1_1	LeanDag.Hydrozoan.BlockUniverse
 EDGE	LeanDag.Integration.Hydrozoan.isCandidateAt_of_chopHZ._proof_1_1	LeanDag.Hydrozoan.Block.round
@@ -69577,6 +69613,9 @@ EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.emitted	LeanDag.HybridFaults
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.emitted	LeanDag.Hybrid.Checkpoint.ChkProp
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.emitted	LeanDag.Hybrid.Checkpoint.Model
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.emitted	LeanDag.Hybrid.Checkpoint.Model.Execution
+NODE	LeanDag.Properties.Rebases.unique._proof_1_1	LeanDag.Properties.Compose	thm
+EDGE	LeanDag.Properties.Rebases.unique._proof_1_1	LeanDag.Slots.slotRound
+EDGE	LeanDag.Properties.Rebases.unique._proof_1_1	LeanDag.Slots
 NODE	LeanDagTest.Dexcl._proof_1	LeanDagTest.GC.Bootstrap	thm
 NODE	LeanDag.self_mem_topsOf	LeanDag.DoS.Pedigree	thm
 EDGE	LeanDag.self_mem_topsOf	LeanDag.Faults
@@ -76039,6 +76078,19 @@ EDGE	LeanDag.viewUpto_chopD._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.viewUpto_chopD._proof_1_2	LeanDag.BlockUniverse.block
 EDGE	LeanDag.viewUpto_chopD._proof_1_2	LeanDag.Block.round
 EDGE	LeanDag.viewUpto_chopD._proof_1_2	LeanDag.BlockUniverse
+NODE	LeanDag.Integration.joiner_decided_agree	LeanDag.Integration.Joiner	thm
+EDGE	LeanDag.Integration.joiner_decided_agree	LeanDag.Faults
+EDGE	LeanDag.Integration.joiner_decided_agree	LeanDag.Slots.slotRound
+EDGE	LeanDag.Integration.joiner_decided_agree	LeanDag.Integration.injective_slotRound_chop
+EDGE	LeanDag.Integration.joiner_decided_agree	LeanDag.slotsOf
+EDGE	LeanDag.Integration.joiner_decided_agree	LeanDag.Decided
+EDGE	LeanDag.Integration.joiner_decided_agree	LeanDag.chop
+EDGE	LeanDag.Integration.joiner_decided_agree	LeanDag.BlockUniverse
+EDGE	LeanDag.Integration.joiner_decided_agree	LeanDag.Integration.slotsChop_slotsOf_eq
+EDGE	LeanDag.Integration.joiner_decided_agree	LeanDag.Slots.chop
+EDGE	LeanDag.Integration.joiner_decided_agree	LeanDag.Slots
+EDGE	LeanDag.Integration.joiner_decided_agree	LeanDag.View
+EDGE	LeanDag.Integration.joiner_decided_agree	LeanDag.Properties.Arcs.decided_agree_chop
 NODE	LeanDagTest.spacedSlots_slotRound	LeanDagTest.Pipelined	thm
 EDGE	LeanDagTest.spacedSlots_slotRound	LeanDag.Slots.slotRound
 EDGE	LeanDagTest.spacedSlots_slotRound	LeanDagTest.spacedSlots_slotRound._proof_1_1
