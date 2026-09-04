@@ -196,15 +196,27 @@ theorem u7_window_healthy :
 back-off, because the window is healthy — not because the arithmetic was
 computed. -/
 example : Aimd.rule bnRule bnP bnLeader bnWin 1 0 U7 (View.full U7) 20 = (2, 0) :=
-  (Healthy.holds (Fin 4) (Fin 24) Unit bnRule bnP bnLeader bnWin).2 U7 20 (by decide) 1
+  (Healthy.holds (Fin 4) (Fin 24) Unit bnRule bnP bnLeader bnWin
+      (commitsDirect_toDagRule _ (Mysticeti.holds (Fin 4) (Fin 24) Unit))).2.1 U7 20 (by decide) 1
     (by decide) (by decide) 0 (View.full U7) (by decide) (by decide) (by decide)
     u7_window_healthy
 
 /-- And `observed` meets `expected` there, which is BN12a. -/
 example : expected bnRule bnP 1 ≤ observed bnRule bnP bnLeader bnWin U7 20 1
     (by decide) (by decide) :=
-  (Healthy.holds (Fin 4) (Fin 24) Unit bnRule bnP bnLeader bnWin).1 U7 20 (by decide) 1
+  (Healthy.holds (Fin 4) (Fin 24) Unit bnRule bnP bnLeader bnWin
+      (commitsDirect_toDagRule _ (Mysticeti.holds (Fin 4) (Fin 24) Unit))).1 U7 20 (by decide) 1
     (by decide) (by decide) (by decide) (by decide) u7_window_healthy
+
+/-- **BN12c applied**: every slot the healthy window counted is a
+commit *verdict*, not merely a slot whose direct predicate held. -/
+example : ∀ d, bnRule.waveLength ≤ d → d ≤ bnP.interval → ∀ l, l < 1 →
+    ∃ L, bnRule.Decided (Sched bnLeader bnWin 1 (by decide) (by decide))
+      (bnRule.historyView U7 20 (by decide)) (1 * ((bnRule.block U7 20).round - d) + l)
+      (some L) :=
+  (Healthy.holds (Fin 4) (Fin 24) Unit bnRule bnP bnLeader bnWin
+      (commitsDirect_toDagRule _ (Mysticeti.holds (Fin 4) (Fin 24) Unit))).2.2
+    U7 20 (by decide) 1 (by decide) (by decide) u7_window_healthy
 
 #print axioms LeanDag.Barnacle.Healthy.holds
 example : Aimd.rule bnRule bnP bnLeader bnWin 4 0 U7 (View.full U7) 20 = (3, 1) := by decide

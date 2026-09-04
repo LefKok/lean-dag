@@ -76,6 +76,14 @@ theorem commitsCandidate_toDagRule (R : BaseRule Validator BlockId Payload)
     (L : BaseRule.Laws R) : Properties.CommitsCandidate R.toDagRule :=
   fun S _ V k lead h => L.candidates S V k lead h
 
+/-- **And `decided_of_directCommitIn` is `CommitsDirect`**, at the
+rule's own direct predicate. The clause had no consumer; the property
+does (`Barnacle/Healthy/`). -/
+theorem commitsDirect_toDagRule (R : BaseRule Validator BlockId Payload)
+    (L : BaseRule.Laws R) :
+    Properties.CommitsDirect R.toDagRule (fun {_} V => R.DirectCommitIn V) :=
+  fun S _ V k lead hc hd => L.decided_of_directCommitIn S V k lead hc hd
+
 end Barnacle
 
 end LeanDag

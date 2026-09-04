@@ -42,9 +42,13 @@ RULES = [
 ]
 
 # The obligations, in the order 11.1 lists them.
+# The six every rule owes, then the two owed only when a mechanism asks:
+# `CommitsDirect` by a rule whose direct predicate a window count reads,
+# `SkipsUnsupported` by one that skips without an anchor.
 OBLIGATIONS = ["Causal", "Banded", "Agree", "CommitsCandidate",
-               "LeaderCommits", "Descends", "SkipsUnsupported"]
-DERIVED = ["Persist", "Local", "LocalTruncate"]
+               "LeaderCommits", "Descends", "CommitsDirect", "SkipsUnsupported"]
+REQUIRED = 6
+DERIVED = ["Persist", "LocalTruncate"]
 
 # Files that state the generic theory rather than an instance of it.
 GENERIC = re.compile(r"^LeanDag\.Properties\b")
@@ -86,8 +90,9 @@ def main():
     cols = OBLIGATIONS + ["|"] + DERIVED
     short = {"Causal": "caus", "Banded": "band", "Agree": "agre",
              "CommitsCandidate": "cand", "LeaderCommits": "lead",
-             "Descends": "desc", "SkipsUnsupported": "skip*",
-             "Persist": "pers", "Local": "locl", "LocalTruncate": "trnc",
+             "Descends": "desc", "CommitsDirect": "drct*",
+             "SkipsUnsupported": "skip*",
+             "Persist": "pers", "LocalTruncate": "trnc",
              "|": "|"}
     width = max(len(name) for name, _, _ in RULES) + 1
     print("obligations, then what follows from them "
@@ -108,13 +113,13 @@ def main():
             else:
                 cells.append("--  ")
         print(name.ljust(width) + "  ".join(cells) + ("   " + note if note else ""))
-        if carrier and all(carrier in shown.get(c, ()) for c in OBLIGATIONS[:6]):
+        if carrier and all(carrier in shown.get(c, ()) for c in OBLIGATIONS[:REQUIRED]):
             conforming += 1
 
     carriers = {c for _, c, _ in RULES if c}
     without = [n for n, c, _ in RULES if not c]
     partial_ = [n for n, c, _ in RULES
-                if c and not all(c in shown.get(o, ()) for o in OBLIGATIONS[:6])]
+                if c and not all(c in shown.get(o, ()) for o in OBLIGATIONS[:REQUIRED])]
     print(f"\n{len(carriers)} carriers over {len(RULES)} rules; "
           f"{conforming} show all six required properties.")
     if partial_:
@@ -124,7 +129,9 @@ def main():
         print("  and `Banded` is the induction each rule owes. Those four are per-rule.")
     if without:
         print(f"{len(without)} with no carrier: " + ", ".join(without) + ".")
-    print("* SkipsUnsupported is optional; the other six are required.")
+    print("* CommitsDirect and SkipsUnsupported are conditional: owed only when "
+          "a mechanism\n  reads the rule's direct predicate, or the rule skips "
+          "without an anchor.")
     return 0
 
 

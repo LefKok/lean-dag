@@ -17,7 +17,7 @@ namespace Barnacle
 namespace Healthy
 
 theorem holds : Statement := by
-  intro Validator BlockId Payload _ _ _ R P getLeader hk
+  intro Validator BlockId Payload _ _ _ R P getLeader hk hcd
   have hcount : Counted R P getLeader hk := by
     intro U A hA m hm hmax hwi hint hH
     -- the scoring slots, as a product of intervals
@@ -39,13 +39,17 @@ theorem holds : Statement := by
       rw [observed, dif_pos hA]
       exact Finset.card_le_card hsub
     omega
-  refine ⟨hcount, ?_⟩
-  intro U A hA m hm hmax backoff V hnd hwi hint hH
-  have hge : expected R P m ≤ observed R P getLeader hk U A m hm hmax :=
-    hcount U A hA m hm hmax hwi hint hH
-  have htest : P.num * expected R P m ≤ P.den * observed R P getLeader hk U A m hm hmax :=
-    le_trans (Nat.mul_le_mul_right _ hnd) (Nat.mul_le_mul_left _ hge)
-  rw [Aimd.rule, dif_pos ⟨hm, hmax⟩, decide_eq_true htest, Aimd.update, if_pos rfl]
+  refine ⟨hcount, ?_, ?_⟩
+  · intro U A hA m hm hmax backoff V hnd hwi hint hH
+    have hge : expected R P m ≤ observed R P getLeader hk U A m hm hmax :=
+      hcount U A hA m hm hmax hwi hint hH
+    have htest : P.num * expected R P m ≤ P.den * observed R P getLeader hk U A m hm hmax :=
+      le_trans (Nat.mul_le_mul_right _ hnd) (Nat.mul_le_mul_left _ hge)
+    rw [Aimd.rule, dif_pos ⟨hm, hmax⟩, decide_eq_true htest, Aimd.update, if_pos rfl]
+  · -- BN12c: each counted slot is a commit verdict, by `CommitsDirect`.
+    intro U A hA m hm hmax hH d hlo hhi l hl
+    obtain ⟨L, hLids, hLb, hdc⟩ := hH d hlo hhi l hl
+    exact ⟨L, hcd _ U _ _ L hLb hdc⟩
 
 end Healthy
 

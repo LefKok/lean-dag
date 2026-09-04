@@ -89,7 +89,6 @@ import LeanDag.Properties.Candidate
 import LeanDag.Properties.Extends
 import LeanDag.Properties.Derived.Persist
 import LeanDag.Properties.Agreement
-import LeanDag.Properties.Derived.Local
 import LeanDag.Properties.Truncate
 import LeanDag.Properties.Sustain
 import LeanDag.Properties.Optional.Skip

@@ -7,7 +7,7 @@ import LeanDag.Properties.Band
 Every theorem below discharges one property from another, once and
 generically, so that a protocol proving `Banded` need not prove any of
 them and a protocol that would rather prove them directly still may —
-Hydrozoan proves `Persist` and `Local` on its own, having no `Banded`.
+Hydrozoan proved `Persist` on its own, having no `Banded`.
 
 The split this file marks is the one worth keeping in view. A protocol
 or a mechanism must *show*: `Causal`, `Agree`, `Banded`, `ViewSound`,
@@ -51,20 +51,6 @@ theorem decided_mono_of_banded (h : Banded R) {S : Slots Validator} {U : R.Unive
     (fun m m' hm _ => by have : m = m' := by omega
                          subst this; rfl)
     AgreeBand.refl (fun b hb _ _ => hsub hb)
-
-/-- **And locality.** Two DAGs agreeing above a round at or below the
-slot's agree on the band, and views agreeing there hold the same blocks
-of it. -/
-theorem Local.of_banded (h : Banded R) : Local R := by
-  intro S U U' r hag V V' hvag k hk v hd
-  obtain ⟨top, htop⟩ := h S U V k v hd
-  refine htop 0 0 0 0 S U' V' k (by omega) (fun m m' hm => by
-      have : m = m' := by omega
-      subst this; rfl)
-    (fun m m' hm _ => by have : m = m' := by omega
-                         subst this; rfl)
-    (AgreeBand.of_agreeAbove hag hk) (fun b hb hlo _ => ?_)
-  exact (hvag b (R.viewSound V hb) (by omega)).mp hb
 
 /-- **A bound falls out of the band.** The slots sitting at or below a
 round are finitely many, since the round structure is monotone and

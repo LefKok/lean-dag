@@ -17,7 +17,7 @@ class of mechanism, and it was already derived.
 **Liveness had nothing at all.** Nothing said a rate limiter eventually
 delivers enough for a slot to decide, and a mechanism that deferred a
 block forever would have satisfied every obligation in this development.
-`Delivers` is that statement.
+`DeliversOn` is that statement.
 
 **The protocol side is derived, not owed.** `exists_coversUpto_decides`
 below: every verdict has a round it is settled by, and any view covering
@@ -79,34 +79,6 @@ theorem exists_coversUpto_decides (h : Banded R) {S : Slots Validator}
                          subst this; rfl)
     AgreeBand.refl (fun b hb _ h2 => hcov b (R.viewSound W hb) h2)
 
-/-- **A view-level mechanism delivers**: for every round, one of the
-views it produces is caught up to it. The view twin of `Sustains`, and
-like it an obligation on the mechanism rather than on the protocol.
-
-Indexed by an arbitrary family rather than by time, because the carrier
-has no clock: `DoS/Novelty.viewUpto` is such a family, indexed by round,
-and a joiner's successive views are another. -/
-def Delivers (R : DagRule Validator BlockId Payload) {U : R.Universe}
-    (view : ℕ → R.View U) : Prop :=
-  ∀ N, ∃ t, CoversUpto R (view t) N
-
-/-- **A mechanism that delivers reaches every verdict.** Whatever any
-view of the universe decides, some view the mechanism produces decides
-too — so deferring a block is a delay and never a loss.
-
-The consumer test this obligation is owed: `Sustains` was first stated
-in a form that had witnesses and served no theorem, and the discipline
-that caught it is to name the theorem first. This is that theorem;
-`docs/target-properties.md` §11.5 records that no mechanism here yet
-exhibits `Delivers`. -/
-theorem decided_of_delivers (h : Banded R) {S : Slots Validator}
-    {U : R.Universe} {view : ℕ → R.View U} (hdel : Delivers R view)
-    {W : R.View U} {k : ℕ} {v : Option BlockId} (hW : R.Decided S W k v) :
-    ∃ t, R.Decided S (view t) k v := by
-  obtain ⟨N, hN⟩ := exists_coversUpto_decides h hW
-  obtain ⟨t, ht⟩ := hdel N
-  exact ⟨t, hN (view t) ht⟩
-
 /-- **A view holds the reliable set's blocks over a window.** Weaker
 than `CoversUpto` in the way a rate limiter needs: it says nothing about
 what an equivocator or a withholder produced, because a verdict is
@@ -129,12 +101,6 @@ proves of the novelty budget. -/
 def DeliversOn (R : DagRule Validator BlockId Payload) {U : R.Universe}
     (view : ℕ → R.View U) (T : Finset Validator) (lo : ℕ) : Prop :=
   ∀ hi, ∃ t, CoversOn R (view t) T lo hi
-
-/-- The strong obligation implies the weak one. -/
-theorem Delivers.deliversOn {U : R.Universe} {view : ℕ → R.View U}
-    (h : Delivers R view) (T : Finset Validator) (lo : ℕ) :
-    DeliversOn R view T lo :=
-  fun hi => let ⟨t, ht⟩ := h hi; ⟨t, ht.coversOn T lo⟩
 
 end Properties
 

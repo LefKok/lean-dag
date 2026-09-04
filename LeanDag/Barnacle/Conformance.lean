@@ -59,6 +59,13 @@ theorem mysticetiRule_agree :
     Properties.Agree (mysticetiRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload)) := agree_toDagRule _ (Mysticeti.holds _ _ _)
 
+theorem mysticetiRule_commitsDirect :
+    Properties.CommitsDirect (mysticetiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload))
+      (fun {_} V => (mysticeti (Validator := Validator) (BlockId := BlockId)
+        (Payload := Payload)).DirectCommitIn V) :=
+  commitsDirect_toDagRule _ (Mysticeti.holds _ _ _)
+
 theorem mysticetiRule_commitsCandidate :
     Properties.CommitsCandidate (mysticetiRule (Validator := Validator)
       (BlockId := BlockId) (Payload := Payload)) := commitsCandidate_toDagRule _ (Mysticeti.holds _ _ _)
@@ -75,6 +82,13 @@ abbrev nemoRule : Properties.DagRule Validator BlockId Payload :=
 theorem nemoRule_agree :
     Properties.Agree (nemoRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload)) := agree_toDagRule _ (Nemo.holds.1 _ _ _)
+
+theorem nemoRule_commitsDirect :
+    Properties.CommitsDirect (nemoRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload))
+      (fun {_} V => (nemo (Validator := Validator) (BlockId := BlockId)
+        (Payload := Payload)).DirectCommitIn V) :=
+  commitsDirect_toDagRule _ (Nemo.holds.1 _ _ _)
 
 theorem nemoRule_commitsCandidate :
     Properties.CommitsCandidate (nemoRule (Validator := Validator)

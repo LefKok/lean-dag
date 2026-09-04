@@ -22579,6 +22579,25 @@ def Raises (R : BaseRule Validator BlockId Payload) (P : Params)
 
 **BN12b, and the rule then increases.** At a threshold of at most one — the paper's `num / den ≤ 1`, which every deployment satisfies — a healthy window raises the count by one, capped at `maxLeaders`, and resets the back-off. So the loop cannot read a window in which every scoring slot committed as a reason to back off.
 
+#### `Sound`
+
+*def, `Barnacle.Healthy.Statement.lean`*
+
+```lean
+def Sound (R : BaseRule Validator BlockId Payload) (P : Params)
+    (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders) : Prop :=
+  ∀ (U : R.Universe) (A : BlockId) (hA : A ∈ R.ids U) (m : ℕ) (hm : 0 < m)
+    (hmax : m ≤ P.maxLeaders),
+    WindowHealthy R P getLeader hk U A hA m hm hmax →
+    ∀ d, R.waveLength ≤ d → d ≤ P.interval → ∀ l, l < m →
+      ∃ L, R.Decided (Sched getLeader hk m hm hmax) (R.historyView U A hA)
+        (m * ((R.block U A).round - d) + l) (some L)
+```
+
+**BN12c, the count counts verdicts.** Every slot the window counts is a slot the protocol committed.
+
+Without this the arc's other two results are true of a rule whose direct predicate holds of everything: the count would reach its expectation, the leader count would rise every window, and nothing would be measured. `Properties.CommitsDirect` is what rules that out, and it is the one thing the leader count asks of a protocol that agreement does not.
+
 #### `Statement`
 
 *def, `Barnacle.Healthy.Statement.lean`*
@@ -22588,7 +22607,8 @@ def Statement : Prop :=
   ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
     [DecidableEq BlockId] (R : BaseRule Validator BlockId Payload) (P : Params)
     (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders),
-    Counted R P getLeader hk ∧ Raises R P getLeader hk
+    Properties.CommitsDirect R.toDagRule (fun {_} V => R.DirectCommitIn V) →
+    Counted R P getLeader hk ∧ Raises R P getLeader hk ∧ Sound R P getLeader hk
 ```
 
 The count of a healthy window, and the step it produces.
@@ -24518,6 +24538,23 @@ def CommitsCandidate (R : DagRule Validator BlockId Payload) : Prop :=
 
 Not derivable from the band. `Banded` says which DAGs a verdict cannot tell apart; it says nothing about what the verdict's payload denotes, and a rule that committed an id it had never seen would satisfy every band.
 
+#### `CommitsDirect`
+
+*def, `Properties.Candidate.lean`*
+
+```lean
+def CommitsDirect (R : DagRule Validator BlockId Payload)
+    (Direct : ∀ {U : R.Universe}, R.View U → BlockId → ℕ → Prop) : Prop :=
+  ∀ (S : Slots Validator) (U : R.Universe) (V : R.View U) (k : ℕ) (L : BlockId),
+    R.IsCandidate S U k L → Direct V L (S.slotRound k) → R.Decided S V k (some L)
+```
+
+**And a direct commit is a verdict** — the converse, parameterised by the rule's own direct-commit predicate, since what counts as *direct* is the rule's business and not the carrier's.
+
+**Why a mechanism needs this.** `Barnacle`'s leader count is driven by a window count: how many slots of the recent past were directly committed, measured on the anchor's causal history. Nothing in that count mentions `Decided`. A rule whose direct predicate held of everything would drive the count to its maximum and raise the leader count every window, and every theorem about the count would still be true — it would simply be counting nothing. This is the property that makes it a count of verdicts.
+
+It sat unused in `Barnacle.BaseRule.Laws` as `decided_of_directCommitIn` for exactly as long as its own docstring claimed it was what made the window count meaningful. Six protocols proved it and nothing read it.
+
 #### `DagRule`
 
 *structure, `Properties.Carrier.lean`*
@@ -24647,20 +24684,6 @@ def CoversUpto (R : DagRule Validator BlockId Payload) {U : R.Universe}
 
 Four protocols define this separately as `View.CoversUpto` — the core, Hydrozoan, Nemo and Barnacle — with the same three lines each.
 
-#### `Delivers`
-
-*def, `Properties.Deliver.lean`*
-
-```lean
-def Delivers (R : DagRule Validator BlockId Payload) {U : R.Universe}
-    (view : ℕ → R.View U) : Prop :=
-  ∀ N, ∃ t, CoversUpto R (view t) N
-```
-
-**A view-level mechanism delivers**: for every round, one of the views it produces is caught up to it. The view twin of `Sustains`, and like it an obligation on the mechanism rather than on the protocol.
-
-Indexed by an arbitrary family rather than by time, because the carrier has no clock: `DoS/Novelty.viewUpto` is such a family, indexed by round, and a joiner's successive views are another.
-
 #### `CoversOn`
 
 *def, `Properties.Deliver.lean`*
@@ -24685,20 +24708,6 @@ def DeliversOn (R : DagRule Validator BlockId Payload) {U : R.Universe}
 ```
 
 **A view-level mechanism delivers the reliable set.** For every round, one of the views it produces holds every `T`-block from `lo` up to it. What a rate limiter can promise, and what `DoS/Delivers.lean` proves of the novelty budget.
-
-#### `Local`
-
-*def, `Properties.Derived.Local.lean`*
-
-```lean
-def Local (R : DagRule Validator BlockId Payload) : Prop :=
-  ∀ (S : Slots Validator) (U U' : R.Universe) (r : ℕ), AgreeAbove R U U' r →
-    ∀ (V : R.View U) (V' : R.View U'), ViewAgreeAbove R V V' r →
-    ∀ (k : ℕ), r ≤ S.slotRound k →
-    ∀ (v : Option BlockId), R.Decided S V k v → R.Decided S V' k v
-```
-
-**Locality.** A verdict at a slot whose round is at or above `r` depends on the DAG and the view only above `r`.
 
 #### `Persist`
 
@@ -24943,7 +24952,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 956 theorems that either another module of the
+The 953 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -37032,17 +37041,6 @@ theorem descends {S : Slots Validator} {c : ℕ} (hc : 0 < c)
 
 **The descent as a property**, under the spanning hypothesis on the round structure.
 
-#### `symm`
-
-*theorem, `Properties.Agreement.lean`*
-
-```lean
-theorem symm (h : AgreeAbove R U U' r) (hv : ViewAgreeAbove R V V' r) :
-    ViewAgreeAbove R V' V r
-```
-
-Agreement of views is symmetric, given agreement of the universes that fixes the rounds.
-
 #### `decided_agree_truncate`
 
 *theorem, `Properties.Arcs.GC.lean`*
@@ -37161,18 +37159,6 @@ theorem of_extends {U U' : R.Universe} (he : Extends R U U') (lo hi : ℕ) :
 
 An extension carries every band, since it moves nothing.
 
-#### `of_agreeAbove`
-
-*theorem, `Properties.Band.lean`*
-
-```lean
-theorem of_agreeAbove {U U' : R.Universe} {r lo hi : ℕ} (h : AgreeAbove R U U' r)
-    (hr : r ≤ lo) : AgreeBand R U U' lo hi 0 0 where
-  mem
-```
-
-Agreement above a round carries every band whose floor is at or above it.
-
 #### `mono`
 
 *theorem, `Properties.Band.lean`*
@@ -37225,17 +37211,6 @@ theorem of_mem' (h : RebasedAbove R U U' G R₀) {b : BlockId} (hb : b ∈ R.ids
 ```
 
 A block of the target at or above the settling round is a block of the source, at the shifted round.
-
-#### `symm`
-
-*theorem, `Properties.Carrier.lean`*
-
-```lean
-theorem symm (h : AgreeAbove R U U' r) : AgreeAbove R U' U r where
-  mem
-```
-
-Agreement at no offset is symmetric — which the paired `mem` clause is what secures. A rebase by a positive offset is not: reading it backwards moves the offset to the other side, which is why `AgreeBand` carries one on each.
 
 #### `trans`
 
@@ -38991,14 +38966,16 @@ subsection per module, in the layer order of Appendices B and C.
 | `partialRun_assign_agree` | Assignments agree wherever the common verdicts determine them. |
 | `spansEligible_slotsOf` | Eligibility reads only the round structure, which reassignment fixes: the spanning property transfers to … |
 
-### `Barnacle/Conformance.lean` (10)
+### `Barnacle/Conformance.lean` (12)
 
 | Lemma | Role |
 |:---|:---|
 | `mysticetiRule_agree` | — |
 | `mysticetiRule_commitsCandidate` | — |
+| `mysticetiRule_commitsDirect` | — |
 | `nemoRule_agree` | — |
 | `nemoRule_commitsCandidate` | — |
+| `nemoRule_commitsDirect` | — |
 | `odontocetiRule_agree` | — |
 | `odontocetiRule_commitsCandidate` | — |
 | `optimalHydrozoanRule_agree` | — |
@@ -39006,10 +38983,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `orcaellaRule_agree` | — |
 | `orcaellaRule_commitsCandidate` | — |
 
-### `Barnacle/Helpers/DagRule.lean` (2)
+### `Barnacle/Helpers/DagRule.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
+| `commitsDirect_toDagRule` | And `decided_of_directCommitIn` is `CommitsDirect`, at the rule's own direct predicate. The clause had no … |
 | `toDagRule_block` | — |
 | `toDagRule_ids` | — |
 
@@ -39397,6 +39375,12 @@ subsection per module, in the layer order of Appendices B and C.
 | `extends_of_skipFill` | The fill is an extension. It holds every block the original held — `ids` is a union — and denotes each of … |
 | `presentAt_liftView` | Presence in the pre-crash view is presence in the lifted one: the ids are the same and old blocks are … |
 
+### `Properties/Band.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `of_agreeAbove` | Agreement above a round carries every band whose floor is at or above it. |
+
 ### `Properties/Candidate.lean` (4)
 
 | Lemma | Role |
@@ -39421,14 +39405,12 @@ subsection per module, in the layer order of Appendices B and C.
 | `refl` | Doing nothing rebases by nothing, from round zero. |
 | `unique` | A rebase determines the schedule it produces. Both fields are pinned — rounds by the offset, leaders by … |
 
-### `Properties/Deliver.lean` (4)
+### `Properties/Deliver.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
 | `CoversUpto.coversOn` | Full coverage over a window is coverage of any set over it. |
 | `CoversUpto.mono` | Covering a round covers every earlier one. |
-| `Delivers.deliversOn` | The strong obligation implies the weak one. |
-| `decided_of_delivers` | A mechanism that delivers reaches every verdict. Whatever any view of the universe decides, some view the … |
 
 ### `Properties/Derived/Bounded.lean` (1)
 
@@ -39436,19 +39418,12 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `lt_bound` | The decided slot lies below the bound. |
 
-### `Properties/Derived/FromBand.lean` (3)
+### `Properties/Derived/FromBand.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
-| `Local.of_banded` | And locality. Two DAGs agreeing above a round at or below the slot's agree on the band, and views agreeing … |
 | `Persist.of_banded` | Persistence falls out. An extension carries every band and adds only blocks; a larger view holds … |
 | `exists_decidedBelow` | A bound falls out of the band. The slots sitting at or below a round are finitely many, since the round … |
-
-### `Properties/Derived/Local.lean` (1)
-
-| Lemma | Role |
-|:---|:---|
-| `Local.iff` | Locality in both directions, which is what agreement gives: the hypothesis is symmetric, so a protocol … |
 
 ### `Properties/Derived/Progress.lean` (1)
 

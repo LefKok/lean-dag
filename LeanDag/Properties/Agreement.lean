@@ -46,20 +46,6 @@ def ViewAgreeAbove (R : DagRule Validator BlockId Payload) {U U' : R.Universe}
     (b ∈ R.viewIds V ↔ b ∈ R.viewIds V')
 
 
-namespace ViewAgreeAbove
-
-variable {U U' : R.Universe} {V : R.View U} {V' : R.View U'} {r : ℕ}
-
-/-- Agreement of views is symmetric, given agreement of the universes
-that fixes the rounds. -/
-theorem symm (h : AgreeAbove R U U' r) (hv : ViewAgreeAbove R V V' r) :
-    ViewAgreeAbove R V' V r := by
-  intro b hb hr
-  have hU : b ∈ R.ids U ∧ r ≤ (R.block U b).round := (h.mem b).mpr ⟨hb, hr⟩
-  exact (hv b hU.1 hU.2).symm
-
-end ViewAgreeAbove
-
 end Properties
 
 end LeanDag

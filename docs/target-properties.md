@@ -1120,7 +1120,7 @@ LeanDag/Properties/
   Band.lean        AgreeBand and Banded, the one safety obligation
   Candidate.lean   IsCandidate, and CommitsCandidate: what a commit names
   Extends.lean  Agreement.lean   vocabulary the derived properties use
-  Derived/Persist.lean  Derived/Local.lean   the two statements
+  Derived/Persist.lean    Persist, and its route from the band
   Derived/Truncate.lean   LocalTruncate, and its route from the band
   Derived/FromBand.lean   the routes, and view monotonicity and the bound
   Derived/Bounded.lean    the laws of DecidedBelow
@@ -1285,8 +1285,9 @@ instance question rather than a design one: seven rules have none
 
 ### 11.1 Against part 1: what is owed, and what follows
 
-**Nine obligations, in the two directions §3.6 argues for.** Six fall on
-the protocol, one more is optional, and two fall on a mechanism —
+**Ten obligations, in the two directions §3.6 argues for.** Six fall on
+the protocol unconditionally, two more are owed only when a mechanism
+asks for them, and two fall on a mechanism —
 which one depending on whether it transforms the DAG or a view.
 
 | Direction | Property | Content |
@@ -1297,7 +1298,8 @@ which one depending on whether it transforms the DAG or a view.
 | | `CommitsCandidate` | a commit names a block the DAG holds, at the slot's round, by the slot's leader |
 | | `LeaderCommits R Live` | under the protocol's own precondition, a reliably-led slot commits at a tight bound |
 | | `Descends R S c` | a run of `c` committed slots decides everything below it |
-| protocol, optional | `SkipsUnsupported R Ok` | an unsupported slot is skipped without waiting for an anchor |
+| protocol, conditional | `CommitsDirect R Direct` | a directly committed candidate is a commit verdict — owed when a mechanism counts the rule's direct predicate |
+| | `SkipsUnsupported R Ok` | an unsupported slot is skipped without waiting for an anchor |
 | mechanism, DAG | `Sustains R U U' G R₀` | above the settling round the transformed DAG holds the same blocks, at rounds `G` apart |
 | mechanism, view | `DeliversOn R view T lo` | for every round, one of the views produced holds every `T`-block from `lo` up to it |
 
@@ -1308,7 +1310,7 @@ protocol's view type already carried the proof (§11.4d).
 
 | Derived | From |
 |---|---|
-| `Persist`, `Local`, `LocalTruncate` | `Banded` |
+| `Persist`, `LocalTruncate` | `Banded` |
 | view monotonicity, a slot bound, `exists_coversUpto_decides` | `Banded` |
 | cross-cut and cross-horizon agreement | `Agree` + `LocalTruncate` |
 | agreement across an extension | `Agree` + `Persist` |
@@ -1404,12 +1406,27 @@ a protocol owes.
 **What is left of `Laws` is a source, not an interface.** One consumer
 remains, `Helpers/Cover.coversUpto_full`, for `full_ids`. `agree` and
 `candidates` survive only to build the two properties;
-`decided_of_directCommitIn` and `historyView_ids` have **no consumers at
-all** — six protocols prove them for nothing. Deleting the two dead
-clauses is available and not taken:
-`decided_of_directCommitIn` is precisely the law a direct-commit
-predicate would need if `DirectCommitIn` were ever made a parameter of a
-property rather than carrier data, so it is likelier to move than to go.
+`decided_of_directCommitIn` has moved out, to `Properties.CommitsDirect`
+(below); `historyView_ids` has **no consumer at all**, and six protocols
+prove it for nothing.
+
+**BN12 was provable and not sound, and that is now fixed.** The window
+count that drives the leader count filters on `DirectCommitIn`, a free
+field of `BaseRule` that nothing related to `Decided` —
+`Model/Window.lean`, `Healthy/Statement.lean` and `Healthy/Proof.lean`
+mention `Decided` zero times. A rule whose direct predicate held of
+everything would reach its expected count every window and raise the
+leader count forever, and `Counted` and `Raises` would both still be
+true. `Properties.CommitsDirect` rules that out, `Healthy.Sound` is the
+consumer, and `LeanDagTest/Barnacle/Model.lean` exhibits it on the
+witness universe.
+
+The property is `Laws.decided_of_directCommitIn` promoted. It sat unused
+for exactly as long as its own docstring claimed it was what made the
+window count a count of verdicts — six protocols proving it and nothing
+reading it. It is conditional rather than required: a rule owes it for
+whatever direct predicate a mechanism counts, in the way `LeaderCommits`
+is owed at whatever `Live` an execution model supplies.
 
 **Why Barnacle's laws stay in `Barnacle/`.** They are properties, and a
 reader may expect them under `Properties/`. §8's dependency rule is what
@@ -1591,10 +1608,13 @@ kinds, and only the first is large.
   `DagRule` has no validity field. The last place that calls for a new
   carrier field rather than a new property; §3.9 records what the
   property side already gives.
-- **Two dead statements**, for different reasons. `Local` has no
-  consumer and no need. `Delivers` — the strong view obligation — has a
-  consumer in `decided_of_delivers` but no witness beyond `View.full`,
-  since both view-level mechanisms meet `DeliversOn` instead (§3.11).
+- ~~**Two dead statements**~~ (**deleted**). `Local` had no consumer and
+  no need; `Delivers`, the full-coverage view obligation, had no witness
+  beyond `View.full`. Both are gone, with `AgreeAbove.symm` and
+  `ViewAgreeAbove.symm`, which existed only for `Local.iff`. A property
+  whose only model is the mechanism that does nothing is the vacuity
+  this arc has twice been caught by (§3.4, §3.6); keeping a third would
+  invite someone to prove it for a real limiter and fail.
 - **One structural limit.** Two *sibling* transformations — two
   validators recovering from one universe with different fill messages —
   give universes neither of which extends the other, and `Agree`

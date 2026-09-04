@@ -148,29 +148,6 @@ theorem of_mem' (h : RebasedAbove R U U' G R₀) {b : BlockId} (hb : b ∈ R.ids
 
 end RebasedAbove
 
-namespace AgreeAbove
-
-variable {R : DagRule Validator BlockId Payload} {U U' : R.Universe} {r : ℕ}
-
-/-- Agreement at no offset is symmetric — which the paired `mem` clause
-is what secures. A rebase by a positive offset is not: reading it
-backwards moves the offset to the other side, which is why `AgreeBand`
-carries one on each. -/
-theorem symm (h : AgreeAbove R U U' r) : AgreeAbove R U' U r where
-  mem := fun b => by simpa using (h.mem b).symm
-  round := fun b hb hr =>
-    have hU := (h.mem b).mpr ⟨hb, by simpa using hr⟩
-    by simpa using (h.round b hU.1 hU.2).symm
-  creator := fun b hb hr =>
-    have hU := (h.mem b).mpr ⟨hb, by simpa using hr⟩
-    (h.creator b hU.1 hU.2).symm
-  refs := fun b hb hr =>
-    have hU := (h.mem b).mpr ⟨hb, by simpa using le_of_lt hr⟩
-    have hround := h.round b hU.1 hU.2
-    (h.refs b hU.1 (by omega)).symm
-
-end AgreeAbove
-
 /-- **What a block above the cut references is itself above the cut** —
 a fact about causal structure alone, and the step an induction over a
 derivation's anchors needs, since it says the region agreement covers

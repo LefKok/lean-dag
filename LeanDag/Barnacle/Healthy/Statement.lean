@@ -1,3 +1,4 @@
+import LeanDag.Barnacle.Helpers.DagRule
 import LeanDag.Barnacle.Model.Window
 import Mathlib.Order.Interval.Finset.Nat
 
@@ -77,12 +78,30 @@ def Raises (R : BaseRule Validator BlockId Payload) (P : Params)
     WindowHealthy R P getLeader hk U A hA m hm hmax →
     Aimd.rule R P getLeader hk m backoff U V A = (min (m + 1) P.maxLeaders, 0)
 
+/-- **BN12c, the count counts verdicts.** Every slot the window counts
+is a slot the protocol committed.
+
+Without this the arc's other two results are true of a rule whose direct
+predicate holds of everything: the count would reach its expectation,
+the leader count would rise every window, and nothing would be measured.
+`Properties.CommitsDirect` is what rules that out, and it is the one
+thing the leader count asks of a protocol that agreement does not. -/
+def Sound (R : BaseRule Validator BlockId Payload) (P : Params)
+    (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders) : Prop :=
+  ∀ (U : R.Universe) (A : BlockId) (hA : A ∈ R.ids U) (m : ℕ) (hm : 0 < m)
+    (hmax : m ≤ P.maxLeaders),
+    WindowHealthy R P getLeader hk U A hA m hm hmax →
+    ∀ d, R.waveLength ≤ d → d ≤ P.interval → ∀ l, l < m →
+      ∃ L, R.Decided (Sched getLeader hk m hm hmax) (R.historyView U A hA)
+        (m * ((R.block U A).round - d) + l) (some L)
+
 /-- The count of a healthy window, and the step it produces. -/
 def Statement : Prop :=
   ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
     [DecidableEq BlockId] (R : BaseRule Validator BlockId Payload) (P : Params)
     (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders),
-    Counted R P getLeader hk ∧ Raises R P getLeader hk
+    Properties.CommitsDirect R.toDagRule (fun {_} V => R.DirectCommitIn V) →
+    Counted R P getLeader hk ∧ Raises R P getLeader hk ∧ Sound R P getLeader hk
 
 end Healthy
 
