@@ -437,6 +437,56 @@ rather than left to be discovered.
 
 ---
 
+## 3.8 The band: what `Local` and `Persist` are shadows of
+
+`Properties/Witness.lean`. Locality and persistence say one thing twice,
+in different units and from opposite ends, and the statement they are
+both shadows of is the one a reader reaches for first: *a verdict is
+carried by a range of rounds*.
+
+`Banded R` says that for every verdict at slot `k` there is a **top**
+such that any universe carrying `U`'s blocks between the slot's own
+round and that top, and any view holding those blocks, reaches the same
+verdict. The floor is the slot's round, which is `Local`'s content. The
+top is variable, as it must be, since an indirect verdict anchors on a
+committed slot that may sit arbitrarily high and the anchor's own
+derivation reaches higher; what the property claims is that the top
+**exists**, so no verdict is a function of unboundedly much of the DAG.
+
+The agreement it asks for, `AgreeBand`, is deliberately
+**one-directional**: the larger universe may hold blocks the band did
+not, in the band or out of it, which is what a fill does. A rule proving
+`Banded` therefore has to cope with candidates that appear from nowhere,
+and the core does, on two counts. The slot-level skip does not look for
+them (§3.2). And the anchor cannot see them: an old block in the band
+keeps the references it had, so the anchor's cone never leaves the
+blocks the band already carried (`AgreeBand.reaches_old`).
+
+**Three properties come out of one induction.**
+
+| Corollary | The band applied to |
+|---|---|
+| `Persist.Unconditional` | an extension, which carries every band |
+| `Local` | two DAGs agreeing above a round at or below the slot's |
+| view monotonicity (L2) | one universe, which carries its own bands |
+
+The core proves `banded` in a single induction over `Decided` and takes
+all three (`persist_unconditional`, `local_`, `decided_mono_of_band`).
+That closes the core's missing `Local`, which §11.2 had listed as a gap,
+and it re-derives `decided_mono` — a four-case induction of
+`Liveness.lean` — with none of its own, which is the consumer test.
+
+**What stays outside.** `LocalTruncate` renumbers rounds and slots as
+well as restricting them, and no agreement hypothesis states a
+renumbering; §3.4 records why the renumbering cannot be isolated, so the
+combined property stays combined. `Bounded` bounds the **slots** a
+derivation names, and a bound in rounds does not give one when a round
+carries several slots, which pipelining allows and this development
+permits. The two are the parts of the interval the band does not reach:
+one below, one above.
+
+---
+
 ## 4. Properties for the schedule mechanisms
 
 `Barnacle.BaseRule` and its `Laws` are one working interface: any two
@@ -784,8 +834,10 @@ directory, hence the one flat module.
 - **G4** Discharge them for the core (**`Persist` done**, and
   *unconditional* once the second instance turned up a defect in the
   core's skip rule — §3.2 — with `SafeSkip.decided_fill` re-derived as
-  the consumer test and its counting hypothesis dropped). The instance
-  also reshaped `Persist.Ok` before any proof was attempted. **`SkipsUnsupported` done** at grade
+  the consumer test and its counting hypothesis dropped). `Local` is
+  done too, and both now fall out of `Banded` (§3.8), which also
+  re-derives view monotonicity. The instance reshaped `Persist.Ok`
+  before any proof was attempted. `LocalTruncate` remains. **`SkipsUnsupported` done** at grade
   `quorumCard ≤ |T|`, with SS3 re-derived as its consumer (§3.7).
   `Local` and `LocalTruncate` for the core remain.
 - **G5** The schedule family (**built, for Mysticeti timed and
@@ -853,6 +905,7 @@ residue; the mechanism owes one liveness property.
 | Direction | Property | Content |
 |---|---|---|
 | protocol, safety | `Causal` | universes are block DAGs |
+| | `Banded` | a verdict is carried by a range of rounds, and `Persist`, `Local` and view monotonicity are its corollaries |
 | | `Persist R Ok` | a verdict survives extension of the DAG, at grade `Ok` |
 | | `Local` | a verdict at round ≥ r reads the DAG only above r |
 | | `LocalTruncate` | a verdict survives restriction with renumbering, both ways |
@@ -871,8 +924,10 @@ property (§5).
 | | Hydrozoan | core Mysticeti | reactive Mysticeti | Odontoceti, Nemo, Mahi-Mahi, Hybrid, Optimal-Hydrozoan, FinWhale |
 |---|---|---|---|---|
 | `Causal` | ✓ | ✓ | inherited | — |
-| `Persist` | ✓ unconditional | ✓ unconditional | inherited | — |
-| `Local`, `LocalTruncate` | ✓ | **missing** | — | — |
+| `Persist` | ✓ unconditional | ✓ unconditional, from `Banded` | inherited | — |
+| `Banded` | **missing** | ✓ | inherited | — |
+| `Local` | ✓ | ✓, from `Banded` | inherited | — |
+| `LocalTruncate` | ✓ | **missing** | — | — |
 | `SkipsUnsupported` | ✓ at `qFast ≤ |T|` | ✓ at a correct quorum | — | — |
 | `Agree`, `Bounded`, `SchedLocal` | **missing** | ✓ | inherited | — |
 | `LeaderCommits`, `Descends` | **missing** | ✓ | ✓, a second `Live` | — |
@@ -890,7 +945,10 @@ What part 2 does not yet deliver:
 
 - **No protocol has the full set.** Hydrozoan cannot take adaptive
   leaders; the core cannot take garbage collection through the
-  properties. Hydrozoan is closer, by a bounded relation.
+  properties, `LocalTruncate` being the one property it still lacks.
+  Hydrozoan proves `Local` and `LocalTruncate` directly and has no
+  `Banded`, so the two protocols prove the same things by different
+  routes.
 - **Six protocols have no instance of any property.** Whether
   `Descends` and `Live` are generic or Mysticeti's shape with the name
   removed is unknown until the Odontoceti mirror is collapsed.
@@ -931,8 +989,9 @@ is the part of the goal least served, and it is the first item below.
 1. **`Compose.lean`.** The three composition lemmas, then
    `Stack.lean`'s theorem re-derived from them. Small, and the direct
    test of part 3.
-2. **Core `Local` and `LocalTruncate`**, so one protocol has every
-   property and every mechanism.
+2. **Core `LocalTruncate`**, the one property the core still lacks, so
+   one protocol has every property and every mechanism. `Local` is done,
+   from `Banded` (§3.8).
 3. **Collapse the Odontoceti mirrors** (`Adaptive/`, `Reactive/`) onto
    instances, to learn whether `Live` and `Descends` are generic before
    more instances are written.

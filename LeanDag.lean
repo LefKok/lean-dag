@@ -90,6 +90,7 @@ import LeanDag.Properties.Skip
 import LeanDag.Properties.Agree
 import LeanDag.Properties.Bounded
 import LeanDag.Properties.Commit
+import LeanDag.Properties.Witness
 import LeanDag.MysticetiProperties
 import LeanDag.Properties.Arcs.SafeSkip
 import LeanDag.Properties.Arcs.GC
