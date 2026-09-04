@@ -21,6 +21,7 @@ import LeanDag.DoS.Adoption
 import LeanDag.DoS.Pedigree
 import LeanDag.DoS.Density
 import LeanDag.DoS.Novelty
+import LeanDag.DoS.Delivers
 import LeanDag.DoS.Composition
 import LeanDag.DoS.Acceptance
 import LeanDag.DoS.Counting

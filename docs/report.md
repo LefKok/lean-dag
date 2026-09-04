@@ -23286,6 +23286,20 @@ def Statement : Prop :=
 
 The delivered order of the Black Marlin commit rule where the rotation names reliable validators, over every fault configuration, rotation and block universe the model admits.
 
+#### `View.ofViewUpto`
+
+*def, `DoS.Delivers.lean`*
+
+```lean
+def View.ofViewUpto (D : Delivery U) (v : Validator) (n : ℕ) :
+    View Validator BlockId Payload U where
+  ids := viewUpto D v n
+  subset_ids := viewUpto_subset_ids
+  complete := fun _ hi _ hj => mem_viewUpto_of_mem_refs hi hj
+```
+
+**A retained store is a view.** It holds only real blocks (`viewUpto_subset_ids`) and is closed under references (`mem_viewUpto_of_mem_refs`), which are the two things a view is.
+
 #### `History`
 
 *abbrev, `Hybrid.Checkpoint.BaseSpec.lean`*
@@ -24554,6 +24568,31 @@ def Delivers (R : DagRule Validator BlockId Payload) {U : R.Universe}
 
 Indexed by an arbitrary family rather than by time, because the carrier has no clock: `DoS/Novelty.viewUpto` is such a family, indexed by round, and a joiner's successive views are another.
 
+#### `CoversOn`
+
+*def, `Properties.Deliver.lean`*
+
+```lean
+def CoversOn (R : DagRule Validator BlockId Payload) {U : R.Universe}
+    (V : R.View U) (T : Finset Validator) (lo hi : ℕ) : Prop :=
+  ∀ b, b ∈ R.ids U → (R.block U b).creator ∈ T →
+    lo ≤ (R.block U b).round → (R.block U b).round ≤ hi → b ∈ R.viewIds V
+```
+
+**A view holds the reliable set's blocks over a window.** Weaker than `CoversUpto` in the way a rate limiter needs: it says nothing about what an equivocator or a withholder produced, because a verdict is reached from a quorum of correct evidence and not from every block.
+
+#### `DeliversOn`
+
+*def, `Properties.Deliver.lean`*
+
+```lean
+def DeliversOn (R : DagRule Validator BlockId Payload) {U : R.Universe}
+    (view : ℕ → R.View U) (T : Finset Validator) (lo : ℕ) : Prop :=
+  ∀ hi, ∃ t, CoversOn R (view t) T lo hi
+```
+
+**A view-level mechanism delivers the reliable set.** For every round, one of the views it produces holds every `T`-block from `lo` up to it. What a rate limiter can promise, and what `DoS/Delivers.lean` proves of the novelty budget.
+
 #### `Local`
 
 *def, `Properties.Derived.Local.lean`*
@@ -24800,7 +24839,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 951 theorems that either another module of the
+The 952 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -37067,6 +37106,21 @@ theorem trans (h : Rebases S S' G₁ d₁) (h' : Rebases S' S'' G₂ d₂) :
 
 **And two schedule rebases are one.** Offsets and base slots both add, which is what makes a stack of truncations a truncation.
 
+#### `exists_coversUpto_decides`
+
+*theorem, `Properties.Deliver.lean`*
+
+```lean
+theorem exists_coversUpto_decides (h : Banded R) {S : Slots Validator}
+    {U : R.Universe} {W : R.View U} {k : ℕ} {v : Option BlockId}
+    (hW : R.Decided S W k v) :
+    ∃ N, ∀ V : R.View U, CoversUpto R V N → R.Decided S V k v
+```
+
+**A verdict is reached by every view caught up far enough.** The round is the band's ceiling: the verdict reads nothing above it, so a view holding everything up to it holds everything the verdict reads.
+
+This is the protocol's whole contribution to view-level liveness, and it is `Banded` applied.
+
 #### `toDecided`
 
 *theorem, `Properties.Derived.Bounded.lean`*
@@ -37339,7 +37393,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 939 lemmas used only within the file that proves
+The 945 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -37446,7 +37500,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `PopulatedFrom.mono` | Population is antitone: a smaller set is easier to populate. |
 | `SynchronisedFrom.mono` | Coverage is antitone too: mutual coverage among a larger set implies it among any subset. |
 
-### `Liveness.lean` (21)
+### `Liveness.lean` (22)
 
 | Lemma | Role |
 |:---|:---|
@@ -37462,6 +37516,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `certifies_of_synchronisedOn` | A correct round-`(r+2)` block certifies any correct round-`r` block, once round `r+1` is populated and … |
 | `decided_none_of_no_candidate` | L5, in the form the `Decided` constructor wants. |
 | `directCommitIn_mono` | A larger view can only see more certificates. |
+| `directCommitIn_of_certifiesAt` | The commit argument at the view level. `directCommit_of_certifiesAt` counts `T`'s decision-round blocks in … |
 | `directCommit_of_synchronisedOn` | L4, at the round level. A correct block at round `r` is directly committed, given coverage from `r` and … |
 | `directSkipIn_mono` | A larger view can only see more blame. |
 | `exists_eligible` | Every slot has an eligible anchor somewhere. |
@@ -38820,6 +38875,15 @@ subsection per module, in the layer order of Appendices B and C.
 | `descent` | — |
 | `roundRobinLive` | — |
 
+### `DoS/Delivers.lean` (4)
+
+| Lemma | Role |
+|:---|:---|
+| `View.ofViewUpto_ids` | — |
+| `correct_mem_viewUpto` | What a rate-limited store holds. After the settling round a correct validator's store contains every … |
+| `deliversOn_viewUpto` | The witness. The novelty budget's stores cover the correct validators from the settling round on, so a … |
+| `directCommitIn_viewUpto` | A rate-limited validator commits. Given a reliable quorum whose decision-round blocks certify `L`, a store … |
+
 ### `Hybrid/Checkpoint/RecoveryProofs.lean` (14)
 
 | Lemma | Role |
@@ -39184,13 +39248,14 @@ subsection per module, in the layer order of Appendices B and C.
 | `mono` | A mechanism that rebases from a round rebases from any later one, which is what lets two settling rounds … |
 | `refl` | Doing nothing rebases by nothing, from round zero. |
 
-### `Properties/Deliver.lean` (3)
+### `Properties/Deliver.lean` (4)
 
 | Lemma | Role |
 |:---|:---|
+| `CoversUpto.coversOn` | Full coverage over a window is coverage of any set over it. |
 | `CoversUpto.mono` | Covering a round covers every earlier one. |
+| `Delivers.deliversOn` | The strong obligation implies the weak one. |
 | `decided_of_delivers` | A mechanism that delivers reaches every verdict. Whatever any view of the universe decides, some view the … |
-| `exists_coversUpto_decides` | A verdict is reached by every view caught up far enough. The round is the band's ceiling: the verdict … |
 
 ### `Properties/Derived/Bounded.lean` (1)
 

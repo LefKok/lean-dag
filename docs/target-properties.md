@@ -747,22 +747,40 @@ to *the verdict's own* ceiling, which is what the band already named, so
 an indirect commit anchored far above gets the right bound rather than
 the direct rule's.
 
-**The obligation has no witness, and that is the next step.**
-`DoS/Novelty.lean` bounds the *size* of a rate-limited view — that is
-what the novelty budget is for — and proves nothing about its coverage.
-Recording that plainly matters, because the first `Sustains` had
-witnesses for both mechanisms and served no theorem (§3.6); this is the
-opposite failure and the same discipline catches it. `Delivers` is
-stated because `decided_of_delivers` consumes it, not because anything
-satisfies it.
+**The witness weakened the obligation, which is what witnesses are
+for.** `Delivers` asks the view to hold *every* block of the universe up
+to a round, and `DoS/Delivers.lean` cannot supply it. Two reasons, and
+the second is decisive: nothing forces a withheld Byzantine block into
+anybody's view, since `Delivery.accepts_correct` constrains acceptance
+for correct blocks alone; and `Delivery.accepted_inj` *requires* a
+validator to drop one of an equivocating pair, so at a round where an
+equivocator published twice **no admissible delivery covers the layer**.
+The strong form's only model is `View.full` — the mechanism that does
+nothing.
 
-**And a witness may show it wants weakening.** `Delivers` asks for
-coverage of everything the universe holds. A limiter that permanently
-drops Byzantine spam does not satisfy that, and should not have to: a
-verdict is reached because a quorum of *correct* blocks suffices, not
-because every block arrives. The weaker obligation naming only the
-correct blocks is the likely repair, and stating it needs a consumer
-that asks for it.
+`CoversOn` and `DeliversOn` are the repair: the blocks of a **reliable
+set**, over a window. `deliversOn_viewUpto` exhibits it for the novelty
+budget, from `accepts_correct` and `EventuallyDelivers` — a correct
+validator holds every correct block after the settling round, accepts
+every one it holds, and its store keeps whole causal cones.
+
+**The budget does not appear in the argument.** A rate limit that
+deferred a *correct* block would violate `accepts_correct`, so
+`Novelty.lean`'s theorems — which bound the *size* of `viewUpto` — are
+not needed and not used. The novelty budget keeps the store small;
+what makes it safe to deploy is that it never defers what a decision
+reads, and those are separate facts.
+
+**The two forms have different consumers, and that is the finding.**
+`decided_of_delivers` *transports* a verdict, so it needs everything the
+deciding view held — the strong form. Liveness *produces* a verdict from
+a quorum of correct evidence, so it needs the weak form.
+`directCommitIn_of_certifiesAt` is the consumer that made this visible:
+it counts a reliable quorum's certificates inside a view rather than in
+the universe, where `directCommitIn_of_coversUpto` took a `DirectCommit`
+and threw the certifier set away, forcing full coverage for no reason.
+`DoS.directCommitIn_viewUpto` is the payoff — a rate-limited validator
+commits.
 
 ## 4. Properties for the schedule mechanisms
 
@@ -1610,11 +1628,10 @@ slots when it means a dependence bound — *the verdict is settled by slot
 5. **~~Re-genesis as an `Extends`~~** (**done**, §3.10). Two witnesses
    and no new property — the first DAG-transforming mechanism added to
    this development without one.
-6. **~~A view-level `Sustains`~~** (**stated**, §3.11).
-   `Properties/Deliver.lean`. The protocol side is derived; the
-   obligation falls on the mechanism, and **no mechanism here exhibits
-   it yet** — `DoS/Novelty.lean` bounds the size of a rate-limited view
-   and says nothing about its coverage. The next step is a witness, and
-   it may show the obligation wants weakening (§3.11).
+6. **~~A view-level `Sustains`~~** (**done**, §3.11).
+   `Properties/Deliver.lean`, with the witness in `DoS/Delivers.lean`.
+   The witness forced the weakening §3.11 predicted: the strong form has
+   no model but `View.full`, and the reliable-set form is what a rate
+   limiter can promise and does.
 7. **Chain quality** from fairness and self-reference (§5), on item 4.
 8. **Barnacle**, starting from `Agree`.

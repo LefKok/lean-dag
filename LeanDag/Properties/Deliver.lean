@@ -107,6 +107,35 @@ theorem decided_of_delivers (h : Banded R) {S : Slots Validator}
   obtain ⟨t, ht⟩ := hdel N
   exact ⟨t, hN (view t) ht⟩
 
+/-- **A view holds the reliable set's blocks over a window.** Weaker
+than `CoversUpto` in the way a rate limiter needs: it says nothing about
+what an equivocator or a withholder produced, because a verdict is
+reached from a quorum of correct evidence and not from every block. -/
+def CoversOn (R : DagRule Validator BlockId Payload) {U : R.Universe}
+    (V : R.View U) (T : Finset Validator) (lo hi : ℕ) : Prop :=
+  ∀ b, b ∈ R.ids U → (R.block U b).creator ∈ T →
+    lo ≤ (R.block U b).round → (R.block U b).round ≤ hi → b ∈ R.viewIds V
+
+/-- Full coverage over a window is coverage of any set over it. -/
+theorem CoversUpto.coversOn {U : R.Universe} {V : R.View U} {N : ℕ}
+    (h : CoversUpto R V N) (T : Finset Validator) (lo : ℕ) :
+    CoversOn R V T lo N :=
+  fun b hb _ _ hhi => h b hb hhi
+
+/-- **A view-level mechanism delivers the reliable set.** For every
+round, one of the views it produces holds every `T`-block from `lo` up to
+it. What a rate limiter can promise, and what `DoS/Delivers.lean`
+proves of the novelty budget. -/
+def DeliversOn (R : DagRule Validator BlockId Payload) {U : R.Universe}
+    (view : ℕ → R.View U) (T : Finset Validator) (lo : ℕ) : Prop :=
+  ∀ hi, ∃ t, CoversOn R (view t) T lo hi
+
+/-- The strong obligation implies the weak one. -/
+theorem Delivers.deliversOn {U : R.Universe} {view : ℕ → R.View U}
+    (h : Delivers R view) (T : Finset Validator) (lo : ℕ) :
+    DeliversOn R view T lo :=
+  fun hi => let ⟨t, ht⟩ := h hi; ⟨t, ht.coversOn T lo⟩
+
 end Properties
 
 end LeanDag

@@ -564,6 +564,29 @@ theorem directCommitIn_of_coversUpto {V : View Validator BlockId Payload U}
   rw [DirectCommitIn, certificatesIn, Finset.inter_eq_left.2 hsub]
   exact h
 
+omit S in
+/-- **The commit argument at the view level.** `directCommit_of_certifiesAt`
+counts `T`'s decision-round blocks in the universe; this counts the same
+blocks in a view that holds them. The coverage asked for is `T`'s blocks
+at one round, not the whole layer — which is what lets a rate-limited
+validator commit, since a limiter may drop what an equivocator produced
+but not what a correct quorum did (`Properties/Deliver.lean`). -/
+theorem directCommitIn_of_certifiesAt {V : View Validator BlockId Payload U}
+    (hcard : quorumCard Validator ≤ T.card)
+    (hpop2 : PopulatedOn U T (r + 2))
+    (hcov : ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = r + 2 → b ∈ V.ids)
+    (hc : CertifiesAt U T r L) :
+    DirectCommitIn U V L r := by
+  refine le_trans hcard (Finset.card_le_card ?_)
+  intro v hv
+  obtain ⟨C, hC, hCc, hCr⟩ := hpop2 v hv
+  rw [mem_creatorsOf]
+  refine ⟨C, ?_, hCc⟩
+  rw [certificatesIn, Finset.mem_inter]
+  exact ⟨mem_certificates.mpr ⟨hC, hCr, hc v hv C hC hCc hCr⟩,
+    hcov C hC (by rw [hCc]; exact hv) hCr⟩
+
 /-- **L4, as a decision.** What L6 consumes and L3 propagates. -/
 theorem decided_of_leader_mem (hcard : quorumCard Validator ≤ T.card)
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
