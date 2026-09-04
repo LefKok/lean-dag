@@ -766,6 +766,8 @@ keeps.
 ```
 LeanDag/Properties/
   Carrier.lean     the abstract DAG the properties talk about
+  Witness.lean     the band, and the obligations' shared vocabulary
+  Derived/FromBand.lean   the consequences: Persist, Local, monotonicity, the bound
   Local.lean  Persist.lean  Truncate.lean  Sustain.lean  Skip.lean
   Agree.lean  Bounded.lean  Commit.lean        the schedule family (§4)
   Arcs/GC.lean          garbage collection, given LocalTruncate
@@ -998,6 +1000,41 @@ is the part of the goal least served, and it is the first item below.
   asked.
 - **Re-genesis**: §1 says it should be an `Extends` and would then
   inherit `Persist` and `Sustains`; nothing has been proved.
+
+### 11.4b Obligation or consequence
+
+The properties divide three ways, and only the first column is work a
+protocol or a mechanism has to do.
+
+| Must be shown | By whom | Consequence, shown once | From |
+|---|---|---|---|
+| `Causal` | protocol | `Persist` | `Banded` |
+| `Agree` | protocol | `Local` | `Banded` |
+| `Banded` | protocol | view monotonicity | `Banded` |
+| `ViewSound` | protocol | `DecidedBelow` and its four laws | definition |
+| `LocalTruncate` | protocol | `exists_decidedBelow` | `Banded` |
+| `SkipsUnsupported` | protocol | | |
+| `LeaderCommits` | protocol | | |
+| `Descends` | protocol | | |
+| `Sustains` | mechanism | | |
+
+The rest of `Properties/` is vocabulary the obligations are stated in
+and prove nothing on its own: `DagRule`, `AgreeAbove`, `AgreeBand`,
+`Extends`, `Novel`, `Truncates`, `ViewTruncates`, `ViewAgreeAbove`,
+`Unsupported`, `PresentAt`.
+
+**The consequences live in `Properties/Derived/`.** `FromBand.lean`
+holds the four that come out of the band. The distinction is not
+"provable versus assumed" — a protocol may prove a consequence directly,
+and Hydrozoan proves `Persist` and `Local` that way, having no `Banded`
+— but it is the difference between a claim someone owes and a claim the
+layer settles.
+
+Two entries deserve a note. `ViewSound` is an obligation only formally:
+every protocol satisfies it by construction, and it is a candidate to
+become a law of `DagRule`. And `LeaderCommits` and `Descends` cannot be
+derived from `Banded` even though a bound can, because they must produce
+a **tight** bound and the band's is every slot its rounds can hold.
 
 ### 11.5 Next steps, in order
 

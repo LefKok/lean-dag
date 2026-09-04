@@ -3,6 +3,7 @@ import LeanDag.Properties.Persist
 import LeanDag.Properties.Skip
 import LeanDag.Properties.Commit
 import LeanDag.Properties.Witness
+import LeanDag.Properties.Derived.FromBand
 import Mathlib.Order.Interval.Finset.Nat
 import Mathlib.Data.Finset.Lattice.Fold
 import LeanDag.Liveness

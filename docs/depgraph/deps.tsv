@@ -5009,7 +5009,7 @@ EDGE	LeanDagTest.Integration.Ux._proof_2	LeanDagTest.Integration.exclFaults
 EDGE	LeanDagTest.Integration.Ux._proof_2	LeanDag.Hydrozoan.instDecidableValidWrtOfDecidableEq
 EDGE	LeanDagTest.Integration.Ux._proof_2	LeanDagTest.Integration.lkx
 EDGE	LeanDagTest.Integration.Ux._proof_2	LeanDag.Hydrozoan.ValidWrt
-NODE	LeanDag.Properties.Local.of_banded	LeanDag.Properties.Witness	thm
+NODE	LeanDag.Properties.Local.of_banded	LeanDag.Properties.Derived.FromBand	thm
 EDGE	LeanDag.Properties.Local.of_banded	LeanDag.Properties.AgreeBand.of_agreeAbove
 EDGE	LeanDag.Properties.Local.of_banded	LeanDag.Properties.Local.of_banded._proof_1_1
 EDGE	LeanDag.Properties.Local.of_banded	LeanDag.Properties.DagRule.Decided
@@ -28074,7 +28074,7 @@ NODE	LeanDag.Barnacle.LiveRule.mk	LeanDag.Barnacle.Model.Live	ctor
 EDGE	LeanDag.Barnacle.LiveRule.mk	LeanDag.Barnacle.BaseRule.Universe
 EDGE	LeanDag.Barnacle.LiveRule.mk	LeanDag.Barnacle.LiveRule
 EDGE	LeanDag.Barnacle.LiveRule.mk	LeanDag.Barnacle.BaseRule
-NODE	LeanDag.Properties.Local.of_banded._proof_1_1	LeanDag.Properties.Witness	thm
+NODE	LeanDag.Properties.Local.of_banded._proof_1_1	LeanDag.Properties.Derived.FromBand	thm
 EDGE	LeanDag.Properties.Local.of_banded._proof_1_1	LeanDag.Slots.slotRound
 EDGE	LeanDag.Properties.Local.of_banded._proof_1_1	LeanDag.Properties.DagRule.block
 EDGE	LeanDag.Properties.Local.of_banded._proof_1_1	LeanDag.Block.round
@@ -39864,7 +39864,7 @@ NODE	LeanDag.CausalStructure.not_reaches_of_round_lt._proof_1_1	LeanDag.Causalit
 EDGE	LeanDag.CausalStructure.not_reaches_of_round_lt._proof_1_1	LeanDag.Block
 EDGE	LeanDag.CausalStructure.not_reaches_of_round_lt._proof_1_1	LeanDag.Block.round
 NODE	LeanDag.FinWhale.histOf._proof_1	LeanDag.FinWhale.Model.Order	thm
-NODE	LeanDag.Properties.decided_mono_of_banded	LeanDag.Properties.Witness	thm
+NODE	LeanDag.Properties.decided_mono_of_banded	LeanDag.Properties.Derived.FromBand	thm
 EDGE	LeanDag.Properties.decided_mono_of_banded	LeanDag.Properties.DagRule.Decided
 EDGE	LeanDag.Properties.decided_mono_of_banded	LeanDag.Slots.slotRound
 EDGE	LeanDag.Properties.decided_mono_of_banded	LeanDag.Slots.leader
@@ -63839,7 +63839,7 @@ EDGE	LeanDag.Hydrozoan.no_base_of_naive_shift	LeanDag.Hydrozoan.BlockUniverse.va
 EDGE	LeanDag.Hydrozoan.no_base_of_naive_shift	LeanDag.Hydrozoan.Faults
 EDGE	LeanDag.Hydrozoan.no_base_of_naive_shift	LeanDag.Hydrozoan.NaiveShift.parents
 EDGE	LeanDag.Hydrozoan.no_base_of_naive_shift	LeanDag.Hydrozoan.BlockUniverse.ids
-NODE	LeanDag.Properties.exists_decidedBelow	LeanDag.Properties.Witness	thm
+NODE	LeanDag.Properties.exists_decidedBelow	LeanDag.Properties.Derived.FromBand	thm
 EDGE	LeanDag.Properties.exists_decidedBelow	LeanDag.Properties.DagRule.Decided
 EDGE	LeanDag.Properties.exists_decidedBelow	LeanDag.Properties.DecidedBelow
 EDGE	LeanDag.Properties.exists_decidedBelow	LeanDag.Slots.slotRound
@@ -72105,7 +72105,7 @@ EDGE	LeanDag.Integration.Hydrozoan.decidedOpt_chopHZ	LeanDag.Integration.Hydrozo
 EDGE	LeanDag.Integration.Hydrozoan.decidedOpt_chopHZ	LeanDag.Integration.Hydrozoan.slotsChopHZ
 EDGE	LeanDag.Integration.Hydrozoan.decidedOpt_chopHZ	LeanDag.Integration.Hydrozoan.SelfParenting
 EDGE	LeanDag.Integration.Hydrozoan.decidedOpt_chopHZ	LeanDag.Integration.Hydrozoan.decidedOpt_of_decidedOpt_chopHZ
-NODE	LeanDag.Properties.Persist.of_banded	LeanDag.Properties.Witness	thm
+NODE	LeanDag.Properties.Persist.of_banded	LeanDag.Properties.Derived.FromBand	thm
 EDGE	LeanDag.Properties.Persist.of_banded	LeanDag.Properties.DagRule.Decided
 EDGE	LeanDag.Properties.Persist.of_banded	LeanDag.Slots.slotRound
 EDGE	LeanDag.Properties.Persist.of_banded	LeanDag.Properties.Persist.Unconditional
@@ -78030,7 +78030,7 @@ EDGE	LeanDag.FinWhale.Run.held._proof_1_1	LeanDag.FinWhale.Run.stable
 EDGE	LeanDag.FinWhale.Run.held._proof_1_1	LeanDag.FinWhale.Params
 EDGE	LeanDag.FinWhale.Run.held._proof_1_1	LeanDag.FinWhale.Run.paceHorizon
 EDGE	LeanDag.FinWhale.Run.held._proof_1_1	LeanDag.FinWhale.Run
-NODE	LeanDag.Properties.exists_decidedBelow._proof_1_1	LeanDag.Properties.Witness	thm
+NODE	LeanDag.Properties.exists_decidedBelow._proof_1_1	LeanDag.Properties.Derived.FromBand	thm
 EDGE	LeanDag.Properties.exists_decidedBelow._proof_1_1	LeanDag.Slots.slotRound
 EDGE	LeanDag.Properties.exists_decidedBelow._proof_1_1	LeanDag.Slots
 NODE	LeanDag.FinWhale.nonVoters_restrict._simp_1_2	LeanDag.FinWhale.View	thm

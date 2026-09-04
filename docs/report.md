@@ -24746,7 +24746,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 825 theorems that either another module of the
+The 921 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -25914,6 +25914,43 @@ theorem directCommit_of_directCommitIn {V : View Validator BlockId Payload U}
 **A view can only under-report.** Everything it sees is real, so a view-relative direct commit is a genuine one.
 
 This one line is what lets all of Stage A be reused unchanged: M2, M4 and M5 are stated universe-level, and a validator's local judgement feeds straight into them.
+
+#### `directSkipIn_of_directSkipSlotIn`
+
+*theorem, `Mysticeti.lean`*
+
+```lean
+theorem directSkipIn_of_directSkipSlotIn {V : View Validator BlockId Payload U} {k : ℕ}
+    (h : DirectSkipSlotIn U V k) {L : BlockId} (hL : IsLeaderBlock U k L) :
+    DirectSkipIn U V L (S.slotRound k)
+```
+
+**The slot-level skip implies the per-candidate one**, so every theorem stated over `DirectSkipIn` — M1 and M3 in particular — applies to it unchanged. A block referencing no candidate references not `L`.
+
+#### `directSkipSlotIn_mono`
+
+*theorem, `Mysticeti.lean`*
+
+```lean
+theorem directSkipSlotIn_mono {V V' : View Validator BlockId Payload U} {k : ℕ}
+    (hsub : V.ids ⊆ V'.ids) (h : DirectSkipSlotIn U V k) : DirectSkipSlotIn U V' k
+```
+
+A larger view only sees more blamers.
+
+#### `directSkipSlotIn_of_no_candidate`
+
+*theorem, `Mysticeti.lean`*
+
+```lean
+theorem directSkipSlotIn_of_no_candidate {V : View Validator BlockId Payload U} {k : ℕ}
+    (hnone : ∀ L, ¬ IsLeaderBlock U k L)
+    (hq : quorumCard Validator ≤
+      (creatorsOf U.block (blocksAt U (S.slotRound k + 1) ∩ V.ids)).card) :
+    DirectSkipSlotIn U V k
+```
+
+**A slot with no candidate is blamed by every voting-round block**, so the skip reduces to a quorum being present at that round. This is the form the liveness statements use.
 
 #### `isLeaderBlock_of_decided`
 
@@ -29639,6 +29676,29 @@ theorem partialRun_agree {V₁ V₂ : R.View U} {E₁ E₂ : ℕ}
 
 The strong induction the module docstring describes: verdict agreement below an epoch forces assignment agreement through the epoch above it (`adapted`), which forces verdict agreement at the epoch itself (`DecidedBelow.reschedule`, then `Agree`).
 
+#### `partialRun_assign_agree`
+
+*theorem, `Adaptive.Run.lean`*
+
+```lean
+theorem partialRun_assign_agree {V₁ V₂ : R.View U} {E₁ E₂ : ℕ}
+    (A₁ : PartialRun P U V₁ E₁) (A₂ : PartialRun P U V₂ E₂) :
+    ∀ m, epochOf P.W m < min E₁ E₂ + 1 → A₁.assign m = A₂.assign m
+```
+
+Assignments agree wherever the common verdicts determine them.
+
+#### `run_agree`
+
+*theorem, `Adaptive.Run.lean`*
+
+```lean
+theorem run_agree {V₁ V₂ : R.View U} (A₁ : Run P U V₁) (A₂ : Run P U V₂) :
+    (∀ k, A₁.vdct k = A₂.vdct k) ∧ (∀ m, A₁.assign m = A₂.assign m)
+```
+
+**Safety: the adaptive fixpoint is unique.** Two total runs over one universe — derived from any two views, under no synchrony or fairness hypothesis — hold the same verdicts and run the same schedule. Adaptive validators cannot diverge, whatever the policy adapts to.
+
 #### `Policy.const_run_decided`
 
 *theorem, `Adaptive.Run.lean`*
@@ -29683,6 +29743,21 @@ theorem exists_partialRun (hlc : LeaderCommits R Live)
 ```
 
 **Partial runs exist at every height** — the witnessable, finite- horizon form of existence, by induction on the height: each stage re-reads the schedule off the verdicts so far and closes one more epoch, under the precondition for that stage's schedule.
+
+#### `run_exists`
+
+*theorem, `Adaptive.Liveness.lean`*
+
+```lean
+theorem run_exists (ha : Agree R) (hlc : LeaderCommits R Live)
+    (hd : ∀ a : ℕ → Validator, Descends R (slotsOf P.inj a) c)
+    (hruns : PlacesRuns P T c) (V : R.View U)
+    (hlive : ∀ (E : ℕ) (A : PartialRun P U V E),
+      Live (slotsOf P.inj (fun m => P.pick U V A.vdct m)) V T P.W (P.W * (E + 2))) :
+    Nonempty (Run P U V)
+```
+
+**The adaptive fixpoint exists.** Under a policy that places runs, with the protocol's precondition at every height, a total adaptive run exists — partial runs at every height glued along the diagonal, `partialRun_agree` making the stage-by-stage choices cohere. With `run_agree` it is THE fixpoint.
 
 #### `Run.commits`
 
@@ -33758,6 +33833,18 @@ theorem parents_nonempty {i : BlockId} (hi : i ∈ U.ids)
 
 Non-genesis universe blocks have a parent (`q ≥ 1`).
 
+#### `isLeaderBlock_of_decided`
+
+*theorem, `Hydrozoan.Helpers.SlotAgreement.lean`*
+
+```lean
+theorem isLeaderBlock_of_decided [LinearOrder BlockId] [S : Slots Replica]
+    {V : View U} {j : ℕ} {A : BlockId}
+    (h : Decided U V j (some A)) : IsLeaderBlock U j A
+```
+
+Whatever route committed it, a verdict names a genuine candidate.
+
 #### `certificates_nonempty_of_certifiedIn`
 
 *theorem, `Hydrozoan.Helpers.SlotAgreement.lean`*
@@ -35148,6 +35235,32 @@ theorem holds : Statement
 
 ### Not otherwise grouped
 
+#### `run_agree_extends`
+
+*theorem, `Adaptive.Growth.lean`*
+
+```lean
+theorem run_agree_extends (hext : Extends R U U')
+    (hsub : R.viewIds V ⊆ R.viewIds V') (A : Run P U V) (A' : Run P U' V')
+    (hok : Ok (slotsOf P.inj A.assign) U U' V) :
+    (∀ k, A.vdct k = A'.vdct k) ∧ (∀ m, A.assign m = A'.assign m)
+```
+
+**The fixpoint is a prefix of the fixpoint on any extension.** Two total runs, on a universe and an extension of it, hold the same verdicts and run the same schedule.
+
+#### `isLeaderBlock_slotsOf_congr`
+
+*theorem, `Adaptive.Mysticeti.lean`*
+
+```lean
+theorem isLeaderBlock_slotsOf_congr {hinj : Function.Injective S.slotRound}
+    {a₁ a₂ : ℕ → Validator} {k : ℕ} {L : BlockId} (hk : a₁ k = a₂ k)
+    (h : IsLeaderBlock (S := slotsOf hinj a₁) U k L) :
+    IsLeaderBlock (S := slotsOf hinj a₂) U k L
+```
+
+Only the leader clause of `IsLeaderBlock` consults the assignment, at the slot itself.
+
 #### `decidedWithin_congr`
 
 *theorem, `Adaptive.Mysticeti.lean`*
@@ -35215,6 +35328,19 @@ theorem AdaptivePolicy.const_run_decided {W : ℕ} {hW : 0 < W}
 ```
 
 **Conservativity.** Under the constant policy a run's verdicts are ordinary `Decided` verdicts of the base schedule.
+
+#### `descends_slotsOf`
+
+*theorem, `Adaptive.Mysticeti.lean`*
+
+```lean
+theorem descends_slotsOf (hc : 0 < c) (hspans : SpansEligible (Validator := Validator) c)
+    (a : ℕ → Validator) :
+    Descends (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+      (slotsOf P.inj a) c
+```
+
+The core's descent, at every induced schedule.
 
 #### `epoch_closes`
 
@@ -35545,6 +35671,71 @@ theorem exists_recoveryCorrect_recorder {x : CheckpointData Value}
 
 A finality quorum yields a recovery-correct validator that recorded the concrete checkpoint certificate before emitting its witness.
 
+#### `causal`
+
+*theorem, `Hydrozoan.Helpers.Carrier.lean`*
+
+```lean
+theorem causal : Properties.Causal (rule (Replica := Replica) (BlockId := BlockId))
+```
+
+**Hydrozoan's universes are block DAGs**, which is `HI3` in the shared vocabulary: the two fields are the universe's own `complete` and the `predecessor` half of its validity.
+
+#### `local_aux`
+
+*theorem, `Hydrozoan.Helpers.Locality.lean`*
+
+```lean
+theorem local_aux (h : AgreeAbove rule U U' r)
+    {V : LeanDag.Hydrozoan.View U} {V' : LeanDag.Hydrozoan.View U'}
+    (hv : ViewAgreeAbove rule V V' r) {k : ℕ} {v : Option BlockId}
+    (hd : LeanDag.Hydrozoan.Decided U V k v) :
+    r ≤ S.slotRound k → LeanDag.Hydrozoan.Decided U' V' k v
+```
+
+#### `decided_none_of_unsupported`
+
+*theorem, `Hydrozoan.Helpers.Skippability.lean`*
+
+```lean
+theorem decided_none_of_unsupported {V : LeanDag.Hydrozoan.View U} {T : Finset Replica} {k : ℕ}
+    (hq : LeanDag.Hydrozoan.qFast Replica ≤ T.card)
+    (hpres : ∀ v ∈ T, ∃ c ∈ V.ids, (U.block c).author = v ∧
+      (U.block c).round = S.slotRound k + 1)
+    (huns : ∀ c ∈ V.ids, (U.block c).author ∈ T → (U.block c).round = S.slotRound k + 1 →
+      ∀ L, LeanDag.Hydrozoan.IsLeaderBlock U k L → L ∉ (U.block c).parents) :
+    LeanDag.Hydrozoan.Decided U V k none
+```
+
+**The skip fires at `qFast` blamers.**
+
+#### `decided_iff`
+
+*theorem, `Hydrozoan.Helpers.Truncation.lean`*
+
+```lean
+theorem decided_iff (h : TruncatesHZ U U' S S' G d)
+    {V : LeanDag.Hydrozoan.View U} {V' : LeanDag.Hydrozoan.View U'}
+    (hv : ∀ b, b ∈ U'.ids → (b ∈ V'.ids ↔ b ∈ V.ids)) {k : ℕ} {v : Option BlockId} :
+    @LeanDag.Hydrozoan.Decided _ _ _ _ _ _ _ S U V (d + k) v
+      ↔ @LeanDag.Hydrozoan.Decided _ _ _ _ _ _ _ S' U' V' k v
+```
+
+**Truncation invariance for Hydrozoan.**
+
+#### `persist_aux`
+
+*theorem, `Hydrozoan.Properties.Proof.lean`*
+
+```lean
+theorem persist_aux (he : Extends rule U U') {V : LeanDag.Hydrozoan.View U}
+    {V' : LeanDag.Hydrozoan.View U'} (hV : V.ids ⊆ V'.ids)
+    {k : ℕ} {v : Option BlockId} (h : LeanDag.Hydrozoan.Decided U V k v) :
+    LeanDag.Hydrozoan.Decided U' V' k v
+```
+
+**Hydrozoan's verdicts survive every extension.** The induction, six cases, each a transfer lemma above applied.
+
 #### `holds`
 
 *theorem, `Hydrozoan.Properties.Proof.lean`*
@@ -35554,6 +35745,310 @@ theorem holds : Statement
 ```
 
 **HZ9.**
+
+#### `chopHZ_round`
+
+*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+
+```lean
+@[simp] theorem chopHZ_round (i : BlockId) :
+    ((chopHZ U hsp G).block i).round = (U.block i).round - G
+```
+
+#### `chopHZ_author`
+
+*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+
+```lean
+@[simp] theorem chopHZ_author (i : BlockId) :
+    ((chopHZ U hsp G).block i).author = (U.block i).author
+```
+
+#### `mem_chopHZ_ids`
+
+*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+
+```lean
+theorem mem_chopHZ_ids {i : BlockId} :
+    i ∈ (chopHZ U hsp G).ids ↔ i ∈ U.ids ∧ G ≤ (U.block i).round
+```
+
+#### `chopHZ_parents_of_lt`
+
+*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+
+```lean
+theorem chopHZ_parents_of_lt {i : BlockId} (h : G < (U.block i).round) :
+    ((chopHZ U hsp G).block i).parents = (U.block i).parents
+```
+
+Above the cut the parents are untouched.
+
+#### `chopHZ_parents_of_le`
+
+*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+
+```lean
+theorem chopHZ_parents_of_le {i : BlockId} (h : (U.block i).round ≤ G) :
+    ((chopHZ U hsp G).block i).parents = ∅
+```
+
+At the cut the block becomes a genesis.
+
+#### `slotsChopHZ_leader`
+
+*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+
+```lean
+@[simp] theorem slotsChopHZ_leader (hd : G ≤ S.slotRound d) (k : ℕ) :
+    (slotsChopHZ hd).leader k = S.leader (d + k)
+```
+
+#### `horizon_le_slotRoundHZ`
+
+*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+
+```lean
+theorem horizon_le_slotRoundHZ (hd : G ≤ S.slotRound d) (k : ℕ) :
+    G ≤ S.slotRound (d + k)
+```
+
+Every slot from the base slot on clears the horizon.
+
+#### `isLeaderBlockHZ_chop`
+
+*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+
+```lean
+theorem isLeaderBlockHZ_chop (hd : G ≤ S.slotRound d) {k : ℕ} {L : BlockId} :
+    @LeanDag.Hydrozoan.IsLeaderBlock _ _ _ _ _ (slotsChopHZ hd) (chopHZ U hsp G) k L
+      ↔ LeanDag.Hydrozoan.IsLeaderBlock U (d + k) L
+```
+
+Candidacy is re-indexed: a block is slot `k`'s candidate in the truncation exactly when it is slot `d + k`'s in the original.
+
+#### `eligibleAsAnchorHZ_chop`
+
+*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+
+```lean
+theorem eligibleAsAnchorHZ_chop (hd : G ≤ S.slotRound d) {k j : ℕ} :
+    @LeanDag.Hydrozoan.EligibleAsAnchor Replica (slotsChopHZ hd) k j
+      ↔ LeanDag.Hydrozoan.EligibleAsAnchor Replica (d + k) (d + j)
+```
+
+Anchor eligibility is re-indexed, both slots moving together.
+
+#### `fairRunOn_slotsChopHZ`
+
+*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+
+```lean
+theorem fairRunOn_slotsChopHZ (hd : G ≤ S.slotRound d) {T : Finset Replica} {c : ℕ}
+    (h : LeanDag.Hydrozoan.EventualDecision.FairRunOn Replica T c) :
+    @LeanDag.Hydrozoan.EventualDecision.FairRunOn Replica (slotsChopHZ hd) T c
+```
+
+Run fairness survives the cut, the search shifted past the base slot. Proved directly rather than through the core's `fairRunOn_chop`, which is stated over a `Faults` instance: schedule fairness should not depend on a committee condition, and here it does not.
+
+#### `spansEligible_slotsChopHZ`
+
+*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+
+```lean
+theorem spansEligible_slotsChopHZ (hd : G ≤ S.slotRound d) {c : ℕ}
+    (h : LeanDag.Hydrozoan.IndirectLiveness.SpansEligible Replica c) :
+    @LeanDag.Hydrozoan.IndirectLiveness.SpansEligible Replica (slotsChopHZ hd) c
+```
+
+And the runway a committed run needs, by the same re-indexing that carries anchor eligibility.
+
+#### `authorsOf_chopHZ`
+
+*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+
+```lean
+@[simp] theorem authorsOf_chopHZ (s : Finset BlockId) :
+    LeanDag.Hydrozoan.authorsOf (chopHZ U hsp G).block s
+      = LeanDag.Hydrozoan.authorsOf U.block s
+```
+
+#### `blocksAt_chopHZ`
+
+*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+
+```lean
+theorem blocksAt_chopHZ (r : ℕ) :
+    LeanDag.Hydrozoan.blocksAt (chopHZ U hsp G) r
+      = LeanDag.Hydrozoan.blocksAt U (G + r)
+```
+
+The rounds shift by the cut, at every round including the new base layer: `G ≤ round` and `round − G = r` together pin `round = G + r`.
+
+#### `isVote_chopHZ`
+
+*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+
+```lean
+theorem isVote_chopHZ {b L : BlockId} (h : G < (U.block b).round) :
+    LeanDag.Hydrozoan.IsVote (chopHZ U hsp G) b L
+      ↔ LeanDag.Hydrozoan.IsVote U b L
+```
+
+Above the cut a vote is a vote: the parents are the same set.
+
+#### `mem_viewChopHZ`
+
+*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+
+```lean
+theorem mem_viewChopHZ {b : BlockId} (h : G ≤ (U.block b).round) :
+    b ∈ (View.chopHZ V hsp G).ids ↔ b ∈ V.ids
+```
+
+A block above the cut is held by the truncated view exactly when the original view holds it.
+
+#### `supportersInView_chopHZ`
+
+*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+
+```lean
+theorem supportersInView_chopHZ (L : BlockId) (r : ℕ) (hr : 0 < r) :
+    LeanDag.Hydrozoan.supportersInView (chopHZ U hsp G) (View.chopHZ V hsp G) L r
+      = LeanDag.Hydrozoan.supportersInView U V L (G + r)
+```
+
+Supporters at a round above the new base layer are the originals, at the shifted round.
+
+#### `voteBlocks_chopHZ`
+
+*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+
+```lean
+theorem voteBlocks_chopHZ {C L : BlockId} (hC : C ∈ U.ids)
+    (h : G + 1 < (U.block C).round) :
+    LeanDag.Hydrozoan.voteBlocks (chopHZ U hsp G) C L
+      = LeanDag.Hydrozoan.voteBlocks U C L
+```
+
+Two rounds above the cut a block's votes are the originals: its own parents are untouched, and so are theirs.
+
+#### `fastCommitInView_chopHZ`
+
+*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+
+```lean
+theorem fastCommitInView_chopHZ (L : BlockId) (r : ℕ) :
+    LeanDag.Hydrozoan.FastCommitInView (chopHZ U hsp G) (View.chopHZ V hsp G) L r
+      ↔ LeanDag.Hydrozoan.FastCommitInView U V L (G + r)
+```
+
+#### `slowCommitInView_chopHZ`
+
+*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+
+```lean
+theorem slowCommitInView_chopHZ (L : BlockId) (r : ℕ) :
+    LeanDag.Hydrozoan.SlowCommitInView (chopHZ U hsp G) (View.chopHZ V hsp G) L r
+      ↔ LeanDag.Hydrozoan.SlowCommitInView U V L (G + r)
+```
+
+#### `reaches_of_reaches_chopHZ`
+
+*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+
+```lean
+theorem reaches_of_reaches_chopHZ {A B : BlockId}
+    (h : LeanDag.Hydrozoan.Reaches (chopHZ U hsp G) A B) :
+    LeanDag.Hydrozoan.Reaches U A B
+```
+
+#### `reaches_chopHZ`
+
+*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+
+```lean
+theorem reaches_chopHZ {A B : BlockId} (hA : A ∈ U.ids)
+    (hB : G < (U.block B).round) :
+    LeanDag.Hydrozoan.Reaches (chopHZ U hsp G) A B
+      ↔ LeanDag.Hydrozoan.Reaches U A B
+```
+
+#### `blamesInView_chopHZ`
+
+*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+
+```lean
+theorem blamesInView_chopHZ (hd : G ≤ S.slotRound d) (k : ℕ) :
+    LeanDag.Hydrozoan.blamesInView (S := slotsChopHZ hd) (chopHZ U hsp G)
+        (View.chopHZ V hsp G) k
+      = LeanDag.Hydrozoan.blamesInView U V (d + k)
+```
+
+#### `skippedLeaderInView_chopHZ`
+
+*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+
+```lean
+theorem skippedLeaderInView_chopHZ (hd : G ≤ S.slotRound d) (k : ℕ) :
+    LeanDag.Hydrozoan.SkippedLeaderInView (S := slotsChopHZ hd) (chopHZ U hsp G)
+        (View.chopHZ V hsp G) k
+      ↔ LeanDag.Hydrozoan.SkippedLeaderInView U V (d + k)
+```
+
+#### `certifiedIn_chopHZ`
+
+*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+
+```lean
+theorem certifiedIn_chopHZ (hd : G ≤ S.slotRound d) {A L : BlockId}
+    (hA : A ∈ U.ids) (k : ℕ) :
+    LeanDag.Hydrozoan.CertifiedIn (chopHZ U hsp G) A L
+        ((slotsChopHZ hd).slotRound k)
+      ↔ LeanDag.Hydrozoan.CertifiedIn U A L (S.slotRound (d + k))
+```
+
+Rung 1's test: the certificate and the anchor both sit above the cut, so both the certificate set and the reachability transport.
+
+#### `weakLinked_chopHZ`
+
+*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+
+```lean
+theorem weakLinked_chopHZ (hd : G ≤ S.slotRound d) {A L : BlockId}
+    (hA : A ∈ U.ids) (k : ℕ) :
+    LeanDag.Hydrozoan.WeakLinked (chopHZ U hsp G) A L
+        ((slotsChopHZ hd).slotRound k)
+      ↔ LeanDag.Hydrozoan.WeakLinked U A L (S.slotRound (d + k))
+```
+
+Rung 2's test: the witness set is the same set of blocks, each a voting-round block above the cut.
+
+#### `isLeaderBlock_of_decidedHZ`
+
+*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+
+```lean
+theorem isLeaderBlock_of_decidedHZ
+    {W : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
+    {SS : LeanDag.Hydrozoan.Slots Replica}
+    {V : LeanDag.Hydrozoan.View W} {k : ℕ} {L : BlockId}
+    (h : LeanDag.Hydrozoan.Decided (S := SS) W V k (some L)) :
+    LeanDag.Hydrozoan.IsLeaderBlock (S := SS) W k L
+```
+
+A commit verdict is about a candidate of its slot, so the anchor of an indirect derivation is a block of the universe. Stated over an arbitrary universe and schedule, since the induction below needs it at the truncation's.
+
+#### `chopRound_add`
+
+*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+
+```lean
+theorem chopRound_add (hd : G ≤ S.slotRound d) (k : ℕ) :
+    G + (slotsChopHZ hd).slotRound k = S.slotRound (d + k)
+```
+
+The cut and the re-indexing cancel above the base slot.
 
 #### `decided_chopHZ`
 
@@ -35629,6 +36124,135 @@ theorem hybridCommittee_of_slack [F : LeanDag.Hydrozoan.Faults Replica]
 
 **Slack covering the crash bound is enough**, by Hydrozoan's own committee bound — the convenient way to discharge the `Fact` from the parameters, though not the weakest way.
 
+#### `quorumCard_eq_q`
+
+*theorem, `Integration.Hydrozoan.Faults.lean`*
+
+```lean
+@[simp] theorem quorumCard_eq_q :
+    quorumCard Replica = LeanDag.Hydrozoan.q Replica
+```
+
+The two quorums coincide: `n − f − c` is `n − (f + c)`. Not definitional, which is why it is a simp lemma rather than left implicit.
+
+#### `skipFillHZ_block_old`
+
+*theorem, `Integration.Hydrozoan.FillDecided.lean`*
+
+```lean
+theorem skipFillHZ_block_old {b : BlockId} (hb : b ∈ U.ids) :
+    (skipFillHZ U hsp sk).block b = U.block b
+```
+
+#### `isLeaderBlockHZ_fill`
+
+*theorem, `Integration.Hydrozoan.FillDecided.lean`*
+
+```lean
+theorem isLeaderBlockHZ_fill [S : LeanDag.Hydrozoan.Slots Replica] {k : ℕ} {L : BlockId}
+    (h : LeanDag.Hydrozoan.IsLeaderBlock U k L) :
+    LeanDag.Hydrozoan.IsLeaderBlock (skipFillHZ U hsp sk) k L
+```
+
+#### `isLeaderBlockHZ_fill_old`
+
+*theorem, `Integration.Hydrozoan.FillDecided.lean`*
+
+```lean
+theorem isLeaderBlockHZ_fill_old [S : LeanDag.Hydrozoan.Slots Replica] {k : ℕ} {L : BlockId}
+    (hL : L ∈ U.ids) (h : LeanDag.Hydrozoan.IsLeaderBlock (skipFillHZ U hsp sk) k L) :
+    LeanDag.Hydrozoan.IsLeaderBlock U k L
+```
+
+An old candidate of the extension is an old candidate.
+
+#### `fastCommitInView_fill`
+
+*theorem, `Integration.Hydrozoan.FillDecided.lean`*
+
+```lean
+theorem fastCommitInView_fill (L : BlockId) (r : ℕ) :
+    LeanDag.Hydrozoan.FastCommitInView (skipFillHZ U hsp sk)
+        (liftViewHZ U hsp sk V) L r
+      ↔ LeanDag.Hydrozoan.FastCommitInView U V L r
+```
+
+#### `slowCommitInView_fill`
+
+*theorem, `Integration.Hydrozoan.FillDecided.lean`*
+
+```lean
+theorem slowCommitInView_fill (L : BlockId) (r : ℕ) :
+    LeanDag.Hydrozoan.SlowCommitInView (skipFillHZ U hsp sk)
+        (liftViewHZ U hsp sk V) L r
+      ↔ LeanDag.Hydrozoan.SlowCommitInView U V L r
+```
+
+#### `skippedLeaderInView_fill`
+
+*theorem, `Integration.Hydrozoan.FillDecided.lean`*
+
+```lean
+theorem skippedLeaderInView_fill (k : ℕ) :
+    LeanDag.Hydrozoan.SkippedLeaderInView (skipFillHZ U hsp sk)
+        (liftViewHZ U hsp sk V) k
+      ↔ LeanDag.Hydrozoan.SkippedLeaderInView U V k
+```
+
+**The skip survives the fill, with no quorum hypothesis.**
+
+#### `certifiedInHZ_fill`
+
+*theorem, `Integration.Hydrozoan.FillDecided.lean`*
+
+```lean
+theorem certifiedInHZ_fill {A L : BlockId} {r : ℕ} (hA : A ∈ U.ids) :
+    LeanDag.Hydrozoan.CertifiedIn (skipFillHZ U hsp sk) A L r
+      ↔ LeanDag.Hydrozoan.CertifiedIn U A L r
+```
+
+#### `weakLinkedHZ_fill`
+
+*theorem, `Integration.Hydrozoan.FillDecided.lean`*
+
+```lean
+theorem weakLinkedHZ_fill {A L : BlockId} {r : ℕ} (hA : A ∈ U.ids) :
+    LeanDag.Hydrozoan.WeakLinked (skipFillHZ U hsp sk) A L r
+      ↔ LeanDag.Hydrozoan.WeakLinked U A L r
+```
+
+#### `not_certifiedInHZ_fresh`
+
+*theorem, `Integration.Hydrozoan.FillDecided.lean`*
+
+```lean
+theorem not_certifiedInHZ_fresh {A L : BlockId} {r : ℕ} (hA : A ∈ U.ids)
+    (hL : L ∉ U.ids) :
+    ¬ LeanDag.Hydrozoan.CertifiedIn (skipFillHZ U hsp sk) A L r
+```
+
+#### `not_weakLinkedHZ_fresh`
+
+*theorem, `Integration.Hydrozoan.FillDecided.lean`*
+
+```lean
+theorem not_weakLinkedHZ_fresh {A L : BlockId} {r : ℕ} (hA : A ∈ U.ids)
+    (hL : L ∉ U.ids) :
+    ¬ LeanDag.Hydrozoan.WeakLinked (skipFillHZ U hsp sk) A L r
+```
+
+#### `decided_fillHZ`
+
+*theorem, `Integration.Hydrozoan.FillDecided.lean`*
+
+```lean
+theorem decided_fillHZ {k : ℕ} {v : Option BlockId}
+    (h : LeanDag.Hydrozoan.Decided U V k v) :
+    LeanDag.Hydrozoan.Decided (skipFillHZ U hsp sk) (liftViewHZ U hsp sk V) k v
+```
+
+**Verdict invariance across the fill.** Every verdict a view reached in `U` re-derives, for the lifted view, in the extension — and unlike the core's `decided_fill` this needs **no quorum hypothesis**, because Hydrozoan's skip is a count at the slot rather than a condition per candidate.
+
 #### `decided_fill_agreeHZ`
 
 *theorem, `Integration.Hydrozoan.FillDecided.lean`*
@@ -35642,6 +36266,56 @@ theorem decided_fill_agreeHZ {k : ℕ} {v w : Option BlockId}
 ```
 
 **Cross-fill agreement.** A verdict reached before the recovery and one reached after it agree, which is `integration.md` SS5 for Hydrozoan's rule.
+
+#### `synchronisedOn_stackHZ`
+
+*theorem, `Integration.Hydrozoan.Liveness.lean`*
+
+```lean
+theorem synchronisedOn_stackHZ {R R' R'' G : ℕ}
+    (hs : LeanDag.Hydrozoan.SynchronisedOn U T R) (hR : R ≤ R') (hR' : sk.r < R')
+    (hGR : R' ≤ G + R'') :
+    LeanDag.Hydrozoan.SynchronisedOn (stackHZ U hsp sk G) T R''
+```
+
+**The stack is covered**, from a round above the fill, rebased.
+
+#### `populatedOn_stackHZ`
+
+*theorem, `Integration.Hydrozoan.Liveness.lean`*
+
+```lean
+theorem populatedOn_stackHZ {k G : ℕ}
+    (hpop : LeanDag.Hydrozoan.PopulatedOn U T k) (hk1 : sk.r0 < k) (hk2 : k ≤ sk.r)
+    (hG : G ≤ k) :
+    LeanDag.Hydrozoan.PopulatedOn (stackHZ U hsp sk G) (insert sk.v1 T) (k - G)
+```
+
+**The stack is populated across the gap**, with the recovered replica counted, at the rebased round.
+
+#### `commitLiveness_stackHZ`
+
+*theorem, `Integration.Hydrozoan.Liveness.lean`*
+
+```lean
+theorem commitLiveness_stackHZ [LinearOrder BlockId]
+    [LeanDag.Hydrozoan.Slots Replica] {G : ℕ} :
+    LeanDag.Hydrozoan.DirectLiveness.CommitLiveness (stackHZ U hsp sk G)
+```
+
+**HZ5 applies to the stack.** Its content here is the hypotheses, which the theorems above transport.
+
+#### `anchoredTotality_stackHZ`
+
+*theorem, `Integration.Hydrozoan.Liveness.lean`*
+
+```lean
+theorem anchoredTotality_stackHZ [LinearOrder BlockId]
+    [LeanDag.Hydrozoan.Slots Replica] {G : ℕ} :
+    LeanDag.Hydrozoan.IndirectLiveness.AnchoredTotality (stackHZ U hsp sk G)
+```
+
+**HZ6's descent applies too**, so a run of committed slots on the stack decides everything below it.
 
 #### `decidedOpt_chopHZ`
 
@@ -35669,6 +36343,17 @@ theorem decides {V : LeanDag.Hydrozoan.View D.network} {k : ℕ} {v : Option Blo
 ```
 
 **The replica reaches exactly the verdicts it would have reached with its whole history**, at its own numbering. Pruning below the horizon is invisible to the decision rule.
+
+#### `leaderExcludedAll_chopHZ`
+
+*theorem, `Integration.Hydrozoan.OptimalTransport.lean`*
+
+```lean
+theorem leaderExcludedAll_chopHZ (h : LeaderExcludedAll U) :
+    LeaderExcludedAll (chopHZ U hsp G)
+```
+
+**Leader exclusion survives the cut.**
 
 #### `fairRunOn_eq`
 
@@ -35706,6 +36391,45 @@ theorem decided (h : Simulates U V S U' V' S' R Novel) {n : ℕ} {v : Option Blo
 
 **Simulation transports verdicts.** The six-constructor induction, once. Every case is a field of the structure applied; nothing about any particular transformer appears.
 
+#### `decided_stackHZ`
+
+*theorem, `Integration.Hydrozoan.Stack.lean`*
+
+```lean
+theorem decided_stackHZ (hd : G ≤ S.slotRound d) {k : ℕ} {v : Option BlockId}
+    (h : LeanDag.Hydrozoan.Decided U V (d + k) v) :
+    LeanDag.Hydrozoan.Decided (S := slotsChopHZ hd) (stackHZ U hsp sk G)
+      (stackView U hsp sk G V) k v
+```
+
+**Verdicts survive the stack.** A verdict reached before the recovery, at a slot at or above the base slot, re-derives on the recovered-and-pruned universe at the re-indexed slot. The composition of P8 and P7, in that order.
+
+#### `agree_stackHZ`
+
+*theorem, `Integration.Hydrozoan.Stack.lean`*
+
+```lean
+theorem agree_stackHZ (hd : G ≤ S.slotRound d) {k : ℕ} {v w : Option BlockId}
+    {W : LeanDag.Hydrozoan.View (stackHZ U hsp sk G)}
+    (hV : LeanDag.Hydrozoan.Decided U V (d + k) v)
+    (hW : LeanDag.Hydrozoan.Decided (S := slotsChopHZ hd) (stackHZ U hsp sk G) W k w) :
+    v = w
+```
+
+**The capstone: a recovered and pruned replica cannot disagree.** Its view `W` is an arbitrary view of the stack — not a transported full-history view — and its verdict at the re-indexed slot is the verdict anyone else reached at the original slot. The proof is HZ3 applied to a different universe, with `decided_stackHZ` moving the other verdict into it.
+
+#### `decidedUnique_stackHZ`
+
+*theorem, `Integration.Hydrozoan.Stack.lean`*
+
+```lean
+theorem decidedUnique_stackHZ (hd : G ≤ S.slotRound d) :
+    @LeanDag.Hydrozoan.SlotAgreement.DecidedUnique Replica BlockId _ _ _ _ _
+      (slotsChopHZ hd) (stackHZ U hsp sk G)
+```
+
+**Safety across the stack**, in HZ3's own words: no two views of the recovered-and-pruned universe decide a slot differently, whatever the routes. Nothing about the fill or the cut is re-proved.
+
 #### `selfParenting_ofCore`
 
 *theorem, `Integration.Hydrozoan.Transport.lean`*
@@ -35718,6 +36442,105 @@ theorem selfParenting_ofCore {Payload : Type}
 
 **Every core universe self-parents**, so the condition `toCore` consumes is re-supplied by `ofCore` without an argument: it is the fourth field of the core's `ValidWrt`, read back.
 
+#### `selfParenting_chopHZ`
+
+*theorem, `Integration.Hydrozoan.Transport.lean`*
+
+```lean
+theorem selfParenting_chopHZ (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
+    (hsp : SelfParenting U) (G : ℕ) : SelfParenting (chopHZ U hsp G)
+```
+
+#### `chopHZ_ids`
+
+*theorem, `Integration.Hydrozoan.Transport.lean`*
+
+```lean
+@[simp] theorem chopHZ_ids (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
+    (hsp : SelfParenting U) (G : ℕ) :
+    (chopHZ U hsp G).ids = U.ids.filter fun i => G ≤ (U.block i).round
+```
+
+#### `selfParenting_skipFillHZ`
+
+*theorem, `Integration.Hydrozoan.Transport.lean`*
+
+```lean
+theorem selfParenting_skipFillHZ (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
+    (hsp : SelfParenting U) (sk : SkipMsg (toCore U hsp)) :
+    SelfParenting (skipFillHZ U hsp sk)
+```
+
+#### `honestNoEquiv_toCore`
+
+*theorem, `Integration.Hydrozoan.Universe.lean`*
+
+```lean
+theorem honestNoEquiv_toCore (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
+    (hsp : SelfParenting U) : HonestNoEquiv (toCore U hsp)
+```
+
+**The transported universe carries the wider non-equivocation**, which is Hydrozoan's own field: the hybrid arc's `creator ∉ byzantine` and Hydrozoan's `author ∈ NonByzantine` are one condition.
+
+#### `isLeaderBlock_congr`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem isLeaderBlock_congr {S₁ S₂ : Slots Validator} {k : ℕ} {L : BlockId}
+    (hround : S₁.slotRound k = S₂.slotRound k) (hk : S₁.leader k = S₂.leader k)
+    (h : IsLeaderBlock (S := S₁) U k L) : IsLeaderBlock (S := S₂) U k L
+```
+
+Only the leader clause of `IsLeaderBlock` consults the schedule's leaders, at the slot itself.
+
+#### `directCommit_of_sustains`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem directCommit_of_sustains (h : Sustains mysticetiRule U U' G R₀)
+    {T : Finset Validator} {r : ℕ} {L : BlockId} (hr : R₀ ≤ r) (hG : G ≤ r)
+    (hcard : quorumCard Validator ≤ T.card)
+    (hpop : PopulatedOn U T (r + 2)) (hc : CertifiesAt U T r L) :
+    DirectCommit U' L (r - G)
+```
+
+**The reactive commit survives any sustaining mechanism.** The hypotheses are exactly what `Reactive/Mysticeti.directCommit` establishes on the original DAG — certification by `cert_or_wait`, and production — and the conclusion is the commit on the transformed one.
+
+#### `causal`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem causal : Causal (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+```
+
+The core's universes are block DAGs.
+
+#### `persist`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem persist : Persist (mysticetiRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)) (fun S U U' V => Quorate S U U' V)
+```
+
+The graded form, for consumers that carry a condition.
+
+#### `skipsUnsupported`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem skipsUnsupported :
+    SkipsUnsupported (mysticetiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) (fun T => quorumCard Validator ≤ T.card)
+```
+
+**The core skips an unsupported slot from a correct quorum.**
+
 #### `toDecided`
 
 *theorem, `MysticetiProperties.lean`*
@@ -35727,6 +36550,91 @@ theorem toDecided (h : DecidedWithin U V B k v) : Decided U V k v
 ```
 
 Forgetting the bound: every bounded derivation is a `Decided` derivation, so the base safety development — M1–M6 in particular — applies to bounded verdicts without restatement.
+
+#### `mono`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem mono (h : DecidedWithin U V B k v) (hBB : B ≤ B') :
+    DecidedWithin U V B' k v
+```
+
+The bound relaxes upward.
+
+#### `agree`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem agree {V₁ V₂ : View Validator BlockId Payload U} {B₁ B₂ k : ℕ}
+    {v₁ v₂ : Option BlockId} (h₁ : DecidedWithin U V₁ B₁ k v₁)
+    (h₂ : DecidedWithin U V₂ B₂ k v₂) : v₁ = v₂
+```
+
+Two bounded verdicts agree — M6, through the embedding.
+
+#### `decidedWithin_congr_of_slotRound`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem decidedWithin_congr_of_slotRound {S₁ S₂ : Slots Validator}
+    (hround : S₁.slotRound = S₂.slotRound) {V : View Validator BlockId Payload U}
+    {B k : ℕ} {v : Option BlockId} (ha : ∀ m, m < B → S₁.leader m = S₂.leader m)
+    (h : DecidedWithin (S := S₁) U V B k v) : DecidedWithin (S := S₂) U V B k v
+```
+
+**Congruence below the bound**, for any two schedules with one round structure. Only `IsLeaderBlock` consults the leaders, and only at slots below `B`; eligibility, decision rounds and every counting predicate read the rounds, which are shared.
+
+#### `agree`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem agree :
+    Agree (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+```
+
+**M6 as a property.**
+
+#### `leaderCommits`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem leaderCommits :
+    LeaderCommits (mysticetiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) (fun S {U} V T lo K => coreLive S (U := U) V T lo K)
+```
+
+**L4 as a property**: a `T`-led slot in the window commits, and the commit reads one leader, so its bound is one above the slot.
+
+#### `decidedBelow_of_decidedWithin`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem decidedBelow_of_decidedWithin [S : Slots Validator]
+    {U : BlockUniverse Validator BlockId Payload} {V : View Validator BlockId Payload U}
+    {B k : ℕ} {v : Option BlockId} (h : DecidedWithin (S := S) U V B k v) :
+    DecidedBelow mysticetiRule S B V k v
+```
+
+**The core's own bounded relation lands in the derived one.** `DecidedWithin` still names the slots a derivation mentions, which is the tight information `LeaderCommits` and `Descends` need; this says that carrying it implies the semantic bound the mechanism reads. The old `BoundedRule` field asked the carrier for the relation itself.
+
+#### `descends`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem descends {S : Slots Validator} {c : ℕ} (hc : 0 < c)
+    (hspans : SpansEligible (Validator := Validator) (S := S) c) :
+    Descends (mysticetiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) S c
+```
+
+**The descent as a property**, under the spanning hypothesis on the round structure.
 
 #### `directCommit_chop`
 
@@ -35750,6 +36658,224 @@ theorem toDecided (h : DecidedBelow R S B V k v) : R.Decided S V k v
 ```
 
 Forgetting the bound leaves an ordinary verdict.
+
+#### `mono`
+
+*theorem, `Properties.Bounded.lean`*
+
+```lean
+theorem mono (h : DecidedBelow R S B V k v) (hBB : B ≤ B') : DecidedBelow R S B' V k v
+```
+
+The bound relaxes upward: a larger bound asks agreement of more leaders, so it is a weaker claim.
+
+#### `reschedule`
+
+*theorem, `Properties.Bounded.lean`*
+
+```lean
+theorem reschedule (h : DecidedBelow R S B V k v) {S' : Slots Validator}
+    (hround : S'.slotRound = S.slotRound) (hlead : ∀ m, m < B → S'.leader m = S.leader m) :
+    DecidedBelow R S' B V k v
+```
+
+**Locality in the schedule**, which was a property to prove and is now a theorem: two schedules with one round structure, agreeing on the leaders below the bound, carry the same bounded verdicts.
+
+#### `agree`
+
+*theorem, `Properties.Bounded.lean`*
+
+```lean
+theorem agree (ha : Agree R) {S : Slots Validator} {U : R.Universe} {V₁ V₂ : R.View U}
+    {B₁ B₂ k : ℕ} {v₁ v₂ : Option BlockId}
+    (h₁ : DecidedBelow R S B₁ V₁ k v₁) (h₂ : DecidedBelow R S B₂ V₂ k v₂) : v₁ = v₂
+```
+
+Two bounded verdicts agree, at any bounds — `Agree` through the first component.
+
+#### `symm`
+
+*theorem, `Properties.Carrier.lean`*
+
+```lean
+theorem symm (h : AgreeAbove R U U' r) : AgreeAbove R U' U r where
+  mem
+```
+
+And symmetric — which the paired `mem` clause is what secures.
+
+#### `reaches_iff`
+
+*theorem, `Properties.Local.lean`*
+
+```lean
+theorem reaches_iff (hc : Causal R) (h : AgreeAbove R U U' r)
+    {A C : BlockId} (hA : A ∈ R.ids U) (hAr : r ≤ (R.block U A).round)
+    (hC : C ∈ R.ids U) (hCr : r ≤ (R.block U C).round) :
+    ReachesFrom (R.block U') A C ↔ ReachesFrom (R.block U) A C
+```
+
+And so it agrees in both directions.
+
+#### `old_refs_old`
+
+*theorem, `Properties.Persist.lean`*
+
+```lean
+theorem old_refs_old (hc : Causal R) (he : Extends R U U')
+    {b : BlockId} (hb : b ∈ R.ids U) {j : BlockId} (hj : j ∈ (R.block U' b).refs) :
+    j ∈ R.ids U
+```
+
+**An old block references only old blocks**, so nothing that was already present can reach what the extension added. This is the formal content of "blocks nothing references cannot change a verdict", and it is *derived* rather than assumed: an extension leaves old blocks alone, and an old block's references were already inside `U`.
+
+#### `reaches_old`
+
+*theorem, `Properties.Persist.lean`*
+
+```lean
+theorem reaches_old (hc : Causal R) (he : Extends R U U')
+    {A B : BlockId} (hA : A ∈ R.ids U) (h : ReachesFrom (R.block U') A B) :
+    ReachesFrom (R.block U) A B ∧ B ∈ R.ids U
+```
+
+**Nothing an old block reaches is new.** The reference lemma propagated along causal history: an extension can add blocks, but none of them enters the history of a block that was already there.
+
+This is what every protocol's persistence proof turns on. A rung test asks whether something is in reach of the *anchor*, and the anchor of a derivation over the old universe is old — so the extension cannot supply a new certificate, a new vote, or a new candidate to any rung, and the negative premises that would otherwise be destroyed survive.
+
+#### `reaches_iff`
+
+*theorem, `Properties.Persist.lean`*
+
+```lean
+theorem reaches_iff (hc : Causal R) (he : Extends R U U')
+    {A B : BlockId} (hA : A ∈ R.ids U) :
+    ReachesFrom (R.block U') A B ↔ ReachesFrom (R.block U) A B
+```
+
+And so reachability from an old block is the same relation in both universes.
+
+#### `of_unconditional`
+
+*theorem, `Properties.Persist.lean`*
+
+```lean
+theorem of_unconditional (h : Unconditional R) : Persist R Ok
+```
+
+An unconditional rule persists under any condition whatsoever.
+
+#### `unsupported_of_novel`
+
+*theorem, `Properties.Skip.lean`*
+
+```lean
+theorem unsupported_of_novel (hc : Causal R) {U U' : R.Universe} (he : Extends R U U')
+    {S : Slots Validator} {V' : R.View U'} {T : Finset Validator} {k : ℕ}
+    (hnov : ∀ L, R.IsCandidate S U' k L → Novel R U U' L)
+    (hold : ∀ c, c ∈ R.viewIds V' → (R.block U' c).creator ∈ T →
+      (R.block U' c).round = S.slotRound k + 1 → c ∈ R.ids U) :
+    Unsupported R S U' V' T k
+```
+
+**The bridge from the mechanism.** After an extension, a slot all of whose candidates are novel is unsupported by any `T` whose voting-round blocks are old — because an old block references only old blocks. This is the hypothesis a fill hands the protocol; `SkipsUnsupported`'s grade says whether the protocol can use it.
+
+#### `of_mem'`
+
+*theorem, `Properties.Sustain.lean`*
+
+```lean
+theorem of_mem' (h : Sustains R U U' G R₀) {b : BlockId} (hb : b ∈ R.ids U')
+    (hr : R₀ ≤ (R.block U' b).round + G) :
+    b ∈ R.ids U ∧ (R.block U' b).round + G = (R.block U b).round
+```
+
+A block of the target at or above the settling round is a block of the source, at the shifted round.
+
+#### `populatedOn_of`
+
+*theorem, `Properties.Sustain.lean`*
+
+```lean
+theorem populatedOn_of (h : Sustains R U U' G R₀) {T : Finset Validator} {r : ℕ}
+    (hr : R₀ ≤ r) (hG : G ≤ r) (hp : PopulatedOn R U T r) : PopulatedOn R U' T (r - G)
+```
+
+**Production survives.**
+
+#### `mem_of`
+
+*theorem, `Properties.Truncate.lean`*
+
+```lean
+theorem mem_of (h : Truncates R U U' S S' G d) {b : BlockId} (hb : b ∈ R.ids U') :
+    b ∈ R.ids U
+```
+
+A retained block is a block of the original.
+
+#### `le_round`
+
+*theorem, `Properties.Truncate.lean`*
+
+```lean
+theorem le_round (h : Truncates R U U' S S' G d) {b : BlockId} (hb : b ∈ R.ids U') :
+    G ≤ (R.block U b).round
+```
+
+And sits at or above the horizon there.
+
+#### `mono`
+
+*theorem, `Properties.Witness.lean`*
+
+```lean
+theorem mono {U U' : R.Universe} {lo hi lo' hi' : ℕ} (h : AgreeBand R U U' lo hi)
+    (hlo : lo ≤ lo') (hhi : hi' ≤ hi) : AgreeBand R U U' lo' hi' where
+  mem
+```
+
+Agreement on a band gives agreement on any narrower one.
+
+#### `reaches_of`
+
+*theorem, `Properties.Witness.lean`*
+
+```lean
+theorem reaches_of (hc : Causal R) (h : AgreeBand R U U' lo hi)
+    {A : BlockId} (hA : A ∈ R.ids U) (hAhi : (R.block U A).round ≤ hi) :
+    ∀ {C : BlockId}, ReachesFrom (R.block U) A C → lo < (R.block U C).round →
+      ReachesFrom (R.block U') A C
+```
+
+**Causal history inside the band is the same history.** A path that starts in the band and ends strictly above its floor keeps every step inside, since a reference sits one round below its referrer.
+
+#### `reaches_old`
+
+*theorem, `Properties.Witness.lean`*
+
+```lean
+theorem reaches_old (hc : Causal R) (h : AgreeBand R U U' lo hi)
+    {A : BlockId} (hA : A ∈ R.ids U) (hAlo : lo ≤ (R.block U A).round)
+    (hAhi : (R.block U A).round ≤ hi) :
+    ∀ {C : BlockId}, ReachesFrom (R.block U') A C → lo ≤ (R.block U' C).round →
+      C ∈ R.ids U ∧ ReachesFrom (R.block U) A C ∧
+        (R.block U C).round = (R.block U' C).round
+```
+
+**And a path of `U'` that stays above the floor is a path of `U`.** Nothing the band adds is reachable from a block the band already had: the references of an old block in the band are the references it had, and those are blocks of `U`. This is what lets a rule prove `Banded` without knowing whether the candidates it must rule out are new.
+
+#### `leaderCommits_reactive`
+
+*theorem, `Reactive.MysticetiProperties.lean`*
+
+```lean
+theorem leaderCommits_reactive :
+    LeaderCommits (mysticetiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) (fun S {U} V T lo K => reactiveLive S (U := U) V T lo K)
+```
+
+**Reactive Mysticeti commits its reliable leaders** — `ReactiveM.decided` as the property, on any view caught up to the horizon.
 
 #### `waveRobin_fairRun`
 
@@ -35790,7 +36916,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 1064 lemmas used only within the file that proves
+The 968 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -35873,15 +36999,12 @@ subsection per module, in the layer order of Appendices B and C.
 | `uniform_leader` | — |
 | `uniform_slotRound` | — |
 
-### `Mysticeti.lean` (15)
+### `Mysticeti.lean` (12)
 
 | Lemma | Role |
 |:---|:---|
 | `certifiedIn_of_directCommitIn` | The engine of M6. A direct commit made in *any* view is visible from *every* later slot's leader block. A … |
 | `certifiedIn_of_directCommitIn_at_anchor` | Visibility from an anchor. A slot committed directly is certified at any eligible anchor above it: the … |
-| `directSkipIn_of_directSkipSlotIn` | The slot-level skip implies the per-candidate one, so every theorem stated over `DirectSkipIn` — M1 and M3 … |
-| `directSkipSlotIn_mono` | A larger view only sees more blamers. |
-| `directSkipSlotIn_of_no_candidate` | A slot with no candidate is blamed by every voting-round block, so the skip reduces to a quorum being … |
 | `directSkip_of_directSkipIn` | — |
 | `eq_of_directCommitIn` | Cross-view M5: two validators cannot directly commit *different* blocks for one slot. Both candidates are … |
 | `eq_of_hasCertificate` | Two commits for one slot agree, however each was reached. Both routes yield a certificate, so this is M5′ … |
@@ -36414,21 +37537,13 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `const_pick` | — |
 
-### `Adaptive/Run.lean` (2)
-
-| Lemma | Role |
-|:---|:---|
-| `partialRun_assign_agree` | Assignments agree wherever the common verdicts determine them. |
-| `run_agree` | Safety: the adaptive fixpoint is unique. Two total runs over one universe — derived from any two views, … |
-
-### `Adaptive/Liveness.lean` (4)
+### `Adaptive/Liveness.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
 | `Run.assign_eq` | The run's schedule is the policy's, as a function. |
 | `Run.commits_in_epoch` | Every epoch past the first carries `c` consecutive commits. |
 | `Run.live_of_staged` | The staged precondition, read at a total run's own schedule. |
-| `run_exists` | The adaptive fixpoint exists. Under a policy that places runs, with the protocol's precondition at every … |
 
 ### `Adaptive/Odontoceti.lean` (3)
 
@@ -36964,7 +38079,7 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `exists_nonByzantine_mem_inter` | Two replica sets whose cardinalities sum past `n + f` share a non-Byzantine member. |
 
-### `Hydrozoan/Helpers/SlotAgreement.lean` (16)
+### `Hydrozoan/Helpers/SlotAgreement.lean` (15)
 
 | Lemma | Role |
 |:---|:---|
@@ -36974,7 +38089,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `certifiedIn_of_reaches` | `CertifiedIn` is inherited upward along reachability. |
 | `certifiedIn_of_slowCommit_aux` | — |
 | `certifiedIn_of_slowCommit_base` | — |
-| `isLeaderBlock_of_decided` | Whatever route committed it, a verdict names a genuine candidate. |
 | `n_add_qWeak_add_f_le_qFast_add_q` | The strengthened footprint row: `n + q_weak + f ≤ q_fast + q`. Only the non-Byzantine overlap of an … |
 | `nf_lt_qFast_add_qWeak` | `n + f < q_fast + q_weak` — a fast commit starves conflicts below the weak rung (Phase 2's row 3). |
 | `nf_lt_q_add_qSlow` | `n + f < q + q_slow` — an anchor's parents meet any slow commit (Phase 2's row 5). Standalone this is an … |
@@ -37215,16 +38329,15 @@ subsection per module, in the layer order of Appendices B and C.
 | `horizonOptUniverse_toBlockUniverse` | — |
 | `horizonUniverse_noEquivocation` | No author of the horizon universe has two blocks in one round — Byzantine or not: block indices are … |
 
-### `Adaptive/Growth.lean` (4)
+### `Adaptive/Growth.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
 | `Policy.const_stable` | The constant policy is stable. |
 | `partialRun_agree_extends` | Partial runs agree across growth. A run on `U` and a run on an extension `U'`, from views one contained in … |
 | `partialRun_assign_agree_extends` | Assignments agree across growth wherever the common verdicts determine them. |
-| `run_agree_extends` | The fixpoint is a prefix of the fixpoint on any extension. Two total runs, on a universe and an extension … |
 
-### `Adaptive/Mysticeti.lean` (10)
+### `Adaptive/Mysticeti.lean` (8)
 
 | Lemma | Role |
 |:---|:---|
@@ -37234,8 +38347,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `adaptiveRun_commits_in_epoch` | Every epoch past the first carries `c` consecutive commits, in every run — the liveness statement AL5 was … |
 | `adaptive_decided_agree` | The verdict form of uniqueness, in the shape of M6. |
 | `const_pick` | — |
-| `descends_slotsOf` | The core's descent, at every induced schedule. |
-| `isLeaderBlock_slotsOf_congr` | Only the leader clause of `IsLeaderBlock` consults the assignment, at the slot itself. |
 | `partialRun_assign_agree` | Assignments agree wherever the common verdicts determine them. |
 | `spansEligible_slotsOf` | Eligibility reads only the round structure, which reassignment fixes: the spanning property transfers to … |
 
@@ -37312,18 +38423,17 @@ subsection per module, in the layer order of Appendices B and C.
 | `mem_recoveryCorrect` | Recovery-correct membership excludes all three fault classes. |
 | `mem_reliableSigner` | Reliable signing excludes precisely the two classes allowed to equivocate. |
 
-### `Hydrozoan/Helpers/Carrier.lean` (6)
+### `Hydrozoan/Helpers/Carrier.lean` (5)
 
 | Lemma | Role |
 |:---|:---|
-| `causal` | Hydrozoan's universes are block DAGs, which is `HI3` in the shared vocabulary: the two fields are the … |
 | `rule_block_creator` | — |
 | `rule_block_refs` | — |
 | `rule_block_round` | — |
 | `rule_ids` | — |
 | `rule_viewIds` | — |
 
-### `Hydrozoan/Helpers/Locality.lean` (25)
+### `Hydrozoan/Helpers/Locality.lean` (24)
 
 | Lemma | Role |
 |:---|:---|
@@ -37342,7 +38452,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `isCertificate_agr` | — |
 | `isLeaderBlock_agr` | — |
 | `isVote_agr` | A vote cast strictly above the horizon is the vote it was. |
-| `local_aux` | — |
 | `mem_certificates_bounds` | What membership in the certificate set supplies. |
 | `of_mem_blocksAt'` | What a block at a round above the horizon supplies: presence in the original, and its round. |
 | `reaches_agr` | Reachability between blocks above the horizon, in Hydrozoan's vocabulary. |
@@ -37353,14 +38462,13 @@ subsection per module, in the layer order of Appendices B and C.
 | `votesSet_agr` | — |
 | `weakLinked_agr` | — |
 
-### `Hydrozoan/Helpers/Skippability.lean` (2)
+### `Hydrozoan/Helpers/Skippability.lean` (1)
 
 | Lemma | Role |
 |:---|:---|
-| `decided_none_of_unsupported` | The skip fires at `qFast` blamers. |
 | `subset_blamesInView` | Every member of `T` blames the slot. |
 
-### `Hydrozoan/Helpers/Truncation.lean` (27)
+### `Hydrozoan/Helpers/Truncation.lean` (26)
 
 | Lemma | Role |
 |:---|:---|
@@ -37372,7 +38480,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `certifiedIn_eq` | — |
 | `certifiersInView_eq` | — |
 | `decided_from` | — |
-| `decided_iff` | Truncation invariance for Hydrozoan. |
 | `decided_to` | — |
 | `eligible_eq` | — |
 | `fastCommitInView_eq` | — |
@@ -37392,7 +38499,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `voteBlocks_eq` | — |
 | `weakLinked_eq` | — |
 
-### `Hydrozoan/Properties/Proof.lean` (26)
+### `Hydrozoan/Properties/Proof.lean` (25)
 
 | Lemma | Role |
 |:---|:---|
@@ -37415,7 +38522,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `not_certifiedIn_novel` | A new candidate is certified by nothing an old anchor can see. A certificate for it would have to … |
 | `not_isVote_novel` | And an old block votes for nothing the extension added. |
 | `not_weakLinked_novel` | And weak-linked by nothing either, for the same reason. |
-| `persist_aux` | Hydrozoan's verdicts survive every extension. The induction, six cases, each a transfer lemma above applied. |
 | `reaches_old` | Reachability from an old block is unchanged, and stays old — the carrier-level lemma read in Hydrozoan's … |
 | `skippedLeaderInView_mono` | — |
 | `slowCommitInView_mono` | — |
@@ -37431,47 +38537,20 @@ subsection per module, in the layer order of Appendices B and C.
 | `adaptiveRun_exists_reactive` | The adaptive fixpoint exists over reactive Mysticeti. Under a policy that places runs, with the reactive … |
 | `exists_partialRun_reactive` | Partial runs exist at every height, reactively. |
 
-### `Integration/Hydrozoan/ChopDecided.lean` (37)
+### `Integration/Hydrozoan/ChopDecided.lean` (10)
 
 | Lemma | Role |
 |:---|:---|
 | `View.chopHZ_ids` | — |
-| `authorsOf_chopHZ` | — |
-| `blamesInView_chopHZ` | — |
-| `blocksAt_chopHZ` | The rounds shift by the cut, at every round including the new base layer: `G ≤ round` and `round − G = r` … |
 | `certificates_chopHZ` | — |
-| `certifiedIn_chopHZ` | Rung 1's test: the certificate and the anchor both sit above the cut, so both the certificate set and the … |
 | `certifiersInView_chopHZ` | — |
-| `chopHZ_author` | — |
-| `chopHZ_parents_of_le` | At the cut the block becomes a genesis. |
-| `chopHZ_parents_of_lt` | Above the cut the parents are untouched. |
 | `chopHZ_parents_subset` | The truncation only ever drops parents, never adds them. |
-| `chopHZ_round` | — |
-| `chopRound_add` | The cut and the re-indexing cancel above the base slot. |
 | `decided_agree_chopHZ` | Cross-cut agreement. A replica that has pruned below the horizon and one that has not cannot disagree … |
 | `decided_chopHZ_of_decided` | Backward: the original verdict is reached on the truncation. Generalised over the slot, with the … |
 | `decided_of_decided_chopHZ` | Forward: a verdict reached on the truncation is the original verdict, at the re-indexed slot. |
-| `eligibleAsAnchorHZ_chop` | Anchor eligibility is re-indexed, both slots moving together. |
-| `fairRunOn_slotsChopHZ` | Run fairness survives the cut, the search shifted past the base slot. Proved directly rather than through … |
-| `fastCommitInView_chopHZ` | — |
-| `horizon_le_slotRoundHZ` | Every slot from the base slot on clears the horizon. |
 | `isCertificate_chopHZ` | Certification is a count over a block's votes, so it transports where the votes do. |
-| `isLeaderBlockHZ_chop` | Candidacy is re-indexed: a block is slot `k`'s candidate in the truncation exactly when it is slot `d + … |
-| `isLeaderBlock_of_decidedHZ` | A commit verdict is about a candidate of its slot, so the anchor of an indirect derivation is a block of … |
-| `isVote_chopHZ` | Above the cut a vote is a vote: the parents are the same set. |
-| `mem_chopHZ_ids` | — |
-| `mem_viewChopHZ` | A block above the cut is held by the truncated view exactly when the original view holds it. |
-| `reaches_chopHZ` | — |
 | `reaches_chopHZ_of_reaches` | — |
-| `reaches_of_reaches_chopHZ` | — |
-| `skippedLeaderInView_chopHZ` | — |
-| `slotsChopHZ_leader` | — |
 | `slotsChopHZ_slotRound` | — |
-| `slowCommitInView_chopHZ` | — |
-| `spansEligible_slotsChopHZ` | And the runway a committed run needs, by the same re-indexing that carries anchor eligibility. |
-| `supportersInView_chopHZ` | Supporters at a round above the new base layer are the originals, at the shifted round. |
-| `voteBlocks_chopHZ` | Two rounds above the cut a block's votes are the originals: its own parents are untouched, and so are theirs. |
-| `weakLinked_chopHZ` | Rung 2's test: the witness set is the same set of blocks, each a voting-round block above the cut. |
 
 ### `Integration/Hydrozoan/Deployment.lean` (5)
 
@@ -37483,59 +38562,43 @@ subsection per module, in the layer order of Appendices B and C.
 | `populated` | Production carries across the gap, with the recovered replica counted, at the rebased round. This is what … |
 | `spans` | And a spanning runway stays spanning. |
 
-### `Integration/Hydrozoan/Faults.lean` (3)
+### `Integration/Hydrozoan/Faults.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
 | `correct_eq` | The correct pools coincide: the derived instance's Byzantine set is the union, so its complement is … |
 | `nonByzantine_eq` | The never-equivocating pools coincide: the hybrid arc's honest class is Hydrozoan's `NonByzantine`. |
-| `quorumCard_eq_q` | The two quorums coincide: `n − f − c` is `n − (f + c)`. Not definitional, which is why it is a simp lemma … |
 
-### `Integration/Hydrozoan/FillDecided.lean` (24)
+### `Integration/Hydrozoan/FillDecided.lean` (13)
 
 | Lemma | Role |
 |:---|:---|
 | `authorHZ_fill_old` | — |
 | `authorsOfHZ_fill` | Author sets read identically on any set of old blocks. |
 | `blamesInView_fill` | — |
-| `certifiedInHZ_fill` | — |
 | `certifiersInView_fill` | — |
-| `decided_fillHZ` | Verdict invariance across the fill. Every verdict a view reached in `U` re-derives, for the lifted view, … |
-| `fastCommitInView_fill` | — |
 | `ids_subset_skipFillHZ` | — |
 | `isCertificateHZ_fill_old` | Certification reads identically on an old block: its parents are unchanged, and so are their votes. |
-| `isLeaderBlockHZ_fill` | — |
-| `isLeaderBlockHZ_fill_old` | An old candidate of the extension is an old candidate. |
 | `isVoteHZ_fill_old` | Above the fill an old block's vote is its vote. |
 | `liftViewHZ_ids_eq` | — |
-| `not_certifiedInHZ_fresh` | — |
 | `not_isVote_fresh` | An old block never references a fresh identifier. |
-| `not_weakLinkedHZ_fresh` | — |
 | `parentsHZ_fill_old` | — |
 | `reachesHZ_fill_old` | — |
 | `roundHZ_fill_old` | — |
-| `skipFillHZ_block_old` | — |
-| `skippedLeaderInView_fill` | The skip survives the fill, with no quorum hypothesis. |
-| `slowCommitInView_fill` | — |
 | `supportersInView_fill` | — |
-| `weakLinkedHZ_fill` | — |
 
-### `Integration/Hydrozoan/Liveness.lean` (13)
+### `Integration/Hydrozoan/Liveness.lean` (9)
 
 | Lemma | Role |
 |:---|:---|
-| `anchoredTotality_stackHZ` | HZ6's descent applies too, so a run of committed slots on the stack decides everything below it. |
-| `commitLiveness_stackHZ` | HZ5 applies to the stack. Its content here is the hypotheses, which the theorems above transport. |
 | `populatedOn_chopHZ` | Production survives the cut, at the rebased round. A block retained by the horizon keeps its author, and … |
 | `populatedOn_ofCore` | Production differs only in the order of a conjunction. |
 | `populatedOn_skipFillHZ` | The gap is populated, with the recovering replica back in the set — SS2, which is what liveness consumes … |
-| `populatedOn_stackHZ` | The stack is populated across the gap, with the recovered replica counted, at the rebased round. |
 | `populatedOn_toCore` | — |
 | `synchronisedOn_chopHZ` | Coverage survives the cut, needing only the horizon offset — `integration.md` I2, which holds because the … |
 | `synchronisedOn_ofCore` | Coverage is the same proposition either side of the transport: the core's `SynchronisedFrom` is … |
 | `synchronisedOn_skipFillHZ_above` | Coverage returns strictly above the fill — `integration.md` I4's positive case. The strictness is not … |
 | `synchronisedOn_skipFillHZ_of_notMem` | And for a set excluding the recovering replica it survives outright — the filled blocks are that replica's … |
-| `synchronisedOn_stackHZ` | The stack is covered, from a round above the fill, rebased. |
 | `synchronisedOn_toCore` | — |
 
 ### `Integration/Hydrozoan/OptimalChopDecided.lean` (13)
@@ -37556,12 +38619,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `votesFor_chopHZ` | The vote count a block casts is unchanged above the cut. |
 | `witnessesEquivocation_chopHZ` | Witnessing is preserved, at the re-indexed slot. The guard is two rounds above the horizon because a vote … |
 
-### `Integration/Hydrozoan/OptimalTransport.lean` (3)
+### `Integration/Hydrozoan/OptimalTransport.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
 | `isCandidateAt_of_chopHZ` | A candidate of the truncation is a candidate of the original, at the round shifted by the horizon. |
-| `leaderExcludedAll_chopHZ` | Leader exclusion survives the cut. |
 | `witnessesAt_of_chopHZ` | And a witness in the truncation is a witness in the original. A vote is membership in the voter's … |
 
 ### `Integration/Hydrozoan/Schedule.lean` (4)
@@ -37584,34 +38646,27 @@ subsection per module, in the layer order of Appendices B and C.
 | `simulates_chop_bwd` | And the cut read backwards is a simulation too — the same correspondence, `n ↦ d + n`, taken from the … |
 | `simulates_fill` | The fill is a simulation along the identity on slots, with the fresh identifiers as the novel ones. |
 
-### `Integration/Hydrozoan/Stack.lean` (4)
+### `Integration/Hydrozoan/Stack.lean` (1)
 
 | Lemma | Role |
 |:---|:---|
-| `agree_stackHZ` | The capstone: a recovered and pruned replica cannot disagree. Its view `W` is an arbitrary view of the … |
-| `decidedUnique_stackHZ` | Safety across the stack, in HZ3's own words: no two views of the recovered-and-pruned universe decide a … |
-| `decided_stackHZ` | Verdicts survive the stack. A verdict reached before the recovery, at a slot at or above the base slot, … |
 | `selfParenting_stackHZ` | The stack is still transportable. Its side condition holds by `selfParenting_ofCore` at each step, so a … |
 
-### `Integration/Hydrozoan/Transport.lean` (6)
+### `Integration/Hydrozoan/Transport.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
-| `chopHZ_ids` | — |
 | `liftViewHZ_ids` | — |
-| `selfParenting_chopHZ` | — |
-| `selfParenting_skipFillHZ` | — |
 | `selfParenting_transport` | Transport preserves the side condition, for every `F`. |
 | `transport_ids` | — |
 
-### `Integration/Hydrozoan/Universe.lean` (8)
+### `Integration/Hydrozoan/Universe.lean` (7)
 
 | Lemma | Role |
 |:---|:---|
 | `View.ofCore_ids` | — |
 | `View.toCore_ids` | — |
 | `correct_subset_nonByzantine` | Hydrozoan's `Correct` is inside its `NonByzantine`: a crashed replica does not equivocate. What lets the … |
-| `honestNoEquiv_toCore` | The transported universe carries the wider non-equivocation, which is Hydrozoan's own field: the hybrid … |
 | `ofCore_ids` | — |
 | `ofCore_toCore` | — |
 | `toCore_block` | — |
@@ -37637,12 +38692,10 @@ subsection per module, in the layer order of Appendices B and C.
 | `soundOn_skipFill` | The fill preserves it, above the gap. The synchrony round must clear the filled round: inside the gap the … |
 | `soundOn_stack` | The stack preserves it, the offsets composing exactly as the two statements above suggest: the fill … |
 
-### `MysticetiProperties.lean` (59)
+### `MysticetiProperties.lean` (47)
 
 | Lemma | Role |
 |:---|:---|
-| `agree` | Two bounded verdicts agree — M6, through the embedding. |
-| `agree` | M6 as a property. |
 | `band_block` | — |
 | `band_block'` | — |
 | `band_mem` | — |
@@ -37651,7 +38704,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `banded_aux` | Every verdict of the core reads a band of rounds, from the slot's own round up to a top the derivation … |
 | `blocksAt_band` | — |
 | `blocksAt_subset` | — |
-| `causal` | The core's universes are block DAGs. |
 | `certifiedIn_band` | — |
 | `certifiedIn_old` | — |
 | `certifiesAt_of_sustains` | Certification at a slot survives a sustaining mechanism, above its settling round. |
@@ -37661,13 +38713,9 @@ subsection per module, in the layer order of Appendices B and C.
 | `creatorsOf_band` | — |
 | `creatorsOf_old` | — |
 | `decidedBelow_of_committed_run` | The committed-run descent. `c` consecutive commits decide every slot below them, and the derivations … |
-| `decidedBelow_of_decidedWithin` | The core's own bounded relation lands in the derived one. `DecidedWithin` still names the slots a … |
-| `decidedWithin_congr_of_slotRound` | Congruence below the bound, for any two schedules with one round structure. Only `IsLeaderBlock` consults … |
 | `decided_mono_of_band` | L2 re-derived, with no induction of its own. View monotonicity (`decided_mono`, four cases in … |
-| `descends` | The descent as a property, under the spanning hypothesis on the round structure. |
 | `directCommitIn_band` | — |
 | `directCommitIn_mono` | — |
-| `directCommit_of_sustains` | The reactive commit survives any sustaining mechanism. The hypotheses are exactly what … |
 | `directSkipIn_mono` | An old candidate blamed before is blamed still. |
 | `directSkipIn_novel` | A new candidate is blamed by every old block in view — and the grade supplies a quorum of them. This is … |
 | `directSkipSlotIn_band` | — |
@@ -37676,24 +38724,19 @@ subsection per module, in the layer order of Appendices B and C.
 | `ext_mem` | — |
 | `isLeaderBlock_band` | — |
 | `isLeaderBlock_band_old` | — |
-| `isLeaderBlock_congr` | Only the leader clause of `IsLeaderBlock` consults the schedule's leaders, at the slot itself. |
 | `isLeaderBlock_mono` | — |
 | `isLeaderBlock_old` | — |
-| `leaderCommits` | L4 as a property: a `T`-led slot in the window commits, and the commit reads one leader, so its bound is … |
 | `local_` | And it is local, from the same band: a verdict at a slot whose round is at or above `r` reads nothing … |
 | `lt_bound` | The decided slot lies below the bound. |
 | `mem_certificates_band` | — |
 | `mem_certificates_old` | — |
-| `mono` | The bound relaxes upward. |
 | `not_certifiedIn_band_novel` | A candidate the band did not have is certified by nothing an old anchor can see. The anchor's cone stays … |
 | `not_certifiedIn_novel` | A new candidate is certified by nothing an old anchor can see. |
 | `not_mem_refs_novel` | An old block votes for nothing the extension added. |
-| `persist` | The graded form, for consumers that carry a condition. |
 | `persist_unconditional` | The core persists unconditionally, as an evidence-backed rule must — now a corollary of the band rather … |
 | `populatedOn_ofCore` | The carrier's production predicate and the core's are the same statement with the conjuncts in the other … |
 | `populatedOn_toCore` | — |
 | `quorumCard_pos` | Two quorums share a correct validator, so a quorum is not empty. |
-| `skipsUnsupported` | The core skips an unsupported slot from a correct quorum. |
 | `slotBlamers_congr` | The slot-level skip reads the schedule only at its own slot, so two schedules naming the same round and … |
 | `subset_blamers` | Every member of `T` blames the slot: its voting-round block is in view and references no candidate, which … |
 | `viewSound` | Views hold blocks of their universe. |
@@ -37722,72 +38765,20 @@ subsection per module, in the layer order of Appendices B and C.
 | `presentAt_liftView` | Presence in the pre-crash view is presence in the lifted one: the ids are the same and old blocks are … |
 | `quorate_of_quorateOverGap` | Quorate over the gap is the core's grade, for the fill. A candidate the fill introduces is a fresh block, … |
 
-### `Properties/Bounded.lean` (4)
+### `Properties/Bounded.lean` (1)
 
 | Lemma | Role |
 |:---|:---|
-| `agree` | Two bounded verdicts agree, at any bounds — `Agree` through the first component. |
 | `lt_bound` | The decided slot lies below the bound. |
-| `mono` | The bound relaxes upward: a larger bound asks agreement of more leaders, so it is a weaker claim. |
-| `reschedule` | Locality in the schedule, which was a property to prove and is now a theorem: two schedules with one round … |
 
-### `Properties/Carrier.lean` (3)
+### `Properties/Carrier.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
 | `Causal.refs_above` | What a block above the cut references is itself above the cut — a fact about causal structure alone, and … |
 | `refl` | Agreement is reflexive. |
-| `symm` | And symmetric — which the paired `mem` clause is what secures. |
 
-### `Properties/Local.lean` (4)
-
-| Lemma | Role |
-|:---|:---|
-| `Local.iff` | Locality in both directions, which is what agreement gives: the hypothesis is symmetric, so a protocol … |
-| `reaches_iff` | And so it agrees in both directions. |
-| `reaches_of` | Causal history above the horizon is the same history. A path from `A` descends one round at a time, so if … |
-| `symm` | Agreement of views is symmetric, given agreement of the universes that fixes the rounds. |
-
-### `Properties/Persist.lean` (10)
-
-| Lemma | Role |
-|:---|:---|
-| `isCandidate` | And a candidate of `U` is a candidate of `U'` at the same slot. |
-| `mono` | A protocol proving persistence under a weaker condition proves it under a stronger one, so the grades are … |
-| `not_novel_of_mem_refs` | Restated: an old block never references a novel identifier. |
-| `of_unconditional` | An unconditional rule persists under any condition whatsoever. |
-| `old_refs_old` | An old block references only old blocks, so nothing that was already present can reach what the extension … |
-| `reaches_iff` | And so reachability from an old block is the same relation in both universes. |
-| `reaches_old` | Nothing an old block reaches is new. The reference lemma propagated along causal history: an extension can … |
-| `refl` | Extension is reflexive. |
-| `round` | An old block keeps its round. |
-| `trans` | And transitive, so a sequence of extensions is one. |
-
-### `Properties/Skip.lean` (2)
-
-| Lemma | Role |
-|:---|:---|
-| `mono` | A protocol skipping under a weaker condition skips under a stronger one, so the grades compare. |
-| `unsupported_of_novel` | The bridge from the mechanism. After an extension, a slot all of whose candidates are novel is unsupported … |
-
-### `Properties/Sustain.lean` (5)
-
-| Lemma | Role |
-|:---|:---|
-| `mono` | A mechanism that sustains from a round sustains from any later one. |
-| `of_mem'` | A block of the target at or above the settling round is a block of the source, at the shifted round. |
-| `populatedOn_of` | Production survives. |
-| `refl` | Doing nothing sustains everything. |
-| `votesAt_of` | Votes survive. A `T`-block one round above `r` is old, keeps its author and its references, so a vote it … |
-
-### `Properties/Truncate.lean` (2)
-
-| Lemma | Role |
-|:---|:---|
-| `le_round` | And sits at or above the horizon there. |
-| `mem_of` | A retained block is a block of the original. |
-
-### `Properties/Witness.lean` (10)
+### `Properties/Derived/FromBand.lean` (4)
 
 | Lemma | Role |
 |:---|:---|
@@ -37795,18 +38786,47 @@ subsection per module, in the layer order of Appendices B and C.
 | `Persist.of_banded` | Persistence falls out. An extension carries every band and adds only blocks; a larger view holds … |
 | `decided_mono_of_banded` | And monotonicity in the view. Fix the universe and the band carries itself; a larger view holds everything … |
 | `exists_decidedBelow` | A bound falls out of the band. The slots sitting at or below a round are finitely many, since the round … |
-| `mono` | Agreement on a band gives agreement on any narrower one. |
-| `of_agreeAbove` | Agreement above a round carries every band whose floor is at or above it. |
-| `of_extends` | An extension carries every band, since it moves nothing. |
-| `reaches_of` | Causal history inside the band is the same history. A path that starts in the band and ends strictly above … |
-| `reaches_old` | And a path of `U'` that stays above the floor is a path of `U`. Nothing the band adds is reachable from a … |
-| `refl` | A universe carries its own bands. |
 
-### `Reactive/MysticetiProperties.lean` (1)
+### `Properties/Local.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
-| `leaderCommits_reactive` | Reactive Mysticeti commits its reliable leaders — `ReactiveM.decided` as the property, on any view caught … |
+| `Local.iff` | Locality in both directions, which is what agreement gives: the hypothesis is symmetric, so a protocol … |
+| `reaches_of` | Causal history above the horizon is the same history. A path from `A` descends one round at a time, so if … |
+| `symm` | Agreement of views is symmetric, given agreement of the universes that fixes the rounds. |
+
+### `Properties/Persist.lean` (6)
+
+| Lemma | Role |
+|:---|:---|
+| `isCandidate` | And a candidate of `U` is a candidate of `U'` at the same slot. |
+| `mono` | A protocol proving persistence under a weaker condition proves it under a stronger one, so the grades are … |
+| `not_novel_of_mem_refs` | Restated: an old block never references a novel identifier. |
+| `refl` | Extension is reflexive. |
+| `round` | An old block keeps its round. |
+| `trans` | And transitive, so a sequence of extensions is one. |
+
+### `Properties/Skip.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `mono` | A protocol skipping under a weaker condition skips under a stronger one, so the grades compare. |
+
+### `Properties/Sustain.lean` (3)
+
+| Lemma | Role |
+|:---|:---|
+| `mono` | A mechanism that sustains from a round sustains from any later one. |
+| `refl` | Doing nothing sustains everything. |
+| `votesAt_of` | Votes survive. A `T`-block one round above `r` is old, keeps its author and its references, so a vote it … |
+
+### `Properties/Witness.lean` (3)
+
+| Lemma | Role |
+|:---|:---|
+| `of_agreeAbove` | Agreement above a round carries every band whose floor is at or above it. |
+| `of_extends` | An extension carries every band, since it moves nothing. |
+| `refl` | A universe carries its own bands. |
 
 ### `WaveRobin.lean` (3)
 
