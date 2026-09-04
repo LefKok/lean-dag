@@ -5,6 +5,7 @@ import LeanDag.Hydrozoan.DirectLiveness.Proof
 import LeanDag.Hydrozoan.SlotAgreement.Proof
 import LeanDag.Properties.Commit
 import LeanDag.Properties.Candidate
+import LeanDag.Properties.Deliver
 
 /-!
 # Hydrozoan's liveness obligations
@@ -239,6 +240,23 @@ theorem commitsCandidate :
     CommitsCandidate (rule (Replica := Replica) (BlockId := BlockId)) :=
   fun S _ _ _ _ hd =>
     LeanDag.Hydrozoan.isLeaderBlock_of_decided (S := ofCoreSlots S) hd
+
+/-- The carrier's coverage predicate is Hydrozoan's. -/
+theorem coversUpto_eq {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
+    {V : LeanDag.Hydrozoan.View U} {N : ℕ} :
+    Properties.CoversUpto (rule (Replica := Replica) (BlockId := BlockId)) V N ↔
+      V.CoversUpto N := Iff.rfl
+
+/-- **A caught-up replica reaches every verdict**, at the band's own
+ceiling rather than a rule-specific round. What a view-level mechanism
+has to deliver, for this protocol. -/
+theorem exists_coversUpto_decides {S : LeanDag.Slots Replica}
+    {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
+    {W : LeanDag.Hydrozoan.View U} {k : ℕ} {v : Option BlockId}
+    (hW : LeanDag.Hydrozoan.Decided (S := ofCoreSlots S) U W k v) :
+    ∃ N, ∀ V : LeanDag.Hydrozoan.View U, V.CoversUpto N →
+      LeanDag.Hydrozoan.Decided (S := ofCoreSlots S) U V k v :=
+  Properties.exists_coversUpto_decides banded (S := S) hW
 
 end Hydrozoan
 

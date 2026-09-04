@@ -5,6 +5,7 @@ import LeanDag.Properties.Optional.Skip
 import LeanDag.Properties.Commit
 import LeanDag.Properties.Derived.Bounded
 import LeanDag.Properties.Band
+import LeanDag.Properties.Deliver
 import LeanDag.Properties.Derived.FromBand
 import Mathlib.Order.Interval.Finset.Nat
 import Mathlib.Data.Finset.Lattice.Fold
@@ -705,6 +706,22 @@ theorem banded : Banded
   obtain ⟨top, -, ht⟩ := banded_aux (S := S) hd
   exact ⟨top, fun g g' d d' S' U' V' k' hkd hsch hlead hab hV =>
     ht g g' d d' S' U' V' k' hkd hsch hlead hab hV⟩
+
+/-- The carrier's coverage predicate is the core's, on the nose. -/
+theorem coversUpto_eq {U : BlockUniverse Validator BlockId Payload}
+    {V : View Validator BlockId Payload U} {N : ℕ} :
+    Properties.CoversUpto mysticetiRule V N ↔ V.CoversUpto N := Iff.rfl
+
+/-- **A caught-up validator reaches every verdict.** Whatever any view
+decides, a view covering far enough decides too — the round being the
+band's own ceiling rather than a rule-specific `r + 2`. What a
+view-level mechanism has to deliver, for this protocol. -/
+theorem exists_coversUpto_decides [S : Slots Validator]
+    {U : BlockUniverse Validator BlockId Payload}
+    {W : View Validator BlockId Payload U} {k : ℕ} {v : Option BlockId}
+    (hW : Decided U W k v) :
+    ∃ N, ∀ V : View Validator BlockId Payload U, V.CoversUpto N → Decided U V k v :=
+  Properties.exists_coversUpto_decides banded hW
 
 /-- **A commit names the slot's candidate.** `isLeaderBlock_of_decided`
 under the property's name — one of seven such lemmas across the

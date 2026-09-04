@@ -711,6 +711,59 @@ reject. That is an agreement problem about per-validator horizons, not a
 property of a rule or a promise of a mechanism, and the file header is
 right to record it rather than formalise it here.
 
+## 3.11 The view axis
+
+`Sustains` is what a mechanism that transforms the **DAG** owes.
+`LeanDag/DoS/` transforms no DAG: its one universe-shaped constructor is
+`View.ofAccepted`, and a rate-limited validator differs from an
+unlimited one only in what it holds. So does a joiner. That is a second
+class of mechanism, and until now it had no obligation at all.
+
+**Safety needed nothing.** A verdict reached on a smaller view is
+reached on a larger one (`decided_mono_of_banded`), so a rate limiter
+cannot make a validator decide wrongly. Already derived, for both
+protocols.
+
+**Liveness had nothing.** A mechanism that deferred a block forever
+satisfied every obligation in this development. `Delivers R view` is the
+statement it did not: for every round, one of the views the mechanism
+produces is caught up to it.
+
+**The protocol side is derived, which is the asymmetry §3.6 predicts.**
+`exists_coversUpto_decides`: every verdict has a round it is settled by
+— the band's ceiling — and any view covering to that round reaches it.
+A protocol proves nothing new. `decided_of_delivers` composes the two:
+a mechanism that delivers reaches every verdict, so deferring a block is
+a delay and never a loss.
+
+`CoversUpto` comes with it, lifting a definition the core, Hydrozoan,
+Nemo and Barnacle each wrote out separately. Both carriers' bridges are
+`Iff.rfl`.
+
+**What this replaces in the liveness route.** The core's own coverage
+hypothesis is `V.CoversUpto (r + 2)` — a rule-specific number, the
+decision round of a direct commit. The generic form asks for coverage up
+to *the verdict's own* ceiling, which is what the band already named, so
+an indirect commit anchored far above gets the right bound rather than
+the direct rule's.
+
+**The obligation has no witness, and that is the next step.**
+`DoS/Novelty.lean` bounds the *size* of a rate-limited view — that is
+what the novelty budget is for — and proves nothing about its coverage.
+Recording that plainly matters, because the first `Sustains` had
+witnesses for both mechanisms and served no theorem (§3.6); this is the
+opposite failure and the same discipline catches it. `Delivers` is
+stated because `decided_of_delivers` consumes it, not because anything
+satisfies it.
+
+**And a witness may show it wants weakening.** `Delivers` asks for
+coverage of everything the universe holds. A limiter that permanently
+drops Byzantine spam does not satisfy that, and should not have to: a
+verdict is reached because a quorum of *correct* blocks suffices, not
+because every block arrives. The weaker obligation naming only the
+correct blocks is the likely repair, and stating it needs a consumer
+that asks for it.
+
 ## 4. Properties for the schedule mechanisms
 
 `Barnacle.BaseRule` and its `Laws` are one working interface: any two
@@ -1557,12 +1610,11 @@ slots when it means a dependence bound — *the verdict is settled by slot
 5. **~~Re-genesis as an `Extends`~~** (**done**, §3.10). Two witnesses
    and no new property — the first DAG-transforming mechanism added to
    this development without one.
-6. **A view-level `Sustains`.** `DoS/` builds no universe — its only
-   constructor is `View.ofAccepted` — so rate limiting and the joiner
-   are view-level mechanisms and `Sustains` does not describe them.
-   Their safety direction is already covered by `decided_mono_of_banded`;
-   their liveness direction has no obligation, since nothing says a rate
-   limiter eventually delivers enough for a slot to decide. The one item
-   here needing design rather than typing.
+6. **~~A view-level `Sustains`~~** (**stated**, §3.11).
+   `Properties/Deliver.lean`. The protocol side is derived; the
+   obligation falls on the mechanism, and **no mechanism here exhibits
+   it yet** — `DoS/Novelty.lean` bounds the size of a rate-limited view
+   and says nothing about its coverage. The next step is a witness, and
+   it may show the obligation wants weakening (§3.11).
 7. **Chain quality** from fairness and self-reference (§5), on item 4.
 8. **Barnacle**, starting from `Agree`.

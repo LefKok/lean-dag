@@ -24526,6 +24526,34 @@ def Descends (R : DagRule Validator BlockId Payload) (S : Slots Validator) (c : 
 
 **A committed run decides everything below it.** `c` consecutive slots from `b`, each committed within `b + c`, decide every slot below `b` within `b + c`.
 
+#### `CoversUpto`
+
+*def, `Properties.Deliver.lean`*
+
+```lean
+def CoversUpto (R : DagRule Validator BlockId Payload) {U : R.Universe}
+    (V : R.View U) (N : ℕ) : Prop :=
+  ∀ b, b ∈ R.ids U → (R.block U b).round ≤ N → b ∈ R.viewIds V
+```
+
+**A view is caught up to round `N`**: it holds every block the universe has at or below that round.
+
+Four protocols define this separately as `View.CoversUpto` — the core, Hydrozoan, Nemo and Barnacle — with the same three lines each.
+
+#### `Delivers`
+
+*def, `Properties.Deliver.lean`*
+
+```lean
+def Delivers (R : DagRule Validator BlockId Payload) {U : R.Universe}
+    (view : ℕ → R.View U) : Prop :=
+  ∀ N, ∃ t, CoversUpto R (view t) N
+```
+
+**A view-level mechanism delivers**: for every round, one of the views it produces is caught up to it. The view twin of `Sustains`, and like it an obligation on the mechanism rather than on the protocol.
+
+Indexed by an arbitrary family rather than by time, because the carrier has no clock: `DoS/Novelty.viewUpto` is such a family, indexed by round, and a joiner's successive views are another.
+
 #### `Local`
 
 *def, `Properties.Derived.Local.lean`*
@@ -24772,7 +24800,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 947 theorems that either another module of the
+The 951 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -36634,6 +36662,17 @@ theorem populatedOn_toCore {T : Finset Validator} {r : ℕ}
     (h : Properties.PopulatedOn mysticetiRule U T r) : LeanDag.PopulatedOn U T r
 ```
 
+#### `synchronisedOn_eq`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem synchronisedOn_eq {T : Finset Validator} {r : ℕ} :
+    Properties.SynchronisedOn mysticetiRule U T r ↔ LeanDag.SynchronisedOn U T r
+```
+
+The carrier's synchrony predicate is the core's, on the nose.
+
 #### `directCommit_of_sustains`
 
 *theorem, `MysticetiProperties.lean`*
@@ -36808,6 +36847,19 @@ theorem symm (h : AgreeAbove R U U' r) (hv : ViewAgreeAbove R V V' r) :
 ```
 
 Agreement of views is symmetric, given agreement of the universes that fixes the rounds.
+
+#### `decided_agree_truncate`
+
+*theorem, `Properties.Arcs.GC.lean`*
+
+```lean
+theorem decided_agree_truncate (ha : Agree R) (hlt : LocalTruncate R)
+    (ht : Truncates R U U' S S' G d) (hv : ViewAgreeAbove R V V' G)
+    {W : R.View U'} {k : ℕ} {w v : Option BlockId}
+    (hW : R.Decided S' W k w) (hV : R.Decided S V (d + k) v) : w = v
+```
+
+**Cross-cut agreement.** A validator holding any view of the truncation agrees, slot for slot, with a full-history validator.
 
 #### `decided_agree_horizons`
 
@@ -37155,6 +37207,31 @@ theorem populatedOn_insert_of_extends {R : DagRule Validator BlockId Payload}
 
 `SafeSkip.skipFill_populatedOn` and `Integration.populatedOn_addGenesis` are this, at their own added blocks.
 
+#### `noEquivOn_of_truncates`
+
+*theorem, `Properties.Sustain.lean`*
+
+```lean
+theorem noEquivOn_of_truncates {R : DagRule Validator BlockId Payload}
+    {U U' : R.Universe} {S S' : Slots Validator} {G d : ℕ}
+    (h : Truncates R U U' S S' G d) {T : Finset Validator}
+    (hne : NoEquivOn R U T) : NoEquivOn R U' T
+```
+
+**A cut cannot introduce equivocation.** It holds a subset of the blocks at rebased rounds, and a restriction of an injection is injective. Stated over `Truncates` rather than `Sustains` because that is what says no block is *added*, which is the whole of the argument.
+
+#### `synchronisedOn_of`
+
+*theorem, `Properties.Sustain.lean`*
+
+```lean
+theorem synchronisedOn_of (h : Sustains R U U' G R₀) {T : Finset Validator} {r : ℕ}
+    (hr : R₀ ≤ r) (hG : G ≤ r) (hs : SynchronisedOn R U T r) :
+    SynchronisedOn R U' T (r - G)
+```
+
+**Synchrony survives**, for the same reason votes do: it is read from rounds, authors and references, and above the settling round the mechanism changed none of them. The references clause is guarded strictly above `R₀`, and a synchronised pair sits at `n` and `n + 1`, so the block that must carry the reference is above the floor whenever the pair is.
+
 #### `populatedOn_of`
 
 *theorem, `Properties.Sustain.lean`*
@@ -37262,7 +37339,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 936 lemmas used only within the file that proves
+The 939 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -38816,13 +38893,15 @@ subsection per module, in the layer order of Appendices B and C.
 | `rule_ids` | — |
 | `rule_viewIds` | — |
 
-### `Hydrozoan/Helpers/Commit.lean` (3)
+### `Hydrozoan/Helpers/Commit.lean` (5)
 
 | Lemma | Role |
 |:---|:---|
+| `coversUpto_eq` | The carrier's coverage predicate is Hydrozoan's. |
 | `decidedBelow_of_anchor` | The graded rule is total, at a bound. `decided_of_anchor` with the schedule dependence tracked: every rung … |
 | `decidedBelow_of_committed_run` | A committed run decides everything below it, at a bound. The existing descent with `DecidedBelow` in place … |
 | `eligibleAsAnchor_sched` | — |
+| `exists_coversUpto_decides` | A caught-up replica reaches every verdict, at the band's own ceiling rather than a rule-specific round. … |
 
 ### `Hydrozoan/Helpers/Skippability.lean` (1)
 
@@ -39010,7 +39089,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `soundOn_skipFill` | The fill preserves it, above the gap. The synchrony round must clear the filled round: inside the gap the … |
 | `soundOn_stack` | The stack preserves it, the offsets composing exactly as the two statements above suggest: the fill … |
 
-### `MysticetiProperties.lean` (42)
+### `MysticetiProperties.lean` (43)
 
 | Lemma | Role |
 |:---|:---|
@@ -39027,6 +39106,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `certifies_band` | — |
 | `certifies_of_sustains` | The core's certificate predicate transports. |
 | `certifies_old` | — |
+| `coversUpto_eq` | The carrier's coverage predicate is the core's, on the nose. |
 | `creatorsOf_band` | — |
 | `creatorsOf_old` | — |
 | `decidedBelow_of_committed_run` | The committed-run descent. `c` consecutive commits decide every slot below them, and the derivations … |
@@ -39037,6 +39117,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `directSkipIn_novel` | A new candidate is blamed by every old block in view — and the grade supplies a quorum of them. This is … |
 | `directSkipSlotIn_band` | — |
 | `directSkipSlotIn_congr` | The count that reads it is therefore the same count. |
+| `exists_coversUpto_decides` | A caught-up validator reaches every verdict. Whatever any view decides, a view covering far enough decides … |
 | `ext_block` | — |
 | `ext_mem` | — |
 | `isLeaderBlock_band` | A candidate of slot `k` is a candidate of the slot `k'` that answers to it: the shift carries its round, … |
@@ -39052,17 +39133,15 @@ subsection per module, in the layer order of Appendices B and C.
 | `quorumCard_pos` | Two quorums share a correct validator, so a quorum is not empty. |
 | `slotBlamers_congr` | The slot-level skip reads the schedule only at its own slot, so two schedules naming the same round and … |
 | `subset_blamers` | Every member of `T` blames the slot: its voting-round block is in view and references no candidate, which … |
-| `synchronisedOn_eq` | The carrier's synchrony predicate is the core's, on the nose. |
 | `votesIn_band` | The votes an in-band certificate counts are the votes it counted. |
 | `votesIn_of_sustains` | The votes an old decision-round block counts are the votes it counted: its references are unchanged, and … |
 | `votesIn_old` | The votes an old certificate counts are the votes it counted. |
 
-### `Properties/Arcs/GC.lean` (8)
+### `Properties/Arcs/GC.lean` (7)
 
 | Lemma | Role |
 |:---|:---|
 | `decided_agree_horizons_chop` | G8 re-derived. Validators at different horizons agree. |
-| `decided_agree_truncate` | Cross-cut agreement. A validator holding any view of the truncation agrees, slot for slot, with a … |
 | `decided_chop_iff` | G3 re-derived, with no induction of its own. Both directions of the cut's verdict transport, from the band. |
 | `decided_of_truncate` | A verdict survives the cut, at the replica's own numbering. |
 | `decided_of_truncated` | And a verdict of the truncation is a verdict of the whole DAG, which is what lets a pruned replica be … |
@@ -39104,6 +39183,14 @@ subsection per module, in the layer order of Appendices B and C.
 | `Truncates.trans` | A stack of truncations is a truncation. Both halves compose, and the settling round of the composite is … |
 | `mono` | A mechanism that rebases from a round rebases from any later one, which is what lets two settling rounds … |
 | `refl` | Doing nothing rebases by nothing, from round zero. |
+
+### `Properties/Deliver.lean` (3)
+
+| Lemma | Role |
+|:---|:---|
+| `CoversUpto.mono` | Covering a round covers every earlier one. |
+| `decided_of_delivers` | A mechanism that delivers reaches every verdict. Whatever any view of the universe decides, some view the … |
+| `exists_coversUpto_decides` | A verdict is reached by every view caught up far enough. The round is the band's ceiling: the verdict … |
 
 ### `Properties/Derived/Bounded.lean` (1)
 
@@ -39153,13 +39240,11 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `mono` | A protocol skipping under a weaker condition skips under a stronger one, so the grades compare. |
 
-### `Properties/Sustain.lean` (4)
+### `Properties/Sustain.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
 | `SynchronisedOn.mono` | Synchrony from a round is synchrony from any later one. |
-| `noEquivOn_of_truncates` | A cut cannot introduce equivocation. It holds a subset of the blocks at rebased rounds, and a restriction … |
-| `synchronisedOn_of` | Synchrony survives, for the same reason votes do: it is read from rounds, authors and references, and … |
 | `votesAt_of` | Votes survive. A `T`-block one round above `r` is old, keeps its author and its references, so a vote it … |
 
 ### `WaveRobin.lean` (3)
