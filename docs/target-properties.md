@@ -767,7 +767,8 @@ keeps.
 LeanDag/Properties/
   Carrier.lean     the abstract DAG the properties talk about
   Witness.lean     the band, and the obligations' shared vocabulary
-  Derived/FromBand.lean   the consequences: Persist, Local, monotonicity, the bound
+  Derived/FromBand.lean   the routes: Persist, Local, monotonicity, the bound
+  Derived/Bounded.lean    the laws of DecidedBelow
   Local.lean  Persist.lean  Truncate.lean  Sustain.lean  Skip.lean
   Agree.lean  Bounded.lean  Commit.lean        the schedule family (§4)
   Arcs/GC.lean          garbage collection, given LocalTruncate
@@ -1003,38 +1004,44 @@ is the part of the goal least served, and it is the first item below.
 
 ### 11.4b Obligation or consequence
 
-The properties divide three ways, and only the first column is work a
-protocol or a mechanism has to do.
+The properties divide four ways, and the folder follows the division:
+`Properties/Derived/` holds theorems, never statements.
 
-| Must be shown | By whom | Consequence, shown once | From |
-|---|---|---|---|
-| `Causal` | protocol | `Persist` | `Banded` |
-| `Agree` | protocol | `Local` | `Banded` |
-| `Banded` | protocol | view monotonicity | `Banded` |
-| `ViewSound` | protocol | `DecidedBelow` and its four laws | definition |
-| `LocalTruncate` | protocol | `exists_decidedBelow` | `Banded` |
-| `SkipsUnsupported` | protocol | | |
-| `LeaderCommits` | protocol | | |
-| `Descends` | protocol | | |
-| `Sustains` | mechanism | | |
+**Obligations. Someone must prove these, per protocol or per mechanism.**
+`Causal`, `Agree`, `Banded`, `ViewSound`, `LocalTruncate`,
+`SkipsUnsupported`, `LeaderCommits` and `Descends` fall on the protocol;
+`Sustains` falls on the mechanism. Nothing derives them.
 
-The rest of `Properties/` is vocabulary the obligations are stated in
-and prove nothing on its own: `DagRule`, `AgreeAbove`, `AgreeBand`,
-`Extends`, `Novel`, `Truncates`, `ViewTruncates`, `ViewAgreeAbove`,
-`Unsupported`, `PresentAt`.
+**Interfaces a protocol may discharge either way.** `Persist` and
+`Local` are statements a *mechanism* reads, and a protocol reaches them
+by whichever route it has. The core obtains both from `Banded`;
+Hydrozoan proves both directly, having no `Banded`. So they are neither
+purely obligations nor purely consequences, and their statements stay in
+`Properties/` where the mechanisms find them. What is derived is the
+*route*, and the routes are in `Derived/FromBand.lean`.
 
-**The consequences live in `Properties/Derived/`.** `FromBand.lean`
-holds the four that come out of the band. The distinction is not
-"provable versus assumed" — a protocol may prove a consequence directly,
-and Hydrozoan proves `Persist` and `Local` that way, having no `Banded`
-— but it is the difference between a claim someone owes and a claim the
-layer settles.
+**Derived theorems. Nothing proves these per protocol.**
 
-Two entries deserve a note. `ViewSound` is an obligation only formally:
-every protocol satisfies it by construction, and it is a candidate to
-become a law of `DagRule`. And `LeaderCommits` and `Descends` cannot be
-derived from `Banded` even though a bound can, because they must produce
-a **tight** bound and the band's is every slot its rounds can hold.
+| Theorem | Where | From |
+|---|---|---|
+| `Persist.of_banded` | `Derived/FromBand.lean` | `Banded` |
+| `Local.of_banded` | `Derived/FromBand.lean` | `Banded` |
+| `decided_mono_of_banded` | `Derived/FromBand.lean` | `Banded` |
+| `exists_decidedBelow` | `Derived/FromBand.lean` | `Banded` |
+| `DecidedBelow`'s five laws | `Derived/Bounded.lean` | the definition, and `Agree` |
+
+**Vocabulary. Statements the obligations are written in, proving
+nothing.** `DagRule`, `AgreeAbove`, `AgreeBand`, `Extends`, `Novel`,
+`Truncates`, `ViewTruncates`, `ViewAgreeAbove`, `Unsupported`,
+`PresentAt`, and `DecidedBelow` itself, which is a definition and not a
+property anyone shows.
+
+Two obligations carry a note. `ViewSound` is one only formally: every
+protocol satisfies it by construction, and it is a candidate to become a
+law of `DagRule`. And `LeaderCommits` and `Descends` resist derivation
+from `Banded` even though a *bound* is derivable, because they must
+produce a **tight** one, where the band's is every slot its rounds can
+hold.
 
 ### 11.5 Next steps, in order
 

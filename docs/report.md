@@ -24746,7 +24746,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 921 theorems that either another module of the
+The 922 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -36649,50 +36649,6 @@ theorem directCommit_chop {T : Finset Validator} {r : ℕ} {L : BlockId}
 
 **The reactive commit survives the cut** — the consumer test, from the obligation rather than from `chop` directly.
 
-#### `toDecided`
-
-*theorem, `Properties.Bounded.lean`*
-
-```lean
-theorem toDecided (h : DecidedBelow R S B V k v) : R.Decided S V k v
-```
-
-Forgetting the bound leaves an ordinary verdict.
-
-#### `mono`
-
-*theorem, `Properties.Bounded.lean`*
-
-```lean
-theorem mono (h : DecidedBelow R S B V k v) (hBB : B ≤ B') : DecidedBelow R S B' V k v
-```
-
-The bound relaxes upward: a larger bound asks agreement of more leaders, so it is a weaker claim.
-
-#### `reschedule`
-
-*theorem, `Properties.Bounded.lean`*
-
-```lean
-theorem reschedule (h : DecidedBelow R S B V k v) {S' : Slots Validator}
-    (hround : S'.slotRound = S.slotRound) (hlead : ∀ m, m < B → S'.leader m = S.leader m) :
-    DecidedBelow R S' B V k v
-```
-
-**Locality in the schedule**, which was a property to prove and is now a theorem: two schedules with one round structure, agreeing on the leaders below the bound, carry the same bounded verdicts.
-
-#### `agree`
-
-*theorem, `Properties.Bounded.lean`*
-
-```lean
-theorem agree (ha : Agree R) {S : Slots Validator} {U : R.Universe} {V₁ V₂ : R.View U}
-    {B₁ B₂ k : ℕ} {v₁ v₂ : Option BlockId}
-    (h₁ : DecidedBelow R S B₁ V₁ k v₁) (h₂ : DecidedBelow R S B₂ V₂ k v₂) : v₁ = v₂
-```
-
-Two bounded verdicts agree, at any bounds — `Agree` through the first component.
-
 #### `symm`
 
 *theorem, `Properties.Carrier.lean`*
@@ -36703,6 +36659,28 @@ theorem symm (h : AgreeAbove R U U' r) : AgreeAbove R U' U r where
 ```
 
 And symmetric — which the paired `mem` clause is what secures.
+
+#### `toDecided`
+
+*theorem, `Properties.Derived.Bounded.lean`*
+
+```lean
+theorem toDecided (h : DecidedBelow R S B V k v) : R.Decided S V k v
+```
+
+Forgetting the bound leaves an ordinary verdict.
+
+#### `decided_mono_of_banded`
+
+*theorem, `Properties.Derived.FromBand.lean`*
+
+```lean
+theorem decided_mono_of_banded (h : Banded R) {S : Slots Validator} {U : R.Universe}
+    {V V' : R.View U} (hsub : R.viewIds V ⊆ R.viewIds V') {k : ℕ} {v : Option BlockId}
+    (hd : R.Decided S V k v) : R.Decided S V' k v
+```
+
+**And monotonicity in the view.** Fix the universe and the band carries itself; a larger view holds everything the band names. The core's L2 is a four-case induction, and this is the same statement with none.
 
 #### `reaches_iff`
 
@@ -36825,6 +36803,41 @@ theorem le_round (h : Truncates R U U' S S' G d) {b : BlockId} (hb : b ∈ R.ids
 
 And sits at or above the horizon there.
 
+#### `of_extends`
+
+*theorem, `Properties.Witness.lean`*
+
+```lean
+theorem of_extends {U U' : R.Universe} (he : Extends R U U') (lo hi : ℕ) :
+    AgreeBand R U U' lo hi where
+  mem
+```
+
+An extension carries every band, since it moves nothing.
+
+#### `of_agreeAbove`
+
+*theorem, `Properties.Witness.lean`*
+
+```lean
+theorem of_agreeAbove {U U' : R.Universe} {r lo hi : ℕ} (h : AgreeAbove R U U' r)
+    (hr : r ≤ lo) : AgreeBand R U U' lo hi where
+  mem
+```
+
+Agreement above a round carries every band whose floor is at or above it.
+
+#### `refl`
+
+*theorem, `Properties.Witness.lean`*
+
+```lean
+theorem refl {U : R.Universe} {lo hi : ℕ} : AgreeBand R U U lo hi where
+  mem
+```
+
+A universe carries its own bands.
+
 #### `mono`
 
 *theorem, `Properties.Witness.lean`*
@@ -36916,7 +36929,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 968 lemmas used only within the file that proves
+The 967 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -38765,12 +38778,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `presentAt_liftView` | Presence in the pre-crash view is presence in the lifted one: the ids are the same and old blocks are … |
 | `quorate_of_quorateOverGap` | Quorate over the gap is the core's grade, for the fill. A candidate the fill introduces is a fresh block, … |
 
-### `Properties/Bounded.lean` (1)
-
-| Lemma | Role |
-|:---|:---|
-| `lt_bound` | The decided slot lies below the bound. |
-
 ### `Properties/Carrier.lean` (2)
 
 | Lemma | Role |
@@ -38778,13 +38785,21 @@ subsection per module, in the layer order of Appendices B and C.
 | `Causal.refs_above` | What a block above the cut references is itself above the cut — a fact about causal structure alone, and … |
 | `refl` | Agreement is reflexive. |
 
-### `Properties/Derived/FromBand.lean` (4)
+### `Properties/Derived/Bounded.lean` (4)
+
+| Lemma | Role |
+|:---|:---|
+| `agree` | Two bounded verdicts agree, at any bounds — `Agree` through the first component. |
+| `lt_bound` | The decided slot lies below the bound. |
+| `mono` | The bound relaxes upward: a larger bound asks agreement of more leaders, so it is a weaker claim. |
+| `reschedule` | Locality in the schedule, which was a property to prove and is now a theorem: two schedules with one round … |
+
+### `Properties/Derived/FromBand.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
 | `Local.of_banded` | And locality. Two DAGs agreeing above a round at or below the slot's agree on the band, and views agreeing … |
 | `Persist.of_banded` | Persistence falls out. An extension carries every band and adds only blocks; a larger view holds … |
-| `decided_mono_of_banded` | And monotonicity in the view. Fix the universe and the band carries itself; a larger view holds everything … |
 | `exists_decidedBelow` | A bound falls out of the band. The slots sitting at or below a round are finitely many, since the round … |
 
 ### `Properties/Local.lean` (3)
@@ -38819,14 +38834,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `mono` | A mechanism that sustains from a round sustains from any later one. |
 | `refl` | Doing nothing sustains everything. |
 | `votesAt_of` | Votes survive. A `T`-block one round above `r` is old, keeps its author and its references, so a vote it … |
-
-### `Properties/Witness.lean` (3)
-
-| Lemma | Role |
-|:---|:---|
-| `of_agreeAbove` | Agreement above a round carries every band whose floor is at or above it. |
-| `of_extends` | An extension carries every band, since it moves nothing. |
-| `refl` | A universe carries its own bands. |
 
 ### `WaveRobin.lean` (3)
 

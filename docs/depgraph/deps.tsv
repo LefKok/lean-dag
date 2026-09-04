@@ -8178,7 +8178,7 @@ EDGE	LeanDagTest.Hydrozoan.U14._proof_3	LeanDagTest.Hydrozoan.sixReplicas
 EDGE	LeanDagTest.Hydrozoan.U14._proof_3	LeanDag.Hydrozoan.Block.round
 EDGE	LeanDagTest.Hydrozoan.U14._proof_3	LeanDag.Hydrozoan.NonByzantine
 EDGE	LeanDagTest.Hydrozoan.U14._proof_3	LeanDagTest.Hydrozoan.lk14
-NODE	LeanDag.Properties.DecidedBelow.agree	LeanDag.Properties.Bounded	thm
+NODE	LeanDag.Properties.DecidedBelow.agree	LeanDag.Properties.Derived.Bounded	thm
 EDGE	LeanDag.Properties.DecidedBelow.agree	LeanDag.Properties.DecidedBelow
 EDGE	LeanDag.Properties.DecidedBelow.agree	LeanDag.Properties.Agree
 EDGE	LeanDag.Properties.DecidedBelow.agree	LeanDag.Properties.DecidedBelow.toDecided
@@ -13919,7 +13919,7 @@ NODE	LeanDagTest.Barnacle.OrcaellaLive.OL	LeanDagTest.Barnacle.OrcaellaLive	def
 EDGE	LeanDagTest.Barnacle.OrcaellaLive.OL	LeanDagTest.hyb4
 EDGE	LeanDagTest.Barnacle.OrcaellaLive.OL	LeanDag.Barnacle.orcaella
 EDGE	LeanDagTest.Barnacle.OrcaellaLive.OL	LeanDag.Barnacle.BaseRule
-NODE	LeanDag.Properties.DecidedBelow.toDecided	LeanDag.Properties.Bounded	thm
+NODE	LeanDag.Properties.DecidedBelow.toDecided	LeanDag.Properties.Derived.Bounded	thm
 EDGE	LeanDag.Properties.DecidedBelow.toDecided	LeanDag.Properties.DagRule.Decided
 EDGE	LeanDag.Properties.DecidedBelow.toDecided	LeanDag.Properties.DecidedBelow
 EDGE	LeanDag.Properties.DecidedBelow.toDecided	LeanDag.Slots.slotRound
@@ -16368,7 +16368,7 @@ EDGE	LeanDag.FinWhale.voters_of_directCommit	LeanDag.FinWhale.Params.p
 EDGE	LeanDag.FinWhale.voters_of_directCommit	LeanDag.FinWhale.Dag
 EDGE	LeanDag.FinWhale.voters_of_directCommit	LeanDag.FinWhale.params_arith
 EDGE	LeanDag.FinWhale.voters_of_directCommit	LeanDag.Block.creator
-NODE	LeanDag.Properties.DecidedBelow.mono._proof_1_2	LeanDag.Properties.Bounded	thm
+NODE	LeanDag.Properties.DecidedBelow.mono._proof_1_2	LeanDag.Properties.Derived.Bounded	thm
 NODE	LeanDag.card_honest_add_byzantine	LeanDag.Hybrid.Faults	thm
 EDGE	LeanDag.card_honest_add_byzantine	LeanDag.HybridFaults
 EDGE	LeanDag.card_honest_add_byzantine	LeanDag.Honest
@@ -24541,7 +24541,7 @@ EDGE	LeanDagTest.Barnacle.run1._proof_10	LeanDagTest.Barnacle.vd1
 EDGE	LeanDagTest.Barnacle.run1._proof_10	LeanDag.Barnacle.Params.interval
 EDGE	LeanDagTest.Barnacle.run1._proof_10	LeanDagTest.Barnacle.run1._proof_4
 EDGE	LeanDagTest.Barnacle.run1._proof_10	LeanDagTest.Barnacle.bnP1
-NODE	LeanDag.Properties.DecidedBelow.reschedule	LeanDag.Properties.Bounded	thm
+NODE	LeanDag.Properties.DecidedBelow.reschedule	LeanDag.Properties.Derived.Bounded	thm
 EDGE	LeanDag.Properties.DecidedBelow.reschedule	LeanDag.Properties.DagRule.Decided
 EDGE	LeanDag.Properties.DecidedBelow.reschedule	LeanDag.Properties.DecidedBelow
 EDGE	LeanDag.Properties.DecidedBelow.reschedule	LeanDag.Slots.slotRound
@@ -33028,7 +33028,7 @@ EDGE	LeanDag.FinWhale.chooseSound_least.match_1_2	LeanDag.FinWhale.IndirectCommi
 EDGE	LeanDag.FinWhale.chooseSound_least.match_1_2	LeanDag.FinWhale.Params
 EDGE	LeanDag.FinWhale.chooseSound_least.match_1_2	LeanDag.FinWhale.Dag
 NODE	LeanDag.Integration.Hydrozoan.Simulates.simulates_fill._proof_1_1	LeanDag.Integration.Hydrozoan.Simulation	thm
-NODE	LeanDag.Properties.DecidedBelow.mono._proof_1_1	LeanDag.Properties.Bounded	thm
+NODE	LeanDag.Properties.DecidedBelow.mono._proof_1_1	LeanDag.Properties.Derived.Bounded	thm
 NODE	LeanDagTest.BlackMarlin.fullFlush.match_9	LeanDagTest.BlackMarlin.Ledger	def
 EDGE	LeanDagTest.BlackMarlin.fullFlush.match_9	LeanDagTest.BlackMarlin.fullBlock
 NODE	LeanDag.Properties.Truncates.refs	LeanDag.Properties.Truncate	thm
@@ -75652,7 +75652,7 @@ EDGE	LeanDag.Barnacle.progress_exists._proof_1_15	LeanDag.Barnacle.Keyed
 EDGE	LeanDag.Barnacle.progress_exists._proof_1_15	LeanDag.Barnacle.PartialRun.start
 EDGE	LeanDag.Barnacle.progress_exists._proof_1_15	LeanDag.Barnacle.Params.interval
 EDGE	LeanDag.Barnacle.progress_exists._proof_1_15	LeanDag.Barnacle.LiveRule
-NODE	LeanDag.Properties.DecidedBelow.mono	LeanDag.Properties.Bounded	thm
+NODE	LeanDag.Properties.DecidedBelow.mono	LeanDag.Properties.Derived.Bounded	thm
 EDGE	LeanDag.Properties.DecidedBelow.mono	LeanDag.Properties.DagRule.Decided
 EDGE	LeanDag.Properties.DecidedBelow.mono	LeanDag.Properties.DecidedBelow
 EDGE	LeanDag.Properties.DecidedBelow.mono	LeanDag.Slots.slotRound
@@ -76605,7 +76605,7 @@ EDGE	LeanDagTest.Barnacle.OrcaellaLive.promise_r0	LeanDag.Barnacle.BaseRule.full
 EDGE	LeanDagTest.Barnacle.OrcaellaLive.promise_r0	LeanDagTest.Barnacle.OrcaellaLive.OUL
 EDGE	LeanDagTest.Barnacle.OrcaellaLive.promise_r0	LeanDagTest.Barnacle.OrcaellaLive.S1._proof_3
 EDGE	LeanDagTest.Barnacle.OrcaellaLive.promise_r0	LeanDag.Barnacle.orcaella
-NODE	LeanDag.Properties.DecidedBelow.lt_bound	LeanDag.Properties.Bounded	thm
+NODE	LeanDag.Properties.DecidedBelow.lt_bound	LeanDag.Properties.Derived.Bounded	thm
 EDGE	LeanDag.Properties.DecidedBelow.lt_bound	LeanDag.Properties.DagRule.Decided
 EDGE	LeanDag.Properties.DecidedBelow.lt_bound	LeanDag.Properties.DecidedBelow
 EDGE	LeanDag.Properties.DecidedBelow.lt_bound	LeanDag.Slots.slotRound
