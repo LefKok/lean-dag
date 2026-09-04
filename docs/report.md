@@ -37079,7 +37079,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 948 lemmas used only within the file that proves
+The 951 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -38902,12 +38902,15 @@ subsection per module, in the layer order of Appendices B and C.
 | `reaches_iff` | And so it agrees in both directions. |
 | `reaches_of` | Causal history above the horizon is the same history. A path from `A` descends one round at a time, so if … |
 
-### `Properties/Arcs/GC.lean` (3)
+### `Properties/Arcs/GC.lean` (6)
 
 | Lemma | Role |
 |:---|:---|
+| `agreeBand_chop` | A `Truncates` target and the canonical cut agree on every band: the same blocks, at the same rounds, with … |
 | `decided_of_truncate` | A verdict survives the cut, at the replica's own numbering. |
 | `decided_of_truncated` | And a verdict of the truncation is a verdict of the whole DAG, which is what lets a pruned replica be … |
+| `localTruncate` | The core truncates locally. A verdict at slot `d + k` of the full DAG is a verdict at slot `k` of any … |
+| `slots_eq_chop` | The schedule clauses of `Truncates` determine the schedule: it is the chopped one, on the nose. |
 | `sustains_chop` | The cut sustains the core from its horizon. |
 
 ### `Properties/Arcs/SafeSkip.lean` (8)

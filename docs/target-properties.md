@@ -278,7 +278,48 @@ because the reactive commit consumes `CertifiesAt` and it transported
 `VotesAt` (§3.6). A witness catches a relation with no models; only a
 consumer catches one that has models and serves no theorem.
 
-### 3.5 Composition
+#### 3.4b Why the band does not subsume truncation, and what closed the gap
+
+The band tolerates more of a truncation than it looks. Its references
+clause is guarded **strictly** above the floor, so two universes may
+differ entirely on what the bottom layer of the band points at, which is
+exactly what a cut does to its base layer. Nothing above the horizon
+ever consults what the horizon points at, and the same holds of every
+later verdict, whose own band has a floor at least as high.
+
+What the band does not tolerate is the **renumbering**, and the
+renumbering is forced by the model rather than by the rule. Validity
+requires a block at a positive round to carry references from the round
+below, so a universe pruned below `G` with its survivors left where they
+sit has an invalid base layer. The cut must rebase to zero, and every
+clause of `AgreeBand` compares rounds by equality.
+
+**The generic fix, not taken.** Give `AgreeBand` an offset: `round' b +
+G = round b` instead of equality, with the matching shift on the
+schedule axis, which `Truncates` already states additively. At offset
+zero it is today's band, so nothing else changes; at the horizon it is
+the restriction-and-renumbering half of `LocalTruncate`. That would make
+truncation a corollary rather than an obligation. It was not done,
+because it threads a shift through every band lemma of both protocols
+and `LocalTruncate` is an *iff* where the band gives one direction, so
+the relation would have to be stated so that reading it backwards is
+another instance.
+
+**What was done instead.** The core's instance, for thirty lines
+(`Arcs/GC.lean`). `GC/ChopDecided.lean` already proves both directions
+for the *canonical* truncation. An arbitrary `Truncates` target holds
+exactly the blocks the cut holds, at the same rounds and authors, and
+above the horizon with the same references, so the band carries verdicts
+between them at offset zero; and the schedule clauses pin `S'` to be the
+chopped schedule outright, which `slots_eq_chop` proves as an equality
+of `Slots`. The core therefore has `LocalTruncate`, and both protocols
+now discharge every obligation.
+
+The property stays an obligation. It asks something the band does not:
+that the rule is invariant under a change of coordinates, which is a
+fact about its arithmetic rather than about what it reads.
+
+## 3.5 Composition
 
 Transport should be a **relation that composes**: compose the slot
 correspondences, take the union of the novel sets. Then a stack of
@@ -987,7 +1028,7 @@ property (§5).
 | `Persist` | ✓, from `Banded` | ✓, from `Banded` | inherited | — |
 | `Banded` | ✓ | ✓ | inherited | — |
 | `Local` | ✓, from `Banded` | ✓, from `Banded` | inherited | — |
-| `LocalTruncate` | ✓ | **missing** | — | — |
+| `LocalTruncate` | ✓ | ✓, §3.4b | — | — |
 | `SkipsUnsupported` | ✓ at `qFast ≤ |T|` | ✓ at a correct quorum | — | — |
 | `Agree` | ✓ | ✓ | inherited | — |
 | `LeaderCommits`, `Descends` | ✓ | ✓ | ✓, a second `Live` | — |
@@ -1003,10 +1044,10 @@ development did not have: Hammerhead over reactive Mysticeti
 
 What part 2 does not yet deliver:
 
-- **Hydrozoan has the full set**, and takes adaptive leaders through
-  it (§4.5), safety and liveness both. The core still lacks
-  `LocalTruncate`, so it cannot take garbage collection through the
-  properties, which is the one remaining gap.
+- **Both protocols now have the full set.** Hydrozoan takes adaptive
+  leaders through it (§4.5), safety and liveness both, and the core
+  takes garbage collection at any truncation rather than only at the
+  canonical cut (§3.4b). No protocol is short of an obligation.
 - **Six protocols have no instance of any property.** Whether
   `Descends` and `Live` are generic or Mysticeti's shape with the name
   removed is unknown until the Odontoceti mirror is collapsed.
@@ -1132,9 +1173,8 @@ instantiates it (§4.5).
 1. **`Compose.lean`.** The three composition lemmas, then
    `Stack.lean`'s theorem re-derived from them. Small, and the direct
    test of part 3.
-2. **Core `LocalTruncate`**, the one property the core still lacks, so
-   one protocol has every property and every mechanism. `Local` is done,
-   from `Banded` (§3.8).
+2. **An offset for the band**, which would turn `LocalTruncate` from an
+   obligation into a corollary (§3.4b). Deferred, not blocked.
 3. **Collapse the Odontoceti mirrors** (`Adaptive/`, `Reactive/`) onto
    instances. `Live` and `Descends` now have two instances each and
    survived both, so the shape is no longer in doubt.
