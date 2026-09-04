@@ -4,6 +4,7 @@ import LeanDag.Hydrozoan.IndirectLiveness.Statement
 import LeanDag.Hydrozoan.DirectLiveness.Proof
 import LeanDag.Hydrozoan.SlotAgreement.Proof
 import LeanDag.Properties.Commit
+import LeanDag.Properties.Candidate
 
 /-!
 # Hydrozoan's liveness obligations
@@ -229,6 +230,15 @@ theorem descends {S : LeanDag.Slots Replica} {c : ℕ} (hc : 0 < c)
     fun j h1 h2 => hrun j h1 (by omega)
   exact decidedBelow_of_committed_run (by omega) (by omega)
     (fun i hi => hspans b i hi) hrun' i hi
+
+/-- **A commit names the slot's candidate.** Hydrozoan's
+`isLeaderBlock_of_decided` under the property's name. Four commit
+constructors, each carrying the premise; the discharge is the
+coercion. -/
+theorem commitsCandidate :
+    CommitsCandidate (rule (Replica := Replica) (BlockId := BlockId)) :=
+  fun S _ _ _ _ hd =>
+    LeanDag.Hydrozoan.isLeaderBlock_of_decided (S := ofCoreSlots S) hd
 
 end Hydrozoan
 

@@ -26,9 +26,9 @@ but not attempted in this arc.
 
 namespace LeanDag
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator]
-variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
+variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 variable {U : BlockUniverse Validator BlockId Payload}
 variable [S : Slots Validator]
 variable {T : Finset Validator} {b L : BlockId} {R m : ℕ}
@@ -45,7 +45,7 @@ theorem mem_history_of_decided_commit (hs : Synchronised U R)
     (hlt : (U.block b).round < (U.block L).round) :
     b ∈ history U L :=
   mem_history_of_correct hs ((U.block L).round - (U.block b).round - 1)
-    L (isLeaderBlock_of_decided hdec).1 b hb hLc hbc hR (by omega)
+    L (mem_ids_of_decided hdec) b hb hLc hbc hR (by omega)
 
 /-- **A slot whose commit carries a whole round into the ledger.**
 
@@ -104,7 +104,7 @@ theorem committed_of_correct_block (hT : T ⊆ (Correct : Finset Validator))
     mem_history_of_decided_commit hs hdec hLc hb hbc (by omega)
       (by rw [hLb.2.1]; omega)
   exact ⟨hmem, fun g n hg hn =>
-    mem_ledgerSet_of_mem_history hg hn (isLeaderBlock_of_decided hdec).1 hmem⟩
+    mem_ledgerSet_of_mem_history hg hn (mem_ids_of_decided hdec) hmem⟩
 
 /-- **CQ6 at `T := Correct`.** -/
 theorem committed_of_correct_block_correct

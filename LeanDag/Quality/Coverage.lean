@@ -1,5 +1,5 @@
 import LeanDag.DoS.Density
-import LeanDag.Mysticeti
+import LeanDag.MysticetiProperties
 
 /-!
 # Chain quality: asynchronous coverage
@@ -22,9 +22,9 @@ decision).
 
 namespace LeanDag
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator]
-variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
+variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 variable {U : BlockUniverse Validator BlockId Payload}
 variable {b L : BlockId} {δ : ℕ}
 
@@ -71,9 +71,27 @@ theorem card_coveredAt_ge (hb : b ∈ U.ids) (hδ : δ < (U.block b).round) :
   rw [coveredAt_eq_sdiff, hcard]
   omega
 
+/-! ## Where the arc depends on the rule
+
+Exactly one step, and it is now a property. `card_coveredAt_ge` above is
+about valid DAGs and knows nothing of a decision rule; what the theorems
+below add is that a *committed* block is one of those blocks, at the
+slot's round. That is `Properties.CommitsCandidate`, which seven
+protocols proved separately as `isLeaderBlock_of_decided` before it had
+a name (`Properties/Candidate.lean`). Reading it from the property
+rather than from the core's lemma is what will let a second protocol
+have this arc without a second copy of it. -/
+
 section Decided
 
 variable [S : Slots Validator]
+
+/-- **The arc's one rule-dependent step**: a committed block is a block.
+`Properties.CommitsCandidate` at the core, which is where the rest of
+this arc and `Quality/{Inclusion,Capstone}.lean` read it from. -/
+theorem mem_ids_of_decided {V : View Validator BlockId Payload U}
+    {k : ℕ} (h : Decided U V k (some L)) : L ∈ U.ids :=
+  (MysticetiProperties.commitsCandidate (Payload := Payload) S U V k L h).1
 
 /-- **CQ1.** A committed leader's flush covers all but at most `f` of
 the correct validators at every round below it — any route, any view,
@@ -81,7 +99,7 @@ no synchrony. -/
 theorem card_coveredAt_ge_of_decided {V : View Validator BlockId Payload U}
     {k : ℕ} (h : Decided U V k (some L)) (hδ : δ < (U.block L).round) :
     (Correct : Finset Validator).card - F.f ≤ (coveredAt U L δ).card :=
-  card_coveredAt_ge (isLeaderBlock_of_decided h).1 hδ
+  card_coveredAt_ge (mem_ids_of_decided h) hδ
 
 /-- **CQ2 (the half, exactly).** Every commit carries, at every round
 below it, blocks from at least half of the correct validators:
@@ -119,8 +137,7 @@ theorem ledger_coverage {V : View Validator BlockId Payload U}
     card_coveredAt_ge_of_decided hdec hδ, ?_⟩
   intro v hv
   obtain ⟨-, i, hi, hic, hir⟩ := mem_coveredAt.mp hv
-  exact ⟨i, mem_ledgerSet_of_mem_history hg hk
-    (isLeaderBlock_of_decided hdec).1 hi, hic, hir⟩
+  exact ⟨i, mem_ledgerSet_of_mem_history hg hk (mem_ids_of_decided hdec) hi, hic, hir⟩
 
 end Decided
 

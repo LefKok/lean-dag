@@ -622,6 +622,43 @@ the renumbering directly (§3.4b).
 
 ---
 
+## 3.9 What a commit names
+
+`Banded` says which DAGs a verdict cannot tell apart. It says nothing
+about what the verdict's *payload* denotes, and a rule that committed an
+id it had never seen would satisfy every band. So a consumer that
+reasons about the committed block — rather than about the verdict —
+gets nothing from the band, and needs a property of its own.
+
+`CommitsCandidate R` is it: where a rule commits `L` at slot `k`, `L` is
+a block the universe holds, at that slot's round, authored by that
+slot's leader. `R.IsCandidate S U k L`, in the vocabulary the carrier
+already had.
+
+**Seven protocols proved this before it had a name.** Mysticeti,
+Odontoceti, Nemo, Mahi-Mahi, Hybrid, Hydrozoan and Optimal-Hydrozoan
+each carry an `isLeaderBlock_of_decided`, and
+`Integration/Hydrozoan/ChopDecided.lean` carries an eighth copy for a
+second schedule. Every one is the same two-case discharge: a commit
+constructor carries its `IsLeaderBlock` premise, and a skip constructor
+concludes `none`. Both carriers' instances are one line each.
+
+**The consumer is chain quality, and it has exactly one dependence on
+the rule.** `Quality/Coverage.card_coveredAt_ge` is about valid DAGs:
+the quorum structure forces every layer of every valid cone to carry
+blocks from all but `f` of the correct validators, with no rule, no
+synchrony and no delivery model. What the committed case adds is that
+the committed block is one of those blocks — and that is the whole of
+it. `mem_ids_of_decided` now reads it from the property, and
+`Quality/{Inclusion,Capstone}.lean` read it from there, so a second
+protocol gets this arc without a second copy of the bridge.
+
+**What it does not give.** The density bound needs a universe's
+validity — that a block references a quorum of the round below — which
+`DagRule` does not carry. Lifting chain quality itself to the carrier
+would need that as a new law; this property is only its rule-dependent
+step, and the step was the part that was duplicated.
+
 ## 4. Properties for the schedule mechanisms
 
 `Barnacle.BaseRule` and its `Laws` are one working interface: any two
@@ -925,6 +962,7 @@ keeps.
 LeanDag/Properties/
   Carrier.lean     the abstract DAG the properties talk about
   Band.lean        AgreeBand and Banded, the one safety obligation
+  Candidate.lean   IsCandidate, and CommitsCandidate: what a commit names
   Extends.lean  Agreement.lean   vocabulary the derived properties use
   Derived/Persist.lean  Derived/Local.lean   the two statements
   Derived/Truncate.lean   LocalTruncate, and its route from the band
@@ -1081,7 +1119,7 @@ The goal, restated in three parts:
 
 ### 11.1 Against part 1: the properties exist
 
-Eleven, in `LeanDag/Properties/`, in the two directions §3.6 argues
+Twelve, in `LeanDag/Properties/`, in the two directions §3.6 argues
 for. The protocol proves the safety side and one graded liveness
 residue; the mechanism owes one liveness property. It was fourteen until
 §11.4d compared them.
@@ -1094,6 +1132,7 @@ residue; the mechanism owes one liveness property. It was fourteen until
 | | `Local` | a verdict at round ≥ r reads the DAG only above r |
 | | `LocalTruncate` | a verdict survives restriction with renumbering, both ways; a corollary of the band's offsets |
 | | `Agree` | two views decide alike |
+| | `CommitsCandidate` | a commit names a block the DAG holds, at the slot's round, by the slot's leader |
 | | `DecidedBelow` | a verdict below a slot bound, surviving reassignment above it; a definition, so its laws are theorems |
 | protocol, optional | `SkipsUnsupported R Ok` | an unsupported slot is skipped without waiting for an anchor, at grade `Ok` |
 | | `LeaderCommits R Live`, `Descends R S c` | a reliable leader commits; a committed run decides everything below |
@@ -1116,6 +1155,7 @@ quality has no property (§5).
 | `ViewSound` | a law of `DagRule` | a law of `DagRule` | — | — |
 | `SkipsUnsupported` | ✓ at `qFast ≤ |T|` | ✓ at a correct quorum | — | — |
 | `Agree` | ✓ | ✓ | inherited | — |
+| `CommitsCandidate` | ✓ | ✓ | inherited | — |
 | `LeaderCommits`, `Descends` | ✓ | ✓ | ✓, a second `Live` | — |
 | `Sustains` witnesses | chop, fill | chop, fill | — | — |
 
@@ -1209,8 +1249,8 @@ because they are theorems. The distinction the folder tracks is who owes
 the proof, which is the distinction a protocol author needs.
 
 **Obligations. Someone must prove these, per protocol or per mechanism.**
-`Causal`, `Agree`, `Banded`, `LeaderCommits` and `Descends` fall on the
-protocol; `Sustains` falls on the mechanism. Nothing derives them.
+`Causal`, `Agree`, `Banded`, `CommitsCandidate`, `LeaderCommits` and
+`Descends` fall on the protocol; `Sustains` falls on the mechanism. Nothing derives them.
 `ViewSound` was on this list and is now a field of `DagRule`: every
 protocol's view type already carried the proof (§11.4d).
 
@@ -1405,13 +1445,8 @@ slots when it means a dependence bound — *the verdict is settled by slot
 3. **Collapse the Odontoceti mirrors** (`Adaptive/`, `Reactive/`) onto
    instances. `Live` and `Descends` now have two instances each and
    survived both, so the shape is no longer in doubt.
-4. **A commit names the slot's candidate.**
-   `Decided S V k (some L) → R.IsCandidate S U k L`, which the
-   chain-quality arc consumes and no property states: both
-   `Quality.Coverage.card_coveredAt_ge_of_decided` and
-   `Quality.Inclusion.mem_history_of_decided_commit` take a commit and
-   then use `L`'s round and causal history. Two cases per protocol,
-   every commit constructor carrying `IsLeaderBlock` already.
+4. **~~A commit names the slot's candidate~~** (**done**, §3.9).
+   `CommitsCandidate`, which seven protocols had proved separately.
 5. **Re-genesis as an `Extends`**, the cheapest of the uncovered
    mechanisms: `addGenesis` is `insert g V.ids` with old blocks
    unchanged, so `Persist` transports verdicts once the witness is

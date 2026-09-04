@@ -1,4 +1,4 @@
-import LeanDag.Properties.Carrier
+import LeanDag.Properties.Candidate
 
 /-!
 # Persistence: verdicts survive a growing DAG
@@ -41,14 +41,6 @@ namespace Properties
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 variable {R : DagRule Validator BlockId Payload}
-
-/-- **A slot's candidate**, in the vocabulary the carrier supplies: the
-right round, the right author, present. Every protocol's
-`IsLeaderBlock` is this. -/
-def DagRule.IsCandidate (R : DagRule Validator BlockId Payload)
-    (S : Slots Validator) (U : R.Universe) (k : ℕ) (L : BlockId) : Prop :=
-  L ∈ R.ids U ∧ (R.block U L).round = S.slotRound k ∧
-    (R.block U L).creator = S.leader k
 
 /-- **`U'` extends `U`**: it holds everything `U` held, and denotes
 those blocks the same way. Nothing is said about what it adds — that is

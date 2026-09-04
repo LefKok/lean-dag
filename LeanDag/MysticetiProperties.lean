@@ -701,6 +701,13 @@ theorem banded : Banded
   exact ⟨top, fun g g' d d' S' U' V' k' hkd hsch hlead hab hV =>
     ht g g' d d' S' U' V' k' hkd hsch hlead hab hV⟩
 
+/-- **A commit names the slot's candidate.** `isLeaderBlock_of_decided`
+under the property's name — one of seven such lemmas across the
+protocols, and the reason `Properties/Candidate.lean` exists. -/
+theorem commitsCandidate : CommitsCandidate
+    (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
+  fun S _ _ _ _ hd => isLeaderBlock_of_decided (S := S) hd
+
 /-- **The core persists unconditionally**, as an evidence-backed rule
 must — now a corollary of the band rather than an induction of its own.
 The grade `Quorate` that stood here before was not a property of the

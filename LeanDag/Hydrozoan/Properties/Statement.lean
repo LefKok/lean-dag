@@ -16,6 +16,10 @@ needed a grade to survive; that was a defect in the rule, since repaired
 (`docs/target-properties.md` §3.2), and `Persist` carries no grade any
 more.
 
+`CommitsCandidate` is the newest, and it is stated because Hydrozoan
+proves it directly: a commit names a block the DAG holds, at the slot's
+round, by the slot's leader. Chain quality is what consumes it.
+
 **What is stated here is smaller than what Hydrozoan satisfies.**
 `Persist`, `Local` and `LocalTruncate` are absent, and all three hold:
 each is `Banded` applied, derived once in `Properties/Derived/` for
@@ -58,6 +62,7 @@ def Statement : Prop :=
     LeanDag.Properties.Causal (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.Banded (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.Agree (rule (Replica := Replica) (BlockId := BlockId)) ∧
+    LeanDag.Properties.CommitsCandidate (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.SkipsUnsupported (rule (Replica := Replica) (BlockId := BlockId))
       (fun T => LeanDag.Hydrozoan.qFast Replica ≤ T.card)
 

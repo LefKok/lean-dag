@@ -23792,6 +23792,7 @@ def Statement : Prop :=
     LeanDag.Properties.Causal (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.Banded (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.Agree (rule (Replica := Replica) (BlockId := BlockId)) ∧
+    LeanDag.Properties.CommitsCandidate (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.SkipsUnsupported (rule (Replica := Replica) (BlockId := BlockId))
       (fun T => LeanDag.Hydrozoan.qFast Replica ≤ T.card)
 ```
@@ -24390,6 +24391,33 @@ def DecidedBelow (R : DagRule Validator BlockId Payload) (S : Slots Validator) (
 
 **A verdict decided below `B`**: the slot sits below the bound, the verdict holds, and it is unchanged by any reassignment of the leaders at or above the bound. The round structure is held fixed, which is what reassignment means.
 
+#### `DagRule.IsCandidate`
+
+*def, `Properties.Candidate.lean`*
+
+```lean
+def DagRule.IsCandidate (R : DagRule Validator BlockId Payload)
+    (S : Slots Validator) (U : R.Universe) (k : ℕ) (L : BlockId) : Prop :=
+  L ∈ R.ids U ∧ (R.block U L).round = S.slotRound k ∧
+    (R.block U L).creator = S.leader k
+```
+
+**A slot's candidate**, in the vocabulary the carrier supplies: the right round, the right author, present. Every protocol's `IsLeaderBlock` is this.
+
+#### `CommitsCandidate`
+
+*def, `Properties.Candidate.lean`*
+
+```lean
+def CommitsCandidate (R : DagRule Validator BlockId Payload) : Prop :=
+  ∀ (S : Slots Validator) (U : R.Universe) (V : R.View U) (k : ℕ) (L : BlockId),
+    R.Decided S V k (some L) → R.IsCandidate S U k L
+```
+
+**A commit names the slot's candidate.** Where a rule commits `L` at slot `k`, `L` is a block the universe holds, at that slot's round, authored by that slot's leader.
+
+Not derivable from the band. `Banded` says which DAGs a verdict cannot tell apart; it says nothing about what the verdict's payload denotes, and a rule that committed an id it had never seen would satisfy every band.
+
 #### `DagRule`
 
 *structure, `Properties.Carrier.lean`*
@@ -24544,19 +24572,6 @@ def LocalTruncate (R : DagRule Validator BlockId Payload) : Prop :=
 **Truncation invariance.** A replica that has pruned below the horizon reaches exactly the verdicts it would have reached with its whole history, at its own numbering.
 
 An `↔`, because both directions are consumed: a joiner needs verdicts to survive the cut, and cross-cut agreement needs them to come back.
-
-#### `DagRule.IsCandidate`
-
-*def, `Properties.Extends.lean`*
-
-```lean
-def DagRule.IsCandidate (R : DagRule Validator BlockId Payload)
-    (S : Slots Validator) (U : R.Universe) (k : ℕ) (L : BlockId) : Prop :=
-  L ∈ R.ids U ∧ (R.block U L).round = S.slotRound k ∧
-    (R.block U L).creator = S.leader k
-```
-
-**A slot's candidate**, in the vocabulary the carrier supplies: the right round, the right author, present. Every protocol's `IsLeaderBlock` is this.
 
 #### `Extends`
 
@@ -24726,7 +24741,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 934 theorems that either another module of the
+The 938 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -36710,6 +36725,18 @@ theorem symm (h : AgreeAbove R U U' r) (hv : ViewAgreeAbove R V V' r) :
 
 Agreement of views is symmetric, given agreement of the universes that fixes the rounds.
 
+#### `sustains_chop`
+
+*theorem, `Properties.Arcs.GC.lean`*
+
+```lean
+theorem sustains_chop :
+    Sustains (MysticetiProperties.mysticetiRule (Payload := Payload)) U (chop U G) G G where
+  mem
+```
+
+**The cut sustains the core from its horizon.**
+
 #### `directCommit_chop`
 
 *theorem, `Properties.Arcs.GC.lean`*
@@ -36722,6 +36749,19 @@ theorem directCommit_chop {T : Finset Validator} {r : ℕ} {L : BlockId}
 ```
 
 **The reactive commit survives the cut** — the consumer test, from the obligation rather than from `chop` directly.
+
+#### `sustains_skipFill`
+
+*theorem, `Properties.Arcs.SafeSkip.lean`*
+
+```lean
+theorem sustains_skipFill (sk : SkipMsg U) :
+    Sustains (MysticetiProperties.mysticetiRule (Payload := Payload))
+      U sk.skipFill 0 (sk.r + 1) where
+  mem
+```
+
+**A fill sustains from the top of its gap.** Above `sk.r` the fill added nothing, so every block there is old and unchanged. Below it the claim would be false, and deliberately: the blocks a fill adds stand in for blocks that voted, and need not vote as they did.
 
 #### `refl`
 
@@ -36821,6 +36861,31 @@ theorem symm (h : AgreeAbove R U U' r) : AgreeAbove R U' U r where
 ```
 
 Agreement at no offset is symmetric — which the paired `mem` clause is what secures. A rebase by a positive offset is not: reading it backwards moves the offset to the other side, which is why `AgreeBand` carries one on each.
+
+#### `trans`
+
+*theorem, `Properties.Compose.lean`*
+
+```lean
+theorem trans {U U' U'' : R.Universe} {G₁ R₁ G₂ R₂ : ℕ}
+    (h : RebasedAbove R U U' G₁ R₁) (h' : RebasedAbove R U' U'' G₂ R₂) :
+    RebasedAbove R U U'' (G₁ + G₂) (max R₁ (R₂ + G₁)) where
+  mem
+```
+
+**Two rebases are one.** The offsets add. The settling round is the later of the two in `U`'s frame: `R₂` is a round of `U'`, so it is compared against `R₁` only after `G₁` is added back.
+
+#### `trans`
+
+*theorem, `Properties.Compose.lean`*
+
+```lean
+theorem trans (h : Rebases S S' G₁ d₁) (h' : Rebases S' S'' G₂ d₂) :
+    Rebases S S'' (G₁ + G₂) (d₁ + d₂) where
+  slotRound
+```
+
+**And two schedule rebases are one.** Offsets and base slots both add, which is what makes a stack of truncations a truncation.
 
 #### `toDecided`
 
@@ -37053,7 +37118,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 922 lemmas used only within the file that proves
+The 925 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -37214,7 +37279,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `mem_heldOf` | — |
 | `toDelivery_held` | The induced layer reads the pacing structure's own holdings: what it records at round `n` is exactly what … |
 
-### `Quality/Coverage.lean` (4)
+### `Quality/Coverage.lean` (5)
 
 | Lemma | Role |
 |:---|:---|
@@ -37222,6 +37287,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `coveredAt_eq_sdiff` | Covered and missing partition the correct validators. |
 | `coveredAt_subset_correct` | — |
 | `mem_coveredAt` | — |
+| `mem_ids_of_decided` | The arc's one rule-dependent step: a committed block is a block. `Properties.CommitsCandidate` at the … |
 
 ### `Quality/Inclusion.lean` (1)
 
@@ -38601,10 +38667,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `rule_ids` | — |
 | `rule_viewIds` | — |
 
-### `Hydrozoan/Helpers/Commit.lean` (3)
+### `Hydrozoan/Helpers/Commit.lean` (4)
 
 | Lemma | Role |
 |:---|:---|
+| `commitsCandidate` | A commit names the slot's candidate. Hydrozoan's `isLeaderBlock_of_decided` under the property's name. … |
 | `decidedBelow_of_anchor` | The graded rule is total, at a bound. `decided_of_anchor` with the schedule dependence tracked: every rung … |
 | `decidedBelow_of_committed_run` | A committed run decides everything below it, at a bound. The existing descent with `DecidedBelow` in place … |
 | `eligibleAsAnchor_sched` | — |
@@ -38794,7 +38861,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `soundOn_skipFill` | The fill preserves it, above the gap. The synchrony round must clear the filled round: inside the gap the … |
 | `soundOn_stack` | The stack preserves it, the offsets composing exactly as the two statements above suggest: the fill … |
 
-### `MysticetiProperties.lean` (43)
+### `MysticetiProperties.lean` (44)
 
 | Lemma | Role |
 |:---|:---|
@@ -38811,6 +38878,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `certifies_band` | — |
 | `certifies_of_sustains` | The core's certificate predicate transports. |
 | `certifies_old` | — |
+| `commitsCandidate` | A commit names the slot's candidate. `isLeaderBlock_of_decided` under the property's name — one of seven … |
 | `creatorsOf_band` | — |
 | `creatorsOf_old` | — |
 | `decidedBelow_of_committed_run` | The committed-run descent. `c` consecutive commits decide every slot below them, and the derivations … |
@@ -38842,17 +38910,16 @@ subsection per module, in the layer order of Appendices B and C.
 | `votesIn_of_sustains` | The votes an old decision-round block counts are the votes it counted: its references are unchanged, and … |
 | `votesIn_old` | The votes an old certificate counts are the votes it counted. |
 
-### `Properties/Arcs/GC.lean` (5)
+### `Properties/Arcs/GC.lean` (4)
 
 | Lemma | Role |
 |:---|:---|
 | `decided_chop_iff` | G3 re-derived, with no induction of its own. Both directions of the cut's verdict transport, from the band. |
 | `decided_of_truncate` | A verdict survives the cut, at the replica's own numbering. |
 | `decided_of_truncated` | And a verdict of the truncation is a verdict of the whole DAG, which is what lets a pruned replica be … |
-| `sustains_chop` | The cut sustains the core from its horizon. |
 | `truncates_chop` | The cut is a truncation. The witness `Truncates` was written to have, exhibited before anything is proved … |
 
-### `Properties/Arcs/SafeSkip.lean` (7)
+### `Properties/Arcs/SafeSkip.lean` (6)
 
 | Lemma | Role |
 |:---|:---|
@@ -38862,7 +38929,15 @@ subsection per module, in the layer order of Appendices B and C.
 | `decided_skipFill` | Verdicts survive the recovery, for any protocol that has proved persistence. The replica that recovered … |
 | `extends_of_skipFill` | The fill is an extension. It holds every block the original held — `ids` is a union — and denotes each of … |
 | `presentAt_liftView` | Presence in the pre-crash view is presence in the lifted one: the ids are the same and old blocks are … |
-| `sustains_skipFill` | A fill sustains from the top of its gap. Above `sk.r` the fill added nothing, so every block there is old … |
+
+### `Properties/Candidate.lean` (4)
+
+| Lemma | Role |
+|:---|:---|
+| `creator` | Authored by the slot's leader. |
+| `mem` | The committed block is a block. |
+| `reaches_mem` | A commit's causal cone is real and below it. Everything the committed block reaches is a block of the … |
+| `round` | At the slot's round. |
 
 ### `Properties/Carrier.lean` (1)
 
@@ -38870,15 +38945,13 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `Causal.refs_above` | What a block above the cut references is itself above the cut — a fact about causal structure alone, and … |
 
-### `Properties/Compose.lean` (5)
+### `Properties/Compose.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
 | `Truncates.trans` | A stack of truncations is a truncation. Both halves compose, and the settling round of the composite is … |
 | `mono` | A mechanism that rebases from a round rebases from any later one, which is what lets two settling rounds … |
 | `refl` | Doing nothing rebases by nothing, from round zero. |
-| `trans` | Two rebases are one. The offsets add. The settling round is the later of the two in `U`'s frame: `R₂` is a … |
-| `trans` | And two schedule rebases are one. Offsets and base slots both add, which is what makes a stack of … |
 
 ### `Properties/Derived/Bounded.lean` (1)
 

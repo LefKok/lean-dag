@@ -31,8 +31,8 @@ namespace LeanDagTest.Routes
 
 open LeanDag
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
-variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
+variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 variable [S : Slots Validator]
 
 section Mysticeti

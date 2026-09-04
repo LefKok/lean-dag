@@ -31,9 +31,9 @@ metric of CQ1–CQ3 is the honest one.
 
 namespace LeanDag
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator]
-variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
+variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 variable [S : Slots Validator]
 variable {T : Finset Validator} {w s R m : ℕ}
 
@@ -73,7 +73,7 @@ theorem committed_of_correct_block_within
     mem_history_of_decided_commit hs hdec hLc hb hbc (by omega)
       (by rw [hLb.2.1]; omega)
   exact ⟨hmem, fun g n hg hn =>
-    mem_ledgerSet_of_mem_history hg hn (isLeaderBlock_of_decided hdec).1 hmem⟩
+    mem_ledgerSet_of_mem_history hg hn (mem_ids_of_decided hdec) hmem⟩
 
 /-- **CQ7, by round.** With bounded slot spacing, the committing slot's
 round is within `s·w` rounds of the first slot above `m`: a correct

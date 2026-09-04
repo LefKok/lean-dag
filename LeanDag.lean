@@ -83,6 +83,7 @@ import LeanDag.Integration.Hydrozoan.OptimalTransport
 import LeanDag.Integration.Hydrozoan.OptimalChopDecided
 import LeanDag.Integration.Hydrozoan.ViaProperties
 import LeanDag.Properties.Carrier
+import LeanDag.Properties.Candidate
 import LeanDag.Properties.Extends
 import LeanDag.Properties.Derived.Persist
 import LeanDag.Properties.Agreement
