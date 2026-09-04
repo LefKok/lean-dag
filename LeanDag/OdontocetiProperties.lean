@@ -398,6 +398,25 @@ theorem commitsDirect : CommitsDirect
     (fun {U} V L r => Odontoceti.DirectCommitIn U V L r) :=
   fun S _ _ _ _ hc hd => Odontoceti.Decided.directCommit (S := S) hc hd
 
+/-- **Odontoceti skips an unsupported slot from a correct quorum.**
+
+The liveness half of the repair. Making the skip a count of blockers
+rather than a vacuous quantification made it strictly harder to satisfy,
+and a rule no quorum can ever trigger would be sound and useless. This
+says the repaired rule is still reachable: a correct quorum whose
+voting-round blocks reference no candidate skips the slot, without
+waiting for an anchor.
+
+The count is the core's, so the argument is too — `subset_blamers`
+applies unchanged, the two carriers projecting identically. -/
+theorem skipsUnsupported :
+    SkipsUnsupported (odontocetiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) (fun T => quorumCard Validator ≤ T.card) :=
+  fun S U V T k hq hpres huns =>
+    Odontoceti.Decided.directSkip (S := S)
+      (le_trans hq (Finset.card_le_card
+        (MysticetiProperties.subset_blamers (S := S) hpres huns)))
+
 /-! ## The bounded relation, and the two liveness properties
 
 `Adaptive/Odontoceti.DecidedWithin` already names the slots a derivation

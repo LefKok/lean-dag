@@ -915,7 +915,21 @@ added to `Adaptive/Odontoceti.lean` — the general schedule congruence
 `DecidedBelow` reads, where the file had only the `slotsOf` case the
 adaptive fixpoint uses.
 
+**And the skip is still reachable.** Making it a count of blockers
+rather than a vacuous quantification made it strictly *harder* to
+satisfy, and a rule no quorum can ever trigger would be sound and
+useless. `SkipsUnsupported` at `quorumCard ≤ |T|` is the liveness half
+of the repair: a correct quorum whose voting-round blocks reference no
+candidate skips the slot, without waiting for an anchor. The count is
+the core's, so `subset_blamers` applies unchanged.
+
+Recording it because the repair was not finished without it. Soundness
+was checked when the band's case closed; that a rule can still fire is a
+separate question, and one a repair that tightens a premise always
+raises.
+
 **Four rules now show the six**, and the band has three instances.
+Odontoceti shows the optional two as well, so its row is full.
 
 ## 4. Properties for the schedule mechanisms
 
@@ -1447,7 +1461,7 @@ conformance `Statement` lists it.
 | reactive Mysticeti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Hydrozoan | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — | ✓ |
 | Optimal-Hydrozoan | — | — | ✓ | ✓ | — | — | — | — |
-| Odontoceti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
+| Odontoceti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Nemo | — | — | ✓ | ✓ | — | — | ✓ | — |
 | Hybrid / Orcaella | — | — | ✓ | ✓ | — | — | — | — |
 | Mahi-Mahi | — | — | — | — | — | — | — | — |

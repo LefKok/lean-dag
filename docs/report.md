@@ -37701,7 +37701,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 968 lemmas used only within the file that proves
+The 969 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -39519,7 +39519,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `votesIn_of_sustains` | The votes an old decision-round block counts are the votes it counted: its references are unchanged, and … |
 | `votesIn_old` | The votes an old certificate counts are the votes it counted. |
 
-### `OdontocetiProperties.lean` (17)
+### `OdontocetiProperties.lean` (18)
 
 | Lemma | Role |
 |:---|:---|
@@ -39536,6 +39536,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `directCommitIn_band` | And so does the direct commit. |
 | `leaderCommits` | A reliably-led slot commits, at a bound one above the slot: a direct commit reads that slot's leader and … |
 | `not_thickLink_band_novel` | A candidate the band did not carry is thick-linked from no old anchor. Its supporters would have to sit in … |
+| `skipsUnsupported` | Odontoceti skips an unsupported slot from a correct quorum. |
 | `supportersIn_band` | Supporters survive the band. A block one round above the slot that referenced the candidate references it … |
 | `thickLink_band` | So the indirect test reads the same. |
 | `thickLink_threshold_pos` | The thick-link threshold is positive: `Faults5` asks for `5f + 1` validators, so `card − 3f ≥ 2f + 1`. |

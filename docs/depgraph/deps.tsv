@@ -57591,6 +57591,24 @@ EDGE	LeanDagTest.ugrowLag._proof_57	LeanDagTest.ugrowLag._simp_10
 EDGE	LeanDagTest.ugrowLag._proof_57	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ugrowLag._proof_57	LeanDagTest.lagHolds
 EDGE	LeanDagTest.ugrowLag._proof_57	LeanDagTest.ugrowLag._proof_23
+NODE	LeanDag.OdontocetiProperties.skipsUnsupported	LeanDag.OdontocetiProperties	thm
+EDGE	LeanDag.OdontocetiProperties.skipsUnsupported	LeanDag.Faults5
+EDGE	LeanDag.OdontocetiProperties.skipsUnsupported	LeanDag.creatorsOf
+EDGE	LeanDag.OdontocetiProperties.skipsUnsupported	LeanDag.Slots.slotRound
+EDGE	LeanDag.OdontocetiProperties.skipsUnsupported	LeanDag.MysticetiProperties.subset_blamers
+EDGE	LeanDag.OdontocetiProperties.skipsUnsupported	LeanDag.Properties.Unsupported
+EDGE	LeanDag.OdontocetiProperties.skipsUnsupported	LeanDag.Properties.SkipsUnsupported
+EDGE	LeanDag.OdontocetiProperties.skipsUnsupported	LeanDag.BlockUniverse.block
+EDGE	LeanDag.OdontocetiProperties.skipsUnsupported	LeanDag.slotBlamers
+EDGE	LeanDag.OdontocetiProperties.skipsUnsupported	LeanDag.View.ids
+EDGE	LeanDag.OdontocetiProperties.skipsUnsupported	LeanDag.Faults.f
+EDGE	LeanDag.OdontocetiProperties.skipsUnsupported	LeanDag.OdontocetiProperties.odontocetiRule
+EDGE	LeanDag.OdontocetiProperties.skipsUnsupported	LeanDag.Slots
+EDGE	LeanDag.OdontocetiProperties.skipsUnsupported	LeanDag.Faults5.toFaults
+EDGE	LeanDag.OdontocetiProperties.skipsUnsupported	LeanDag.Odontoceti.Decided.directSkip
+EDGE	LeanDag.OdontocetiProperties.skipsUnsupported	LeanDag.Properties.DagRule.View
+EDGE	LeanDag.OdontocetiProperties.skipsUnsupported	LeanDag.Properties.DagRule.Universe
+EDGE	LeanDag.OdontocetiProperties.skipsUnsupported	LeanDag.Properties.PresentAt
 NODE	LeanDag.FinWhale.Dag.recOn	LeanDag.FinWhale.Model.Rule	def
 EDGE	LeanDag.FinWhale.Dag.recOn	LeanDag.Block
 EDGE	LeanDag.FinWhale.Dag.recOn	LeanDag.Faults
