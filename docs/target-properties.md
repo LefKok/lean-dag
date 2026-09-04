@@ -1263,33 +1263,63 @@ The goal, restated in three parts:
 3. the mechanisms compose with one another through the same
    properties, automatically.
 
-### 11.1 Against part 1: the properties exist
+**Where it stands.** Part 1 is nine obligations (§11.1). Part 2 holds
+for two protocols and every mechanism in the development, in both
+directions (§11.2). Part 3 holds on both axes — the DAG's, through
+`RebasedAbove.trans`, and the schedule's, through `Rebases` (§11.3) —
+and the last interaction proved by hand, the joiner, is closed.
 
-Twelve, in `LeanDag/Properties/`, in the two directions §3.6 argues
-for. The protocol proves the safety side and one graded liveness
-residue; the mechanism owes one liveness property. It was fourteen until
-§11.4d compared them.
+What is not settled is whether nine is the right nine, and that is an
+instance question rather than a design one: seven rules have none
+(§11.4).
+
+### 11.1 Against part 1: what is owed, and what follows
+
+**Nine obligations, in the two directions §3.6 argues for.** Six fall on
+the protocol, one more is optional, and two fall on a mechanism —
+which one depending on whether it transforms the DAG or a view.
 
 | Direction | Property | Content |
 |---|---|---|
-| protocol, safety | `Causal` | universes are block DAGs |
-| | `Banded` | a verdict is carried by a range of rounds, and `Persist`, `Local` and view monotonicity are its corollaries |
-| | `Persist` | a verdict survives extension of the DAG |
-| | `Local` | a verdict at round ≥ r reads the DAG only above r |
-| | `LocalTruncate` | a verdict survives restriction with renumbering, both ways; a corollary of the band's offsets |
-| | `Agree` | two views decide alike |
+| protocol | `Causal` | universes are block DAGs |
+| | `Banded` | every verdict is carried by a band of rounds, with offsets on both axes |
+| | `Agree` | two views of one universe under one schedule decide alike |
 | | `CommitsCandidate` | a commit names a block the DAG holds, at the slot's round, by the slot's leader |
-| | `DecidedBelow` | a verdict below a slot bound, surviving reassignment above it; a definition, so its laws are theorems |
-| protocol, optional | `SkipsUnsupported R Ok` | an unsupported slot is skipped without waiting for an anchor, at grade `Ok` |
-| | `LeaderCommits R Live`, `Descends R S c` | a reliable leader commits; a committed run decides everything below |
-| mechanism, liveness | `Sustains R U U' G R₀` | above the settling round the transformed DAG holds the same blocks |
+| | `LeaderCommits R Live` | under the protocol's own precondition, a reliably-led slot commits at a tight bound |
+| | `Descends R S c` | a run of `c` committed slots decides everything below it |
+| protocol, optional | `SkipsUnsupported R Ok` | an unsupported slot is skipped without waiting for an anchor |
+| mechanism, DAG | `Sustains R U U' G R₀` | above the settling round the transformed DAG holds the same blocks, at rounds `G` apart |
+| mechanism, view | `DeliversOn R view T lo` | for every round, one of the views produced holds every `T`-block from `lo` up to it |
 
-Two were stated wrongly first and corrected once a witness was
-demanded (the re-indexing property, §3.4; `Sustains` v1, §3.6). Three
-more were stated twice over and found to be one relation (§11.4d). Chain
-quality has no property (§5).
+`ViewSound` was on this list and is now a field of `DagRule`: every
+protocol's view type already carried the proof (§11.4d).
 
-### 11.2 Against part 2: two protocols, three mechanisms
+**And what follows from them, which no protocol proves.**
+
+| Derived | From |
+|---|---|
+| `Persist`, `Local`, `LocalTruncate` | `Banded` |
+| view monotonicity, a slot bound, `exists_coversUpto_decides` | `Banded` |
+| cross-cut and cross-horizon agreement | `Agree` + `LocalTruncate` |
+| agreement across an extension | `Agree` + `Persist` |
+| `decidedBelow_of_run` | `LeaderCommits` + `Descends` |
+| a commit's causal cone is real | `Causal` + `CommitsCandidate` |
+| the three liveness predicates, and composition | `Sustains` |
+| non-equivocation across a cut | `Truncates` |
+| the additive half of production | `Extends` |
+| `decided_of_delivers` | `Banded` + `Delivers` |
+
+**The set a protocol proves is smaller than the set it satisfies**, and
+keeping the two apart is what §11.4b's folder rule is for. `Persist` is
+the clearest case: it is read by name by two mechanisms, so it stays a
+named property, and it is proved by nobody.
+
+Three were stated wrongly first and corrected once a witness was
+demanded — the re-indexing property (§3.4), `Sustains` v1 (§3.6), and
+`Delivers` (§3.11). Three more were stated twice over and found to be
+one relation (§11.4d). Chain quality has no property of its own (§5).
+
+### 11.2 Against part 2: two protocols, every mechanism
 
 | | Hydrozoan | core Mysticeti | reactive Mysticeti | Odontoceti, Nemo, Mahi-Mahi, Hybrid, Optimal-Hydrozoan, FinWhale |
 |---|---|---|---|---|
@@ -1303,7 +1333,8 @@ quality has no property (§5).
 | `Agree` | ✓ | ✓ | inherited | — |
 | `CommitsCandidate` | ✓ | ✓ | inherited | — |
 | `LeaderCommits`, `Descends` | ✓ | ✓ | ✓, a second `Live` | — |
-| `Sustains` witnesses | chop, fill | chop, fill | — | — |
+| `Sustains` witnesses | chop, fill | chop, fill, re-genesis | — | — |
+| `DeliversOn` witnesses | — | rate limiter, paced views | — | — |
 
 The consumer tests passed. Each is a former bespoke induction
 re-derived with none: `decided_fillHZ`, `decided_chopHZ`,
@@ -1322,16 +1353,20 @@ What part 2 does not yet deliver:
   adaptive leaders through it (§4.5), safety and liveness both, and
   both protocols take garbage collection at any truncation rather than
   only at the canonical cut. No protocol is short of an obligation.
-- **Six protocols have no instance of any property.** Whether
-  `Descends` and `Live` are generic or Mysticeti's shape with the name
-  removed is unknown until the Odontoceti mirror is collapsed.
+- **Seven rules have no instance of any property**, and this is now the
+  dominant gap. Six obligations validated against two protocols is a
+  thin basis for claiming they are the right six; whether `Descends` and
+  `Live` are generic or Mysticeti's shape with the name removed stays
+  unknown until a third rule takes them. Odontoceti and Nemo are the
+  cheapest — same `IsLeaderBlock`, same `Eligible`, `decisionRound + 1`
+  where the core has `+ 2`.
 - **"Safe and live" here means the mechanism's own theorems**, at any
   rule with the properties. Ledger validity and chain quality are not
   among the properties, and the liveness preconditions — `PlacesRuns`,
   the staged `Live` — are hypotheses the deployment meets, not things
   the properties discharge.
 
-### 11.3 Against part 3: the DAG axis composes
+### 11.3 Against part 3: the mechanisms compose
 
 **What a mechanism owes is a rebase, and rebases compose.**
 `Properties/Compose.lean` states it: `RebasedAbove.trans` adds the
@@ -1430,19 +1465,34 @@ stated over `Truncates` rather than `Sustains` —
 carries it — and the fill's `honestNoEquiv_skipFill` stays what it is,
 the mechanism's own content.
 
-### 11.4 Not covered at all
+### 11.4 What is left
 
-- **Composition**, beyond the one theorem above.
-- **Chain quality** (§5, G6): no property, nothing built.
-- **Barnacle**: six bespoke instances of its own interface, and no
-  connection to the properties beyond `BaseRule.toDagRule`. The shared
-  `Agree` is the natural first bridge and has not been made.
-- **DoS and rate limiting** (`DoS/`, `Novelty.lean`): declared
-  rule-independent in §1 and untouched; whether that survives contact
-  with `Sustains` — the novelty budget removes blocks — has not been
-  asked.
-- **Re-genesis**: §1 says it should be an `Extends` and would then
-  inherit `Persist` and `Sustains`; nothing has been proved.
+Every mechanism in this development now has both directions through the
+properties, and nothing is proved by hand. What remains is of four
+kinds, and only the first is large.
+
+- **Instances.** Seven rules have none: Barnacle's six, Odontoceti,
+  Nemo, Mahi-Mahi, Optimal-Hydrozoan, Hybrid and FinWhale. Hybrid's
+  `Decided` is its own inductive with no carrier, which is why
+  `hybrid_agree_stack` cannot reach any of this; FinWhale needs a
+  `Slots` layer first (§3.4c); Mahi-Mahi's band is conditional on
+  `2 ≤ w`. This is the gap that would test whether the six obligations
+  are the right six.
+- **A carrier law for chain quality.** `Quality/Coverage.card_coveredAt_ge`
+  rests on a block referencing a quorum of the round below, and
+  `DagRule` has no validity field. The last place that calls for a new
+  carrier field rather than a new property; §3.9 records what the
+  property side already gives.
+- **Two dead statements**, for different reasons. `Local` has no
+  consumer and no need. `Delivers` — the strong view obligation — has a
+  consumer in `decided_of_delivers` but no witness beyond `View.full`,
+  since both view-level mechanisms meet `DeliversOn` instead (§3.11).
+- **One structural limit.** Two *sibling* transformations — two
+  validators recovering from one universe with different fill messages —
+  give universes neither of which extends the other, and `Agree`
+  compares two views of one universe. The carrier has no join. The model
+  does not pose the case: `U` is the global DAG and validators are
+  views (§11.3b).
 
 ### 11.4b Obligation or consequence
 
@@ -1653,9 +1703,12 @@ slots when it means a dependence bound — *the verdict is settled by slot
    Six of the eight rules can carry an offset band as they stand;
    Mahi-Mahi can under `2 ≤ w`, and FinWhale cannot until it has a
    `Slots` layer. `scripts/audit-rounds.py` keeps the result.
-3. **Collapse the Odontoceti mirrors** (`Adaptive/`, `Reactive/`) onto
-   instances. `Live` and `Descends` now have two instances each and
-   survived both, so the shape is no longer in doubt.
+3. **A third rule.** Odontoceti or Nemo, whichever is cheaper — same
+   `IsLeaderBlock`, same `Eligible`, `decisionRound + 1` where the core
+   has `+ 2`. Everything else on this list serves two protocols, and
+   two is a thin basis for the claim part 1 makes. Collapsing the
+   Odontoceti mirrors (`Adaptive/`, `Reactive/`) onto instances falls
+   out of it.
 4. **~~A commit names the slot's candidate~~** (**done**, §3.9).
    `CommitsCandidate`, which seven protocols had proved separately.
 5. **~~Re-genesis as an `Extends`~~** (**done**, §3.10). Two witnesses
@@ -1666,5 +1719,12 @@ slots when it means a dependence bound — *the verdict is settled by slot
    The witness forced the weakening §3.11 predicted: the strong form has
    no model but `View.full`, and the reliable-set form is what a rate
    limiter can promise and does.
-7. **Chain quality** from fairness and self-reference (§5), on item 4.
-8. **Barnacle**, starting from `Agree`.
+7. **~~The joiner~~** (**done**, §11.3). I9's verdict half, from
+   cross-cut agreement instantiated at the adaptive schedule. This was
+   the last mechanism interaction proved by hand.
+8. **A validity law on `DagRule`**, which is what lifting chain quality
+   to the carrier needs and the only remaining call for a new carrier
+   field.
+9. **Delete `Local`, and decide about `Delivers`** (§11.4).
+10. **Barnacle**, starting from `Agree` — six rules at once, and the
+    largest single gain available on the instance side.
