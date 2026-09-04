@@ -346,7 +346,6 @@ EDGE	LeanDag.Hydrozoan.Properties.holds	LeanDag.Hydrozoan.Block.author
 EDGE	LeanDag.Hydrozoan.Properties.holds	LeanDag.Slots.slotRound
 EDGE	LeanDag.Hydrozoan.Properties.holds	LeanDag.Hydrozoan.rule
 EDGE	LeanDag.Hydrozoan.Properties.holds	LeanDag.Properties.Unsupported
-EDGE	LeanDag.Hydrozoan.Properties.holds	LeanDag.Properties.Persist.of_banded
 EDGE	LeanDag.Hydrozoan.Properties.holds	LeanDag.Hydrozoan.IsLeaderBlock
 EDGE	LeanDag.Hydrozoan.Properties.holds	LeanDag.Hydrozoan.Properties.Statement
 EDGE	LeanDag.Hydrozoan.Properties.holds	LeanDag.Properties.Causal
@@ -355,7 +354,6 @@ EDGE	LeanDag.Hydrozoan.Properties.holds	LeanDag.Hydrozoan.Block.round
 EDGE	LeanDag.Hydrozoan.Properties.holds	LeanDag.Properties.Agree
 EDGE	LeanDag.Hydrozoan.Properties.holds	LeanDag.Properties.SkipsUnsupported
 EDGE	LeanDag.Hydrozoan.Properties.holds	LeanDag.Block.round
-EDGE	LeanDag.Hydrozoan.Properties.holds	LeanDag.Properties.Persist
 EDGE	LeanDag.Hydrozoan.Properties.holds	LeanDag.Hydrozoan.qFast
 EDGE	LeanDag.Hydrozoan.Properties.holds	LeanDag.Hydrozoan.agree
 EDGE	LeanDag.Hydrozoan.Properties.holds	LeanDag.Hydrozoan.View.ids
@@ -74370,7 +74368,6 @@ EDGE	LeanDag.Hydrozoan.Properties.Statement	LeanDag.Hydrozoan.rule
 EDGE	LeanDag.Hydrozoan.Properties.Statement	LeanDag.Properties.Causal
 EDGE	LeanDag.Hydrozoan.Properties.Statement	LeanDag.Properties.Agree
 EDGE	LeanDag.Hydrozoan.Properties.Statement	LeanDag.Properties.SkipsUnsupported
-EDGE	LeanDag.Hydrozoan.Properties.Statement	LeanDag.Properties.Persist
 EDGE	LeanDag.Hydrozoan.Properties.Statement	LeanDag.Hydrozoan.qFast
 EDGE	LeanDag.Hydrozoan.Properties.Statement	LeanDag.Properties.Banded
 EDGE	LeanDag.Hydrozoan.Properties.Statement	LeanDag.Hydrozoan.Faults

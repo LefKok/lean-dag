@@ -23792,7 +23792,6 @@ def Statement : Prop :=
     LeanDag.Properties.Causal (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.Banded (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.Agree (rule (Replica := Replica) (BlockId := BlockId)) ∧
-    LeanDag.Properties.Persist (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.SkipsUnsupported (rule (Replica := Replica) (BlockId := BlockId))
       (fun T => LeanDag.Hydrozoan.qFast Replica ≤ T.card)
 ```

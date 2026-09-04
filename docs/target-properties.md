@@ -1203,6 +1203,20 @@ stay named properties because that is what the crash-recovery and
 garbage-collection arcs consume, and because a rule with no band could
 prove either on its own.
 
+**The condition on that.** A statement may sit in `Derived/` only while
+its uses are downstream — mechanisms consuming it, other derived results
+building on it. It may not appear where a protocol declares what it
+owes, because there it reads as an obligation and there is none.
+`Persist` was in HZ9's conjunction on the argument that mechanisms read
+it by name; they do, and they can reach it from `Banded`, which HZ9
+states. `scripts/check-arc-holes.py` now enforces this: no name defined
+in `Properties/Derived/` may appear in an arc's conformance
+`Statement.lean`.
+
+HZ9 therefore states four things — `Causal`, `Banded`, `Agree` and
+`SkipsUnsupported` — where it once stated seven, and satisfies the same
+set as before.
+
 `Local` is in `Derived/` too and **no mechanism reads it**. It was kept
 on the ground that garbage collection consumed it, which stopped being
 true when that arc moved to `LocalTruncate`. It is a corollary of the

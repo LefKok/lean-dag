@@ -17,10 +17,12 @@ needed a grade to survive; that was a defect in the rule, since repaired
 more.
 
 **What is stated here is smaller than what Hydrozoan satisfies.**
-`Persist` appears because mechanisms read it by name. `Local` and
-`LocalTruncate` do not appear at all: both are `Banded` applied, derived
-once in `Properties/Derived/` for every protocol with a band, so listing
-them here would suggest an obligation that no longer exists.
+`Persist`, `Local` and `LocalTruncate` are absent, and all three hold:
+each is `Banded` applied, derived once in `Properties/Derived/` for
+every rule with a band. A conformance statement lists what a protocol
+*owes*, so naming a consequence here would invent an obligation. A
+mechanism that wants one of the three reaches it from `Banded`, which is
+listed.
 
 **The last grade is the finding.** A quorum of correct replicas has
 `q = n − f − c` members and Hydrozoan's skip needs `qFast = n − p`, so a
@@ -56,7 +58,6 @@ def Statement : Prop :=
     LeanDag.Properties.Causal (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.Banded (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.Agree (rule (Replica := Replica) (BlockId := BlockId)) ∧
-    LeanDag.Properties.Persist (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.SkipsUnsupported (rule (Replica := Replica) (BlockId := BlockId))
       (fun T => LeanDag.Hydrozoan.qFast Replica ≤ T.card)
 

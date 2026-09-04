@@ -13,6 +13,10 @@ words:
   Statement.lean files are proof-free  (no theorem/lemma/example/instance),
   Model/ files are theorem-free        (no theorem/lemma/example; instances
                                         by `inferInstanceAs` are allowed);
+  a `Properties/Derived/` name appears in no conformance statement
+      (those are consequences of the band, so naming one where a protocol
+       declares what it owes invents an obligation — target-properties
+       §11.4b);
   View.full appears in no Statement.lean and no Model/ file
                                        (a liveness statement concludes on a
                                         view a validator can hold — issue #12;
@@ -42,6 +46,21 @@ FULLVIEW_ALLOW = {
 ROOT = Path(__file__).resolve().parent.parent
 ARCS = ["MahiMahi", "BlackMarlin", "FinWhale", "Barnacle", "Hydrozoan", "OptimalHydrozoan"]
 SOURCES = [f"{top}/{arc}" for arc in ARCS for top in ("LeanDag", "LeanDagTest")]
+DERIVED = ROOT / "LeanDag/Properties/Derived"
+DECL = re.compile(r"^\s*(?:@\[[^\]]*\]\s*)?(?:noncomputable\s+)?"
+                  r"(?:def|abbrev|structure|class|inductive)\s+([A-Za-z_][\w'.]*)")
+
+
+def derived_names():
+    """The properties stated in `Properties/Derived/`: consequences of the
+    band that no protocol proves, so no conformance statement may name one."""
+    names = set()
+    for path in sorted(DERIVED.glob("*.lean")):
+        for _, code in strip_comments(path.read_text(encoding="utf-8").splitlines()):
+            match = DECL.match(code)
+            if match and "." not in match.group(1):
+                names.add(match.group(1))
+    return names
 
 
 def lean_files():
@@ -76,6 +95,8 @@ def strip_comments(lines):
 
 def main():
     holes = []
+    derived = derived_names()
+    conformance = re.compile(r"\b(" + "|".join(sorted(derived)) + r")\b") if derived else None
     for path in lean_files():
         rel = path.relative_to(ROOT)
         in_model = "Model" in path.parent.parts
@@ -87,6 +108,11 @@ def main():
                 match = STATEMENT_FORBIDDEN.search(code)
                 if match:
                     holes.append(f"{rel}:{lineno}: {match.group(1)} (proof material in a Statement file)")
+                if conformance is not None and "Properties" in path.parent.parts:
+                    match = conformance.search(code)
+                    if match:
+                        holes.append(f"{rel}:{lineno}: {match.group(1)} "
+                                     "(a Derived/ consequence named as an obligation)")
             elif in_model and str(rel).startswith("LeanDag/"):
                 match = MODEL_FORBIDDEN.search(code)
                 if match:

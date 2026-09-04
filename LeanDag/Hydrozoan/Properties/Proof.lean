@@ -76,8 +76,7 @@ theorem persist_aux [S : LeanDag.Hydrozoan.Slots Replica]
 
 theorem holds : Statement := by
   intro Replica _ _ BlockId _ _ _
-  refine ⟨causal, banded, agree, ?_, ?_⟩
-  · exact LeanDag.Properties.Persist.of_banded banded
+  refine ⟨causal, banded, agree, ?_⟩
   · intro S U V T k hq hpres huns
     have hpres' : ∀ v ∈ T, ∃ c ∈ V.ids, (U.block c).author = v ∧
         (U.block c).round = S.slotRound k + 1 := fun v hv => by
