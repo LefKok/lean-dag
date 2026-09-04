@@ -8031,7 +8031,7 @@ NODE	LeanDagTest.Barnacle.u44_sync._proof_1_1	LeanDagTest.Barnacle.Heads	thm
 EDGE	LeanDagTest.Barnacle.u44_sync._proof_1_1	LeanDagTest.Barnacle.U44
 EDGE	LeanDagTest.Barnacle.u44_sync._proof_1_1	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.Barnacle.u44_sync._proof_1_1	LeanDag.Block.round
-NODE	LeanDag.Properties.PresentAt	LeanDag.Properties.Skip	def
+NODE	LeanDag.Properties.PresentAt	LeanDag.Properties.Optional.Skip	def
 EDGE	LeanDag.Properties.PresentAt	LeanDag.Properties.DagRule.block
 EDGE	LeanDag.Properties.PresentAt	LeanDag.Block.round
 EDGE	LeanDag.Properties.PresentAt	LeanDag.Properties.DagRule
@@ -19679,7 +19679,7 @@ EDGE	LeanDagTest.OptimalHydrozoan.us'_synchronised	LeanDag.Hydrozoan.BlockUniver
 EDGE	LeanDagTest.OptimalHydrozoan.us'_synchronised	LeanDagTest.OptimalHydrozoan.us'_synchronised._proof_1_1
 EDGE	LeanDagTest.OptimalHydrozoan.us'_synchronised	LeanDagTest.OptimalHydrozoan.US'
 EDGE	LeanDagTest.OptimalHydrozoan.us'_synchronised	LeanDag.Hydrozoan.BlockUniverse.ids
-NODE	LeanDag.Properties.SkipsUnsupported	LeanDag.Properties.Skip	def
+NODE	LeanDag.Properties.SkipsUnsupported	LeanDag.Properties.Optional.Skip	def
 EDGE	LeanDag.Properties.SkipsUnsupported	LeanDag.Properties.DagRule.Decided
 EDGE	LeanDag.Properties.SkipsUnsupported	LeanDag.Slots.slotRound
 EDGE	LeanDag.Properties.SkipsUnsupported	LeanDag.Properties.Unsupported
@@ -25670,7 +25670,7 @@ EDGE	LeanDag.Hydrozoan.not_weakLinked_bnd_novel._proof_1_2	LeanDag.Block.round
 EDGE	LeanDag.Hydrozoan.not_weakLinked_bnd_novel._proof_1_2	LeanDag.Hydrozoan.BlockUniverse.block
 EDGE	LeanDag.Hydrozoan.not_weakLinked_bnd_novel._proof_1_2	LeanDag.Hydrozoan.Faults
 EDGE	LeanDag.Hydrozoan.not_weakLinked_bnd_novel._proof_1_2	LeanDag.Hydrozoan.authorsOf
-NODE	LeanDag.Properties.unsupported_of_novel	LeanDag.Properties.Skip	thm
+NODE	LeanDag.Properties.unsupported_of_novel	LeanDag.Properties.Optional.Skip	thm
 EDGE	LeanDag.Properties.unsupported_of_novel	LeanDag.Properties.DagRule.ids
 EDGE	LeanDag.Properties.unsupported_of_novel	LeanDag.Slots.slotRound
 EDGE	LeanDag.Properties.unsupported_of_novel	LeanDag.Properties.Unsupported
@@ -30640,7 +30640,7 @@ EDGE	LeanDagTest.Integration.skcr._proof_5	LeanDagTest.Integration.Ucr
 EDGE	LeanDagTest.Integration.skcr._proof_5	LeanDag.Integration.Hydrozoan.toCore
 NODE	LeanDag.epochOf.eq_1	LeanDagTest.Adaptive	thm
 EDGE	LeanDag.epochOf.eq_1	LeanDag.epochOf
-NODE	LeanDag.Properties.SkipsUnsupported.mono	LeanDag.Properties.Skip	thm
+NODE	LeanDag.Properties.SkipsUnsupported.mono	LeanDag.Properties.Optional.Skip	thm
 EDGE	LeanDag.Properties.SkipsUnsupported.mono	LeanDag.Slots.slotRound
 EDGE	LeanDag.Properties.SkipsUnsupported.mono	LeanDag.Properties.Unsupported
 EDGE	LeanDag.Properties.SkipsUnsupported.mono	LeanDag.Properties.SkipsUnsupported
@@ -37112,7 +37112,7 @@ EDGE	LeanDag.MahiMahi.decided_below_of_committed_run._proof_1_3	LeanDag.BlockUni
 EDGE	LeanDag.MahiMahi.decided_below_of_committed_run._proof_1_3	LeanDag.Slots
 EDGE	LeanDag.MahiMahi.decided_below_of_committed_run._proof_1_3	LeanDag.MahiMahi.Decided
 EDGE	LeanDag.MahiMahi.decided_below_of_committed_run._proof_1_3	LeanDag.View
-NODE	LeanDag.Properties.Unsupported	LeanDag.Properties.Skip	def
+NODE	LeanDag.Properties.Unsupported	LeanDag.Properties.Optional.Skip	def
 EDGE	LeanDag.Properties.Unsupported	LeanDag.Slots.slotRound
 EDGE	LeanDag.Properties.Unsupported	LeanDag.Properties.DagRule.block
 EDGE	LeanDag.Properties.Unsupported	LeanDag.Block.refs

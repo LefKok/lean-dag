@@ -1,6 +1,6 @@
 import LeanDag.Properties.Extends
 import LeanDag.Properties.Derived.Persist
-import LeanDag.Properties.Skip
+import LeanDag.Properties.Optional.Skip
 import LeanDag.SafeSkip.Basic
 import LeanDag.SafeSkip.Invariance
 import LeanDag.MysticetiProperties

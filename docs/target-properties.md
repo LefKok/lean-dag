@@ -774,6 +774,7 @@ LeanDag/Properties/
   Derived/Persist.lean  Derived/Local.lean   the two statements
   Derived/FromBand.lean   the routes, and view monotonicity and the bound
   Derived/Bounded.lean    the laws of DecidedBelow
+  Optional/Skip.lean      SkipsUnsupported: promptness, not liveness
   Local.lean  Persist.lean  Truncate.lean  Sustain.lean  Skip.lean
   Agree.lean  Bounded.lean  Commit.lean        the schedule family (§4)
   Arcs/GC.lean          garbage collection, given LocalTruncate
@@ -934,7 +935,7 @@ residue; the mechanism owes one liveness property.
 | | `LocalTruncate` | a verdict survives restriction with renumbering, both ways |
 | | `Agree` | two views decide alike |
 | | `DecidedBelow` | a verdict below a slot bound, surviving reassignment above it; a definition, so its laws are theorems |
-| protocol, liveness | `SkipsUnsupported R Ok` | an unsupported slot is skipped, at grade `Ok` |
+| protocol, optional | `SkipsUnsupported R Ok` | an unsupported slot is skipped without waiting for an anchor, at grade `Ok` |
 | | `LeaderCommits R Live`, `Descends R S c` | a reliable leader commits; a committed run decides everything below |
 | mechanism, liveness | `Sustains R U U' G R₀` | above the settling round the transformed DAG holds the same blocks |
 
@@ -1013,8 +1014,12 @@ The properties divide four ways, and the folder follows the division:
 
 **Obligations. Someone must prove these, per protocol or per mechanism.**
 `Causal`, `Agree`, `Banded`, `ViewSound`, `LocalTruncate`,
-`SkipsUnsupported`, `LeaderCommits` and `Descends` fall on the protocol;
-`Sustains` falls on the mechanism. Nothing derives them.
+`LeaderCommits` and `Descends` fall on the protocol; `Sustains` falls on
+the mechanism. Nothing derives them.
+
+**Optional. A protocol may show these and need not.**
+`Properties/Optional/` holds them. `SkipsUnsupported` is the only one
+so far, and §11.4c records why it was demoted.
 
 **Statements no protocol proves directly.** `Persist` and `Local` are
 read by mechanisms and reached by both instances through `Banded`, so
@@ -1045,6 +1050,47 @@ law of `DagRule`. And `LeaderCommits` and `Descends` resist derivation
 from `Banded` even though a *bound* is derivable, because they must
 produce a **tight** one, where the band's is every slot its rounds can
 hold.
+
+### 11.4c Why `SkipsUnsupported` is optional
+
+It asked a protocol to skip a slot none of whose candidates a quorum
+supports, using evidence at the slot's own two rounds. A rule with no
+direct skip cannot do that, and nothing in this setting says a rule must
+have one. Nemo has none.
+
+The property was introduced as the residue `Sustains` leaves: a fill
+adds a candidate nothing old references, which cannot be committed, and
+the worry was that for some rules it could not be skipped either,
+leaving the slot dead. **That worry was inherited from the vacuous
+direct skip.** Under the old rule a candidate-less slot was decided
+`none` for no evidence, so a fill adding a candidate took a *decided*
+slot back to undecided, and something had to restore the verdict. Since
+the skip counts blockers (§3.2) the slot was never decided in the first
+place. It is undecided until an anchor resolves it, which is ordinary
+operation rather than a stall.
+
+**The anchor does resolve it**, for two reasons both already proved.
+Every rule's anchored case splits on whether some candidate is reachable
+from the anchor, and the split is total, so a fresh candidate falls on
+the negative side and the slot is skipped indirectly. And it cannot fall
+on the positive side, because nothing old references it while the anchor
+is old: `not_certifiedIn_band_novel` for both protocols, and
+`not_weakLinked_bnd_novel` for Hydrozoan, which is what protects its
+minimality tie-break.
+
+So eventual decision after a fill rests on `Descends`, stated over the
+anchored rule every protocol has, rather than on a direct rule only some
+have. What `SkipsUnsupported` still gives is **promptness**: the slot is
+settled at once instead of when an anchor arrives, and the grade states
+a deployment condition, which is why it is kept rather than deleted.
+
+**What is not yet written** is the composition that states the
+requirement outright: after a fill, every slot below a committed run is
+decided, from `Sustains` for the run's preconditions, `LeaderCommits`
+for the run, and `Descends` for everything under it. The pieces are
+proved for the core and the composition is not. Hydrozoan has neither
+`LeaderCommits` nor `Descends`, so for Hydrozoan the claim is an
+argument rather than a theorem.
 
 ### 11.5 Next steps, in order
 

@@ -1,7 +1,7 @@
 import LeanDag.Properties.Sustain
 import LeanDag.Properties.Extends
 import LeanDag.Properties.Derived.Persist
-import LeanDag.Properties.Skip
+import LeanDag.Properties.Optional.Skip
 import LeanDag.Properties.Commit
 import LeanDag.Properties.Derived.Bounded
 import LeanDag.Properties.Witness

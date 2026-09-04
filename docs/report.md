@@ -24507,7 +24507,7 @@ def Novel (R : DagRule Validator BlockId Payload) (U U' : R.Universe) (b : Block
 
 #### `Unsupported`
 
-*def, `Properties.Skip.lean`*
+*def, `Properties.Optional.Skip.lean`*
 
 ```lean
 def Unsupported (R : DagRule Validator BlockId Payload) (S : Slots Validator)
@@ -24521,7 +24521,7 @@ def Unsupported (R : DagRule Validator BlockId Payload) (S : Slots Validator)
 
 #### `PresentAt`
 
-*def, `Properties.Skip.lean`*
+*def, `Properties.Optional.Skip.lean`*
 
 ```lean
 def PresentAt (R : DagRule Validator BlockId Payload) {U : R.Universe} (V : R.View U)
@@ -24533,7 +24533,7 @@ def PresentAt (R : DagRule Validator BlockId Payload) {U : R.Universe} (V : R.Vi
 
 #### `SkipsUnsupported`
 
-*def, `Properties.Skip.lean`*
+*def, `Properties.Optional.Skip.lean`*
 
 ```lean
 def SkipsUnsupported (R : DagRule Validator BlockId Payload)
@@ -24747,7 +24747,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 919 theorems that either another module of the
+The 927 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -35672,6 +35672,45 @@ theorem exists_recoveryCorrect_recorder {x : CheckpointData Value}
 
 A finality quorum yields a recovery-correct validator that recorded the concrete checkpoint certificate before emitting its witness.
 
+#### `banded_aux`
+
+*theorem, `Hydrozoan.Helpers.Banded.lean`*
+
+```lean
+theorem banded_aux {V : LeanDag.Hydrozoan.View U} {k : ℕ} {v : Option BlockId}
+    (hd : LeanDag.Hydrozoan.Decided U V k v) :
+    ∃ top, S.slotRound k + 2 ≤ top ∧
+      ∀ (S' : LeanDag.Hydrozoan.Slots Replica)
+        (U' : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
+        (V' : LeanDag.Hydrozoan.View U'),
+        S'.slotRound = S.slotRound →
+        (∀ m, S.slotRound m ≤ top → S'.leader m = S.leader m) →
+        AgreeBand rule U U' (S.slotRound k) top →
+        (∀ b, b ∈ V.ids → S.slotRound k ≤ (U.block b).round →
+          (U.block b).round ≤ top → b ∈ V'.ids) →
+        LeanDag.Hydrozoan.Decided (S := S') U' V' k v
+```
+
+#### `banded`
+
+*theorem, `Hydrozoan.Helpers.Banded.lean`*
+
+```lean
+theorem banded : Banded (rule (Replica := Replica) (BlockId := BlockId))
+```
+
+**Hydrozoan reads a band.** The property stated at the core's schedule vocabulary, which `ofCoreSlots` carries into Hydrozoan's.
+
+#### `viewSound`
+
+*theorem, `Hydrozoan.Helpers.Banded.lean`*
+
+```lean
+theorem viewSound : ViewSound (rule (Replica := Replica) (BlockId := BlockId))
+```
+
+Views hold blocks of their universe.
+
 #### `causal`
 
 *theorem, `Hydrozoan.Helpers.Carrier.lean`*
@@ -36624,6 +36663,17 @@ theorem descends {S : Slots Validator} {c : ℕ} (hc : 0 < c)
 
 **The descent as a property**, under the spanning hypothesis on the round structure.
 
+#### `symm`
+
+*theorem, `Properties.Agreement.lean`*
+
+```lean
+theorem symm (h : AgreeAbove R U U' r) (hv : ViewAgreeAbove R V V' r) :
+    ViewAgreeAbove R V' V r
+```
+
+Agreement of views is symmetric, given agreement of the universes that fixes the rounds.
+
 #### `directCommit_chop`
 
 *theorem, `Properties.Arcs.GC.lean`*
@@ -36704,9 +36754,57 @@ theorem decided_mono_of_banded (h : Banded R) {S : Slots Validator} {U : R.Unive
 
 **And monotonicity in the view.** Fix the universe and the band carries itself; a larger view holds everything the band names. The core's L2 is a four-case induction, and this is the same statement with none.
 
+#### `of_unconditional`
+
+*theorem, `Properties.Derived.Persist.lean`*
+
+```lean
+theorem of_unconditional (h : Unconditional R) : Persist R Ok
+```
+
+An unconditional rule persists under any condition whatsoever.
+
+#### `old_refs_old`
+
+*theorem, `Properties.Extends.lean`*
+
+```lean
+theorem old_refs_old (hc : Causal R) (he : Extends R U U')
+    {b : BlockId} (hb : b ∈ R.ids U) {j : BlockId} (hj : j ∈ (R.block U' b).refs) :
+    j ∈ R.ids U
+```
+
+**An old block references only old blocks**, so nothing that was already present can reach what the extension added. This is the formal content of "blocks nothing references cannot change a verdict", and it is *derived* rather than assumed: an extension leaves old blocks alone, and an old block's references were already inside `U`.
+
+#### `reaches_old`
+
+*theorem, `Properties.Extends.lean`*
+
+```lean
+theorem reaches_old (hc : Causal R) (he : Extends R U U')
+    {A B : BlockId} (hA : A ∈ R.ids U) (h : ReachesFrom (R.block U') A B) :
+    ReachesFrom (R.block U) A B ∧ B ∈ R.ids U
+```
+
+**Nothing an old block reaches is new.** The reference lemma propagated along causal history: an extension can add blocks, but none of them enters the history of a block that was already there.
+
+This is what every protocol's persistence proof turns on. A rung test asks whether something is in reach of the *anchor*, and the anchor of a derivation over the old universe is old — so the extension cannot supply a new certificate, a new vote, or a new candidate to any rung, and the negative premises that would otherwise be destroyed survive.
+
+#### `reaches_iff`
+
+*theorem, `Properties.Extends.lean`*
+
+```lean
+theorem reaches_iff (hc : Causal R) (he : Extends R U U')
+    {A B : BlockId} (hA : A ∈ R.ids U) :
+    ReachesFrom (R.block U') A B ↔ ReachesFrom (R.block U) A B
+```
+
+And so reachability from an old block is the same relation in both universes.
+
 #### `unsupported_of_novel`
 
-*theorem, `Properties.Skip.lean`*
+*theorem, `Properties.Optional.Skip.lean`*
 
 ```lean
 theorem unsupported_of_novel (hc : Causal R) {U U' : R.Universe} (he : Extends R U U')
@@ -36890,7 +36988,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 950 lemmas used only within the file that proves
+The 942 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -38397,13 +38495,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `mem_recoveryCorrect` | Recovery-correct membership excludes all three fault classes. |
 | `mem_reliableSigner` | Reliable signing excludes precisely the two classes allowed to equivocate. |
 
-### `Hydrozoan/Helpers/Banded.lean` (30)
+### `Hydrozoan/Helpers/Banded.lean` (27)
 
 | Lemma | Role |
 |:---|:---|
 | `authorsOf_bnd` | — |
-| `banded` | Hydrozoan reads a band. The property stated at the core's schedule vocabulary, which `ofCoreSlots` carries … |
-| `banded_aux` | — |
 | `blamesInView_bnd` | The blame set is carried across. A blamer references no candidate, its parents are the parents it had, and … |
 | `blamesInView_sched` | — |
 | `blocksAt_bnd` | A round layer inside the band is carried across. Containment, not equality: `U'` may hold blocks there … |
@@ -38426,7 +38522,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `not_weakLinked_bnd_novel` | — |
 | `of_mem_blocksAt_old` | What a block of `U'` at a band round supplies, when it is a block the band already had. |
 | `supportersInView_bnd` | — |
-| `viewSound` | Views hold blocks of their universe. |
 | `voteBlocks_bnd` | Two rounds of slack: a certificate counts votes cast by its own parents. |
 | `votesSet_bnd` | — |
 | `weakLinked_bnd` | — |
@@ -38694,13 +38789,12 @@ subsection per module, in the layer order of Appendices B and C.
 | `votesIn_of_sustains` | The votes an old decision-round block counts are the votes it counted: its references are unchanged, and … |
 | `votesIn_old` | The votes an old certificate counts are the votes it counted. |
 
-### `Properties/Agreement.lean` (3)
+### `Properties/Agreement.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
 | `reaches_iff` | And so it agrees in both directions. |
 | `reaches_of` | Causal history above the horizon is the same history. A path from `A` descends one round at a time, so if … |
-| `symm` | Agreement of views is symmetric, given agreement of the universes that fixes the rounds. |
 
 ### `Properties/Arcs/GC.lean` (3)
 
@@ -38750,27 +38844,23 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `Local.iff` | Locality in both directions, which is what agreement gives: the hypothesis is symmetric, so a protocol … |
 
-### `Properties/Derived/Persist.lean` (2)
+### `Properties/Derived/Persist.lean` (1)
 
 | Lemma | Role |
 |:---|:---|
 | `mono` | A protocol proving persistence under a weaker condition proves it under a stronger one, so the grades are … |
-| `of_unconditional` | An unconditional rule persists under any condition whatsoever. |
 
-### `Properties/Extends.lean` (8)
+### `Properties/Extends.lean` (5)
 
 | Lemma | Role |
 |:---|:---|
 | `isCandidate` | And a candidate of `U` is a candidate of `U'` at the same slot. |
 | `not_novel_of_mem_refs` | Restated: an old block never references a novel identifier. |
-| `old_refs_old` | An old block references only old blocks, so nothing that was already present can reach what the extension … |
-| `reaches_iff` | And so reachability from an old block is the same relation in both universes. |
-| `reaches_old` | Nothing an old block reaches is new. The reference lemma propagated along causal history: an extension can … |
 | `refl` | Extension is reflexive. |
 | `round` | An old block keeps its round. |
 | `trans` | And transitive, so a sequence of extensions is one. |
 
-### `Properties/Skip.lean` (1)
+### `Properties/Optional/Skip.lean` (1)
 
 | Lemma | Role |
 |:---|:---|

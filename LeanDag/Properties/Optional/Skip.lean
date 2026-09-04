@@ -2,36 +2,67 @@ import LeanDag.Properties.Extends
 import LeanDag.Properties.Derived.Persist
 
 /-!
-# Skippability: the residue `Sustains` leaves to the protocol
+# Skippability: settling an unsupported slot without an anchor
 
-`docs/target-properties.md` §3.6's last paragraph, stated.
+**Optional.** `docs/target-properties.md` §11.4c. A protocol may show
+this and need not. It is a claim about *promptness*, not about liveness,
+and the earlier reading of it as an obligation was wrong for a reason
+worth recording.
 
-`Sustains` says a mechanism destroys no vote and silences no producer.
-That is not enough for progress, and the fill shows why: it adds a
-*candidate* — the recovering replica's block lands on a slot that
-replica leads — and a candidate nothing old references can be neither
-committed (no votes) nor, for some rules, skipped. Every vote survives,
-every producer survives, and the slot is dead.
+## What it says
 
-Whether it is dead is a fact about the **protocol's skip rule**, not
-about the mechanism, so this obligation sits on the protocol side and is
-graded, as `Persist` is by `Ok`. The question it asks: *if every block
-of `T` one round above a slot references none of that slot's candidates,
-does the protocol skip it, and what does it need of `T`?*
+*If every block of `T` one round above a slot references none of that
+slot's candidates, the protocol skips the slot* — with the size `T` must
+reach left as a grade, since it differs by rule.
 
-Hydrozoan needs `qFast ≤ |T|`, because its skip is `qFast` blames at
-the slot. A quorum of correct replicas has `q = n − f − c`, and
-`qFast = n − p`, so a correct quorum suffices exactly when
-`f + c ≤ p` — which is `hydrozoan-integration.md` §5.1's condition,
-recovered here as a grade. Optimal-Hydrozoan's skip is at `qCert ≤ q`
-and OH5 discharges it from population alone.
+## Why it is not an obligation
+
+It was introduced as the residue `Sustains` leaves behind. `Sustains`
+says a mechanism destroys no vote and silences no producer, and the
+crash-recovery fill still adds a *candidate*: the recovering replica's
+block lands on a slot that replica leads. A candidate nothing old
+references cannot be committed, and the concern was that for some rules
+it could not be skipped either, leaving the slot dead.
+
+That concern was inherited from a defect since fixed. Under the old
+direct skip a candidate-less slot was decided `none` for nothing, so a
+fill adding a candidate took a *decided* slot back to undecided and
+something had to restore the verdict. The rule now counts blockers
+(report §3.5), so the slot was never decided in the first place. It is
+undecided until an anchor above resolves it, which is ordinary
+operation.
+
+**And the anchor does resolve it.** Every rule's anchored case splits on
+whether some candidate is reachable from the anchor, and that split is
+total: a fresh candidate falls on the negative side, so the slot is
+skipped indirectly. It cannot fall on the positive side, because nothing
+old references it and the anchor is old — which both protocols prove as
+part of `Banded` (`not_certifiedIn_band_novel`, and for Hydrozoan
+`not_weakLinked_bnd_novel`, which is what protects its minimality
+tie-break). So eventual decision after a fill rests on `Descends`, an
+obligation stated over the anchored rule that every protocol has, rather
+than on a direct rule that only some do.
+
+Demanding a direct skip would exclude rules that have none. Nemo has
+none, and nothing in the setting says a rule must.
+
+## What the grade still gives
+
+Promptness, and a deployment condition. Hydrozoan needs `qFast ≤ |T|`,
+because its skip is `qFast` blames at the slot. A quorum of correct
+replicas has `q = n − f − c` and `qFast = n − p`, so a correct quorum
+suffices exactly when `f + c ≤ p` — which is
+`hydrozoan-integration.md` §5.1's condition, recovered here as a grade.
+The core reaches it at a correct quorum. Optimal-Hydrozoan's skip wants
+`qCert` blames and a no-evidence quorum at the decision round, two
+rounds of presence where this supplies one, so its instance would
+reshape the statement.
 
 `unsupported_of_novel` is the bridge from the mechanism's side: after an
 extension, any slot all of whose candidates are novel is unsupported by
 the old blocks, because an old block references only old blocks
-(`Extends.old_refs_old`). So a mechanism that adds candidates hands the
-protocol exactly this hypothesis, and the protocol's grade says whether
-that is enough.
+(`Extends.old_refs_old`). A rule with this property settles such a slot
+at once; a rule without it waits for an anchor.
 -/
 
 namespace LeanDag

@@ -1,5 +1,5 @@
 import LeanDag.Hydrozoan.Helpers.Carrier
-import LeanDag.Properties.Skip
+import LeanDag.Properties.Optional.Skip
 
 /-!
 # Hydrozoan skips an unsupported slot, at `qFast` blamers

@@ -11,10 +11,10 @@ Hydrozoan proves `Persist` and `Local` on its own, having no `Banded`.
 
 The split this file marks is the one worth keeping in view. A protocol
 or a mechanism must *show*: `Causal`, `Agree`, `Banded`, `ViewSound`,
-`LocalTruncate`, `SkipsUnsupported`, `LeaderCommits`, `Descends`, and,
-on the mechanism side, `Sustains`. Everything else in `Properties/` is
-either vocabulary the obligations are stated in, or a consequence, and
-the consequences live here.
+`LocalTruncate`, `LeaderCommits`, `Descends`, and, on the mechanism
+side, `Sustains`. Everything else in `Properties/` is vocabulary the
+obligations are stated in, a consequence, or optional; the consequences
+live here and `Optional/` holds the rest.
 -/
 
 namespace LeanDag
