@@ -815,6 +815,62 @@ and threw the certifier set away, forcing full coverage for no reason.
 `DoS.directCommitIn_viewUpto` is the payoff — a rate-limited validator
 commits.
 
+## 3.12 The third rule, and what it found
+
+Odontoceti was chosen as the third instance because it mirrors the core
+constructor for constructor at a shorter wavelength —
+`decisionRound k = slotRound k + 1`, no certificate round — so the
+differences it does have should have been the only work.
+
+**Four of the six came at once.** `Causal` is the core's argument at the
+same universe type; `Agree` is O5; `CommitsCandidate` is
+`isLeaderBlock_of_decided`; `CommitsDirect` is `Decided.directCommit`.
+All four are one line each at a native carrier
+(`LeanDag/OdontocetiProperties.lean`), and the carrier is native rather
+than `Barnacle.odontocetiRule` because a protocol's conformance should
+not route through a mechanism (§8).
+
+**`Banded` is blocked, and not by the properties.** Odontoceti's
+`Decided.directSkip` quantifies over the candidates the universe holds:
+
+```lean
+| directSkip {k} : (∀ L, IsLeaderBlock U k L → DirectSkipIn U V L (S.slotRound k)) →
+    Decided U V k none
+```
+
+so a slot with no candidate is skipped *vacuously*. `AgreeBand`'s
+membership clause runs one way — a block of `U` in the band is a block
+of `U'` — because a band must admit universes holding more, which is
+what makes `Persist` a corollary of it. So a candidate present in `U'`
+and absent from `U` is beyond reach, and the skip does not transport.
+The goal that cannot be closed is `L ∈ U.ids` from `L ∈ U'.ids`, and it
+is unreachable from every hypothesis the band supplies.
+
+**This is the core's own defect, found again.** §3.2 records it: the
+core's skip once had this shape, a validator holding no evidence at all
+could skip, and `ugrow_commits_recur` committed slots that `ugrow_skip`
+had let every view skip. `Decided.directSkip` now takes
+`DirectSkipSlotIn` — a count of voting-round blocks referencing *no*
+candidate of the slot — which is a fact about blocks `U` already holds,
+so it transports. Odontoceti's `DirectSkipIn` counts blames against one
+candidate and has the shape the core's had.
+
+**What the repair would cost.** The same shape as the core's: a
+slot-level `blamesInSlot`, `Decided.directSkip` restated over it, and
+Odontoceti's twenty-two uses of `directSkip` in `Decision.lean` and one
+in `Liveness.lean` re-checked. Where a candidate exists the two forms
+agree, so the safety development should be untouched; where none exists
+the count still asks for a quorum. That is a change to the protocol,
+not to its conformance file, and it is the reason `Banded` is not
+claimed for Odontoceti.
+
+**The third instance did its job.** The point of a third rule was to
+test whether the six obligations are the right six. They found a defect
+in the third protocol within an hour of being pointed at it — the same
+defect, in the same clause, that the second instance found in the first
+protocol. That is the strongest evidence so far that `Banded` is
+carrying real content and not restating what each rule already knew.
+
 ## 4. Properties for the schedule mechanisms
 
 `Barnacle.BaseRule` and its `Laws` are one working interface: any two
@@ -1334,7 +1390,7 @@ one relation (§11.4d). Chain quality has no property of its own (§5).
 
 ### 11.2 Against part 2: two protocols, every mechanism
 
-**Ten decision rules, seven carriers.** `scripts/audit-conformance.py`
+**Ten decision rules, eight carriers.** `scripts/audit-conformance.py`
 recomputes this from `docs/decls.json`: a rule shows a property when
 some theorem concludes it at one of the rule's carriers, or when its
 conformance `Statement` lists it.
@@ -1342,10 +1398,10 @@ conformance `Statement` lists it.
 | rule | `Causal` | `Banded` | `Agree` | `CommitsCandidate` | `LeaderCommits` | `Descends` | `CommitsDirect`* | `SkipsUnsupported`* |
 |---|---|---|---|---|---|---|---|---|
 | core Mysticeti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| reactive Mysticeti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — | ✓ |
+| reactive Mysticeti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Hydrozoan | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — | ✓ |
 | Optimal-Hydrozoan | — | — | ✓ | ✓ | — | — | — | — |
-| Odontoceti | — | — | ✓ | ✓ | — | — | — | — |
+| Odontoceti | ✓ | — | ✓ | ✓ | — | — | ✓ | — |
 | Nemo | — | — | ✓ | ✓ | — | — | ✓ | — |
 | Hybrid / Orcaella | — | — | ✓ | ✓ | — | — | — | — |
 | Mahi-Mahi | — | — | — | — | — | — | — | — |

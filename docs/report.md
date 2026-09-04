@@ -24416,6 +24416,24 @@ def coreLive (S : Slots Validator) {U : BlockUniverse Validator BlockId Payload}
 
 **The timed core's liveness precondition**, over a slot window: a quorum `T` synchronised from some round `R₀` at or below the window's first slot, the DAG populated by `T` from `R₀` to a horizon `N`, the view caught up to `N`, and every slot of the window two rounds under `N`. It reads no leader, so it holds under every schedule with the same rounds.
 
+#### `odontocetiRule`
+
+*def, `OdontocetiProperties.lean`*
+
+```lean
+def odontocetiRule : DagRule Validator BlockId Payload where
+  Universe := BlockUniverse Validator BlockId Payload
+  View := fun U => View Validator BlockId Payload U
+  block := fun U i => U.block i
+  ids := fun U => U.ids
+  viewIds := fun V => V.ids
+  viewSound := fun V => V.subset_ids
+  viewComplete := fun V => V.complete
+  Decided := fun S _ V k v => Odontoceti.Decided (S := S) _ V k v
+```
+
+**Odontoceti as a carrier**, at its own namespace rather than through `Barnacle.odontocetiRule`: a protocol's conformance should not route through a mechanism (`docs/target-properties.md` §8).
+
 #### `Agree`
 
 *def, `Properties.Agree.lean`*
@@ -37532,7 +37550,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 959 lemmas used only within the file that proves
+The 964 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -39310,7 +39328,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `soundOn_skipFill` | The fill preserves it, above the gap. The synchrony round must clear the filled round: inside the gap the … |
 | `soundOn_stack` | The stack preserves it, the offsets composing exactly as the two statements above suggest: the fill … |
 
-### `MysticetiProperties.lean` (43)
+### `MysticetiProperties.lean` (44)
 
 | Lemma | Role |
 |:---|:---|
@@ -39327,6 +39345,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `certifies_band` | — |
 | `certifies_of_sustains` | The core's certificate predicate transports. |
 | `certifies_old` | — |
+| `commitsDirect` | A direct commit is a verdict, at the core's own direct-commit predicate. `Decided.directCommit` under the … |
 | `coversUpto_eq` | The carrier's coverage predicate is the core's, on the nose. |
 | `creatorsOf_band` | — |
 | `creatorsOf_old` | — |
@@ -39357,6 +39376,15 @@ subsection per module, in the layer order of Appendices B and C.
 | `votesIn_band` | The votes an in-band certificate counts are the votes it counted. |
 | `votesIn_of_sustains` | The votes an old decision-round block counts are the votes it counted: its references are unchanged, and … |
 | `votesIn_old` | The votes an old certificate counts are the votes it counted. |
+
+### `OdontocetiProperties.lean` (4)
+
+| Lemma | Role |
+|:---|:---|
+| `agree` | Two views decide alike. O5 under the property's name. |
+| `causal` | Odontoceti's universes are block DAGs — the same argument as the core's, the universe type being the same. |
+| `commitsCandidate` | A commit names the slot's candidate. |
+| `commitsDirect` | And a direct commit is a verdict, at Odontoceti's own direct predicate. |
 
 ### `Properties/Arcs/GC.lean` (7)
 

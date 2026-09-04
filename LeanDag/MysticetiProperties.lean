@@ -2,6 +2,7 @@ import LeanDag.Properties.Sustain
 import LeanDag.Properties.Extends
 import LeanDag.Properties.Derived.Persist
 import LeanDag.Properties.Optional.Skip
+import LeanDag.Properties.Optional.Direct
 import LeanDag.Properties.Commit
 import LeanDag.Properties.Derived.Bounded
 import LeanDag.Properties.Band
@@ -730,6 +731,18 @@ protocols, and the reason `Properties/Candidate.lean` exists. -/
 theorem commitsCandidate : CommitsCandidate
     (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
   fun S _ _ _ _ hd => isLeaderBlock_of_decided (S := S) hd
+
+/-- **A direct commit is a verdict**, at the core's own direct-commit
+predicate. `Decided.directCommit` under the property's name.
+
+This completes the core and the reactive discipline, which share the
+rule: `Barnacle.mysticetiRule_commitsDirect` proves the same thing at
+Barnacle's carrier for the same protocol, and a rule wants it at the
+carrier its own mechanisms use. -/
+theorem commitsDirect : CommitsDirect
+    (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+    (fun {U} V L r => DirectCommitIn U V L r) :=
+  fun S _ _ _ _ hc hd => Decided.directCommit (S := S) hc hd
 
 /-- **The core persists unconditionally**, as an evidence-backed rule
 must — now a corollary of the band rather than an induction of its own.

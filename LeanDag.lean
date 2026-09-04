@@ -104,6 +104,7 @@ import LeanDag.Properties.Derived.Truncate
 import LeanDag.Properties.Compose
 import LeanDag.Properties.Deliver
 import LeanDag.MysticetiProperties
+import LeanDag.OdontocetiProperties
 import LeanDag.Properties.Arcs.SafeSkip
 import LeanDag.Properties.Arcs.GC
 import LeanDag.Hydrozoan.Helpers.Carrier
