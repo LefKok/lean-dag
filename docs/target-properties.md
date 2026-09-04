@@ -28,25 +28,35 @@ About fifteen exist:
 
 | Mechanism | Where | Rules covered (bespoke) | Through the properties |
 |---|---|---|---|
-| Garbage collection (`chop`) | `GC/` | Mysticeti, Hydrozoan, Optimal | Hydrozoan (safety); core (liveness) |
-| Crash recovery (`skipFill`, `liftView`) | `SafeSkip/` | Mysticeti, Hydrozoan | Hydrozoan, core |
-| Re-genesis | `Integration/ReGenesis.lean` | none | **none** |
-| Adaptive leader schedule (Hammerhead) | `Adaptive/` | Mysticeti, Odontoceti | core, reactive core |
-| Adaptive leader count (Barnacle) | `Barnacle/` | six | **none** |
+| Garbage collection (`chop`) | `GC/` | Mysticeti, Hydrozoan, Optimal | core, Hydrozoan: both directions |
+| Crash recovery (`skipFill`, `liftView`) | `SafeSkip/` | Mysticeti, Hydrozoan | core, Hydrozoan: both directions |
+| Re-genesis | `Integration/ReGenesis.lean` | none | core: both directions (§3.10) |
+| Adaptive leader schedule (Hammerhead) | `Adaptive/` | Mysticeti, Odontoceti | core, reactive core, Hydrozoan |
+| Adaptive leader count (Barnacle) | `Barnacle/` | six | carriers for four, two properties each (§11.2) |
 | Reactive schedule | `Reactive/` | Mysticeti, Odontoceti | as a second `Live` for the core |
-| Chain quality | `Quality/` | Mysticeti | **none** |
+| Rate limiting | `DoS/` | none | `DeliversOn`, with the paced discipline (§3.11) |
+| Chain quality | `Quality/` | Mysticeti | `CommitsCandidate` (§3.9) |
 
-The distribution is the argument. **Barnacle covers six rules and every
-other mechanism covers one or two, and Barnacle is the only one with a
-stated interface** — `BaseRule`, `Laws`, `LiveRule`, `Descent`, which
-five protocols instantiate. `Adaptive` and `Reactive` each carry two
-hand-written per-protocol copies instead. Barnacle is the existence
-proof for this arc, and the others are the work.
+The distribution was the argument, and it has changed. **Barnacle
+covered six rules where every other mechanism covered one or two, and it
+was the only one with a stated interface** — `BaseRule`, `Laws`,
+`LiveRule`, `Descent`, which six protocols instantiate. That made it the
+existence proof for this arc.
 
-Two mechanisms are rule-independent as far as this survey goes and are
-not in scope: the denial-of-service arc (`DoS/`, including
-`Novelty.lean`, the novelty budget that rate-limits block production)
-and the pacing and delivery layers.
+It is now also the sharpest comparison available. Barnacle's `Laws` are
+validated against six rules; the properties here are validated against
+two, and the part that is *not* Barnacle's — `Banded`, and everything
+derived from it — is exactly the part with two instances. Where the two
+collections overlap they now agree by construction: `Laws.agree` **is**
+`Agree` and `Laws.candidates` **is** `CommitsCandidate`
+(`Barnacle/Conformance.lean`). Where they do not,
+`Laws.decided_of_directCommitIn` has no counterpart here and
+`LiveRule.LiveOn` splits into `LeaderCommits` and `Descends` without
+being related to them. §11.2 records what follows.
+
+One mechanism stays rule-independent as far as this survey goes: the
+pacing and delivery layers. The denial-of-service arc left that
+category when `DoS/Delivers.lean` gave `DeliversOn` its witness.
 
 **On two entries.** Re-genesis is not an orphan: `integration.md` gives
 it I10–I13, `Exposure.lean` consumes it, and it already composes with
@@ -1362,6 +1372,27 @@ new carriers gain two obligations of six, and the remaining four are
 per-rule work — the honest reading being that a shared interface hands
 over the laws a protocol already had, under new names, and nothing
 deeper.
+
+**Why Barnacle's laws stay in `Barnacle/`.** They are properties, and a
+reader may expect them under `Properties/`. §8's dependency rule is what
+forbids it: the properties depend on nothing but the block and schedule
+vocabulary, and Barnacle is a *mechanism* — the adaptive leader count —
+so `Properties/` importing `BaseRule` would tie garbage collection,
+crash recovery and chain quality to the leader count for no reason. The
+dependency runs the other way: `Barnacle/Helpers/DagRule.lean` holds the
+coercion and the two bridges, `Barnacle/Conformance.lean` the carriers.
+
+What that leaves is two collections that overlap without being one.
+`Laws.agree` and `Laws.candidates` are now `Agree` and
+`CommitsCandidate` by construction. `Laws.view_subset` became a field of
+`DagRule`. The remaining four clauses are about `BaseRule`'s extra
+fields — `full`, `historyView` — which `DagRule` does not have, except
+`decided_of_directCommitIn`, which is a genuine property of a rule with
+**no counterpart here**: this arc absorbs it into `LeaderCommits`
+instead of naming it. `LiveRule.LiveOn` and `Descent` likewise split
+into `LeaderCommits` and `Descends` without being related to them.
+Relating them is restatement over a different carrier, not a move, and
+is not attempted.
 
 **Hydrozoan is deliberately not carried twice.** Barnacle instantiates
 it too, so a second carrier could be built and would prove two
