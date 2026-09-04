@@ -70,6 +70,18 @@ theorem decided_skipFill {R : DagRule Validator BlockId Payload} (hp : Persist R
     R.Decided S V' k v :=
   hp S U U' (extends_of_skipFill R sk hi hb hi' hb') V V' hV k v h
 
+/-- **Agreement across the recovery.** A validator that recovered agrees
+with one that did not, from any view of the extension — the same shape
+as cross-cut agreement (`Arcs/GC.lean`), with `Persist` going up where
+`LocalTruncate` goes down. Stated for any extension, so re-genesis and
+the fill both take it. -/
+theorem decided_agree_extends {R : DagRule Validator BlockId Payload}
+    (ha : Agree R) (hp : Persist R) {S : Slots Validator} {U U' : R.Universe}
+    (he : Extends R U U') {V : R.View U} {V' W : R.View U'}
+    (hsub : R.viewIds V ⊆ R.viewIds V') {k : ℕ} {v w : Option BlockId}
+    (hV : R.Decided S V k v) (hW : R.Decided S W k w) : v = w :=
+  ha S V' W k v w (hp S U U' he V V' hsub k v hV) hW
+
 /-! ## For the core: the grade the fill meets, and the bespoke theorem re-derived
 
 The consumer test for `MysticetiProperties.persist`. `SafeSkip.decided_fill`

@@ -53,6 +53,45 @@ theorem decided_of_truncated (h : LocalTruncate R) (ht : Truncates R U U' S S' G
     (hd : R.Decided S' V' k v) : R.Decided S V (d + k) v :=
   (h S S' U U' G d ht V V' hv k v).mpr hd
 
+/-! ## The agreement half
+
+`decided_of_truncate` and its converse compare a verdict with *the same
+validator's* verdict. What a deployment asks is different and stronger:
+a validator that joined from the truncation holds an **arbitrary** view
+of it, with no history below the cut and no relation to anyone's
+full-history view, and must still agree.
+
+`GC/ChopDecided.lean` proves that for the core (G4) and `GC/Horizon.lean`
+across two horizons (G8), each by hand; `Integration/Hydrozoan` has its
+own copy. None of that was necessary. `Agree` compares two views of one
+universe, `LocalTruncate` puts the full-history verdict into the
+truncation, and the two compose — so every rule with a band and
+agreement has cross-cut agreement, and neither protocol needed to prove
+it. -/
+
+/-- **Cross-cut agreement.** A validator holding any view of the
+truncation agrees, slot for slot, with a full-history validator. -/
+theorem decided_agree_truncate (ha : Agree R) (hlt : LocalTruncate R)
+    (ht : Truncates R U U' S S' G d) (hv : ViewAgreeAbove R V V' G)
+    {W : R.View U'} {k : ℕ} {w v : Option BlockId}
+    (hW : R.Decided S' W k w) (hV : R.Decided S V (d + k) v) : w = v :=
+  ha S' W V' k w v hW ((hlt S S' U U' G d ht V V' hv k v).mp hV)
+
+/-- **And across two horizons.** Validators cut at different depths
+agree on every shared slot, matched through the absolute slot index.
+Horizons need never be negotiated. -/
+theorem decided_agree_horizons (ha : Agree R) (hlt : LocalTruncate R)
+    {U₁ U₂ : R.Universe} {S₁ S₂ : Slots Validator} {G₁ d₁ G₂ d₂ : ℕ}
+    (ht₁ : Truncates R U U₁ S S₁ G₁ d₁) (ht₂ : Truncates R U U₂ S S₂ G₂ d₂)
+    {V₁ : R.View U₁} {V₂ : R.View U₂}
+    (hv₁ : ViewAgreeAbove R V V₁ G₁) (hv₂ : ViewAgreeAbove R V V₂ G₂)
+    {W₁ : R.View U₁} {W₂ : R.View U₂} {k₁ k₂ : ℕ}
+    (halign : d₁ + k₁ = d₂ + k₂) {w₁ w₂ v : Option BlockId}
+    (hW₁ : R.Decided S₁ W₁ k₁ w₁) (hW₂ : R.Decided S₂ W₂ k₂ w₂)
+    (hV : R.Decided S V (d₁ + k₁) v) : w₁ = w₂ :=
+  (decided_agree_truncate ha hlt ht₁ hv₁ hW₁ hV).trans
+    (decided_agree_truncate ha hlt ht₂ hv₂ hW₂ (halign ▸ hV)).symm
+
 /-! ## The liveness half, for the core
 
 Garbage collection is a mechanism, so on the liveness side it *owes*
@@ -158,6 +197,60 @@ theorem decided_chop_iff (hd : G ≤ S.slotRound d)
       show b ∈ V.ids ↔ b ∈ (V.chop G).ids
       rw [View.chop_ids, Finset.mem_filter]
       exact ⟨fun h => ⟨h, hr⟩, fun h => h.1⟩) k v
+
+/-- **The chopped view agrees with the original above the cut**, which
+is the view hypothesis the two theorems below need. -/
+theorem viewAgreeAbove_chop {V : View Validator BlockId Payload U} :
+    ViewAgreeAbove (MysticetiProperties.mysticetiRule (Payload := Payload))
+      V (V.chop G) G :=
+  fun b _ hr => by
+    show b ∈ V.ids ↔ b ∈ (V.chop G).ids
+    rw [View.chop_ids, Finset.mem_filter]
+    exact ⟨fun h => ⟨h, hr⟩, fun h => h.1⟩
+
+/-- **G4 re-derived.** `GC/ChopDecided.decided_agree_chop` proves this
+by running the core's uniqueness inside the truncation and carrying the
+verdict across by induction. Here it is two properties applied. -/
+theorem decided_agree_chop (hd : G ≤ S.slotRound d)
+    {W : View Validator BlockId Payload (chop U G)}
+    {V : View Validator BlockId Payload U} {k : ℕ} {w v : Option BlockId}
+    (hW : Decided (S := S.chop G d hd) (chop U G) W k w)
+    (hV : Decided U V (d + k) v) : w = v :=
+  decided_agree_truncate MysticetiProperties.agree
+    (LocalTruncate.of_banded MysticetiProperties.banded)
+    (truncates_chop hd) viewAgreeAbove_chop hW hV
+
+/-- **G8 re-derived.** Validators at different horizons agree. -/
+theorem decided_agree_horizons_chop {G₁ G₂ d₁ d₂ : ℕ}
+    (hd₁ : G₁ ≤ S.slotRound d₁) (hd₂ : G₂ ≤ S.slotRound d₂)
+    {W₁ : View Validator BlockId Payload (chop U G₁)}
+    {W₂ : View Validator BlockId Payload (chop U G₂)}
+    {V : View Validator BlockId Payload U}
+    {k₁ k₂ : ℕ} (halign : d₁ + k₁ = d₂ + k₂) {w₁ w₂ v : Option BlockId}
+    (hW₁ : Decided (S := S.chop G₁ d₁ hd₁) (chop U G₁) W₁ k₁ w₁)
+    (hW₂ : Decided (S := S.chop G₂ d₂ hd₂) (chop U G₂) W₂ k₂ w₂)
+    (hV : Decided U V (d₁ + k₁) v) : w₁ = w₂ :=
+  decided_agree_horizons MysticetiProperties.agree
+    (LocalTruncate.of_banded MysticetiProperties.banded)
+    (truncates_chop hd₁) (truncates_chop hd₂)
+    viewAgreeAbove_chop viewAgreeAbove_chop halign hW₁ hW₂ hV
+
+/-- **Synchrony survives the cut, from the rebase.**
+`Integration/Preservation.synchronisedOn_chop` proves this directly; it
+is `Sustains` applied, as votes and production already were. -/
+theorem synchronisedOn_chop {T : Finset Validator} {Rs R' : ℕ}
+    (hs : LeanDag.SynchronisedOn U T Rs) (hGR : Rs ≤ G + R') :
+    LeanDag.SynchronisedOn (chop U G) T R' := by
+  have h := RebasedAbove.synchronisedOn_of (R := MysticetiProperties.mysticetiRule)
+    (sustains_chop (U := U) (G := G)) (T := T) (r := G + R') (by omega) (by omega)
+    (SynchronisedOn.mono ((MysticetiProperties.synchronisedOn_eq).mpr hs) hGR)
+  exact MysticetiProperties.synchronisedOn_eq.mp (by simpa using h)
+
+/-- **And so does non-equivocation**, from the truncation. -/
+theorem noEquivOn_chop (hd : G ≤ S.slotRound d) {T : Finset Validator}
+    (hne : NoEquivOn (MysticetiProperties.mysticetiRule (Payload := Payload)) U T) :
+    NoEquivOn (MysticetiProperties.mysticetiRule (Payload := Payload)) (chop U G) T :=
+  noEquivOn_of_truncates (truncates_chop hd) hne
 
 end CoreTruncate
 

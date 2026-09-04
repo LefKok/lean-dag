@@ -1,4 +1,5 @@
 import LeanDag.Properties.Extends
+import LeanDag.Properties.Truncate
 
 /-!
 # What a mechanism owes a protocol, so liveness survives
@@ -60,10 +61,38 @@ def VotesAt (R : DagRule Validator BlockId Payload) (U : R.Universe)
   ∀ v ∈ T, ∀ c, c ∈ R.ids U → (R.block U c).creator = v →
     (R.block U c).round = r + 1 → L ∈ (R.block U c).refs
 
+/-- **No equivocation by `T`**: at most one block per `T`-author per
+round. A fault-model invariant rather than a delivery one, and the only
+member of this family that a mechanism can *break*: a cut cannot, since
+it removes blocks, but a fill or a re-genesis adds one and must argue
+that the author it speaks for was silent there. -/
+def NoEquivOn (R : DagRule Validator BlockId Payload) (U : R.Universe)
+    (T : Finset Validator) : Prop :=
+  ∀ i, i ∈ R.ids U → ∀ j, j ∈ R.ids U → (R.block U i).creator ∈ T →
+    (R.block U i).creator = (R.block U j).creator →
+    (R.block U i).round = (R.block U j).round → i = j
+
 /-- **Production**: every member of `T` has a block at round `r`. -/
 def PopulatedOn (R : DagRule Validator BlockId Payload) (U : R.Universe)
     (T : Finset Validator) (r : ℕ) : Prop :=
   ∀ v ∈ T, ∃ b, b ∈ R.ids U ∧ (R.block U b).round = r ∧ (R.block U b).creator = v
+
+/-- **What the liveness route needs of delivery**: from round `r` on,
+every `T`-block one round up holds every `T`-block below it as a
+reference. `LeanDag.SynchronisedFrom`, read at the carrier.
+
+Third of the three predicates a liveness precondition is built from, and
+the one that was missing: `votesAt_of` and `populatedOn_of` were stated
+here and this was transported by hand, once per mechanism
+(`Integration/Preservation.lean`, `Integration/Coverage.lean`,
+`Integration/Stack.lean`). It is computed from rounds, authors and
+references like the other two, so it travels for the same reason. -/
+def SynchronisedOn (R : DagRule Validator BlockId Payload) (U : R.Universe)
+    (T : Finset Validator) (r : ℕ) : Prop :=
+  ∀ n, r ≤ n → ∀ b, b ∈ R.ids U → (R.block U b).round = n + 1 →
+    (R.block U b).creator ∈ T →
+    ∀ a, a ∈ R.ids U → (R.block U a).round = n → (R.block U a).creator ∈ T →
+      a ∈ (R.block U b).refs
 
 /-! ## The additive half
 
@@ -106,6 +135,30 @@ relation is the same one a truncation and a plain agreement satisfy
 abbrev Sustains (R : DagRule Validator BlockId Payload) (U U' : R.Universe)
     (G R₀ : ℕ) : Prop := RebasedAbove R U U' G R₀
 
+/-- **A cut cannot introduce equivocation.** It holds a subset of the
+blocks at rebased rounds, and a restriction of an injection is
+injective. Stated over `Truncates` rather than `Sustains` because that
+is what says no block is *added*, which is the whole of the argument. -/
+theorem noEquivOn_of_truncates {R : DagRule Validator BlockId Payload}
+    {U U' : R.Universe} {S S' : Slots Validator} {G d : ℕ}
+    (h : Truncates R U U' S S' G d) {T : Finset Validator}
+    (hne : NoEquivOn R U T) : NoEquivOn R U' T := by
+  intro i hi j hj hic hij hround
+  have hiU := (h.mem_iff i).mp hi
+  have hjU := (h.mem_iff j).mp hj
+  refine hne i hiU.1 j hjU.1 ?_ ?_ ?_
+  · rwa [← h.creator_of hi]
+  · rw [← h.creator_of hi, ← h.creator_of hj]; exact hij
+  · have h1 := h.round_of hi
+    have h2 := h.round_of hj
+    omega
+
+/-- Synchrony from a round is synchrony from any later one. -/
+theorem SynchronisedOn.mono {R : DagRule Validator BlockId Payload}
+    {U : R.Universe} {T : Finset Validator} {r r' : ℕ}
+    (h : SynchronisedOn R U T r) (hr : r ≤ r') : SynchronisedOn R U T r' :=
+  fun n hn => h n (le_trans hr hn)
+
 namespace RebasedAbove
 
 variable {R : DagRule Validator BlockId Payload} {U U' : R.Universe} {G R₀ : ℕ}
@@ -120,6 +173,23 @@ theorem votesAt_of (h : Sustains R U U' G R₀) {T : Finset Validator} {r : ℕ}
   have hcc' : (R.block U c).creator = v := by rw [← h.creator c hcU (by omega)]; exact hcc
   rw [h.refs c hcU (by omega)]
   exact hv v hvT c hcU hcc' hUr
+
+/-- **Synchrony survives**, for the same reason votes do: it is read
+from rounds, authors and references, and above the settling round the
+mechanism changed none of them. The references clause is guarded
+strictly above `R₀`, and a synchronised pair sits at `n` and `n + 1`, so
+the block that must carry the reference is above the floor whenever the
+pair is. -/
+theorem synchronisedOn_of (h : Sustains R U U' G R₀) {T : Finset Validator} {r : ℕ}
+    (hr : R₀ ≤ r) (hG : G ≤ r) (hs : SynchronisedOn R U T r) :
+    SynchronisedOn R U' T (r - G) := by
+  intro n hn b hb hbr hbc a ha har hac
+  obtain ⟨hbU, hbround⟩ := h.of_mem' hb (by omega)
+  obtain ⟨haU, haround⟩ := h.of_mem' ha (by omega)
+  have hbc' : (R.block U b).creator ∈ T := by rwa [← h.creator b hbU (by omega)]
+  have hac' : (R.block U a).creator ∈ T := by rwa [← h.creator a haU (by omega)]
+  rw [h.refs b hbU (by omega)]
+  exact hs (n + G) (by omega) b hbU (by omega) hbc' a haU (by omega) hac'
 
 /-- **Production survives.** -/
 theorem populatedOn_of (h : Sustains R U U' G R₀) {T : Finset Validator} {r : ℕ}

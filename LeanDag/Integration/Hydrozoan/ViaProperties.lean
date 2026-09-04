@@ -2,6 +2,7 @@ import LeanDag.Hydrozoan.Properties.Proof
 import LeanDag.Integration.Hydrozoan.FillDecided
 import LeanDag.Properties.Sustain
 import LeanDag.Properties.Derived.Truncate
+import LeanDag.Properties.Arcs.GC
 
 /-!
 # The fill, re-derived through the target properties
@@ -173,6 +174,26 @@ theorem decided_chopHZ_of_localTruncate [S : LeanDag.Hydrozoan.Slots Replica] {G
     (fun b hb hbr => by
       change b ∈ V.ids ↔ b ∈ (View.chopHZ V hsp G).ids
       exact (mem_viewChopHZ (V := V) hbr).symm) k v).symm
+
+/-- **HI8's cross-cut agreement, from HZ9.** `ChopDecided.decided_agree_chopHZ`
+plays Hydrozoan's slot agreement inside the truncation and moves across
+the cut by a six-constructor induction. Here it is `Agree` and
+`LocalTruncate` composed, which every rule with a band has. -/
+theorem decided_agree_chopHZ_of_properties [S : LeanDag.Hydrozoan.Slots Replica]
+    {G d : ℕ} (hd : G ≤ S.slotRound d)
+    {V : LeanDag.Hydrozoan.View U} {W : LeanDag.Hydrozoan.View (chopHZ U hsp G)}
+    {k : ℕ} {v w : Option BlockId}
+    (hV : LeanDag.Hydrozoan.Decided U V (d + k) v)
+    (hW : LeanDag.Hydrozoan.Decided (S := slotsChopHZ hd) (chopHZ U hsp G) W k w) :
+    v = w :=
+  (Properties.Arcs.decided_agree_truncate LeanDag.Hydrozoan.agree
+    (Properties.LocalTruncate.of_banded LeanDag.Hydrozoan.banded)
+    (truncates_chopHZ (hsp := hsp) hd) (V' := View.chopHZ V hsp G)
+    (fun b hb hbr => by
+      change b ∈ V.ids ↔ b ∈ (View.chopHZ V hsp G).ids
+      exact (mem_viewChopHZ (V := V) hbr).symm)
+    hW hV).symm
+
 
 end Hydrozoan
 

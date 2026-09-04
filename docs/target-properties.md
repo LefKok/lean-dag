@@ -1271,6 +1271,61 @@ is still proved by hand. A view-level mechanism — rate limiting, the
 joiner — has no transport obligation at all, since `Sustains` is about
 universes; §11.5 records it.
 
+### 11.3b The agreement half, and why it was bespoke
+
+The garbage-collection arc lifted verdict *transport* and stopped.
+`decided_of_truncate` and its converse compare a verdict with the same
+validator's verdict; what a deployment asks is stronger — a validator
+that joined from the truncation holds an **arbitrary** view of it, with
+no history below the cut and no relation to anyone's full-history view,
+and must still agree.
+
+`GC/ChopDecided.lean` proved that for the core (G4), `GC/Horizon.lean`
+across two horizons (G8), and `Integration/Hydrozoan/ChopDecided.lean`
+again for Hydrozoan. **None of it was necessary.** `Agree` compares two
+views of one universe; `LocalTruncate` puts the full-history verdict
+into the truncation; the two compose. `Arcs/GC.decided_agree_truncate`
+and `decided_agree_horizons` are those two lines, and every rule with a
+band and agreement has them.
+
+The extension side is the same shape with `Persist` going up where
+`LocalTruncate` goes down — `Arcs/SafeSkip.decided_agree_extends`, which
+the fill and re-genesis both take.
+
+**The reason it was bespoke was order of construction, not structure.**
+The arcs were written before the properties, and the lift when it came
+took the transport half only. The same thing can happen again, so the
+rule this suggests is: an arc that consumes a property is not finished
+until every theorem it states about the mechanism has been asked for
+from the properties.
+
+**The one case that does not derive.** Two *sibling* transformations —
+two validators recovering from one universe with different fill messages
+— give universes neither of which extends the other, and `Agree`
+compares two views of **one** universe. The carrier has no join, so
+there is no common point to apply it at. The model does not pose that
+case: `U` is the global DAG and a mechanism produces a new global DAG,
+with validators as views. Adding machinery for it needs a reason first.
+
+### 11.3c The three predicates a liveness route needs
+
+`Sustains` promises blocks, so everything computed from blocks travels.
+`votesAt_of` and `populatedOn_of` said so for two of the three
+predicates a liveness precondition is built from. The third, **synchrony**,
+was transported by hand three times — `Integration/Preservation.lean`,
+`Integration/Coverage.lean`, `Integration/Stack.lean` — and it travels
+for exactly the same reason: it is read from rounds, authors and
+references. `RebasedAbove.synchronisedOn_of` states it once.
+
+**Non-equivocation splits, as production did.** `NoEquivOn` is the one
+member of the family a mechanism can *break*: a cut cannot, since it
+only removes blocks, but a fill or a re-genesis adds one and must argue
+that the author it speaks for was silent there. So the derivable half is
+stated over `Truncates` rather than `Sustains` —
+`noEquivOn_of_truncates`, since it is the *absence* of additions that
+carries it — and the fill's `honestNoEquiv_skipFill` stays what it is,
+the mechanism's own content.
+
 ### 11.4 Not covered at all
 
 - **Composition**, beyond the one theorem above.

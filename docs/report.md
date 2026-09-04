@@ -24651,6 +24651,20 @@ def VotesAt (R : DagRule Validator BlockId Payload) (U : R.Universe)
 
 **What the commit rules count**: every `T`-authored block one round above `r` references `L`. The carrier's reading of `LeanDag.VotesAt`.
 
+#### `NoEquivOn`
+
+*def, `Properties.Sustain.lean`*
+
+```lean
+def NoEquivOn (R : DagRule Validator BlockId Payload) (U : R.Universe)
+    (T : Finset Validator) : Prop :=
+  ∀ i, i ∈ R.ids U → ∀ j, j ∈ R.ids U → (R.block U i).creator ∈ T →
+    (R.block U i).creator = (R.block U j).creator →
+    (R.block U i).round = (R.block U j).round → i = j
+```
+
+**No equivocation by `T`**: at most one block per `T`-author per round. A fault-model invariant rather than a delivery one, and the only member of this family that a mechanism can *break*: a cut cannot, since it removes blocks, but a fill or a re-genesis adds one and must argue that the author it speaks for was silent there.
+
 #### `PopulatedOn`
 
 *def, `Properties.Sustain.lean`*
@@ -24662,6 +24676,23 @@ def PopulatedOn (R : DagRule Validator BlockId Payload) (U : R.Universe)
 ```
 
 **Production**: every member of `T` has a block at round `r`.
+
+#### `SynchronisedOn`
+
+*def, `Properties.Sustain.lean`*
+
+```lean
+def SynchronisedOn (R : DagRule Validator BlockId Payload) (U : R.Universe)
+    (T : Finset Validator) (r : ℕ) : Prop :=
+  ∀ n, r ≤ n → ∀ b, b ∈ R.ids U → (R.block U b).round = n + 1 →
+    (R.block U b).creator ∈ T →
+    ∀ a, a ∈ R.ids U → (R.block U a).round = n → (R.block U a).creator ∈ T →
+      a ∈ (R.block U b).refs
+```
+
+**What the liveness route needs of delivery**: from round `r` on, every `T`-block one round up holds every `T`-block below it as a reference. `LeanDag.SynchronisedFrom`, read at the carrier.
+
+Third of the three predicates a liveness precondition is built from, and the one that was missing: `votesAt_of` and `populatedOn_of` were stated here and this was transported by hand, once per mechanism (`Integration/Preservation.lean`, `Integration/Coverage.lean`, `Integration/Stack.lean`). It is computed from rounds, authors and references like the other two, so it travels for the same reason.
 
 #### `Sustains`
 
@@ -24741,7 +24772,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 941 theorems that either another module of the
+The 947 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -36583,6 +36614,26 @@ theorem isLeaderBlock_congr {S₁ S₂ : Slots Validator} {k : ℕ} {L : BlockId
 
 Only the leader clause of `IsLeaderBlock` consults the schedule's leaders, at the slot itself.
 
+#### `populatedOn_ofCore`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem populatedOn_ofCore {T : Finset Validator} {r : ℕ}
+    (h : LeanDag.PopulatedOn U T r) : Properties.PopulatedOn mysticetiRule U T r
+```
+
+The carrier's production predicate and the core's are the same statement with the conjuncts in the other order — the one per-protocol agreement `Sustains` asks for, here a reordering rather than `rfl`.
+
+#### `populatedOn_toCore`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem populatedOn_toCore {T : Finset Validator} {r : ℕ}
+    (h : Properties.PopulatedOn mysticetiRule U T r) : LeanDag.PopulatedOn U T r
+```
+
 #### `directCommit_of_sustains`
 
 *theorem, `MysticetiProperties.lean`*
@@ -36758,6 +36809,24 @@ theorem symm (h : AgreeAbove R U U' r) (hv : ViewAgreeAbove R V V' r) :
 
 Agreement of views is symmetric, given agreement of the universes that fixes the rounds.
 
+#### `decided_agree_horizons`
+
+*theorem, `Properties.Arcs.GC.lean`*
+
+```lean
+theorem decided_agree_horizons (ha : Agree R) (hlt : LocalTruncate R)
+    {U₁ U₂ : R.Universe} {S₁ S₂ : Slots Validator} {G₁ d₁ G₂ d₂ : ℕ}
+    (ht₁ : Truncates R U U₁ S S₁ G₁ d₁) (ht₂ : Truncates R U U₂ S S₂ G₂ d₂)
+    {V₁ : R.View U₁} {V₂ : R.View U₂}
+    (hv₁ : ViewAgreeAbove R V V₁ G₁) (hv₂ : ViewAgreeAbove R V V₂ G₂)
+    {W₁ : R.View U₁} {W₂ : R.View U₂} {k₁ k₂ : ℕ}
+    (halign : d₁ + k₁ = d₂ + k₂) {w₁ w₂ v : Option BlockId}
+    (hW₁ : R.Decided S₁ W₁ k₁ w₁) (hW₂ : R.Decided S₂ W₂ k₂ w₂)
+    (hV : R.Decided S V (d₁ + k₁) v) : w₁ = w₂
+```
+
+**And across two horizons.** Validators cut at different depths agree on every shared slot, matched through the absolute slot index. Horizons need never be negotiated.
+
 #### `sustains_chop`
 
 *theorem, `Properties.Arcs.GC.lean`*
@@ -36782,6 +36851,32 @@ theorem directCommit_chop {T : Finset Validator} {r : ℕ} {L : BlockId}
 ```
 
 **The reactive commit survives the cut** — the consumer test, from the obligation rather than from `chop` directly.
+
+#### `decided_agree_chop`
+
+*theorem, `Properties.Arcs.GC.lean`*
+
+```lean
+theorem decided_agree_chop (hd : G ≤ S.slotRound d)
+    {W : View Validator BlockId Payload (chop U G)}
+    {V : View Validator BlockId Payload U} {k : ℕ} {w v : Option BlockId}
+    (hW : Decided (S := S.chop G d hd) (chop U G) W k w)
+    (hV : Decided U V (d + k) v) : w = v
+```
+
+**G4 re-derived.** `GC/ChopDecided.decided_agree_chop` proves this by running the core's uniqueness inside the truncation and carrying the verdict across by induction. Here it is two properties applied.
+
+#### `synchronisedOn_chop`
+
+*theorem, `Properties.Arcs.GC.lean`*
+
+```lean
+theorem synchronisedOn_chop {T : Finset Validator} {Rs R' : ℕ}
+    (hs : LeanDag.SynchronisedOn U T Rs) (hGR : Rs ≤ G + R') :
+    LeanDag.SynchronisedOn (chop U G) T R'
+```
+
+**Synchrony survives the cut, from the rebase.** `Integration/Preservation.synchronisedOn_chop` proves this directly; it is `Sustains` applied, as votes and production already were.
 
 #### `sustains_skipFill`
 
@@ -37044,6 +37139,22 @@ theorem unsupported_of_novel (hc : Causal R) {U U' : R.Universe} (he : Extends R
 
 **The bridge from the mechanism.** After an extension, a slot all of whose candidates are novel is unsupported by any `T` whose voting-round blocks are old — because an old block references only old blocks. This is the hypothesis a fill hands the protocol; `SkipsUnsupported`'s grade says whether the protocol can use it.
 
+#### `populatedOn_insert_of_extends`
+
+*theorem, `Properties.Sustain.lean`*
+
+```lean
+theorem populatedOn_insert_of_extends {R : DagRule Validator BlockId Payload}
+    {U U' : R.Universe} {T : Finset Validator} {v : Validator} {r : ℕ}
+    (he : Extends R U U') (hnew : PopulatedOn R U' {v} r)
+    (hpop : PopulatedOn R U T r) :
+    PopulatedOn R U' (insert v T) r
+```
+
+**An extension that seats one author seats the set.** Given production by `T` in the source and a block by `v` in the target, the target has production by `T` with `v` added — old blocks survive an extension unchanged, and the new author is the singleton the mechanism supplies.
+
+`SafeSkip.skipFill_populatedOn` and `Integration.populatedOn_addGenesis` are this, at their own added blocks.
+
 #### `populatedOn_of`
 
 *theorem, `Properties.Sustain.lean`*
@@ -37151,7 +37262,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 929 lemmas used only within the file that proves
+The 936 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -38878,10 +38989,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `toCore_block` | — |
 | `toCore_ids` | — |
 
-### `Integration/Hydrozoan/ViaProperties.lean` (6)
+### `Integration/Hydrozoan/ViaProperties.lean` (7)
 
 | Lemma | Role |
 |:---|:---|
+| `decided_agree_chopHZ_of_properties` | HI8's cross-cut agreement, from HZ9. `ChopDecided.decided_agree_chopHZ` plays Hydrozoan's slot agreement … |
 | `decided_chopHZ_of_localTruncate` | HI7's transport, from HZ9. The same statement as `decided_chopHZ`, reached without an induction — and now … |
 | `decided_fillHZ_of_persist` | HI9's transport, from HZ9. The same statement as `decided_fillHZ`, reached without an induction: … |
 | `extends_skipFillHZ` | The fill is an extension. It holds every block the original held and denotes each of them unchanged. |
@@ -38898,7 +39010,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `soundOn_skipFill` | The fill preserves it, above the gap. The synchrony round must clear the filled round: inside the gap the … |
 | `soundOn_stack` | The stack preserves it, the offsets composing exactly as the two statements above suggest: the fill … |
 
-### `MysticetiProperties.lean` (43)
+### `MysticetiProperties.lean` (42)
 
 | Lemma | Role |
 |:---|:---|
@@ -38937,29 +39049,33 @@ subsection per module, in the layer order of Appendices B and C.
 | `not_certifiedIn_band_novel` | A candidate the band did not carry is certified by nothing an old anchor can see. |
 | `not_certifiedIn_novel` | A new candidate is certified by nothing an old anchor can see. |
 | `not_mem_refs_novel` | An old block votes for nothing the extension added. |
-| `populatedOn_ofCore` | The carrier's production predicate and the core's are the same statement with the conjuncts in the other … |
-| `populatedOn_toCore` | — |
 | `quorumCard_pos` | Two quorums share a correct validator, so a quorum is not empty. |
 | `slotBlamers_congr` | The slot-level skip reads the schedule only at its own slot, so two schedules naming the same round and … |
 | `subset_blamers` | Every member of `T` blames the slot: its voting-round block is in view and references no candidate, which … |
+| `synchronisedOn_eq` | The carrier's synchrony predicate is the core's, on the nose. |
 | `votesIn_band` | The votes an in-band certificate counts are the votes it counted. |
 | `votesIn_of_sustains` | The votes an old decision-round block counts are the votes it counted: its references are unchanged, and … |
 | `votesIn_old` | The votes an old certificate counts are the votes it counted. |
 
-### `Properties/Arcs/GC.lean` (4)
+### `Properties/Arcs/GC.lean` (8)
 
 | Lemma | Role |
 |:---|:---|
+| `decided_agree_horizons_chop` | G8 re-derived. Validators at different horizons agree. |
+| `decided_agree_truncate` | Cross-cut agreement. A validator holding any view of the truncation agrees, slot for slot, with a … |
 | `decided_chop_iff` | G3 re-derived, with no induction of its own. Both directions of the cut's verdict transport, from the band. |
 | `decided_of_truncate` | A verdict survives the cut, at the replica's own numbering. |
 | `decided_of_truncated` | And a verdict of the truncation is a verdict of the whole DAG, which is what lets a pruned replica be … |
+| `noEquivOn_chop` | And so does non-equivocation, from the truncation. |
 | `truncates_chop` | The cut is a truncation. The witness `Truncates` was written to have, exhibited before anything is proved … |
+| `viewAgreeAbove_chop` | The chopped view agrees with the original above the cut, which is the view hypothesis the two theorems … |
 
-### `Properties/Arcs/SafeSkip.lean` (6)
+### `Properties/Arcs/SafeSkip.lean` (7)
 
 | Lemma | Role |
 |:---|:---|
 | `candidates_fresh` | Every candidate of a slot the recovering replica leads, at a gap round, is a filled block — the replica … |
+| `decided_agree_extends` | Agreement across the recovery. A validator that recovered agrees with one that did not, from any view of … |
 | `decided_fill_of_persist` | `SafeSkip.decided_fill`, from `Persist`. The same statement, with no induction: persistence is proved once … |
 | `decided_none_fresh` | SS3, as a verdict, from the properties. The slot the recovering replica leads at a gap round is decided … |
 | `decided_skipFill` | Verdicts survive the recovery, for any protocol that has proved persistence. The replica that recovered … |
@@ -39037,11 +39153,13 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `mono` | A protocol skipping under a weaker condition skips under a stronger one, so the grades compare. |
 
-### `Properties/Sustain.lean` (2)
+### `Properties/Sustain.lean` (4)
 
 | Lemma | Role |
 |:---|:---|
-| `populatedOn_insert_of_extends` | An extension that seats one author seats the set. Given production by `T` in the source and a block by `v` … |
+| `SynchronisedOn.mono` | Synchrony from a round is synchrony from any later one. |
+| `noEquivOn_of_truncates` | A cut cannot introduce equivocation. It holds a subset of the blocks at rebased rounds, and a restriction … |
+| `synchronisedOn_of` | Synchrony survives, for the same reason votes do: it is read from rounds, authors and references, and … |
 | `votesAt_of` | Votes survive. A `T`-block one round above `r` is old, keeps its author and its references, so a vote it … |
 
 ### `WaveRobin.lean` (3)

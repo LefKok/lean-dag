@@ -117,6 +117,11 @@ theorem populatedOn_toCore {T : Finset Validator} {r : ℕ}
     (h : Properties.PopulatedOn mysticetiRule U T r) : LeanDag.PopulatedOn U T r :=
   fun v hv => let ⟨b, hb, hr, hc⟩ := h v hv; ⟨b, hb, hc, hr⟩
 
+/-- The carrier's synchrony predicate is the core's, on the nose. -/
+theorem synchronisedOn_eq {T : Finset Validator} {r : ℕ} :
+    Properties.SynchronisedOn mysticetiRule U T r ↔ LeanDag.SynchronisedOn U T r :=
+  Iff.rfl
+
 /-- The votes an old decision-round block counts are the votes it
 counted: its references are unchanged, and so are theirs. -/
 theorem votesIn_of_sustains (h : Sustains mysticetiRule U U' G R₀) {C L : BlockId}
