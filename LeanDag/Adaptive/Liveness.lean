@@ -58,7 +58,7 @@ def PlacesRuns {R : DagRule Validator BlockId Payload} (P : Policy R)
 
 section Existence
 
-variable {R : BoundedRule Validator BlockId Payload} {P : Policy R.toDagRule}
+variable {R : DagRule Validator BlockId Payload} {P : Policy R}
 variable {Live : Slots Validator → ∀ {U : R.Universe}, R.View U → Finset Validator → ℕ → ℕ → Prop}
 variable {T : Finset Validator} {c : ℕ} {U : R.Universe}
 
@@ -67,18 +67,19 @@ function induces, with the protocol's precondition over the slots that
 schedule determines, every slot of epoch `E` is decided inside its
 window: the run `PlacesRuns` puts in epoch `E + 1` commits, and the
 descent clears everything below it. -/
-theorem epoch_closes (hb : Bounded R) (hlc : LeaderCommits R Live)
+theorem epoch_closes (hlc : LeaderCommits R Live)
     (hd : ∀ a : ℕ → Validator, Descends R (slotsOf P.inj a) c)
     (hruns : PlacesRuns P T c)
     (V : R.View U) (v : ℕ → Option BlockId) (E : ℕ)
     (hlive : Live (slotsOf P.inj (fun m => P.pick U V v m)) V T P.W (P.W * (E + 2))) :
     ∀ k, epochOf P.W k < E + 1 →
-      ∃ w, R.DecidedWithin (slotsOf P.inj (fun m => P.pick U V v m)) (P.W * (E + 2)) V k w := by
+      ∃ w, DecidedBelow R (slotsOf P.inj (fun m => P.pick U V v m))
+        (P.W * (E + 2)) V k w := by
   obtain ⟨b, hb1, hb2, hbT⟩ := hruns U V v E
   have hWpos := P.W_pos
   -- Every run slot is committed, inside the run's bound.
   have hrun : ∀ j, b ≤ j → j < b + c →
-      ∃ L, R.DecidedWithin (slotsOf P.inj (fun m => P.pick U V v m)) (b + c) V j (some L) := by
+      ∃ L, DecidedBelow R (slotsOf P.inj (fun m => P.pick U V v m)) (b + c) V j (some L) := by
     intro j hj1 hj2
     have hlead : (slotsOf P.inj (fun m => P.pick U V v m)).leader j ∈ T := by
       have := hbT (j - b) (by omega)
@@ -89,20 +90,20 @@ theorem epoch_closes (hb : Bounded R) (hlc : LeaderCommits R Live)
       have h1 : P.W * 1 ≤ P.W * (E + 1) := Nat.mul_le_mul_left P.W (by omega)
       omega
     obtain ⟨L, hL⟩ := hlc _ V T P.W (P.W * (E + 2)) hlive j hWle (by omega) hlead
-    exact ⟨L, hb.mono _ (j + 1) (b + c) V j _ hL (by omega)⟩
+    exact ⟨L, hL.mono (by omega)⟩
   -- The descent clears everything below the run — all of epoch `E`.
   have hbelow := hd (fun m => P.pick U V v m) V b hrun
   intro k hk
   have hkb : k < b :=
     lt_of_lt_of_le ((epochOf_lt_iff hWpos).mp hk) hb1
   obtain ⟨w, hw⟩ := hbelow k hkb
-  exact ⟨w, hb.mono _ (b + c) (P.W * (E + 2)) V k w hw hb2⟩
+  exact ⟨w, hw.mono hb2⟩
 
 /-- **Partial runs exist at every height** — the witnessable, finite-
 horizon form of existence, by induction on the height: each stage
 re-reads the schedule off the verdicts so far and closes one more
 epoch, under the precondition for that stage's schedule. -/
-theorem exists_partialRun (hb : Bounded R) (hl : SchedLocal R) (hlc : LeaderCommits R Live)
+theorem exists_partialRun (hlc : LeaderCommits R Live)
     (hd : ∀ a : ℕ → Validator, Descends R (slotsOf P.inj a) c)
     (hruns : PlacesRuns P T c) (V : R.View U) (E : ℕ)
     (hlive : ∀ (E' : ℕ), E' < E → ∀ (A : PartialRun P U V E'),
@@ -117,7 +118,7 @@ theorem exists_partialRun (hb : Bounded R) (hl : SchedLocal R) (hlc : LeaderComm
                coherent := fun _ _ => rfl }⟩
   | succ E ih =>
       obtain ⟨A₀⟩ := ih (fun E' hE' A => hlive E' (by omega) A)
-      have hclose := epoch_closes hb hlc hd hruns V A₀.vdct E (hlive E (by omega) A₀)
+      have hclose := epoch_closes hlc hd hruns V A₀.vdct E (hlive E (by omega) A₀)
       -- The new verdicts: epoch `E` freshly decided, everything below kept.
       set v' : ℕ → Option BlockId := fun k =>
         if h : epochOf P.W k = E then (hclose k (by omega)).choose
@@ -146,8 +147,8 @@ theorem exists_partialRun (hb : Bounded R) (hl : SchedLocal R) (hlc : LeaderComm
         have : v' k = (hclose k (by omega)).choose := by
           simp only [hv', dif_pos hkE]
         rw [this, hkE]
-        exact hl (slotsOf P.inj (fun m => P.pick U V A₀.vdct m))
-          (slotsOf P.inj (fun m => P.pick U V v' m)) rfl _ (fun m hm => hsched m hm) V k _ hspec
+        exact hspec.reschedule (S' := slotsOf P.inj (fun m => P.pick U V v' m)) rfl
+          (fun m hm => (hsched m hm).symm)
       · -- An old epoch: transport the old derivation.
         have hkE' : epochOf P.W k < E := by omega
         have hold := A₀.closed k hkE'
@@ -159,8 +160,8 @@ theorem exists_partialRun (hb : Bounded R) (hl : SchedLocal R) (hlc : LeaderComm
           rw [A₀.coherent m (by omega)]
           refine P.adapted U V V A₀.vdct v' m (fun j hj => ?_)
           exact (hagree j (by omega)).symm
-        have := hl (slotsOf P.inj A₀.assign) (slotsOf P.inj (fun m => P.pick U V v' m)) rfl _
-          (fun m hm => hsched' m hm) V k _ hold
+        have := hold.reschedule (S' := slotsOf P.inj (fun m => P.pick U V v' m)) rfl
+          (fun m hm => (hsched' m hm).symm)
         rw [hagree k hkE']
         exact this
 
@@ -169,8 +170,7 @@ with the protocol's precondition at every height, a total adaptive run
 exists — partial runs at every height glued along the diagonal,
 `partialRun_agree` making the stage-by-stage choices cohere. With
 `run_agree` it is THE fixpoint. -/
-theorem run_exists (hb : Bounded R) (ha : Agree R.toDagRule) (hl : SchedLocal R)
-    (hlc : LeaderCommits R Live)
+theorem run_exists (ha : Agree R) (hlc : LeaderCommits R Live)
     (hd : ∀ a : ℕ → Validator, Descends R (slotsOf P.inj a) c)
     (hruns : PlacesRuns P T c) (V : R.View U)
     (hlive : ∀ (E : ℕ) (A : PartialRun P U V E),
@@ -179,26 +179,25 @@ theorem run_exists (hb : Bounded R) (ha : Agree R.toDagRule) (hl : SchedLocal R)
   classical
   -- A partial run at every height, chosen arbitrarily.
   have hex : ∀ E, Nonempty (PartialRun P U V E) := fun E =>
-    exists_partialRun hb hl hlc hd hruns V E (fun E' _ A => hlive E' A)
+    exists_partialRun hlc hd hruns V E (fun E' _ A => hlive E' A)
   set As : ∀ E, PartialRun P U V E := fun E => (hex E).some with hAs
   -- The diagonal: each slot's verdict read from the first height above it.
   set vd : ℕ → Option BlockId := fun k => (As (epochOf P.W k + 1)).vdct k with hvd
   -- Any stage's verdicts agree with the diagonal on the epochs it closed.
   have hdiag : ∀ E j, epochOf P.W j < E → (As E).vdct j = vd j := by
     intro E j hj
-    exact partialRun_agree hb ha hl (As E) (As (epochOf P.W j + 1)) j (by omega)
+    exact partialRun_agree ha (As E) (As (epochOf P.W j + 1)) j (by omega)
   refine ⟨{ assign := fun m => P.pick U V vd m
             vdct := vd
             closed := ?_
             coherent := fun _ => rfl }⟩
   intro k
   have hclosed := (As (epochOf P.W k + 1)).closed k (by omega)
-  refine hl (slotsOf P.inj (As (epochOf P.W k + 1)).assign)
-    (slotsOf P.inj (fun m => P.pick U V vd m)) rfl _ (fun m hm => ?_) V k _ hclosed
+  refine hclosed.reschedule (S' := slotsOf P.inj (fun m => P.pick U V vd m)) rfl (fun m hm => ?_)
   have hmE : epochOf P.W m < epochOf P.W k + 2 := (epochOf_lt_iff P.W_pos).mpr hm
-  change (As (epochOf P.W k + 1)).assign m = P.pick U V vd m
+  change P.pick U V vd m = (As (epochOf P.W k + 1)).assign m
   rw [(As (epochOf P.W k + 1)).coherent m (by omega)]
-  refine P.adapted U V V (As (epochOf P.W k + 1)).vdct vd m (fun j hj => ?_)
+  refine (P.adapted U V V (As (epochOf P.W k + 1)).vdct vd m (fun j hj => ?_)).symm
   exact hdiag _ j (by omega)
 
 /-! ## What the run commits
@@ -225,16 +224,15 @@ theorem Run.live_of_staged {V : R.View U} (A : Run P U V)
   rwa [A.assign_eq] at h
 
 /-- **A reliable leader's slot commits in the run.** -/
-theorem Run.commits (hb : Bounded R) (ha : Agree R.toDagRule) (hlc : LeaderCommits R Live)
+theorem Run.commits (ha : Agree R) (hlc : LeaderCommits R Live)
     {V : R.View U} (A : Run P U V) {lo K : ℕ}
     (hlive : Live (slotsOf P.inj A.assign) V T lo K) {k : ℕ} (hlo : lo ≤ k) (hK : k < K)
     (hlead : A.assign k ∈ T) : ∃ L, A.vdct k = some L := by
   obtain ⟨L, hL⟩ := hlc (slotsOf P.inj A.assign) V T lo K hlive k hlo hK hlead
-  exact ⟨L, hb.agree ha (A.closed k) hL⟩
+  exact ⟨L, DecidedBelow.agree ha (A.closed k) hL⟩
 
 /-- **Every epoch past the first carries `c` consecutive commits.** -/
-theorem Run.commits_in_epoch (hb : Bounded R) (ha : Agree R.toDagRule)
-    (hlc : LeaderCommits R Live) (hruns : PlacesRuns P T c) {V : R.View U} (A : Run P U V)
+theorem Run.commits_in_epoch (ha : Agree R) (hlc : LeaderCommits R Live) (hruns : PlacesRuns P T c) {V : R.View U} (A : Run P U V)
     (e : ℕ) (hlive : Live (slotsOf P.inj A.assign) V T P.W (P.W * (e + 2))) :
     ∃ b, P.W * (e + 1) ≤ b ∧ b + c ≤ P.W * (e + 2) ∧
       ∀ i, i < c → ∃ L, A.vdct (b + i) = some L := by
@@ -244,7 +242,7 @@ theorem Run.commits_in_epoch (hb : Bounded R) (ha : Agree R.toDagRule)
   have hWle : P.W ≤ b + i := by
     have := Nat.mul_le_mul_left P.W (show 1 ≤ e + 1 by omega)
     omega
-  exact A.commits hb ha hlc hlive hWle (by omega) hlead
+  exact A.commits ha hlc hlive hWle (by omega) hlead
 
 end Existence
 

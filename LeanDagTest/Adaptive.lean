@@ -152,12 +152,16 @@ def run7 : PartialRun demotePolicy U7 V7 2 where
     interval_cases k
     · have hB : demotePolicy.W * (epochOf demotePolicy.W 0 + 2) = 2 := rfl
       rw [hB]
-      exact decidedWithin_congr (fun m hm => by interval_cases m <;> rfl)
-        u7_decidedWithin_slot0
+      exact MysticetiProperties.decidedBelow_of_decidedWithin
+        (S := slotsOf demotePolicy.inj (fun k => demotePolicy.pick U7 V7 vd7 k))
+        (decidedWithin_congr (fun m hm => by interval_cases m <;> rfl)
+          u7_decidedWithin_slot0)
     · have hB : demotePolicy.W * (epochOf demotePolicy.W 1 + 2) = 3 := rfl
       rw [hB]
-      exact decidedWithin_congr (fun m hm => by interval_cases m <;> rfl)
-        (u7_decidedWithin_slot1.mono (by omega))
+      exact MysticetiProperties.decidedBelow_of_decidedWithin
+        (S := slotsOf demotePolicy.inj (fun k => demotePolicy.pick U7 V7 vd7 k))
+        (decidedWithin_congr (fun m hm => by interval_cases m <;> rfl)
+          (u7_decidedWithin_slot1.mono (by omega)))
   coherent := fun _ _ => rfl
 
 /-- The same run over the trimmed view `V7small`. -/
@@ -172,19 +176,23 @@ def run7small : PartialRun demotePolicy U7 V7small 2 where
     interval_cases k
     · have hB : demotePolicy.W * (epochOf demotePolicy.W 0 + 2) = 2 := rfl
       rw [hB]
-      exact decidedWithin_congr (fun m hm => by interval_cases m <;> rfl)
+      exact MysticetiProperties.decidedBelow_of_decidedWithin
+        (S := slotsOf demotePolicy.inj (fun k => demotePolicy.pick U7 V7small vd7 k))
+        (decidedWithin_congr (fun m hm => by interval_cases m <;> rfl)
         (DecidedWithin.indirectCommit (S := slotsOf u7_inj aBase)
           (j := 1) (A := 12) (by omega) (by omega) (by decide)
           (DecidedWithin.directCommit (S := slotsOf u7_inj aBase)
             (by omega) (by decide) (by decide))
           (fun _ h1 h2 _ => absurd h2 (by omega))
           (by decide)
-          ⟨8, by decide, Reaches.single (by decide)⟩)
+          ⟨8, by decide, Reaches.single (by decide)⟩))
     · have hB : demotePolicy.W * (epochOf demotePolicy.W 1 + 2) = 3 := rfl
       rw [hB]
-      exact decidedWithin_congr (fun m hm => by interval_cases m <;> rfl)
-        ((DecidedWithin.directCommit (S := slotsOf u7_inj aBase) (B := 2)
-          (by omega) (by decide) (by decide)).mono (by omega))
+      exact MysticetiProperties.decidedBelow_of_decidedWithin
+        (S := slotsOf demotePolicy.inj (fun k => demotePolicy.pick U7 V7small vd7 k))
+        (decidedWithin_congr (fun m hm => by interval_cases m <;> rfl)
+          ((DecidedWithin.directCommit (S := slotsOf u7_inj aBase) (B := 2)
+            (by omega) (by decide) (by decide)).mono (by omega)))
   coherent := fun _ _ => rfl
 
 -- **The policy genuinely adapts**: a skip two slots below moves the

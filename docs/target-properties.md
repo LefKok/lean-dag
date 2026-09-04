@@ -476,14 +476,26 @@ That closes the core's missing `Local`, which §11.2 had listed as a gap,
 and it re-derives `decided_mono` — a four-case induction of
 `Liveness.lean` — with none of its own, which is the consumer test.
 
+**The band has three axes**, and the third was added after the first
+two: a schedule with the same round structure, naming the same leaders
+at every slot sitting in the band, decides alike. That is what makes the
+band reach the bound the adaptive fixpoint needs, since the slots at or
+below a round are finitely many. `Slots` carries `mono` and `unbounded`,
+and those two alone force it: if infinitely many slots shared a round,
+monotonicity would pin every earlier slot to that round and
+unboundedness would fail. Many slots per round is no obstacle.
+
+`exists_decidedBelow` is that conversion. The bound it produces is
+**not tight** — it is every slot the band's rounds can hold, where a
+derivation may have named fewer — which is why `LeaderCommits` and
+`Descends` remain protocol obligations rather than corollaries: a direct
+commit at slot `k` depends on one leader, not on all the leaders of its
+round.
+
 **What stays outside.** `LocalTruncate` renumbers rounds and slots as
 well as restricting them, and no agreement hypothesis states a
 renumbering; §3.4 records why the renumbering cannot be isolated, so the
-combined property stays combined. `Bounded` bounds the **slots** a
-derivation names, and a bound in rounds does not give one when a round
-carries several slots, which pipelining allows and this development
-permits. The two are the parts of the interval the band does not reach:
-one below, one above.
+combined property stays combined.
 
 ---
 
@@ -510,15 +522,19 @@ Safety, proved by the protocol:
   alike. M6 as a property. Nothing before the schedule family needed
   it: `Persist`, `Local` and `Truncates` compare a verdict with a
   verdict, never two views at one slot.
-- `Bounded` — the protocol supplies a bounded family `DecidedWithin S B`
-  alongside `Decided`, embedding in it, deciding only slots under `B`,
-  monotone in `B`. The bound cannot be derived from `Decided`: an
-  indirect verdict's anchors are hidden inside a proof of a `Prop`, so
-  `BoundedRule` extends `DagRule` with the family as a field.
-- `SchedLocal` — a verdict within `B` reads the schedule's leaders only
-  below `B`. The twin of `Local` on the other axis: `Local` bounds what
-  a verdict reads of the DAG from below, `SchedLocal` bounds what it
-  reads of the schedule from above.
+- `DecidedBelow R S B V k v` — the slot sits below `B`, the verdict
+  holds, and it survives any reassignment of the leaders at or above
+  `B`. A **definition** over `DagRule`, not a field of it: its four laws
+  (`toDecided`, `lt_bound`, `mono`, `reschedule`) are theorems and a
+  protocol proves none of them.
+
+  This replaced `BoundedRule`, a carrier extended with a second decision
+  relation, and the two properties `Bounded` and `SchedLocal` relating
+  it to the first. The reasoning behind the field was that a `Decided`
+  derivation is a proof of a `Prop` whose anchors cannot be recovered,
+  which is sound about *derivations* and beside the point about
+  *verdicts*: what the fixpoint needs is not which slots a derivation
+  named but which leaders the verdict depends on.
 
 Liveness, provided by the protocol for the mechanism's existence
 theorem:
@@ -534,10 +550,8 @@ theorem:
   descent; `c` and the round-structure hypothesis it needs are the
   protocol's.
 
-`Adaptive/{Policy,Run,Liveness}.lean` are now stated over `BoundedRule`
-and these five, and name no protocol. `Adaptive.run_agree` uses the
-three safety properties and depends on `propext` and `Quot.sound`
-only; `Adaptive.run_exists` uses all five.
+`Adaptive/{Policy,Run,Liveness}.lean` are stated over `DagRule` and
+these, and name no protocol. `Adaptive.run_agree` uses `Agree` alone.
 
 ### 4.2 The staged precondition
 
@@ -563,15 +577,16 @@ model, not of the rule.
 
 ### 4.3 Instances
 
-- **Core Mysticeti** (`MysticetiProperties.lean`): `mysticetiBounded`,
-  with `DecidedWithin` moved there from `Adaptive/Basic.lean` — it is
-  the protocol's relation. `agree`, `bounded`, `schedLocal` (the
-  congruence proved for any two schedules with one round structure, by
-  destructuring both), `leaderCommits` under `coreLive`, `descends`
-  under `SpansEligible`.
+- **Core Mysticeti** (`MysticetiProperties.lean`): `agree`,
+  `leaderCommits` under `coreLive`, and `descends` under
+  `SpansEligible`. Two properties where there were five. The core keeps
+  a `DecidedWithin` relation of its own, because `LeaderCommits` and
+  `Descends` must produce a **tight** bound and the semantic form cannot
+  recover one; `decidedBelow_of_decidedWithin` carries it across. It is
+  the protocol's tool, not part of any interface.
 - **Reactive Mysticeti** (`Reactive/MysticetiProperties.lean`): the
-  same `mysticetiBounded`, so the three safety properties are
-  inherited, and `leaderCommits_reactive` under `reactiveLive`, from
+  same rule, so the safety side is inherited, and
+  `leaderCommits_reactive` under `reactiveLive`, from
   `ReactiveM.directCommit`. This is the case `Live` was made a
   parameter for.
 - **Consumers.** `Adaptive/Mysticeti.lean` restates every statement of
@@ -910,7 +925,7 @@ residue; the mechanism owes one liveness property.
 | | `Local` | a verdict at round ≥ r reads the DAG only above r |
 | | `LocalTruncate` | a verdict survives restriction with renumbering, both ways |
 | | `Agree` | two views decide alike |
-| | `Bounded`, `SchedLocal` | a bounded derivation family; verdicts read leaders only below the bound |
+| | `DecidedBelow` | a verdict below a slot bound, surviving reassignment above it; a definition, so its laws are theorems |
 | protocol, liveness | `SkipsUnsupported R Ok` | an unsupported slot is skipped, at grade `Ok` |
 | | `LeaderCommits R Live`, `Descends R S c` | a reliable leader commits; a committed run decides everything below |
 | mechanism, liveness | `Sustains R U U' G R₀` | above the settling round the transformed DAG holds the same blocks |
@@ -929,7 +944,7 @@ property (§5).
 | `Local` | ✓ | ✓, from `Banded` | inherited | — |
 | `LocalTruncate` | ✓ | **missing** | — | — |
 | `SkipsUnsupported` | ✓ at `qFast ≤ |T|` | ✓ at a correct quorum | — | — |
-| `Agree`, `Bounded`, `SchedLocal` | **missing** | ✓ | inherited | — |
+| `Agree` | **missing** | ✓ | inherited | — |
 | `LeaderCommits`, `Descends` | **missing** | ✓ | ✓, a second `Live` | — |
 | `Sustains` witnesses | chop, fill | chop; **fill missing** | — | — |
 

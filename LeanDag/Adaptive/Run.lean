@@ -14,15 +14,18 @@ development's split between the `Decided` relation and `decided_unique`:
 The safety argument (`run_agree`) is a strong induction on epochs in
 which nothing about counting is ever re-proved. At epoch `e` the verdict
 prefixes of both runs agree below by hypothesis, so `adapted` forces the
-two assignments to agree through epoch `e + 1`, so `SchedLocal` places
+two assignments to agree through epoch `e + 1`, so `DecidedBelow.reschedule` places
 both runs' epoch-`e` derivations in the *same* `Slots` instance — where
 agreement is `Agree`, through `Bounded`. The theorem carries **no
 fairness, synchrony or view hypothesis of any kind**: adaptivity is safe
 unconditionally, for arbitrary — even adversarial — adapted policies,
 and only liveness prices the policy's choices.
 
-Everything here is stated over a `Properties.BoundedRule` and the three
-properties `Bounded`, `Agree` and `SchedLocal`; no protocol is named.
+Everything here is stated over a `Properties.DagRule` and one property,
+`Agree`; no protocol is named. The bound a run carries is
+`Properties.DecidedBelow`, a definition rather than a second relation
+the carrier supplies, so its laws are theorems and a protocol proves
+none of them.
 The induction is stated over *partial* runs — closed up to an epoch
 height — so that two validators that have not decided equally far agree
 on their common prefix; total runs are the special case at every height.
@@ -39,13 +42,13 @@ open Properties
 
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
-variable {R : BoundedRule Validator BlockId Payload}
+variable {R : DagRule Validator BlockId Payload}
 variable [S : Slots Validator]
 
 /-- A run closed up to epoch height `E`: verdicts derived for every slot
 of epochs `< E`, the schedule coherent as far as those derivations read
 it (epochs `< E + 1`). What a validator holds mid-execution. -/
-structure PartialRun (P : Policy R.toDagRule) (U : R.Universe) (V : R.View U) (E : ℕ) where
+structure PartialRun (P : Policy R) (U : R.Universe) (V : R.View U) (E : ℕ) where
   /-- The leader assignment. -/
   assign : ℕ → Validator
   /-- The verdicts. -/
@@ -53,23 +56,24 @@ structure PartialRun (P : Policy R.toDagRule) (U : R.Universe) (V : R.View U) (E
   /-- Every slot of a closed epoch is decided inside its window: anchors
   strictly below the start of epoch `e + 2`. -/
   closed : ∀ k, epochOf P.W k < E →
-    R.DecidedWithin (slotsOf P.inj assign) (P.W * (epochOf P.W k + 2)) V k (vdct k)
+    DecidedBelow R (slotsOf P.inj assign) (P.W * (epochOf P.W k + 2)) V k (vdct k)
   /-- The assignment is the policy's, computed on this view, as far as
   the derivations read it. -/
   coherent : ∀ m, epochOf P.W m < E + 1 → assign m = P.pick U V vdct m
 
 /-- A total run: the adaptive fixpoint itself. -/
-structure Run (P : Policy R.toDagRule) (U : R.Universe) (V : R.View U) where
+structure Run (P : Policy R) (U : R.Universe) (V : R.View U) where
   /-- The leader assignment. -/
   assign : ℕ → Validator
   /-- The verdicts. -/
   vdct : ℕ → Option BlockId
   /-- Every slot is decided inside its epoch window. -/
-  closed : ∀ k, R.DecidedWithin (slotsOf P.inj assign) (P.W * (epochOf P.W k + 2)) V k (vdct k)
+  closed : ∀ k, DecidedBelow R (slotsOf P.inj assign)
+    (P.W * (epochOf P.W k + 2)) V k (vdct k)
   /-- The assignment is the policy's, computed on this view, everywhere. -/
   coherent : ∀ m, assign m = P.pick U V vdct m
 
-variable {P : Policy R.toDagRule} {U : R.Universe}
+variable {P : Policy R} {U : R.Universe}
 
 /-- A total run is partial at every height. -/
 def Run.toPartial {V : R.View U} (A : Run P U V) (E : ℕ) : PartialRun P U V E where
@@ -80,8 +84,8 @@ def Run.toPartial {V : R.View U} (A : Run P U V) (E : ℕ) : PartialRun P U V E 
 
 section Agreement
 
-variable (hb : Bounded R) (ha : Agree R.toDagRule) (hl : SchedLocal R)
-include hb ha hl
+variable (ha : Agree R)
+include ha
 
 /-- **The master agreement lemma.** Two partial runs over one universe —
 whatever views, each computing its schedule on its own, whatever heights
@@ -91,7 +95,7 @@ those verdicts determine.
 The strong induction the module docstring describes: verdict agreement
 below an epoch forces assignment agreement through the epoch above it
 (`adapted`), which forces verdict agreement at the epoch itself
-(`SchedLocal`, then `Agree` through `Bounded`). -/
+(`DecidedBelow.reschedule`, then `Agree`). -/
 theorem partialRun_agree {V₁ V₂ : R.View U} {E₁ E₂ : ℕ}
     (A₁ : PartialRun P U V₁ E₁) (A₂ : PartialRun P U V₂ E₂) :
     ∀ k, epochOf P.W k < min E₁ E₂ → A₁.vdct k = A₂.vdct k := by
@@ -115,9 +119,8 @@ theorem partialRun_agree {V₁ V₂ : R.View U} {E₁ E₂ : ℕ}
     -- Both derivations live in one instance; agreement is `Agree`.
     have h₁ := A₁.closed k (by omega)
     have h₂ := A₂.closed k (by omega)
-    exact hb.agree ha
-      (hl (slotsOf P.inj A₁.assign) (slotsOf P.inj A₂.assign) rfl _
-        (fun m hm => hassign m hm) V₁ k _ h₁) h₂
+    exact DecidedBelow.agree ha (h₁.reschedule (S' := slotsOf P.inj A₂.assign) rfl
+      (fun m hm => (hassign m hm).symm)) h₂
 
 /-- Assignments agree wherever the common verdicts determine them. -/
 theorem partialRun_assign_agree {V₁ V₂ : R.View U} {E₁ E₂ : ℕ}
@@ -126,7 +129,7 @@ theorem partialRun_assign_agree {V₁ V₂ : R.View U} {E₁ E₂ : ℕ}
   intro m hm
   rw [A₁.coherent m (by omega), A₂.coherent m (by omega)]
   refine P.adapted U V₁ V₂ A₁.vdct A₂.vdct m (fun j hj => ?_)
-  exact partialRun_agree hb ha hl A₁ A₂ j (by omega)
+  exact partialRun_agree ha A₁ A₂ j (by omega)
 
 /-- **Safety: the adaptive fixpoint is unique.** Two total runs over one
 universe — derived from any two views, under no synchrony or fairness
@@ -136,10 +139,10 @@ theorem run_agree {V₁ V₂ : R.View U} (A₁ : Run P U V₁) (A₂ : Run P U V
     (∀ k, A₁.vdct k = A₂.vdct k) ∧ (∀ m, A₁.assign m = A₂.assign m) := by
   constructor
   · intro k
-    exact partialRun_agree hb ha hl (A₁.toPartial (epochOf P.W k + 1))
+    exact partialRun_agree ha (A₁.toPartial (epochOf P.W k + 1))
       (A₂.toPartial (epochOf P.W k + 1)) k (by omega)
   · intro m
-    exact partialRun_assign_agree hb ha hl (A₁.toPartial (epochOf P.W m + 1))
+    exact partialRun_assign_agree ha (A₁.toPartial (epochOf P.W m + 1))
       (A₂.toPartial (epochOf P.W m + 1)) m (by omega)
 
 end Agreement
@@ -149,14 +152,14 @@ ordinary `Decided` verdicts of the base schedule — the adaptive
 development instantiates to the base one, per the house rule that a new
 relation must collapse onto the old. With `Agree` this also pins each
 `vdct k` to the unique base verdict. -/
-theorem Policy.const_run_decided (hb : Bounded R) (hl : SchedLocal R)
+theorem Policy.const_run_decided
     {W : ℕ} {hW : 0 < W} {hinj : Function.Injective S.slotRound} {V : R.View U}
-    (A : Run (Policy.const (R := R.toDagRule) W hW hinj) U V) (k : ℕ) :
+    (A : Run (Policy.const (R := R) W hW hinj) U V) (k : ℕ) :
     R.Decided S V k (A.vdct k) := by
-  have h := hl (slotsOf hinj A.assign) (slotsOf hinj S.leader) rfl _
-    (fun m _ => A.coherent m) V k _ (A.closed k)
+  have h := (A.closed k).reschedule (S' := slotsOf hinj S.leader) rfl
+    (fun m _ => (A.coherent m).symm)
   rw [slotsOf_base hinj] at h
-  exact hb.toDecided _ _ V k _ h
+  exact h.toDecided
 
 end Adaptive
 

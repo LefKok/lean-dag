@@ -6,7 +6,7 @@ import LeanDag.MysticetiProperties
 
 `docs/target-properties.md` §4. The reactive discipline changes no
 rule: `Decided` and the bounded relation are the core's, so `Agree`,
-`Bounded` and `SchedLocal` are inherited without a word. What changes is
+the safety side is inherited without a word. What changes is
 the liveness precondition, and `LeaderCommits` was stated with the
 precondition as a parameter for exactly this case: the same rule, a
 second `Live`.
@@ -46,7 +46,7 @@ def reactiveLive (S : Slots Validator) {U : BlockUniverse Validator BlockId Payl
 /-- **Reactive Mysticeti commits its reliable leaders** — `ReactiveM.decided`
 as the property, on any view caught up to the horizon. -/
 theorem leaderCommits_reactive :
-    LeaderCommits (mysticetiBounded (Validator := Validator) (BlockId := BlockId)
+    LeaderCommits (mysticetiRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload)) (fun S {U} V T lo K => reactiveLive S (U := U) V T lo K) := by
   intro S U V T lo K hlive k hlo hK hlead
   obtain ⟨hT, hcard, N, R₀, rm, hgst, hto, hR, hcov, hN⟩ := hlive
@@ -55,9 +55,14 @@ theorem leaderCommits_reactive :
   obtain ⟨L, hLmem, hLc, hLr⟩ :=
     rm.toPaceCore.populatedOn hcard (S.slotRound k) (by omega) (S.leader k) hlead
   have hL : IsLeaderBlock (S := S) U k L := ⟨hLmem, hLr, hLc⟩
-  exact ⟨L, DecidedWithin.directCommit (S := S) (U := U) (by omega) hL
-    (directCommitIn_of_coversUpto (rm.directCommit hT hcard hgst hto hRk hNk hlead hL)
-      (hcov.mono hNk))⟩
+  have hin : DirectCommitIn U V L (S.slotRound k) :=
+    directCommitIn_of_coversUpto (rm.directCommit hT hcard hgst hto hRk hNk hlead hL)
+      (hcov.mono hNk)
+  refine ⟨L, by omega, Decided.directCommit hL hin, ?_⟩
+  intro S' hround hlead'
+  refine Decided.directCommit (S := S') ⟨hLmem, by rw [hround]; exact hLr,
+    by rw [hlead' k (by omega)]; exact hLc⟩ ?_
+  rw [hround]; exact hin
 
 end MysticetiProperties
 

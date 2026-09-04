@@ -12,7 +12,7 @@ generic — `AdaptivePolicy`, `PartialRun`, `AdaptiveRun`,
 `partialRun_agree`, `adaptiveRun_agree`, `epoch_closes`,
 `exists_partialRun`, `adaptiveRun_exists`, and the congruence lemmas —
 is restated here verbatim, and each is now a corollary of the generic
-theorem at `MysticetiProperties.mysticetiBounded` with the core's
+theorem at `MysticetiProperties.mysticetiRule` with the core's
 proofs of the five properties. Nothing downstream changes.
 
 The one visible difference is in how the liveness hypotheses are
@@ -55,7 +55,6 @@ end AdaptivePolicy
 
 /-! ## Congruence, at induced schedules -/
 
-omit [DecidableEq BlockId] in
 /-- Only the leader clause of `IsLeaderBlock` consults the assignment,
 at the slot itself. -/
 theorem isLeaderBlock_slotsOf_congr {hinj : Function.Injective S.slotRound}
@@ -80,13 +79,13 @@ theorem decidedWithin_congr {hinj : Function.Injective S.slotRound}
 abbrev PartialRun (P : AdaptivePolicy Validator BlockId Payload)
     (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (E : ℕ) : Type :=
-  Adaptive.PartialRun (R := mysticetiBounded) P U V E
+  Adaptive.PartialRun (R := mysticetiRule) P U V E
 
 /-- A total run: the adaptive fixpoint itself, over the core. -/
 abbrev AdaptiveRun (P : AdaptivePolicy Validator BlockId Payload)
     (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) : Type :=
-  Adaptive.Run (R := mysticetiBounded) P U V
+  Adaptive.Run (R := mysticetiRule) P U V
 
 /-- A total run is partial at every height. -/
 def AdaptiveRun.toPartial {P : AdaptivePolicy Validator BlockId Payload}
@@ -99,21 +98,21 @@ theorem partialRun_agree {P : AdaptivePolicy Validator BlockId Payload}
     {V₁ V₂ : View Validator BlockId Payload U} {E₁ E₂ : ℕ}
     (R₁ : PartialRun P U V₁ E₁) (R₂ : PartialRun P U V₂ E₂) :
     ∀ k, epochOf P.W k < min E₁ E₂ → R₁.vdct k = R₂.vdct k :=
-  Adaptive.partialRun_agree bounded agree schedLocal R₁ R₂
+  Adaptive.partialRun_agree agree R₁ R₂
 
 /-- Assignments agree wherever the common verdicts determine them. -/
 theorem partialRun_assign_agree {P : AdaptivePolicy Validator BlockId Payload}
     {V₁ V₂ : View Validator BlockId Payload U} {E₁ E₂ : ℕ}
     (R₁ : PartialRun P U V₁ E₁) (R₂ : PartialRun P U V₂ E₂) :
     ∀ m, epochOf P.W m < min E₁ E₂ + 1 → R₁.assign m = R₂.assign m :=
-  Adaptive.partialRun_assign_agree bounded agree schedLocal R₁ R₂
+  Adaptive.partialRun_assign_agree agree R₁ R₂
 
 /-- **AL3 — safety: the adaptive fixpoint is unique.** -/
 theorem adaptiveRun_agree {P : AdaptivePolicy Validator BlockId Payload}
     {V₁ V₂ : View Validator BlockId Payload U}
     (R₁ : AdaptiveRun P U V₁) (R₂ : AdaptiveRun P U V₂) :
     (∀ k, R₁.vdct k = R₂.vdct k) ∧ (∀ m, R₁.assign m = R₂.assign m) :=
-  Adaptive.run_agree bounded agree schedLocal R₁ R₂
+  Adaptive.run_agree agree R₁ R₂
 
 /-- The verdict form of uniqueness, in the shape of M6. -/
 theorem adaptive_decided_agree {P : AdaptivePolicy Validator BlockId Payload}
@@ -137,7 +136,7 @@ theorem AdaptivePolicy.const_run_decided {W : ℕ} {hW : 0 < W}
     (R : AdaptiveRun (AdaptivePolicy.const (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload) W hW hinj) U V) (k : ℕ) :
     Decided U V k (R.vdct k) :=
-  Adaptive.Policy.const_run_decided bounded schedLocal R k
+  Adaptive.Policy.const_run_decided R k
 
 /-! ## Liveness -/
 
@@ -162,7 +161,7 @@ variable {T : Finset Validator} {c R N : ℕ}
 /-- The core's descent, at every induced schedule. -/
 theorem descends_slotsOf (hc : 0 < c) (hspans : SpansEligible (Validator := Validator) c)
     (a : ℕ → Validator) :
-    Descends (mysticetiBounded (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+    Descends (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
       (slotsOf P.inj a) c :=
   descends hc (spansEligible_slotsOf hspans)
 
@@ -178,15 +177,15 @@ theorem epoch_closes (hT : T ⊆ (Correct : Finset Validator))
     (v : ℕ → Option BlockId) (E : ℕ)
     (hN : S.slotRound (P.W * (E + 2)) + 2 ≤ N) :
     ∀ k, epochOf P.W k < E + 1 →
-      ∃ w, DecidedWithin (S := slotsOf P.inj (fun m => P.pick U V v m)) U
-        V (P.W * (E + 2)) k w := by
+      ∃ w, DecidedBelow mysticetiRule (slotsOf P.inj (fun m => P.pick U V v m))
+        (P.W * (E + 2)) V k w := by
   have hlive : coreLive (slotsOf P.inj (fun m => P.pick U V v m)) V T P.W (P.W * (E + 2)) :=
     ⟨hcard, R, N, hs, hRW, hpop, hcov, fun k hk => by
       have := S.mono (le_of_lt hk)
       change S.slotRound k + 2 ≤ N
       omega⟩
   intro k hk
-  obtain ⟨w, hw⟩ := Adaptive.epoch_closes bounded leaderCommits
+  obtain ⟨w, hw⟩ := Adaptive.epoch_closes leaderCommits
     (descends_slotsOf (P := P) hc hspans) hruns V v E hlive k hk
   exact ⟨w, hw⟩
 
@@ -200,7 +199,7 @@ theorem exists_partialRun (hT : T ⊆ (Correct : Finset Validator))
     (V : View Validator BlockId Payload U) (hcov : V.CoversUpto N) (E : ℕ)
     (hN : S.slotRound (P.W * (E + 1)) + 2 ≤ N) :
     Nonempty (PartialRun P U V E) :=
-  Adaptive.exists_partialRun bounded schedLocal leaderCommits (descends_slotsOf (P := P) hc hspans)
+  Adaptive.exists_partialRun leaderCommits (descends_slotsOf (P := P) hc hspans)
     hruns V E (fun E' hE' _ => ⟨hcard, R, N, hs, hRW, hpop, hcov, fun k hk => by
       have h1 : k ≤ P.W * (E + 1) := by
         have := Nat.mul_le_mul_left P.W (show E' + 2 ≤ E + 1 by omega)
@@ -222,7 +221,7 @@ theorem adaptiveRun_exists (hT : T ⊆ (Correct : Finset Validator))
     (hpop : ∀ r, Populated U r)
     (V : View Validator BlockId Payload U) (hcov : ∀ N, V.CoversUpto N) :
     Nonempty (AdaptiveRun P U V) :=
-  Adaptive.run_exists bounded agree schedLocal leaderCommits (descends_slotsOf (P := P) hc hspans)
+  Adaptive.run_exists agree leaderCommits (descends_slotsOf (P := P) hc hspans)
     hruns V (fun E _ => ⟨hcard, R, S.slotRound (P.W * (E + 2)) + 2, hs, hRW,
       fun r _ _ => PopulatedOn.mono hT (hpop r), hcov _, fun k hk => by
         have := S.mono (le_of_lt hk)
@@ -239,7 +238,7 @@ theorem adaptiveRun_commits (hcard : quorumCard Validator ≤ T.card)
     {V : View Validator BlockId Payload U} (hcov : V.CoversUpto N) (A : AdaptiveRun P U V)
     {k : ℕ} (hk : P.W ≤ k) (hN : S.slotRound k + 2 ≤ N) (hlead : A.assign k ∈ T) :
     ∃ L, A.vdct k = some L :=
-  Adaptive.Run.commits bounded agree leaderCommits A (lo := P.W) (K := k + 1)
+  Adaptive.Run.commits agree leaderCommits A (lo := P.W) (K := k + 1)
     (show coreLive (slotsOf P.inj A.assign) V T P.W (k + 1) from
       ⟨hcard, R, N, hs, hRW, hpop, hcov, fun j hj => by
         have := S.mono (show j ≤ k by omega)
@@ -257,7 +256,7 @@ theorem adaptiveRun_commits_in_epoch (hT : T ⊆ (Correct : Finset Validator))
     (A : AdaptiveRun P U V) (e : ℕ) :
     ∃ b, P.W * (e + 1) ≤ b ∧ b + c ≤ P.W * (e + 2) ∧
       ∀ i, i < c → ∃ L, A.vdct (b + i) = some L :=
-  Adaptive.Run.commits_in_epoch bounded agree leaderCommits hruns A e
+  Adaptive.Run.commits_in_epoch agree leaderCommits hruns A e
     (show coreLive (slotsOf P.inj A.assign) V T P.W (P.W * (e + 2)) from
       ⟨hcard, R, S.slotRound (P.W * (e + 2)) + 2, hs, hRW,
         fun r _ _ => PopulatedOn.mono hT (hpop r), hcov _, fun k hk => by
@@ -288,6 +287,6 @@ theorem adaptiveRun_agree_extends {P : AdaptivePolicy Validator BlockId Payload}
     (R₁ : AdaptiveRun P U V) (R₂ : AdaptiveRun P U' V')
     (hok : Quorate (slotsOf P.inj R₁.assign) U U' V) :
     (∀ k, R₁.vdct k = R₂.vdct k) ∧ (∀ m, R₁.assign m = R₂.assign m) :=
-  Adaptive.run_agree_extends bounded agree schedLocal persist hst hext hsub R₁ R₂ hok
+  Adaptive.run_agree_extends agree persist hst hext hsub R₁ R₂ hok
 
 end LeanDag

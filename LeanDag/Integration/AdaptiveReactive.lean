@@ -40,7 +40,7 @@ theorem exists_partialRun_reactive (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hlive : ∀ (E' : ℕ), E' < E → ∀ (A : PartialRun P U V E'),
       reactiveLive (slotsOf P.inj (fun m => P.pick U V A.vdct m)) V T P.W (P.W * (E' + 2))) :
     Nonempty (PartialRun P U V E) :=
-  Adaptive.exists_partialRun bounded schedLocal leaderCommits_reactive
+  Adaptive.exists_partialRun leaderCommits_reactive
     (descends_slotsOf (P := P) hc hspans) hruns V E hlive
 
 /-- **The adaptive fixpoint exists over reactive Mysticeti.** Under a
@@ -53,7 +53,7 @@ theorem adaptiveRun_exists_reactive (hc : 0 < c) (hruns : PlacesRuns P T c)
     (hlive : ∀ (E : ℕ) (A : PartialRun P U V E),
       reactiveLive (slotsOf P.inj (fun m => P.pick U V A.vdct m)) V T P.W (P.W * (E + 2))) :
     Nonempty (AdaptiveRun P U V) :=
-  Adaptive.run_exists bounded agree schedLocal leaderCommits_reactive
+  Adaptive.run_exists agree leaderCommits_reactive
     (descends_slotsOf (P := P) hc hspans) hruns V hlive
 
 /-- **Reliable-led slots commit, reactively.** In any run, a slot past
@@ -67,7 +67,7 @@ theorem adaptiveRun_commits_reactive (V : View Validator BlockId Payload U)
   have hlt : k < P.W * (epochOf P.W k + 2) := by
     have := (epochOf_lt_iff P.W_pos).mp (show epochOf P.W k < epochOf P.W k + 2 by omega)
     exact this
-  exact Adaptive.Run.commits bounded agree leaderCommits_reactive A
+  exact Adaptive.Run.commits agree leaderCommits_reactive A
     (Adaptive.Run.live_of_staged (Live := fun S {U} V T lo K => reactiveLive S (U := U) V T lo K)
       A hlive (epochOf P.W k)) hk hlt hlead
 

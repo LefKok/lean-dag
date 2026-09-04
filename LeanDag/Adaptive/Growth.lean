@@ -50,18 +50,17 @@ theorem Policy.const_stable {R : DagRule Validator BlockId Payload} (W : ℕ) (h
 
 section Growth
 
-variable {R : BoundedRule Validator BlockId Payload} {P : Policy R.toDagRule}
+variable {R : DagRule Validator BlockId Payload} {P : Policy R}
 variable {Ok : Slots Validator → ∀ (U _U' : R.Universe), R.View U → Prop}
-variable (hb : Bounded R) (ha : Agree R.toDagRule) (hl : SchedLocal R)
-variable (hp : Persist R.toDagRule Ok) (hst : P.Stable)
-include hb ha hl hp hst
+variable (ha : Agree R) (hp : Persist R Ok) (hst : P.Stable)
+include ha hp hst
 
 variable {U U' : R.Universe} {V : R.View U} {V' : R.View U'}
 
 /-- **Partial runs agree across growth.** A run on `U` and a run on an
 extension `U'`, from views one contained in the other, agree on the
 verdicts of their common epochs. -/
-theorem partialRun_agree_extends (hext : Extends R.toDagRule U U')
+theorem partialRun_agree_extends (hext : Extends R U U')
     (hsub : R.viewIds V ⊆ R.viewIds V') {E E' : ℕ}
     (A : PartialRun P U V E) (A' : PartialRun P U' V' E')
     (hok : Ok (slotsOf P.inj A.assign) U U' V) :
@@ -83,17 +82,16 @@ theorem partialRun_agree_extends (hext : Extends R.toDagRule U U')
       exact ih (epochOf P.W j) (by omega) j rfl (by omega)
     -- The smaller run's verdict, persisted to the larger view.
     have h₁ : R.Decided (slotsOf P.inj A.assign) V' k (A.vdct k) :=
-      hp _ U U' hext V V' hok hsub k _ (hb.toDecided _ _ V k _ (A.closed k (by omega)))
+      hp _ U U' hext V V' hok hsub k _ (A.closed k (by omega)).toDecided
     -- The larger run's verdict, transported to the smaller run's schedule.
     have h₂ : R.Decided (slotsOf P.inj A.assign) V' k (A'.vdct k) :=
-      hb.toDecided _ _ V' k _
-        (hl (slotsOf P.inj A'.assign) (slotsOf P.inj A.assign) rfl _
-          (fun m hm => (hassign m hm).symm) V' k _ (A'.closed k (by omega)))
+      ((A'.closed k (by omega)).reschedule (S' := slotsOf P.inj A.assign) rfl
+        (fun m hm => hassign m hm)).toDecided
     exact ha _ V' V' k _ _ h₁ h₂
 
 /-- Assignments agree across growth wherever the common verdicts
 determine them. -/
-theorem partialRun_assign_agree_extends (hext : Extends R.toDagRule U U')
+theorem partialRun_assign_agree_extends (hext : Extends R U U')
     (hsub : R.viewIds V ⊆ R.viewIds V') {E E' : ℕ}
     (A : PartialRun P U V E) (A' : PartialRun P U' V' E')
     (hok : Ok (slotsOf P.inj A.assign) U U' V) :
@@ -101,21 +99,21 @@ theorem partialRun_assign_agree_extends (hext : Extends R.toDagRule U U')
   intro m hm
   rw [A.coherent m (by omega), A'.coherent m (by omega), hst U U' hext V V' A.vdct m]
   refine P.adapted U' V' V' A.vdct A'.vdct m (fun j hj => ?_)
-  exact partialRun_agree_extends hb ha hl hp hst hext hsub A A' hok j (by omega)
+  exact partialRun_agree_extends ha hp hst hext hsub A A' hok j (by omega)
 
 /-- **The fixpoint is a prefix of the fixpoint on any extension.** Two
 total runs, on a universe and an extension of it, hold the same
 verdicts and run the same schedule. -/
-theorem run_agree_extends (hext : Extends R.toDagRule U U')
+theorem run_agree_extends (hext : Extends R U U')
     (hsub : R.viewIds V ⊆ R.viewIds V') (A : Run P U V) (A' : Run P U' V')
     (hok : Ok (slotsOf P.inj A.assign) U U' V) :
     (∀ k, A.vdct k = A'.vdct k) ∧ (∀ m, A.assign m = A'.assign m) := by
   constructor
   · intro k
-    exact partialRun_agree_extends hb ha hl hp hst hext hsub
+    exact partialRun_agree_extends ha hp hst hext hsub
       (A.toPartial (epochOf P.W k + 1)) (A'.toPartial (epochOf P.W k + 1)) hok k (by omega)
   · intro m
-    exact partialRun_assign_agree_extends hb ha hl hp hst hext hsub
+    exact partialRun_assign_agree_extends ha hp hst hext hsub
       (A.toPartial (epochOf P.W m + 1)) (A'.toPartial (epochOf P.W m + 1)) hok m (by omega)
 
 end Growth

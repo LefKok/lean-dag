@@ -1,5 +1,6 @@
 import LeanDag.Properties.Local
 import LeanDag.Properties.Persist
+import LeanDag.Properties.Bounded
 
 /-!
 # The band a verdict reads
@@ -171,24 +172,34 @@ theorem reaches_old (hc : Causal R) (h : AgreeBand R U U' lo hi)
 end AgreeBand
 
 /-- **Every verdict reads a band of rounds.** From the slot's own round
-up to some top, the blocks the view holds already carry the verdict:
-any universe carrying that band and any view holding those blocks
-decides the slot the same way. -/
+up to some top, the blocks the view holds and the leaders of the slots
+sitting there already carry the verdict: any universe carrying the
+band, any view holding those blocks, and any schedule with the same
+round structure naming the same leaders inside the band, decides the
+slot the same way.
+
+Three axes, one top. The DAG axis gives `Persist` and `Local`, the view
+axis gives monotonicity, and the schedule axis gives the bound the
+adaptive fixpoint needs, since the slots sitting at or below a round are
+finitely many (`Slots.mono` with `Slots.unbounded`). -/
 def Banded (R : DagRule Validator BlockId Payload) : Prop :=
   ∀ (S : Slots Validator) (U : R.Universe) (V : R.View U) (k : ℕ) (v : Option BlockId),
     R.Decided S V k v →
-      ∃ top : ℕ, ∀ (U' : R.Universe) (V' : R.View U'),
+      ∃ top : ℕ, ∀ (S' : Slots Validator) (U' : R.Universe) (V' : R.View U'),
+        S'.slotRound = S.slotRound →
+        (∀ m, S.slotRound m ≤ top → S'.leader m = S.leader m) →
         AgreeBand R U U' (S.slotRound k) top →
         (∀ b, b ∈ R.viewIds V → S.slotRound k ≤ (R.block U b).round →
           (R.block U b).round ≤ top → b ∈ R.viewIds V') →
-        R.Decided S V' k v
+        R.Decided S' V' k v
 
 /-- **Persistence falls out.** An extension carries every band and adds
 only blocks; a larger view holds everything the band names. -/
 theorem Persist.of_banded (h : Banded R) : Persist.Unconditional R := by
   intro S U U' he V V' _ hV k v hd
   obtain ⟨top, htop⟩ := h S U V k v hd
-  exact htop U' V' (AgreeBand.of_extends he _ _) (fun b hb _ _ => hV hb)
+  exact htop S U' V' rfl (fun _ _ => rfl) (AgreeBand.of_extends he _ _)
+    (fun b hb _ _ => hV hb)
 
 /-- **And monotonicity in the view.** Fix the universe and the band
 carries itself; a larger view holds everything the band names. The
@@ -198,7 +209,7 @@ theorem decided_mono_of_banded (h : Banded R) {S : Slots Validator} {U : R.Unive
     {V V' : R.View U} (hsub : R.viewIds V ⊆ R.viewIds V') {k : ℕ} {v : Option BlockId}
     (hd : R.Decided S V k v) : R.Decided S V' k v := by
   obtain ⟨top, htop⟩ := h S U V k v hd
-  exact htop U V' AgreeBand.refl (fun b hb _ _ => hsub hb)
+  exact htop S U V' rfl (fun _ _ => rfl) AgreeBand.refl (fun b hb _ _ => hsub hb)
 
 /-- **And locality.** Two DAGs agreeing above a round at or below the
 slot's agree on the band, and views agreeing there hold the same blocks
@@ -206,8 +217,32 @@ of it. -/
 theorem Local.of_banded (hvs : ViewSound R) (h : Banded R) : Local R := by
   intro S U U' r hag V V' hvag k hk v hd
   obtain ⟨top, htop⟩ := h S U V k v hd
-  refine htop U' V' (AgreeBand.of_agreeAbove hag hk) (fun b hb hlo _ => ?_)
+  refine htop S U' V' rfl (fun _ _ => rfl) (AgreeBand.of_agreeAbove hag hk)
+    (fun b hb hlo _ => ?_)
   exact (hvag b (hvs V hb) (by omega)).mp hb
+
+/-- **A bound falls out of the band.** The slots sitting at or below a
+round are finitely many, since the round structure is monotone and
+unbounded, so the band's top names a slot bound and the verdict is
+unchanged by reassignment above it.
+
+The bound is not tight: it is every slot the band's rounds can hold,
+where a derivation may have named fewer. A mechanism wanting a tight
+bound asks the protocol for one (`Commit.lean`); this is what a rule
+gets for nothing. -/
+theorem exists_decidedBelow (h : Banded R) {S : Slots Validator} {U : R.Universe}
+    {V : R.View U} {k : ℕ} {v : Option BlockId} (hd : R.Decided S V k v) :
+    ∃ B, DecidedBelow R S B V k v := by
+  obtain ⟨top, ht⟩ := h S U V k v hd
+  obtain ⟨B₀, hB₀⟩ := S.unbounded (top + 1)
+  refine ⟨max (k + 1) B₀, lt_of_lt_of_le (Nat.lt_succ_self k) (le_max_left _ _), hd, ?_⟩
+  intro S' hround hlead
+  refine ht S' U V hround (fun m hm => hlead m ?_) AgreeBand.refl (fun b hb _ _ => hb)
+  by_contra hge
+  push_neg at hge
+  have hB : B₀ ≤ m := le_trans (le_max_right _ _) hge
+  have := S.mono hB
+  omega
 
 end Properties
 

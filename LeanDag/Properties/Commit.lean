@@ -22,10 +22,14 @@ feeding. Two properties, both proved by the protocol.
   whose leaders that execution followed.
 
 * `Descends` — a run of `c` consecutive committed slots decides every
-  slot below it, inside the run's bound. The indirect rule's descent,
-  stated over the bounded family; `c` is the protocol's, as is the
-  hypothesis on the round structure under which it holds, so the
-  property is indexed by the schedule too.
+  slot below it, inside the run's bound. The indirect rule's descent;
+  `c` is the protocol's, as is the hypothesis on the round structure
+  under which it holds, so the property is indexed by the schedule too.
+
+Both produce a verdict at a **tight** bound, which is why they are
+protocol obligations rather than corollaries of the band: the band's
+top names every slot its rounds can hold, and a direct commit at slot
+`k` depends on one leader, not on all of them.
 -/
 
 namespace LeanDag
@@ -38,20 +42,20 @@ variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 /-- **A reliable leader's slot commits**, within a bound one above it,
 wherever the protocol's precondition `Live` holds over a slot window
 containing the slot. -/
-def LeaderCommits (R : BoundedRule Validator BlockId Payload)
+def LeaderCommits (R : DagRule Validator BlockId Payload)
     (Live : Slots Validator → ∀ {U : R.Universe}, R.View U → Finset Validator → ℕ → ℕ → Prop) :
     Prop :=
   ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (T : Finset Validator) (lo K : ℕ),
     Live S V T lo K → ∀ k, lo ≤ k → k < K → S.leader k ∈ T →
-      ∃ L, R.DecidedWithin S (k + 1) V k (some L)
+      ∃ L, DecidedBelow R S (k + 1) V k (some L)
 
 /-- **A committed run decides everything below it.** `c` consecutive
 slots from `b`, each committed within `b + c`, decide every slot below
 `b` within `b + c`. -/
-def Descends (R : BoundedRule Validator BlockId Payload) (S : Slots Validator) (c : ℕ) : Prop :=
+def Descends (R : DagRule Validator BlockId Payload) (S : Slots Validator) (c : ℕ) : Prop :=
   ∀ {U : R.Universe} (V : R.View U) (b : ℕ),
-    (∀ j, b ≤ j → j < b + c → ∃ L, R.DecidedWithin S (b + c) V j (some L)) →
-    ∀ i, i < b → ∃ v, R.DecidedWithin S (b + c) V i v
+    (∀ j, b ≤ j → j < b + c → ∃ L, DecidedBelow R S (b + c) V j (some L)) →
+    ∀ i, i < b → ∃ v, DecidedBelow R S (b + c) V i v
 
 end Properties
 
