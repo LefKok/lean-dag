@@ -213,7 +213,7 @@ example : run2.anchor 0 = run2'.anchor 0 :=
 
 /-- BN2 on `Usun`: the smaller view holds the anchor, hence its history. -/
 example : historyFrom Usun.block 21 ⊆ Vsun'.ids :=
-  ((Window.holds (Fin 4) (Fin 32) Unit bnRule32 laws32).1 Usun Vsun' 21 (by decide))
+  ((Window.holds (Fin 4) (Fin 32) Unit bnRule32).1 Usun Vsun' 21 (by decide))
 
 /-- BN7a on the witness parameters: the rule stays in range at the values
 the run meets. -/
@@ -252,7 +252,7 @@ example : Aimd.rule bnRule32 bnP bnLeader bnWin 4 0 Usun (View.full Usun) 21 = (
 
 /-- BN2b on two views: the views differ, the windows do not. -/
 example : historyFrom Usun.block 21 ∩ Vsun.ids = historyFrom Usun.block 21 ∩ Vsun'.ids :=
-  (Window.holds (Fin 4) (Fin 32) Unit bnRule32 laws32).2 Usun Vsun Vsun' 21 (by decide) (by decide)
+  (Window.holds (Fin 4) (Fin 32) Unit bnRule32).2 Usun Vsun Vsun' 21 (by decide) (by decide)
 example : Vsun.ids ≠ Vsun'.ids := by decide
 
 /-- The `candidates` law through the run: the anchor `run2'` committed is

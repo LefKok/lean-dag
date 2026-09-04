@@ -8136,8 +8136,6 @@ predicate, a decision relation parametric in the schedule — and laws:
 
 ```lean
 structure Laws (R : BaseRule Validator BlockId Payload) : Prop where
-  view_complete : ∀ {U : R.Universe} (V : R.View U),
-    ∀ i ∈ R.viewIds V, ∀ j ∈ (R.block U i).refs, j ∈ R.viewIds V
   full_ids : ∀ U, R.viewIds (R.full U) = R.ids U
   historyView_ids : ∀ U A (hA : A ∈ R.ids U),
     R.viewIds (R.historyView U A hA) = historyFrom (R.block U) A
@@ -8150,8 +8148,8 @@ structure Laws (R : BaseRule Validator BlockId Payload) : Prop where
     R.Decided S V k (some L) → R.IsLeaderBlock S U k L
 ```
 
-`view_complete` is the paper's A2 (view soundness having moved into
-`BaseRule` itself as `viewSound`), `agree` the
+A2 has moved into `BaseRule` itself, as the fields `viewSound` and
+`viewComplete`; `agree` is the
 safety half of A4, and the two candidate laws tie the direct predicate
 to the relation; the liveness half of A4 is a clause on a schedule,
 below. Each rule's fault class lives on its instantiation and none on
@@ -18111,6 +18109,10 @@ structure BaseRule (Validator : Type) [Fintype Validator] [DecidableEq Validator
   without `Laws` — so a rule reaches the properties before it has
   proved anything. -/
   viewSound : ∀ {U : Universe} (V : View U), viewIds V ⊆ ids U
+  /-- **A2.** A view is closed downward: it holds what its blocks
+  reference. A field for the same reason as `viewSound`. -/
+  viewComplete : ∀ {U : Universe} (V : View U),
+    ∀ i ∈ viewIds V, ∀ j ∈ (block U i).refs, j ∈ viewIds V
   /-- The full view: every block of the universe. -/
   full : ∀ U : Universe, View U
   /-- The causal history of a block of the universe, as a view. -/
@@ -18164,9 +18166,6 @@ def CoversUpto (R : BaseRule Validator BlockId Payload) (U : R.Universe)
 
 ```lean
 structure Laws (R : BaseRule Validator BlockId Payload) : Prop where
-  /-- **A2.** A view is closed downward: it holds what its blocks reference. -/
-  view_complete : ∀ {U : R.Universe} (V : R.View U),
-    ∀ i ∈ R.viewIds V, ∀ j ∈ (R.block U i).refs, j ∈ R.viewIds V
   /-- The full view holds exactly the universe. -/
   full_ids : ∀ U, R.viewIds (R.full U) = R.ids U
   /-- The history view holds exactly the history. -/
@@ -18186,7 +18185,9 @@ structure Laws (R : BaseRule Validator BlockId Payload) : Prop where
     R.Decided S V k (some L) → R.IsLeaderBlock S U k L
 ```
 
-**The laws of a base rule** — what the leader-count mechanism consumes of the protocol, and what each instantiation is proved to satisfy. `view_complete` is the paper's A2 (a validator holds a block only with its whole causal history), view soundness having moved into `BaseRule` itself as the field `viewSound`; `agree` is the safety half of A4 (for a fixed schedule, verdicts agree across views); `decided_of_directCommitIn` ties the direct predicate to the relation, which is what makes the window count a count of *verdicts*: two directly committed candidates of one slot are one block, by `agree`; `candidates` is its converse, a committed block is a candidate of its slot. The liveness half of A4 is stated in Phase 3 over an extension of the data.
+**The laws of a base rule** — what the leader-count mechanism consumes of the protocol, and what each instantiation is proved to satisfy. A2 — a validator holds a block only with its whole causal history — has moved into `BaseRule` itself, as the fields `viewSound` and `viewComplete`; `agree` is the safety half of A4 (for a fixed schedule, verdicts agree across views); `decided_of_directCommitIn` ties the direct predicate to the relation, which is what makes the window count a count of *verdicts*: two directly committed candidates of one slot are one block, by `agree`; `candidates` is its converse, a committed block is a candidate of its slot. The liveness half of A4 is stated in Phase 3 over an extension of the data.
+
+**What still reads this.** One theorem, `Helpers/Cover.coversUpto_full`, for `full_ids`. `agree` and `candidates` survive to build `Properties.Agree` and `Properties.CommitsCandidate`, which is what every other theorem of the mechanism now takes; `decided_of_directCommitIn` and `historyView_ids` have no consumers at all. `docs/target-properties.md` §11.2 records why the two dead clauses are kept rather than deleted.
 
 #### `UpdateRule`
 
@@ -18594,11 +18595,13 @@ def WindowAgreement (R : BaseRule Validator BlockId Payload) : Prop :=
 ```lean
 def Statement : Prop :=
   ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
-    [DecidableEq BlockId] (R : BaseRule Validator BlockId Payload), R.Laws →
+    [DecidableEq BlockId] (R : BaseRule Validator BlockId Payload),
     HistoryInView R ∧ WindowAgreement R
 ```
 
-The window is agreed, for every base rule satisfying the laws.
+**The window is agreed, for every base rule** — no laws, and no properties either.
+
+It took `R.Laws` while view closure was a law. Closure is now a field of the carrier (`Properties.DagRule.viewComplete`, and `BaseRule` alongside it), which every view type already carried, so BN2 asks nothing of a protocol beyond being a rule at all.
 
 #### `PartialRunAgreement`
 
@@ -18909,7 +18912,8 @@ def EveryHeight (R : LiveRule Validator BlockId Payload) (P : Params)
 ```lean
 def Statement : Prop :=
   ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
-    [DecidableEq BlockId] (R : LiveRule Validator BlockId Payload), R.Laws →
+    [DecidableEq BlockId] (R : LiveRule Validator BlockId Payload),
+    Properties.Agree R.toBaseRule.toDagRule →
     ∀ (P : Params) (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders)
       (upd : UpdateRule R.toBaseRule), UpdBounded P upd → ∀ c,
       ProgressStmt R P getLeader hk upd c ∧ EveryHeight R P getLeader hk upd c
@@ -19042,6 +19046,7 @@ def mysticeti [Faults Validator] : BaseRule Validator BlockId Payload where
   ids := fun U => U.ids
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
+  viewComplete := fun V => V.complete
   full := fun U => LeanDag.View.full U
   historyView := fun U A hA => historyViewOf U A hA
   waveLength := 3
@@ -19128,6 +19133,7 @@ def odontoceti [Faults5 Validator] : BaseRule Validator BlockId Payload where
   ids := fun U => U.ids
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
+  viewComplete := fun V => V.complete
   full := fun U => LeanDag.View.full U
   historyView := fun U A hA => historyViewOf U A hA
   waveLength := 2
@@ -19214,6 +19220,7 @@ def nemo : BaseRule Validator BlockId Payload where
   ids := fun U => U.ids
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
+  viewComplete := fun V => V.complete
   full := fun U => Nemo.View.full U
   historyView := fun U A hA => nemoHistoryViewOf U A hA
   waveLength := 2
@@ -22599,6 +22606,7 @@ def BaseRule.toDagRule (R : BaseRule Validator BlockId Payload) :
   ids := R.ids
   viewIds := R.viewIds
   viewSound := R.viewSound
+  viewComplete := R.viewComplete
   Decided := R.Decided
 ```
 
@@ -22731,6 +22739,7 @@ def hydrozoan [LeanDag.Hydrozoan.Faults Replica] :
   ids := fun U => U.ids
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
+  viewComplete := fun V => V.complete
   full := fun U => LeanDag.Hydrozoan.View.full U
   historyView := fun U A hA => Hydrozoan.historyView U A hA
   waveLength := 3
@@ -22912,6 +22921,7 @@ def optimalHydrozoan [LeanDag.OptimalHydrozoan.OptimalFaults Replica] :
   ids := fun U => U.val.ids
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
+  viewComplete := fun V => V.complete
   full := fun U => LeanDag.Hydrozoan.View.full U.val
   historyView := fun U A hA => Hydrozoan.historyView U.val A hA
   waveLength := 3
@@ -23020,6 +23030,7 @@ def orcaella [HybridFaults Validator] (k : ℕ) : BaseRule Validator BlockId Pay
   ids := fun U => U.val.ids
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
+  viewComplete := fun V => V.complete
   full := fun U => LeanDag.View.full U.val
   historyView := fun U A hA => historyViewOf U.val A hA
   waveLength := 2
@@ -23132,7 +23143,8 @@ def Delivered (R : LiveRule Validator BlockId Payload) (P : Params)
 ```lean
 def Statement : Prop :=
   ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
-    [DecidableEq BlockId] (R : LiveRule Validator BlockId Payload), R.Laws →
+    [DecidableEq BlockId] (R : LiveRule Validator BlockId Payload),
+    Properties.CommitsCandidate R.toBaseRule.toDagRule →
     ∀ (P : Params) (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders)
       (upd : UpdateRule R.toBaseRule) (slack : ℕ),
       Delivered R P getLeader hk upd slack
@@ -23830,6 +23842,7 @@ def rule : Properties.DagRule Replica BlockId Unit where
   ids := fun U => U.ids
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
+  viewComplete := fun V => V.complete
   Decided := fun S _ V k v =>
     @LeanDag.Hydrozoan.Decided _ _ _ _ _ _ _ (ofCoreSlots S) _ V k v
 ```
@@ -24331,6 +24344,7 @@ def mysticetiRule : DagRule Validator BlockId Payload where
   ids := fun U => U.ids
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
+  viewComplete := fun V => V.complete
   Decided := fun S _ V k v => Decided (S := S) _ V k v
 ```
 
@@ -24526,6 +24540,13 @@ structure DagRule (Validator : Type) [Fintype Validator] [DecidableEq Validator]
   asking for it here costs an instance nothing and spares every
   consumer a hypothesis. -/
   viewSound : ∀ {U : Universe} (V : View U), viewIds V ⊆ ids U
+  /-- A view is closed under references: it holds what its blocks point
+  at. The second law every view type already carries, and the one a
+  window count needs — a validator holding a block holds its whole
+  causal history, so a window measured on that history is the same
+  window whoever measures it (`Barnacle/Window/`). -/
+  viewComplete : ∀ {U : Universe} (V : View U),
+    ∀ i ∈ viewIds V, ∀ j ∈ (block U i).refs, j ∈ viewIds V
   /-- The decision relation under a schedule. -/
   Decided : Slots Validator → ∀ {U : Universe}, View U → ℕ → Option BlockId → Prop
 ```
@@ -33338,7 +33359,7 @@ Two closed ranges' ledgers are disjoint: their blocks have rounds in disjoint in
 *theorem, `Barnacle.Helpers.Progress.lean`*
 
 ```lean
-theorem progress (hR : R.Laws) (hupd : UpdBounded P upd) {c K Rnd N : ℕ}
+theorem progress (hR : Properties.Agree R.toBaseRule.toDagRule) (hupd : UpdBounded P upd) {c K Rnd N : ℕ}
     {V : R.View U} (hcov : R.toBaseRule.CoversUpto U V N)
     (Rn : PartialRun R.toBaseRule P getLeader hk upd U V K)
     (hlive : R.LiveOn (Sched getLeader hk (Rn.count K) (Rn.count_pos K) (Rn.count_le K)) c)
@@ -33352,7 +33373,7 @@ theorem progress (hR : R.Laws) (hupd : UpdBounded P upd) {c K Rnd N : ℕ}
 *theorem, `Barnacle.Helpers.Progress.lean`*
 
 ```lean
-theorem everyHeight (hR : R.Laws) (hupd : UpdBounded P upd) {c : ℕ}
+theorem everyHeight (hR : Properties.Agree R.toBaseRule.toDagRule) (hupd : UpdBounded P upd) {c : ℕ}
     (hlive : ∀ m (hm : 0 < m) (hmax : m ≤ P.maxLeaders),
       R.LiveOn (Sched getLeader hk m hm hmax) c)
     {Rnd N : ℕ} {V : R.View U} (hcov : R.toBaseRule.CoversUpto U V N)
@@ -33452,7 +33473,7 @@ theorem mysticetiLive_descent [F : Faults Validator] :
 ```lean
 theorem odontoceti_laws [Faults5 Validator] :
     BaseRule.Laws (odontoceti (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) where
-  view_complete
+  full_ids
 ```
 
 The laws, for Odontoceti.
@@ -33477,7 +33498,7 @@ The descent laws, for Odontoceti at slack `f`.
 ```lean
 theorem nemo_laws :
     BaseRule.Laws (nemo (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) where
-  view_complete
+  full_ids
 ```
 
 The laws, for Nemo-Nemo.
@@ -35725,7 +35746,7 @@ theorem causalStructure (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) :
 theorem orcaella_laws [HybridFaults Validator] {k : ℕ} (hk : Hybrid.Admissible Validator k) :
     BaseRule.Laws
       (orcaella (Validator := Validator) (BlockId := BlockId) (Payload := Payload) k) where
-  view_complete
+  full_ids
 ```
 
 The laws, for Orcaella at an admissible threshold.

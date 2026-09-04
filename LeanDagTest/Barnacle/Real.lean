@@ -106,7 +106,8 @@ theorem real_delivers (K : ℕ) :
           ∃ A, (real_runs K).some.vdct k ((real_runs K).some.anchor k) = some A ∧
             b ∈ historyFrom (Ugrow (11 * K + 9)).block A := by
   obtain ⟨T, hcard, hT⟩ :=
-    Validity.holds (Fin 4) ℕ Unit realRule (Mysticeti.holds (Fin 4) ℕ Unit) bnP bnLeader bnWin
+    Validity.holds (Fin 4) ℕ Unit realRule
+      (commitsCandidate_toDagRule _ (Mysticeti.holds (Fin 4) ℕ Unit)) bnP bnLeader bnWin
       realUpd (Faults.f (Fin 4)) mysticetiLive_delivers (Ugrow (11 * K + 9))
       (realRule.full (Ugrow (11 * K + 9))) K (real_runs K).some 0 (11 * K + 9)
       (ugrow_good _)

@@ -32,7 +32,7 @@ About fifteen exist:
 | Crash recovery (`skipFill`, `liftView`) | `SafeSkip/` | Mysticeti, Hydrozoan | core, Hydrozoan: both directions |
 | Re-genesis | `Integration/ReGenesis.lean` | none | core: both directions (§3.10) |
 | Adaptive leader schedule (Hammerhead) | `Adaptive/` | Mysticeti, Odontoceti | core, reactive core, Hydrozoan |
-| Adaptive leader count (Barnacle) | `Barnacle/` | six | carriers for four, two properties each (§11.2) |
+| Adaptive leader count (Barnacle) | `Barnacle/` | six | every theorem takes properties or nothing (§11.2) |
 | Reactive schedule | `Reactive/` | Mysticeti, Odontoceti | as a second `Live` for the core |
 | Rate limiting | `DoS/` | none | `DeliversOn`, with the paced discipline (§3.11) |
 | Chain quality | `Quality/` | Mysticeti | `CommitsCandidate` (§3.9) |
@@ -1372,6 +1372,44 @@ new carriers gain two obligations of six, and the remaining four are
 per-rule work — the honest reading being that a shared interface hands
 over the laws a protocol already had, under new names, and nothing
 deeper.
+
+**The link now runs protocol → properties → Barnacle.** Every theorem
+of the leader-count mechanism takes properties or nothing:
+
+| Barnacle result | takes |
+|---|---|
+| BN3 partial-run agreement | `Agree` |
+| BN5 ledger agreement, prefix, no-duplication | `Agree`, `CommitsCandidate` |
+| BN2 window agreement | nothing |
+| BN12 healthy window, and the count | nothing |
+| Progress, run existence | `Agree` |
+| Validity, delivery | `CommitsCandidate` |
+
+Two changes made it so, and neither needed a new property. `viewSound`
+and `viewComplete` became fields of `DagRule` **and** of `BaseRule` —
+every view type carried both proofs already — which is what lets
+`toDagRule` be taken without laws, so a rule is a carrier before it has
+proved anything. And the hypotheses were restated: `Laws.agree` and
+`Properties.Agree R.toDagRule` are the same proposition, since
+`toDagRule` preserves `Decided` by `rfl`, so this was a signature change
+throughout.
+
+**BN2 and BN12 need nothing at all.** Window agreement
+rested on view closure, which is now a carrier field, so it holds of
+every rule. The window count never took laws in the first place: it is
+parameterised by `BaseRule`'s *data* — `DirectCommitIn`, `historyView`,
+`waveLength` — which is the mechanism's own instrument and not something
+a protocol owes.
+
+**What is left of `Laws` is a source, not an interface.** One consumer
+remains, `Helpers/Cover.coversUpto_full`, for `full_ids`. `agree` and
+`candidates` survive only to build the two properties;
+`decided_of_directCommitIn` and `historyView_ids` have **no consumers at
+all** — six protocols prove them for nothing. Deleting the two dead
+clauses is available and not taken:
+`decided_of_directCommitIn` is precisely the law a direct-commit
+predicate would need if `DirectCommitIn` were ever made a parameter of a
+property rather than carrier data, so it is likelier to move than to go.
 
 **Why Barnacle's laws stay in `Barnacle/`.** They are properties, and a
 reader may expect them under `Properties/`. §8's dependency rule is what

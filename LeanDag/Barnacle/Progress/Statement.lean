@@ -1,3 +1,4 @@
+import LeanDag.Barnacle.Helpers.DagRule
 import LeanDag.Barnacle.Model.Live
 
 /-!
@@ -73,7 +74,8 @@ every parameter set, every keyed leader function, every update rule that
 keeps the count in range, and every gap. -/
 def Statement : Prop :=
   ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
-    [DecidableEq BlockId] (R : LiveRule Validator BlockId Payload), R.Laws →
+    [DecidableEq BlockId] (R : LiveRule Validator BlockId Payload),
+    Properties.Agree R.toBaseRule.toDagRule →
     ∀ (P : Params) (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders)
       (upd : UpdateRule R.toBaseRule), UpdBounded P upd → ∀ c,
       ProgressStmt R P getLeader hk upd c ∧ EveryHeight R P getLeader hk upd c

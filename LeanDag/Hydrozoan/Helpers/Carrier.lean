@@ -62,6 +62,7 @@ def rule : Properties.DagRule Replica BlockId Unit where
   ids := fun U => U.ids
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
+  viewComplete := fun V => V.complete
   Decided := fun S _ V k v =>
     @LeanDag.Hydrozoan.Decided _ _ _ _ _ _ _ (ofCoreSlots S) _ V k v
 

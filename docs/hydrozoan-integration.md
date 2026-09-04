@@ -262,7 +262,7 @@ What **HI4** requires:
 | obligation | source |
 |:---|:---|
 | `block`, `ids`, `viewIds`, `full` | Hydrozoan's `BlockUniverse`, `View`, `View.full` |
-| `view_subset`, `view_complete`, `full_ids` | `View.subset_ids`, `View.complete`, `View.full`, verbatim |
+| `viewSound`, `viewComplete` (now `BaseRule` fields), `full_ids` | `View.subset_ids`, `View.complete`, `View.full`, verbatim |
 | `agree` | **HZ3 `SlotAgreement.holds`**, already proved |
 | `decided_of_directCommitIn`, `candidates` | the `Decided` constructors, which carry `IsLeaderBlock` |
 | `decDirect` | `FastCommit` and `SlowCommit` are `Finset.card` comparisons |
@@ -1071,8 +1071,8 @@ def hydrozoan : Barnacle.BaseRule Replica BlockId Unit where
 
 theorem hydrozoan_laws : hydrozoan.Laws where
   agree := SlotAgreement.holds ..
-  view_subset := fun V => V.subset_ids
-  view_complete := fun V => V.complete
+  viewSound := fun V => V.subset_ids
+  viewComplete := fun V => V.complete
   …
 ```
 

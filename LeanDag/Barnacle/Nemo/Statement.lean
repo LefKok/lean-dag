@@ -34,6 +34,7 @@ def nemo : BaseRule Validator BlockId Payload where
   ids := fun U => U.ids
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
+  viewComplete := fun V => V.complete
   full := fun U => Nemo.View.full U
   historyView := fun U A hA => nemoHistoryViewOf U A hA
   waveLength := 2

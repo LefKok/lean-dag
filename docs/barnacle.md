@@ -181,7 +181,7 @@ as a result of the house shape: `Mysticeti/Statement.lean` defines the
 data and states `Laws mysticeti`, `Mysticeti/Proof.lean` proves it, and
 Phase 5 adds the same pair for Odontoceti and Nemo. Every generic
 theorem takes `(hR : R.Laws)`. The laws render the paper's
-assumptions: `view_complete` is A2's second half (a validator
+assumptions: A2 has moved into `BaseRule` as fields (a validator
 holds a block only with its whole causal history), `DirectCommitIn` and
 `waveLength` are A3, `agree` is the safety half of A4; the liveness
 half is §7. `BaseRule.IsLeaderBlock

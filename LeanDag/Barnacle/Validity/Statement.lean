@@ -1,3 +1,4 @@
+import LeanDag.Barnacle.Helpers.DagRule
 import LeanDag.Barnacle.Model.Run
 import LeanDag.Barnacle.Model.Live
 
@@ -60,7 +61,8 @@ def Delivered (R : LiveRule Validator BlockId Payload) (P : Params)
 /-- Validity, for every live rule satisfying the laws. -/
 def Statement : Prop :=
   ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
-    [DecidableEq BlockId] (R : LiveRule Validator BlockId Payload), R.Laws →
+    [DecidableEq BlockId] (R : LiveRule Validator BlockId Payload),
+    Properties.CommitsCandidate R.toBaseRule.toDagRule →
     ∀ (P : Params) (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders)
       (upd : UpdateRule R.toBaseRule) (slack : ℕ),
       Delivered R P getLeader hk upd slack

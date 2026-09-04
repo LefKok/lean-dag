@@ -16,10 +16,10 @@ namespace Barnacle
 namespace Window
 
 theorem holds : Statement := by
-  intro Validator BlockId Payload _ _ _ R hR
+  intro Validator BlockId Payload _ _ _ R
   have hin : HistoryInView R := by
     intro U V A hA i hi
-    exact mem_of_reaches_of_closed (hR.view_complete V) hA
+    exact mem_of_reaches_of_closed (R.viewComplete V) hA
       (reaches_of_mem_historyUptoFrom hi)
   refine ⟨hin, ?_⟩
   intro U V₁ V₂ A h₁ h₂

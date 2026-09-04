@@ -103,6 +103,7 @@ def mysticetiRule : DagRule Validator BlockId Payload where
   ids := fun U => U.ids
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
+  viewComplete := fun V => V.complete
   Decided := fun S _ V k v => Decided (S := S) _ V k v
 
 variable {U U' : BlockUniverse Validator BlockId Payload} {G R₀ : ℕ}

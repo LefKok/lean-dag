@@ -127,7 +127,7 @@ configuration `1` with `run2`'s — two leaders after round `5`. -/
 example :
     ∃ Rn1 : PartialRun bnLive.toBaseRule bnP bnLeader bnWin bnUpd Usun (bnLive.full Usun) 1,
     Rn1.count 1 = 2 ∧ Rn1.start 1 = 5 ∧ Rn1.anchor 0 = 5 := by
-  obtain ⟨Rn1⟩ := (Progress.holds (Fin 4) (Fin 32) Unit bnLive laws32 bnP bnLeader bnWin bnUpd
+  obtain ⟨Rn1⟩ := (Progress.holds (Fin 4) (Fin 32) Unit bnLive (agree_toDagRule _ laws32) bnP bnLeader bnWin bnUpd
     bnUpd_bounded 0).1 Usun (bnLive.full Usun) 1 8 0 (coversUpto_full laws32 Usun 8) run0 bnLive_liveOn
     (show bnLive.Good Usun 1 8 from ⟨rfl, rfl, rfl⟩) (by decide) (by decide)
   refine ⟨Rn1, ?_⟩
@@ -141,7 +141,7 @@ example :
 example :
     ∃ Rn1 : PartialRun bnLive.toBaseRule bnP bnLeader bnWin bnUpd Usun (bnLive.full Usun) 1,
     Rn1.start 1 ≤ 0 + 4 + 1 + 0 :=
-  progress_exists laws32 bnUpd_bounded (coversUpto_full laws32 Usun 8) run0 bnLive_liveOn
+  progress_exists (agree_toDagRule _ laws32) bnUpd_bounded (coversUpto_full laws32 Usun 8) run0 bnLive_liveOn
     (show bnLive.Good Usun 1 8 from ⟨rfl, rfl, rfl⟩) (by decide) (by decide)
 
 -- horizon values
@@ -193,18 +193,18 @@ theorem bnLive_liveOn_all : ∀ m (hm : 0 < m) (hmax : m ≤ bnP.maxLeaders),
 /-- BN8b applied on data: height `1` under horizon `8`. -/
 example :
     Nonempty (PartialRun bnLive.toBaseRule bnP bnLeader bnWin bnUpd Usun (bnLive.full Usun) 1) :=
-  everyHeight laws32 bnUpd_bounded bnLive_liveOn_all (coversUpto_full laws32 Usun 8)
+  everyHeight (agree_toDagRule _ laws32) bnUpd_bounded bnLive_liveOn_all (coversUpto_full laws32 Usun 8)
     (show bnLive.Good Usun 1 8 from ⟨rfl, rfl, rfl⟩) le_rfl 1 (by decide)
 
 -- Through `holds`.
 example :
     Nonempty (PartialRun bnLive.toBaseRule bnP bnLeader bnWin bnUpd Usun (bnLive.full Usun) 1) :=
-  ((Progress.holds (Fin 4) (Fin 32) Unit bnLive laws32 bnP bnLeader bnWin bnUpd bnUpd_bounded 0).2
+  ((Progress.holds (Fin 4) (Fin 32) Unit bnLive (agree_toDagRule _ laws32) bnP bnLeader bnWin bnUpd bnUpd_bounded 0).2
     bnLive_liveOn_all Usun (bnLive.full Usun) 1 8 ⟨rfl, rfl, rfl⟩ (coversUpto_full laws32 Usun 8) le_rfl 1
     (by decide))
 example :
     Nonempty (PartialRun bnLive.toBaseRule bnP bnLeader bnWin bnUpd Usun (bnLive.full Usun) 1) :=
-  ((Progress.holds (Fin 4) (Fin 32) Unit bnLive laws32 bnP bnLeader bnWin bnUpd bnUpd_bounded 0).1
+  ((Progress.holds (Fin 4) (Fin 32) Unit bnLive (agree_toDagRule _ laws32) bnP bnLeader bnWin bnUpd bnUpd_bounded 0).1
     Usun (bnLive.full Usun) 1 8 0 (coversUpto_full laws32 Usun 8) run0 bnLive_liveOn ⟨rfl, rfl, rfl⟩
     (by decide) (by decide))
 
@@ -297,7 +297,7 @@ def runP1v : PartialRun bnLive.toBaseRule bnP1 bnLeader bnWin bnUpd1 Usun (bnLiv
 example :
     ∃ Rn2 : PartialRun bnLive.toBaseRule bnP1 bnLeader bnWin bnUpd1 Usun (bnLive.full Usun) 2,
     Rn2.start 2 = 4 ∧ Rn2.count 2 = 1 ∧ Rn2.backoff 2 = 2 ∧ Rn2.anchor 1 = 4 := by
-  obtain ⟨Rn2⟩ := (Progress.holds (Fin 4) (Fin 32) Unit bnLive laws32 bnP1 bnLeader bnWin bnUpd1
+  obtain ⟨Rn2⟩ := (Progress.holds (Fin 4) (Fin 32) Unit bnLive (agree_toDagRule _ laws32) bnP1 bnLeader bnWin bnUpd1
     bnUpd1_bounded 0).1 Usun (bnLive.full Usun) 1 8 1 (coversUpto_full laws32 Usun 8) runP1v bnLive_liveOn
     ⟨rfl, rfl, rfl⟩ (by decide) (by decide)
   refine ⟨Rn2, ?_⟩
@@ -318,7 +318,7 @@ example : ¬ (runP1.start 2 + bnP1.interval + 1 + 0 + bnLive.waveLength ≤ 8) :
 example : horizon bnP1 bnLive 0 2 = 7 := by decide
 example :
     Nonempty (PartialRun bnLive.toBaseRule bnP1 bnLeader bnWin bnUpd1 Usun (bnLive.full Usun) 2) :=
-  ((Progress.holds (Fin 4) (Fin 32) Unit bnLive laws32 bnP1 bnLeader bnWin bnUpd1
+  ((Progress.holds (Fin 4) (Fin 32) Unit bnLive (agree_toDagRule _ laws32) bnP1 bnLeader bnWin bnUpd1
     bnUpd1_bounded 0).2
     bnLive_liveOn_all Usun (bnLive.full Usun) 1 8 ⟨rfl, rfl, rfl⟩ (coversUpto_full laws32 Usun 8) le_rfl 2
     (by decide))
@@ -522,7 +522,7 @@ example :
     ∃ Rn1 : PartialRun bnLiveSk.toBaseRule bnP1 bnLeader bnWin bnUpdSk Usk (bnLiveSk.full Usk) 1,
     Rn1.anchor 0 = 3 ∧ Rn1.start 1 = 3 ∧ Rn1.count 1 = 1 ∧ Rn1.backoff 1 = 1 ∧
       Rn1.vdct 0 2 = none ∧ Rn1.start 0 + bnP1.interval < 2 / Rn1.count 0 := by
-  obtain ⟨Rn1⟩ := (Progress.holds (Fin 4) (Fin 32) Unit bnLiveSk laws32 bnP1 bnLeader bnWin
+  obtain ⟨Rn1⟩ := (Progress.holds (Fin 4) (Fin 32) Unit bnLiveSk (agree_toDagRule _ laws32) bnP1 bnLeader bnWin
     bnUpdSk bnUpdSk_bounded 1).1 Usk (bnLiveSk.full Usk) 1 8 0
     (coversUpto_full laws32 Usk 8) run0sk bnLiveSk_liveOn1 ⟨rfl, rfl, rfl⟩
     (by decide) (by decide)

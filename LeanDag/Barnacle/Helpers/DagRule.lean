@@ -42,6 +42,7 @@ def BaseRule.toDagRule (R : BaseRule Validator BlockId Payload) :
   ids := R.ids
   viewIds := R.viewIds
   viewSound := R.viewSound
+  viewComplete := R.viewComplete
   Decided := R.Decided
 
 @[simp] theorem toDagRule_ids (R : BaseRule Validator BlockId Payload) :

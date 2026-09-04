@@ -1,3 +1,4 @@
+import LeanDag.Barnacle.Helpers.DagRule
 import LeanDag.Barnacle.Model.Live
 import LeanDag.Barnacle.Helpers.Schedule
 
@@ -44,7 +45,7 @@ def PartialRun.zero (R : BaseRule Validator BlockId Payload) (P : Params)
 
 open Classical in
 /-- **Configuration progress, with the bound on the new start.** -/
-theorem progress_exists (hR : R.Laws) (hupd : UpdBounded P upd) {c K Rnd N : ℕ}
+theorem progress_exists (hR : Properties.Agree R.toBaseRule.toDagRule) (hupd : UpdBounded P upd) {c K Rnd N : ℕ}
     {V : R.View U} (hcov : R.toBaseRule.CoversUpto U V N)
     (Rn : PartialRun R.toBaseRule P getLeader hk upd U V K)
     (hlive : R.LiveOn (Sched getLeader hk (Rn.count K) (Rn.count_pos K) (Rn.count_le K)) c)
@@ -73,7 +74,7 @@ theorem progress_exists (hR : R.Laws) (hupd : UpdBounded P upd) {c K Rnd N : ℕ
   simp only [Sched_slotRound] at hκ₀ hκ₀'
   -- Its chosen verdict is that commit, by agreement.
   have hvκ₀ : v κ₀ = some L₀ :=
-    hR.agree _ _ _ κ₀ _ _ (hv κ₀ (by omega) (by omega)) hL₀
+    hR _ _ _ κ₀ _ _ (hv κ₀ (by omega) (by omega)) hL₀
   -- The anchor: the least committed slot past the threshold.
   have hex : ∃ κ, Rn.start K + P.interval < κ / Rn.count K ∧ ∃ L, v κ = some L :=
     ⟨κ₀, by omega, L₀, hvκ₀⟩
@@ -183,7 +184,7 @@ theorem progress_exists (hR : R.Laws) (hupd : UpdBounded P upd) {c K Rnd N : ℕ
     simp only [hk1, if_false]
     exact ha_round
 
-theorem progress (hR : R.Laws) (hupd : UpdBounded P upd) {c K Rnd N : ℕ}
+theorem progress (hR : Properties.Agree R.toBaseRule.toDagRule) (hupd : UpdBounded P upd) {c K Rnd N : ℕ}
     {V : R.View U} (hcov : R.toBaseRule.CoversUpto U V N)
     (Rn : PartialRun R.toBaseRule P getLeader hk upd U V K)
     (hlive : R.LiveOn (Sched getLeader hk (Rn.count K) (Rn.count_pos K) (Rn.count_le K)) c)
@@ -194,7 +195,7 @@ theorem progress (hR : R.Laws) (hupd : UpdBounded P upd) {c K Rnd N : ℕ}
   ⟨Rn'⟩
 
 /-- (D) -/
-theorem everyHeight_bound (hR : R.Laws) (hupd : UpdBounded P upd) {c : ℕ}
+theorem everyHeight_bound (hR : Properties.Agree R.toBaseRule.toDagRule) (hupd : UpdBounded P upd) {c : ℕ}
     (hlive : ∀ m (hm : 0 < m) (hmax : m ≤ P.maxLeaders),
       R.LiveOn (Sched getLeader hk m hm hmax) c)
     {Rnd N : ℕ} {V : R.View U} (hcov : R.toBaseRule.CoversUpto U V N)
@@ -212,7 +213,7 @@ theorem everyHeight_bound (hR : R.Laws) (hupd : UpdBounded P upd) {c : ℕ}
       (hlive (Rn.count K) (Rn.count_pos K) (Rn.count_le K)) hgood (by omega) (by omega)
     exact ⟨Rn', by rw [Nat.succ_mul]; omega⟩
 
-theorem everyHeight (hR : R.Laws) (hupd : UpdBounded P upd) {c : ℕ}
+theorem everyHeight (hR : Properties.Agree R.toBaseRule.toDagRule) (hupd : UpdBounded P upd) {c : ℕ}
     (hlive : ∀ m (hm : 0 < m) (hmax : m ≤ P.maxLeaders),
       R.LiveOn (Sched getLeader hk m hm hmax) c)
     {Rnd N : ℕ} {V : R.View U} (hcov : R.toBaseRule.CoversUpto U V N)

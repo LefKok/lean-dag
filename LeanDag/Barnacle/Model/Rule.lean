@@ -73,6 +73,10 @@ structure BaseRule (Validator : Type) [Fintype Validator] [DecidableEq Validator
   without `Laws` — so a rule reaches the properties before it has
   proved anything. -/
   viewSound : ∀ {U : Universe} (V : View U), viewIds V ⊆ ids U
+  /-- **A2.** A view is closed downward: it holds what its blocks
+  reference. A field for the same reason as `viewSound`. -/
+  viewComplete : ∀ {U : Universe} (V : View U),
+    ∀ i ∈ viewIds V, ∀ j ∈ (block U i).refs, j ∈ viewIds V
   /-- The full view: every block of the universe. -/
   full : ∀ U : Universe, View U
   /-- The causal history of a block of the universe, as a view. -/
@@ -127,19 +131,24 @@ def CoversUpto (R : BaseRule Validator BlockId Payload) (U : R.Universe)
 
 /-- **The laws of a base rule** — what the leader-count mechanism
 consumes of the protocol, and what each instantiation is proved to
-satisfy. `view_subset` and `view_complete` are the paper's A2 (a
-validator holds a block only with its whole causal history); `agree` is
-the safety half of A4 (for a fixed schedule, verdicts agree across
-views); `decided_of_directCommitIn` ties the direct predicate to the
-relation, which is what makes the window count a count of *verdicts*:
-two directly committed candidates of one slot are one block, by
-`agree`; `candidates` is its converse, a committed block is a candidate
-of its slot. The liveness half of A4 is stated in Phase 3 over an
-extension of the data. -/
+satisfy. A2 — a validator holds a block only with its whole causal
+history — has moved into `BaseRule` itself, as the fields `viewSound`
+and `viewComplete`; `agree` is the safety half of A4 (for a fixed
+schedule, verdicts agree across views); `decided_of_directCommitIn` ties
+the direct predicate to the relation, which is what makes the window
+count a count of *verdicts*: two directly committed candidates of one
+slot are one block, by `agree`; `candidates` is its converse, a
+committed block is a candidate of its slot. The liveness half of A4 is
+stated in Phase 3 over an extension of the data.
+
+**What still reads this.** One theorem, `Helpers/Cover.coversUpto_full`,
+for `full_ids`. `agree` and `candidates` survive to build
+`Properties.Agree` and `Properties.CommitsCandidate`, which is what
+every other theorem of the mechanism now takes;
+`decided_of_directCommitIn` and `historyView_ids` have no consumers at
+all. `docs/target-properties.md` §11.2 records why the two dead clauses
+are kept rather than deleted. -/
 structure Laws (R : BaseRule Validator BlockId Payload) : Prop where
-  /-- **A2.** A view is closed downward: it holds what its blocks reference. -/
-  view_complete : ∀ {U : R.Universe} (V : R.View U),
-    ∀ i ∈ R.viewIds V, ∀ j ∈ (R.block U i).refs, j ∈ R.viewIds V
   /-- The full view holds exactly the universe. -/
   full_ids : ∀ U, R.viewIds (R.full U) = R.ids U
   /-- The history view holds exactly the history. -/

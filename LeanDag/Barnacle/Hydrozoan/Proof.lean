@@ -22,7 +22,7 @@ namespace Hydrozoan
 theorem holds : Statement := by
   intro Replica BlockId _ _ _ _
   refine
-    { view_complete := fun V => V.complete
+    {
       full_ids := fun _ => rfl
       historyView_ids := fun _ _ _ => rfl
       agree := ?_

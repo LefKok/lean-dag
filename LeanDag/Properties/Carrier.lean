@@ -74,6 +74,13 @@ structure DagRule (Validator : Type) [Fintype Validator] [DecidableEq Validator]
   asking for it here costs an instance nothing and spares every
   consumer a hypothesis. -/
   viewSound : ∀ {U : Universe} (V : View U), viewIds V ⊆ ids U
+  /-- A view is closed under references: it holds what its blocks point
+  at. The second law every view type already carries, and the one a
+  window count needs — a validator holding a block holds its whole
+  causal history, so a window measured on that history is the same
+  window whoever measures it (`Barnacle/Window/`). -/
+  viewComplete : ∀ {U : Universe} (V : View U),
+    ∀ i ∈ viewIds V, ∀ j ∈ (block U i).refs, j ∈ viewIds V
   /-- The decision relation under a schedule. -/
   Decided : Slots Validator → ∀ {U : Universe}, View U → ℕ → Option BlockId → Prop
 
