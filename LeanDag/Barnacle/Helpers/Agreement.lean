@@ -1,3 +1,4 @@
+import LeanDag.Barnacle.Helpers.DagRule
 import LeanDag.Barnacle.Model.Run
 import LeanDag.Barnacle.Helpers.Schedule
 
@@ -27,7 +28,7 @@ def ConfigAgree (R₁ : PartialRun R P getLeader hk upd U V₁ K₁)
 
 /-- Verdicts of a slot both runs have closed agree — the base rule's
 agreement law, once the two schedules are seen to be one. -/
-theorem vdct_agree (hR : R.Laws) (R₁ : PartialRun R P getLeader hk upd U V₁ K₁)
+theorem vdct_agree (hR : Properties.Agree R.toDagRule) (R₁ : PartialRun R P getLeader hk upd U V₁ K₁)
     (R₂ : PartialRun R P getLeader hk upd U V₂ K₂) {k : ℕ} (hc : R₁.count k = R₂.count k)
     (hk₁ : k < K₁) (hk₂ : k < K₂) {κ : ℕ}
     (h₁ : R₁.start k < κ / R₁.count k) (h₁' : κ / R₁.count k ≤ R₁.start (k + 1))
@@ -37,11 +38,11 @@ theorem vdct_agree (hR : R.Laws) (R₁ : PartialRun R P getLeader hk upd U V₁ 
   have d₂ := R₂.closed k hk₂ κ h₂ h₂'
   rw [Sched_congr getLeader hk hc (R₁.count_pos k) (R₁.count_le k)
     (R₂.count_pos k) (R₂.count_le k)] at d₁
-  exact hR.agree _ _ _ κ _ _ d₁ d₂
+  exact hR _ _ _ κ _ _ d₁ d₂
 
 /-- The anchors agree: the lesser of two anchors is, in the other run, a
 committed slot past the threshold below its anchor. -/
-theorem anchor_agree (hR : R.Laws) (R₁ : PartialRun R P getLeader hk upd U V₁ K₁)
+theorem anchor_agree (hR : Properties.Agree R.toDagRule) (R₁ : PartialRun R P getLeader hk upd U V₁ K₁)
     (R₂ : PartialRun R P getLeader hk upd U V₂ K₂) {k : ℕ} (h : ConfigAgree R₁ R₂ k)
     (hk₁ : k < K₁) (hk₂ : k < K₂) : R₁.anchor k = R₂.anchor k := by
   obtain ⟨hs, hc, _⟩ := h
@@ -68,7 +69,7 @@ theorem anchor_agree (hR : R.Laws) (R₁ : PartialRun R P getLeader hk upd U V�
 
 /-- Agreement at `k` carries to `k + 1`: the anchors agree, so the anchor
 blocks agree, so one update of one state yields one configuration. -/
-theorem configAgree_succ (hR : R.Laws) (hanc : Anchored R upd)
+theorem configAgree_succ (hR : Properties.Agree R.toDagRule) (hanc : Anchored R upd)
     (R₁ : PartialRun R P getLeader hk upd U V₁ K₁)
     (R₂ : PartialRun R P getLeader hk upd U V₂ K₂) {k : ℕ} (h : ConfigAgree R₁ R₂ k)
     (hk₁ : k < K₁) (hk₂ : k < K₂) : ConfigAgree R₁ R₂ (k + 1) := by
@@ -88,7 +89,7 @@ theorem configAgree_succ (hR : R.Laws) (hanc : Anchored R upd)
   rw [R₁.start_succ k hk₁, R₂.start_succ k hk₂, ha, hc]
 
 /-- **Configurations agree** up to the lower height, by induction. -/
-theorem configAgree (hR : R.Laws) (hanc : Anchored R upd)
+theorem configAgree (hR : Properties.Agree R.toDagRule) (hanc : Anchored R upd)
     (R₁ : PartialRun R P getLeader hk upd U V₁ K₁)
     (R₂ : PartialRun R P getLeader hk upd U V₂ K₂) :
     ∀ k, k ≤ min K₁ K₂ → ConfigAgree R₁ R₂ k

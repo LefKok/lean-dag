@@ -1,3 +1,4 @@
+import LeanDag.Barnacle.Helpers.DagRule
 import LeanDag.Barnacle.Model.Run
 
 /-!
@@ -34,6 +35,20 @@ namespace Agreement
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
   {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 
+/-! ## What this asks of the rule
+
+`Properties.Agree`, and nothing else. The hypothesis used to be
+`R.Laws`, which bundles seven clauses of which this proof reads one —
+so a protocol reaching Barnacle went through Barnacle's own interface
+rather than through the properties, and the two collections stayed
+parallel. `docs/target-properties.md` §11.2 records what that cost.
+
+Stating it at the property instead is a signature change and no more:
+`Laws.agree` and `Properties.Agree R.toDagRule` are the same
+proposition, since `toDagRule` preserves `Decided` by `rfl`. What it
+buys is the direction — a rule with `Agree` feeds this theorem whether
+or not it has ever heard of `BaseRule.Laws`. -/
+
 /-- **BN3, partial runs agree.** Two partial runs over one universe —
 whatever views, whatever heights `K₁`, `K₂` — agree on `start`, `count`
 and `backoff` up to `min K₁ K₂`, and below it on the anchor and on every
@@ -67,7 +82,8 @@ base rule satisfying the laws, every parameter set, every keyed leader
 function and **every update rule**. -/
 def Statement : Prop :=
   ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
-    [DecidableEq BlockId] (R : BaseRule Validator BlockId Payload), R.Laws →
+    [DecidableEq BlockId] (R : BaseRule Validator BlockId Payload),
+    Properties.Agree R.toDagRule →
     ∀ (P : Params) (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders)
       (upd : UpdateRule R),
       PartialRunAgreement R P getLeader hk upd

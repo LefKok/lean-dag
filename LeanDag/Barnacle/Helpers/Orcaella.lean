@@ -25,7 +25,6 @@ variable {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
 theorem orcaella_laws [HybridFaults Validator] {k : ℕ} (hk : Hybrid.Admissible Validator k) :
     BaseRule.Laws
       (orcaella (Validator := Validator) (BlockId := BlockId) (Payload := Payload) k) where
-  view_subset := fun V => V.subset_ids
   view_complete := fun V => V.complete
   full_ids := fun _ => rfl
   historyView_ids := fun _ _ _ => rfl

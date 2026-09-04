@@ -30,23 +30,25 @@ variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 
 /-- **Every Barnacle rule is a carrier.** The fields `DagRule` asks for
-are a sub-record of `BaseRule`'s, save view soundness, which `Laws`
-carries as `view_subset`. -/
-def BaseRule.toDagRule (R : BaseRule Validator BlockId Payload) (L : BaseRule.Laws R) :
+are a sub-record of `BaseRule`'s, view soundness included, so the
+coercion needs no laws: a rule is a carrier before it has proved
+anything, which is what lets the properties be the hypotheses of
+Barnacle's own theorems rather than a parallel interface. -/
+def BaseRule.toDagRule (R : BaseRule Validator BlockId Payload) :
     Properties.DagRule Validator BlockId Payload where
   Universe := R.Universe
   View := R.View
   block := R.block
   ids := R.ids
   viewIds := R.viewIds
-  viewSound := L.view_subset
+  viewSound := R.viewSound
   Decided := R.Decided
 
-@[simp] theorem toDagRule_ids (R : BaseRule Validator BlockId Payload) (L : BaseRule.Laws R) :
-    (R.toDagRule L).ids = R.ids := rfl
+@[simp] theorem toDagRule_ids (R : BaseRule Validator BlockId Payload) :
+    R.toDagRule.ids = R.ids := rfl
 
-@[simp] theorem toDagRule_block (R : BaseRule Validator BlockId Payload) (L : BaseRule.Laws R) :
-    (R.toDagRule L).block = R.block := rfl
+@[simp] theorem toDagRule_block (R : BaseRule Validator BlockId Payload) :
+    R.toDagRule.block = R.block := rfl
 
 /-! ## What the laws already say
 
@@ -63,14 +65,14 @@ either, and would not be: it is the induction each protocol owes. -/
 
 /-- **A4 is `Agree`.** The law and the property are the same statement. -/
 theorem agree_toDagRule (R : BaseRule Validator BlockId Payload) (L : BaseRule.Laws R) :
-    Properties.Agree (R.toDagRule L) :=
+    Properties.Agree R.toDagRule :=
   fun S _ V₁ V₂ k v₁ v₂ h₁ h₂ => L.agree S V₁ V₂ k v₁ v₂ h₁ h₂
 
 /-- **And `candidates` is `CommitsCandidate`.** `BaseRule.IsLeaderBlock`
 and `DagRule.IsCandidate` are the same three conjuncts — present, at the
 slot's round, by the slot's leader — so this is the law verbatim. -/
 theorem commitsCandidate_toDagRule (R : BaseRule Validator BlockId Payload)
-    (L : BaseRule.Laws R) : Properties.CommitsCandidate (R.toDagRule L) :=
+    (L : BaseRule.Laws R) : Properties.CommitsCandidate R.toDagRule :=
   fun S _ V k lead h => L.candidates S V k lead h
 
 end Barnacle

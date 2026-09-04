@@ -51,6 +51,7 @@ def optimalHydrozoan [LeanDag.OptimalHydrozoan.OptimalFaults Replica] :
   block := fun U => Hydrozoan.adaptBlk U.val
   ids := fun U => U.val.ids
   viewIds := fun V => V.ids
+  viewSound := fun V => V.subset_ids
   full := fun U => LeanDag.Hydrozoan.View.full U.val
   historyView := fun U A hA => Hydrozoan.historyView U.val A hA
   waveLength := 3

@@ -1384,8 +1384,8 @@ coercion and the two bridges, `Barnacle/Conformance.lean` the carriers.
 
 What that leaves is two collections that overlap without being one.
 `Laws.agree` and `Laws.candidates` are now `Agree` and
-`CommitsCandidate` by construction. `Laws.view_subset` became a field of
-`DagRule`. The remaining four clauses are about `BaseRule`'s extra
+`CommitsCandidate` by construction. `Laws.view_subset` became a field of both
+`DagRule` and `BaseRule`. The remaining four clauses are about `BaseRule`'s extra
 fields — `full`, `historyView` — which `DagRule` does not have, except
 `decided_of_directCommitIn`, which is a genuine property of a rule with
 **no counterpart here**: this arc absorbs it into `LeaderCommits`
@@ -1743,7 +1743,8 @@ not rescue a protocol that proves the band. Gone, and with it `Quorate`,
 already carried `subset_ids`, so the obligation cost an instance nothing
 and cost every derivation a hypothesis. `Local.of_banded` and
 `LocalTruncate.of_banded` each lost one. Barnacle's `BaseRule.toDagRule`
-now takes its `Laws`, which carry `view_subset`.
+now takes no laws at all: `viewSound` became a field of `BaseRule`,
+which is what lets a rule be a carrier before it has proved anything.
 
 **What the review did not do.** `Banded` gives a *round* ceiling — the
 verdict reads nothing above `top` — and `DecidedBelow B` gives a *slot*

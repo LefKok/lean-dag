@@ -20,7 +20,6 @@ variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 /-- The laws, for Nemo-Nemo. -/
 theorem nemo_laws :
     BaseRule.Laws (nemo (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) where
-  view_subset := fun V => V.subset_ids
   view_complete := fun V => V.complete
   full_ids := fun _ => rfl
   historyView_ids := fun _ _ _ => rfl

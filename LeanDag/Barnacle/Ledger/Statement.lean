@@ -1,3 +1,4 @@
+import LeanDag.Barnacle.Helpers.DagRule
 import LeanDag.Barnacle.Model.Run
 
 /-!
@@ -34,6 +35,14 @@ namespace Ledger
 
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
   {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
+
+/-! ## What this asks of the rule
+
+`Agree` and `CommitsCandidate`, in place of the seven-clause `R.Laws`.
+The ledger results read exactly two of those clauses — `agree`, through
+the agreement theorem, and `candidates`, to identify a committed block's
+slot — and both are properties. See `Agreement/Statement.lean` for why
+the change is a signature and not an argument. -/
 
 /-- **BN5a, the ledger is agreed**: two runs over one universe read the
 same committed sequence from every range both have closed, hence the
@@ -75,7 +84,8 @@ def LedgerNodup (R : BaseRule Validator BlockId Payload) (P : Params)
 base rule satisfying the laws and every update rule. -/
 def Statement : Prop :=
   ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
-    [DecidableEq BlockId] (R : BaseRule Validator BlockId Payload), R.Laws →
+    [DecidableEq BlockId] (R : BaseRule Validator BlockId Payload),
+    Properties.Agree R.toDagRule → Properties.CommitsCandidate R.toDagRule →
     ∀ (P : Params) (getLeader : ℕ → Validator) (hk : Keyed getLeader P.maxLeaders)
       (upd : UpdateRule R), Anchored R upd →
       LedgerAgreement R P getLeader hk upd ∧ LedgerPrefix R P getLeader hk upd ∧

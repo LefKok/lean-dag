@@ -19,8 +19,7 @@ namespace Mysticeti
 theorem holds : Statement := by
   intro Validator BlockId Payload _ _ _ _
   exact
-    { view_subset := fun V => V.subset_ids
-      view_complete := fun V => V.complete
+    { view_complete := fun V => V.complete
       full_ids := fun _ => rfl
       historyView_ids := fun _ _ _ => rfl
       agree := fun _ {_} _ _ _ _ _ h₁ h₂ => decided_agree h₁ h₂

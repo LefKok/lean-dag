@@ -1,3 +1,4 @@
+import LeanDag.Barnacle.Helpers.DagRule
 import LeanDag.Barnacle.Model.Run
 import LeanDag.Barnacle.Helpers.Schedule
 import Mathlib.Data.List.Nodup
@@ -74,20 +75,23 @@ theorem start_mono (Rn : PartialRun R P getLeader hk upd U V K) {k k' : ℕ} (h 
   | @step m _ ih => exact le_trans (ih (by omega)) (start_lt_succ Rn (by omega)).le
 
 /-- A block of range `k`'s ledger has a round in the range. -/
-theorem round_of_mem_rangeLedger (hR : R.Laws) (Rn : PartialRun R P getLeader hk upd U V K)
+theorem round_of_mem_rangeLedger (hR : Properties.CommitsCandidate R.toDagRule)
+    (Rn : PartialRun R P getLeader hk upd U V K)
     {k : ℕ} (hk : k < K) {L : BlockId} (h : L ∈ Rn.rangeLedger k) :
     Rn.start k < (R.block U L).round ∧ (R.block U L).round ≤ Rn.start (k + 1) := by
   obtain ⟨κ, h1, h2, hv⟩ := mem_ledgerOf.mp h
   obtain ⟨hlo, hhi⟩ := round_of_mem_interval Rn h1 h2
   have hd := Rn.closed k hk κ hlo hhi
   rw [hv] at hd
-  have hc := hR.candidates _ _ κ L hd
-  rw [hc.2.1, Sched_slotRound]
+  have hc := hR _ _ _ κ L hd
+  have hlink : (R.toDagRule.block U L).round = (R.block U L).round := rfl
+  rw [← hlink, hc.2.1, Sched_slotRound]
   exact ⟨hlo, hhi⟩
 
 /-- Within a range a block is committed by one slot: two committing slots
 share the block's round and author, and `Slots.keyed` identifies them. -/
-theorem slot_unique_of_rangeLedger (hR : R.Laws) (Rn : PartialRun R P getLeader hk upd U V K)
+theorem slot_unique_of_rangeLedger (hR : Properties.CommitsCandidate R.toDagRule)
+    (Rn : PartialRun R P getLeader hk upd U V K)
     {k : ℕ} (hk : k < K) {κ₁ κ₂ : ℕ} {L : BlockId}
     (h₁ : Rn.count k * (Rn.start k + 1) ≤ κ₁) (h₁' : κ₁ < Rn.count k * (Rn.start (k + 1) + 1))
     (h₂ : Rn.count k * (Rn.start k + 1) ≤ κ₂) (h₂' : κ₂ < Rn.count k * (Rn.start (k + 1) + 1))
@@ -98,14 +102,15 @@ theorem slot_unique_of_rangeLedger (hR : R.Laws) (Rn : PartialRun R P getLeader 
   have d₂ := Rn.closed k hk κ₂ hlo₂ hhi₂
   rw [hv₁] at d₁
   rw [hv₂] at d₂
-  have c₁ := hR.candidates _ _ κ₁ L d₁
-  have c₂ := hR.candidates _ _ κ₂ L d₂
+  have c₁ := hR _ _ _ κ₁ L d₁
+  have c₂ := hR _ _ _ κ₂ L d₂
   apply (Rn.sched k).keyed
   simp only [Prod.mk.injEq]
   exact ⟨c₁.2.1.symm.trans c₂.2.1, c₁.2.2.symm.trans c₂.2.2⟩
 
 /-- A closed range's ledger has no repetition. -/
-theorem rangeLedger_nodup (hR : R.Laws) (Rn : PartialRun R P getLeader hk upd U V K)
+theorem rangeLedger_nodup (hR : Properties.CommitsCandidate R.toDagRule)
+    (Rn : PartialRun R P getLeader hk upd U V K)
     {k : ℕ} (hk : k < K) : (Rn.rangeLedger k).Nodup := by
   unfold PartialRun.rangeLedger
   set lo := Rn.count k * (Rn.start k + 1)
@@ -125,7 +130,8 @@ theorem rangeLedger_nodup (hR : R.Laws) (Rn : PartialRun R P getLeader hk upd U 
 
 /-- Two closed ranges' ledgers are disjoint: their blocks have rounds in
 disjoint intervals. -/
-theorem rangeLedger_disjoint (hR : R.Laws) (Rn : PartialRun R P getLeader hk upd U V K)
+theorem rangeLedger_disjoint (hR : Properties.CommitsCandidate R.toDagRule)
+    (Rn : PartialRun R P getLeader hk upd U V K)
     {k k' : ℕ} (h : k < k') (hK : k' < K) : (Rn.rangeLedger k).Disjoint (Rn.rangeLedger k') := by
   intro L hL hL'
   obtain ⟨_, hhi⟩ := round_of_mem_rangeLedger hR Rn (by omega) hL

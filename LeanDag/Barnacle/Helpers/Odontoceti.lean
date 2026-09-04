@@ -20,7 +20,6 @@ variable {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
 /-- The laws, for Odontoceti. -/
 theorem odontoceti_laws [Faults5 Validator] :
     BaseRule.Laws (odontoceti (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) where
-  view_subset := fun V => V.subset_ids
   view_complete := fun V => V.complete
   full_ids := fun _ => rfl
   historyView_ids := fun _ _ _ => rfl

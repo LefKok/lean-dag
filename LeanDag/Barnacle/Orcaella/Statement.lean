@@ -60,6 +60,7 @@ def orcaella [HybridFaults Validator] (k : ℕ) : BaseRule Validator BlockId Pay
   block := fun U => U.val.block
   ids := fun U => U.val.ids
   viewIds := fun V => V.ids
+  viewSound := fun V => V.subset_ids
   full := fun U => LeanDag.View.full U.val
   historyView := fun U A hA => historyViewOf U.val A hA
   waveLength := 2

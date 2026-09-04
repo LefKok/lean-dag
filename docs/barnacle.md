@@ -162,7 +162,6 @@ structure BaseRule (Validator : Type) [Fintype Validator] [DecidableEq Validator
   Decided : Slots Validator → ∀ {U : Universe}, View U → ℕ → Option BlockId → Prop
 
 structure BaseRule.Laws (R : BaseRule Validator BlockId Payload) : Prop where
-  view_subset : ∀ {U : R.Universe} (V : R.View U), R.viewIds V ⊆ R.ids U
   view_complete : ∀ {U : R.Universe} (V : R.View U),
     ∀ i ∈ R.viewIds V, ∀ j ∈ (R.block U i).refs, j ∈ R.viewIds V
   full_ids : ∀ U, R.viewIds (R.full U) = R.ids U
@@ -182,7 +181,7 @@ as a result of the house shape: `Mysticeti/Statement.lean` defines the
 data and states `Laws mysticeti`, `Mysticeti/Proof.lean` proves it, and
 Phase 5 adds the same pair for Odontoceti and Nemo. Every generic
 theorem takes `(hR : R.Laws)`. The laws render the paper's
-assumptions: `view_subset` and `view_complete` are A2 (a validator
+assumptions: `view_complete` is A2's second half (a validator
 holds a block only with its whole causal history), `DirectCommitIn` and
 `waveLength` are A3, `agree` is the safety half of A4; the liveness
 half is §7. `BaseRule.IsLeaderBlock

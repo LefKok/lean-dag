@@ -67,6 +67,12 @@ structure BaseRule (Validator : Type) [Fintype Validator] [DecidableEq Validator
   ids : Universe → Finset BlockId
   /-- The ids a view holds. -/
   viewIds : ∀ {U : Universe}, View U → Finset BlockId
+  /-- A view holds only blocks the universe has. A field rather than a
+  law, matching `Properties.DagRule`: every view type carries the proof
+  already, and asking for it here is what lets `toDagRule` be taken
+  without `Laws` — so a rule reaches the properties before it has
+  proved anything. -/
+  viewSound : ∀ {U : Universe} (V : View U), viewIds V ⊆ ids U
   /-- The full view: every block of the universe. -/
   full : ∀ U : Universe, View U
   /-- The causal history of a block of the universe, as a view. -/
@@ -131,8 +137,6 @@ two directly committed candidates of one slot are one block, by
 of its slot. The liveness half of A4 is stated in Phase 3 over an
 extension of the data. -/
 structure Laws (R : BaseRule Validator BlockId Payload) : Prop where
-  /-- A view holds only blocks of the universe. -/
-  view_subset : ∀ {U : R.Universe} (V : R.View U), R.viewIds V ⊆ R.ids U
   /-- **A2.** A view is closed downward: it holds what its blocks reference. -/
   view_complete : ∀ {U : R.Universe} (V : R.View U),
     ∀ i ∈ R.viewIds V, ∀ j ∈ (R.block U i).refs, j ∈ R.viewIds V

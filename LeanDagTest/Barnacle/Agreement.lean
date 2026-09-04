@@ -195,14 +195,20 @@ example : run2.count 1 = 2 ∧ run2.start 1 = 5 ∧ run2.backoff 1 = 0 := ⟨rfl
 /-- The laws of Mysticeti at this committee, once. -/
 abbrev laws32 : bnRule32.Laws := Mysticeti.holds (Fin 4) (Fin 32) Unit
 
+/-- And the two properties the safety results now ask for instead. -/
+abbrev agree32 : Properties.Agree bnRule32.toDagRule := agree_toDagRule _ laws32
+
+abbrev candidates32 : Properties.CommitsCandidate bnRule32.toDagRule :=
+  commitsCandidate_toDagRule _ laws32
+
 /-- BN3 on `run2` and `run2'`: the two views hold one configuration `1`
 and one anchor. -/
 example : run2.count 1 = run2'.count 1 ∧ run2.start 1 = run2'.start 1 :=
-  let h := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl))
+  let h := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnP bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl))
     Usun Vsun Vsun' 1 1 run2 run2' 1 (by decide)
   ⟨h.2.1, h.1⟩
 example : run2.anchor 0 = run2'.anchor 0 :=
-  ((Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl))
+  ((Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnP bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl))
     Usun Vsun Vsun' 1 1 run2 run2' 0 (by decide)).2.2.2 (by decide) |>.1
 
 /-- BN2 on `Usun`: the smaller view holds the anchor, hence its history. -/
@@ -309,7 +315,7 @@ def run2x : PartialRun bnRule32 bnP bnLeader bnWin (Aimd.rule bnRule32 bnP bnLea
     decide
 
 example : run2.vdct 0 3 = run2x.vdct 0 3 :=
-  ((Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl))
+  ((Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnP bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl))
     Usun Vsun Vsun' 1 1 run2 run2x 0 (by decide)).2.2.2 (by decide) |>.2 3 (by decide) (by decide)
 example : run2.vdct 0 9 ≠ run2x.vdct 0 9 := by decide
 
@@ -427,11 +433,11 @@ example : runP1.backoff 0 = 0 ∧ runP1.backoff 1 = 1 ∧ runP1.backoff 2 = 2 �
 -- BN3 at heights `2` and `1`: agreement on configuration `1` — not pinned by `init` —
 -- and on the verdicts of range `0`; `k = 2` is not offered (`2 ≤ min 2 1` fails).
 example : runP1.backoff 1 = runP1'.backoff 1 ∧ runP1.start 1 = runP1'.start 1 :=
-  let h := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP1 bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl))
+  let h := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnP1 bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl))
     Usun Vsun Vsun' 2 1 runP1 runP1' 1 (by decide)
   ⟨h.2.2.1, h.1⟩
 example : runP1.vdct 0 2 = runP1'.vdct 0 2 :=
-  ((Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP1 bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl))
+  ((Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnP1 bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl))
     Usun Vsun Vsun' 2 1 runP1 runP1' 0 (by decide)).2.2.2 (by decide) |>.2 2 (by decide) (by decide)
 
 
@@ -445,19 +451,19 @@ without repetition. -/
 example : run2.rangeLedger 0 = [5, 10, 15, 16, 21] := by decide
 example : run2.ledgerUpto 1 = [5, 10, 15, 16, 21] := by decide
 example : run2.ledgerUpto 1 = run2'.ledgerUpto 1 :=
-  ((Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl)).1
+  ((Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 candidates32 bnP bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl)).1
     Usun Vsun Vsun' 1 1 run2 run2').2 1 (by decide)
 example : run2.ledgerUpto 0 <+: run2.ledgerUpto 1 :=
-  (Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl)).2.1
+  (Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 candidates32 bnP bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl)).2.1
     Usun Vsun 1 run2 0 1 (by decide)
 example : (run2.ledgerUpto 1).Nodup :=
-  (Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl)).2.2
+  (Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 candidates32 bnP bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl)).2.2
     Usun Vsun 1 run2 1 le_rfl
 -- Two ranges at interval one: `[5, 10]` then `[15, 16]`, one list without
 -- repetition.
 example : runP1.ledgerUpto 2 = [5, 10, 15, 16] := by decide
 example : (runP1.ledgerUpto 2).Nodup :=
-  (Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 laws32 bnP1 bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl)).2.2
+  (Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 candidates32 bnP1 bnLeader bnWin _ (fun _ _ _ _ _ _ => rfl)).2.2
     Usun Vsun 2 runP1 2 le_rfl
 
 /-! ## Conservativity, through the theorem -/

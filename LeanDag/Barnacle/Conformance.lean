@@ -53,15 +53,15 @@ variable [Faults Validator]
 /-- Mysticeti as a `DagRule`, through Barnacle. -/
 abbrev mysticetiRule : Properties.DagRule Validator BlockId Payload :=
   (mysticeti (Validator := Validator) (BlockId := BlockId)
-    (Payload := Payload)).toDagRule (Mysticeti.holds _ _ _)
+    (Payload := Payload)).toDagRule
 
 theorem mysticetiRule_agree :
     Properties.Agree (mysticetiRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload)) := agree_toDagRule _ _
+      (Payload := Payload)) := agree_toDagRule _ (Mysticeti.holds _ _ _)
 
 theorem mysticetiRule_commitsCandidate :
     Properties.CommitsCandidate (mysticetiRule (Validator := Validator)
-      (BlockId := BlockId) (Payload := Payload)) := commitsCandidate_toDagRule _ _
+      (BlockId := BlockId) (Payload := Payload)) := commitsCandidate_toDagRule _ (Mysticeti.holds _ _ _)
 
 end Mysticeti
 
@@ -70,15 +70,15 @@ section Nemo
 /-- Nemo as a `DagRule`. -/
 abbrev nemoRule : Properties.DagRule Validator BlockId Payload :=
   (nemo (Validator := Validator) (BlockId := BlockId)
-    (Payload := Payload)).toDagRule (Nemo.holds.1 _ _ _)
+    (Payload := Payload)).toDagRule
 
 theorem nemoRule_agree :
     Properties.Agree (nemoRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload)) := agree_toDagRule _ _
+      (Payload := Payload)) := agree_toDagRule _ (Nemo.holds.1 _ _ _)
 
 theorem nemoRule_commitsCandidate :
     Properties.CommitsCandidate (nemoRule (Validator := Validator)
-      (BlockId := BlockId) (Payload := Payload)) := commitsCandidate_toDagRule _ _
+      (BlockId := BlockId) (Payload := Payload)) := commitsCandidate_toDagRule _ (Nemo.holds.1 _ _ _)
 
 end Nemo
 
@@ -89,15 +89,15 @@ variable [Faults5 Validator] {B : Type} [LinearOrder B]
 /-- Odontoceti as a `DagRule`. -/
 abbrev odontocetiRule : Properties.DagRule Validator B Payload :=
   (odontoceti (Validator := Validator) (BlockId := B)
-    (Payload := Payload)).toDagRule (Odontoceti.holds.1 _ _ _)
+    (Payload := Payload)).toDagRule
 
 theorem odontocetiRule_agree :
     Properties.Agree (odontocetiRule (Validator := Validator) (B := B)
-      (Payload := Payload)) := agree_toDagRule _ _
+      (Payload := Payload)) := agree_toDagRule _ (Odontoceti.holds.1 _ _ _)
 
 theorem odontocetiRule_commitsCandidate :
     Properties.CommitsCandidate (odontocetiRule (Validator := Validator) (B := B)
-      (Payload := Payload)) := commitsCandidate_toDagRule _ _
+      (Payload := Payload)) := commitsCandidate_toDagRule _ (Odontoceti.holds.1 _ _ _)
 
 end Odontoceti
 
@@ -111,15 +111,15 @@ enters and why this carrier is one per `k` rather than one outright. -/
 abbrev orcaellaRule (k : ℕ) (hk : Hybrid.Admissible Validator k) :
     Properties.DagRule Validator B Payload :=
   (orcaella (Validator := Validator) (BlockId := B)
-    (Payload := Payload) k).toDagRule (Orcaella.holds.1 _ _ _ k hk)
+    (Payload := Payload) k).toDagRule
 
 theorem orcaellaRule_agree (k : ℕ) (hk : Hybrid.Admissible Validator k) :
     Properties.Agree (orcaellaRule (Validator := Validator) (B := B)
-      (Payload := Payload) k hk) := agree_toDagRule _ _
+      (Payload := Payload) k hk) := agree_toDagRule _ (Orcaella.holds.1 _ _ _ k hk)
 
 theorem orcaellaRule_commitsCandidate (k : ℕ) (hk : Hybrid.Admissible Validator k) :
     Properties.CommitsCandidate (orcaellaRule (Validator := Validator)
-      (B := B) (Payload := Payload) k hk) := commitsCandidate_toDagRule _ _
+      (B := B) (Payload := Payload) k hk) := commitsCandidate_toDagRule _ (Orcaella.holds.1 _ _ _ k hk)
 
 end Orcaella
 
@@ -133,16 +133,15 @@ its verdicts are `DecidedOpt` over `OptUniverse`, and Barnacle's
 instance is what puts them in the shared vocabulary. -/
 abbrev optimalHydrozoanRule : Properties.DagRule Replica BlockId Unit :=
   (optimalHydrozoan (Replica := Replica) (BlockId := BlockId)).toDagRule
-    (OptimalHydrozoan.holds _ _)
 
 theorem optimalHydrozoanRule_agree :
     Properties.Agree (optimalHydrozoanRule (Replica := Replica) (BlockId := BlockId)) :=
-  agree_toDagRule _ _
+  agree_toDagRule _ (OptimalHydrozoan.holds _ _)
 
 theorem optimalHydrozoanRule_commitsCandidate :
     Properties.CommitsCandidate
       (optimalHydrozoanRule (Replica := Replica) (BlockId := BlockId)) :=
-  commitsCandidate_toDagRule _ _
+  commitsCandidate_toDagRule _ (OptimalHydrozoan.holds _ _)
 
 end OptimalHydrozoan
 

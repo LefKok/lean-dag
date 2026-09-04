@@ -17,13 +17,13 @@ namespace Barnacle
 namespace Ledger
 
 theorem holds : Statement := by
-  intro Validator BlockId Payload _ _ _ R hR P getLeader hk upd hanc
+  intro Validator BlockId Payload _ _ _ R hRa hRc P getLeader hk upd hanc
   refine ⟨?_, ?_, ?_⟩
   · -- BN5a.
     intro U V₁ V₂ K₁ K₂ R₁ R₂
     have hrange : ∀ k, k < min K₁ K₂ → R₁.rangeLedger k = R₂.rangeLedger k := by
       intro k hkm
-      have h := Agreement.holds Validator BlockId Payload R hR P getLeader hk upd hanc
+      have h := Agreement.holds Validator BlockId Payload R hRa P getLeader hk upd hanc
         U V₁ V₂ K₁ K₂ R₁ R₂
       obtain ⟨hs, hc, _, hrest⟩ := h k (by omega)
       obtain ⟨_, hv⟩ := hrest hkm
@@ -49,14 +49,14 @@ theorem holds : Statement := by
     intro U V K Rn K' hK'
     unfold PartialRun.ledgerUpto
     rw [List.nodup_flatMap]
-    refine ⟨fun k hkm => rangeLedger_nodup hR Rn (by rw [List.mem_range] at hkm; omega), ?_⟩
+    refine ⟨fun k hkm => rangeLedger_nodup hRc Rn (by rw [List.mem_range] at hkm; omega), ?_⟩
     have hpw : (List.range K').Pairwise (fun a b => a < b ∧ b < K') := by
       rw [List.pairwise_iff_getElem]
       intro i j hi hj hij
       simp only [List.getElem_range]
       rw [List.length_range] at hj
       exact ⟨hij, hj⟩
-    exact hpw.imp (fun h => rangeLedger_disjoint hR Rn h.1 (by omega))
+    exact hpw.imp (fun h => rangeLedger_disjoint hRc Rn h.1 (by omega))
 
 end Ledger
 
