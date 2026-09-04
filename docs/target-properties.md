@@ -855,21 +855,48 @@ candidate of the slot — which is a fact about blocks `U` already holds,
 so it transports. Odontoceti's `DirectSkipIn` counts blames against one
 candidate and has the shape the core's had.
 
-**What the repair would cost.** The same shape as the core's: a
-slot-level `blamesInSlot`, `Decided.directSkip` restated over it, and
-Odontoceti's twenty-two uses of `directSkip` in `Decision.lean` and one
-in `Liveness.lean` re-checked. Where a candidate exists the two forms
-agree, so the safety development should be untouched; where none exists
-the count still asks for a quorum. That is a change to the protocol,
-not to its conformance file, and it is the reason `Banded` is not
-claimed for Odontoceti.
+**The repair, and what it cost.** Nothing new had to be defined.
+Odontoceti's `DirectSkipIn` and the core's are the *same predicate* —
+both count, against `quorumCard`, the creators of blocks at
+`slotRound k + 1` in view that do not reference the candidate — because
+both rules blame at the round above the proposal. Odontoceti already
+imports `Mysticeti`, and `Faults5 extends Faults`, so the core's
+repaired machinery applies verbatim: `Decided.directSkip` now takes
+`DirectSkipSlotIn`, the count of voting-round blocks referencing *no*
+candidate of the slot.
+
+Four proof sites in `Decision.lean` consumed the old per-candidate
+premise, and each is now `directSkipIn_of_directSkipSlotIn` applied —
+the bridge that recovers a blame against a specific candidate from a
+blame against the slot. `Adaptive/Odontoceti.lean`'s bounded relation
+`DecidedWithin` mirrors the constructor and needed the same change,
+with `directSkipSlotIn_congr` for the schedule-reassignment case, where
+the old form used `isLeaderBlock_slotsOf_congr`. The safety development
+is otherwise untouched, which is what the core's repair predicted:
+where a candidate exists the two forms agree.
+
+`Banded`'s `directSkip` case now closes, by the core's
+`directSkipSlotIn_band` — the two carriers project identically, so the
+band transfers between them by its three fields.
+
+**Two protocols now share one skip rule**, which is a smaller
+development than two. That was not the goal of the repair and is the
+clearest sign it was the right one: the vacuous form was not Odontoceti
+expressing something the core could not, it was the same rule stated
+before anyone had asked what a skip must survive.
 
 **The third instance did its job.** The point of a third rule was to
 test whether the six obligations are the right six. They found a defect
-in the third protocol within an hour of being pointed at it — the same
-defect, in the same clause, that the second instance found in the first
-protocol. That is the strongest evidence so far that `Banded` is
-carrying real content and not restating what each rule already knew.
+in the third protocol immediately — the same defect, in the same clause,
+that the second instance found in the first protocol — and the repair
+was the first protocol's, reused without change. That is the strongest
+evidence so far that `Banded` carries real content rather than
+restating what each rule already knew.
+
+What remains for Odontoceti is the band's *induction*: four constructors
+and their transport lemmas, of which `directSkip` is now the settled
+one. `Causal`, `Agree`, `CommitsCandidate` and `CommitsDirect` are
+proved (`LeanDag/OdontocetiProperties.lean`).
 
 ## 4. Properties for the schedule mechanisms
 

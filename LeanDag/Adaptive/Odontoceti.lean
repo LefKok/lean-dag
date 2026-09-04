@@ -36,9 +36,9 @@ inductive DecidedWithin (U : BlockUniverse Validator BlockId Payload)
   | directCommit {k : ℕ} {L : BlockId} :
       k < B → IsLeaderBlock U k L → DirectCommitIn U V L (S.slotRound k) →
       DecidedWithin U V B k (some L)
-  /-- The direct rule blames every candidate. -/
+  /-- The direct rule skips the slot, on a quorum of blockers. -/
   | directSkip {k : ℕ} :
-      k < B → (∀ L, IsLeaderBlock U k L → DirectSkipIn U V L (S.slotRound k)) →
+      k < B → DirectSkipSlotIn U V k →
       DecidedWithin U V B k none
   /-- Anchored below the bound, the least candidate passing the indirect
   test is committed. -/
@@ -105,7 +105,8 @@ theorem decidedWithin_congr {hinj : Function.Injective S.slotRound}
         (isLeaderBlock_slotsOf_congr (ha k hk) hL) hdc
   | @directSkip k hk hall =>
       exact DecidedWithin.directSkip (S := slotsOf hinj a₂) hk
-        (fun L hL => hall L (isLeaderBlock_slotsOf_congr (ha k hk).symm hL))
+        (directSkipSlotIn_congr (S₁ := slotsOf hinj a₁) (S₂ := slotsOf hinj a₂)
+          rfl (by simpa using ha k hk) hall)
   | @indirectCommit k j A L hkj hj helig _ _ hL ht hmin ihj ihmid =>
       exact DecidedWithin.indirectCommit (S := slotsOf hinj a₂) hkj hj helig ihj
         (fun i h1 h2 h3 => ihmid i h1 h2 h3)

@@ -12822,10 +12822,15 @@ inductive Decided (U : BlockUniverse Validator BlockId Payload)
   | directCommit {k : ℕ} {L : BlockId} :
       IsLeaderBlock U k L → DirectCommitIn U V L (S.slotRound k) →
       Decided U V k (some L)
-  /-- The direct rule blames every candidate — vacuously, when the
-  leader produced nothing. -/
+  /-- The direct rule skips the slot: a quorum of voting-round blocks in
+  view references no candidate of it. Required whatever the slot holds,
+  an absent leader included, which is what makes a skip final.
+
+  `DirectSkipSlotIn` is the core's, reused unchanged: both rules blame
+  at `slotRound k + 1` and both count creators against `quorumCard`, so
+  the repaired premise is literally the same predicate. -/
   | directSkip {k : ℕ} :
-      (∀ L, IsLeaderBlock U k L → DirectSkipIn U V L (S.slotRound k)) →
+      DirectSkipSlotIn U V k →
       Decided U V k none
   /-- Anchored on the nearest eligible committed slot, the least
   candidate passing the indirect test is committed. -/
@@ -14074,9 +14079,9 @@ inductive DecidedWithin (U : BlockUniverse Validator BlockId Payload)
   | directCommit {k : ℕ} {L : BlockId} :
       k < B → IsLeaderBlock U k L → DirectCommitIn U V L (S.slotRound k) →
       DecidedWithin U V B k (some L)
-  /-- The direct rule blames every candidate. -/
+  /-- The direct rule skips the slot, on a quorum of blockers. -/
   | directSkip {k : ℕ} :
-      k < B → (∀ L, IsLeaderBlock U k L → DirectSkipIn U V L (S.slotRound k)) →
+      k < B → DirectSkipSlotIn U V k →
       DecidedWithin U V B k none
   /-- Anchored below the bound, the least candidate passing the indirect
   test is committed. -/

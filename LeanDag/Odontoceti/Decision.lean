@@ -191,10 +191,15 @@ inductive Decided (U : BlockUniverse Validator BlockId Payload)
   | directCommit {k : ℕ} {L : BlockId} :
       IsLeaderBlock U k L → DirectCommitIn U V L (S.slotRound k) →
       Decided U V k (some L)
-  /-- The direct rule blames every candidate — vacuously, when the
-  leader produced nothing. -/
+  /-- The direct rule skips the slot: a quorum of voting-round blocks in
+  view references no candidate of it. Required whatever the slot holds,
+  an absent leader included, which is what makes a skip final.
+
+  `DirectSkipSlotIn` is the core's, reused unchanged: both rules blame
+  at `slotRound k + 1` and both count creators against `quorumCard`, so
+  the repaired premise is literally the same predicate. -/
   | directSkip {k : ℕ} :
-      (∀ L, IsLeaderBlock U k L → DirectSkipIn U V L (S.slotRound k)) →
+      DirectSkipSlotIn U V k →
       Decided U V k none
   /-- Anchored on the nearest eligible committed slot, the least
   candidate passing the indirect test is committed. -/
@@ -263,7 +268,8 @@ theorem decided_unique {V₁ : View Validator BlockId Payload U} {k : ℕ}
     | directCommit hL₂ h₂ =>
       exact congrArg some (eq_of_directCommitIn hL hL₂ h h₂)
     | directSkip hskip =>
-      exact absurd (not_directSkipIn_of_directCommitIn h (hskip L hL))
+      exact absurd (not_directSkipIn_of_directCommitIn h
+        (directSkipIn_of_directSkipSlotIn hskip hL))
         not_false
     | indirectCommit _ _ _ _ hL₂ ht₂ _ =>
       exact congrArg some (eq_of_directCommitIn_of_thickLink hL hL₂ h ht₂)
@@ -274,11 +280,13 @@ theorem decided_unique {V₁ : View Validator BlockId Payload U} {k : ℕ}
     intro V₂ v₂ h₂
     cases h₂ with
     | @directCommit _ L₂ hL₂ h₂ =>
-      exact absurd (not_directSkipIn_of_directCommitIn h₂ (hskip L₂ hL₂))
+      exact absurd (not_directSkipIn_of_directCommitIn h₂
+        (directSkipIn_of_directSkipSlotIn hskip hL₂))
         not_false
     | directSkip _ => rfl
     | indirectCommit _ _ _ _ hL₂ ht₂ _ =>
-      exact absurd ht₂ (not_thickLink_of_directSkipIn (hskip _ hL₂) _)
+      exact absurd ht₂ (not_thickLink_of_directSkipIn
+        (directSkipIn_of_directSkipSlotIn hskip hL₂) _)
     | indirectSkip _ _ _ _ _ => rfl
   | @indirectCommit k j A L hkj helig hj hmid hL ht hmin ihj ihmid =>
     intro V₂ v₂ h₂
@@ -287,7 +295,8 @@ theorem decided_unique {V₁ : View Validator BlockId Payload U} {k : ℕ}
       exact congrArg some
         (eq_of_directCommitIn_of_thickLink hL₂ hL h₂ ht).symm
     | directSkip hskip₂ =>
-      exact absurd ht (not_thickLink_of_directSkipIn (hskip₂ _ hL) _)
+      exact absurd ht (not_thickLink_of_directSkipIn
+        (directSkipIn_of_directSkipSlotIn hskip₂ hL) _)
     | @indirectCommit _ j₂ A₂ L₂ hkj₂ helig₂ hj₂ hmid₂ hL₂ ht₂ hmin₂ =>
       obtain ⟨rfl, rfl⟩ := anchor_eq hkj helig hkj₂ helig₂ hj₂ hmid₂ ihj ihmid
       -- shared anchor: canonicity arbitrates

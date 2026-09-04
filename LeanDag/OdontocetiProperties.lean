@@ -16,32 +16,23 @@ constructor for constructor at a shorter wavelength —
 six obligations are the right six, the differences it does have should
 be the only work. That is what a third instance is for.
 
-**Four of the six are here, and `Banded` is blocked** — by a defect in
-the protocol, not in the properties. `Decided.directSkip` quantifies
-over the candidates the universe holds:
+**Four of the six are here.** `Banded` is not, and the reason is worth
+recording: it was blocked, by a defect in the protocol rather than in
+the properties, and the block is now cleared.
 
-```
-| directSkip {k} : (∀ L, IsLeaderBlock U k L → DirectSkipIn U V L (S.slotRound k)) →
-    Decided U V k none
-```
+`Decided.directSkip` used to quantify over the candidates the universe
+holds, so a slot with no candidate was skipped *vacuously*.
+`AgreeBand`'s membership clause runs one way — a block of `U` in the
+band is a block of `U'` — because a band must admit universes that hold
+*more*. A candidate present in `U'` and absent from `U` was therefore
+beyond reach, and the goal `L ∈ U.ids` could not be closed.
 
-so a slot with no candidate is skipped *vacuously*. `AgreeBand`'s
-membership clause runs one way — a block of `U` in the band is a block
-of `U'` — because a band must admit universes that hold *more*. So a
-candidate present in `U'` and not in `U` is beyond reach, and the skip
-does not transport. The goal that cannot be closed is `L ∈ U.ids`, from
-`L ∈ U'.ids`.
-
-This is the core's own defect, before its repair: §3.2 records it, and
-`Mysticeti.Decided.directSkip` now takes `DirectSkipSlotIn` — a count of
-voting-round blocks referencing *no* candidate of the slot — which is a
-fact about blocks `U` already holds, and so transports. Odontoceti's
-`DirectSkipIn` counts blames against one candidate and has the same
-shape the core's had.
-
-The repair is the same shape too, and it is a change to Odontoceti's
-decision relation rather than to this file, so it is not made here.
-`docs/target-properties.md` §3.12 records what it would cost.
+That was the core's own defect, before its repair
+(`docs/target-properties.md` §3.2), and the repair transferred without
+change: Odontoceti's `DirectSkipIn` and the core's are the same
+predicate, so `Decided.directSkip` now takes `DirectSkipSlotIn` and the
+band's case closes by `directSkipSlotIn_band`. What is left is the
+induction itself, over four constructors.
 -/
 
 namespace LeanDag
