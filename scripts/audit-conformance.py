@@ -32,11 +32,11 @@ RULES = [
     ("core Mysticeti",     "MysticetiProperties.mysticetiRule", None),
     ("reactive Mysticeti", "MysticetiProperties.mysticetiRule", "shares the core's rule"),
     ("Hydrozoan",          "Hydrozoan.rule",                    None),
-    ("Optimal-Hydrozoan",  None, "no carrier; `DecidedOpt` is over `OptUniverse`"),
-    ("Odontoceti",         None, "no carrier"),
-    ("Nemo",               None, "no carrier; its own `Universe` type"),
+    ("Optimal-Hydrozoan",  "Barnacle.optimalHydrozoanRule",     "carrier via Barnacle"),
+    ("Odontoceti",         "Barnacle.odontocetiRule",           "carrier via Barnacle"),
+    ("Nemo",               "Barnacle.nemoRule",                 "carrier via Barnacle"),
     ("Mahi-Mahi",          None, "no carrier; band conditional on `2 <= w` (3.4c)"),
-    ("Hybrid / Orcaella",  None, "no carrier; `Decided` indexed by a threshold"),
+    ("Hybrid / Orcaella",  "Barnacle.orcaellaRule",             "carrier via Barnacle, one per threshold"),
     ("FinWhale",           None, "no carrier; no `Slots` layer at all (3.4c)"),
     ("Black Marlin",       None, "no carrier; commits by round, no slot-indexed relation"),
 ]
@@ -113,12 +113,17 @@ def main():
 
     carriers = {c for _, c, _ in RULES if c}
     without = [n for n, c, _ in RULES if not c]
-    print(f"\n{len(carriers)} carriers, covering {conforming} of {len(RULES)} rules "
-          "(reactive Mysticeti shares the core's).")
-    print(f"{len(without)} rules have no carrier and so show nothing: "
-          + ", ".join(without) + ".")
-    print("Giving one a carrier is the first step, and the cheapest test of "
-          "whether the six are the right six.")
+    partial_ = [n for n, c, _ in RULES
+                if c and not all(c in shown.get(o, ()) for o in OBLIGATIONS[:6])]
+    print(f"\n{len(carriers)} carriers over {len(RULES)} rules; "
+          f"{conforming} show all six required properties.")
+    if partial_:
+        print("Carrier but not the six: " + ", ".join(partial_) + ".")
+        print("  `Agree` and `CommitsCandidate` are `Barnacle.Laws` renamed;")
+        print("  `Causal` needs the universe-level facts `Laws` states only for views,")
+        print("  and `Banded` is the induction each rule owes. Those four are per-rule.")
+    if without:
+        print(f"{len(without)} with no carrier: " + ", ".join(without) + ".")
     print("* SkipsUnsupported is optional; the other six are required.")
     return 0
 

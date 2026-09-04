@@ -22455,6 +22455,67 @@ abbrev PlacesRuns (P : AdaptivePolicy Validator BlockId Payload)
 
 **The adaptive fairness clause**, for the core.
 
+#### `mysticetiRule`
+
+*abbrev, `Barnacle.Conformance.lean`*
+
+```lean
+abbrev mysticetiRule : Properties.DagRule Validator BlockId Payload :=
+  (mysticeti (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)).toDagRule (Mysticeti.holds _ _ _)
+```
+
+Mysticeti as a `DagRule`, through Barnacle.
+
+#### `nemoRule`
+
+*abbrev, `Barnacle.Conformance.lean`*
+
+```lean
+abbrev nemoRule : Properties.DagRule Validator BlockId Payload :=
+  (nemo (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)).toDagRule (Nemo.holds.1 _ _ _)
+```
+
+Nemo as a `DagRule`.
+
+#### `odontocetiRule`
+
+*abbrev, `Barnacle.Conformance.lean`*
+
+```lean
+abbrev odontocetiRule : Properties.DagRule Validator B Payload :=
+  (odontoceti (Validator := Validator) (BlockId := B)
+    (Payload := Payload)).toDagRule (Odontoceti.holds.1 _ _ _)
+```
+
+Odontoceti as a `DagRule`.
+
+#### `orcaellaRule`
+
+*abbrev, `Barnacle.Conformance.lean`*
+
+```lean
+abbrev orcaellaRule (k : ℕ) (hk : Hybrid.Admissible Validator k) :
+    Properties.DagRule Validator B Payload :=
+  (orcaella (Validator := Validator) (BlockId := B)
+    (Payload := Payload) k).toDagRule (Orcaella.holds.1 _ _ _ k hk)
+```
+
+Orcaella — the hybrid rule at threshold `k` — as a `DagRule`. The threshold must be admissible, which is where the mixed fault bound enters and why this carrier is one per `k` rather than one outright.
+
+#### `optimalHydrozoanRule`
+
+*abbrev, `Barnacle.Conformance.lean`*
+
+```lean
+abbrev optimalHydrozoanRule : Properties.DagRule Replica BlockId Unit :=
+  (optimalHydrozoan (Replica := Replica) (BlockId := BlockId)).toDagRule
+    (OptimalHydrozoan.holds _ _)
+```
+
+**Optimal-Hydrozoan as a `DagRule`**, which it had no way to be: its verdicts are `DecidedOpt` over `OptUniverse`, and Barnacle's instance is what puts them in the shared vocabulary.
+
 #### `WindowHealthy`
 
 *def, `Barnacle.Healthy.Statement.lean`*
@@ -24850,7 +24911,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 954 theorems that either another module of the
+The 956 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -35583,6 +35644,28 @@ theorem coversUpto_full (hR : R.Laws) (U : R.Universe) (N : ℕ) :
 
 **The full view is caught up to every horizon.**
 
+#### `agree_toDagRule`
+
+*theorem, `Barnacle.Helpers.DagRule.lean`*
+
+```lean
+theorem agree_toDagRule (R : BaseRule Validator BlockId Payload) (L : BaseRule.Laws R) :
+    Properties.Agree (R.toDagRule L)
+```
+
+**A4 is `Agree`.** The law and the property are the same statement.
+
+#### `commitsCandidate_toDagRule`
+
+*theorem, `Barnacle.Helpers.DagRule.lean`*
+
+```lean
+theorem commitsCandidate_toDagRule (R : BaseRule Validator BlockId Payload)
+    (L : BaseRule.Laws R) : Properties.CommitsCandidate (R.toDagRule L)
+```
+
+**And `candidates` is `CommitsCandidate`.** `BaseRule.IsLeaderBlock` and `DagRule.IsCandidate` are the same three conjuncts — present, at the slot's round, by the slot's leader — so this is the law verbatim.
+
 #### `mysticetiLive_delivers`
 
 *theorem, `Barnacle.Helpers.Delivery.lean`*
@@ -37432,7 +37515,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 950 lemmas used only within the file that proves
+The 960 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -38873,6 +38956,21 @@ subsection per module, in the layer order of Appendices B and C.
 | `const_pick` | — |
 | `partialRun_assign_agree` | Assignments agree wherever the common verdicts determine them. |
 | `spansEligible_slotsOf` | Eligibility reads only the round structure, which reassignment fixes: the spanning property transfers to … |
+
+### `Barnacle/Conformance.lean` (10)
+
+| Lemma | Role |
+|:---|:---|
+| `mysticetiRule_agree` | — |
+| `mysticetiRule_commitsCandidate` | — |
+| `nemoRule_agree` | — |
+| `nemoRule_commitsCandidate` | — |
+| `odontocetiRule_agree` | — |
+| `odontocetiRule_commitsCandidate` | — |
+| `optimalHydrozoanRule_agree` | — |
+| `optimalHydrozoanRule_commitsCandidate` | — |
+| `orcaellaRule_agree` | — |
+| `orcaellaRule_commitsCandidate` | — |
 
 ### `Barnacle/Helpers/DagRule.lean` (2)
 

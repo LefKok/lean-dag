@@ -1,5 +1,7 @@
 import LeanDag.Barnacle.Model.Rule
 import LeanDag.Properties.Carrier
+import LeanDag.Properties.Agree
+import LeanDag.Properties.Candidate
 
 /-!
 # A Barnacle rule is a `DagRule`
@@ -45,6 +47,31 @@ def BaseRule.toDagRule (R : BaseRule Validator BlockId Payload) (L : BaseRule.La
 
 @[simp] theorem toDagRule_block (R : BaseRule Validator BlockId Payload) (L : BaseRule.Laws R) :
     (R.toDagRule L).block = R.block := rfl
+
+/-! ## What the laws already say
+
+Two of the six required properties are `Laws` under another name, so
+every Barnacle rule has them the moment it has a carrier. That is six
+rules at once (`docs/target-properties.md` §11.2), and it is why
+`BaseRule.toDagRule` was worth taking before adding carriers one at a
+time.
+
+`Causal` is not among them: `Laws` states the structural facts for
+*views* — `view_complete` — and not for universes, so it gives neither
+completeness nor the round condition on references. `Banded` is not
+either, and would not be: it is the induction each protocol owes. -/
+
+/-- **A4 is `Agree`.** The law and the property are the same statement. -/
+theorem agree_toDagRule (R : BaseRule Validator BlockId Payload) (L : BaseRule.Laws R) :
+    Properties.Agree (R.toDagRule L) :=
+  fun S _ V₁ V₂ k v₁ v₂ h₁ h₂ => L.agree S V₁ V₂ k v₁ v₂ h₁ h₂
+
+/-- **And `candidates` is `CommitsCandidate`.** `BaseRule.IsLeaderBlock`
+and `DagRule.IsCandidate` are the same three conjuncts — present, at the
+slot's round, by the slot's leader — so this is the law verbatim. -/
+theorem commitsCandidate_toDagRule (R : BaseRule Validator BlockId Payload)
+    (L : BaseRule.Laws R) : Properties.CommitsCandidate (R.toDagRule L) :=
+  fun S _ V k lead h => L.candidates S V k lead h
 
 end Barnacle
 

@@ -226,6 +226,7 @@ import LeanDag.Barnacle.Nemo.Proof
 import LeanDag.Barnacle.Orcaella.Statement
 import LeanDag.Barnacle.Helpers.Orcaella
 import LeanDag.Barnacle.Orcaella.Proof
+import LeanDag.Barnacle.Conformance
 import LeanDag.Barnacle.Helpers.Hydrozoan
 import LeanDag.Barnacle.Hydrozoan.Statement
 import LeanDag.Barnacle.Hydrozoan.Proof

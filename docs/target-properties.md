@@ -1321,7 +1321,7 @@ one relation (§11.4d). Chain quality has no property of its own (§5).
 
 ### 11.2 Against part 2: two protocols, every mechanism
 
-**Ten decision rules, two carriers.** `scripts/audit-conformance.py`
+**Ten decision rules, six carriers.** `scripts/audit-conformance.py`
 recomputes this from `docs/decls.json` rather than trusting the table: a
 rule shows a property when some theorem concludes it at that rule's
 carrier, or when its conformance `Statement` lists it.
@@ -1331,34 +1331,49 @@ carrier, or when its conformance `Statement` lists it.
 | core Mysticeti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | reactive Mysticeti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Hydrozoan | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Optimal-Hydrozoan | — | — | — | — | — | — | — |
-| Odontoceti | — | — | — | — | — | — | — |
-| Nemo | — | — | — | — | — | — | — |
+| Optimal-Hydrozoan | — | — | ✓ | ✓ | — | — | — |
+| Odontoceti | — | — | ✓ | ✓ | — | — | — |
+| Nemo | — | — | ✓ | ✓ | — | — | — |
+| Hybrid / Orcaella | — | — | ✓ | ✓ | — | — | — |
 | Mahi-Mahi | — | — | — | — | — | — | — |
-| Hybrid / Orcaella | — | — | — | — | — | — | — |
 | FinWhale | — | — | — | — | — | — | — |
 | Black Marlin | — | — | — | — | — | — | — |
 
 `Persist`, `Local` and `LocalTruncate` are not columns: they follow from
 `Banded` for every rule that has it, so there is nothing per protocol to
-record. Reactive Mysticeti shares the core's rule outright, so the two
-carriers cover three rules.
+record.
 
-**Why the seven have nothing, which is not one reason but four.**
-Odontoceti and Nemo simply have no carrier — Nemo over its own
-`Universe` type, Odontoceti over the shared one — and are the cheapest
-to add. Optimal-Hydrozoan decides over `OptUniverse`. Mahi-Mahi and
-Hybrid index their decision relation by a parameter, a wave width and a
-threshold, so each needs a carrier per value and Mahi-Mahi's band is
-conditional on `2 ≤ w` (§3.4c). FinWhale has no `Slots` layer at all,
-and Black Marlin commits by round with no slot-indexed relation — for
-those two the carrier is not the first step, the schedule layer is.
+**Four carriers came at once, from `Barnacle.BaseRule.toDagRule`**
+(`Barnacle/Conformance.lean`). Barnacle's instances are not further
+protocols — they are Mysticeti, Odontoceti, Nemo, Hydrozoan,
+Optimal-Hydrozoan and Orcaella under an interface whose fields are a
+superset of `DagRule`'s — so the coercion carries them, and `Laws`,
+which each already proved, is two of the six obligations verbatim:
+`agree` **is** `Agree`, and `candidates` **is** `CommitsCandidate`.
+Optimal-Hydrozoan and Orcaella had no other route: the first decides
+over `OptUniverse`, the second is indexed by an admissible threshold, so
+its carrier is one per `k`.
 
-**The six Barnacle rules are not seven more.** `Barnacle/*/Statement.lean`
-instantiates `BaseRule` at Mysticeti, Odontoceti, Nemo, Hydrozoan,
-Optimal-Hydrozoan and Orcaella; those are the same rules under another
-interface, so `BaseRule.toDagRule` would carry six of the seven at once.
-That is the largest single gain available here, and §11.5 lists it.
+**What an interface leaves undone, which is the more useful half.**
+`Causal` needs completeness and the round condition on references at the
+*universe*, and `Laws` states those for views only. `Banded` is the
+induction a protocol owes and no interface can supply it. So the four
+new carriers gain two obligations of six, and the remaining four are
+per-rule work — the honest reading being that a shared interface hands
+over the laws a protocol already had, under new names, and nothing
+deeper.
+
+**Hydrozoan is deliberately not carried twice.** Barnacle instantiates
+it too, so a second carrier could be built and would prove two
+properties Hydrozoan already proves. Two carriers for one rule is a way
+to make this table read better than the development is.
+
+**Three rules still have none**, for reasons that are not the same.
+Mahi-Mahi's decision relation is indexed by a wave width and its band is
+conditional on `2 ≤ w` (§3.4c), so it needs a carrier per width.
+FinWhale has no `Slots` layer at all and Black Marlin commits by round
+with no slot-indexed relation — for those two the carrier is not the
+first step, the schedule layer is.
 
 The consumer tests passed. Each is a former bespoke induction
 re-derived with none: `decided_fillHZ`, `decided_chopHZ`,
@@ -1727,12 +1742,13 @@ slots when it means a dependence bound — *the verdict is settled by slot
    Six of the eight rules can carry an offset band as they stand;
    Mahi-Mahi can under `2 ≤ w`, and FinWhale cannot until it has a
    `Slots` layer. `scripts/audit-rounds.py` keeps the result.
-3. **A third rule.** Odontoceti or Nemo, whichever is cheaper — same
-   `IsLeaderBlock`, same `Eligible`, `decisionRound + 1` where the core
-   has `+ 2`. Everything else on this list serves two protocols, and
-   two is a thin basis for the claim part 1 makes. Collapsing the
-   Odontoceti mirrors (`Adaptive/`, `Reactive/`) onto instances falls
-   out of it.
+3. **`Banded` for a third rule.** Odontoceti or Nemo — both now have
+   carriers and two of the six properties (§11.2), so what is left is
+   the induction. Same `IsLeaderBlock`, same `Eligible`,
+   `decisionRound + 1` where the core has `+ 2`. `Banded` is the
+   obligation everything else follows from, so a third instance of it
+   is the real test of whether the six are the right six; collapsing
+   the Odontoceti mirrors (`Adaptive/`, `Reactive/`) falls out of it.
 4. **~~A commit names the slot's candidate~~** (**done**, §3.9).
    `CommitsCandidate`, which seven protocols had proved separately.
 5. **~~Re-genesis as an `Extends`~~** (**done**, §3.10). Two witnesses
@@ -1750,9 +1766,8 @@ slots when it means a dependence bound — *the verdict is settled by slot
    to the carrier needs and the only remaining call for a new carrier
    field.
 9. **Delete `Local`, and decide about `Delivers`** (§11.4).
-10. **Barnacle**, through `BaseRule.toDagRule` — Mysticeti,
-    Odontoceti, Nemo, Hydrozoan, Optimal-Hydrozoan and Orcaella are the
-    same rules under another interface, so six of the seven carriers
-    could come at once. The largest single gain on the instance side,
-    and it is why item 3 should be read as a rehearsal for this one
-    rather than an end in itself.
+10. **~~Barnacle, through `BaseRule.toDagRule`~~** (**done**, §11.2).
+    Four new carriers — Odontoceti, Nemo, Optimal-Hydrozoan and
+    Orcaella — each with `Agree` and `CommitsCandidate` from `Laws`.
+    What it did not give is what item 3 is now for: `Causal` and
+    `Banded` are per-rule, and `Banded` is the one that matters.
