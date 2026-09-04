@@ -330,6 +330,67 @@ genesis special case, a hardcoded first slot — has no offset band, and
 would have to state its own truncation property or exclude the bottom of
 the DAG from the offset. Neither protocol has such a rule today.
 
+#### 3.4c Which rules can read a band with an offset
+
+§3.4b leaves one thing to check. A rule satisfies `Banded` only if its
+decision relation is invariant under adding a constant to every block
+round and every `slotRound`, so every round it reads must be a slot's
+round plus a constant, or a comparison between two rounds. A round
+compared with a literal, or reached by truncated subtraction, is
+neither.
+
+`scripts/audit-rounds.py` recomputes the result below. It takes each
+rule's decision relation, closes it over the dependency graph — 83
+round-reading definitions across the eight rules — and flags the shapes
+that break the invariance. The known findings sit in an `ALLOW` list, so
+a genesis special case added later fails the script rather than silently
+making that rule's band unprovable.
+
+| rule | the rounds it reads | offset band |
+|---|---|---|
+| core Mysticeti | `slotRound k`, `+1`, `+2` | proved |
+| Hydrozoan | `slotRound k`, `+1`, `+2` | proved |
+| reactive Mysticeti | the core's relation, unchanged | inherited |
+| Odontoceti | `slotRound k`, `+1` | reachable |
+| Nemo | `slotRound k`, `+1` | reachable |
+| Hybrid | `slotRound k`, `+1` | reachable |
+| Optimal-Hydrozoan | `slotRound k`, `+1`, `+2` | reachable |
+| Mahi-Mahi | `slotRound k + w - 1`, `r + w - 2` | reachable, under `2 ≤ w` |
+| FinWhale | `leader (round b - 2)` | not as the rule stands |
+
+**Mahi-Mahi's wave rounds truncate.** `votingRound w r = r + w - 2`,
+`decisionRoundAt w r = r + w - 1` and `decisionRound w k = slotRound k +
+w - 1` are `ℕ` subtractions, and `(r + g) - 2 = (r - 2) + g` fails at
+`r + w < 2`. It holds at `2 ≤ w`, and every Mahi-Mahi theorem already
+carries that or more — safety `3 ≤ w`, counting `4 ≤ w` and `5 ≤ w` — so
+the hypothesis is there to be used. What follows is that Mahi-Mahi's
+carrier instance is per-width and its band is conditional, `Banded
+(mahiMahiRule w)` under `2 ≤ w`, where both proved bands are
+unconditional. `Banded R` is a predicate on the rule alone, so the width
+has to be fixed before the property is stated rather than appear inside
+it.
+
+**FinWhale indexes its leader by an absolute round**, in
+`ExposesEquivocation`: `D.leader ((D.block b).round - 2)`. The
+subtraction is the smaller half. `Dag.leader : ℕ → Validator` is indexed
+by round rather than by slot, and FinWhale's model has no `Slots`, so
+the band's slot-correspondence hypothesis has nothing to attach to.
+FinWhale needs the schedule layer before it can have a band, and that is
+a carrier gap rather than an offset one.
+
+**A third difference, which is not a defect.** Odontoceti, Nemo,
+Mahi-Mahi and Hybrid define causal history by a depth bound taken from a
+block's own round: `historyFrom blk b = historyUptoFrom blk ((blk b).round
++ 1) b`, enough unfoldings to reach round zero. Under a truncation that
+bound shrinks by the horizon, so the history is a shallower unfolding
+and is *not* the same set. It agrees with the original everywhere the
+rule looks, because a reference path drops one round per step and a
+block above the floor is within the shorter depth, but that is an
+argument those four bands will have to make. The core and Hydrozoan read
+`Reaches`, an unbounded `ReflTransGen`, and make no such argument. The
+difference is invisible in the rules as stated and appeared only in the
+closure.
+
 ## 3.5 Composition
 
 Transport should be a **relation that composes**: compose the slot
@@ -1192,11 +1253,10 @@ instantiates it (§4.5).
 1. **`Compose.lean`.** The three composition lemmas, then
    `Stack.lean`'s theorem re-derived from them. Small, and the direct
    test of part 3.
-2. **Audit the rules for absolute round reads.** The offset band
-   (§3.4b) is the one obligation a genesis special case would break,
-   and neither protocol has one today. A protocol that acquires one
-   loses `LocalTruncate` silently, since the band would simply be
-   unprovable rather than wrong.
+2. **~~Audit the rules for absolute round reads~~** (**done**, §3.4c).
+   Six of the eight rules can carry an offset band as they stand;
+   Mahi-Mahi can under `2 ≤ w`, and FinWhale cannot until it has a
+   `Slots` layer. `scripts/audit-rounds.py` keeps the result.
 3. **Collapse the Odontoceti mirrors** (`Adaptive/`, `Reactive/`) onto
    instances. `Live` and `Descends` now have two instances each and
    survived both, so the shape is no longer in doubt.
