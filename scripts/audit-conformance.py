@@ -42,9 +42,10 @@ RULES = [
 ]
 
 # The obligations, in the order 11.1 lists them.
-# The six every rule owes, then the two owed only when a mechanism asks:
-# `CommitsDirect` by a rule whose direct predicate a window count reads,
-# `SkipsUnsupported` by one that skips without an anchor.
+# The six every rule owes, then the two in `Properties/Optional/`, owed
+# only when a mechanism asks: `CommitsDirect` by a rule whose direct
+# predicate a window count reads, `SkipsUnsupported` by one that skips
+# without waiting for an anchor.
 OBLIGATIONS = ["Causal", "Banded", "Agree", "CommitsCandidate",
                "LeaderCommits", "Descends", "CommitsDirect", "SkipsUnsupported"]
 REQUIRED = 6
@@ -129,9 +130,10 @@ def main():
         print("  and `Banded` is the induction each rule owes. Those four are per-rule.")
     if without:
         print(f"{len(without)} with no carrier: " + ", ".join(without) + ".")
-    print("* CommitsDirect and SkipsUnsupported are conditional: owed only when "
-          "a mechanism\n  reads the rule's direct predicate, or the rule skips "
-          "without an anchor.")
+    print("* CommitsDirect and SkipsUnsupported are optional "
+          "(`Properties/Optional/`): owed\n  only when a mechanism reads the "
+          "rule's direct predicate, or the rule skips\n  without waiting for an "
+          "anchor.")
     return 0
 
 

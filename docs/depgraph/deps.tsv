@@ -29824,7 +29824,7 @@ EDGE	LeanDag.outputAt_unique	LeanDag.Faults
 EDGE	LeanDag.outputAt_unique	LeanDag.OutputAt
 EDGE	LeanDag.outputAt_unique	LeanDag.BlockUniverse
 EDGE	LeanDag.outputAt_unique	LeanDag.Reaches
-NODE	LeanDag.Properties.CommitsDirect	LeanDag.Properties.Candidate	def
+NODE	LeanDag.Properties.CommitsDirect	LeanDag.Properties.Optional.Direct	def
 EDGE	LeanDag.Properties.CommitsDirect	LeanDag.Properties.DagRule.Decided
 EDGE	LeanDag.Properties.CommitsDirect	LeanDag.Slots.slotRound
 EDGE	LeanDag.Properties.CommitsDirect	LeanDag.Properties.DagRule.IsCandidate

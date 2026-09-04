@@ -24538,23 +24538,6 @@ def CommitsCandidate (R : DagRule Validator BlockId Payload) : Prop :=
 
 Not derivable from the band. `Banded` says which DAGs a verdict cannot tell apart; it says nothing about what the verdict's payload denotes, and a rule that committed an id it had never seen would satisfy every band.
 
-#### `CommitsDirect`
-
-*def, `Properties.Candidate.lean`*
-
-```lean
-def CommitsDirect (R : DagRule Validator BlockId Payload)
-    (Direct : ∀ {U : R.Universe}, R.View U → BlockId → ℕ → Prop) : Prop :=
-  ∀ (S : Slots Validator) (U : R.Universe) (V : R.View U) (k : ℕ) (L : BlockId),
-    R.IsCandidate S U k L → Direct V L (S.slotRound k) → R.Decided S V k (some L)
-```
-
-**And a direct commit is a verdict** — the converse, parameterised by the rule's own direct-commit predicate, since what counts as *direct* is the rule's business and not the carrier's.
-
-**Why a mechanism needs this.** `Barnacle`'s leader count is driven by a window count: how many slots of the recent past were directly committed, measured on the anchor's causal history. Nothing in that count mentions `Decided`. A rule whose direct predicate held of everything would drive the count to its maximum and raise the leader count every window, and every theorem about the count would still be true — it would simply be counting nothing. This is the property that makes it a count of verdicts.
-
-It sat unused in `Barnacle.BaseRule.Laws` as `decided_of_directCommitIn` for exactly as long as its own docstring claimed it was what made the window count meaningful. Six protocols proved it and nothing read it.
-
 #### `DagRule`
 
 *structure, `Properties.Carrier.lean`*
@@ -24767,6 +24750,19 @@ def Novel (R : DagRule Validator BlockId Payload) (U U' : R.Universe) (b : Block
 
 **What an extension adds.** A parameter in `Integration/Hydrozoan/Simulation.lean`, because that interface covers truncations too and there "novel" has to be supplied as empty. For an extension it is determined, so it is a definition here.
 
+#### `CommitsDirect`
+
+*def, `Properties.Optional.Direct.lean`*
+
+```lean
+def CommitsDirect (R : DagRule Validator BlockId Payload)
+    (Direct : ∀ {U : R.Universe}, R.View U → BlockId → ℕ → Prop) : Prop :=
+  ∀ (S : Slots Validator) (U : R.Universe) (V : R.View U) (k : ℕ) (L : BlockId),
+    R.IsCandidate S U k L → Direct V L (S.slotRound k) → R.Decided S V k (some L)
+```
+
+**A direct commit is a verdict.** The converse of `CommitsCandidate`, parameterised by the rule's own direct-commit predicate — what counts as *direct* is the rule's business and not the carrier's, which is why `Direct` is an argument rather than a field.
+
 #### `Unsupported`
 
 *def, `Properties.Optional.Skip.lean`*
@@ -24952,7 +24948,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 953 theorems that either another module of the
+The 954 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -35709,6 +35705,18 @@ theorem commitsCandidate_toDagRule (R : BaseRule Validator BlockId Payload)
 
 **And `candidates` is `CommitsCandidate`.** `BaseRule.IsLeaderBlock` and `DagRule.IsCandidate` are the same three conjuncts — present, at the slot's round, by the slot's leader — so this is the law verbatim.
 
+#### `commitsDirect_toDagRule`
+
+*theorem, `Barnacle.Helpers.DagRule.lean`*
+
+```lean
+theorem commitsDirect_toDagRule (R : BaseRule Validator BlockId Payload)
+    (L : BaseRule.Laws R) :
+    Properties.CommitsDirect R.toDagRule (fun {_} V => R.DirectCommitIn V)
+```
+
+**And `decided_of_directCommitIn` is `CommitsDirect`**, at the rule's own direct predicate. The clause had no consumer; the property does (`Barnacle/Healthy/`).
+
 #### `mysticetiLive_delivers`
 
 *theorem, `Barnacle.Helpers.Delivery.lean`*
@@ -37524,7 +37532,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 960 lemmas used only within the file that proves
+The 959 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -38983,11 +38991,10 @@ subsection per module, in the layer order of Appendices B and C.
 | `orcaellaRule_agree` | — |
 | `orcaellaRule_commitsCandidate` | — |
 
-### `Barnacle/Helpers/DagRule.lean` (3)
+### `Barnacle/Helpers/DagRule.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
-| `commitsDirect_toDagRule` | And `decided_of_directCommitIn` is `CommitsDirect`, at the rule's own direct predicate. The clause had no … |
 | `toDagRule_block` | — |
 | `toDagRule_ids` | — |
 

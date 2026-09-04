@@ -1126,6 +1126,7 @@ LeanDag/Properties/
   Derived/Bounded.lean    the laws of DecidedBelow
   Derived/Progress.lean   a committed run decides everything below it
   Optional/Skip.lean      SkipsUnsupported: promptness, not liveness
+  Optional/Direct.lean    CommitsDirect: what a window count counts
   Truncate.lean   Truncates and Rebases, the schedule half
   Sustain.lean    Sustains, and what a mechanism's promise carries
   Agree.lean  Bounded.lean  Commit.lean        the schedule family (§4)
@@ -1286,8 +1287,8 @@ instance question rather than a design one: seven rules have none
 ### 11.1 Against part 1: what is owed, and what follows
 
 **Ten obligations, in the two directions §3.6 argues for.** Six fall on
-the protocol unconditionally, two more are owed only when a mechanism
-asks for them, and two fall on a mechanism —
+the protocol unconditionally, two are optional — owed only when a
+mechanism asks — and two fall on a mechanism —
 which one depending on whether it transforms the DAG or a view.
 
 | Direction | Property | Content |
@@ -1298,7 +1299,7 @@ which one depending on whether it transforms the DAG or a view.
 | | `CommitsCandidate` | a commit names a block the DAG holds, at the slot's round, by the slot's leader |
 | | `LeaderCommits R Live` | under the protocol's own precondition, a reliably-led slot commits at a tight bound |
 | | `Descends R S c` | a run of `c` committed slots decides everything below it |
-| protocol, conditional | `CommitsDirect R Direct` | a directly committed candidate is a commit verdict — owed when a mechanism counts the rule's direct predicate |
+| protocol, optional | `CommitsDirect R Direct` | a directly committed candidate is a commit verdict — owed when a mechanism counts the rule's direct predicate |
 | | `SkipsUnsupported R Ok` | an unsupported slot is skipped without waiting for an anchor |
 | mechanism, DAG | `Sustains R U U' G R₀` | above the settling round the transformed DAG holds the same blocks, at rounds `G` apart |
 | mechanism, view | `DeliversOn R view T lo` | for every round, one of the views produced holds every `T`-block from `lo` up to it |
@@ -1644,8 +1645,12 @@ the proof, which is the distinction a protocol author needs.
 protocol's view type already carried the proof (§11.4d).
 
 **Optional. A protocol may show these and need not.**
-`Properties/Optional/` holds them. `SkipsUnsupported` is the only one
-so far, and §11.4c records why it was demoted.
+`Properties/Optional/` holds them, and there are two.
+`SkipsUnsupported` — §11.4c records why it was demoted — and
+`CommitsDirect`, which a rule owes for whatever direct predicate a
+mechanism counts, and which a rule with no such mechanism over it owes
+not at all. Both are parameterised, which is the mark of the category:
+an optional property names the thing the consumer supplies.
 
 **Statements no protocol proves directly.** `Persist` and
 `LocalTruncate` are read by mechanisms and reached by both instances

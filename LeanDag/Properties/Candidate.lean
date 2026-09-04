@@ -55,27 +55,6 @@ def CommitsCandidate (R : DagRule Validator BlockId Payload) : Prop :=
   ∀ (S : Slots Validator) (U : R.Universe) (V : R.View U) (k : ℕ) (L : BlockId),
     R.Decided S V k (some L) → R.IsCandidate S U k L
 
-/-- **And a direct commit is a verdict** — the converse, parameterised
-by the rule's own direct-commit predicate, since what counts as *direct*
-is the rule's business and not the carrier's.
-
-**Why a mechanism needs this.** `Barnacle`'s leader count is driven by a
-window count: how many slots of the recent past were directly committed,
-measured on the anchor's causal history. Nothing in that count mentions
-`Decided`. A rule whose direct predicate held of everything would drive
-the count to its maximum and raise the leader count every window, and
-every theorem about the count would still be true — it would simply be
-counting nothing. This is the property that makes it a count of
-verdicts.
-
-It sat unused in `Barnacle.BaseRule.Laws` as `decided_of_directCommitIn`
-for exactly as long as its own docstring claimed it was what made the
-window count meaningful. Six protocols proved it and nothing read it. -/
-def CommitsDirect (R : DagRule Validator BlockId Payload)
-    (Direct : ∀ {U : R.Universe}, R.View U → BlockId → ℕ → Prop) : Prop :=
-  ∀ (S : Slots Validator) (U : R.Universe) (V : R.View U) (k : ℕ) (L : BlockId),
-    R.IsCandidate S U k L → Direct V L (S.slotRound k) → R.Decided S V k (some L)
-
 namespace CommitsCandidate
 
 variable {S : Slots Validator} {U : R.Universe} {V : R.View U} {k : ℕ} {L : BlockId}

@@ -92,6 +92,7 @@ import LeanDag.Properties.Agreement
 import LeanDag.Properties.Truncate
 import LeanDag.Properties.Sustain
 import LeanDag.Properties.Optional.Skip
+import LeanDag.Properties.Optional.Direct
 import LeanDag.Properties.Agree
 import LeanDag.Properties.Bounded
 import LeanDag.Properties.Commit
