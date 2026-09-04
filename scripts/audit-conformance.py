@@ -28,17 +28,23 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 # The decision rules of this repository. `carrier` is the `DagRule` a
 # rule's conformance is stated against, or None with the reason it has
 # none.
+# A rule may have more than one carrier: the core and Hydrozoan have
+# their own, and Barnacle's interface supplies a second for the rules it
+# instantiates. A property counts as shown at any of them.
 RULES = [
-    ("core Mysticeti",     "MysticetiProperties.mysticetiRule", None),
-    ("reactive Mysticeti", "MysticetiProperties.mysticetiRule", "shares the core's rule"),
-    ("Hydrozoan",          "Hydrozoan.rule",                    None),
-    ("Optimal-Hydrozoan",  "Barnacle.optimalHydrozoanRule",     "carrier via Barnacle"),
-    ("Odontoceti",         "Barnacle.odontocetiRule",           "carrier via Barnacle"),
-    ("Nemo",               "Barnacle.nemoRule",                 "carrier via Barnacle"),
-    ("Mahi-Mahi",          None, "no carrier; band conditional on `2 <= w` (3.4c)"),
-    ("Hybrid / Orcaella",  "Barnacle.orcaellaRule",             "carrier via Barnacle, one per threshold"),
-    ("FinWhale",           None, "no carrier; no `Slots` layer at all (3.4c)"),
-    ("Black Marlin",       None, "no carrier; commits by round, no slot-indexed relation"),
+    ("core Mysticeti",     ["MysticetiProperties.mysticetiRule",
+                            "Barnacle.mysticetiRule"], "two carriers"),
+    ("reactive Mysticeti", ["MysticetiProperties.mysticetiRule"],
+                           "shares the core's rule"),
+    ("Hydrozoan",          ["Hydrozoan.rule"],                   None),
+    ("Optimal-Hydrozoan",  ["Barnacle.optimalHydrozoanRule"],    "carrier via Barnacle"),
+    ("Odontoceti",         ["Barnacle.odontocetiRule"],          "carrier via Barnacle"),
+    ("Nemo",               ["Barnacle.nemoRule"],                "carrier via Barnacle"),
+    ("Mahi-Mahi",          [], "no carrier; band conditional on `2 <= w` (3.4c)"),
+    ("Hybrid / Orcaella",  ["Barnacle.orcaellaRule"],
+                           "carrier via Barnacle, one per threshold"),
+    ("FinWhale",           [], "no carrier; no `Slots` layer at all (3.4c)"),
+    ("Black Marlin",       [], "no carrier; commits by round, no slot-indexed relation"),
 ]
 
 # The obligations, in the order 11.1 lists them.
@@ -53,6 +59,18 @@ DERIVED = ["Persist", "LocalTruncate"]
 
 # Files that state the generic theory rather than an instance of it.
 GENERIC = re.compile(r"^LeanDag\.Properties\b")
+
+
+def owner(carrier):
+    """The module prefix a carrier belongs to.
+
+    Needed because two carriers can share a short name: the core's
+    `MysticetiProperties.mysticetiRule` and Barnacle's
+    `Barnacle.mysticetiRule` both print as `mysticetiRule` inside their
+    own namespaces, and matching on the suffix alone credits one with
+    the other's instances.
+    """
+    return "LeanDag." + carrier.split(".")[0]
 
 
 def conclusions(decls):
@@ -75,8 +93,15 @@ def conclusions(decls):
                    or (is_stmt and re.search(r"Properties\." + prop + r"\b", flat)))
             if not hit:
                 continue
-            for _, carrier, _ in RULES:
-                if carrier and carrier.split(".")[-1] in flat:
+            owners = {owner(c) for _, cs, _ in RULES for c in cs}
+            for carrier in {c for _, cs, _ in RULES for c in cs}:
+                if not re.search(r"\b" + re.escape(carrier.split(".")[-1]) + r"\b", flat):
+                    continue
+                mine = owner(carrier)
+                # A statement in another carrier's namespace names that
+                # carrier, not this one.
+                if d["module"].startswith(mine) or not any(
+                        d["module"].startswith(o) for o in owners if o != mine):
                     out.setdefault(prop, set()).add(carrier)
     return out
 
@@ -100,28 +125,29 @@ def main():
           "(der = free, given Banded)\n")
     print(" " * width + "  ".join(short[c].ljust(4) for c in cols))
     conforming = 0
-    for name, carrier, note in RULES:
+    for name, carriers, note in RULES:
         cells = []
+        has = lambda prop: any(c in shown.get(prop, ()) for c in carriers)
         for c in cols:
             if c == "|":
                 cells.append("|   ")
-            elif carrier and carrier in shown.get(c, ()):
+            elif carriers and has(c):
                 cells.append("yes ")
-            elif (c in DERIVED and carrier
-                  and carrier in shown.get("Banded", ())):
+            elif c in DERIVED and carriers and has("Banded"):
                 # a consequence of the band: nothing to show per protocol
                 cells.append("der ")
             else:
                 cells.append("--  ")
         print(name.ljust(width) + "  ".join(cells) + ("   " + note if note else ""))
-        if carrier and all(carrier in shown.get(c, ()) for c in OBLIGATIONS[:REQUIRED]):
+        if carriers and all(has(c) for c in OBLIGATIONS[:REQUIRED]):
             conforming += 1
 
-    carriers = {c for _, c, _ in RULES if c}
-    without = [n for n, c, _ in RULES if not c]
-    partial_ = [n for n, c, _ in RULES
-                if c and not all(c in shown.get(o, ()) for o in OBLIGATIONS[:REQUIRED])]
-    print(f"\n{len(carriers)} carriers over {len(RULES)} rules; "
+    allcarriers = {c for _, cs, _ in RULES for c in cs}
+    without = [n for n, cs, _ in RULES if not cs]
+    partial_ = [n for n, cs, _ in RULES
+                if cs and not all(any(c in shown.get(o, ()) for c in cs)
+                                  for o in OBLIGATIONS[:REQUIRED])]
+    print(f"\n{len(allcarriers)} carriers over {len(RULES)} rules; "
           f"{conforming} show all six required properties.")
     if partial_:
         print("Carrier but not the six: " + ", ".join(partial_) + ".")

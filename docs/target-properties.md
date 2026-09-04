@@ -1334,27 +1334,37 @@ one relation (§11.4d). Chain quality has no property of its own (§5).
 
 ### 11.2 Against part 2: two protocols, every mechanism
 
-**Ten decision rules, six carriers.** `scripts/audit-conformance.py`
-recomputes this from `docs/decls.json` rather than trusting the table: a
-rule shows a property when some theorem concludes it at that rule's
-carrier, or when its conformance `Statement` lists it.
+**Ten decision rules, seven carriers.** `scripts/audit-conformance.py`
+recomputes this from `docs/decls.json`: a rule shows a property when
+some theorem concludes it at one of the rule's carriers, or when its
+conformance `Statement` lists it.
 
-| rule | `Causal` | `Banded` | `Agree` | `CommitsCandidate` | `LeaderCommits` | `Descends` | `SkipsUnsupported` |
-|---|---|---|---|---|---|---|---|
-| core Mysticeti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| reactive Mysticeti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Hydrozoan | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Optimal-Hydrozoan | — | — | ✓ | ✓ | — | — | — |
-| Odontoceti | — | — | ✓ | ✓ | — | — | — |
-| Nemo | — | — | ✓ | ✓ | — | — | — |
-| Hybrid / Orcaella | — | — | ✓ | ✓ | — | — | — |
-| Mahi-Mahi | — | — | — | — | — | — | — |
-| FinWhale | — | — | — | — | — | — | — |
-| Black Marlin | — | — | — | — | — | — | — |
+| rule | `Causal` | `Banded` | `Agree` | `CommitsCandidate` | `LeaderCommits` | `Descends` | `CommitsDirect`* | `SkipsUnsupported`* |
+|---|---|---|---|---|---|---|---|---|
+| core Mysticeti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| reactive Mysticeti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — | ✓ |
+| Hydrozoan | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — | ✓ |
+| Optimal-Hydrozoan | — | — | ✓ | ✓ | — | — | — | — |
+| Odontoceti | — | — | ✓ | ✓ | — | — | — | — |
+| Nemo | — | — | ✓ | ✓ | — | — | ✓ | — |
+| Hybrid / Orcaella | — | — | ✓ | ✓ | — | — | — | — |
+| Mahi-Mahi | — | — | — | — | — | — | — | — |
+| FinWhale | — | — | — | — | — | — | — | — |
+| Black Marlin | — | — | — | — | — | — | — | — |
 
-`Persist`, `Local` and `LocalTruncate` are not columns: they follow from
-`Banded` for every rule that has it, so there is nothing per protocol to
-record.
+\* optional (`Properties/Optional/`): owed when a mechanism counts the
+rule's direct predicate, or when the rule skips without waiting for an
+anchor. A dash there is not a gap.
+
+`Persist` and `LocalTruncate` are not columns: they follow from `Banded`
+for every rule that has it, so there is nothing per protocol to record.
+
+**Three rules show the six.** Everything else this arc contributes rests
+on `Banded`, and `Banded` has two instances — reactive Mysticeti shares
+the core's rule. That is the number to watch: Barnacle's `Laws` are
+validated against six rules and supply `Agree` and `CommitsCandidate`
+for four more, but the band, and therefore `Persist`, `LocalTruncate`, view
+monotonicity, the composition lemmas and the view axis, rest on two.
 
 **Four carriers came at once, from `Barnacle.BaseRule.toDagRule`**
 (`Barnacle/Conformance.lean`). Barnacle's instances are not further
@@ -1371,89 +1381,19 @@ its carrier is one per `k`.
 `Causal` needs completeness and the round condition on references at the
 *universe*, and `Laws` states those for views only. `Banded` is the
 induction a protocol owes and no interface can supply it. So the four
-new carriers gain two obligations of six, and the remaining four are
-per-rule work — the honest reading being that a shared interface hands
-over the laws a protocol already had, under new names, and nothing
-deeper.
+new carriers gain two obligations of six, the honest reading being that
+a shared interface hands over the laws a protocol already had, under new
+names, and nothing deeper.
 
-**The link now runs protocol → properties → Barnacle.** Every theorem
-of the leader-count mechanism takes properties or nothing:
-
-| Barnacle result | takes |
-|---|---|
-| BN3 partial-run agreement | `Agree` |
-| BN5 ledger agreement, prefix, no-duplication | `Agree`, `CommitsCandidate` |
-| BN2 window agreement | nothing |
-| BN12 healthy window, and the count | nothing |
-| Progress, run existence | `Agree` |
-| Validity, delivery | `CommitsCandidate` |
-
-Two changes made it so, and neither needed a new property. `viewSound`
-and `viewComplete` became fields of `DagRule` **and** of `BaseRule` —
-every view type carried both proofs already — which is what lets
-`toDagRule` be taken without laws, so a rule is a carrier before it has
-proved anything. And the hypotheses were restated: `Laws.agree` and
-`Properties.Agree R.toDagRule` are the same proposition, since
-`toDagRule` preserves `Decided` by `rfl`, so this was a signature change
-throughout.
-
-**BN2 and BN12 need nothing at all.** Window agreement
-rested on view closure, which is now a carrier field, so it holds of
-every rule. The window count never took laws in the first place: it is
-parameterised by `BaseRule`'s *data* — `DirectCommitIn`, `historyView`,
-`waveLength` — which is the mechanism's own instrument and not something
-a protocol owes.
-
-**What is left of `Laws` is a source, not an interface.** One consumer
-remains, `Helpers/Cover.coversUpto_full`, for `full_ids`. `agree` and
-`candidates` survive only to build the two properties;
-`decided_of_directCommitIn` has moved out, to `Properties.CommitsDirect`
-(below); `historyView_ids` has **no consumer at all**, and six protocols
-prove it for nothing.
-
-**BN12 was provable and not sound, and that is now fixed.** The window
-count that drives the leader count filters on `DirectCommitIn`, a free
-field of `BaseRule` that nothing related to `Decided` —
-`Model/Window.lean`, `Healthy/Statement.lean` and `Healthy/Proof.lean`
-mention `Decided` zero times. A rule whose direct predicate held of
-everything would reach its expected count every window and raise the
-leader count forever, and `Counted` and `Raises` would both still be
-true. `Properties.CommitsDirect` rules that out, `Healthy.Sound` is the
-consumer, and `LeanDagTest/Barnacle/Model.lean` exhibits it on the
-witness universe.
-
-The property is `Laws.decided_of_directCommitIn` promoted. It sat unused
-for exactly as long as its own docstring claimed it was what made the
-window count a count of verdicts — six protocols proving it and nothing
-reading it. It is conditional rather than required: a rule owes it for
-whatever direct predicate a mechanism counts, in the way `LeaderCommits`
-is owed at whatever `Live` an execution model supplies.
-
-**Why Barnacle's laws stay in `Barnacle/`.** They are properties, and a
-reader may expect them under `Properties/`. §8's dependency rule is what
-forbids it: the properties depend on nothing but the block and schedule
-vocabulary, and Barnacle is a *mechanism* — the adaptive leader count —
-so `Properties/` importing `BaseRule` would tie garbage collection,
-crash recovery and chain quality to the leader count for no reason. The
-dependency runs the other way: `Barnacle/Helpers/DagRule.lean` holds the
-coercion and the two bridges, `Barnacle/Conformance.lean` the carriers.
-
-What that leaves is two collections that overlap without being one.
-`Laws.agree` and `Laws.candidates` are now `Agree` and
-`CommitsCandidate` by construction. `Laws.view_subset` became a field of both
-`DagRule` and `BaseRule`. The remaining four clauses are about `BaseRule`'s extra
-fields — `full`, `historyView` — which `DagRule` does not have, except
-`decided_of_directCommitIn`, which is a genuine property of a rule with
-**no counterpart here**: this arc absorbs it into `LeaderCommits`
-instead of naming it. `LiveRule.LiveOn` and `Descent` likewise split
-into `LeaderCommits` and `Descends` without being related to them.
-Relating them is restatement over a different carrier, not a move, and
-is not attempted.
-
-**Hydrozoan is deliberately not carried twice.** Barnacle instantiates
-it too, so a second carrier could be built and would prove two
-properties Hydrozoan already proves. Two carriers for one rule is a way
-to make this table read better than the development is.
+**One rule has two carriers, and the audit has to know.** Core Mysticeti
+holds `MysticetiProperties.mysticetiRule` and `Barnacle.mysticetiRule`,
+and its `CommitsDirect` is proved at the second. A first version of the
+script matched carriers by their short name and so credited the core
+with Barnacle's instances and *vice versa*; it now disambiguates by
+module and takes a list of carriers per rule. Hydrozoan is deliberately
+not carried twice — Barnacle instantiates it, so a second carrier could
+be built and would prove two properties Hydrozoan already proves, which
+is a way to make this table read better than the development is.
 
 **Three rules still have none**, for reasons that are not the same.
 Mahi-Mahi's decision relation is indexed by a wave width and its band is
