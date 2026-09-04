@@ -45,6 +45,15 @@ same fields, so every projection is the identity. -/
   unbounded := S.unbounded
   keyed := S.keyed
 
+/-- And back. `ofCoreSlots (toCoreSlots S) = S` by `rfl`, which is what
+lets a Hydrozoan statement be handed to a generic one. -/
+@[reducible] def toCoreSlots (S : LeanDag.Hydrozoan.Slots Replica) : LeanDag.Slots Replica where
+  slotRound := S.slotRound
+  leader := S.leader
+  mono := S.mono
+  unbounded := S.unbounded
+  keyed := S.keyed
+
 /-- **Hydrozoan as a carrier.** -/
 def rule : Properties.DagRule Replica BlockId Unit where
   Universe := LeanDag.Hydrozoan.BlockUniverse Replica BlockId
@@ -52,6 +61,7 @@ def rule : Properties.DagRule Replica BlockId Unit where
   block := fun U i => adaptBlock (U.block i)
   ids := fun U => U.ids
   viewIds := fun V => V.ids
+  viewSound := fun V => V.subset_ids
   Decided := fun S _ V k v =>
     @LeanDag.Hydrozoan.Decided _ _ _ _ _ _ _ (ofCoreSlots S) _ V k v
 

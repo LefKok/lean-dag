@@ -27,8 +27,8 @@ variable {R : DagRule Validator BlockId Payload}
 
 /-- **Persistence falls out.** An extension carries every band and adds
 only blocks; a larger view holds everything the band names. -/
-theorem Persist.of_banded (h : Banded R) : Persist.Unconditional R := by
-  intro S U U' he V V' _ hV k v hd
+theorem Persist.of_banded (h : Banded R) : Persist R := by
+  intro S U U' he V V' hV k v hd
   obtain ⟨top, htop⟩ := h S U V k v hd
   exact htop 0 0 0 0 S U' V' k (by omega) (fun m m' hm => by
       have : m = m' := by omega
@@ -55,7 +55,7 @@ theorem decided_mono_of_banded (h : Banded R) {S : Slots Validator} {U : R.Unive
 /-- **And locality.** Two DAGs agreeing above a round at or below the
 slot's agree on the band, and views agreeing there hold the same blocks
 of it. -/
-theorem Local.of_banded (hvs : ViewSound R) (h : Banded R) : Local R := by
+theorem Local.of_banded (h : Banded R) : Local R := by
   intro S U U' r hag V V' hvag k hk v hd
   obtain ⟨top, htop⟩ := h S U V k v hd
   refine htop 0 0 0 0 S U' V' k (by omega) (fun m m' hm => by
@@ -64,7 +64,7 @@ theorem Local.of_banded (hvs : ViewSound R) (h : Banded R) : Local R := by
     (fun m m' hm _ => by have : m = m' := by omega
                          subst this; rfl)
     (AgreeBand.of_agreeAbove hag hk) (fun b hb hlo _ => ?_)
-  exact (hvag b (hvs V hb) (by omega)).mp hb
+  exact (hvag b (R.viewSound V hb) (by omega)).mp hb
 
 /-- **A bound falls out of the band.** The slots sitting at or below a
 round are finitely many, since the round structure is monotone and

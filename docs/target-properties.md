@@ -155,10 +155,10 @@ anything true of the protocol. Odontoceti and
 Hybrid are still in that group and have no instance.
 
 **Both instances are now theorems, and both are unconditional.**
-Hydrozoan proves `Persist.Unconditional` (HZ9). The core proves it too
-(`MysticetiProperties.persist_unconditional`) — but only after the
-property found something wrong with the protocol's model, and that
-episode is the substance of this section.
+Hydrozoan proves `Persist` (HZ9). The core proves it too
+(`MysticetiProperties.persist`) — but only after the property found
+something wrong with the protocol's model, and that episode is the
+substance of this section.
 
 **The grade was a defect in the rule, not a property of the protocol.**
 The core first proved `Persist` at a grade `Quorate`: at every slot the
@@ -194,9 +194,15 @@ frontier and only the vacuous skip ever let it pretend otherwise.
 **The property also found a defect in itself, earlier.** `Persist`'s
 side condition was `Ok : Slots → Universe → Universe → Prop`, and the
 core's condition was one on the **view**. The grade was not unproved; it
-was unstatable. `Ok` now takes the source view. It survives the repair
-above with no instance using it, kept for a rule that decides on the
-absence of a block rather than on the contents of blocks present.
+was unstatable, and `Ok` was widened to take the source view.
+
+**The grade is now gone entirely.** It survived the repair above with no
+instance using it, kept against a rule that decides on a block's absence
+rather than on the contents of blocks present. Such a rule fails
+`Banded` too — the band admits extra blocks inside itself — so the grade
+could not rescue a protocol that proves the band, and every route to
+persistence here runs through the band. `Persist` takes no `Ok`, and
+`Quorate` is deleted (§11.4d).
 
 ### 3.3 Inertness, and what `Novel` is
 
@@ -582,7 +588,7 @@ one 389-line file with one of each.
 
 | Corollary | The band applied to |
 |---|---|
-| `Persist.Unconditional` | an extension, which carries every band |
+| `Persist` | an extension, which carries every band |
 | `Local` | two DAGs agreeing above a round at or below the slot's |
 | view monotonicity (L2) | one universe, which carries its own bands |
 
@@ -926,7 +932,8 @@ LeanDag/Properties/
   Derived/Bounded.lean    the laws of DecidedBelow
   Derived/Progress.lean   a committed run decides everything below it
   Optional/Skip.lean      SkipsUnsupported: promptness, not liveness
-  Truncate.lean  Sustain.lean   the two transport relations
+  Truncate.lean   Truncates and Rebases, the schedule half
+  Sustain.lean    Sustains, and what a mechanism's promise carries
   Agree.lean  Bounded.lean  Commit.lean        the schedule family (§4)
   Arcs/GC.lean          garbage collection, given a band
   Arcs/SafeSkip.lean    crash recovery, given Persist
@@ -995,10 +1002,10 @@ directory, hence the one flat module.
   `GC/ChopDecided.lean` proves by induction and the arc re-derives in
   one application.
 - **G3** Discharge them for Hydrozoan (**done**) — HZ9 states
-  `Causal`, `Banded`, `Agree`, `Persist.Unconditional`, `Local` and
-  `SkipsUnsupported` at grade `qFast ≤ |T|` (§3.7). Persistence holds at
-  the *unconditional* grade, as §3.2 predicts for a rule whose skip
-  counts blames at the slot. Two consumer tests passed with no induction
+  `Causal`, `Banded`, `Agree`, `Persist` and `SkipsUnsupported` at grade
+  `qFast ≤ |T|` (§3.7). Persistence is unconditional, as §3.2 predicts
+  for a rule whose skip counts blames at the slot. `Local` and
+  `LocalTruncate` are not stated: both are the band applied (§11.4d). Two consumer tests passed with no induction
   of their own, both in `Integration/Hydrozoan/ViaProperties.lean`:
   `decided_fillHZ`, a six-constructor induction in `FillDecided.lean`,
   and `decided_chopHZ`, an induction in `Truncation.lean`. **The
@@ -1074,15 +1081,16 @@ The goal, restated in three parts:
 
 ### 11.1 Against part 1: the properties exist
 
-Fourteen, in `LeanDag/Properties/`, in the two directions §3.6 argues
+Eleven, in `LeanDag/Properties/`, in the two directions §3.6 argues
 for. The protocol proves the safety side and one graded liveness
-residue; the mechanism owes one liveness property.
+residue; the mechanism owes one liveness property. It was fourteen until
+§11.4d compared them.
 
 | Direction | Property | Content |
 |---|---|---|
 | protocol, safety | `Causal` | universes are block DAGs |
 | | `Banded` | a verdict is carried by a range of rounds, and `Persist`, `Local` and view monotonicity are its corollaries |
-| | `Persist R Ok` | a verdict survives extension of the DAG, at grade `Ok` |
+| | `Persist` | a verdict survives extension of the DAG |
 | | `Local` | a verdict at round ≥ r reads the DAG only above r |
 | | `LocalTruncate` | a verdict survives restriction with renumbering, both ways; a corollary of the band's offsets |
 | | `Agree` | two views decide alike |
@@ -1092,7 +1100,8 @@ residue; the mechanism owes one liveness property.
 | mechanism, liveness | `Sustains R U U' G R₀` | above the settling round the transformed DAG holds the same blocks |
 
 Two were stated wrongly first and corrected once a witness was
-demanded (the re-indexing property, §3.4; `Sustains` v1, §3.6). Chain
+demanded (the re-indexing property, §3.4; `Sustains` v1, §3.6). Three
+more were stated twice over and found to be one relation (§11.4d). Chain
 quality has no property (§5).
 
 ### 11.2 Against part 2: two protocols, three mechanisms
@@ -1100,10 +1109,11 @@ quality has no property (§5).
 | | Hydrozoan | core Mysticeti | reactive Mysticeti | Odontoceti, Nemo, Mahi-Mahi, Hybrid, Optimal-Hydrozoan, FinWhale |
 |---|---|---|---|---|
 | `Causal` | ✓ | ✓ | inherited | — |
-| `Persist` | ✓, from `Banded` | ✓, from `Banded` | inherited | — |
+| `Persist` | ✓, from `Banded`, unconditional | ✓, from `Banded`, unconditional | inherited | — |
 | `Banded` | ✓ | ✓ | inherited | — |
 | `Local` | ✓, from `Banded` | ✓, from `Banded` | inherited | — |
 | `LocalTruncate` | ✓, from `Banded` | ✓, from `Banded` | inherited | — |
+| `ViewSound` | a law of `DagRule` | a law of `DagRule` | — | — |
 | `SkipsUnsupported` | ✓ at `qFast ≤ |T|` | ✓ at a correct quorum | — | — |
 | `Agree` | ✓ | ✓ | inherited | — |
 | `LeaderCommits`, `Descends` | ✓ | ✓ | ✓, a second `Live` | — |
@@ -1167,20 +1177,27 @@ The properties divide four ways, and the folder follows the division:
 `Properties/Derived/` holds theorems, never statements.
 
 **Obligations. Someone must prove these, per protocol or per mechanism.**
-`Causal`, `Agree`, `Banded`, `ViewSound`, `LeaderCommits` and `Descends`
-fall on the protocol; `Sustains` falls on the mechanism. Nothing derives
-them.
+`Causal`, `Agree`, `Banded`, `LeaderCommits` and `Descends` fall on the
+protocol; `Sustains` falls on the mechanism. Nothing derives them.
+`ViewSound` was on this list and is now a field of `DagRule`: every
+protocol's view type already carried the proof (§11.4d).
 
 **Optional. A protocol may show these and need not.**
 `Properties/Optional/` holds them. `SkipsUnsupported` is the only one
 so far, and §11.4c records why it was demoted.
 
-**Statements no protocol proves directly.** `Persist`, `Local` and
+**Statements no protocol proves directly.** `Persist` and
 `LocalTruncate` are read by mechanisms and reached by both instances
 through `Banded`, so they live in `Derived/` with their routes. They
 stay named properties because that is what the crash-recovery and
 garbage-collection arcs consume, and because a rule with no band could
-prove any of them on its own.
+prove either on its own.
+
+`Local` is in `Derived/` too and **no mechanism reads it**. It was kept
+on the ground that garbage collection consumed it, which stopped being
+true when that arc moved to `LocalTruncate`. It is a corollary of the
+band and nothing else, so neither protocol's conformance statement
+lists it (§11.4d).
 
 **Derived theorems. Nothing proves these per protocol.**
 
@@ -1190,19 +1207,18 @@ prove any of them on its own.
 | `Local`, `Local.of_banded` | `Derived/{Local,FromBand}.lean` | `Banded` |
 | `decided_mono_of_banded` | `Derived/FromBand.lean` | `Banded` |
 | `exists_decidedBelow` | `Derived/FromBand.lean` | `Banded` |
-| `LocalTruncate`, `LocalTruncate.of_banded` | `Derived/Truncate.lean` | `Banded`, `ViewSound` |
+| `LocalTruncate`, `LocalTruncate.of_banded` | `Derived/Truncate.lean` | `Banded` |
 | `DecidedBelow`'s five laws | `Derived/Bounded.lean` | the definition, and `Agree` |
 
 **Vocabulary. Statements the obligations are written in, proving
-nothing.** `DagRule`, `AgreeAbove`, `AgreeBand`, `Extends`, `Novel`,
-`Truncates`, `ViewTruncates`, `ViewAgreeAbove`, `Unsupported`,
+nothing.** `DagRule`, `RebasedAbove` and its two named settings
+`AgreeAbove` and `Sustains`, `Rebases`, `AgreeBand`, `Extends`, `Novel`,
+`Truncates`, `ViewAgreeAbove`, `Unsupported`,
 `PresentAt`, and `DecidedBelow` itself, which is a definition and not a
 property anyone shows. `Extends.lean` and `Agreement.lean` hold the two
 families that used to sit beside the properties now in `Derived/`.
 
-Two obligations carry a note. `ViewSound` is one only formally: every
-protocol satisfies it by construction, and it is a candidate to become a
-law of `DagRule`. And `LeaderCommits` and `Descends` resist derivation
+One obligation carries a note. `LeaderCommits` and `Descends` resist derivation
 from `Banded` even though a *bound* is derivable, because they must
 produce a **tight** one, where the band's is every slot its rounds can
 hold.
@@ -1247,6 +1263,82 @@ mechanisms, which is §11.3's subject and still largely open. It is a
 consequence of two properties, in the same sense that `Persist` is a
 consequence of `Banded`, and it names no mechanism at all. Hydrozoan
 instantiates it (§4.5).
+
+### 11.4d The review of the property layer
+
+Every property, every consumer, and every relation compared against
+every other. Six things came out, four of them checked in Lean before
+being acted on. The layer went from 1,950 lines to 1,872 while gaining
+a schedule relation it did not have.
+
+**1. Three relations were one.** `AgreeAbove r`, `Sustains G R₀` and the
+four block clauses of `Truncates` had the same shape, and the shape is
+`RebasedAbove R U U' G R₀`: at and above `R₀` the two universes hold the
+same blocks, at rounds `G` apart, same authors, and strictly above `R₀`
+the same references. `AgreeAbove r` is the zero offset,
+`Sustains G R₀` is the relation under the name the obligation is owed
+in, and `Truncates` is it at `R₀ = G` plus `Rebases`, a new three-clause
+relation saying what became of the *schedule*. Both directions of the
+`Truncates` collapse were proved before anything was deleted.
+
+Separating the two axes is what the naming should have said all along:
+`RebasedAbove` is what became of the DAG, `Rebases` what became of the
+schedule, and a mechanism that touches one states one.
+
+**2. `ViewTruncates` and `ViewAgreeAbove` were the same definition**,
+`rfl`-equal, differing only in the name of the bound. One is gone.
+
+**3. Hydrozoan carried a private copy of the truncation.**
+`TruncatesHZ` was `Properties.Truncates` field for field, with `author`
+and `parents` for `creator` and `refs`, and `decided_iff` re-proved
+`LocalTruncate.of_banded` in Hydrozoan's vocabulary. Both are gone;
+`Integration/Hydrozoan/ViaProperties.lean` exhibits the cut as a witness
+for the generic relation and applies the generic derivation. The copy
+existed because `rule`'s projections are Hydrozoan's by `rfl` but not
+syntactically, which the proofs paid for in `hlink` bridges; `toCoreSlots`
+closes the gap on the schedule side.
+
+**4. `Local` was consumed by nothing.** It was kept on the ground that
+garbage collection reads it, which stopped being true when that arc moved
+to `LocalTruncate`. Both protocols listed it in their conformance
+statement, which made it read as an obligation. It stays in `Derived/` as
+a corollary of the band and is out of both statements.
+
+**5. `Persist`'s grade `Ok` was dead.** Every instance was
+`Unconditional`, `Persist.of_banded` produced only `Unconditional`, and
+`MysticetiProperties.persist` existed to re-grade an unconditional proof
+so `Adaptive/Growth.lean` would take it. The parameter was held against a
+rule that decides on a block's *absence* — but such a rule fails `Banded`
+too, since the band admits extra blocks inside itself, so the grade could
+not rescue a protocol that proves the band. Gone, and with it `Quorate`,
+`Persist.mono`, `Persist.of_unconditional`, `decided_skipFill_unconditional`,
+`quorate_of_quorateOverGap`, and a hypothesis from three theorems in
+`Growth`. `decided_fill_of_persist` no longer asks `QuorateOverGap`.
+
+**6. `ViewSound` is a field of `DagRule`.** Both protocols' view type
+already carried `subset_ids`, so the obligation cost an instance nothing
+and cost every derivation a hypothesis. `Local.of_banded` and
+`LocalTruncate.of_banded` each lost one. Barnacle's `BaseRule.toDagRule`
+now takes its `Laws`, which carry `view_subset`.
+
+**What the review did not do.** `Banded` gives a *round* ceiling — the
+verdict reads nothing above `top` — and `DecidedBelow B` gives a *slot*
+ceiling — no leader from `B` on matters. They are one idea on the two
+axes, and `exists_decidedBelow` converts between them while losing
+tightness, which is why `LeaderCommits` and `Descends` stay obligations
+and why `Hydrozoan/Helpers/Commit.lean` re-tracks the schedule dependence
+rung by rung. Stating the band on both axes would let the protocol emit
+both bounds from the induction it already runs. It would not make
+`LeaderCommits` derivable, since that is an existence claim needing
+protocol liveness, but it would leave that property supplying only
+"∃ L, Decided". Scoped, not attempted.
+
+**Two names that still mislead.** `top` is the **decision round**, the
+highest round a verdict consults; every protocol already defines
+`decisionRound k = slotRound k + 2` and the band's `top` is its
+indirect-anchor generalisation. And `DecidedBelow B` reads as a range of
+slots when it means a dependence bound — *the verdict is settled by slot
+`B`*.
 
 ### 11.5 Next steps, in order
 

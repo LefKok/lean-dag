@@ -58,23 +58,9 @@ theorem extends_of_skipFill (R : DagRule Validator BlockId Payload)
     rw [hb', hb, sk.skipFill_block_old h]
 
 /-- **Verdicts survive the recovery**, for any protocol that has proved
-persistence and whose condition the fill meets. The replica that
-recovered reaches every verdict it reached before, so what it had
-already output stands. -/
-theorem decided_skipFill {R : DagRule Validator BlockId Payload}
-    {Ok : Slots Validator → ∀ (U U' : R.Universe), R.View U → Prop} (hp : Persist R Ok)
-    {S : Slots Validator} {U U' : R.Universe}
-    {D : BlockUniverse Validator BlockId Payload} (sk : SkipMsg D)
-    (hi : R.ids U = D.ids) (hb : R.block U = D.block)
-    (hi' : R.ids U' = sk.skipFill.ids) (hb' : R.block U' = sk.skipFill.block)
-    {V : R.View U} {V' : R.View U'} (hok : Ok S U U' V) (hV : R.viewIds V ⊆ R.viewIds V')
-    {k : ℕ} {v : Option BlockId} (h : R.Decided S V k v) :
-    R.Decided S V' k v :=
-  hp S U U' (extends_of_skipFill R sk hi hb hi' hb') V V' hok hV k v h
-
-/-- And for an evidence-backed rule the condition is nothing at all. -/
-theorem decided_skipFill_unconditional {R : DagRule Validator BlockId Payload}
-    (hp : Persist.Unconditional R)
+persistence. The replica that recovered reaches every verdict it reached
+before, so what it had already output stands. -/
+theorem decided_skipFill {R : DagRule Validator BlockId Payload} (hp : Persist R)
     {S : Slots Validator} {U U' : R.Universe}
     {D : BlockUniverse Validator BlockId Payload} (sk : SkipMsg D)
     (hi : R.ids U = D.ids) (hb : R.block U = D.block)
@@ -82,49 +68,34 @@ theorem decided_skipFill_unconditional {R : DagRule Validator BlockId Payload}
     {V : R.View U} {V' : R.View U'} (hV : R.viewIds V ⊆ R.viewIds V')
     {k : ℕ} {v : Option BlockId} (h : R.Decided S V k v) :
     R.Decided S V' k v :=
-  decided_skipFill hp sk hi hb hi' hb' trivial hV h
+  hp S U U' (extends_of_skipFill R sk hi hb hi' hb') V V' hV k v h
 
 /-! ## For the core: the grade the fill meets, and the bespoke theorem re-derived
 
 The consumer test for `MysticetiProperties.persist`. `SafeSkip.decided_fill`
 proves the fill transports the core's verdicts by a four-constructor
-induction under `QuorateOverGap`. Here `QuorateOverGap` is shown to imply
-the core's grade `Quorate` — a fresh candidate sits at a gap round, and
-the gap is where the quorum is asked for — and `decided_fill` follows from
-`persist` with no induction of its own. -/
+induction under `QuorateOverGap`, and `decided_fill` follows from
+`persist` with no induction of its own.
+
+`QuorateOverGap` used to be needed here, to meet a grade the core's
+persistence carried. Both went when the core's skip rule was repaired,
+so the transport now asks nothing of the view. -/
 
 section Core
 
 variable {U : BlockUniverse Validator BlockId Payload}
 
-/-- **Quorate over the gap is the core's grade**, for the fill. A candidate
-the fill introduces is a fresh block, a fresh block sits at a gap round,
-and at every gap round the view holds a quorum one round above. -/
-theorem quorate_of_quorateOverGap [S : Slots Validator] (sk : SkipMsg U)
-    {V : View Validator BlockId Payload U} (hq : sk.QuorateOverGap V) :
-    MysticetiProperties.Quorate S U sk.skipFill V := by
-  intro k L hL hLo
-  obtain ⟨hLm, hLr, -⟩ := hL
-  have hfresh : L ∈ sk.freshIds := by
-    rcases Finset.mem_union.mp hLm with h | h
-    · exact absurd h hLo
-    · exact h
-  obtain ⟨m, hm1, hm2, rfl⟩ := sk.mem_freshIds.mp hfresh
-  have hround : S.slotRound k = m := by
-    rw [sk.skipFill_block_fresh] at hLr
-    exact hLr.symm
-  rw [hround]
-  exact hq m hm1 hm2
-
 /-- **`SafeSkip.decided_fill`, from `Persist`.** The same statement, with
 no induction: persistence is proved once for the protocol, and the fill
-is one extension among others — one that meets the core's grade. -/
+is one extension among others. `SafeSkip.decided_fill` carries
+`QuorateOverGap`; this does not, the hypothesis having gone with the
+grade it was there to meet. -/
 theorem decided_fill_of_persist [S : Slots Validator] (sk : SkipMsg U)
     {V : View Validator BlockId Payload U} {k : ℕ} {v : Option BlockId}
-    (hq : sk.QuorateOverGap V) (h : Decided U V k v) :
+    (h : Decided U V k v) :
     Decided sk.skipFill (sk.liftView V) k v :=
   decided_skipFill (R := MysticetiProperties.mysticetiRule) MysticetiProperties.persist sk
-    rfl rfl rfl rfl (quorate_of_quorateOverGap sk hq) (fun _ hb => hb) h
+    (U := U) (U' := sk.skipFill) rfl rfl rfl rfl (fun _ hb => hb) h
 
 /-! ### The filled slot is decided, and SS3 falls out
 

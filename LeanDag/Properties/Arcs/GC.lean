@@ -41,7 +41,7 @@ variable {V : R.View U} {V' : R.View U'}
 
 /-- **A verdict survives the cut**, at the replica's own numbering. -/
 theorem decided_of_truncate (h : LocalTruncate R) (ht : Truncates R U U' S S' G d)
-    (hv : ViewTruncates R V V' G) {k : ℕ} {v : Option BlockId}
+    (hv : ViewAgreeAbove R V V' G) {k : ℕ} {v : Option BlockId}
     (hd : R.Decided S V (d + k) v) : R.Decided S' V' k v :=
   (h S S' U U' G d ht V V' hv k v).mp hd
 
@@ -49,7 +49,7 @@ theorem decided_of_truncate (h : LocalTruncate R) (ht : Truncates R U U' S S' G 
 which is what lets a pruned replica be compared with one that never
 pruned. -/
 theorem decided_of_truncated (h : LocalTruncate R) (ht : Truncates R U U' S S' G d)
-    (hv : ViewTruncates R V V' G) {k : ℕ} {v : Option BlockId}
+    (hv : ViewAgreeAbove R V V' G) {k : ℕ} {v : Option BlockId}
     (hd : R.Decided S' V' k v) : R.Decided S V (d + k) v :=
   (h S S' U U' G d ht V V' hv k v).mpr hd
 
@@ -123,17 +123,23 @@ have, exhibited before anything is proved from it. -/
 theorem truncates_chop (hd : G ≤ S.slotRound d) :
     Truncates (MysticetiProperties.mysticetiRule (Payload := Payload))
       U (chop U G) S (S.chop G d hd) G d where
-  mem := fun b => mem_chop_ids
-  round := fun b hb => by
-    have hb' := mem_chop_ids.mp hb
-    show (chopBlock U G b).round + G = (U.block b).round
-    rw [chopBlock_round]; omega
-  creator := fun b hb => by
-    show (chopBlock U G b).creator = (U.block b).creator
-    rw [chopBlock_creator]
-  refs := fun b hb hgt => by
-    show (chopBlock U G b).refs = (U.block b).refs
-    rw [chopBlock_refs_of_lt hgt]
+  mem := fun b => by
+    show (b ∈ U.ids ∧ G ≤ (U.block b).round) ↔
+      (b ∈ (chop U G).ids ∧ G ≤ ((chop U G).block b).round + G)
+    rw [mem_chop_ids, chop_block_eq, chopBlock_round]
+    constructor
+    · rintro ⟨hb, hr⟩; exact ⟨⟨hb, hr⟩, by omega⟩
+    · rintro ⟨⟨hb, hr⟩, -⟩; exact ⟨hb, hr⟩
+  round := fun b hb hr => by
+    have hr' : G ≤ (U.block b).round := hr
+    show ((chop U G).block b).round + G = (U.block b).round
+    rw [chop_block_eq, chopBlock_round]; omega
+  creator := fun b _ _ => by
+    show ((chop U G).block b).creator = (U.block b).creator
+    rw [chop_block_eq, chopBlock_creator]
+  refs := fun b _ hr => by
+    show ((chop U G).block b).refs = (U.block b).refs
+    rw [chop_block_eq, chopBlock_refs_of_lt hr]
   slotRound := fun k => by
     have := horizon_le_slotRound hd k
     show S.slotRound (d + k) - G + G = S.slotRound (d + k)
@@ -146,7 +152,7 @@ the cut's verdict transport, from the band. -/
 theorem decided_chop_iff (hd : G ≤ S.slotRound d)
     {V : View Validator BlockId Payload U} {k : ℕ} {v : Option BlockId} :
     Decided U V (d + k) v ↔ Decided (S := S.chop G d hd) (chop U G) (V.chop G) k v :=
-  LocalTruncate.of_banded MysticetiProperties.viewSound MysticetiProperties.banded
+  LocalTruncate.of_banded MysticetiProperties.banded
     S (S.chop G d hd) U (chop U G) G d (truncates_chop hd) V (V.chop G)
     (fun b hb hr => by
       show b ∈ V.ids ↔ b ∈ (V.chop G).ids

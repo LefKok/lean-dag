@@ -1,4 +1,4 @@
-import LeanDag.Properties.Carrier
+import LeanDag.Properties.Agreement
 
 /-!
 # Truncation: pruning below a horizon, and renumbering from it
@@ -47,6 +47,23 @@ variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 variable {R : DagRule Validator BlockId Payload}
 
+/-- **The schedule moves with the DAG.** Slot `k` of the truncated
+schedule is slot `d + k` of the original, at a round `G` lower, leading
+the same replica. Stated additively, so truncated subtraction never
+appears.
+
+Separate from the block relation because the two axes are independent:
+`RebasedAbove` says what became of the DAG, `Rebases` says what became
+of the schedule, and a mechanism that touches only one states only
+one. -/
+structure Rebases (S S' : Slots Validator) (G d : ℕ) : Prop where
+  /-- Rounds fall by the horizon. -/
+  slotRound : ∀ k, S'.slotRound k + G = S.slotRound (d + k)
+  /-- And each slot leads the same replica. -/
+  leader : ∀ k, S'.leader k = S.leader (d + k)
+  /-- The horizon does not reach past the base slot. -/
+  base : G ≤ S.slotRound d
+
 /-- **`U'` is `U` pruned below `G` and renumbered from slot `d`.**
 
 The two clauses that distinguish this from a pure shift are `mem` and
@@ -54,45 +71,47 @@ The two clauses that distinguish this from a pure shift are `mem` and
 lies below is legitimately gone; and references are compared only
 **strictly** above the horizon, so the retained bottom layer may
 legitimately lose the references that pointed below it. A relation
-demanding either of those in full has no models. -/
-structure Truncates (R : DagRule Validator BlockId Payload) (U U' : R.Universe)
-    (S S' : Slots Validator) (G d : ℕ) : Prop where
-  /-- What survives the cut: the blocks at or above the horizon. -/
-  mem : ∀ b, b ∈ R.ids U' ↔ (b ∈ R.ids U ∧ G ≤ (R.block U b).round)
-  /-- Rounds fall by the horizon. Stated additively, so truncated
-  subtraction never appears. -/
-  round : ∀ b, b ∈ R.ids U' → (R.block U' b).round + G = (R.block U b).round
-  /-- Authors are untouched. -/
-  creator : ∀ b, b ∈ R.ids U' → (R.block U' b).creator = (R.block U b).creator
-  /-- References survive **strictly** above the horizon. Nothing is
-  claimed at the horizon itself, which is where a truncation empties
-  them and where the renumbering puts them at round zero. -/
-  refs : ∀ b, b ∈ R.ids U' → G < (R.block U b).round →
-    (R.block U' b).refs = (R.block U b).refs
-  /-- The schedule moves with the universe. -/
-  slotRound : ∀ k, S'.slotRound k + G = S.slotRound (d + k)
-  /-- And leads the same replica. -/
-  leader : ∀ k, S'.leader k = S.leader (d + k)
-  /-- The horizon does not reach past the base slot. -/
-  base : G ≤ S.slotRound d
+demanding either of those in full has no models.
 
-/-- **Two views correspond across a truncation.** -/
-def ViewTruncates (R : DagRule Validator BlockId Payload) {U U' : R.Universe}
-    (V : R.View U) (V' : R.View U') (G : ℕ) : Prop :=
-  ∀ b, b ∈ R.ids U → G ≤ (R.block U b).round →
-    (b ∈ R.viewIds V ↔ b ∈ R.viewIds V')
+Both clauses are `RebasedAbove`'s, read at `R₀ = G`. That was not how
+this started: `Truncates` was written with its own four block clauses,
+and they were found to be the same four a mechanism already owed under
+`Sustains`. What is left here is the schedule half. -/
+structure Truncates (R : DagRule Validator BlockId Payload) (U U' : R.Universe)
+    (S S' : Slots Validator) (G d : ℕ) : Prop
+    extends RebasedAbove R U U' G G, Rebases S S' G d
 
 namespace Truncates
 
 variable {U U' : R.Universe} {S S' : Slots Validator} {G d : ℕ}
 
-/-- A retained block is a block of the original. -/
-theorem mem_of (h : Truncates R U U' S S' G d) {b : BlockId} (hb : b ∈ R.ids U') :
-    b ∈ R.ids U := ((h.mem b).mp hb).1
+/-- **What survives the cut**, in the shape the cut is usually read in:
+the blocks at or above the horizon, and no others. The inherited `mem`
+pairs the round condition on both sides, which at `R₀ = G` is vacuous on
+the right. -/
+theorem mem_iff (h : Truncates R U U' S S' G d) (b : BlockId) :
+    b ∈ R.ids U' ↔ (b ∈ R.ids U ∧ G ≤ (R.block U b).round) := by
+  constructor
+  · intro hb; exact (h.mem b).mpr ⟨hb, by omega⟩
+  · rintro ⟨hb, hr⟩; exact ((h.mem b).mp ⟨hb, hr⟩).1
 
-/-- And sits at or above the horizon there. -/
-theorem le_round (h : Truncates R U U' S S' G d) {b : BlockId} (hb : b ∈ R.ids U') :
-    G ≤ (R.block U b).round := ((h.mem b).mp hb).2
+/-- Rounds fall by the horizon, read from the truncation. -/
+theorem round_of (h : Truncates R U U' S S' G d) {b : BlockId} (hb : b ∈ R.ids U') :
+    (R.block U' b).round + G = (R.block U b).round :=
+  have hm := (h.mem_iff b).mp hb
+  h.round b hm.1 hm.2
+
+/-- Authors are untouched, read from the truncation. -/
+theorem creator_of (h : Truncates R U U' S S' G d) {b : BlockId} (hb : b ∈ R.ids U') :
+    (R.block U' b).creator = (R.block U b).creator :=
+  have hm := (h.mem_iff b).mp hb
+  h.creator b hm.1 hm.2
+
+/-- And references survive strictly above the horizon. -/
+theorem refs_of (h : Truncates R U U' S S' G d) {b : BlockId} (hb : b ∈ R.ids U')
+    (hgt : G < (R.block U b).round) :
+    (R.block U' b).refs = (R.block U b).refs :=
+  h.refs b ((h.mem_iff b).mp hb).1 hgt
 
 end Truncates
 

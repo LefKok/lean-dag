@@ -24,8 +24,7 @@ The argument is the strong induction of `partialRun_agree` with one
 extra step at each epoch: the smaller run's verdict is carried to the
 larger view by `Persist`, at the smaller run's schedule, where the
 larger run's verdict also lives after `SchedLocal`, and the two agree
-by `Agree`. The persistence condition `Ok` is therefore asked for at
-the smaller run's schedule.
+by `Agree`.
 -/
 
 namespace LeanDag
@@ -52,8 +51,7 @@ theorem Policy.const_stable {R : DagRule Validator BlockId Payload} (W : ℕ) (h
 section Growth
 
 variable {R : DagRule Validator BlockId Payload} {P : Policy R}
-variable {Ok : Slots Validator → ∀ (U _U' : R.Universe), R.View U → Prop}
-variable (ha : Agree R) (hp : Persist R Ok) (hst : P.Stable)
+variable (ha : Agree R) (hp : Persist R) (hst : P.Stable)
 include ha hp hst
 
 variable {U U' : R.Universe} {V : R.View U} {V' : R.View U'}
@@ -63,8 +61,7 @@ extension `U'`, from views one contained in the other, agree on the
 verdicts of their common epochs. -/
 theorem partialRun_agree_extends (hext : Extends R U U')
     (hsub : R.viewIds V ⊆ R.viewIds V') {E E' : ℕ}
-    (A : PartialRun P U V E) (A' : PartialRun P U' V' E')
-    (hok : Ok (slotsOf P.inj A.assign) U U' V) :
+    (A : PartialRun P U V E) (A' : PartialRun P U' V' E') :
     ∀ k, epochOf P.W k < min E E' → A.vdct k = A'.vdct k := by
   suffices main : ∀ e k, epochOf P.W k = e → epochOf P.W k < min E E' →
       A.vdct k = A'.vdct k by
@@ -83,7 +80,7 @@ theorem partialRun_agree_extends (hext : Extends R U U')
       exact ih (epochOf P.W j) (by omega) j rfl (by omega)
     -- The smaller run's verdict, persisted to the larger view.
     have h₁ : R.Decided (slotsOf P.inj A.assign) V' k (A.vdct k) :=
-      hp _ U U' hext V V' hok hsub k _ (A.closed k (by omega)).toDecided
+      hp _ U U' hext V V' hsub k _ (A.closed k (by omega)).toDecided
     -- The larger run's verdict, transported to the smaller run's schedule.
     have h₂ : R.Decided (slotsOf P.inj A.assign) V' k (A'.vdct k) :=
       ((A'.closed k (by omega)).reschedule (S' := slotsOf P.inj A.assign) rfl
@@ -94,28 +91,26 @@ theorem partialRun_agree_extends (hext : Extends R U U')
 determine them. -/
 theorem partialRun_assign_agree_extends (hext : Extends R U U')
     (hsub : R.viewIds V ⊆ R.viewIds V') {E E' : ℕ}
-    (A : PartialRun P U V E) (A' : PartialRun P U' V' E')
-    (hok : Ok (slotsOf P.inj A.assign) U U' V) :
+    (A : PartialRun P U V E) (A' : PartialRun P U' V' E') :
     ∀ m, epochOf P.W m < min E E' + 1 → A.assign m = A'.assign m := by
   intro m hm
   rw [A.coherent m (by omega), A'.coherent m (by omega), hst U U' hext V V' A.vdct m]
   refine P.adapted U' V' V' A.vdct A'.vdct m (fun j hj => ?_)
-  exact partialRun_agree_extends ha hp hst hext hsub A A' hok j (by omega)
+  exact partialRun_agree_extends ha hp hst hext hsub A A' j (by omega)
 
 /-- **The fixpoint is a prefix of the fixpoint on any extension.** Two
 total runs, on a universe and an extension of it, hold the same
 verdicts and run the same schedule. -/
 theorem run_agree_extends (hext : Extends R U U')
-    (hsub : R.viewIds V ⊆ R.viewIds V') (A : Run P U V) (A' : Run P U' V')
-    (hok : Ok (slotsOf P.inj A.assign) U U' V) :
+    (hsub : R.viewIds V ⊆ R.viewIds V') (A : Run P U V) (A' : Run P U' V') :
     (∀ k, A.vdct k = A'.vdct k) ∧ (∀ m, A.assign m = A'.assign m) := by
   constructor
   · intro k
     exact partialRun_agree_extends ha hp hst hext hsub
-      (A.toPartial (epochOf P.W k + 1)) (A'.toPartial (epochOf P.W k + 1)) hok k (by omega)
+      (A.toPartial (epochOf P.W k + 1)) (A'.toPartial (epochOf P.W k + 1)) k (by omega)
   · intro m
     exact partialRun_assign_agree_extends ha hp hst hext hsub
-      (A.toPartial (epochOf P.W m + 1)) (A'.toPartial (epochOf P.W m + 1)) hok m (by omega)
+      (A.toPartial (epochOf P.W m + 1)) (A'.toPartial (epochOf P.W m + 1)) m (by omega)
 
 end Growth
 

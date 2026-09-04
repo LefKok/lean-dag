@@ -43,11 +43,6 @@ variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 variable {R : DagRule Validator BlockId Payload}
 
-/-- **Views hold blocks of their universe.** `Barnacle.Laws` states this
-as `view_subset`; `DagRule` does not, so the derivations below take it. -/
-def ViewSound (R : DagRule Validator BlockId Payload) : Prop :=
-  ∀ {U : R.Universe} (V : R.View U), R.viewIds V ⊆ R.ids U
-
 /-- **`U'` carries `U`'s band, up to a shift.** Every block `U` holds
 whose round lies in `[lo, hi]` *once `g` is added* is a block of `U'`,
 at the round the shift names and with the same author, and above the
@@ -112,7 +107,8 @@ theorem of_agreeAbove {U U' : R.Universe} {r lo hi : ℕ} (h : AgreeAbove R U U'
       rcases hband with ⟨h1, -⟩ | ⟨hmem', h1, -⟩
       · omega
       · exact ((h.mem b).mpr ⟨hmem', by omega⟩).2
-    exact ⟨by rw [h.round b hb hU], h.creator b hb hU⟩
+    have hr := h.round b hb hU
+    exact ⟨by omega, h.creator b hb hU⟩
   refs := fun b hb hlo _ => h.refs b hb (by omega)
 
 /-- Agreement on a band gives agreement on any narrower one. -/

@@ -684,11 +684,6 @@ theorem banded : Banded (rule (Replica := Replica) (BlockId := BlockId)) := by
   exact ⟨top, fun g g' d d' S' U' V' k' hkd hsch hlead hab hV =>
     ht g g' d d' (ofCoreSlots S') U' V' k' hkd hsch hlead hab hV⟩
 
-omit S in
-/-- Views hold blocks of their universe. -/
-theorem viewSound : ViewSound (rule (Replica := Replica) (BlockId := BlockId)) :=
-  fun V => V.subset_ids
-
 end Hydrozoan
 
 end LeanDag

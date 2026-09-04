@@ -1,6 +1,7 @@
 import LeanDag.Hydrozoan.Properties.Proof
 import LeanDag.Integration.Hydrozoan.FillDecided
 import LeanDag.Properties.Sustain
+import LeanDag.Properties.Derived.Truncate
 
 /-!
 # The fill, re-derived through the target properties
@@ -65,41 +66,6 @@ theorem decided_fillHZ_of_persist (sk : SkipMsg (toCore U hsp))
     (by
       intro b hb
       simpa using hb) h
-
-/-! ## The cut -/
-
-/-- **The truncation is a truncation**, in the carrier's vocabulary.
-This is the check the failed re-indexing property never received: a
-relation with no models proves nothing, and exhibiting a witness before
-proving anything about it is the discipline that catches it. -/
-theorem truncatesHZ_chopHZ [S : LeanDag.Hydrozoan.Slots Replica] {G d : ℕ}
-    (hd : G ≤ S.slotRound d) :
-    LeanDag.Hydrozoan.TruncatesHZ U (chopHZ U hsp G) S (slotsChopHZ hd) G d where
-  mem := fun b => mem_chopHZ_ids
-  round := fun b hb => by
-    have := (mem_chopHZ_ids.mp hb).2
-    rw [chopHZ_round]; omega
-  author := fun b _ => chopHZ_author b
-  parents := fun b hb hm => by
-    refine chopHZ_parents_of_lt ?_
-    have hr := (mem_chopHZ_ids.mp hb).2
-    rw [chopHZ_round] at hm
-    omega
-  slotRound := fun k => by have := chopRound_add hd k; omega
-  leader := fun k => slotsChopHZ_leader hd k
-  base := hd
-
-/-- **HI7's transport, from HZ9.** The same statement as
-`decided_chopHZ`, reached without an induction. -/
-theorem decided_chopHZ_of_localTruncate [S : LeanDag.Hydrozoan.Slots Replica] {G d : ℕ}
-    (hd : G ≤ S.slotRound d) {V : LeanDag.Hydrozoan.View U} {k : ℕ} {v : Option BlockId} :
-    LeanDag.Hydrozoan.Decided (S := slotsChopHZ hd) (chopHZ U hsp G)
-        (View.chopHZ V hsp G) k v
-      ↔ LeanDag.Hydrozoan.Decided U V (d + k) v :=
-  (LeanDag.Hydrozoan.TruncatesHZ.decided_iff (truncatesHZ_chopHZ (hsp := hsp) hd)
-    (fun b hb hbr => by
-      change b ∈ V.ids ↔ b ∈ (View.chopHZ V hsp G).ids
-      exact (mem_viewChopHZ (V := V) hbr).symm)).symm
 
 /-! ## What the two mechanisms sustain
 
@@ -170,6 +136,43 @@ theorem sustains_skipFillHZ (sk : SkipMsg (toCore U hsp)) :
   refs := fun b hb _ => by
     change ((skipFillHZ U hsp sk).block b).parents = (U.block b).parents
     rw [skipFillHZ_block_old hb]
+
+/-! ## The cut -/
+
+/-- **The truncation is a truncation**, in the carrier's vocabulary.
+This is the check the failed re-indexing property never received: a
+relation with no models proves nothing, and exhibiting a witness before
+proving anything about it is the discipline that catches it.
+
+The block half is `sustains_chopHZ` below, since `Truncates` is
+`RebasedAbove` at `R₀ = G` plus the schedule; only the three schedule
+clauses are proved here. -/
+theorem truncates_chopHZ [S : LeanDag.Hydrozoan.Slots Replica] {G d : ℕ}
+    (hd : G ≤ S.slotRound d) :
+    Properties.Truncates LeanDag.Hydrozoan.rule U (chopHZ U hsp G)
+      (LeanDag.Hydrozoan.toCoreSlots S)
+      (LeanDag.Hydrozoan.toCoreSlots (slotsChopHZ hd)) G d :=
+  { sustains_chopHZ (hsp := hsp) (G := G) with
+    slotRound := fun k => by
+      show (slotsChopHZ hd).slotRound k + G = S.slotRound (d + k)
+      have := chopRound_add hd k; omega
+    leader := fun k => slotsChopHZ_leader hd k
+    base := hd }
+
+/-- **HI7's transport, from HZ9.** The same statement as
+`decided_chopHZ`, reached without an induction — and now without a
+Hydrozoan-specific truncation relation either. -/
+theorem decided_chopHZ_of_localTruncate [S : LeanDag.Hydrozoan.Slots Replica] {G d : ℕ}
+    (hd : G ≤ S.slotRound d) {V : LeanDag.Hydrozoan.View U} {k : ℕ} {v : Option BlockId} :
+    LeanDag.Hydrozoan.Decided (S := slotsChopHZ hd) (chopHZ U hsp G)
+        (View.chopHZ V hsp G) k v
+      ↔ LeanDag.Hydrozoan.Decided U V (d + k) v :=
+  (Properties.LocalTruncate.of_banded LeanDag.Hydrozoan.banded
+    (LeanDag.Hydrozoan.toCoreSlots S) (LeanDag.Hydrozoan.toCoreSlots (slotsChopHZ hd))
+    U (chopHZ U hsp G) G d (truncates_chopHZ (hsp := hsp) hd) V (View.chopHZ V hsp G)
+    (fun b hb hbr => by
+      change b ∈ V.ids ↔ b ∈ (View.chopHZ V hsp G).ids
+      exact (mem_viewChopHZ (V := V) hbr).symm) k v).symm
 
 end Hydrozoan
 

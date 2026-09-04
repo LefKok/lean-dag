@@ -284,9 +284,8 @@ theorem adaptiveRun_agree_extends {P : AdaptivePolicy Validator BlockId Payload}
       (Payload := Payload)) U U')
     {V : View Validator BlockId Payload U} {V' : View Validator BlockId Payload U'}
     (hsub : V.ids ⊆ V'.ids) (hst : P.Stable)
-    (R₁ : AdaptiveRun P U V) (R₂ : AdaptiveRun P U' V')
-    (hok : Quorate (slotsOf P.inj R₁.assign) U U' V) :
+    (R₁ : AdaptiveRun P U V) (R₂ : AdaptiveRun P U' V') :
     (∀ k, R₁.vdct k = R₂.vdct k) ∧ (∀ m, R₁.assign m = R₂.assign m) :=
-  Adaptive.run_agree_extends agree persist hst hext hsub R₁ R₂ hok
+  Adaptive.run_agree_extends agree persist hst hext hsub R₁ R₂
 
 end LeanDag

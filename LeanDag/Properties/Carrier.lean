@@ -69,6 +69,11 @@ structure DagRule (Validator : Type) [Fintype Validator] [DecidableEq Validator]
   ids : Universe → Finset BlockId
   /-- The ids a view holds. -/
   viewIds : ∀ {U : Universe}, View U → Finset BlockId
+  /-- A view holds only blocks the universe has. A law rather than a
+  property: every protocol's view type carries this proof already, so
+  asking for it here costs an instance nothing and spares every
+  consumer a hypothesis. -/
+  viewSound : ∀ {U : Universe} (V : View U), viewIds V ⊆ ids U
   /-- The decision relation under a schedule. -/
   Decided : Slots Validator → ∀ {U : Universe}, View U → ℕ → Option BlockId → Prop
 
@@ -78,57 +83,82 @@ for universes. -/
 def Causal (R : DagRule Validator BlockId Payload) : Prop :=
   ∀ U : R.Universe, CausalStructure (R.block U) (R.ids U)
 
-/-- **Two universes agree above round `r`.** Everything a rule can read
-of a block — its presence, round, author and references — is the same
-in both, for blocks at round `r` and above.
+/-- **One DAG is another above a round, rebased.** At and above `R₀`
+the two universes hold the same blocks, at rounds `G` apart, with the
+same authors; and strictly above `R₀`, the same references. Nothing is
+said below `R₀`, which is where a mechanism does its work.
+
+**This one relation is what every mechanism here delivers.** A
+truncation rebases by its horizon (`Truncates`, at `R₀ = G`); a fill or
+an extension rebases by nothing and settles at the top of its gap
+(`Sustains`); plain agreement above a round is the zero offset
+(`AgreeAbove`). They were three structures with the same four clauses
+until the clauses were compared.
 
 `mem` pairs presence with the round condition rather than stating them
-separately, which is what makes the relation symmetric: without it,
-"present and above `r`" could be read in one universe and not the
-other, and the definition would name a direction it does not mean.
+separately, which is what lets the relation be read from either
+universe: without it, "present and above `R₀`" could hold in one and
+not the other, and the definition would name a direction it does not
+mean.
 
-References are compared **strictly** above `r`: a truncation retains
+References are compared **strictly** above `R₀`: a truncation retains
 its bottom layer's blocks but empties their references, since what they
 referenced is gone. Every rule reads a vote from a *parent*, so a block
-at exactly `r` contributes its presence and its author but no vote,
+at exactly `R₀` contributes its presence and its author but no vote,
 which is what the clause says. -/
-structure AgreeAbove (R : DagRule Validator BlockId Payload)
-    (U U' : R.Universe) (r : ℕ) : Prop where
-  /-- The same blocks are present at and above `r`. -/
-  mem : ∀ b, (b ∈ R.ids U ∧ r ≤ (R.block U b).round) ↔
-    (b ∈ R.ids U' ∧ r ≤ (R.block U' b).round)
-  /-- At and above `r`, a block sits at the same round. -/
-  round : ∀ b, b ∈ R.ids U → r ≤ (R.block U b).round →
-    (R.block U' b).round = (R.block U b).round
-  /-- And has the same author. -/
-  creator : ∀ b, b ∈ R.ids U → r ≤ (R.block U b).round →
+structure RebasedAbove (R : DagRule Validator BlockId Payload)
+    (U U' : R.Universe) (G R₀ : ℕ) : Prop where
+  /-- The same blocks at and above `R₀`. -/
+  mem : ∀ b, (b ∈ R.ids U ∧ R₀ ≤ (R.block U b).round) ↔
+    (b ∈ R.ids U' ∧ R₀ ≤ (R.block U' b).round + G)
+  /-- At rounds `G` apart. Additive, so truncated subtraction never
+  appears. -/
+  round : ∀ b, b ∈ R.ids U → R₀ ≤ (R.block U b).round →
+    (R.block U' b).round + G = (R.block U b).round
+  /-- With the same author. -/
+  creator : ∀ b, b ∈ R.ids U → R₀ ≤ (R.block U b).round →
     (R.block U' b).creator = (R.block U b).creator
-  /-- Strictly above `r`, it references the same blocks. -/
-  refs : ∀ b, b ∈ R.ids U → r < (R.block U b).round →
+  /-- And, strictly above, the same references. -/
+  refs : ∀ b, b ∈ R.ids U → R₀ < (R.block U b).round →
     (R.block U' b).refs = (R.block U b).refs
+
+/-- **Two universes agree above a round**: `RebasedAbove` at no
+offset. -/
+abbrev AgreeAbove (R : DagRule Validator BlockId Payload)
+    (U U' : R.Universe) (r : ℕ) : Prop := RebasedAbove R U U' 0 r
+
+namespace RebasedAbove
+
+variable {R : DagRule Validator BlockId Payload} {U U' : R.Universe} {G R₀ : ℕ}
+
+/-- A block of the target at or above the settling round is a block of
+the source, at the shifted round. -/
+theorem of_mem' (h : RebasedAbove R U U' G R₀) {b : BlockId} (hb : b ∈ R.ids U')
+    (hr : R₀ ≤ (R.block U' b).round + G) :
+    b ∈ R.ids U ∧ (R.block U' b).round + G = (R.block U b).round := by
+  have hU := (h.mem b).mpr ⟨hb, hr⟩
+  exact ⟨hU.1, h.round b hU.1 hU.2⟩
+
+end RebasedAbove
 
 namespace AgreeAbove
 
 variable {R : DagRule Validator BlockId Payload} {U U' : R.Universe} {r : ℕ}
 
-/-- Agreement is reflexive. -/
-theorem refl : AgreeAbove R U U r :=
-  { mem := fun _ => Iff.rfl
-    round := fun _ _ _ => rfl
-    creator := fun _ _ _ => rfl
-    refs := fun _ _ _ => rfl }
-
-/-- And symmetric — which the paired `mem` clause is what secures. -/
+/-- Agreement at no offset is symmetric — which the paired `mem` clause
+is what secures. A rebase by a positive offset is not: reading it
+backwards moves the offset to the other side, which is why `AgreeBand`
+carries one on each. -/
 theorem symm (h : AgreeAbove R U U' r) : AgreeAbove R U' U r where
-  mem := fun b => (h.mem b).symm
+  mem := fun b => by simpa using (h.mem b).symm
   round := fun b hb hr =>
-    have hU := (h.mem b).mpr ⟨hb, hr⟩
-    (h.round b hU.1 hU.2).symm
+    have hU := (h.mem b).mpr ⟨hb, by simpa using hr⟩
+    by simpa using (h.round b hU.1 hU.2).symm
   creator := fun b hb hr =>
-    have hU := (h.mem b).mpr ⟨hb, hr⟩
+    have hU := (h.mem b).mpr ⟨hb, by simpa using hr⟩
     (h.creator b hU.1 hU.2).symm
   refs := fun b hb hr =>
-    have hU := (h.mem b).mpr ⟨hb, le_of_lt hr⟩
+    have hU := (h.mem b).mpr ⟨hb, by simpa using le_of_lt hr⟩
     have hround := h.round b hU.1 hU.2
     (h.refs b hU.1 (by omega)).symm
 

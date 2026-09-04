@@ -37,9 +37,8 @@ the same way in a few lines.
 **The settling round is where the content sits.** A truncation settles
 at its horizon. A fill settles at the top of its gap, because below it
 the blocks it adds stand in for blocks that voted and need not vote as
-they did. References are compared **strictly** above `R₀`, as
-`AgreeAbove` and `Truncates` do, so a truncation's emptied bottom layer
-is admitted.
+they did. References are compared **strictly** above `R₀`, so a truncation's
+emptied bottom layer is admitted.
 
 **The discipline this file records.** A witness catches a relation with
 no models; it does not catch one that has models and helps nobody. So a
@@ -66,40 +65,16 @@ def PopulatedOn (R : DagRule Validator BlockId Payload) (U : R.Universe)
     (T : Finset Validator) (r : ℕ) : Prop :=
   ∀ v ∈ T, ∃ b, b ∈ R.ids U ∧ (R.block U b).round = r ∧ (R.block U b).creator = v
 
-/-- **A mechanism sustains from round `R₀`**, re-indexing by `G`: at and
-above the settling round the two universes hold the same blocks, at
-rounds `G` apart, with the same authors; and strictly above it, the same
-references.
+/-- **A mechanism sustains from round `R₀`**, re-indexing by `G`: this
+is `RebasedAbove`, under the name the obligation is owed in. The
+relation is the same one a truncation and a plain agreement satisfy
+(`Properties/Carrier.lean`); what differs is who owes it. -/
+abbrev Sustains (R : DagRule Validator BlockId Payload) (U U' : R.Universe)
+    (G R₀ : ℕ) : Prop := RebasedAbove R U U' G R₀
 
-`mem` pairs presence with the round condition on each side, as
-`AgreeAbove` does, so the relation can be read from either universe.
-Nothing is said below `R₀`, which is where a mechanism does its work. -/
-structure Sustains (R : DagRule Validator BlockId Payload) (U U' : R.Universe)
-    (G R₀ : ℕ) : Prop where
-  /-- The same blocks at and above the settling round. -/
-  mem : ∀ b, (b ∈ R.ids U ∧ R₀ ≤ (R.block U b).round) ↔
-    (b ∈ R.ids U' ∧ R₀ ≤ (R.block U' b).round + G)
-  /-- At rounds `G` apart. Additive, so no truncated subtraction. -/
-  round : ∀ b, b ∈ R.ids U → R₀ ≤ (R.block U b).round →
-    (R.block U' b).round + G = (R.block U b).round
-  /-- With the same author. -/
-  creator : ∀ b, b ∈ R.ids U → R₀ ≤ (R.block U b).round →
-    (R.block U' b).creator = (R.block U b).creator
-  /-- And, strictly above, the same references. -/
-  refs : ∀ b, b ∈ R.ids U → R₀ < (R.block U b).round →
-    (R.block U' b).refs = (R.block U b).refs
-
-namespace Sustains
+namespace RebasedAbove
 
 variable {R : DagRule Validator BlockId Payload} {U U' : R.Universe} {G R₀ : ℕ}
-
-/-- A block of the target at or above the settling round is a block of
-the source, at the shifted round. -/
-theorem of_mem' (h : Sustains R U U' G R₀) {b : BlockId} (hb : b ∈ R.ids U')
-    (hr : R₀ ≤ (R.block U' b).round + G) :
-    b ∈ R.ids U ∧ (R.block U' b).round + G = (R.block U b).round := by
-  have hU := (h.mem b).mpr ⟨hb, hr⟩
-  exact ⟨hU.1, h.round b hU.1 hU.2⟩
 
 /-- **Votes survive.** A `T`-block one round above `r` is old, keeps its
 author and its references, so a vote it cast it casts still. -/
@@ -122,28 +97,7 @@ theorem populatedOn_of (h : Sustains R U U' G R₀) {T : Finset Validator} {r : 
   · have := h.round b hb (by omega); omega
   · rw [h.creator b hb (by omega)]; exact hbc
 
-/-- A mechanism that sustains from a round sustains from any later one. -/
-theorem mono (h : Sustains R U U' G R₀) {R₁ : ℕ} (hR : R₀ ≤ R₁) : Sustains R U U' G R₁ where
-  mem := fun b => by
-    constructor
-    · rintro ⟨hb, hr⟩
-      have := (h.mem b).mp ⟨hb, le_trans hR hr⟩
-      exact ⟨this.1, by have := h.round b hb (le_trans hR hr); omega⟩
-    · rintro ⟨hb, hr⟩
-      have := (h.mem b).mpr ⟨hb, le_trans hR hr⟩
-      exact ⟨this.1, by have := h.round b this.1 this.2; omega⟩
-  round := fun b hb hr => h.round b hb (le_trans hR hr)
-  creator := fun b hb hr => h.creator b hb (le_trans hR hr)
-  refs := fun b hb hr => h.refs b hb (lt_of_le_of_lt hR hr)
-
-/-- Doing nothing sustains everything. -/
-theorem refl : Sustains R U U 0 0 where
-  mem := fun _ => by simp
-  round := fun _ _ _ => rfl
-  creator := fun _ _ _ => rfl
-  refs := fun _ _ _ => rfl
-
-end Sustains
+end RebasedAbove
 
 end Properties
 

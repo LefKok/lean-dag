@@ -101,6 +101,7 @@ def mysticetiRule : DagRule Validator BlockId Payload where
   block := fun U i => U.block i
   ids := fun U => U.ids
   viewIds := fun V => V.ids
+  viewSound := fun V => V.subset_ids
   Decided := fun S _ V k v => Decided (S := S) _ V k v
 
 variable {U U' : BlockUniverse Validator BlockId Payload} {G R₀ : ℕ}
@@ -178,32 +179,23 @@ theorem directCommit_of_sustains (h : Sustains mysticetiRule U U' G R₀)
       exact populatedOn_toCore this)
     (certifiesAt_of_sustains h hr hG hc)
 
-/-! ## Persistence, at the core's grade
+/-! ## Persistence
 
-The second protocol to prove `Persist`, and the one that tests the
-grading. Hydrozoan needed no condition because its skip counts blames at
-the slot. The core's skip quantifies over candidates, so a slot with no
-candidate is skipped *vacuously* — and an extension can supply one. The
-condition below is what makes the new candidate skippable rather than
-merely present: the view already holds a quorum at the voting round of
-every slot the extension gives a candidate to, and every one of those
-blocks blames it, since old blocks reference only old blocks.
+The second protocol to prove it, and the one that found the defect. The
+core's skip once quantified over the candidates a universe holds, so a
+slot with none was skipped *vacuously* and an extension supplying one
+broke the derivation. Persistence was therefore stated at a grade,
+`Quorate`, asking the view to hold a blaming quorum at the voting round
+of every slot the extension gave a candidate to.
 
-This is `SafeSkip.QuorateOverGap`'s content, stated without the skip
-message: `QuorateOverGap` asks for the quorum at every gap round, and
-the gap rounds are exactly where a fill's candidates land. The condition
-is on the **view**, which is why `Persist`'s `Ok` had to see one. -/
+That grade named the repair rather than a property of the protocol. A
+skip resting on the absence of a candidate is not final, which is the
+one thing a skip rule exists to be, and `Decided.directSkip` now takes
+`DirectSkipSlotIn` — a count of blockers at the slot, as Hydrozoan's
+does. Both protocols persist unconditionally, the grade is gone from
+`Persist`, and `Quorate` with it.
+-/
 
-section Persist
-
-/-- The core's grade: at every slot the extension gives a new candidate,
-the view holds a quorum at the voting round. -/
-def Quorate (S : Slots Validator) (U U' : BlockUniverse Validator BlockId Payload)
-    (V : View Validator BlockId Payload U) : Prop :=
-  ∀ k L, IsLeaderBlock (S := S) U' k L → L ∉ U.ids →
-    quorumCard Validator ≤ (creatorsOf U.block ((blocksAt U (S.slotRound k + 1)) ∩ V.ids)).card
-
-end Persist
 
 /-- The core's universes are block DAGs. -/
 theorem causal : Causal (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
@@ -709,16 +701,11 @@ theorem banded : Banded
   exact ⟨top, fun g g' d d' S' U' V' k' hkd hsch hlead hab hV =>
     ht g g' d d' S' U' V' k' hkd hsch hlead hab hV⟩
 
-/-- Views hold blocks of their universe. -/
-theorem viewSound : ViewSound
-    (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
-  fun V => V.subset_ids
-
 /-- **The core persists unconditionally**, as an evidence-backed rule
 must — now a corollary of the band rather than an induction of its own.
 The grade `Quorate` that stood here before was not a property of the
 protocol but the missing half of its skip rule. -/
-theorem persist_unconditional : Persist.Unconditional
+theorem persist : Persist
     (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
   Persist.of_banded banded
 
@@ -726,7 +713,7 @@ theorem persist_unconditional : Persist.Unconditional
 round is at or above `r` reads nothing below `r`. -/
 theorem local_ : Local
     (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
-  Local.of_banded viewSound banded
+  Local.of_banded banded
 
 /-- **L2 re-derived, with no induction of its own.** View monotonicity
 (`decided_mono`, four cases in `Liveness.lean`) is the band read at a
@@ -738,11 +725,6 @@ theorem decided_mono_of_band [S : Slots Validator]
     {k : ℕ} {v : Option BlockId} (hd : Decided U V k v) : Decided U V' k v :=
   Properties.decided_mono_of_banded banded hsub hd
 
-/-- The graded form, for consumers that carry a condition. -/
-theorem persist : Persist (mysticetiRule (Validator := Validator) (BlockId := BlockId)
-    (Payload := Payload)) (fun S U U' V => Quorate S U U' V) :=
-  Persist.of_unconditional persist_unconditional
-
 end PersistProof
 
 /-! ## Skippability, at a correct quorum
@@ -753,12 +735,9 @@ at the voting round references none of the slot's candidates, every one
 of them is a blamer for every candidate at once, so `quorumCard ≤ |T|`
 is enough — **a correct quorum skips an unsupported slot**.
 
-Set beside `Persist`, this inverts. The same per-candidate skip that
-needs `Quorate` to keep a *vacuous* skip alive under extension is what
-makes any *specific* unsupported candidate trivially blamed. Hydrozoan
-is the mirror image: its slot-level `qFast` count survives every
-extension unconditionally and reaches no skip from a correct quorum.
-One mechanism, opposite grades on the two properties. -/
+Hydrozoan reaches no skip from a correct quorum: its slot-level `qFast`
+count is a higher threshold, which is the price of the unconditional
+persistence the core had to be repaired to reach. -/
 
 section Skip
 
