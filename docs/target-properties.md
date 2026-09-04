@@ -771,6 +771,29 @@ not needed and not used. The novelty budget keeps the store small;
 what makes it safe to deploy is that it never defers what a decision
 reads, and those are separate facts.
 
+**The reactive discipline is the second witness, and it answers the
+obvious doubt.** A reactive validator advances as soon as a quorum has
+arrived: it never waits for every correct validator, and its
+*references* omit whatever was late — `Reactive/Mysticeti.lean` gives up
+reference coverage deliberately. So it looks as though such a validator
+cannot promise to cover the reliable set.
+
+It can, because the early exit governs what a validator **references**
+and not what it **holds**. `PaceCore.holds` is passive delivery, the
+view is built from it, and `holds_roundBlocks` already says that after
+GST a paced validator holds every reliable block of a round. What the
+early exit costs is `Synchronised` — reference coverage, a property of
+the *universe* — which is not what a view obligation asks for.
+`PaceCore.deliversOn_viewAt` is the witness.
+
+That the reactive arc had already stated its commit in this shape, years
+before the obligation existed, is the strongest evidence that `CoversOn`
+is the right predicate: `ViewPace.decided_local_of_certifiesAt` counts a
+reliable quorum's certificates inside `viewAt`, which is the same
+counting `Liveness.directCommitIn_of_certifiesAt` and
+`DoS/Delivers.lean` do. Three arcs, one shape, arrived at
+independently.
+
 **The two forms have different consumers, and that is the finding.**
 `decided_of_delivers` *transports* a verdict, so it needs everything the
 deciding view held — the strong form. Liveness *produces* a verdict from

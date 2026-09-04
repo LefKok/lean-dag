@@ -24806,6 +24806,17 @@ The two clauses that distinguish this from a pure shift are `mem` and `refs`. Me
 
 Both clauses are `RebasedAbove`'s, read at `R₀ = G`. That was not how this started: `Truncates` was written with its own four block clauses, and they were found to be the same four a mechanism already owed under `Sustains`. What is left here is the schedule half.
 
+#### `settleBy`
+
+*def, `Reactive.Delivers.lean`*
+
+```lean
+def settleBy (pc : PaceCore U T N) (hi : ℕ) : ℕ :=
+  (Finset.range (hi + 1)).sup pc.latest + pc.delay
+```
+
+A time by which every round up to `hi` has been built and delivered. `latest` is not assumed monotone, so the bound is the supremum over the window rather than its right end.
+
 #### `reactiveLive`
 
 *def, `Reactive.MysticetiProperties.lean`*
@@ -24839,7 +24850,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 952 theorems that either another module of the
+The 954 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -26349,6 +26360,22 @@ theorem directCommitIn_of_coversUpto {V : View Validator BlockId Payload U}
 ```
 
 A view caught up to the certificate round sees every certificate, so a direct commit in the universe is a direct commit in the view.
+
+#### `directCommitIn_of_certifiesAt`
+
+*theorem, `Liveness.lean`*
+
+```lean
+theorem directCommitIn_of_certifiesAt {V : View Validator BlockId Payload U}
+    (hcard : quorumCard Validator ≤ T.card)
+    (hpop2 : PopulatedOn U T (r + 2))
+    (hcov : ∀ b ∈ U.ids, (U.block b).creator ∈ T →
+      (U.block b).round = r + 2 → b ∈ V.ids)
+    (hc : CertifiesAt U T r L) :
+    DirectCommitIn U V L r
+```
+
+**The commit argument at the view level.** `directCommit_of_certifiesAt` counts `T`'s decision-round blocks in the universe; this counts the same blocks in a view that holds them. The coverage asked for is `T`'s blocks at one round, not the whole layer — which is what lets a rate-limited validator commit, since a limiter may drop what an equivocator produced but not what a correct quorum did (`Properties/Deliver.lean`).
 
 #### `decided_of_leader_mem`
 
@@ -28054,6 +28081,18 @@ theorem correct_mem_base {R : ℕ} (hs : Synchronised U R) (hR : R ≤ G)
 ```
 
 **G10, completeness.** Post-`R`, every correct block of the layer is in every correct attestation (the backbone), so it clears the `f+1` bar in *every* sample — the shared correct layer `C` is in every base, and the adversary cannot filter it out.
+
+#### `mem_viewUpto_of_mem_refs`
+
+*theorem, `GC.Bootstrap.lean`*
+
+```lean
+theorem mem_viewUpto_of_mem_refs {i j : BlockId} {n : ℕ}
+    (hi : i ∈ viewUpto D v n) (hj : j ∈ (U.block i).refs) :
+    j ∈ viewUpto D v n
+```
+
+A retained store is closed under references: whatever cone brought `i` also holds everything `i` references.
 
 #### `accepted_mem_base`
 
@@ -37393,7 +37432,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 945 lemmas used only within the file that proves
+The 946 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -37500,7 +37539,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `PopulatedFrom.mono` | Population is antitone: a smaller set is easier to populate. |
 | `SynchronisedFrom.mono` | Coverage is antitone too: mutual coverage among a larger set implies it among any subset. |
 
-### `Liveness.lean` (22)
+### `Liveness.lean` (21)
 
 | Lemma | Role |
 |:---|:---|
@@ -37516,7 +37555,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `certifies_of_synchronisedOn` | A correct round-`(r+2)` block certifies any correct round-`r` block, once round `r+1` is populated and … |
 | `decided_none_of_no_candidate` | L5, in the form the `Decided` constructor wants. |
 | `directCommitIn_mono` | A larger view can only see more certificates. |
-| `directCommitIn_of_certifiesAt` | The commit argument at the view level. `directCommit_of_certifiesAt` counts `T`'s decision-round blocks in … |
 | `directCommit_of_synchronisedOn` | L4, at the round level. A correct block at round `r` is directly committed, given coverage from `r` and … |
 | `directSkipIn_mono` | A larger view can only see more blame. |
 | `exists_eligible` | Every slot has an eligible anchor somewhere. |
@@ -37774,7 +37812,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `history_chop_anti` | Advancing the cut only shrinks cones… |
 | `refsAccepted_chopD` | — |
 
-### `GC/Bootstrap.lean` (6)
+### `GC/Bootstrap.lean` (5)
 
 | Lemma | Role |
 |:---|:---|
@@ -37783,7 +37821,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `history_chop_subset_retained` | G7. The windowed relay obligation: everything a correct author can be asked to serve for its block — the … |
 | `history_subset_insert_viewUpto` | A correct author's cone is its own retained store plus the block itself: `RefsAccepted` one step down, S10 … |
 | `joinView_ids` | — |
-| `mem_viewUpto_of_mem_refs` | A retained store is closed under references: whatever cone brought `i` also holds everything `i` references. |
 
 ### `GC/Horizon.lean` (3)
 
@@ -39311,6 +39348,14 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `SynchronisedOn.mono` | Synchrony from a round is synchrony from any later one. |
 | `votesAt_of` | Votes survive. A `T`-block one round above `r` is old, keeps its author and its references, so a vote it … |
+
+### `Reactive/Delivers.lean` (3)
+
+| Lemma | Role |
+|:---|:---|
+| `coversOn_viewAt` | A paced validator's view covers the reliable set over a window. Every `T`-block from `lo` to `hi` is held … |
+| `deliversOn_viewAt` | The witness. A paced validator delivers the reliable set from any round it has settled past — the … |
+| `le_settleBy` | — |
 
 ### `WaveRobin.lean` (3)
 
