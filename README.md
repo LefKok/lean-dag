@@ -375,7 +375,7 @@ the set of declarations changes. `make help` lists them.
   appendices from it; `audit-report.py` checks the report's
   cross-references, its Lean identifiers, and every displayed statement
   verbatim against the compiled source. Regeneration is deterministic,
-  so regenerate-and-diff is the pre-merge check. `check-arc-holes.py` enforces the statement/proof partition of the arcs that adopt it; `audit-rounds.py` closes each protocol's decision relation over the dependency graph and checks that no rule reads an absolute round, which is what the offset band needs (`docs/target-properties.md` §3.4c); and `black-marlin-figure.py` draws the execution that refutes Agreement (`docs/figures/`).
+  so regenerate-and-diff is the pre-merge check. `check-arc-holes.py` enforces the statement/proof partition of the arcs that adopt it; `audit-rounds.py` closes each protocol's decision relation over the dependency graph and checks that no rule reads an absolute round, which is what the offset band needs (`docs/target-properties.md` §3.4c); `audit-conformance.py` recomputes which protocols have shown which properties (§11.2); and `black-marlin-figure.py` draws the execution that refutes Agreement (`docs/figures/`).
 
 ## Documents
 

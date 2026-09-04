@@ -1321,20 +1321,44 @@ one relation (§11.4d). Chain quality has no property of its own (§5).
 
 ### 11.2 Against part 2: two protocols, every mechanism
 
-| | Hydrozoan | core Mysticeti | reactive Mysticeti | Odontoceti, Nemo, Mahi-Mahi, Hybrid, Optimal-Hydrozoan, FinWhale |
-|---|---|---|---|---|
-| `Causal` | ✓ | ✓ | inherited | — |
-| `Persist` | ✓, from `Banded`, unconditional | ✓, from `Banded`, unconditional | inherited | — |
-| `Banded` | ✓ | ✓ | inherited | — |
-| `Local` | ✓, from `Banded` | ✓, from `Banded` | inherited | — |
-| `LocalTruncate` | ✓, from `Banded` | ✓, from `Banded` | inherited | — |
-| `ViewSound` | a law of `DagRule` | a law of `DagRule` | — | — |
-| `SkipsUnsupported` | ✓ at `qFast ≤ |T|` | ✓ at a correct quorum | — | — |
-| `Agree` | ✓ | ✓ | inherited | — |
-| `CommitsCandidate` | ✓ | ✓ | inherited | — |
-| `LeaderCommits`, `Descends` | ✓ | ✓ | ✓, a second `Live` | — |
-| `Sustains` witnesses | chop, fill | chop, fill, re-genesis | — | — |
-| `DeliversOn` witnesses | — | rate limiter, paced views | — | — |
+**Ten decision rules, two carriers.** `scripts/audit-conformance.py`
+recomputes this from `docs/decls.json` rather than trusting the table: a
+rule shows a property when some theorem concludes it at that rule's
+carrier, or when its conformance `Statement` lists it.
+
+| rule | `Causal` | `Banded` | `Agree` | `CommitsCandidate` | `LeaderCommits` | `Descends` | `SkipsUnsupported` |
+|---|---|---|---|---|---|---|---|
+| core Mysticeti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| reactive Mysticeti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Hydrozoan | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Optimal-Hydrozoan | — | — | — | — | — | — | — |
+| Odontoceti | — | — | — | — | — | — | — |
+| Nemo | — | — | — | — | — | — | — |
+| Mahi-Mahi | — | — | — | — | — | — | — |
+| Hybrid / Orcaella | — | — | — | — | — | — | — |
+| FinWhale | — | — | — | — | — | — | — |
+| Black Marlin | — | — | — | — | — | — | — |
+
+`Persist`, `Local` and `LocalTruncate` are not columns: they follow from
+`Banded` for every rule that has it, so there is nothing per protocol to
+record. Reactive Mysticeti shares the core's rule outright, so the two
+carriers cover three rules.
+
+**Why the seven have nothing, which is not one reason but four.**
+Odontoceti and Nemo simply have no carrier — Nemo over its own
+`Universe` type, Odontoceti over the shared one — and are the cheapest
+to add. Optimal-Hydrozoan decides over `OptUniverse`. Mahi-Mahi and
+Hybrid index their decision relation by a parameter, a wave width and a
+threshold, so each needs a carrier per value and Mahi-Mahi's band is
+conditional on `2 ≤ w` (§3.4c). FinWhale has no `Slots` layer at all,
+and Black Marlin commits by round with no slot-indexed relation — for
+those two the carrier is not the first step, the schedule layer is.
+
+**The six Barnacle rules are not seven more.** `Barnacle/*/Statement.lean`
+instantiates `BaseRule` at Mysticeti, Odontoceti, Nemo, Hydrozoan,
+Optimal-Hydrozoan and Orcaella; those are the same rules under another
+interface, so `BaseRule.toDagRule` would carry six of the seven at once.
+That is the largest single gain available here, and §11.5 lists it.
 
 The consumer tests passed. Each is a former bespoke induction
 re-derived with none: `decided_fillHZ`, `decided_chopHZ`,
@@ -1726,5 +1750,9 @@ slots when it means a dependence bound — *the verdict is settled by slot
    to the carrier needs and the only remaining call for a new carrier
    field.
 9. **Delete `Local`, and decide about `Delivers`** (§11.4).
-10. **Barnacle**, starting from `Agree` — six rules at once, and the
-    largest single gain available on the instance side.
+10. **Barnacle**, through `BaseRule.toDagRule` — Mysticeti,
+    Odontoceti, Nemo, Hydrozoan, Optimal-Hydrozoan and Orcaella are the
+    same rules under another interface, so six of the seven carriers
+    could come at once. The largest single gain on the instance side,
+    and it is why item 3 should be read as a rehearsal for this one
+    rather than an end in itself.
