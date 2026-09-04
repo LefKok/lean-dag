@@ -1,4 +1,5 @@
-import LeanDag.Properties.Persist
+import LeanDag.Properties.Extends
+import LeanDag.Properties.Derived.Persist
 
 /-!
 # Skippability: the residue `Sustains` leaves to the protocol

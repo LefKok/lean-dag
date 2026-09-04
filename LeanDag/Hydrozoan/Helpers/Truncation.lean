@@ -1,4 +1,4 @@
-import LeanDag.Hydrozoan.Helpers.Locality
+import LeanDag.Hydrozoan.Helpers.Banded
 import LeanDag.Properties.Truncate
 
 /-!

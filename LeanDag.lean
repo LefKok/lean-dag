@@ -82,8 +82,10 @@ import LeanDag.Integration.Hydrozoan.OptimalTransport
 import LeanDag.Integration.Hydrozoan.OptimalChopDecided
 import LeanDag.Integration.Hydrozoan.ViaProperties
 import LeanDag.Properties.Carrier
-import LeanDag.Properties.Persist
-import LeanDag.Properties.Local
+import LeanDag.Properties.Extends
+import LeanDag.Properties.Derived.Persist
+import LeanDag.Properties.Agreement
+import LeanDag.Properties.Derived.Local
 import LeanDag.Properties.Truncate
 import LeanDag.Properties.Sustain
 import LeanDag.Properties.Skip
@@ -97,7 +99,7 @@ import LeanDag.MysticetiProperties
 import LeanDag.Properties.Arcs.SafeSkip
 import LeanDag.Properties.Arcs.GC
 import LeanDag.Hydrozoan.Helpers.Carrier
-import LeanDag.Hydrozoan.Helpers.Locality
+import LeanDag.Hydrozoan.Helpers.Banded
 import LeanDag.Hydrozoan.Helpers.Truncation
 import LeanDag.Hydrozoan.Helpers.Skippability
 import LeanDag.Hydrozoan.Properties.Statement

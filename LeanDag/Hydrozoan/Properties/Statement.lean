@@ -1,4 +1,4 @@
-import LeanDag.Hydrozoan.Helpers.Locality
+import LeanDag.Hydrozoan.Helpers.Banded
 import LeanDag.Hydrozoan.Helpers.Truncation
 import LeanDag.Hydrozoan.Helpers.Skippability
 
@@ -52,6 +52,7 @@ def Statement : Prop :=
     (BlockId : Type) [DecidableEq BlockId] [LinearOrder BlockId]
     [LeanDag.Hydrozoan.Faults Replica],
     LeanDag.Properties.Causal (rule (Replica := Replica) (BlockId := BlockId)) ∧
+    LeanDag.Properties.Banded (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.Persist.Unconditional
       (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.Local (rule (Replica := Replica) (BlockId := BlockId)) ∧

@@ -1,7 +1,7 @@
 import LeanDag.Properties.Carrier
 
 /-!
-# Locality: a verdict reads nothing below its own slot
+# Agreement above a round: the vocabulary locality is stated in
 
 `docs/target-properties.md` §3.1, the property garbage collection rests
 on.
@@ -40,14 +40,6 @@ def ViewAgreeAbove (R : DagRule Validator BlockId Payload) {U U' : R.Universe}
     (V : R.View U) (V' : R.View U') (r : ℕ) : Prop :=
   ∀ b, b ∈ R.ids U → r ≤ (R.block U b).round →
     (b ∈ R.viewIds V ↔ b ∈ R.viewIds V')
-
-/-- **Locality.** A verdict at a slot whose round is at or above `r`
-depends on the DAG and the view only above `r`. -/
-def Local (R : DagRule Validator BlockId Payload) : Prop :=
-  ∀ (S : Slots Validator) (U U' : R.Universe) (r : ℕ), AgreeAbove R U U' r →
-    ∀ (V : R.View U) (V' : R.View U'), ViewAgreeAbove R V V' r →
-    ∀ (k : ℕ), r ≤ S.slotRound k →
-    ∀ (v : Option BlockId), R.Decided S V k v → R.Decided S V' k v
 
 namespace AgreeAbove
 
@@ -98,17 +90,6 @@ theorem symm (h : AgreeAbove R U U' r) (hv : ViewAgreeAbove R V V' r) :
   exact (hv b hU.1 hU.2).symm
 
 end ViewAgreeAbove
-
-/-- Locality in both directions, which is what agreement gives: the
-hypothesis is symmetric, so a protocol proving `Local` decides the same
-on either side. -/
-theorem Local.iff (hl : Local R) {S : Slots Validator} {U U' : R.Universe} {r : ℕ}
-    (h : AgreeAbove R U U' r) {V : R.View U} {V' : R.View U'}
-    (hv : ViewAgreeAbove R V V' r) {k : ℕ} (hk : r ≤ S.slotRound k)
-    {v : Option BlockId} :
-    R.Decided S V k v ↔ R.Decided S V' k v :=
-  ⟨hl S U U' r h V V' hv k hk v,
-    hl S U' U r h.symm V' V (ViewAgreeAbove.symm h hv) k hk v⟩
 
 end Properties
 

@@ -1,5 +1,7 @@
-import LeanDag.Properties.Local
-import LeanDag.Properties.Persist
+import LeanDag.Properties.Agreement
+import LeanDag.Properties.Derived.Local
+import LeanDag.Properties.Extends
+import LeanDag.Properties.Derived.Persist
 import LeanDag.Properties.Bounded
 
 /-!

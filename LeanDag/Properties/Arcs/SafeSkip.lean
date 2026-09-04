@@ -1,4 +1,5 @@
-import LeanDag.Properties.Persist
+import LeanDag.Properties.Extends
+import LeanDag.Properties.Derived.Persist
 import LeanDag.Properties.Skip
 import LeanDag.SafeSkip.Basic
 import LeanDag.SafeSkip.Invariance

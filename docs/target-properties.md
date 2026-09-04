@@ -462,7 +462,10 @@ them (§3.2). And the anchor cannot see them: an old block in the band
 keeps the references it had, so the anchor's cone never leaves the
 blocks the band already carried (`AgreeBand.reaches_old`).
 
-**Three properties come out of one induction.**
+**Three properties come out of one induction**, and both protocols now
+take that route: the core in `MysticetiProperties.lean`, Hydrozoan in
+`Hydrozoan/Helpers/Banded.lean`, whose band replaced two inductions and
+one 389-line file with one of each.
 
 | Corollary | The band applied to |
 |---|---|
@@ -767,7 +770,9 @@ keeps.
 LeanDag/Properties/
   Carrier.lean     the abstract DAG the properties talk about
   Witness.lean     the band, and the obligations' shared vocabulary
-  Derived/FromBand.lean   the routes: Persist, Local, monotonicity, the bound
+  Extends.lean  Agreement.lean   vocabulary the derived properties use
+  Derived/Persist.lean  Derived/Local.lean   the two statements
+  Derived/FromBand.lean   the routes, and view monotonicity and the bound
   Derived/Bounded.lean    the laws of DecidedBelow
   Local.lean  Persist.lean  Truncate.lean  Sustain.lean  Skip.lean
   Agree.lean  Bounded.lean  Commit.lean        the schedule family (§4)
@@ -942,9 +947,9 @@ property (§5).
 | | Hydrozoan | core Mysticeti | reactive Mysticeti | Odontoceti, Nemo, Mahi-Mahi, Hybrid, Optimal-Hydrozoan, FinWhale |
 |---|---|---|---|---|
 | `Causal` | ✓ | ✓ | inherited | — |
-| `Persist` | ✓ unconditional | ✓ unconditional, from `Banded` | inherited | — |
-| `Banded` | **missing** | ✓ | inherited | — |
-| `Local` | ✓ | ✓, from `Banded` | inherited | — |
+| `Persist` | ✓, from `Banded` | ✓, from `Banded` | inherited | — |
+| `Banded` | ✓ | ✓ | inherited | — |
+| `Local` | ✓, from `Banded` | ✓, from `Banded` | inherited | — |
 | `LocalTruncate` | ✓ | **missing** | — | — |
 | `SkipsUnsupported` | ✓ at `qFast ≤ |T|` | ✓ at a correct quorum | — | — |
 | `Agree` | **missing** | ✓ | inherited | — |
@@ -962,11 +967,10 @@ development did not have: Hammerhead over reactive Mysticeti
 What part 2 does not yet deliver:
 
 - **No protocol has the full set.** Hydrozoan cannot take adaptive
-  leaders; the core cannot take garbage collection through the
-  properties, `LocalTruncate` being the one property it still lacks.
-  Hydrozoan proves `Local` and `LocalTruncate` directly and has no
-  `Banded`, so the two protocols prove the same things by different
-  routes.
+  leaders, lacking `LeaderCommits` and `Descends`; the core cannot take
+  garbage collection through the properties, `LocalTruncate` being the
+  one property it still lacks. Both now prove `Banded`, so `Persist` and
+  `Local` come the same way for both.
 - **Six protocols have no instance of any property.** Whether
   `Descends` and `Live` are generic or Mysticeti's shape with the name
   removed is unknown until the Odontoceti mirror is collapsed.
@@ -1012,20 +1016,18 @@ The properties divide four ways, and the folder follows the division:
 `SkipsUnsupported`, `LeaderCommits` and `Descends` fall on the protocol;
 `Sustains` falls on the mechanism. Nothing derives them.
 
-**Interfaces a protocol may discharge either way.** `Persist` and
-`Local` are statements a *mechanism* reads, and a protocol reaches them
-by whichever route it has. The core obtains both from `Banded`;
-Hydrozoan proves both directly, having no `Banded`. So they are neither
-purely obligations nor purely consequences, and their statements stay in
-`Properties/` where the mechanisms find them. What is derived is the
-*route*, and the routes are in `Derived/FromBand.lean`.
+**Statements no protocol proves directly.** `Persist` and `Local` are
+read by mechanisms and reached by both instances through `Banded`, so
+they live in `Derived/` with their routes. They stay named properties
+because that is what the crash-recovery and garbage-collection arcs
+consume, and because a rule with no band could prove either on its own.
 
 **Derived theorems. Nothing proves these per protocol.**
 
 | Theorem | Where | From |
 |---|---|---|
-| `Persist.of_banded` | `Derived/FromBand.lean` | `Banded` |
-| `Local.of_banded` | `Derived/FromBand.lean` | `Banded` |
+| `Persist`, `Persist.of_banded` | `Derived/{Persist,FromBand}.lean` | `Banded` |
+| `Local`, `Local.of_banded` | `Derived/{Local,FromBand}.lean` | `Banded` |
 | `decided_mono_of_banded` | `Derived/FromBand.lean` | `Banded` |
 | `exists_decidedBelow` | `Derived/FromBand.lean` | `Banded` |
 | `DecidedBelow`'s five laws | `Derived/Bounded.lean` | the definition, and `Agree` |
@@ -1034,7 +1036,8 @@ purely obligations nor purely consequences, and their statements stay in
 nothing.** `DagRule`, `AgreeAbove`, `AgreeBand`, `Extends`, `Novel`,
 `Truncates`, `ViewTruncates`, `ViewAgreeAbove`, `Unsupported`,
 `PresentAt`, and `DecidedBelow` itself, which is a definition and not a
-property anyone shows.
+property anyone shows. `Extends.lean` and `Agreement.lean` hold the two
+families that used to sit beside the properties now in `Derived/`.
 
 Two obligations carry a note. `ViewSound` is one only formally: every
 protocol satisfies it by construction, and it is a candidate to become a

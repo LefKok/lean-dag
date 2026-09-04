@@ -1,5 +1,6 @@
 import LeanDag.Hydrozoan.Model.Decided
-import LeanDag.Properties.Persist
+import LeanDag.Properties.Extends
+import LeanDag.Properties.Derived.Persist
 
 /-!
 # Hydrozoan as a `Properties.DagRule`

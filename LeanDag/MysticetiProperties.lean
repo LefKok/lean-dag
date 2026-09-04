@@ -1,5 +1,6 @@
 import LeanDag.Properties.Sustain
-import LeanDag.Properties.Persist
+import LeanDag.Properties.Extends
+import LeanDag.Properties.Derived.Persist
 import LeanDag.Properties.Skip
 import LeanDag.Properties.Commit
 import LeanDag.Properties.Derived.Bounded
