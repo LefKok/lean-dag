@@ -3,7 +3,7 @@ import LeanDag.Properties.Sustain
 import LeanDag.GC.Chop
 import LeanDag.GC.ChopDecided
 import LeanDag.MysticetiProperties
-import LeanDag.Properties.Witness
+import LeanDag.Properties.Band
 import LeanDag.Properties.Derived.Truncate
 
 /-!

@@ -1,5 +1,5 @@
 import LeanDag.Properties.Truncate
-import LeanDag.Properties.Witness
+import LeanDag.Properties.Band
 
 /-!
 # Truncation invariance

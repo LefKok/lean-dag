@@ -558,7 +558,7 @@ rather than left to be discovered.
 
 ## 3.8 The band: what `Local` and `Persist` are shadows of
 
-`Properties/Witness.lean`. Locality and persistence say one thing twice,
+`Properties/Band.lean`. Locality and persistence say one thing twice,
 in different units and from opposite ends, and the statement they are
 both shadows of is the one a reader reaches for first: *a verdict is
 carried by a range of rounds*.
@@ -924,7 +924,7 @@ keeps.
 ```
 LeanDag/Properties/
   Carrier.lean     the abstract DAG the properties talk about
-  Witness.lean     the band, and the obligations' shared vocabulary
+  Band.lean        AgreeBand and Banded, the one safety obligation
   Extends.lean  Agreement.lean   vocabulary the derived properties use
   Derived/Persist.lean  Derived/Local.lean   the two statements
   Derived/Truncate.lean   LocalTruncate, and its route from the band
@@ -1173,8 +1173,18 @@ is the part of the goal least served, and it is the first item below.
 
 ### 11.4b Obligation or consequence
 
-The properties divide four ways, and the folder follows the division:
-`Properties/Derived/` holds theorems, never statements.
+The properties divide four ways, and the folder follows the division.
+The rule is **what a protocol proves directly stays at the root**;
+`Properties/Derived/` holds what none does, statement and route
+together; `Properties/Optional/` holds what a protocol may show and need
+not.
+
+That is not the rule this section first stated. It said `Derived/` holds
+theorems and never statements, which its own contents contradicted the
+day `Persist` moved there: `Persist`, `Local` and `LocalTruncate` are
+statements, and they sit in `Derived/` because nobody proves them, not
+because they are theorems. The distinction the folder tracks is who owes
+the proof, which is the distinction a protocol author needs.
 
 **Obligations. Someone must prove these, per protocol or per mechanism.**
 `Causal`, `Agree`, `Banded`, `LeaderCommits` and `Descends` fall on the
@@ -1196,8 +1206,15 @@ prove either on its own.
 `Local` is in `Derived/` too and **no mechanism reads it**. It was kept
 on the ground that garbage collection consumed it, which stopped being
 true when that arc moved to `LocalTruncate`. It is a corollary of the
-band and nothing else, so neither protocol's conformance statement
-lists it (§11.4d).
+band and nothing else, so neither protocol states it and neither
+instantiates it (§11.4d).
+
+**Vocabulary stays at the root** whether or not a protocol proves
+anything about it, because the obligations are written in it:
+`RebasedAbove` and its two settings, `Rebases`, `Truncates`, `AgreeBand`,
+`Extends`, `DecidedBelow`. `AgreeBand` and `Banded` are in
+`Properties/Band.lean`; the file was called `Witness.lean`, which named
+the satisfiability discipline rather than what it holds.
 
 **Derived theorems. Nothing proves these per protocol.**
 

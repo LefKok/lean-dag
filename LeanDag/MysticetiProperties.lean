@@ -4,7 +4,7 @@ import LeanDag.Properties.Derived.Persist
 import LeanDag.Properties.Optional.Skip
 import LeanDag.Properties.Commit
 import LeanDag.Properties.Derived.Bounded
-import LeanDag.Properties.Witness
+import LeanDag.Properties.Band
 import LeanDag.Properties.Derived.FromBand
 import Mathlib.Order.Interval.Finset.Nat
 import Mathlib.Data.Finset.Lattice.Fold
@@ -708,12 +708,6 @@ protocol but the missing half of its skip rule. -/
 theorem persist : Persist
     (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
   Persist.of_banded banded
-
-/-- **And it is local**, from the same band: a verdict at a slot whose
-round is at or above `r` reads nothing below `r`. -/
-theorem local_ : Local
-    (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
-  Local.of_banded banded
 
 /-- **L2 re-derived, with no induction of its own.** View monotonicity
 (`decided_mono`, four cases in `Liveness.lean`) is the band read at a

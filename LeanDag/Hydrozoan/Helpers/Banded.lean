@@ -1,6 +1,6 @@
 import LeanDag.Hydrozoan.Helpers.Carrier
 import LeanDag.Hydrozoan.Helpers.SlotAgreement
-import LeanDag.Properties.Witness
+import LeanDag.Properties.Band
 import Mathlib.Order.Interval.Finset.Nat
 import Mathlib.Data.Finset.Lattice.Fold
 

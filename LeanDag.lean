@@ -93,7 +93,7 @@ import LeanDag.Properties.Optional.Skip
 import LeanDag.Properties.Agree
 import LeanDag.Properties.Bounded
 import LeanDag.Properties.Commit
-import LeanDag.Properties.Witness
+import LeanDag.Properties.Band
 import LeanDag.Properties.Derived.Bounded
 import LeanDag.Properties.Derived.FromBand
 import LeanDag.Properties.Derived.Progress
