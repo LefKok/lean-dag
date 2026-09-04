@@ -602,10 +602,16 @@ constant timeout of at least `D₀ + Δ`.
 - **L5 — An absent leader is skipped.** If `leader k` has no
   round-`slotRound k` block, the slot is decided `none`.
 
-  Immediate, and it is what a C1 decision was drawn for: `Decided.directSkip` takes the
-  premise `∀ L, IsLeaderBlock U k L → DirectSkipIn U V L …`, which is
-  **vacuously true** when the leader published nothing. Choosing the `∀` form
-  over naming a candidate block is what makes this case disappear.
+  `Decided.directSkip` asks for a quorum of voting-round blocks referencing no
+  candidate of the slot. When the leader published nothing every voting-round
+  block qualifies, so the premise reduces to a quorum being *present* at that
+  round, which is the second hypothesis and the one a validator can check
+  against its own view.
+
+  An earlier form of the rule quantified over the candidates the universe
+  holds and was therefore satisfied by nothing at all here, so a view holding
+  no evidence decided the slot. That is not final: the leader block may arrive
+  later and be committed. See the report, §3.5.
 
 - **L6 — Commits recur.** Given a `FairScheduleOn T`, for every slot `k` there is
   a slot `k' ≥ k` such that **every** sufficiently grown synchronous DAG
@@ -745,7 +751,7 @@ the weak forms remain available untouched.
 | — | **`Ugrow`: a family satisfying `Live`, `DeliversQuorum` and `Synchronised` at every `N`** | low, and required **first** | ✓ `ugrow_live`, `ugrow_deliversQuorum`, `ugrow_synchronised` |
 | L1 | `Live U D N` + `DeliversQuorum D`, then induction on rounds | low | ✓ `no_stall` |
 | L4 | `PopulatedOn` ×3 + `SynchronisedOn`, then the two-layer argument | medium — the only real proof | ✓ `directCommit_of_leader_mem` |
-| L5 | vacuity of the `∀`-over-candidates premise | low | ✓ `decided_none_of_leader_absent` |
+| L5 | every voting-round block blocks a candidate-less slot, so the count is a quorum being present | low | ✓ `decided_none_of_leader_absent` |
 | L6 | `FairScheduleOn`, then L1 and L4 | low — but see the quantifier order | ✓ `commits_recur_on` |
 | L7a | `Delivery`, then `Synchronised` as a theorem | low — see S4 | ✓ `synchronised_of_delivery` |
 | — | **`ugrowTiming`: a `Timing` witness at every horizon** | low, and required **first** | ✓ `ugrowTiming` |

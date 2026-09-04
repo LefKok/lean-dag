@@ -819,8 +819,8 @@ record is `pipelining-and-multi-leader.md`).
 
 `IsLeaderBlock` characterises the *candidates* for a slot rather than selecting
 one. A Byzantine leader may have several; a correct leader has at most one, by
-non-equivocation. Quantifying over candidates is what allows the case of an
-absent leader to be discharged vacuously (§6.6).
+non-equivocation. The commit rule therefore quantifies over candidates; the
+skip rule does not, and §3.5 records why.
 
 ### 3.5 The decision relation
 
@@ -830,7 +830,7 @@ inductive Decided (U) (V : View …) : ℕ → Option BlockId → Prop
       IsLeaderBlock U k L → DirectCommitIn U V L (S.slotRound k) →
       Decided U V k (some L)
   | directSkip {k} :
-      (∀ L, IsLeaderBlock U k L → DirectSkipIn U V L (S.slotRound k)) →
+      DirectSkipSlotIn U V k →
       Decided U V k none
   | indirectCommit {k j A L} :
       k < j → Eligible Validator k j → Decided U V j (some A) →
@@ -845,6 +845,36 @@ inductive Decided (U) (V : View …) : ℕ → Option BlockId → Prop
 ```
 
 Here `some L` records a commitment and `none` a skip.
+
+**A skip is a count, not a quantifier, and it was not always so.** The rule
+above asks for `DirectSkipSlotIn`: a quorum of distinct validators whose
+voting-round block, in view, references no candidate of the slot. An earlier
+form asked instead that every candidate the universe holds be blamed by a
+quorum, which is the same condition wherever a candidate exists and no
+condition at all where none does. A slot whose leader had published nothing
+was then skipped by a validator holding no evidence whatever — and
+`decided_none_of_leader_absent` said so.
+
+That is unsound across universes, which is where a deployment lives. The
+premise is a statement about the whole DAG, and a validator cannot tell "the
+leader published nothing" from "the leader's block has not reached me"; if it
+skips and the block then arrives, another validator commits the slot, and the
+two verdicts sit in different universes where §5's uniqueness theorem does
+not compare them. The witness family makes it concrete: `ugrow_commits_recur`
+commits slots that the earlier rule let every view skip while the DAG was
+shorter (§25).
+
+Counting blockers repairs it without weakening anything else. Where a
+candidate exists the two forms agree, since a block referencing no candidate
+references not that one (`directSkipIn_of_directSkipSlotIn`), so M1 and M3 and
+the whole of §5 apply unchanged. Where none exists the count still asks for a
+quorum, which is exactly the reference implementation's `enough_leader_blame`,
+and which two of the protocols below — Hydrozoan (§18) and Mahi-Mahi (§21) —
+already modelled that way. The gain is that a skip cannot be overturned by a
+block that arrives afterwards: its blockers are blocks that exist, and a
+later candidate is referenced by none of them. Persistence (§24) becomes
+unconditional for the core as a result, and the crash-recovery arc's SS5
+sheds its counting hypothesis (§12.3).
 
 The relation is not a function. A decision procedure would recurse upward in
 slot index with no *a priori* bound, requiring fuel or partiality for no benefit,
@@ -1889,14 +1919,18 @@ interface: one commit argument, two suppliers.
 ```lean
 theorem decided_none_of_leader_absent {V : View …}
     (h : ∀ b ∈ U.ids, (U.block b).round = S.slotRound k →
-      (U.block b).creator ≠ S.leader k) :
+      (U.block b).creator ≠ S.leader k)
+    (hq : quorumCard Validator ≤
+      (creatorsOf U.block (blocksAt U (S.slotRound k + 1) ∩ V.ids)).card) :
     Decided U V k none
 ```
 
-If the leader of a slot published nothing, every view decides `none`. The premise
-of `Decided.directSkip` quantifies over candidates and is therefore satisfied
-vacuously; a formulation which selected a distinguished leader block would have
-had nothing to select.
+If the leader of a slot published nothing, every view that saw a quorum at the
+round above decides `none`: with no candidate, every voting-round block blocks
+the slot, so the skip rule's count reduces to a quorum being present. The
+second hypothesis is what a validator can actually check, the first being a
+statement about the whole DAG; §3.5 records why a skip may not rest on the
+first alone.
 
 **L6.**
 ```lean
@@ -3883,32 +3917,30 @@ old block never leaves the old identifiers (`reaches_fill_old`), so
 certification transports both ways for old anchors and fails outright
 for fresh candidates (`not_certifiedIn_fresh`).
 
-One obligation is genuinely new. `Decided.directSkip` quantifies over
-the universe's leader blocks, and the fill may create a candidate where
-there was none — a filled block landing on a leader slot of the
-recovering validator, the situation of SS3. The old verdict skipped
-that slot *vacuously*; the new derivation must skip it by counting, and
-the count is the single hypothesis of the theorem:
+The direct skip needs no obligation at all, and an earlier form of this
+theorem thought otherwise. When `Decided.directSkip` quantified over the
+universe's leader blocks, a fill creating a candidate where there was
+none — a filled block landing on a leader slot of the recovering
+validator, the situation of SS3 — turned a vacuous skip into one that
+had to be re-derived by counting, and the count was a hypothesis of the
+theorem. §3.5 records why that premise was wrong and what replaced it.
+A skip is now a quorum of blockers, blocks whose references name no
+candidate of the slot, and a fill cannot turn a blocker into a
+supporter: an old block's references are old, and a filled candidate is
+fresh. So the blocker sets agree across the fill
+(`slotBlamersIn_fill`) and the case transports like the others:
 
 **SS5.**
 ```lean
 theorem decided_fill {V : View Validator BlockId Payload U} {k : ℕ}
     {v : Option BlockId}
-    (hq : ∀ n, sk.r0 < n → n ≤ sk.r →
-      quorumCard Validator ≤
-        (creatorsOf U.block ((blocksAt U (n + 1)) ∩ V.ids)).card)
     (h : Decided U V k v) :
     Decided sk.skipFill (sk.liftView V) k v
 ```
 
-`hq` asks that the view hold a quorum of authors at the round above
-each gap round — SS3's count, relativised to the view. It is consumed at
-exactly one point of the induction, the fresh-candidate case of the
-direct skip, and it is not an artefact of the proof: a view too sparse
-to blame the filled candidate genuinely cannot re-derive the skip. The
-indirect cases transport along SS4, and the indirect *skip* against a
-fresh candidate is unconditional — no anchor certifies a block that
-nothing reaches.
+The indirect cases transport along SS4, and the indirect *skip* against
+a fresh candidate is unconditional too — no anchor certifies a block
+that nothing reaches.
 
 Composing with agreement in the extension (M6) yields the statement
 deployment relies on — no verdict moves across a recovery, whatever
@@ -3916,16 +3948,17 @@ view either side held:
 
 **SS6.**
 ```lean
-def QuorateOverGap (V : View Validator BlockId Payload U) : Prop :=
-  ∀ n, sk.r0 < n → n ≤ sk.r →
-    quorumCard Validator ≤
-      (creatorsOf U.block ((blocksAt U (n + 1)) ∩ V.ids)).card
 theorem decided_fill_agree {V : View Validator BlockId Payload U}
     {W : View Validator BlockId Payload sk.skipFill} {k : ℕ}
     {v w : Option BlockId}
-    (hq : sk.QuorateOverGap V)
     (hv : Decided U V k v) (hw : Decided sk.skipFill W k w) : v = w
 ```
+
+`QuorateOverGap` survives as a definition without being a hypothesis
+here: it is the condition under which a *pre-crash* view could have
+skipped a gap slot at all, which is a statement about what the
+recovering validator may be assumed to have decided, not about whether
+its verdicts survive.
 
 ### 12.4 The witness
 
@@ -4366,11 +4399,15 @@ expects, so nothing is restated on the way.
 a slot whose verdict two below was a skip is handed to a fixed
 replacement — and the witness exhibits the phenomena the theorems govern:
 the same DAG under a reassigned leader commits a *different block* for
-a slot, on both rules; a vacuous skip moves a later slot's leader off
-the base rotation; two total runs over distinct views are constructed
-and shown verdict- and schedule-identical by AL3; and the two-round
-indirect commit carries its canonicity clause through the bound on
-data.
+a slot, on both rules; a skip two slots below moves a later slot's
+leader off the base rotation; two runs over distinct views are
+constructed and shown verdict- and schedule-identical by AL3; and the
+two-round indirect commit carries its canonicity clause through the
+bound on data. The runs are **partial**, closed to the height the
+witness universe supports: `U7` is finite, a skip asks for a quorum of
+blockers at the voting round, and no slot past the frontier has one —
+so a total run needs the populated-everywhere hypothesis AL5 carries,
+and the reassignment is read off `pick` rather than off a run.
 
 One question from the design record remains open (AL9): whether the
 anchor bound is *necessary* — a model with two self-justifying runs
@@ -9661,14 +9698,14 @@ motivates the canonicity premise (`utwin6_both_pass` (O11)). The reactive
 schedule is witnessed at §11.4's `ugrowReactive`, and Safe Skip on `Ucrash`
 (SS7): the fill's reference sets and cardinality computed by `decide`, the
 gap populated, the filled candidate skipped, and `decided_fill` applied to
-the full view with its quorum hypothesis discharged by counting the three
-live authors. The jump message is witnessed on the same family (SS11):
+the full view. The jump message is witnessed on the same family (SS11):
 `ucrashJump` carries `ucrashMsg`'s four names and no line, its
 elaboration reproduces the hand-written line (`ucrashJump_line_eq`),
 and the two denotations agree (`ucrashJump_denote_eq`). Adaptive leaders are witnessed on `demotePolicy` (AL8): the
 same DAG under a reassigned leader commits a different block on both
-rules, a vacuous skip moves a later slot's leader off the base rotation,
-and two views' total runs are constructed and shown identical by AL3.
+rules, a skip two slots below moves a later slot's leader off the base
+rotation, and two views' partial runs are constructed and shown
+identical by AL3.
 The hybrid model is witnessed at both of §14.7's committees (H9), and
 the one-short committee's two attack universes carry the tightness
 refutation (H10). The crash arc is witnessed on `Unemo` (NN9), §15.5's
@@ -11275,6 +11312,32 @@ def DirectSkipIn (U : BlockUniverse Validator BlockId Payload)
 
 Direct skip, as judged from a single view.
 
+#### `slotBlamers`
+
+*def, `Mysticeti.lean`*
+
+```lean
+def slotBlamers (U : BlockUniverse Validator BlockId Payload) (k : ℕ) : Finset BlockId :=
+  (blocksAt U (S.slotRound k + 1)).filter
+    (fun q => ∀ j ∈ (U.block q).refs, ¬ IsLeaderBlock U k j)
+```
+
+The round-`(r+1)` blocks that reference **no candidate** of slot `k`.
+
+#### `DirectSkipSlotIn`
+
+*def, `Mysticeti.lean`*
+
+```lean
+def DirectSkipSlotIn (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (k : ℕ) : Prop :=
+  quorumCard Validator ≤ (creatorsOf U.block (slotBlamers U k ∩ V.ids)).card
+```
+
+**The slot is directly skipped, as judged from a view**: a quorum of distinct validators holds a voting-round block, in view, that references no candidate of the slot.
+
+Strictly stronger than the per-candidate `DirectSkipIn`, which it implies (`directSkipIn_of_directSkipSlotIn`) and which a slot with no candidate satisfies for nothing.
+
 #### `Decided`
 
 *inductive, `Mysticeti.lean`*
@@ -11286,10 +11349,11 @@ inductive Decided (U : BlockUniverse Validator BlockId Payload)
   | directCommit {k : ℕ} {L : BlockId} :
       IsLeaderBlock U k L → DirectCommitIn U V L (S.slotRound k) →
       Decided U V k (some L)
-  /-- The direct rule blames every candidate — including vacuously, when the
-  leader produced no block at all. -/
+  /-- The direct rule skips the slot: a quorum of voting-round blocks in
+  view references no candidate of it. Required whatever the slot holds,
+  an absent leader included, which is what makes a skip final. -/
   | directSkip {k : ℕ} :
-      (∀ L, IsLeaderBlock U k L → DirectSkipIn U V L (S.slotRound k)) →
+      DirectSkipSlotIn U V k →
       Decided U V k none
   /-- Anchored on the nearest eligible committed slot, a certificate is in
   reach. -/
@@ -11309,7 +11373,7 @@ inductive Decided (U : BlockUniverse Validator BlockId Payload)
 
 **The decision relation.** `Decided U V k v` — a validator holding the view `V` has settled slot `k`, committing the block `v = some L` or skipping it, `v = none`.
 
-Four rules, in two pairs. The *direct* pair reads the slot's own certificates: a candidate carrying `n−f` of them is committed, and a slot whose every candidate is blamed by `n−f` is skipped. The *indirect* pair applies when the direct evidence is inconclusive, and decides `k` by looking up to an **anchor** — the nearest eligible slot above `k` that is itself committed — and asking whether a certificate for a candidate of `k` is reachable from the anchor's block.
+Four rules, in two pairs. The *direct* pair reads the slot's own certificates: a candidate carrying `n−f` of them is committed, and a slot that `n−f` voting-round blocks decline to reference is skipped. The *indirect* pair applies when the direct evidence is inconclusive, and decides `k` by looking up to an **anchor** — the nearest eligible slot above `k` that is itself committed — and asking whether a certificate for a candidate of `k` is reachable from the anchor's block.
 
 "Nearest" is stated positively: every eligible slot strictly between `k` and the anchor is decided `none`. The negative reading — *no eligible slot between is committed* — would be a negative premise, which an inductive definition cannot carry; the positive form is equivalent, since the sweep decides every slot it passes, and it keeps every recursive occurrence strictly positive. The occurrence sits behind `Eligible`, which is a predicate on two naturals and does not mention `Decided`.
 
@@ -13166,7 +13230,9 @@ def QuorateOverGap (V : View Validator BlockId Payload U) : Prop :=
       (creatorsOf U.block ((blocksAt U (n + 1)) ∩ V.ids)).card
 ```
 
-**The view is quorate over the gap**: at every gap round it holds blocks from a quorum of distinct authors at the round above. This is the condition the agreement result below consumes --- the recovering validator may be counted on only where the pre-crash view could already have decided.
+**The view is quorate over the gap**: at every gap round it holds blocks from a quorum of distinct authors at the round above.
+
+No longer consumed by `decided_fill`, which needs no condition once a skip is a count of blockers. Kept because it is the condition under which a *pre-crash* view could have skipped a gap slot at all, and so the honest precondition for a recovering validator having decided anything there.
 
 #### `selfParent`
 
@@ -24193,9 +24259,9 @@ inductive DecidedWithin (U : BlockUniverse Validator BlockId Payload)
   | directCommit {k : ℕ} {L : BlockId} :
       k < B → IsLeaderBlock U k L → DirectCommitIn U V L (S.slotRound k) →
       DecidedWithin U V B k (some L)
-  /-- The direct rule blames every candidate. -/
+  /-- The direct rule skips the slot. -/
   | directSkip {k : ℕ} :
-      k < B → (∀ L, IsLeaderBlock U k L → DirectSkipIn U V L (S.slotRound k)) →
+      k < B → DirectSkipSlotIn U V k →
       DecidedWithin U V B k none
   /-- Anchored on the nearest eligible committed slot below the bound. -/
   | indirectCommit {k j : ℕ} {A L : BlockId} :
@@ -24468,7 +24534,9 @@ def Persist (R : DagRule Validator BlockId Payload)
 
 **Persistence, under a condition on the extension.** A verdict reached on `V` is reached again on any larger view of any extension the condition admits.
 
-`Ok` is where the grading lives, and it sees the **source view** as well as the two universes. The core's condition is on the view — a quorum of voting-round blocks *held*, to blame whatever candidate the extension adds — and a condition that could not see the view could not state it. A protocol whose skip counts evidence at the slot proves this at `fun _ _ _ _ => True`; one whose skip quantifies over candidates cannot, and states the condition its vacuous skips need.
+`Ok` is where the grading lives, and it sees the **source view** as well as the two universes, since a condition of this kind is about what a view *held* rather than about the universes alone.
+
+**No protocol here now needs one.** The core once did: its skip quantified over the candidates a universe holds, so a slot with none was skipped for nothing and a later candidate broke the derivation, and the grade named the quorum that would have blamed it. That premise was the defect, not the grade — a skip resting on the absence of a candidate is not final, which is the one thing a skip rule exists to be — and it has been replaced by a count of blockers. Both instances are now `Unconditional`. The parameter is kept for a rule that decides on the absence of a block, rather than on the contents of blocks that are present; such a rule would need it.
 
 #### `Unconditional`
 
@@ -26198,11 +26266,13 @@ The same at `T := Correct`.
 ```lean
 theorem decided_none_of_leader_absent {V : View Validator BlockId Payload U}
     (h : ∀ b ∈ U.ids, (U.block b).round = S.slotRound k →
-      (U.block b).creator ≠ S.leader k) :
+      (U.block b).creator ≠ S.leader k)
+    (hq : quorumCard Validator ≤
+      (creatorsOf U.block (blocksAt U (S.slotRound k + 1) ∩ V.ids)).card) :
     Decided U V k none
 ```
 
-**L5 — an absent leader is skipped.** If the slot-`k` leader has no block at its round, every view decides `none`.
+**L5 — an absent leader is skipped.** If the slot-`k` leader has no block at its round, every view holding a quorum at the voting round decides `none`.
 
 #### `le_slotRound_slotAt`
 
@@ -28569,16 +28639,13 @@ Reachability from an old block never leaves the old ids, in either universe, and
 ```lean
 theorem decided_fill {V : View Validator BlockId Payload U} {k : ℕ}
     {v : Option BlockId}
-    (hq : ∀ n, sk.r0 < n → n ≤ sk.r →
-      quorumCard Validator ≤
-        (creatorsOf U.block ((blocksAt U (n + 1)) ∩ V.ids)).card)
     (h : Decided U V k v) :
     Decided sk.skipFill (sk.liftView V) k v
 ```
 
 **Verdict invariance.** Every verdict a view reached in `U` re-derives, for the lifted view, in the extension.
 
-The hypothesis `hq` is consumed at exactly one point: a slot of the recovering validator inside the gap, previously skipped for want of any candidate, must now be skipped by counting blames against the filled candidate — and the count is the view's quorum at the round above.
+**No hypothesis is needed.** An earlier form of this theorem carried a quorum condition over the gap, consumed at one point: a slot of the recovering validator inside the gap, skipped for want of any candidate, had to be re-skipped by counting against the filled candidate. The count now sits in `Decided.directSkip` itself, where a skip is a quorum of blockers rather than a quantifier over the candidates that happen to exist, and the blockers of a slot are the same on both sides of the fill.
 
 #### `decided_fill_agree`
 
@@ -28588,7 +28655,6 @@ The hypothesis `hq` is consumed at exactly one point: a slot of the recovering v
 theorem decided_fill_agree {V : View Validator BlockId Payload U}
     {W : View Validator BlockId Payload sk.skipFill} {k : ℕ}
     {v w : Option BlockId}
-    (hq : sk.QuorateOverGap V)
     (hv : Decided U V k v) (hw : Decided sk.skipFill W k w) : v = w
 ```
 
@@ -29014,13 +29080,15 @@ theorem lifecycle {V : View Validator BlockId Payload U} {k : ℕ}
     (sk : SkipMsg U) (hne : HonestNoEquiv U) {T : Finset Validator}
     (hhalt : ∀ b ∈ U.ids, (U.block b).round = S.slotRound k →
       (U.block b).creator ≠ S.leader k)
+    (hq : quorumCard Validator ≤
+      (creatorsOf U.block (blocksAt U (S.slotRound k + 1) ∩ V.ids)).card)
     {m : ℕ} (hpop : PopulatedOn U T m) (hm1 : sk.r0 < m) (hm2 : m ≤ sk.r) :
     Decided U V k none
       ∧ PopulatedOn sk.skipFill (insert sk.v1 T) m
       ∧ HonestNoEquiv sk.skipFill
 ```
 
-**The lifecycle, in one statement.** A validator that halts has its slot skipped (L5, unchanged); after it rejoins by Safe Skip its gap rounds are populated with it back in the reliable set (SS2); and the resulting universe still carries honest non-equivocation (I3), so report §14's safety applies throughout.
+**The lifecycle, in one statement.** A validator that halts has its slot skipped (L5, on a view that saw the round above); after it rejoins by Safe Skip its gap rounds are populated with it back in the reliable set (SS2); and the resulting universe still carries honest non-equivocation (I3), so report §14's safety applies throughout.
 
 Three arcs — the base liveness rules, Safe Skip, and the hybrid fault model — meet here without any of them mentioning another. What connects them is that all three speak about the same universe and the same verdicts, which is what report §2's invariant vocabulary was collected to make possible.
 
@@ -35697,7 +35765,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 1022 lemmas used only within the file that proves
+The 1033 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -35780,12 +35848,15 @@ subsection per module, in the layer order of Appendices B and C.
 | `uniform_leader` | — |
 | `uniform_slotRound` | — |
 
-### `Mysticeti.lean` (12)
+### `Mysticeti.lean` (15)
 
 | Lemma | Role |
 |:---|:---|
 | `certifiedIn_of_directCommitIn` | The engine of M6. A direct commit made in *any* view is visible from *every* later slot's leader block. A … |
 | `certifiedIn_of_directCommitIn_at_anchor` | Visibility from an anchor. A slot committed directly is certified at any eligible anchor above it: the … |
+| `directSkipIn_of_directSkipSlotIn` | The slot-level skip implies the per-candidate one, so every theorem stated over `DirectSkipIn` — M1 and M3 … |
+| `directSkipSlotIn_mono` | A larger view only sees more blamers. |
+| `directSkipSlotIn_of_no_candidate` | A slot with no candidate is blamed by every voting-round block, so the skip reduces to a quorum being … |
 | `directSkip_of_directSkipIn` | — |
 | `eq_of_directCommitIn` | Cross-view M5: two validators cannot directly commit *different* blocks for one slot. Both candidates are … |
 | `eq_of_hasCertificate` | Two commits for one slot agree, however each was reached. Both routes yield a certificate, so this is M5′ … |
@@ -35804,7 +35875,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `PopulatedFrom.mono` | Population is antitone: a smaller set is easier to populate. |
 | `SynchronisedFrom.mono` | Coverage is antitone too: mutual coverage among a larger set implies it among any subset. |
 
-### `Liveness.lean` (20)
+### `Liveness.lean` (21)
 
 | Lemma | Role |
 |:---|:---|
@@ -35827,6 +35898,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `exists_mem_of_authorsAt_card_pos` | A round with any author at all has a block. The bridge that lets L0's induction step back down: a … |
 | `exists_slotRound_ge` | Some slot sits at or beyond any given round. |
 | `notMem_stuck_of_decided` | L9. Nothing in a stuck set is ever decided, on any view. |
+| `quorate_of_populatedOn` | A populated round, seen by a view that covers it, supplies the count the skip rule asks for. |
 | `stuck_empty_below_commit_of_spacing` | L8 and L9 are consistent, and their hypotheses are jointly exhaustive. |
 
 ### `Quantitative.lean` (3)
@@ -36049,7 +36121,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `supporters_chop` | — |
 | `votesIn_chop` | — |
 
-### `GC/ChopDecided.lean` (12)
+### `GC/ChopDecided.lean` (14)
 
 | Lemma | Role |
 |:---|:---|
@@ -36062,9 +36134,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `decided_of_decided_chop` | Forward: a decision reached on the truncation, from a truncated view, is the original decision. Structural … |
 | `directCommitIn_chop` | — |
 | `directSkipIn_chop` | — |
+| `directSkipSlotIn_chop` | The slot-level skip survives the cut. |
 | `eligible_chop` | — |
 | `horizon_le_slotRound` | Every slot from the base slot on clears the horizon. |
 | `isLeaderBlock_chop` | — |
+| `slotBlamersIn_chop` | The blamer set of a slot, in view, is the same on both sides of the cut: it is read at the voting round, … |
 
 ### `GC/Window.lean` (4)
 
@@ -36138,7 +36212,7 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `committed_of_correct_block_of_run` | No reliable validator's block is censored (RS5, execution first). In a reactive run past GST whose timeout … |
 
-### `SafeSkip/Invariance.lean` (11)
+### `SafeSkip/Invariance.lean` (12)
 
 | Lemma | Role |
 |:---|:---|
@@ -36151,6 +36225,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `isLeaderBlock_fill_cases` | A leader block of the extension is an old one, or a filled block on a slot of the recovering validator. |
 | `liftView_ids` | — |
 | `not_certifiedIn_fresh` | No old anchor certifies a fresh candidate: everything it reaches is old, and no old reference contains a … |
+| `slotBlamersIn_fill` | The blockers of a slot read identically across the fill. An old block's references are old, and a filled … |
 | `votesIn_fill` | Votes read identically on old certificates — for *every* candidate: an old block's references are … |
 | `votesIn_subset_ids` | — |
 
@@ -36409,7 +36484,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `votesIn_spec` | A vote counted by a decision-round certificate is a voting-round block of the universe. |
 | `votes_iff_mem_refs` | At the round below a block, a vote is a direct reference: the cone at that round is the reference set, and … |
 
-### `MahiMahi/Helpers/Decision.lean` (15)
+### `MahiMahi/Helpers/Decision.lean` (16)
 
 | Lemma | Role |
 |:---|:---|
@@ -36418,6 +36493,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `certifiedIn_of_directCommitIn_at_anchor` | A direct commit is seen from any eligible anchor. |
 | `certifiedIn_three_iff` | — |
 | `core_directSkipIn_of_directSkipIn` | A blame of the slot in view is a blame of each candidate in view. |
+| `core_directSkipSlotIn_of_directSkipIn` | A blame of the slot in view is the core's slot-level blame. The two rules agree on what a blame is — no … |
 | `decisionRound_eq` | — |
 | `directCommitIn_three_iff` | — |
 | `directCommit_of_directCommitIn` | — |
@@ -37536,7 +37612,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `soundOn_skipFill` | The fill preserves it, above the gap. The synchrony round must clear the filled round: inside the gap the … |
 | `soundOn_stack` | The stack preserves it, the offsets composing exactly as the two statements above suggest: the fill … |
 
-### `MysticetiProperties.lean` (38)
+### `MysticetiProperties.lean` (41)
 
 | Lemma | Role |
 |:---|:---|
@@ -37557,6 +37633,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `directCommit_of_sustains` | The reactive commit survives any sustaining mechanism. The hypotheses are exactly what … |
 | `directSkipIn_mono` | An old candidate blamed before is blamed still. |
 | `directSkipIn_novel` | A new candidate is blamed by every old block in view — and the grade supplies a quorum of them. This is … |
+| `directSkipSlotIn_congr` | The count that reads it is therefore the same count. |
 | `ext_block` | — |
 | `ext_mem` | — |
 | `isLeaderBlock_congr` | Only the leader clause of `IsLeaderBlock` consults the schedule's leaders, at the slot itself. |
@@ -37568,14 +37645,16 @@ subsection per module, in the layer order of Appendices B and C.
 | `mono` | The bound relaxes upward. |
 | `not_certifiedIn_novel` | A new candidate is certified by nothing an old anchor can see. |
 | `not_mem_refs_novel` | An old block votes for nothing the extension added. |
-| `persist` | The core persists, at grade `Quorate`. |
-| `persist_aux` | The core's verdicts survive an extension the grade admits. Four cases; the condition is consumed in … |
+| `persist` | The graded form, for consumers that carry a condition. |
+| `persist_aux` | The core's verdicts survive every extension. Four cases, none of them conditional. A commit is evidence a … |
+| `persist_unconditional` | The core persists unconditionally, as an evidence-backed rule must. The grade `Quorate` that stood here … |
 | `populatedOn_ofCore` | The carrier's production predicate and the core's are the same statement with the conjuncts in the other … |
 | `populatedOn_toCore` | — |
 | `quorumCard_pos` | Two quorums share a correct validator, so a quorum is not empty. |
 | `schedLocal` | The core reads the schedule only below the bound. |
 | `skipsUnsupported` | The core skips an unsupported slot from a correct quorum. |
-| `subset_blamers` | Every member of `T` blames every candidate of the slot. |
+| `slotBlamers_congr` | The slot-level skip reads the schedule only at its own slot, so two schedules naming the same round and … |
+| `subset_blamers` | Every member of `T` blames the slot: its voting-round block is in view and references no candidate, which … |
 | `votesIn_of_sustains` | The votes an old decision-round block counts are the votes it counted: its references are unchanged, and … |
 | `votesIn_old` | The votes an old certificate counts are the votes it counted. |
 

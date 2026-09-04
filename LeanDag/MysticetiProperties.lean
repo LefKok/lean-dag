@@ -302,21 +302,39 @@ theorem not_certifiedIn_novel (he : Extends mysticetiRule U U') {A L : BlockId} 
 
 /-! ### Persistence -/
 
-/-- **The core's verdicts survive an extension the grade admits.** Four
-cases; the condition is consumed in exactly one of them, for exactly the
-candidates the extension introduced. -/
+/-- **The core's verdicts survive every extension.** Four cases, none of
+them conditional. A commit is evidence a larger view still holds; a skip
+is a count of blockers that reference no candidate, and the blocks
+behind it neither move nor acquire references; the two indirect cases
+read an old anchor's causal history, which an extension cannot grow. -/
 theorem persist_aux [S : Slots Validator] (he : Extends mysticetiRule U U')
     {V : View Validator BlockId Payload U} {V' : View Validator BlockId Payload U'}
-    (hok : Quorate S U U' V) (hV : V.ids ⊆ V'.ids)
+    (hV : V.ids ⊆ V'.ids)
     {k : ℕ} {v : Option BlockId} (hd : Decided U V k v) : Decided U' V' k v := by
   induction hd with
   | @directCommit k L hL hc =>
       exact Decided.directCommit (isLeaderBlock_mono he hL) (directCommitIn_mono he hV hc)
   | @directSkip k hs =>
-      refine Decided.directSkip fun L hL => ?_
-      by_cases hLo : L ∈ U.ids
-      · exact directSkipIn_mono he hV (hs L (isLeaderBlock_old he hLo hL))
-      · exact directSkipIn_novel he hV hLo (hok k L hL hLo)
+      -- **The case the grade used to pay for.** A slot-level blamer
+      -- references no candidate, and an old block's references are old,
+      -- so a candidate the extension introduces is referenced by none of
+      -- them: the same blockers blame the same slot in `U'`.
+      have hblk : ∀ b, b ∈ U.ids → U'.block b = U.block b := fun b hb => he.block b hb
+      have hids : ∀ b, b ∈ U.ids → b ∈ U'.ids := fun b hb => he.subset b hb
+      refine Decided.directSkip (le_trans hs (Finset.card_le_card ?_))
+      intro a ha
+      rw [mem_creatorsOf] at ha ⊢
+      obtain ⟨q, hq, hqc⟩ := ha
+      rw [Finset.mem_inter, slotBlamers, Finset.mem_filter] at hq
+      obtain ⟨⟨hqb, hqn⟩, hqV⟩ := hq
+      rw [mem_blocksAt] at hqb
+      refine ⟨q, ?_, ?_⟩
+      · rw [Finset.mem_inter, slotBlamers, Finset.mem_filter]
+        refine ⟨⟨mem_blocksAt.mpr ⟨hids q hqb.1, ?_⟩, fun j hj hjL => ?_⟩, hV hqV⟩
+        · rw [hblk q hqb.1]; exact hqb.2
+        · rw [hblk q hqb.1] at hj
+          exact hqn j hj (isLeaderBlock_old he (U.complete q hqb.1 j hj) hjL)
+      · rw [hblk q hqb.1]; exact hqc
   | @indirectCommit k j A L hkj helig hanchor hmid hL hcert ihj ihmid =>
       have hA : A ∈ U.ids := (isLeaderBlock_of_decided hanchor).1
       exact Decided.indirectCommit hkj helig ihj (fun i h1 h2 he' => ihmid i h1 h2 he')
@@ -329,10 +347,18 @@ theorem persist_aux [S : Slots Validator] (he : Extends mysticetiRule U U')
       · exact hnocert L (isLeaderBlock_old he hLo hL) ((certifiedIn_old he hA).mp hc)
       · exact not_certifiedIn_novel he hA hLo hc
 
-/-- **The core persists, at grade `Quorate`.** -/
+/-- **The core persists unconditionally**, as an evidence-backed rule
+must. The grade `Quorate` that stood here before was not a property of
+the protocol but the missing half of its skip rule, since recovered
+into `Decided.directSkip`. -/
+theorem persist_unconditional : Persist.Unconditional
+    (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
+  fun S U U' he V V' _ hV k v hd => persist_aux (S := S) he hV hd
+
+/-- The graded form, for consumers that carry a condition. -/
 theorem persist : Persist (mysticetiRule (Validator := Validator) (BlockId := BlockId)
     (Payload := Payload)) (fun S U U' V => Quorate S U U' V) :=
-  fun S U U' he V V' hok hV k v hd => persist_aux (S := S) he hok hV hd
+  Persist.of_unconditional persist_unconditional
 
 end PersistProof
 
@@ -355,25 +381,26 @@ section Skip
 
 variable {U : BlockUniverse Validator BlockId Payload} [S : Slots Validator]
 
-/-- Every member of `T` blames every candidate of the slot. -/
+/-- Every member of `T` blames the slot: its voting-round block is in
+view and references no candidate, which is what `Unsupported` says. -/
 theorem subset_blamers {V : View Validator BlockId Payload U} {T : Finset Validator} {k : ℕ}
     (hpres : PresentAt mysticetiRule V T (S.slotRound k + 1))
-    (huns : Unsupported mysticetiRule S U V T k) {L : BlockId} (hL : IsLeaderBlock U k L) :
-    T ⊆ creatorsOf U.block
-      (((blocksAt U (S.slotRound k + 1)).filter fun q => L ∉ (U.block q).refs) ∩ V.ids) := by
+    (huns : Unsupported mysticetiRule S U V T k) :
+    T ⊆ creatorsOf U.block (slotBlamers U k ∩ V.ids) := by
   intro v hv
   obtain ⟨c, hcV, hcc, hcr⟩ := hpres v hv
   have hcU : c ∈ U.ids := V.subset_ids hcV
-  refine Finset.mem_image.mpr ⟨c, Finset.mem_inter.mpr ⟨Finset.mem_filter.mpr
-    ⟨mem_blocksAt.mpr ⟨hcU, hcr⟩, huns c hcV (by rw [hcc]; exact hv) hcr L hL⟩, hcV⟩, hcc⟩
+  refine Finset.mem_image.mpr ⟨c, ?_, hcc⟩
+  rw [Finset.mem_inter, slotBlamers, Finset.mem_filter]
+  exact ⟨⟨mem_blocksAt.mpr ⟨hcU, hcr⟩,
+    fun j hj hjL => huns c hcV (by rw [hcc]; exact hv) hcr j hjL hj⟩, hcV⟩
 
 /-- **The core skips an unsupported slot from a correct quorum.** -/
 theorem skipsUnsupported :
     SkipsUnsupported (mysticetiRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload)) (fun T => quorumCard Validator ≤ T.card) :=
   fun S U V T k hq hpres huns =>
-    Decided.directSkip fun L hL =>
-      le_trans hq (Finset.card_le_card (subset_blamers (S := S) hpres huns hL))
+    Decided.directSkip (le_trans hq (Finset.card_le_card (subset_blamers (S := S) hpres huns)))
 
 end Skip
 
@@ -407,9 +434,9 @@ inductive DecidedWithin (U : BlockUniverse Validator BlockId Payload)
   | directCommit {k : ℕ} {L : BlockId} :
       k < B → IsLeaderBlock U k L → DirectCommitIn U V L (S.slotRound k) →
       DecidedWithin U V B k (some L)
-  /-- The direct rule blames every candidate. -/
+  /-- The direct rule skips the slot. -/
   | directSkip {k : ℕ} :
-      k < B → (∀ L, IsLeaderBlock U k L → DirectSkipIn U V L (S.slotRound k)) →
+      k < B → DirectSkipSlotIn U V k →
       DecidedWithin U V B k none
   /-- Anchored on the nearest eligible committed slot below the bound. -/
   | indirectCommit {k j : ℕ} {A L : BlockId} :
@@ -479,6 +506,30 @@ theorem isLeaderBlock_congr {S₁ S₂ : Slots Validator} {k : ℕ} {L : BlockId
   exact ⟨h1, by rw [← hround]; exact h2, by rw [← hk]; exact h3⟩
 
 omit S in
+/-- **The slot-level skip reads the schedule only at its own slot**, so
+two schedules naming the same round and the same leader there agree on
+whether the slot is skipped. -/
+theorem slotBlamers_congr {S₁ S₂ : Slots Validator} {k : ℕ}
+    (hround : S₁.slotRound k = S₂.slotRound k) (hk : S₁.leader k = S₂.leader k) :
+    slotBlamers (S := S₁) U k = slotBlamers (S := S₂) U k := by
+  ext q
+  simp only [slotBlamers, Finset.mem_filter, mem_blocksAt, hround]
+  constructor
+  · rintro ⟨hqb, hqn⟩
+    exact ⟨hqb, fun j hj hjL => hqn j hj (isLeaderBlock_congr hround.symm hk.symm hjL)⟩
+  · rintro ⟨hqb, hqn⟩
+    exact ⟨hqb, fun j hj hjL => hqn j hj (isLeaderBlock_congr hround hk hjL)⟩
+
+omit S in
+/-- The count that reads it is therefore the same count. -/
+theorem directSkipSlotIn_congr {S₁ S₂ : Slots Validator}
+    {V : View Validator BlockId Payload U} {k : ℕ}
+    (hround : S₁.slotRound k = S₂.slotRound k) (hk : S₁.leader k = S₂.leader k)
+    (h : DirectSkipSlotIn (S := S₁) U V k) : DirectSkipSlotIn (S := S₂) U V k := by
+  unfold DirectSkipSlotIn at h ⊢
+  rwa [slotBlamers_congr hround hk] at h
+
+omit S in
 /-- **Congruence below the bound**, for any two schedules with one round
 structure. Only `IsLeaderBlock` consults the leaders, and only at slots
 below `B`; eligibility, decision rounds and every counting predicate
@@ -499,8 +550,8 @@ theorem decidedWithin_congr_of_slotRound {S₁ S₂ : Slots Validator}
           (S₂ := ⟨sr, ld', hmono', hunb', hkeyed'⟩) rfl (ha k hk) hL) hdc
   | @directSkip k hk hall =>
       exact DecidedWithin.directSkip (S := ⟨sr, ld', hmono', hunb', hkeyed'⟩) hk
-        (fun L hL => hall L (isLeaderBlock_congr (S₁ := ⟨sr, ld', hmono', hunb', hkeyed'⟩)
-          (S₂ := ⟨sr, ld, hmono, hunb, hkeyed⟩) rfl (ha k hk).symm hL))
+        (directSkipSlotIn_congr (S₁ := ⟨sr, ld, hmono, hunb, hkeyed⟩)
+          (S₂ := ⟨sr, ld', hmono', hunb', hkeyed'⟩) rfl (ha k hk) hall)
   | @indirectCommit k j A L hkj hj helig _ _ hL hcert ihj ihmid =>
       exact DecidedWithin.indirectCommit (S := ⟨sr, ld', hmono', hunb', hkeyed'⟩) hkj hj helig
         ihj (fun i h1 h2 h3 => ihmid i h1 h2 h3)

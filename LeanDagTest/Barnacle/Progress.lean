@@ -398,7 +398,7 @@ theorem hallSk : ∀ L : Fin 32, bnRule32.IsLeaderBlock sched1 Usk 2 L → L = 1
 example : bnRule32.IsLeaderBlock sched1 Usk 2 10 := by decide
 example : ¬ bnRule32.DirectCommitIn (bnLiveSk.full Usk) 10 2 := by decide
 example : bnRule32.Decided sched1 (bnLiveSk.full Usk) 2 none :=
-  Decided.directSkip (S := sched1) (fun L hL => by have := hallSk L hL; subst this; decide)
+  Decided.directSkip (S := sched1) (by decide)
 -- Slot 3 (block 15) commits.
 example : bnRule32.Decided sched1 (bnLiveSk.full Usk) 3 (some 15) :=
   Decided.directCommit (S := sched1) (by decide) (by decide)
@@ -411,7 +411,7 @@ theorem bnLiveSk_not_liveOn0 : ¬ bnLiveSk.LiveOn sched1 0 := by
   have hκ : κ = 2 := by omega
   subst hκ
   have hskip : bnRule32.Decided sched1 (bnLiveSk.full Usk) 2 none :=
-    Decided.directSkip (S := sched1) (fun L hL => by have := hallSk L hL; subst this; decide)
+    Decided.directSkip (S := sched1) (by decide)
   exact Option.some_ne_none L (laws32.agree sched1 _ _ 2 _ _ hL hskip)
 
 /-- The same transport on `Usk`, whose blocks also lie at rounds up to `8`. -/
@@ -433,8 +433,7 @@ theorem bnLiveSk_liveOn1 : bnLiveSk.LiveOn sched1 1 := by
     rcases this with rfl | rfl | rfl | rfl | rfl
     · exact ⟨some 5, transport_full_sk hcov <| Decided.directCommit
         (S := sched1) (by decide) (by decide)⟩
-    · exact ⟨none, transport_full_sk hcov <| Decided.directSkip (S := sched1)
-        (fun L hL => by have := hallSk L hL; subst this; decide)⟩
+    · exact ⟨none, transport_full_sk hcov <| Decided.directSkip (S := sched1) (by decide)⟩
     · exact ⟨some 15, transport_full_sk hcov <| Decided.directCommit
         (S := sched1) (by decide) (by decide)⟩
     · exact ⟨some 16, transport_full_sk hcov <| Decided.directCommit
@@ -488,8 +487,7 @@ def runSk :
     have : κ = 1 ∨ κ = 2 ∨ κ = 3 := by omega
     rcases this with rfl | rfl | rfl
     · exact Decided.directCommit (S := sched1) (by decide) (by decide)
-    · exact Decided.directSkip (S := sched1)
-        (fun L hL => by have := hallSk L hL; subst this; decide)
+    · exact Decided.directSkip (S := sched1) (by decide)
     · exact Decided.directCommit (S := sched1) (by decide) (by decide)
   anchor_commits := by
     intro k hk

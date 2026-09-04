@@ -454,6 +454,78 @@ theorem directSkip_of_directSkipIn {V : View Validator BlockId Payload U}
     {L : BlockId} {r : ℕ} (h : DirectSkipIn U V L r) : DirectSkip U L r :=
   le_trans h (Finset.card_le_card (Finset.image_subset_image Finset.inter_subset_left))
 
+/-! ### The slot-level skip
+
+A blame is the **absence of any candidate** from a voting-round block's
+references, as the reference implementation's `enough_leader_blame` has
+it, and not the absence of one named candidate.
+
+The distinction is invisible inside a fixed universe and decisive
+across universes. A premise quantified over the candidates a universe
+*holds* is discharged vacuously by a slot holding none, so a validator
+that has seen nothing could settle the slot; a later block then supplies
+a candidate, another validator commits it, and the two verdicts stand in
+different universes where no uniqueness theorem compares them. The
+count below is required whatever the slot holds, so the blockers are
+blocks that exist, and a candidate arriving afterwards is referenced by
+none of them. That is what makes a skip final, which is the whole
+purpose of a skip rule. -/
+
+/-- The round-`(r+1)` blocks that reference **no candidate** of slot `k`. -/
+def slotBlamers (U : BlockUniverse Validator BlockId Payload) (k : ℕ) : Finset BlockId :=
+  (blocksAt U (S.slotRound k + 1)).filter
+    (fun q => ∀ j ∈ (U.block q).refs, ¬ IsLeaderBlock U k j)
+
+/-- **The slot is directly skipped, as judged from a view**: a quorum of
+distinct validators holds a voting-round block, in view, that references
+no candidate of the slot.
+
+Strictly stronger than the per-candidate `DirectSkipIn`, which it
+implies (`directSkipIn_of_directSkipSlotIn`) and which a slot with no
+candidate satisfies for nothing. -/
+def DirectSkipSlotIn (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (k : ℕ) : Prop :=
+  quorumCard Validator ≤ (creatorsOf U.block (slotBlamers U k ∩ V.ids)).card
+
+instance decidableDirectSkipSlotIn (V : View Validator BlockId Payload U) (k : ℕ) :
+    Decidable (DirectSkipSlotIn U V k) :=
+  inferInstanceAs (Decidable (quorumCard Validator ≤
+    (creatorsOf U.block (slotBlamers U k ∩ V.ids)).card))
+
+/-- **The slot-level skip implies the per-candidate one**, so every
+theorem stated over `DirectSkipIn` — M1 and M3 in particular — applies
+to it unchanged. A block referencing no candidate references not `L`. -/
+theorem directSkipIn_of_directSkipSlotIn {V : View Validator BlockId Payload U} {k : ℕ}
+    (h : DirectSkipSlotIn U V k) {L : BlockId} (hL : IsLeaderBlock U k L) :
+    DirectSkipIn U V L (S.slotRound k) := by
+  refine le_trans h (Finset.card_le_card (Finset.image_subset_image ?_))
+  intro q hq
+  rw [Finset.mem_inter] at hq
+  rw [Finset.mem_inter, Finset.mem_filter]
+  obtain ⟨hq1, hq2⟩ := hq
+  rw [slotBlamers, Finset.mem_filter] at hq1
+  exact ⟨⟨hq1.1, fun hmem => hq1.2 L hmem hL⟩, hq2⟩
+
+/-- A larger view only sees more blamers. -/
+theorem directSkipSlotIn_mono {V V' : View Validator BlockId Payload U} {k : ℕ}
+    (hsub : V.ids ⊆ V'.ids) (h : DirectSkipSlotIn U V k) : DirectSkipSlotIn U V' k :=
+  le_trans h (Finset.card_le_card (Finset.image_subset_image
+    (Finset.inter_subset_inter Finset.Subset.rfl hsub)))
+
+/-- **A slot with no candidate is blamed by every voting-round block**, so
+the skip reduces to a quorum being present at that round. This is the
+form the liveness statements use. -/
+theorem directSkipSlotIn_of_no_candidate {V : View Validator BlockId Payload U} {k : ℕ}
+    (hnone : ∀ L, ¬ IsLeaderBlock U k L)
+    (hq : quorumCard Validator ≤
+      (creatorsOf U.block (blocksAt U (S.slotRound k + 1) ∩ V.ids)).card) :
+    DirectSkipSlotIn U V k := by
+  refine le_trans hq (Finset.card_le_card (Finset.image_subset_image ?_))
+  intro q hqm
+  rw [Finset.mem_inter] at hqm
+  rw [Finset.mem_inter, slotBlamers, Finset.mem_filter]
+  exact ⟨⟨hqm.1, fun j _ => hnone j⟩, hqm.2⟩
+
 /-! ### The decision relation
 
 `Decided U V k v` — a validator holding `V` has settled slot `k`, with `v`
@@ -488,7 +560,7 @@ skipping it, `v = none`.
 
 Four rules, in two pairs. The *direct* pair reads the slot's own
 certificates: a candidate carrying `n−f` of them is committed, and a slot
-whose every candidate is blamed by `n−f` is skipped. The *indirect* pair
+that `n−f` voting-round blocks decline to reference is skipped. The *indirect* pair
 applies when the direct evidence is inconclusive, and decides `k` by
 looking up to an **anchor** — the nearest eligible slot above `k` that is
 itself committed — and asking whether a certificate for a candidate of
@@ -511,10 +583,11 @@ inductive Decided (U : BlockUniverse Validator BlockId Payload)
   | directCommit {k : ℕ} {L : BlockId} :
       IsLeaderBlock U k L → DirectCommitIn U V L (S.slotRound k) →
       Decided U V k (some L)
-  /-- The direct rule blames every candidate — including vacuously, when the
-  leader produced no block at all. -/
+  /-- The direct rule skips the slot: a quorum of voting-round blocks in
+  view references no candidate of it. Required whatever the slot holds,
+  an absent leader included, which is what makes a skip final. -/
   | directSkip {k : ℕ} :
-      (∀ L, IsLeaderBlock U k L → DirectSkipIn U V L (S.slotRound k)) →
+      DirectSkipSlotIn U V k →
       Decided U V k none
   /-- Anchored on the nearest eligible committed slot, a certificate is in
   reach. -/
@@ -585,14 +658,14 @@ theorem not_certifiedIn_of_directSkipIn {V : View Validator BlockId Payload U}
   not_certifiedIn_of_directSkip (directSkip_of_directSkipIn h)
 
 /-- **Direct decisions agree across views.** If one validator directly
-commits a slot, no other validator can directly skip it — the `∀`-form here
-being exactly the premise of `Decided.directSkip`. -/
+commits a slot, no other validator can directly skip it — the argument
+here being exactly the premise of `Decided.directSkip`. -/
 theorem not_directSkip_of_directCommitIn {V₁ V₂ : View Validator BlockId Payload U}
     {k : ℕ} {L : BlockId} (hL : IsLeaderBlock U k L)
     (h₁ : DirectCommitIn U V₁ L (S.slotRound k))
-    (h₂ : ∀ L', IsLeaderBlock U k L' → DirectSkipIn U V₂ L' (S.slotRound k)) :
+    (h₂ : DirectSkipSlotIn U V₂ k) :
     False :=
-  not_directSkipIn_of_directCommitIn h₁ (h₂ L hL)
+  not_directSkipIn_of_directCommitIn h₁ (directSkipIn_of_directSkipSlotIn h₂ hL)
 
 /-! ## Stage C3 — agreement -/
 
@@ -729,7 +802,8 @@ theorem decided_unique {V₁ : View Validator BlockId Payload U} {k : ℕ} {v₁
     | directCommit hL₂ h₂ => exact absurd (not_directSkip_of_directCommitIn hL₂ h₂ hskip) not_false
     | directSkip _ => rfl
     | indirectCommit _ _ _ _ hL₂ hcert₂ =>
-      exact absurd hcert₂ (not_certifiedIn_of_directSkipIn (hskip _ hL₂))
+      exact absurd hcert₂ (not_certifiedIn_of_directSkipIn
+        (directSkipIn_of_directSkipSlotIn hskip hL₂))
     | indirectSkip _ _ _ _ _ => rfl
   | @indirectCommit k j A L hkj helig hj hmid hL hcert ihj ihmid =>
     intro V₂ v₂ h₂
@@ -739,7 +813,8 @@ theorem decided_unique {V₁ : View Validator BlockId Payload U} {k : ℕ} {v₁
         (certificates_nonempty_of_certifiedIn hcert)
         (certificates_nonempty_of_directCommit (directCommit_of_directCommitIn h₂)))
     | directSkip hskip₂ =>
-      exact absurd hcert (not_certifiedIn_of_directSkipIn (hskip₂ _ hL))
+      exact absurd hcert (not_certifiedIn_of_directSkipIn
+        (directSkipIn_of_directSkipSlotIn hskip₂ hL))
     | indirectCommit _ _ _ _ hL₂ hcert₂ =>
       exact congrArg some (eq_of_hasCertificate hL hL₂
         (certificates_nonempty_of_certifiedIn hcert)

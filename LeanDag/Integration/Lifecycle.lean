@@ -84,10 +84,11 @@ relating `AdaptivePolicy` to `HybridFaults`. There is none, and there
 cannot usefully be one: **the crash class is invisible to report §13.**
 
 A policy reads verdicts. A halted validator's slot is skipped by L5
-(`decided_none_of_leader_absent`), whose hypothesis is that no block at
+(`decided_none_of_leader_absent`), whose hypotheses are that no block at
 the round carries the leader as creator — which is what halting *is* in
-a structural model — and which says nothing about *why* the leader is
-absent. A crash-prone leader, a Byzantine leader that withholds, and a
+a structural model — and that the view holds a quorum at the round
+above, which is what lets the skip be *observed* rather than assumed.
+Neither says anything about *why* the leader is absent. A crash-prone leader, a Byzantine leader that withholds, and a
 correct leader that has not yet built are indistinguishable at that
 lemma, and a demoting policy demotes all three alike.
 
@@ -104,7 +105,7 @@ variable [H : HybridFaults Validator] [S : Slots Validator]
 variable {U : BlockUniverse Validator BlockId Payload}
 
 /-- **The lifecycle, in one statement.** A validator that halts has its
-slot skipped (L5, unchanged); after it rejoins by Safe Skip its gap
+slot skipped (L5, on a view that saw the round above); after it rejoins by Safe Skip its gap
 rounds are populated with it back in the reliable set (SS2); and the
 resulting universe still carries honest non-equivocation (I3), so report §14's
 safety applies throughout.
@@ -118,11 +119,13 @@ theorem lifecycle {V : View Validator BlockId Payload U} {k : ℕ}
     (sk : SkipMsg U) (hne : HonestNoEquiv U) {T : Finset Validator}
     (hhalt : ∀ b ∈ U.ids, (U.block b).round = S.slotRound k →
       (U.block b).creator ≠ S.leader k)
+    (hq : quorumCard Validator ≤
+      (creatorsOf U.block (blocksAt U (S.slotRound k + 1) ∩ V.ids)).card)
     {m : ℕ} (hpop : PopulatedOn U T m) (hm1 : sk.r0 < m) (hm2 : m ≤ sk.r) :
     Decided U V k none
       ∧ PopulatedOn sk.skipFill (insert sk.v1 T) m
       ∧ HonestNoEquiv sk.skipFill :=
-  ⟨decided_none_of_leader_absent hhalt,
+  ⟨decided_none_of_leader_absent hhalt hq,
    sk.skipFill_populatedOn hpop hm1 hm2,
    honestNoEquiv_skipFill sk hne⟩
 

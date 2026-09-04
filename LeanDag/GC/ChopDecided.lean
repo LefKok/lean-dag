@@ -200,6 +200,36 @@ theorem directSkipIn_chop {V : View Validator BlockId Payload U}
       exact hnot
   rw [hset]
 
+/-- The blamer set of a slot, in view, is the same on both sides of the
+cut: it is read at the voting round, which sits above the horizon
+whenever the slot does, and the candidates it quantifies over
+correspond. -/
+theorem slotBlamersIn_chop (hd : G ≤ S.slotRound d)
+    {V : View Validator BlockId Payload U} {k : ℕ} :
+    slotBlamers (S := S.chop G d hd) (chop U G) k ∩ (V.chop G).ids
+      = slotBlamers U (d + k) ∩ V.ids := by
+  have hGk := horizon_le_slotRound hd k
+  ext q
+  simp only [Finset.mem_inter, slotBlamers, Finset.mem_filter, mem_blocksAt,
+    mem_chop_ids, View.chop_ids, chop_block_eq, chopBlock_round, Slots.chop_slotRound]
+  constructor
+  · rintro ⟨⟨⟨⟨hq, hqG⟩, hqr⟩, hnot⟩, hv, -⟩
+    refine ⟨⟨⟨hq, by omega⟩, fun j hj hjL => ?_⟩, hv⟩
+    rw [chopBlock_refs_of_lt (by omega)] at hnot
+    exact hnot j hj ((isLeaderBlock_chop hd).mpr hjL)
+  · rintro ⟨⟨⟨hq, hqr⟩, hnot⟩, hv⟩
+    refine ⟨⟨⟨⟨hq, by omega⟩, by omega⟩, fun j hj hjL => ?_⟩, hv, by omega⟩
+    rw [chopBlock_refs_of_lt (by omega)] at hj
+    exact hnot j hj ((isLeaderBlock_chop hd).mp hjL)
+
+/-- **The slot-level skip survives the cut.** -/
+theorem directSkipSlotIn_chop (hd : G ≤ S.slotRound d)
+    {V : View Validator BlockId Payload U} {k : ℕ} :
+    DirectSkipSlotIn (S := S.chop G d hd) (chop U G) (V.chop G) k ↔
+      DirectSkipSlotIn U V (d + k) := by
+  unfold DirectSkipSlotIn
+  rw [chop_block_eq, creatorsOf_chopBlock, slotBlamersIn_chop hd]
+
 /-- The anchor of a decided slot at or past the base slot survives the cut. -/
 theorem anchor_mem_chop_ids (hd : G ≤ S.slotRound d) {j : ℕ} {A : BlockId}
     (h : IsLeaderBlock U (d + j) A) : A ∈ (chop U G).ids := by
@@ -223,10 +253,7 @@ theorem decided_of_decided_chop (hd : G ≤ S.slotRound d)
     rwa [Nat.add_sub_cancel' hGk] at this
   | @directSkip k hskip =>
     have hGk := horizon_le_slotRound hd k
-    refine Decided.directSkip fun L hL => ?_
-    have := (directSkipIn_chop (V := V) (S.slotRound (d + k) - G)).mp
-      (hskip L ((isLeaderBlock_chop hd).mpr hL))
-    rwa [Nat.add_sub_cancel' hGk] at this
+    exact Decided.directSkip ((directSkipSlotIn_chop hd).mp hskip)
   | @indirectCommit k j A L hkj helig hanchor hmid hL hcert ihj ihmid =>
     have hGk := horizon_le_slotRound hd k
     have hA : A ∈ (chop U G).ids :=
@@ -271,11 +298,7 @@ theorem decided_chop_of_decided (hd : G ≤ S.slotRound d)
   | @directSkip n hskip =>
     rintro k rfl
     have hGk := horizon_le_slotRound hd k
-    refine Decided.directSkip (S := S.chop G d hd) fun L hL => ?_
-    show DirectSkipIn (chop U G) (V.chop G) L (S.slotRound (d + k) - G)
-    refine (directSkipIn_chop _).mpr ?_
-    have := hskip L ((isLeaderBlock_chop hd).mp hL)
-    rwa [Nat.add_sub_cancel' hGk]
+    exact Decided.directSkip (S := S.chop G d hd) ((directSkipSlotIn_chop hd).mpr hskip)
   | @indirectCommit n j A L hkj helig hanchor hmid hL hcert ihj ihmid =>
     rintro k rfl
     have hGk := horizon_le_slotRound hd k

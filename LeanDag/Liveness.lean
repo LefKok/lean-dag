@@ -315,7 +315,7 @@ theorem decided_mono {V V' : View Validator BlockId Payload U}
     Decided U V' k v := by
   induction h with
   | directCommit hL hdc => exact Decided.directCommit hL (directCommitIn_mono hsub hdc)
-  | directSkip hall => exact Decided.directSkip fun L hL => directSkipIn_mono hsub (hall L hL)
+  | directSkip hall => exact Decided.directSkip (directSkipSlotIn_mono hsub hall)
   | indirectCommit hkj helig _ _ hL hcert ihj ihmid =>
       exact Decided.indirectCommit hkj helig ihj ihmid hL hcert
   | indirectSkip hkj helig _ _ hnc ihj ihmid =>
@@ -618,26 +618,52 @@ theorem decided_of_correct_leader (hs : Synchronised U R)
 
 /-! ## L5 — an absent leader is skipped
 
-`liveness.md` §6. Immediate, and it is what a C1 decision was drawn for.
+`liveness.md` §6.
 
-`Decided.directSkip` takes the premise `∀ L, IsLeaderBlock U k L → …`. When
-the leader published nothing there is no such `L`, so the premise holds
-**vacuously** and the case disappears. Choosing the `∀`-over-candidates form
-over naming a single candidate block is what buys this: a formulation that
-selected "the" leader block would have had nothing to select. -/
+`Decided.directSkip` asks for a quorum of voting-round blocks referencing
+no candidate of the slot. When the leader published nothing every
+voting-round block qualifies, so the premise reduces to a quorum being
+*present* at that round — which is the hypothesis below, and which a
+validator can check against its own view.
+
+**The count cannot be dropped.** A premise quantified over the candidates
+the universe holds would be discharged vacuously here, and a validator
+holding nothing at all would settle the slot; a leader block arriving
+afterwards would then let another validator commit it, and the two
+verdicts would stand in different universes, where no uniqueness theorem
+compares them. What a validator can observe is that a quorum voted and
+none of them saw a candidate, and that is what the rule asks for. -/
+
+/-- A populated round, seen by a view that covers it, supplies the count
+the skip rule asks for. -/
+theorem quorate_of_populatedOn {V : View Validator BlockId Payload U}
+    {T : Finset Validator} {r : ℕ} (hcard : quorumCard Validator ≤ T.card)
+    (hpop : PopulatedOn U T r) (hcov : V.CoversUpto r) :
+    quorumCard Validator ≤ (creatorsOf U.block (blocksAt U r ∩ V.ids)).card := by
+  refine le_trans hcard (Finset.card_le_card ?_)
+  intro t ht
+  obtain ⟨b, hb, hbc, hbr⟩ := hpop t ht
+  refine mem_creatorsOf.mpr ⟨b, ?_, hbc⟩
+  exact Finset.mem_inter.mpr ⟨mem_blocksAt.mpr ⟨hb, hbr⟩, hcov b hb (le_of_eq hbr)⟩
 
 /-- L5, in the form the `Decided` constructor wants. -/
 theorem decided_none_of_no_candidate {V : View Validator BlockId Payload U}
-    (h : ∀ L, ¬ IsLeaderBlock U k L) : Decided U V k none :=
-  Decided.directSkip fun L hL => absurd hL (h L)
+    (h : ∀ L, ¬ IsLeaderBlock U k L)
+    (hq : quorumCard Validator ≤
+      (creatorsOf U.block (blocksAt U (S.slotRound k + 1) ∩ V.ids)).card) :
+    Decided U V k none :=
+  Decided.directSkip (directSkipSlotIn_of_no_candidate h hq)
 
 /-- **L5 — an absent leader is skipped.** If the slot-`k` leader has no block
-at its round, every view decides `none`. -/
+at its round, every view holding a quorum at the voting round decides
+`none`. -/
 theorem decided_none_of_leader_absent {V : View Validator BlockId Payload U}
     (h : ∀ b ∈ U.ids, (U.block b).round = S.slotRound k →
-      (U.block b).creator ≠ S.leader k) :
+      (U.block b).creator ≠ S.leader k)
+    (hq : quorumCard Validator ≤
+      (creatorsOf U.block (blocksAt U (S.slotRound k + 1) ∩ V.ids)).card) :
     Decided U V k none :=
-  decided_none_of_no_candidate fun _ hL => h _ hL.1 hL.2.1 hL.2.2
+  decided_none_of_no_candidate (fun _ hL => h _ hL.1 hL.2.1 hL.2.2) hq
 
 /-- **A slot every sufficiently grown synchronous execution commits.**
 
@@ -1017,7 +1043,7 @@ theorem notMem_stuck_of_decided {V : View Validator BlockId Payload U} {X : Set 
   | @directSkip k hall =>
     intro hk
     obtain ⟨L, hL, hns⟩ := hskip k hk
-    exact hns (hall L hL)
+    exact hns (directSkipIn_of_directSkipSlotIn hall hL)
   | @indirectCommit k j A L _ _ _ _ hL hcertIn _ _ =>
     intro hk
     obtain ⟨C, hC⟩ := certificates_nonempty_of_certifiedIn hcertIn

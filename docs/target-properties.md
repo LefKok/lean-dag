@@ -146,34 +146,57 @@ the slot* rather than quantifying over candidates. The principle:
 > justified by the absence of evidence does not.
 
 Evidence does not evaporate when blocks are added; absence does. That
-predicts which protocols get the unconditional form — Hydrozoan,
-Optimal and Mahi-Mahi, whose skips are slot-level counts — and which
-need the condition — Mysticeti, Odontoceti, Hybrid and Adaptive, whose
+predicts which protocols get the unconditional form — those whose
+skips are slot-level counts — and which need a condition — those whose
 skips quantify over candidates. Nemo has no direct skip and nothing to
-break.
+break. **The prediction held, and then changed what it was about:** the
+core was in the second group for a defect in its rule rather than for
+anything true of the protocol. Odontoceti and
+Hybrid are still in that group and have no instance.
 
-**Two of those predictions are now theorems.** Hydrozoan proves
-`Persist.Unconditional` (HZ9). The core proves `Persist` at grade
-`Quorate` (`MysticetiProperties.persist`): at every slot the extension
-gives a new candidate, the view already holds a quorum at the voting
-round — and every one of those blocks blames the newcomer, since an old
-block references only old blocks. The condition is consumed in exactly
-one of the four cases, `directSkip`, for exactly the candidates the
-extension introduced. `SafeSkip.QuorateOverGap` implies it for the fill
-(`Arcs/SafeSkip.quorate_of_quorateOverGap`), and `SafeSkip.decided_fill`
-— a four-constructor induction — is re-derived from `persist` with none
-of its own (`decided_fill_of_persist`). The other five predictions
-remain read off the survey.
+**Both instances are now theorems, and both are unconditional.**
+Hydrozoan proves `Persist.Unconditional` (HZ9). The core proves it too
+(`MysticetiProperties.persist_unconditional`) — but only after the
+property found something wrong with the protocol's model, and that
+episode is the substance of this section.
 
-**And the second instance found a defect in the property.** `Persist`'s
+**The grade was a defect in the rule, not a property of the protocol.**
+The core first proved `Persist` at a grade `Quorate`: at every slot the
+extension gives a new candidate, the view must already hold a quorum at
+the voting round. That was honest about the rule as written, and the
+rule as written was wrong. `Decided.directSkip` quantified over the
+candidates a universe holds, so a slot holding none was skipped by a
+validator holding *no evidence at all* — `decided_none_of_leader_absent`
+said exactly that — and the premise is not one a validator can check,
+since it cannot tell "the leader published nothing" from "the block has
+not reached me". A later block then supplies a candidate, another
+validator commits the slot, and the two verdicts sit in different
+universes where no uniqueness theorem compares them. The test suite
+already contained the refutation: `ugrow_commits_recur` commits slots
+that `ugrow_skip` let every view skip while the DAG was shorter.
+
+The repair is in the protocol. A skip is now a **count of blockers** —
+voting-round blocks in view whose references name no candidate of the
+slot — as the reference implementation's `enough_leader_blame` has it,
+and as Hydrozoan, Optimal and Mahi-Mahi already had it. Where a
+candidate exists the two forms agree, so the safety development is
+untouched; where none exists the count still asks for a quorum. The
+grade then disappears: the same blockers blame the same slot after any
+extension, because an old block's references are old.
+
+Three consequences, none of them planned. `SafeSkip.decided_fill` (SS5)
+loses its counting hypothesis. `decided_none_of_leader_absent` (L5)
+gains the quorum, and becomes checkable. And the witness universes must
+tell the truth: `LeanDagTest/Adaptive.lean`'s total adaptive runs become
+**partial** runs, because a finite DAG cannot decide slots past its
+frontier and only the vacuous skip ever let it pretend otherwise.
+
+**The property also found a defect in itself, earlier.** `Persist`'s
 side condition was `Ok : Slots → Universe → Universe → Prop`, and the
-core's actual condition, `QuorateOverGap`, is a condition on the
-**view** — a quorum of voting-round blocks *held*. The grade was not
-unproved for the core; it was unstatable. `Ok` now takes the source view.
-Hydrozoan's `Unconditional` ignores it and was unaffected. This is the
-third error the arc has caught, after the vacuous `Shifted` and the
-unfeedable `Sustains`, and the first caught by inspection rather than by
-a failed check — which is what a second instance is for.
+core's condition was one on the **view**. The grade was not unproved; it
+was unstatable. `Ok` now takes the source view. It survives the repair
+above with no instance using it, kept for a rule that decides on the
+absence of a block rather than on the contents of blocks present.
 
 ### 3.3 Inertness, and what `Novel` is
 
@@ -356,19 +379,28 @@ candidate, the voting-round blocks that do *not* reference it; if every
 `T`-block references none of the slot's candidates, every one is a
 blamer for every candidate at once.
 
-**Set beside `Persist`, the grading inverts, from one root cause:**
+**Set beside `Persist`, the grading looked like an inversion, and the
+inversion was the symptom of a bug.** As first proved:
 
 | | safety (`Persist`) | liveness (`SkipsUnsupported`) |
 |---|---|---|
 | core — per-candidate skip | conditional, `Quorate` | **correct quorum suffices** |
 | Hydrozoan — slot-level `qFast` count | **unconditional** | `qFast ≤ |T|`; a correct quorum does not |
 
-A rule that skips per candidate has fragile *vacuous* skips — a new
-candidate needs a quorum already in view to blame it — but any
-*specific* unsupported candidate is trivially blamed. A rule that
-counts blames at the slot has skips that survive any extension, and a
-bar to skip at all that a correct quorum does not reach. One mechanism,
-opposite grades on the two properties; four theorems of thirty lines.
+The reading offered was structural: a rule that skips per candidate has
+fragile *vacuous* skips but blames any specific candidate trivially,
+while a rule counting at the slot has durable skips and a higher bar to
+skip at all. Half of that survives. The core's per-candidate skip was
+not a design choice of Mysticeti but a mis-modelling of it (§3.2), and
+once corrected the safety column is unconditional on both rows. What
+remains is a threshold difference in the liveness column — `quorumCard`
+against `qFast` — which is arithmetic, not structure.
+
+**The general reading still holds** for a rule that genuinely skips per
+candidate, and Odontoceti and Hybrid still do: such a rule blames any
+specific unsupported candidate trivially, and pays for it with skips
+that a later candidate can undo. Neither has an instance, so the claim
+is read off the rules rather than proved.
 
 **The consumer.** `Arcs/SafeSkip.decided_none_fresh` reaches SS3's
 content from the properties: the fill is an extension, so its
@@ -749,10 +781,11 @@ directory, hence the one flat module.
   `qFast ≤ |T|` (§3.7), which is no induction at all. The protocol owes
   three inductions in total — persistence, locality, truncation — and no
   more, whatever mechanisms follow.
-- **G4** Discharge them for the core (**`Persist` done**, at grade
-  `Quorate`, with `SafeSkip.decided_fill` re-derived as the consumer
-  test). The second instance reshaped `Persist.Ok` before any proof was
-  attempted (§3.2). **`SkipsUnsupported` done** at grade
+- **G4** Discharge them for the core (**`Persist` done**, and
+  *unconditional* once the second instance turned up a defect in the
+  core's skip rule — §3.2 — with `SafeSkip.decided_fill` re-derived as
+  the consumer test and its counting hypothesis dropped). The instance
+  also reshaped `Persist.Ok` before any proof was attempted. **`SkipsUnsupported` done** at grade
   `quorumCard ≤ |T|`, with SS3 re-derived as its consumer (§3.7).
   `Local` and `LocalTruncate` for the core remain.
 - **G5** The schedule family (**built, for Mysticeti timed and
@@ -838,7 +871,7 @@ property (§5).
 | | Hydrozoan | core Mysticeti | reactive Mysticeti | Odontoceti, Nemo, Mahi-Mahi, Hybrid, Optimal-Hydrozoan, FinWhale |
 |---|---|---|---|---|
 | `Causal` | ✓ | ✓ | inherited | — |
-| `Persist` | ✓ unconditional | ✓ at `Quorate` | inherited | — |
+| `Persist` | ✓ unconditional | ✓ unconditional | inherited | — |
 | `Local`, `LocalTruncate` | ✓ | **missing** | — | — |
 | `SkipsUnsupported` | ✓ at `qFast ≤ |T|` | ✓ at a correct quorum | — | — |
 | `Agree`, `Bounded`, `SchedLocal` | **missing** | ✓ | inherited | — |

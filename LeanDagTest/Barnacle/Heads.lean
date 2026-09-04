@@ -214,7 +214,7 @@ theorem bnLiveSk_descent : bnLiveSk.Descent 1 where
 
 /-- Slot `2` of `Sched 1` is directly skipped on `Usk`. -/
 theorem usk_skip2 : bnRule32.Decided sched1 (bnLiveSk.full Usk) 2 none :=
-  Decided.directSkip (S := sched1) (fun L hL => by have := hallSk L hL; subst this; decide)
+  Decided.directSkip (S := sched1) (by decide)
 
 /-- **BN9b on data.** The heads of rounds `3, 4, 5` are `T`-led, so every
 slot at rounds `0` to `2` is decided and the head of `3` is committed;

@@ -244,18 +244,44 @@ theorem isLeaderBlock_fill_cases {k : ℕ} {L : BlockId}
     rw [sk.skipFill_block_fresh] at hround hcreator
     exact Or.inr ⟨k', hk1, hk2, rfl, hround, hcreator⟩
 
+/-- **The blockers of a slot read identically across the fill.** An old
+block's references are old, and a filled candidate is fresh, so a block
+that referenced no candidate before the fill references none after it.
+This is the clause that used to need counting: the fill cannot turn a
+blocker into a supporter, because it adds nothing an old block points
+at. -/
+theorem slotBlamersIn_fill (V : View Validator BlockId Payload U) {k : ℕ} :
+    slotBlamers sk.skipFill k ∩ (sk.liftView V).ids = slotBlamers U k ∩ V.ids := by
+  ext q
+  simp only [Finset.mem_inter, slotBlamers, Finset.mem_filter, mem_blocksAt, liftView_ids]
+  constructor
+  · rintro ⟨⟨hb, hn⟩, hV⟩
+    have hqo := V.subset_ids hV
+    rw [sk.skipFill_block_old hqo] at hb hn
+    exact ⟨⟨⟨hqo, hb.2⟩, fun j hj hjL => hn j hj (sk.isLeaderBlock_fill hjL)⟩, hV⟩
+  · rintro ⟨⟨hb, hn⟩, hV⟩
+    have hqo := V.subset_ids hV
+    refine ⟨⟨⟨sk.ids_subset_skipFill hb.1, ?_⟩, ?_⟩, hV⟩
+    · rw [sk.skipFill_block_old hqo]; exact hb.2
+    · rw [sk.skipFill_block_old hqo]
+      intro j hj hjL
+      rcases sk.isLeaderBlock_fill_cases hjL with hold | ⟨k', _, _, rfl, _, _⟩
+      · exact hn j hj hold
+      · exact sk.hfresh_new k' (U.complete q hqo _ hj)
+
 /-- **Verdict invariance.** Every verdict a view reached in `U`
 re-derives, for the lifted view, in the extension.
 
-The hypothesis `hq` is consumed at exactly one point: a slot of the
-recovering validator inside the gap, previously skipped for want of any
-candidate, must now be skipped by counting blames against the filled
-candidate — and the count is the view's quorum at the round above. -/
+**No hypothesis is needed.** An earlier form of this theorem carried a
+quorum condition over the gap, consumed at one point: a slot of the
+recovering validator inside the gap, skipped for want of any candidate,
+had to be re-skipped by counting against the filled candidate. The
+count now sits in `Decided.directSkip` itself, where a skip is a quorum
+of blockers rather than a quantifier over the candidates that happen to
+exist, and the blockers of a slot are the same on both sides of the
+fill. -/
 theorem decided_fill {V : View Validator BlockId Payload U} {k : ℕ}
     {v : Option BlockId}
-    (hq : ∀ n, sk.r0 < n → n ≤ sk.r →
-      quorumCard Validator ≤
-        (creatorsOf U.block ((blocksAt U (n + 1)) ∩ V.ids)).card)
     (h : Decided U V k v) :
     Decided sk.skipFill (sk.liftView V) k v := by
   induction h with
@@ -266,28 +292,9 @@ theorem decided_fill {V : View Validator BlockId Payload U} {k : ℕ}
       exact hdc
   | @directSkip k hall =>
       refine Decided.directSkip ?_
-      intro L hL
-      rcases sk.isLeaderBlock_fill_cases hL with hold | ⟨k', hk1, hk2, rfl, hkr, hlead⟩
-      · -- an old candidate: the old skip, sets unchanged
-        have := hall L hold
-        unfold DirectSkipIn at this ⊢
-        rw [sk.blameSetIn_fill V, sk.creatorsOf_fill (inter_view_subset_ids V _)]
-        exact this
-      · -- the filled candidate: skipped by counting, from the view quorum
-        unfold DirectSkipIn
-        rw [sk.blameSetIn_fill V, sk.creatorsOf_fill (inter_view_subset_ids V _)]
-        refine le_trans (hq k' hk1 hk2) (Finset.card_le_card ?_)
-        intro c hc
-        unfold creatorsOf at hc ⊢
-        obtain ⟨q, hqmem, hqc⟩ := Finset.mem_image.mp hc
-        obtain ⟨hqb, hqV⟩ := Finset.mem_inter.mp hqmem
-        refine Finset.mem_image.mpr ⟨q, ?_, hqc⟩
-        refine Finset.mem_inter.mpr ⟨Finset.mem_filter.mpr ⟨?_, ?_⟩, hqV⟩
-        · rw [← hkr]; exact hqb
-        · -- an old block cannot reference a fresh id
-          intro hmem
-          exact sk.hfresh_new k'
-            (U.complete _ (V.subset_ids hqV) _ hmem)
+      unfold DirectSkipSlotIn
+      rw [sk.slotBlamersIn_fill V, sk.creatorsOf_fill (inter_view_subset_ids V _)]
+      exact hall
   | @indirectCommit k j A L hkj helig hj hmid hL hcert ihj ihmid =>
       have hA : A ∈ U.ids := (isLeaderBlock_of_decided hj).1
       exact Decided.indirectCommit hkj helig ihj ihmid
@@ -302,9 +309,13 @@ theorem decided_fill {V : View Validator BlockId Payload U} {k : ℕ}
       · exact sk.not_certifiedIn_fresh hA
 
 /-- **The view is quorate over the gap**: at every gap round it holds blocks
-from a quorum of distinct authors at the round above. This is the condition
-the agreement result below consumes --- the recovering validator may be
-counted on only where the pre-crash view could already have decided. -/
+from a quorum of distinct authors at the round above.
+
+No longer consumed by `decided_fill`, which needs no condition once a
+skip is a count of blockers. Kept because it is the condition under
+which a *pre-crash* view could have skipped a gap slot at all, and so
+the honest precondition for a recovering validator having decided
+anything there. -/
 def QuorateOverGap (V : View Validator BlockId Payload U) : Prop :=
   ∀ n, sk.r0 < n → n ≤ sk.r →
     quorumCard Validator ≤
@@ -316,9 +327,8 @@ held — verdict invariance composed with agreement in the extension. -/
 theorem decided_fill_agree {V : View Validator BlockId Payload U}
     {W : View Validator BlockId Payload sk.skipFill} {k : ℕ}
     {v w : Option BlockId}
-    (hq : sk.QuorateOverGap V)
     (hv : Decided U V k v) (hw : Decided sk.skipFill W k w) : v = w :=
-  decided_agree (sk.decided_fill hq hv) hw
+  decided_agree (sk.decided_fill hv) hw
 
 end Slots
 

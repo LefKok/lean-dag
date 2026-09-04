@@ -295,15 +295,33 @@ example : ∃ L, IsLeaderBlock (Ugrow 8) 2 L ∧
 
 /-! ## L5, L6, L7 against the witness -/
 
-/-- **L5 applied.** Above the horizon the leader has no block at all, so the
-slot is skipped — and by *every* view, not just the full one. -/
-theorem ugrow_skip (N k : ℕ) (h : N < 3 * k) (V : View (Fin 4) ℕ Unit (Ugrow N)) :
-    Decided (Ugrow N) V k none := by
-  refine decided_none_of_leader_absent ?_
-  intro b hb hbr
-  simp only [ugrow_ids, Finset.mem_range] at hb
-  simp only [ugrow_block, rrBlock_round, fairSlots_slotRound] at hbr
-  exfalso; omega
+/-- **The unsupported skip, refuted on data.** Above the horizon the
+universe has no blocks at the voting round, so no view reaches the count
+`Decided.directSkip` asks for and the slot is not directly skipped.
+
+An earlier form of this theorem asserted the opposite — that *every*
+view decides the slot `none` there, the leader having published nothing
+— and `ugrow_commits_recur` below contradicts it: the same slot carries
+a commit once the DAG has grown past it. Two validators would then hold
+`none` and `some L` for one slot, in universes no uniqueness theorem
+compares. A skip resting on the absence of a candidate is not final,
+which is why the rule counts blockers instead. -/
+theorem ugrow_not_directSkip (N k : ℕ) (h : N < 3 * k)
+    (V : View (Fin 4) ℕ Unit (Ugrow N)) :
+    ¬ DirectSkipSlotIn (Ugrow N) V k := by
+  intro hskip
+  have hempty : slotBlamers (Ugrow N) k ∩ V.ids = ∅ := by
+    rw [Finset.eq_empty_iff_forall_notMem]
+    intro q hq
+    rw [Finset.mem_inter, slotBlamers, Finset.mem_filter, mem_blocksAt] at hq
+    obtain ⟨⟨⟨hqi, hqr⟩, -⟩, -⟩ := hq
+    simp only [ugrow_ids, Finset.mem_range] at hqi
+    simp only [ugrow_block, rrBlock_round, fairSlots_slotRound] at hqr
+    omega
+  rw [DirectSkipSlotIn, hempty] at hskip
+  simp only [creatorsOf, Finset.image_empty, Finset.card_empty] at hskip
+  have hc : 3 * Faults.f (Fin 4) + 1 ≤ Fintype.card (Fin 4) := Faults.card_validators
+  omega
 
 /-- The schedule is fair: its leader is correct at every slot. -/
 theorem ugrow_fair : FairSchedule (Validator := Fin 4) :=
@@ -327,7 +345,7 @@ theorem ugrow_commits_recur (k : ℕ) :
 #print axioms ugrow_not_populated_succ
 #print axioms ugrow_directCommit
 #print axioms ugrow_decided
-#print axioms ugrow_skip
+#print axioms ugrow_not_directSkip
 #print axioms ugrow_commits_recur
 /-- **Q2 applied.** A *quorum* of correct validators suffices — here
 `{1, 2, 3}`, which is all of `Correct` at `f = 1`, but the theorem no longer
@@ -434,7 +452,7 @@ def ugrowTimingPace (N : ℕ) : ViewPace (Ugrow N) {1, 2, 3} N where
 #print axioms ugrow_not_populated_succ
 #print axioms ugrow_directCommit
 #print axioms ugrow_decided
-#print axioms ugrow_skip
+#print axioms ugrow_not_directSkip
 #print axioms ugrow_commits_recur
 
 end LeanDagTest

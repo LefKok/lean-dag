@@ -201,6 +201,21 @@ theorem core_directSkipIn_of_directSkipIn {V : View Validator BlockId Payload U}
   obtain ⟨⟨hqb, hqblame⟩, hqV⟩ := hq
   exact ⟨⟨hqb, not_mem_refs_of_blames (mem_blocksAt.mp hqb).1 hqblame hLc hLr⟩, hqV⟩
 
+/-- **A blame of the slot in view is the core's slot-level blame.** The two
+rules agree on what a blame is — no candidate of the slot in the block's
+references — so the count transfers verbatim. -/
+theorem core_directSkipSlotIn_of_directSkipIn {V : View Validator BlockId Payload U} {k : ℕ}
+    (h : DirectSkipIn U V 3 (S.leader k) (S.slotRound k)) :
+    LeanDag.DirectSkipSlotIn U V k := by
+  refine le_trans h (Finset.card_le_card (Finset.image_subset_image ?_))
+  intro q hq
+  rw [votingRound_three] at hq
+  rw [Finset.mem_inter, Finset.mem_filter] at hq
+  rw [Finset.mem_inter, LeanDag.slotBlamers, Finset.mem_filter]
+  obtain ⟨⟨hqb, hqblame⟩, hqV⟩ := hq
+  refine ⟨⟨hqb, fun j hj hjL => ?_⟩, hqV⟩
+  exact not_mem_refs_of_blames (mem_blocksAt.mp hqb).1 hqblame hjL.2.2 hjL.2.1 hj
+
 /-- At wave three every derivation is a derivation of the core's relation. -/
 theorem core_decided_of_decided {V : View Validator BlockId Payload U} {k : ℕ}
     {v : Option BlockId} (h : Decided 3 U V k v) : LeanDag.Decided U V k v := by
@@ -208,8 +223,7 @@ theorem core_decided_of_decided {V : View Validator BlockId Payload U} {k : ℕ}
   | @directCommit k L hL h =>
     exact LeanDag.Decided.directCommit hL ((directCommitIn_three_iff hL.2.1).mp h)
   | @directSkip k hskip =>
-    exact LeanDag.Decided.directSkip
-      (fun L hL => core_directSkipIn_of_directSkipIn hskip hL.2.2 hL.2.1)
+    exact LeanDag.Decided.directSkip (core_directSkipSlotIn_of_directSkipIn hskip)
   | @indirectCommit k j A L hkj helig hj hmid hL hcert ihj ihmid =>
     exact LeanDag.Decided.indirectCommit hkj (eligible_three_iff.mp helig) ihj
       (fun i h1 h2 he => ihmid i h1 h2 (eligible_three_iff.mpr he)) hL
