@@ -37053,7 +37053,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 914 lemmas used only within the file that proves
+The 922 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -37571,12 +37571,14 @@ subsection per module, in the layer order of Appendices B and C.
 | `rejoin_populated` | — |
 | `stack_block_fresh_horizon` | The cut turns the boundary fill block into a genesis block. At a horizon inside the gap, `v1`'s filled … |
 
-### `Integration/Stack.lean` (2)
+### `Integration/Stack.lean` (4)
 
 | Lemma | Role |
 |:---|:---|
+| `directCommit_stack` | The reactive commit survives the whole stack. A validator that filled a crash gap and then pruned below a … |
 | `populated_stack` | I16c. Production survives the stack — SS2 then the truncation's own rebasing. The reliable set gains the … |
 | `schedule_stack` | I16e. A validator running the stack still has a fair, spanning schedule inside its truncation, for any … |
+| `sustains_stack` | The stack rebases. The fill settles above its gap at no offset, the cut settles at its horizon and shifts … |
 
 ### `Integration/Lifecycle.lean` (2)
 
@@ -38850,7 +38852,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `sustains_chop` | The cut sustains the core from its horizon. |
 | `truncates_chop` | The cut is a truncation. The witness `Truncates` was written to have, exhibited before anything is proved … |
 
-### `Properties/Arcs/SafeSkip.lean` (6)
+### `Properties/Arcs/SafeSkip.lean` (7)
 
 | Lemma | Role |
 |:---|:---|
@@ -38860,12 +38862,23 @@ subsection per module, in the layer order of Appendices B and C.
 | `decided_skipFill` | Verdicts survive the recovery, for any protocol that has proved persistence. The replica that recovered … |
 | `extends_of_skipFill` | The fill is an extension. It holds every block the original held — `ids` is a union — and denotes each of … |
 | `presentAt_liftView` | Presence in the pre-crash view is presence in the lifted one: the ids are the same and old blocks are … |
+| `sustains_skipFill` | A fill sustains from the top of its gap. Above `sk.r` the fill added nothing, so every block there is old … |
 
 ### `Properties/Carrier.lean` (1)
 
 | Lemma | Role |
 |:---|:---|
 | `Causal.refs_above` | What a block above the cut references is itself above the cut — a fact about causal structure alone, and … |
+
+### `Properties/Compose.lean` (5)
+
+| Lemma | Role |
+|:---|:---|
+| `Truncates.trans` | A stack of truncations is a truncation. Both halves compose, and the settling round of the composite is … |
+| `mono` | A mechanism that rebases from a round rebases from any later one, which is what lets two settling rounds … |
+| `refl` | Doing nothing rebases by nothing, from round zero. |
+| `trans` | Two rebases are one. The offsets add. The settling round is the later of the two in `U`'s frame: `R₂` is a … |
+| `trans` | And two schedule rebases are one. Offsets and base slots both add, which is what makes a stack of … |
 
 ### `Properties/Derived/Bounded.lean` (1)
 

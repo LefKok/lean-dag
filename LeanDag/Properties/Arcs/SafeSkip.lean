@@ -97,6 +97,46 @@ theorem decided_fill_of_persist [S : Slots Validator] (sk : SkipMsg U)
   decided_skipFill (R := MysticetiProperties.mysticetiRule) MysticetiProperties.persist sk
     (U := U) (U' := sk.skipFill) rfl rfl rfl rfl (fun _ hb => hb) h
 
+/-! ### What the fill sustains
+
+The witness §11.2's table recorded as missing. The cut had one
+(`Arcs/GC.lean`) and Hydrozoan's fill had one
+(`Integration/Hydrozoan/ViaProperties.lean`); the core's fill did not,
+so the two core mechanisms could not be composed through the properties
+even though each had a transport of its own. -/
+
+/-- **A fill sustains from the top of its gap.** Above `sk.r` the fill
+added nothing, so every block there is old and unchanged. Below it the
+claim would be false, and deliberately: the blocks a fill adds stand in
+for blocks that voted, and need not vote as they did. -/
+theorem sustains_skipFill (sk : SkipMsg U) :
+    Sustains (MysticetiProperties.mysticetiRule (Payload := Payload))
+      U sk.skipFill 0 (sk.r + 1) where
+  mem := fun b => by
+    show (b ∈ U.ids ∧ sk.r + 1 ≤ (U.block b).round) ↔
+      (b ∈ sk.skipFill.ids ∧ sk.r + 1 ≤ (sk.skipFill.block b).round + 0)
+    constructor
+    · rintro ⟨hb, hr⟩
+      exact ⟨sk.ids_subset_skipFill hb, by rw [sk.skipFill_block_old hb]; omega⟩
+    · rintro ⟨hb, hr⟩
+      have hbU : b ∈ U.ids := by
+        rcases Finset.mem_union.mp hb with ho | hf
+        · exact ho
+        · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
+          rw [sk.skipFill_block_fresh] at hr
+          simp only [SkipMsg.fillBlock] at hr
+          omega
+      exact ⟨hbU, by rw [sk.skipFill_block_old hbU] at hr; omega⟩
+  round := fun b hb _ => by
+    show (sk.skipFill.block b).round + 0 = (U.block b).round
+    rw [sk.skipFill_block_old hb]; omega
+  creator := fun b hb _ => by
+    show (sk.skipFill.block b).creator = (U.block b).creator
+    rw [sk.skipFill_block_old hb]
+  refs := fun b hb _ => by
+    show (sk.skipFill.block b).refs = (U.block b).refs
+    rw [sk.skipFill_block_old hb]
+
 /-! ### The filled slot is decided, and SS3 falls out
 
 `SafeSkip.directSkip_fresh` (SS3) says the fill cannot conjure a

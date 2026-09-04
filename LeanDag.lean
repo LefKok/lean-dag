@@ -98,6 +98,7 @@ import LeanDag.Properties.Derived.Bounded
 import LeanDag.Properties.Derived.FromBand
 import LeanDag.Properties.Derived.Progress
 import LeanDag.Properties.Derived.Truncate
+import LeanDag.Properties.Compose
 import LeanDag.MysticetiProperties
 import LeanDag.Properties.Arcs.SafeSkip
 import LeanDag.Properties.Arcs.GC

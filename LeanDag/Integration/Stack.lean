@@ -1,6 +1,9 @@
 import LeanDag.Integration.Coverage
 import LeanDag.Integration.ScheduleShape
 import LeanDag.Hybrid.Decision
+import LeanDag.Properties.Compose
+import LeanDag.Properties.Arcs.SafeSkip
+import LeanDag.Properties.Arcs.GC
 
 /-!
 # I16 — the composition capstone
@@ -93,6 +96,53 @@ theorem hybrid_agree_stack [LinearOrder BlockId] [S : Slots Validator]
   Hybrid.decided_agree (honestNoEquiv_stack sk hne) hk h₁ h₂
 
 end Stack
+
+/-! ## The same stack, through the properties
+
+I16a–c above are three transports, one per invariant, each a chain of
+two bespoke lemmas. What a mechanism owes is not an invariant but a
+**rebase** (`Properties/Compose.lean`), and rebases compose — so the
+stack has one obligation, discharged once, and every predicate computed
+from blocks travels with it.
+
+The witness for the fill was the gap `docs/target-properties.md` §11.2
+recorded: the cut had one and Hydrozoan's fill had one, so the core's
+two mechanisms could not be composed through the properties even though
+each transported verdicts on its own. With it, `sustains_stack` is
+`RebasedAbove.trans` applied, and `directCommit_stack` is a result this
+file did not have — the reactive commit crossing a fill *and* a cut. -/
+
+section Composed
+
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
+variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
+variable [H : HybridFaults Validator]
+variable {U : BlockUniverse Validator BlockId Payload} {G : ℕ}
+
+/-- **The stack rebases.** The fill settles above its gap at no offset,
+the cut settles at its horizon and shifts by it, and the composite
+settles at the later of the two and shifts by the cut alone. -/
+theorem sustains_stack (sk : SkipMsg U) :
+    Properties.Sustains (MysticetiProperties.mysticetiRule (Payload := Payload))
+      U (stack sk G) G (max (sk.r + 1) G) := by
+  have h := (Properties.Arcs.sustains_skipFill (Payload := Payload) sk).trans
+    (Properties.Arcs.sustains_chop (U := sk.skipFill) (G := G))
+  simpa using h
+
+/-- **The reactive commit survives the whole stack.** A validator that
+filled a crash gap and then pruned below a horizon still direct-commits
+what a quorum certified, at the stack's own numbering. No induction, and
+no lemma about either mechanism: the certificate travels because the
+blocks do. -/
+theorem directCommit_stack (sk : SkipMsg U) {T : Finset Validator} {r : ℕ} {L : BlockId}
+    (hr : sk.r < r) (hG : G ≤ r) (hcard : quorumCard Validator ≤ T.card)
+    (hpop : PopulatedOn U T (r + 2)) (hc : CertifiesAt U T r L) :
+    DirectCommit (stack sk G) L (r - G) :=
+  MysticetiProperties.directCommit_of_sustains (sustains_stack sk)
+    (by omega) hG hcard hpop hc
+
+end Composed
+
 
 /-! ## The schedule layer stacks for free
 

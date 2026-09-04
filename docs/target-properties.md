@@ -938,7 +938,7 @@ LeanDag/Properties/
   Arcs/GC.lean          garbage collection, given a band
   Arcs/SafeSkip.lean    crash recovery, given Persist
   Arcs/Quality.lean     chain quality, given fairness and self-reference  (planned)
-  Compose.lean          transport composes                               (planned)
+  Compose.lean          RebasedAbove/Rebases/Truncates compose
 
 LeanDag/Adaptive/{Basic,Policy,Run,Liveness}.lean   the mechanism, over BoundedRule
 LeanDag/Adaptive/Growth.lean             the fixpoint under Extends (§4.4)
@@ -1117,7 +1117,7 @@ quality has no property (§5).
 | `SkipsUnsupported` | ✓ at `qFast ≤ |T|` | ✓ at a correct quorum | — | — |
 | `Agree` | ✓ | ✓ | inherited | — |
 | `LeaderCommits`, `Descends` | ✓ | ✓ | ✓, a second `Live` | — |
-| `Sustains` witnesses | chop, fill | chop; **fill missing** | — | — |
+| `Sustains` witnesses | chop, fill | chop, fill | — | — |
 
 The consumer tests passed. Each is a former bespoke induction
 re-derived with none: `decided_fillHZ`, `decided_chopHZ`,
@@ -1145,17 +1145,39 @@ What part 2 does not yet deliver:
   the staged `Live` — are hypotheses the deployment meets, not things
   the properties discharge.
 
-### 11.3 Against part 3: composition is not covered
+### 11.3 Against part 3: the DAG axis composes
 
-One composition theorem exists: `run_agree_extends` (§4.4), the
-adaptive fixpoint under `Extends`, so adaptive leaders compose with
-anything that extends the DAG as far as agreement goes. Nothing else
-composes through the properties. `Compose.lean` is not built:
-`Extends` after `Extends`, `Truncates` after `Extends`, `Sustains`
-after `Sustains` with the settling rounds shifted, are each unstated,
-and `Integration/Hydrozoan/Stack.lean` (chop after fill) remains
-bespoke, as does adaptive leaders under garbage collection (I5). This
-is the part of the goal least served, and it is the first item below.
+**What a mechanism owes is a rebase, and rebases compose.**
+`Properties/Compose.lean` states it: `RebasedAbove.trans` adds the
+offsets and takes the later settling round **read in the source's
+frame**, so the second mechanism's round has the first's offset added
+before the comparison. `Rebases.trans` does the schedule axis, and
+`Truncates.trans` the two together, so a stack of cuts is a cut.
+
+The arithmetic is the whole content, and getting the frame wrong is the
+way to get it wrong: a composite that compared the two settling rounds
+in different frames would claim agreement over a band the second
+mechanism never promised.
+
+**The consumer test passed, and it needed a missing witness first.** The
+core's fill had no `Sustains`, which §11.2's table recorded — so the
+core's two mechanisms could not be composed through the properties even
+though each transported verdicts on its own.
+`Properties/Arcs/SafeSkip.sustains_skipFill` supplies it: above the gap
+the fill added nothing, so it settles at `sk.r + 1` at no offset. Then
+`Integration/Stack.sustains_stack` is `RebasedAbove.trans` applied, and
+`directCommit_stack` is a result that file did not have — the reactive
+commit crossing a fill *and* a cut, from one obligation rather than one
+transport per invariant. I16a–c remain as the hand-written comparison.
+
+`run_agree_extends` (§4.4) is the other composition: the adaptive
+fixpoint under `Extends`.
+
+**What is still bespoke.** The schedule axis composes as arithmetic but
+has no consumer yet, and adaptive leaders under garbage collection (I5)
+is still proved by hand. A view-level mechanism — rate limiting, the
+joiner — has no transport obligation at all, since `Sustains` is about
+universes; §11.5 records it.
 
 ### 11.4 Not covered at all
 
@@ -1373,9 +1395,9 @@ slots when it means a dependence bound — *the verdict is settled by slot
 
 ### 11.5 Next steps, in order
 
-1. **`Compose.lean`.** The three composition lemmas, then
-   `Stack.lean`'s theorem re-derived from them. Small, and the direct
-   test of part 3.
+1. **~~`Compose.lean`~~** (**done**, §11.3). The three composition
+   lemmas, the core's missing fill witness, and `Integration/Stack.lean`
+   given a theorem it did not have.
 2. **~~Audit the rules for absolute round reads~~** (**done**, §3.4c).
    Six of the eight rules can carry an offset band as they stand;
    Mahi-Mahi can under `2 ≤ w`, and FinWhale cannot until it has a
@@ -1383,7 +1405,23 @@ slots when it means a dependence bound — *the verdict is settled by slot
 3. **Collapse the Odontoceti mirrors** (`Adaptive/`, `Reactive/`) onto
    instances. `Live` and `Descends` now have two instances each and
    survived both, so the shape is no longer in doubt.
-4. **Re-genesis as an `Extends`**, the cheapest of the uncovered
-   mechanisms.
-6. **Chain quality** from fairness and self-reference (§5).
-7. **Barnacle**, starting from `Agree`.
+4. **A commit names the slot's candidate.**
+   `Decided S V k (some L) → R.IsCandidate S U k L`, which the
+   chain-quality arc consumes and no property states: both
+   `Quality.Coverage.card_coveredAt_ge_of_decided` and
+   `Quality.Inclusion.mem_history_of_decided_commit` take a commit and
+   then use `L`'s round and causal history. Two cases per protocol,
+   every commit constructor carrying `IsLeaderBlock` already.
+5. **Re-genesis as an `Extends`**, the cheapest of the uncovered
+   mechanisms: `addGenesis` is `insert g V.ids` with old blocks
+   unchanged, so `Persist` transports verdicts once the witness is
+   written.
+6. **A view-level `Sustains`.** `DoS/` builds no universe — its only
+   constructor is `View.ofAccepted` — so rate limiting and the joiner
+   are view-level mechanisms and `Sustains` does not describe them.
+   Their safety direction is already covered by `decided_mono_of_banded`;
+   their liveness direction has no obligation, since nothing says a rate
+   limiter eventually delivers enough for a slot to decide. The one item
+   here needing design rather than typing.
+7. **Chain quality** from fairness and self-reference (§5), on item 4.
+8. **Barnacle**, starting from `Agree`.
