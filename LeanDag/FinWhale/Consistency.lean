@@ -35,7 +35,7 @@ variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 variable {D : Dag Validator BlockId Payload}
-variable {ld : ℕ → Validator}
+variable {S : Sched Validator}
 
 omit [DecidableEq BlockId] in
 /-- **The anchor is fixed by the verdicts above the slot.** Two
@@ -167,23 +167,23 @@ theorem lemma12 {Elig : ℕ → ℕ → Prop}
 
 open scoped Classical in
 /-- And it satisfies the interface. -/
-theorem chooseSound_least [LinearOrder BlockId] : ChooseSound ld D (chooseLeast ld D) where
+theorem chooseSound_least [LinearOrder BlockId] : ChooseSound S D (chooseLeast S D) where
   sound := by
     intro A r b h
     simp only [chooseLeast] at h
     split at h
     · rename_i hne
-      have hb : (((slotBlocks ld D r).filter (fun b => IndirectCommit ld D A r b)).min' hne) = b :=
+      have hb : (((slotBlocks S D r).filter (fun b => IndirectCommit S D A r b)).min' hne) = b :=
         Option.some.inj h
-      have hmem := Finset.min'_mem ((slotBlocks ld D r).filter (fun b => IndirectCommit ld D A r b)) hne
+      have hmem := Finset.min'_mem ((slotBlocks S D r).filter (fun b => IndirectCommit S D A r b)) hne
       rw [hb] at hmem
       exact (Finset.mem_filter.1 hmem).2
     · exact absurd h (by simp)
   total := by
     intro A r ⟨b, hb⟩
-    have hne : ((slotBlocks ld D r).filter (fun b => IndirectCommit ld D A r b)).Nonempty :=
+    have hne : ((slotBlocks S D r).filter (fun b => IndirectCommit S D A r b)).Nonempty :=
       ⟨b, Finset.mem_filter.2 ⟨hb.1, hb⟩⟩
-    refine ⟨((slotBlocks ld D r).filter (fun b => IndirectCommit ld D A r b)).min' hne, ?_⟩
+    refine ⟨((slotBlocks S D r).filter (fun b => IndirectCommit S D A r b)).min' hne, ?_⟩
     simp only [chooseLeast, dif_pos hne]
 
 /-- **Lemma 12's side conditions, discharged on the DAG.** Each
@@ -193,14 +193,14 @@ reading every field is one of the theorems above: Lemma 8 for the two
 commit fields, Lemmas 6 and 7 for the skip fields, and Lemmas 3 and 5 for
 the two that say the anchor can always see a direct commit. -/
 theorem exclusions_of_dag {choose : BlockId → ℕ → Option BlockId}
-    (hch : ChooseSound ld D choose)
+    (hch : ChooseSound S D choose)
     {dc dc' : ℕ → BlockId → Prop} {ds ds' : ℕ → Prop}
-    (hdc : ∀ r l, dc r l → l ∈ slotBlocks ld D r ∧ DirectCommit D l)
-    (hdc' : ∀ r l, dc' r l → l ∈ slotBlocks ld D r ∧ DirectCommit D l)
-    (hds : ∀ r, ds r → DirectSkip ld D r) (hds' : ∀ r, ds' r → DirectSkip ld D r) :
-    Exclusions dc dc' ds ds' choose (fun r A => A ∈ D.ids ∧ r + 3 ≤ (D.block A).round) := by
+    (hdc : ∀ r l, dc r l → l ∈ slotBlocks S D r ∧ DirectCommit D l)
+    (hdc' : ∀ r l, dc' r l → l ∈ slotBlocks S D r ∧ DirectCommit D l)
+    (hds : ∀ r, ds r → DirectSkip S D r) (hds' : ∀ r, ds' r → DirectSkip S D r) :
+    Exclusions dc dc' ds ds' choose (fun r A => A ∈ D.ids ∧ S.round r + 3 ≤ (D.block A).round) := by
   -- a slot's blocks share the leader and the round, so two of them conflict
-  have hconf : ∀ (r : ℕ) (l b : BlockId), l ∈ slotBlocks ld D r → b ∈ slotBlocks ld D r → l ≠ b →
+  have hconf : ∀ (r : ℕ) (l b : BlockId), l ∈ slotBlocks S D r → b ∈ slotBlocks S D r → l ≠ b →
       Conflicting D l b ∧ l ∈ D.ids ∧ b ∈ D.ids := by
     intro r l b hl hb hne
     simp only [slotBlocks, blocksAt, Finset.mem_filter] at hl hb

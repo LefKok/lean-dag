@@ -43,11 +43,11 @@ variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 variable {D : Dag Validator BlockId Payload}
-variable {ld : ℕ → Validator}
+variable {S : Sched Validator}
 
 /-- **And they are the same condition**, for an anchor of the DAG. -/
 theorem indirectCommitOn_iff {A : BlockId} (hA : A ∈ D.ids) {r : ℕ} {b : BlockId} :
-    IndirectCommitOn ld D A r b ↔ IndirectCommit ld D A r b := by
+    IndirectCommitOn S D A r b ↔ IndirectCommit S D A r b := by
   have hiff : ∀ c, c ∈ historyFrom D.block A ↔ ReachesFrom D.block A c := fun c =>
     (causalStructure D).mem_history_iff hA
   constructor
@@ -83,10 +83,10 @@ beside `b`'s; and a quorum of FP-evidence blocks for `b'` is impossible
 under a fast commit for `b`, since no round-`(r+2)` block is FP-evidence
 for a conflicting block at all. -/
 theorem no_indirectCommit_of_fastCommit {A : BlockId} {r : ℕ} {b b' : BlockId}
-    (hb : b ∈ D.ids) (hb' : b' ∈ D.ids) (hbslot : b ∈ slotBlocks ld D r)
+    (hb : b ∈ D.ids) (hb' : b' ∈ D.ids) (hbslot : b ∈ slotBlocks S D r)
     (hconf : Conflicting D b b') (hfast : FastCommit D b) :
-    ¬ IndirectCommit ld D A r b' := by
-  have hbround : (D.block b).round = r := by
+    ¬ IndirectCommit S D A r b' := by
+  have hbround : (D.block b).round = S.round r := by
     simp only [slotBlocks, blocksAt, Finset.mem_filter] at hbslot; exact hbslot.1.2
   rintro ⟨-, hroute⟩
   rcases hroute with ⟨c, hc, -, hcert⟩ | ⟨ev, hev, hevb⟩
@@ -111,10 +111,10 @@ voters against the SP-skip half, and a quorum of FP-evidence blocks meets
 the quorum of Non-FP-evidence blocks in a correct author, whose single
 round-`(r+2)` block cannot be both. -/
 theorem no_indirectCommit_of_directSkip {A : BlockId} {r : ℕ} {b : BlockId}
-    (hskip : DirectSkip ld D r) : ¬ IndirectCommit ld D A r b := by
+    (hskip : DirectSkip S D r) : ¬ IndirectCommit S D A r b := by
   obtain ⟨hsp, nonev, hnon, hnonb⟩ := hskip
   rintro ⟨hbslot, hroute⟩
-  have hbround : (D.block b).round = r := by
+  have hbround : (D.block b).round = S.round r := by
     simp only [slotBlocks, blocksAt, Finset.mem_filter] at hbslot; exact hbslot.1.2
   rcases hroute with ⟨c, hc, -, hcert⟩ | ⟨ev, hev, hevb⟩
   · simp only [blocksAt, Finset.mem_filter] at hc
@@ -126,7 +126,7 @@ theorem no_indirectCommit_of_directSkip {A : BlockId} {r : ℕ} {b : BlockId}
       obtain ⟨c, hc, -, hcv, hfp⟩ := hevb v hv
       exact ⟨c, by rw [hbround]; exact hc, hcv, hfp⟩
     have hnonb' : ∀ v ∈ nonev, ∃ c ∈ blocksAt D ((D.block b).round + 2),
-        (D.block c).creator = v ∧ NonFPEvidence D c (slotBlocks ld D r) := by
+        (D.block c).creator = v ∧ NonFPEvidence D c (slotBlocks S D r) := by
       intro v hv
       obtain ⟨c, hc, hcv, hnonfp⟩ := hnonb v hv
       exact ⟨c, by rw [hbround]; exact hc, hcv, hnonfp⟩
@@ -138,9 +138,9 @@ trail that any block at round `r + 3` or above reaches — a quorum of
 FP-evidence blocks under the fast path, an SP-certificate under the slow
 one. So the anchor's rule always has a candidate to name. -/
 theorem indirectCommit_of_directCommit {A : BlockId} {r : ℕ} {l : BlockId}
-    (hA : A ∈ D.ids) (hAround : r + 3 ≤ (D.block A).round)
-    (hl : l ∈ slotBlocks ld D r) (hcom : DirectCommit D l) :
-    IndirectCommit ld D A r l := by
+    (hA : A ∈ D.ids) (hAround : S.round r + 3 ≤ (D.block A).round)
+    (hl : l ∈ slotBlocks S D r) (hcom : DirectCommit D l) :
+    IndirectCommit S D A r l := by
   have hl' := hl
   simp only [slotBlocks, blocksAt, Finset.mem_filter] at hl'
   obtain ⟨⟨hlids, hlround⟩, -⟩ := hl'
@@ -168,10 +168,10 @@ quorum of voters, which Lemma 8 forbids. A quorum of FP-evidence blocks
 for it meets the quorum of SP-certificates in a correct validator, whose
 single round-`(r+2)` block would have to be both. -/
 theorem no_indirectCommit_of_spCommit {A : BlockId} {r : ℕ} {b b' : BlockId}
-    (hb : b ∈ D.ids) (hb' : b' ∈ D.ids) (hbslot : b ∈ slotBlocks ld D r)
+    (hb : b ∈ D.ids) (hb' : b' ∈ D.ids) (hbslot : b ∈ slotBlocks S D r)
     (hconf : Conflicting D b b') (hsp : SPCommit D b) :
-    ¬ IndirectCommit ld D A r b' := by
-  have hbround : (D.block b).round = r := by
+    ¬ IndirectCommit S D A r b' := by
+  have hbround : (D.block b).round = S.round r := by
     simp only [slotBlocks, blocksAt, Finset.mem_filter] at hbslot; exact hbslot.1.2
   obtain ⟨certs, hcerts, hcertb⟩ := hsp
   rintro ⟨-, hroute⟩
@@ -197,9 +197,9 @@ theorem no_indirectCommit_of_spCommit {A : BlockId} {r : ℕ} {b b' : BlockId}
 /-- **A direct commit rules out an indirect commit of a conflicting
 block**, by either path. -/
 theorem no_indirectCommit_of_directCommit {A : BlockId} {r : ℕ} {b b' : BlockId}
-    (hb : b ∈ D.ids) (hb' : b' ∈ D.ids) (hbslot : b ∈ slotBlocks ld D r)
+    (hb : b ∈ D.ids) (hb' : b' ∈ D.ids) (hbslot : b ∈ slotBlocks S D r)
     (hconf : Conflicting D b b') (hcom : DirectCommit D b) :
-    ¬ IndirectCommit ld D A r b' := by
+    ¬ IndirectCommit S D A r b' := by
   rcases hcom with hfast | hsp
   · exact no_indirectCommit_of_fastCommit hb hb' hbslot hconf hfast
   · exact no_indirectCommit_of_spCommit hb hb' hbslot hconf hsp

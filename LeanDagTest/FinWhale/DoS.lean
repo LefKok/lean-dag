@@ -41,7 +41,7 @@ def DfwTwin : Dag (Fin 4) (Fin 9) Unit :=
   Dag.ofDoSValid Utwin twinLeader utwin_dosValid
 
 /-- The slot of round `0` has both versions, and they conflict. -/
-example : slotBlocks twinLeader DfwTwin 0 = {0, 4} ∧ Conflicting DfwTwin 0 4 := by decide
+example : slotBlocks ⟨id, twinLeader⟩ DfwTwin 0 = {0, 4} ∧ Conflicting DfwTwin 0 4 := by decide
 
 /-- Their author is Byzantine, which is what `correct_single` — inherited
 from the universe's non-equivocation — leaves room for. -/

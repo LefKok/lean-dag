@@ -36,18 +36,18 @@ variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type} [DecidableEq BlockId] [LinearOrder BlockId] {Payload : Type}
 
 variable {D : Dag Validator BlockId Payload} {choose : BlockId → ℕ → Option BlockId} {N : ℕ}
-variable {ld : ℕ → Validator}
+variable {S : Sched Validator}
 
 /-- Above the horizon nothing is decided. -/
 theorem passFrom_of_gt {s : ℕ} (h : N < s) :
-    passFrom ld D choose N s = fun _ => Verdict.undecided := by
+    passFrom S D choose N s = fun _ => Verdict.undecided := by
   rw [passFrom]
   simp [h]
 
 /-- At or above the slot the pass has reached, the pass is the pass from
 that slot. -/
 theorem passFrom_of_ge : ∀ k s r : ℕ, N + 1 - s ≤ k → s ≤ r →
-    passFrom ld D choose N s r = passFrom ld D choose N r r := by
+    passFrom S D choose N s r = passFrom S D choose N r r := by
   intro k
   induction k with
   | zero =>
@@ -96,15 +96,15 @@ theorem anchorVerdict_congr {above above' : ℕ → Verdict BlockId} {r : ℕ}
 not the verdicts. -/
 theorem slotVerdict_congr {above above' : ℕ → Verdict BlockId} {r : ℕ}
     (h : ∀ a, r + 2 < a → a ≤ N → above a = above' a) :
-    slotVerdict ld D choose N above r = slotVerdict ld D choose N above' r := by
+    slotVerdict S D choose N above r = slotVerdict S D choose N above' r := by
   unfold slotVerdict
   rw [anchorVerdict_congr h]
 
 /-- **The equation the pass satisfies.** At or below the horizon, a
 slot's verdict is `slotVerdict` applied to the pass itself. -/
 theorem decOf_eq {r : ℕ} (hr : r ≤ N) :
-    decOf ld D choose N r = slotVerdict ld D choose N (decOf ld D choose N) r := by
-  have hself : passFrom ld D choose N 0 r = passFrom ld D choose N r r :=
+    decOf S D choose N r = slotVerdict S D choose N (decOf S D choose N) r := by
+  have hself : passFrom S D choose N 0 r = passFrom S D choose N r r :=
     passFrom_of_ge (N + 1) 0 r (by omega) (by omega)
   rw [decOf, hself, passFrom, dif_neg (by omega), if_pos rfl]
   refine slotVerdict_congr fun a h1 h2 => ?_
@@ -112,7 +112,7 @@ theorem decOf_eq {r : ℕ} (hr : r ≤ N) :
     passFrom_of_ge (N + 1) 0 a (by omega) (by omega)]
 
 /-- Above the horizon the pass decides nothing. -/
-theorem decOf_of_gt {r : ℕ} (hr : N < r) : decOf ld D choose N r = Verdict.undecided := by
+theorem decOf_of_gt {r : ℕ} (hr : N < r) : decOf S D choose N r = Verdict.undecided := by
   rw [decOf, passFrom_of_ge (N + 1) 0 r (by omega) (by omega), passFrom_of_gt hr]
 
 /-! ## The pass is well formed -/
@@ -123,7 +123,7 @@ omit [LinearOrder BlockId] in
 /-- A slot with a direct skip lies two rounds below the horizon: the skip
 exhibits round-`(r+2)` blocks. -/
 theorem round_le_of_directSkip {N r : ℕ} (hN : ∀ b ∈ D.ids, (D.block b).round ≤ N)
-    (h : DirectSkip ld D r) : r + 2 ≤ N := by
+    (hid : ∀ k, S.round k = k) (h : DirectSkip S D r) : r + 2 ≤ N := by
   obtain ⟨-, nonev, hnon, hnonb⟩ := h
   have := params_arith (Validator := Validator)
   have hpos : 0 < nonev.card := by simp only [spQuorum] at hnon; omega
@@ -131,32 +131,33 @@ theorem round_le_of_directSkip {N r : ℕ} (hN : ∀ b ∈ D.ids, (D.block b).ro
   obtain ⟨b, hb, -, -⟩ := hnonb v hv
   simp only [blocksAt, Finset.mem_filter] at hb
   have := hN b hb.1
+  rw [hid] at hb
   omega
 
 /-- **The anchor the pass finds is the anchor.** Where the candidates are
 nonempty their least member is the first non-skipped slot above
 `r + 2`. -/
-theorem anchor_min' {r : ℕ} (hne : (anchorCands N (decOf ld D choose N) r).Nonempty) :
-    Anchor passElig (decOf ld D choose N) r ((anchorCands N (decOf ld D choose N) r).min' hne) := by
-  have hb : r + 2 < (anchorCands N (decOf ld D choose N) r).min' hne ∧
-      (anchorCands N (decOf ld D choose N) r).min' hne ≤ N ∧
-      decOf ld D choose N ((anchorCands N (decOf ld D choose N) r).min' hne) ≠ Verdict.skip := by
+theorem anchor_min' {r : ℕ} (hne : (anchorCands N (decOf S D choose N) r).Nonempty) :
+    Anchor passElig (decOf S D choose N) r ((anchorCands N (decOf S D choose N) r).min' hne) := by
+  have hb : r + 2 < (anchorCands N (decOf S D choose N) r).min' hne ∧
+      (anchorCands N (decOf S D choose N) r).min' hne ≤ N ∧
+      decOf S D choose N ((anchorCands N (decOf S D choose N) r).min' hne) ≠ Verdict.skip := by
     have hmem := Finset.min'_mem _ hne
     simp only [anchorCands, Finset.mem_filter, Finset.mem_Ioc] at hmem
     exact ⟨hmem.1.1, hmem.1.2, hmem.2⟩
   refine ⟨hb.1, hb.2.2, fun t ht1 ht2 => ?_⟩
   by_contra hskip
-  have hmemt : t ∈ anchorCands N (decOf ld D choose N) r := by
+  have hmemt : t ∈ anchorCands N (decOf S D choose N) r := by
     simp only [anchorCands, Finset.mem_filter, Finset.mem_Ioc]
     exact ⟨⟨ht1, by have := hb.2.1; omega⟩, hskip⟩
-  have hle : (anchorCands N (decOf ld D choose N) r).min' hne ≤ t := Finset.min'_le _ t hmemt
+  have hle : (anchorCands N (decOf S D choose N) r).min' hne ≤ t := Finset.min'_le _ t hmemt
   omega
 
 /-- And an anchor below the horizon is that least member. -/
-theorem eq_min'_of_anchor {r a : ℕ} (hanc : Anchor passElig (decOf ld D choose N) r a) (ha : a ≤ N) :
-    ∃ hne : (anchorCands N (decOf ld D choose N) r).Nonempty,
-      (anchorCands N (decOf ld D choose N) r).min' hne = a := by
-  have hmem : a ∈ anchorCands N (decOf ld D choose N) r := by
+theorem eq_min'_of_anchor {r a : ℕ} (hanc : Anchor passElig (decOf S D choose N) r a) (ha : a ≤ N) :
+    ∃ hne : (anchorCands N (decOf S D choose N) r).Nonempty,
+      (anchorCands N (decOf S D choose N) r).min' hne = a := by
+  have hmem : a ∈ anchorCands N (decOf S D choose N) r := by
     simp only [anchorCands, Finset.mem_filter, Finset.mem_Ioc]
     exact ⟨⟨hanc.1, ha⟩, hanc.2.1⟩
   refine ⟨⟨a, hmem⟩, ?_⟩
@@ -168,8 +169,8 @@ theorem eq_min'_of_anchor {r a : ℕ} (hanc : Anchor passElig (decOf ld D choose
 
 /-- An anchor above the horizon means no candidate at all: everything
 between is skipped, and nothing above the horizon is decided. -/
-theorem anchorCands_eq_empty {r a : ℕ} (hanc : Anchor passElig (decOf ld D choose N) r a) (ha : N < a) :
-    ¬ (anchorCands N (decOf ld D choose N) r).Nonempty := by
+theorem anchorCands_eq_empty {r a : ℕ} (hanc : Anchor passElig (decOf S D choose N) r a) (ha : N < a) :
+    ¬ (anchorCands N (decOf S D choose N) r).Nonempty := by
   rintro ⟨t, ht⟩
   simp only [anchorCands, Finset.mem_filter, Finset.mem_Ioc] at ht
   exact ht.2 (hanc.2.2 t ht.1.1 (by omega))
@@ -178,26 +179,26 @@ theorem anchorCands_eq_empty {r a : ℕ} (hanc : Anchor passElig (decOf ld D cho
 own, and `choose` is whatever deterministic rule the validator applies.
 `hN` is the horizon: no block of the view sits above it. -/
 theorem wellFormed_decOf {N : ℕ} (hN : ∀ b ∈ D.ids, (D.block b).round ≤ N)
-    (choose : BlockId → ℕ → Option BlockId) :
-    WellFormed passElig (fun r l => l ∈ slotBlocks ld D r ∧ DirectCommit D l)
-      (fun r => DirectSkip ld D r) choose (decOf ld D choose N) where
+    (hid : ∀ k, S.round k = k) (choose : BlockId → ℕ → Option BlockId) :
+    WellFormed passElig (fun r l => l ∈ slotBlocks S D r ∧ DirectCommit D l)
+      (fun r => DirectSkip S D r) choose (decOf S D choose N) where
   direct_commit r l := by
     rintro ⟨hslot, hcom⟩
     have hru : (D.block l).round = r ∧ l ∈ D.ids := by
-      simp only [slotBlocks, blocksAt, Finset.mem_filter] at hslot
+      simp only [slotBlocks, blocksAt, Finset.mem_filter, hid] at hslot
       exact ⟨hslot.1.2, hslot.1.1⟩
     have hr : r ≤ N := by have := hN l hru.2; omega
-    have hne : (directCommits ld D r).Nonempty := ⟨l, Finset.mem_filter.2 ⟨hslot, hcom⟩⟩
+    have hne : (directCommits S D r).Nonempty := ⟨l, Finset.mem_filter.2 ⟨hslot, hcom⟩⟩
     rw [decOf_eq hr, slotVerdict, dif_pos hne]
-    have hmem : (directCommits ld D r).min' hne ∈ slotBlocks ld D r ∧
-        DirectCommit D ((directCommits ld D r).min' hne) := by
+    have hmem : (directCommits S D r).min' hne ∈ slotBlocks S D r ∧
+        DirectCommit D ((directCommits S D r).min' hne) := by
       have h := Finset.min'_mem _ hne
       simp only [directCommits, Finset.mem_filter] at h
       exact h
     rw [direct_commit_unique hmem.1 hslot hmem.2 hcom]
   direct_skip r hskip := by
-    have hr : r ≤ N := by have := round_le_of_directSkip hN hskip; omega
-    have hne : ¬ (directCommits ld D r).Nonempty := by
+    have hr : r ≤ N := by have := round_le_of_directSkip hN hid hskip; omega
+    have hne : ¬ (directCommits S D r).Nonempty := by
       rintro ⟨l, hl⟩
       simp only [directCommits, Finset.mem_filter] at hl
       exact no_directSkip_of_commit hl.1 hl.2 hskip
@@ -205,7 +206,7 @@ theorem wellFormed_decOf {N : ℕ} (hN : ∀ b ∈ D.ids, (D.block b).round ≤ 
   indirect_undecided r a hdc hds hanc hau := by
     rcases Nat.lt_or_ge N r with hr | hr
     · exact decOf_of_gt hr
-    have hne : ¬ (directCommits ld D r).Nonempty := by
+    have hne : ¬ (directCommits S D r).Nonempty := by
       rintro ⟨l, hl⟩
       simp only [directCommits, Finset.mem_filter] at hl
       exact hdc ⟨l, hl.1, hl.2⟩
@@ -220,7 +221,7 @@ theorem wellFormed_decOf {N : ℕ} (hN : ∀ b ∈ D.ids, (D.block b).round ≤ 
       rw [decOf_of_gt (by omega : N < a)] at hcom
       cases hcom
     have hr : r ≤ N := by have : r + 2 < a := hanc.1; omega
-    have hne : ¬ (directCommits ld D r).Nonempty := by
+    have hne : ¬ (directCommits S D r).Nonempty := by
       rintro ⟨l, hl⟩
       simp only [directCommits, Finset.mem_filter] at hl
       exact hdc ⟨l, hl.1, hl.2⟩
@@ -231,13 +232,13 @@ theorem wellFormed_decOf {N : ℕ} (hN : ∀ b ∈ D.ids, (D.block b).round ≤ 
   has_anchor r hdc hds hdecided := by
     rcases Nat.lt_or_ge N r with hr | hr
     · exact absurd (decOf_of_gt hr) hdecided
-    have hne : ¬ (directCommits ld D r).Nonempty := by
+    have hne : ¬ (directCommits S D r).Nonempty := by
       rintro ⟨l, hl⟩
       simp only [directCommits, Finset.mem_filter] at hl
       exact hdc ⟨l, hl.1, hl.2⟩
-    by_cases hc : (anchorCands N (decOf ld D choose N) r).Nonempty
+    by_cases hc : (anchorCands N (decOf S D choose N) r).Nonempty
     · exact ⟨_, anchor_min' hc⟩
-    · have hund : decOf ld D choose N r = Verdict.undecided := by
+    · have hund : decOf S D choose N r = Verdict.undecided := by
         rw [decOf_eq hr, slotVerdict, dif_neg hne, if_neg hds, anchorVerdict, dif_neg hc]
       exact absurd hund hdecided
 
@@ -248,27 +249,27 @@ took a direct commit, which is one, or the tie-break named it, and
 `ChooseSound` says what it names is a candidate. -/
 theorem mem_slotBlocks_of_decOf {D' : Dag Validator BlockId Payload} {N : ℕ}
     {choose : BlockId → ℕ → Option BlockId}
-    (hsub : ∀ r, slotBlocks ld D' r ⊆ slotBlocks ld D r) (hch : ChooseSound ld D choose)
-    {r : ℕ} {A : BlockId} (h : decOf ld D' choose N r = Verdict.commit A) :
-    A ∈ slotBlocks ld D r := by
+    (hsub : ∀ r, slotBlocks S D' r ⊆ slotBlocks S D r) (hch : ChooseSound S D choose)
+    {r : ℕ} {A : BlockId} (h : decOf S D' choose N r = Verdict.commit A) :
+    A ∈ slotBlocks S D r := by
   rcases Nat.lt_or_ge N r with hr | hr
   · rw [decOf_of_gt hr] at h; cases h
   rw [decOf_eq hr, slotVerdict] at h
-  by_cases hne : (directCommits ld D' r).Nonempty
+  by_cases hne : (directCommits S D' r).Nonempty
   · rw [dif_pos hne] at h
-    have hmem : (directCommits ld D' r).min' hne ∈ slotBlocks ld D' r := by
+    have hmem : (directCommits S D' r).min' hne ∈ slotBlocks S D' r := by
       have hx := Finset.min'_mem _ hne
       simp only [directCommits, Finset.mem_filter] at hx
       exact hx.1
-    have : (directCommits ld D' r).min' hne = A := by injection h
+    have : (directCommits S D' r).min' hne = A := by injection h
     exact hsub r (this ▸ hmem)
   · rw [dif_neg hne] at h
-    by_cases hskip : DirectSkip ld D' r
+    by_cases hskip : DirectSkip S D' r
     · rw [if_pos hskip] at h; cases h
     rw [if_neg hskip, anchorVerdict] at h
-    by_cases hc : (anchorCands N (decOf ld D' choose N) r).Nonempty
+    by_cases hc : (anchorCands N (decOf S D' choose N) r).Nonempty
     · rw [dif_pos hc] at h
-      rcases hv : decOf ld D' choose N ((anchorCands N (decOf ld D' choose N) r).min' hc) with A' | - | -
+      rcases hv : decOf S D' choose N ((anchorCands N (decOf S D' choose N) r).min' hc) with A' | - | -
       · rcases hch2 : choose A' r with - | b
         · simp only [hv, hch2] at h
           cases h
@@ -292,21 +293,22 @@ decided. What is left is `hk` — how far each validator's sequence runs —
 which is a choice of horizon, and `all_decided` is what establishes
 it. -/
 theorem safety_of_pass {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsView D V')
-    {choose : BlockId → ℕ → Option BlockId} (hch : ChooseSound ld D choose) {N : ℕ}
+    {choose : BlockId → ℕ → Option BlockId} (hch : ChooseSound S D choose) {N : ℕ}
     (hNV : ∀ b ∈ V, (D.block b).round ≤ N) (hNV' : ∀ b ∈ V', (D.block b).round ≤ N)
     {k k' : ℕ}
-    (hk : ∀ s, s < k → decOf ld (restrict D V hV) choose N s ≠ Verdict.undecided)
-    (hk' : ∀ s, s < k' → decOf ld (restrict D V' hV') choose N s ≠ Verdict.undecided)
-    (hist : BlockId → List BlockId) :
-    linearise hist (commitSeq (decOf ld (restrict D V hV) choose N) k) <+:
-        linearise hist (commitSeq (decOf ld (restrict D V' hV') choose N) k') ∨
-      linearise hist (commitSeq (decOf ld (restrict D V' hV') choose N) k') <+:
-        linearise hist (commitSeq (decOf ld (restrict D V hV) choose N) k) :=
-  safety_of_views hV hV' (wellFormed_decOf hNV choose) (wellFormed_decOf hNV' choose) hch
+    (hk : ∀ s, s < k → decOf S (restrict D V hV) choose N s ≠ Verdict.undecided)
+    (hk' : ∀ s, s < k' → decOf S (restrict D V' hV') choose N s ≠ Verdict.undecided)
+    (hid : ∀ k, S.round k = k) (hist : BlockId → List BlockId) :
+    linearise hist (commitSeq (decOf S (restrict D V hV) choose N) k) <+:
+        linearise hist (commitSeq (decOf S (restrict D V' hV') choose N) k') ∨
+      linearise hist (commitSeq (decOf S (restrict D V' hV') choose N) k') <+:
+        linearise hist (commitSeq (decOf S (restrict D V hV) choose N) k) :=
+  safety_of_views hV hV' (wellFormed_decOf hNV hid choose)
+    (wellFormed_decOf hNV' hid choose) hch
     (fun _ _ h => mem_slotBlocks_of_decOf (fun _ => slotBlocks_restrict) hch h)
     (fun _ _ h => mem_slotBlocks_of_decOf (fun _ => slotBlocks_restrict) hch h)
     (fun s (hs : N + 1 ≤ s) => ⟨decOf_of_gt (by omega), decOf_of_gt (by omega)⟩)
-    hk hk' (fun _ _ => Iff.rfl) hist
+    hk hk' (fun _ _ => Iff.rfl) hid hist
 
 
 end FinWhale

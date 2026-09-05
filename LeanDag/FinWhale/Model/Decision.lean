@@ -30,9 +30,9 @@ variable {D : Dag Validator BlockId Payload}
 
 /-- The blocks of the leader slot of round `r`. There may be several, if
 the leader equivocates. -/
-def slotBlocks (ld : ℕ → Validator) (D : Dag Validator BlockId Payload) (r : ℕ) :
+def slotBlocks (S : Sched Validator) (D : Dag Validator BlockId Payload) (k : ℕ) :
     Finset BlockId :=
-  (blocksAt D r).filter (fun b => (D.block b).creator = ld r)
+  (blocksAt D (S.round k)).filter (fun b => (D.block b).creator = S.leader k)
 
 /-- **The slow-path direct commit**: a quorum of SP-certificates from
 distinct validators at round `r + 2`. -/
@@ -63,15 +63,15 @@ instance (D : Dag Validator BlockId Payload) (l : BlockId) :
 
 /-- **The direct skip rule**: an SP-skip pattern at every block of the
 slot, and a quorum of Non-FP-evidence blocks at round `r + 2`. -/
-def DirectSkip (ld : ℕ → Validator) (D : Dag Validator BlockId Payload) (r : ℕ) : Prop :=
-  (∀ l ∈ slotBlocks ld D r, SPSkip D l) ∧
+def DirectSkip (S : Sched Validator) (D : Dag Validator BlockId Payload) (k : ℕ) : Prop :=
+  (∀ l ∈ slotBlocks S D k, SPSkip D l) ∧
     ∃ nonev : Finset Validator, spQuorum Validator ≤ nonev.card ∧
-      ∀ v ∈ nonev, ∃ b ∈ blocksAt D (r + 2),
-        (D.block b).creator = v ∧ NonFPEvidence D b (slotBlocks ld D r)
+      ∀ v ∈ nonev, ∃ b ∈ blocksAt D (S.round k + 2),
+        (D.block b).creator = v ∧ NonFPEvidence D b (slotBlocks S D k)
 
 set_option synthInstance.maxSize 1000 in
-instance (ld : ℕ → Validator) (D : Dag Validator BlockId Payload) (r : ℕ) :
-    Decidable (DirectSkip ld D r) := by unfold DirectSkip; infer_instance
+instance (S : Sched Validator) (D : Dag Validator BlockId Payload) (k : ℕ) :
+    Decidable (DirectSkip S D k) := by unfold DirectSkip; infer_instance
 
 end FinWhale
 

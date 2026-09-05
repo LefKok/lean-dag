@@ -258,7 +258,7 @@ end Creation
 
 section Bridge
 
-variable {D : Dag Validator BlockId Payload} {ld : ℕ → Validator}
+variable {D : Dag Validator BlockId Payload} {S : Sched Validator}
 
 /-- The universe's reading of a certificate is the DAG's. -/
 theorem spCertificate_of_certifiesSP (hblk : D.block = U.block) {c L : BlockId}
@@ -269,13 +269,13 @@ theorem spCertificate_of_certifiesSP (hblk : D.block = U.block) {c L : BlockId}
 /-- **Lemma 20, from the creation rule.** A reliable leader's block is
 committed by the slow path: every reliable validator's round-`(r+2)`
 block certifies it, and they are `n − f ≥ 2f + p`. -/
-theorem Creation.lemma20 (cr : Creation U T N ld)
+theorem Creation.lemma20 (cr : Creation U T N S.leader)
     (hids : D.ids = U.ids) (hblk : D.block = U.block)
     (hcard : quorumCard Validator ≤ T.card) {R n : ℕ}
     (hgst : cr.gst ≤ R) (hto : ∀ m, R ≤ m → 2 * cr.delay + cr.proc ≤ cr.timeout m)
     (hR : R ≤ n) (hN : n + 2 ≤ N)
     {L : BlockId} (hL : L ∈ D.ids) (hLr : (D.block L).round = n)
-    (hLc : (D.block L).creator = ld n) (hlead : ld n ∈ T) :
+    (hLc : (D.block L).creator = S.leader n) (hlead : S.leader n ∈ T) :
     SPCommitBy D L T := by
   have hLu : L ∈ U.ids := hids ▸ hL
   have hLrU : (U.block L).round = n := by rw [← hblk]; exact hLr
@@ -292,30 +292,31 @@ theorem Creation.lemma20 (cr : Creation U T N ld)
 /-- **The liveness interface, from the creation rule.** Every correct-led
 slot below the horizon carries a direct commit — with the vote and
 certificate clauses derived from C1, C2 and C3 rather than assumed. -/
-theorem commits_of_creation (cr : Creation U T N ld)
+theorem commits_of_creation (cr : Creation U T N S.leader)
     (hids : D.ids = U.ids) (hblk : D.block = U.block)
     (hTeq : T = (Correct : Finset Validator)) {R : ℕ}
+    (hid : ∀ k, S.round k = k)
     (hgst : cr.gst ≤ R) (hto : ∀ m, R ≤ m → 2 * cr.delay + cr.proc ≤ cr.timeout m) :
-    CommitsCorrectLeaders ld D R N := by
+    CommitsCorrectLeaders S D R N := by
   subst hTeq
   intro s hR hN hsc
   obtain ⟨L, hL, hLc, hLr⟩ :=
-    cr.toPaceCore.populatedOn card_correct s (by omega) (ld s) hsc
+    cr.toPaceCore.populatedOn card_correct s (by omega) (S.leader s) hsc
   refine ⟨L, ?_, cr.lemma20 hids hblk card_correct hgst hto hR hN
     (hids ▸ hL) (by rw [hblk]; exact hLr) (by rw [hblk]; exact hLc) hsc⟩
-  simp only [slotBlocks, blocksAt, Finset.mem_filter, hids, hblk]
+  simp only [slotBlocks, blocksAt, Finset.mem_filter, hids, hblk, hid]
   exact ⟨⟨hL, hLr⟩, hLc⟩
 
 /-- **Theorem 21, from the creation rule.** Where at most `p` validators
 are Byzantine, the reliable validators' votes alone are a fast commit. -/
-theorem Creation.theorem21 (cr : Creation U T N ld)
+theorem Creation.theorem21 (cr : Creation U T N S.leader)
     (hids : D.ids = U.ids) (hblk : D.block = U.block)
     (hTeq : T = (Correct : Finset Validator)) (hfew : F.byzantine.card ≤ P.p)
     {R n : ℕ} (hgst : cr.gst ≤ R)
     (hto : ∀ m, R ≤ m → 2 * cr.delay + cr.proc ≤ cr.timeout m)
     (hR : R ≤ n) (hN : n + 1 ≤ N)
     {L : BlockId} (hL : L ∈ D.ids) (hLr : (D.block L).round = n)
-    (hLc : (D.block L).creator = ld n) (hlead : ld n ∈ T) :
+    (hLc : (D.block L).creator = S.leader n) (hlead : S.leader n ∈ T) :
     FastCommit D L := by
   subst hTeq
   have hLu : L ∈ U.ids := hids ▸ hL

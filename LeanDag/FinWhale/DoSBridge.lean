@@ -137,13 +137,15 @@ def Run.ofDoSValid [LinearOrder BlockId] (U : BlockUniverse Validator BlockId Pa
     (paceHorizon : ℕ) (pace : PaceCore U (Correct : Finset Validator) paceHorizon)
     (rounds_advance : ∀ u ∈ (Correct : Finset Validator), ∀ n ≤ pace.top u, n ≤ pace.built u n)
     (stable : ℕ) (gst_le : pace.gst ≤ stable) (liveHorizon : ℕ)
-    (commits : CommitsCorrectLeaders leader (Dag.ofDoSValid U leader hdos) stable liveHorizon)
+    (commits : CommitsCorrectLeaders ⟨id, leader⟩ (Dag.ofDoSValid U leader hdos)
+      stable liveHorizon)
     (live_le : liveHorizon ≤ paceHorizon) (roundRobin : RoundRobin leader)
     (choose : BlockId → ℕ → Option BlockId)
-    (chooseSound : ChooseSound leader (Dag.ofDoSValid U leader hdos) choose) :
+    (chooseSound : ChooseSound ⟨id, leader⟩ (Dag.ofDoSValid U leader hdos) choose) :
     Run Validator BlockId Payload where
   dag := Dag.ofDoSValid U leader hdos
-  leader := leader
+  sched := ⟨id, leader⟩
+  roundId := fun _ => rfl
   paced := U
   ids_eq := rfl
   block_eq := rfl
@@ -236,7 +238,7 @@ noncomputable def Run.ofDoSValidReactive [LinearOrder BlockId]
     Run Validator BlockId Payload :=
   Run.ofDoSValid U S.leader hdos horizon rounds_le N rm.toPaceCore rounds_advance
     stable hgst N
-    (commits_of_reactive rm rfl rfl hround (fun _ => rfl) rfl hgst hto)
+    (commits_of_reactive rm rfl rfl hround (fun _ => rfl) (fun _ => rfl) rfl hgst hto)
     (le_refl N) hrr (chooseLeast _ _) chooseSound_least
 
 end FinWhale

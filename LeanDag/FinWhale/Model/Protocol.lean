@@ -57,7 +57,10 @@ structure Run (Validator BlockId Payload : Type) [Fintype Validator] [DecidableE
   /-- The leader schedule the execution runs. It belongs to the
   execution rather than to the DAG: a DAG is blocks, and a schedule is
   not (`docs/porting-plan.md`). -/
-  leader : ℕ → Validator
+  sched : Sched Validator
+  /-- FinWhale runs one slot per round, which is what the reverse pass
+  enumerates. -/
+  roundId : ∀ k, sched.round k = k
   /-- The network has stabilised by this round. -/
   stable : ℕ
   /-- Which is past GST. -/
@@ -66,17 +69,17 @@ structure Run (Validator BlockId Payload : Type) [Fintype Validator] [DecidableE
   liveHorizon : ℕ
   /-- Every correct-led slot below it carries a commit — the input §10
   supplies, by either route. -/
-  commits : CommitsCorrectLeaders leader dag stable liveHorizon
+  commits : CommitsCorrectLeaders sched dag stable liveHorizon
   /-- The schedule reaches that far. -/
   live_le : liveHorizon ≤ paceHorizon
   /-- Leaders rotate. -/
-  roundRobin : RoundRobin leader
+  roundRobin : RoundRobin sched.leader
   /-- Every block references its author's previous block. -/
   selfParented : SelfParented dag
   /-- The deterministic rule among an anchor's candidates. -/
   choose : BlockId → ℕ → Option BlockId
   /-- Which names only candidates, and names one where there is one. -/
-  chooseSound : ChooseSound leader dag choose
+  chooseSound : ChooseSound sched dag choose
 
 namespace Run
 

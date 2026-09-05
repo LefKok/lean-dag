@@ -373,3 +373,57 @@ is not the most urgent thing.
 still standing between the development and *every mechanism running on
 the properties alone*: eight links, four of them the chop transport that
 `LocalTruncate.of_banded` replaces outright.
+
+## FinWhale, slot-indexed: what landed and what is genuinely left
+
+The pinning is gone from `Decided`. FinWhale's rules read the schedule
+they are given — `slotBlocks S D k` is the blocks at `S.round k` by
+`S.leader k`, `DirectSkip` and `IndirectCommit` read `S.round k + 2`,
+`Anchor` is stated at an eligibility rather than at `r + 2 < a`, and
+`Run` carries the schedule as `Sched`. `Agree`, `Causal` and
+`CommitsCandidate` hold with nothing pinned, and `CommitsDirect` became
+**statable**, which it was not before.
+
+### The gaps, precisely
+
+**1. The pass enumerates an interval.** `anchorCands` is
+`Finset.Ioc (r + 2) N`, so the reverse pass is well formed at
+`passElig` and at nothing else. Everything above it — `Anchor`,
+`WellFormed`, `lemma12`, the carrier — is already generic in the
+eligibility. The fix is to filter the eligible slots below the horizon
+instead, which needs the eligibility to carry decidability and its own
+`r < a`.
+
+**2. Which bounds inhabitation, and so bounds `Agree`.** The only
+assignment this development can exhibit is the pass, so
+`decided_of_directCommit` asks for the identity schedule. `Decided` is
+therefore known to be *inhabited* only there, and `Agree` is known to be
+*non-vacuous* only there. `Agree` is true as stated at every schedule;
+what is not yet shown is that it is saying anything at a general one.
+That is the honest reading and it is worth stating plainly, because a
+vacuously-true agreement property is exactly the trap §3.4 and §3.6
+record.
+
+**3. `CommitsDirect` needs (1).** It quantifies over every schedule, so
+proving it means exhibiting an assignment at `schedElig (schedOf S)` for
+an arbitrary `S` — which is (1).
+
+**4. `Banded` needs (1) and more.** It is still the theorem no other
+rule needs: the band must say the *reverse pass* is band-invariant,
+because FinWhale's verdicts are a function constrained by `WellFormed`
+rather than a derivation. Block-level transport of eight predicates, a
+downward induction from the finiteness bound, and `lemma12` to bridge an
+arbitrary assignment to the pass.
+
+**5. `LeaderCommits` and `Indirect` are untouched**, and both are
+reachable once (1) is done — `Indirect` is close to `lemma23`'s content
+and `LeaderCommits` to `CommitsCorrectLeaders`.
+
+### What the identity assumption is now
+
+It used to be a conjunct of `Decided`, where nothing could discharge it.
+It is now a hypothesis of the theorems that construct a pass —
+`wellFormed_decOf`, the liveness capstones, `Run.roundId`. That is where
+it belongs: a FinWhale *execution* runs one slot per round, and saying so
+at the execution rather than in the decision relation is what let the
+carrier take an arbitrary schedule.

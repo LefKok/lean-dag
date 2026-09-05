@@ -232,9 +232,10 @@ def fwReactiveCorrect (N : ℕ) : ReactiveM (Ugrow N) (Correct : Finset (Fin 4))
 /-- **The liveness interface, off the reactive schedule.** Every
 correct-led slot below the horizon carries a direct commit — with no
 coverage assumption anywhere, since a reactive builder has none. -/
-example (N : ℕ) : CommitsCorrectLeaders reactLeader (Dreact N) 0 N :=
+example (N : ℕ) : CommitsCorrectLeaders ⟨id, reactLeader⟩ (Dreact N) 0 N :=
   commits_of_reactive (D := Dreact N) (fwReactiveCorrect N) rfl rfl
-    (fun k => by simp) (fun k => rfl) rfl (Nat.le_refl _) (fun n _ => Nat.le_refl _)
+    (fun k => by simp) (fun _ => rfl) (fun k => rfl) rfl (Nat.le_refl _)
+    (fun n _ => Nat.le_refl _)
 
 /-- And the fast path on the same schedule. Round `1` is led by validator
 `1`, which is correct, and its block is id `5`: at most `p = 1` Byzantine
@@ -430,9 +431,9 @@ def fwCreation (N : ℕ) : Creation (Ugrow N) {1, 2, 3} N reactLeader :=
 
 /-- **The liveness interface, from the creation rule.** No wait clause is
 assumed: the votes and the certificates come out of C1 and C3. -/
-theorem fwCommits (N : ℕ) : CommitsCorrectLeaders reactLeader (Dreact N) 0 N :=
+theorem fwCommits (N : ℕ) : CommitsCorrectLeaders ⟨id, reactLeader⟩ (Dreact N) 0 N :=
   commits_of_creation (D := Dreact N) (fwCreation N) rfl rfl (by decide)
-    (Nat.le_refl _) (fun n _ => Nat.le_refl _)
+    (fun _ => rfl) (Nat.le_refl _) (fun n _ => Nat.le_refl _)
 
 /-- The rotation of this execution is round robin. -/
 theorem fwDreactRoundRobin (N : ℕ) : RoundRobin reactLeader := by
@@ -453,7 +454,8 @@ and a structure nothing satisfies would make every property above it
 vacuous. -/
 noncomputable def fwRun (N : ℕ) : Run (Fin 4) ℕ Unit where
   dag := Dreact N
-  leader := reactLeader
+  sched := ⟨id, reactLeader⟩
+  roundId := fun _ => rfl
   paced := Ugrow N
   ids_eq := rfl
   block_eq := rfl
@@ -476,7 +478,7 @@ noncomputable def fwRun (N : ℕ) : Run (Fin 4) ℕ Unit where
   live_le := Nat.le_refl _
   roundRobin := fwDreactRoundRobin N
   selfParented := selfParented_Dreact N
-  choose := chooseLeast reactLeader (Dreact N)
+  choose := chooseLeast ⟨id, reactLeader⟩ (Dreact N)
   chooseSound := chooseSound_least
 
 /-- **Agreement on data.** Two correct validators of the run deliver the

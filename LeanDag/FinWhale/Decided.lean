@@ -117,18 +117,18 @@ section Triple
 
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
-variable {Payload : Type} {D : Dag Validator BlockId Payload} {ld : ℕ → Validator}
+variable {Payload : Type} {D : Dag Validator BlockId Payload} {S : Sched Validator}
 
 /-- The commit the interface carries. -/
-theorem directCommit_of_commits {R N : ℕ} (h : CommitsCorrectLeaders ld D R N) {s : ℕ}
-    (hR : R ≤ s) (hN : s + 2 ≤ N) (hlead : ld s ∈ (Correct : Finset Validator)) :
-    ∃ l ∈ slotBlocks ld D s, DirectCommit D l := by
+theorem directCommit_of_commits {R N : ℕ} (h : CommitsCorrectLeaders S D R N) {s : ℕ}
+    (hR : R ≤ s) (hN : s + 2 ≤ N) (hlead : S.leader s ∈ (Correct : Finset Validator)) :
+    ∃ l ∈ slotBlocks S D s, DirectCommit D l := by
   obtain ⟨l, hslot, hby⟩ := h s hR hN hlead
   exact ⟨l, hslot, Or.inr (spCommit_of_spCommitBy hby)⟩
 
 /-- A validator reading the whole universe sees them all. -/
-theorem sees_of_commits {R N : ℕ} (h : CommitsCorrectLeaders ld D R N) :
-    SeesCommits ld D (fun r l => l ∈ slotBlocks ld D r ∧ DirectCommit D l) R N := by
+theorem sees_of_commits {R N : ℕ} (h : CommitsCorrectLeaders S D R N) :
+    SeesCommits S D (fun r l => l ∈ slotBlocks S D r ∧ DirectCommit D l) R N := by
   intro s hR hN hlead
   obtain ⟨l, hslot, hcom⟩ := directCommit_of_commits h hR hN hlead
   exact ⟨l, hslot, hslot, hcom⟩
@@ -137,14 +137,14 @@ theorem sees_of_commits {R N : ℕ} (h : CommitsCorrectLeaders ld D R N) :
 theorem committed_triple {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
     (hwf : WellFormed Elig dc ds choose dec) {R N t : ℕ}
-    (hsees : SeesCommits ld D dc R N)
-    (hrr : RoundRobin ld) (hR : R ≤ t) (hN : t + (3 * F.f + 5) ≤ N) :
+    (hsees : SeesCommits S D dc R N)
+    (hrr : RoundRobin S.leader) (hR : R ≤ t) (hN : t + (3 * F.f + 5) ≤ N) :
     ∃ a, t < a ∧ a + 4 ≤ N ∧
       ∀ s, a ≤ s → s ≤ a + 2 →
         dec s ≠ Verdict.undecided ∧ dec s ≠ Verdict.skip := by
   obtain ⟨a, hlo, hhi, h0, h1, h2⟩ := lemma22 hrr (t + 1)
   refine ⟨a, by omega, by omega, fun s hs1 hs2 => ?_⟩
-  have hsc : ld s ∈ (Correct : Finset Validator) := by
+  have hsc : S.leader s ∈ (Correct : Finset Validator) := by
     rcases (by omega : s = a ∨ s = a + 1 ∨ s = a + 2) with rfl | rfl | rfl
     exacts [h0, h1, h2]
   obtain ⟨l, -, hdcl⟩ := hsees s (by omega) (by omega) hsc
@@ -159,8 +159,8 @@ which is why `R` enters through a maximum rather than as a floor on
 theorem all_decided {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
     (hwf : WellFormed Elig dc ds choose dec) {R N r : ℕ}
-    (hsees : SeesCommits ld D dc R N)
-    (hrr : RoundRobin ld) (hEl : ∀ r a, Elig r a ↔ r + 2 < a)
+    (hsees : SeesCommits S D dc R N)
+    (hrr : RoundRobin S.leader) (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ s, S.round s = s)
     (hN : max r R + (3 * F.f + 5) ≤ N) :
     dec r ≠ Verdict.undecided := by
   obtain ⟨a, hlo, -, htri⟩ :=
@@ -244,7 +244,7 @@ section Order
 
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
-variable {Payload : Type} {D : Dag Validator BlockId Payload} {ld : ℕ → Validator}
+variable {Payload : Type} {D : Dag Validator BlockId Payload} {S : Sched Validator}
 
 /-- `histOf` is the causal history: the faithfulness condition Theorem 26
 asks for, discharged. -/
@@ -270,7 +270,7 @@ section Capstone
 
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
-variable {Payload : Type} {D : Dag Validator BlockId Payload} {ld : ℕ → Validator}
+variable {Payload : Type} {D : Dag Validator BlockId Payload} {S : Sched Validator}
 
 /-- **Theorem 24 (Agreement), end to end.** Two validators of one DAG
 deliver the same sequence at every horizon the DAG supports.
@@ -282,38 +282,38 @@ The two finiteness conditions sit together rather than in conflict —
 `hbound` says nothing above `M` is decided, and the horizon is placed
 below what the DAG's own reach decides. -/
 theorem agreement_of_commits {R N : ℕ}
-    (hrr : RoundRobin ld)
+    (hrr : RoundRobin S.leader)
     {dc dc' : ℕ → BlockId → Prop} {ds ds' : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec dec' : ℕ → Verdict BlockId}
     (hwf : WellFormed Elig dc ds choose dec) (hwf' : WellFormed Elig dc' ds' choose dec')
-    (hch : ChooseSound ld D choose)
-    (hdc : ∀ r l, dc r l → l ∈ slotBlocks ld D r ∧ DirectCommit D l)
-    (hdc' : ∀ r l, dc' r l → l ∈ slotBlocks ld D r ∧ DirectCommit D l)
-    (hds : ∀ r, ds r → DirectSkip ld D r) (hds' : ∀ r, ds' r → DirectSkip ld D r)
-    (hsees : SeesCommits ld D dc R N) (hsees' : SeesCommits ld D dc' R N)
-    (hslot : ∀ r A, dec r = Verdict.commit A → A ∈ slotBlocks ld D r)
-    (hslot' : ∀ r A, dec' r = Verdict.commit A → A ∈ slotBlocks ld D r)
+    (hch : ChooseSound S D choose)
+    (hdc : ∀ r l, dc r l → l ∈ slotBlocks S D r ∧ DirectCommit D l)
+    (hdc' : ∀ r l, dc' r l → l ∈ slotBlocks S D r ∧ DirectCommit D l)
+    (hds : ∀ r, ds r → DirectSkip S D r) (hds' : ∀ r, ds' r → DirectSkip S D r)
+    (hsees : SeesCommits S D dc R N) (hsees' : SeesCommits S D dc' R N)
+    (hslot : ∀ r A, dec r = Verdict.commit A → A ∈ slotBlocks S D r)
+    (hslot' : ∀ r A, dec' r = Verdict.commit A → A ∈ slotBlocks S D r)
     {M : ℕ} (hbound : ∀ s, M ≤ s → dec s = Verdict.undecided ∧ dec' s = Verdict.undecided)
-    (hEl : ∀ r a, Elig r a ↔ r + 2 < a)
+    (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ s, S.round s = s)
     {k : ℕ} (hkN : max k R + (3 * F.f + 5) ≤ N)
     (hist : BlockId → List BlockId) :
     linearise hist (commitSeq dec k) = linearise hist (commitSeq dec' k) := by
   have habove : ∀ (dq : ℕ → Verdict BlockId),
-      (∀ r A, dq r = Verdict.commit A → A ∈ slotBlocks ld D r) →
-      ∀ r a A, Elig r a → dq a = Verdict.commit A → A ∈ D.ids ∧ r + 3 ≤ (D.block A).round := by
+      (∀ r A, dq r = Verdict.commit A → A ∈ slotBlocks S D r) →
+      ∀ r a A, Elig r a → dq a = Verdict.commit A → A ∈ D.ids ∧ S.round r + 3 ≤ (D.block A).round := by
     intro dq hq r a A hra' hcom
     have hra := (hEl r a).mp hra'
     have hA := hq a A hcom
     simp only [slotBlocks, blocksAt, Finset.mem_filter] at hA
-    exact ⟨hA.1.1, by omega⟩
+    exact ⟨hA.1.1, by simp only [hid] at hA ⊢; omega⟩
   refine theorem24
     (lemma12 hwf hwf' (exclusions_of_dag hch hdc hdc' hds hds')
       (fun r a h => by have := (hEl r a).mp h; omega)
       (habove dec hslot) (habove dec' hslot') hbound)
-    (fun s hs => all_decided hwf hsees hrr hEl (by
+    (fun s hs => all_decided hwf hsees hrr hEl hid (by
       have : max s R ≤ max k R := max_le_max (by omega) le_rfl
       omega))
-    (fun s hs => all_decided hwf' hsees' hrr hEl (by
+    (fun s hs => all_decided hwf' hsees' hrr hEl hid (by
       have : max s R ≤ max k R := max_le_max (by omega) le_rfl
       omega))
     hist

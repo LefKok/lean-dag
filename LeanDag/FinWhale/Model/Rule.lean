@@ -93,6 +93,24 @@ structure Dag (Validator BlockId Payload : Type*) [Fintype Validator]
 
 variable {D : Dag Validator BlockId Payload}
 
+/-- **A schedule**: which round a slot proposes at, and who leads it.
+
+FinWhale runs one slot per round, so `round` is the identity in every
+execution here. It is a *parameter* rather than an identity because the
+properties index by slot and supply the map (`Properties.Slots`), and a
+rule that reads absolute rounds cannot carry an offset band
+(`docs/target-properties.md` §3.4c). Keeping it abstract is what lets
+FinWhale's carrier take the schedule it is given instead of pinning one.
+
+It is FinWhale's own record rather than `LeanDag.Slots` so that the
+model stays independent of Mysticeti's; the carrier maps one to the
+other. -/
+structure Sched (Validator : Type*) where
+  /-- The round a slot's candidate proposes at. -/
+  round : ℕ → ℕ
+  /-- Who leads the slot. -/
+  leader : ℕ → Validator
+
 /-- The blocks of a round. -/
 def blocksAt (D : Dag Validator BlockId Payload) (r : ℕ) : Finset BlockId :=
   D.ids.filter (fun b => (D.block b).round = r)

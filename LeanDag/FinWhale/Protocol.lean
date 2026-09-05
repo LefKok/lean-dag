@@ -43,7 +43,7 @@ theorem isView (hv : v ∈ (Correct : Finset Validator)) : IsView run.dag (run.v
 /-- **The verdicts a validator reaches**, by running the reverse pass on
 its own view. -/
 noncomputable def verdicts (hv : v ∈ (Correct : Finset Validator)) : ℕ → Verdict BlockId :=
-  decOf run.leader (restrict run.dag (run.view v) (run.isView hv)) run.choose run.horizon
+  decOf run.sched (restrict run.dag (run.view v) (run.isView hv)) run.choose run.horizon
 
 /-- **And what it delivers**: the causal histories of its committed
 leader blocks, in order, each block once. -/
@@ -63,13 +63,13 @@ theorem view_rounds_le (hv : v ∈ (Correct : Finset Validator)) :
 
 /-- Its verdicts follow the reverse pass. -/
 theorem wellFormed (hv : v ∈ (Correct : Finset Validator)) :
-    WellFormed passElig (viewCommit run.leader run.dag (run.view v) (run.isView hv))
-      (viewSkip run.leader run.dag (run.view v) (run.isView hv)) run.choose (run.verdicts hv) :=
-  wellFormed_decOf (run.view_rounds_le hv) run.choose
+    WellFormed passElig (viewCommit run.sched run.dag (run.view v) (run.isView hv))
+      (viewSkip run.sched run.dag (run.view v) (run.isView hv)) run.choose (run.verdicts hv) :=
+  wellFormed_decOf (run.view_rounds_le hv) run.roundId run.choose
 
 /-- A committed verdict names a block of its slot. -/
 theorem slot_of_verdicts (hv : v ∈ (Correct : Finset Validator)) {r : ℕ} {A : BlockId}
-    (h : run.verdicts hv r = Verdict.commit A) : A ∈ slotBlocks run.leader run.dag r :=
+    (h : run.verdicts hv r = Verdict.commit A) : A ∈ slotBlocks run.sched run.dag r :=
   mem_slotBlocks_of_decOf (fun _ => slotBlocks_restrict) run.chooseSound h
 
 /-- Nothing above the horizon is decided. -/
@@ -98,7 +98,7 @@ theorem decided (hv : v ∈ (Correct : Finset Validator)) {r : ℕ}
     (hr : max r run.stable + (3 * F.f + 5) ≤ run.liveHorizon) :
     run.verdicts hv r ≠ Verdict.undecided :=
   all_decided_of_view (run.isView hv) (run.wellFormed hv) (run.held hv) run.commits
-    run.roundRobin (fun _ _ => Iff.rfl) hr
+    run.roundRobin (fun _ _ => Iff.rfl) run.roundId hr
 
 /-- Below a decided horizon a validator's sequence is complete. -/
 theorem decidedBelow (hv : v ∈ (Correct : Finset Validator)) {k : ℕ}
@@ -122,7 +122,7 @@ theorem agreement (hv : v ∈ (Correct : Finset Validator))
     (fun _ _ h => run.slot_of_verdicts hw h)
     (fun s (hs : run.horizon + 1 ≤ s) =>
       ⟨run.undecided_of_gt hv (by omega), run.undecided_of_gt hw (by omega)⟩)
-    (run.held hv) (run.held hw) run.commits run.roundRobin hk (fun _ _ => Iff.rfl)
+    (run.held hv) (run.held hw) run.commits run.roundRobin hk (fun _ _ => Iff.rfl) run.roundId
     (histOf run.dag)
 
 /-- **Total order.** One validator's sequence is a prefix of another's,
@@ -134,7 +134,7 @@ theorem totalOrder (hv : v ∈ (Correct : Finset Validator))
     run.delivers hv k <+: run.delivers hw k' ∨ run.delivers hw k' <+: run.delivers hv k :=
   safety_of_pass (run.isView hv) (run.isView hw) run.chooseSound
     (run.view_rounds_le hv) (run.view_rounds_le hw)
-    (run.decidedBelow hv hk) (run.decidedBelow hw hk') (histOf run.dag)
+    (run.decidedBelow hv hk) (run.decidedBelow hw hk') run.roundId (histOf run.dag)
 
 /-- **Integrity.** No block is delivered twice. Theorem 15 at the
 concrete order, and it asks nothing of the run: the order appends only
@@ -155,8 +155,8 @@ theorem validity (hv : v ∈ (Correct : Finset Validator)) {b : BlockId} {k : �
     (hk : max ((run.dag.block b).round) run.stable + Fintype.card Validator < k) :
     b ∈ run.delivers hv k :=
   theorem26_of_selfParent run.selfParented (run.wellFormed hv)
-    (sees_of_commits_of_held (run.isView hv) run.commits (run.held hv))
-    run.roundRobin hb hbc hbound hk
+    (sees_of_commits_of_held (run.isView hv) run.commits (run.held hv) run.roundId)
+    run.roundRobin run.roundId hb hbc hbound hk
 
 end Run
 

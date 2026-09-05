@@ -36,7 +36,7 @@ variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 variable {Elig : ℕ → ℕ → Prop}
-variable {D : Dag Validator BlockId Payload} {ld : ℕ → Validator}
+variable {D : Dag Validator BlockId Payload} {S : Sched Validator}
 
 /-- **A correct validator's blocks form a chain.** Each of its blocks
 reaches all its earlier ones: the self-parent edge steps down one round,
@@ -80,8 +80,8 @@ theorem theorem26_of_selfParent (hself : SelfParented D)
     {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
     (hwf : WellFormed Elig dc ds choose dec) {R N : ℕ}
-    (hsees : SeesCommits ld D dc R N)
-    (hrr : RoundRobin ld) [LinearOrder BlockId]
+    (hsees : SeesCommits S D dc R N)
+    (hrr : RoundRobin S.leader) (hid : ∀ s, S.round s = s) [LinearOrder BlockId]
     {b : BlockId} {k : ℕ} (hb : b ∈ D.ids)
     (hbc : (D.block b).creator ∈ (Correct : Finset Validator))
     (hbound : max ((D.block b).round) R + Fintype.card Validator + 2 ≤ N)
@@ -92,8 +92,9 @@ theorem theorem26_of_selfParent (hself : SelfParented D)
     exists_round_led_by hrr ((D.block b).creator) (max ((D.block b).round) R)
   obtain ⟨l, hslot, hdcl⟩ := hsees s (le_trans (le_max_right _ R) hlo) (by omega)
     (by rw [hlead]; exact hbc)
-  have hlu : l ∈ D.ids ∧ (D.block l).round = s ∧ (D.block l).creator = ld s := by
-    simp only [slotBlocks, blocksAt, Finset.mem_filter] at hslot
+  have hlu : l ∈ D.ids ∧ (D.block l).round = s ∧
+      (D.block l).creator = S.leader s := by
+    simp only [slotBlocks, blocksAt, Finset.mem_filter, hid] at hslot
     exact ⟨hslot.1.1, hslot.1.2, hslot.2⟩
   -- and the leader block is the author's own, later
   have hreach : ReachesFrom D.block l b :=

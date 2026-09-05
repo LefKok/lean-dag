@@ -53,7 +53,7 @@ variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 variable {U : BlockUniverse Validator BlockId Payload}
-variable {D : Dag Validator BlockId Payload} {ld : ℕ → Validator}
+variable {D : Dag Validator BlockId Payload} {FS : Sched Validator}
 variable [S : Slots Validator]
 variable {T : Finset Validator} {N R k : ℕ} {L : BlockId}
 
@@ -170,20 +170,22 @@ schedule's two wait clauses in place of coverage.
 slot per round, and the same leader. -/
 theorem commits_of_reactive (rm : ReactiveM U T N)
     (hids : D.ids = U.ids) (hblk : D.block = U.block)
-    (hround : ∀ k, S.slotRound k = k) (hleader : ∀ k, S.leader k = ld k)
+    (hround : ∀ k, S.slotRound k = k) (hfr : ∀ k, FS.round k = k)
+    (hleader : ∀ k, FS.leader k = S.leader k)
     (hTeq : T = (Correct : Finset Validator))
     (hgst : rm.gst ≤ R) (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n) :
-    CommitsCorrectLeaders ld D R N := by
+    CommitsCorrectLeaders FS D R N := by
   subst hTeq
   intro s hR hN hsc
   obtain ⟨L, hL, hLc, hLr⟩ :=
-    rm.toPaceCore.populatedOn card_correct s (by omega) (ld s) hsc
-  have hLb : IsLeaderBlock U s L := ⟨hL, by rw [hLr, hround], by rw [hLc, hleader]⟩
+    rm.toPaceCore.populatedOn card_correct s (by omega) (FS.leader s) hsc
+  have hsr : S.slotRound s = s := hround s
+  have hLb : IsLeaderBlock U s L := ⟨hL, by rw [hLr, hsr], by rw [hLc, hleader]⟩
   obtain ⟨certs, hcertsub, hcard, hcertb⟩ :=
     spCommit_of_reactive rm hids hblk (fun _ h => h) card_correct hgst hto
-      (by rw [hround]; exact hR) (by rw [hround]; omega) (by rw [hleader]; exact hsc) hLb
+      (by rw [hsr]; exact hR) (by rw [hsr]; omega) (by rw [← hleader]; exact hsc) hLb
   refine ⟨L, ?_, certs, hcertsub, hcard, hcertb⟩
-  simp only [slotBlocks, blocksAt, Finset.mem_filter, hids, hblk]
+  simp only [slotBlocks, blocksAt, Finset.mem_filter, hids, hblk, hfr]
   exact ⟨⟨hL, hLr⟩, hLc⟩
 
 end FinWhale
