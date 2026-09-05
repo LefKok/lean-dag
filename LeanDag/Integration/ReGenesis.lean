@@ -306,9 +306,9 @@ theorem stack_block_fresh_horizon (hG1 : sk.r0 < G) (hG2 : G ≤ sk.r) :
     rw [sk.skipFill_block_fresh]; rfl
   refine ⟨mem_chop_ids.mpr ⟨hmem, by omega⟩, ?_⟩
   rw [chop_block_eq]
-  unfold chopBlock
+  unfold chopBlock chopBlk
   rw [sk.skipFill_block_fresh]
-  simp only [SkipMsg.fillBlock, le_refl, if_pos, Nat.sub_self]
+  simp only [SkipData.fillBlock, le_refl, if_pos, Nat.sub_self]
 
 /-- **Re-genesis adds nothing the truncated fill lacks.** Every block of the
 re-genesis universe over `chop U G` is present in `chop sk.skipFill G`, with
@@ -333,7 +333,7 @@ theorem addGenesis_sub_stack (hG1 : sk.r0 < G) (hG2 : G ≤ sk.r)
     have hfill : sk.skipFill.block b = U.block b := sk.skipFill_block_old hbU
     refine ⟨mem_chop_ids.mpr ⟨Finset.mem_union_left _ hbU, by rw [hfill]; exact hbr⟩, ?_⟩
     rw [addGenesis_block_old hbo, chop_block_eq, chop_block_eq]
-    unfold chopBlock
+    unfold chopBlock chopBlk
     rw [hfill]
 
 /-- **A restart is a genesis block, necessarily.** If a validator has any
@@ -481,7 +481,7 @@ theorem chop_addGenesis (hd : 0 < d)
       exact ⟨Finset.mem_insert_of_mem hb, by rw [addGenesis_block_old hb]; exact hbr⟩
   · intro b hb
     rw [mem_chop_ids] at hb
-    simp only [chop_block_eq, chopBlock, addGenesis_block_old hb.1]
+    simp only [chop_block_eq, chopBlock, chopBlk, addGenesis_block_old hb.1]
 
 /-- **The convergence.** A validator at horizon `G₁`, truncating on to a
 later horizon `G₂`, holds exactly the blocks of a validator that cut at

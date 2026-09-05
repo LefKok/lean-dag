@@ -40,7 +40,7 @@ theorem reaches_B1_of_fill (sk : SkipMsg U) :
   refine Reaches.single ?_
   show sk.B1 ∈ (sk.skipFill.block (sk.fresh (sk.r0 + 1))).refs
   rw [sk.skipFill_block_fresh]
-  simp only [SkipMsg.fillBlock, SkipMsg.prev, if_pos rfl]
+  simp only [SkipData.fillBlock, SkipData.prev, if_pos rfl]
   exact Finset.mem_insert_self _ _
 
 /-- **The cone grows.** Everything the anchor reaches, the first filled
@@ -196,13 +196,13 @@ theorem fill_cone_subset (sk : SkipMsg U)
         subst hj
         by_cases hb : k = sk.r0 + 1
         · -- boundary: the anchor, whose cone the donor covers
-          rw [SkipMsg.prev, if_pos hb] at hji
+          rw [SkipData.prev, if_pos hb] at hji
           obtain ⟨hio, hiU⟩ := (sk.reaches_fill_old sk.hB1).mp hji
           refine Or.inr (history_subset_of_reaches hlm
             ((mem_history_iff hlm).mp (hcov k hk1 hk2)) ?_)
           exact (mem_history_iff sk.hB1).mpr hiU
         · -- inside the gap: the previous filled block, by induction
-          rw [SkipMsg.prev, if_neg hb] at hji
+          rw [SkipData.prev, if_neg hb] at hji
           rcases ih (k - 1) (by omega) (by omega) (by omega) i hji with h | h
           · exact Or.inl h
           · refine Or.inr (history_subset_of_reaches hlm ?_ h)
@@ -242,20 +242,20 @@ theorem dosValid_skipFill_of_covered (hdos : DoSValid U)
     obtain ⟨m, hm1, hm2, rfl⟩ := sk.mem_freshIds.mp hxf
     obtain ⟨m', hm1', hm2', rfl⟩ := sk.mem_freshIds.mp hyf
     rw [sk.skipFill_block_fresh, sk.skipFill_block_fresh] at hr
-    simp only [SkipMsg.fillBlock] at hr
+    simp only [SkipData.fillBlock] at hr
     exact hne (hr ▸ rfl)
   · -- one fresh, one old: an old `v1` block at a gap round is the crash
     obtain ⟨m, hm1, hm2, rfl⟩ := sk.mem_freshIds.mp hxf
     have hyU : y ∈ U.ids := mem_ids_of_reaches hlm ((mem_history_iff hlm).mp hyo)
     rw [sk.skipFill_block_fresh] at hxc hr
     rw [sk.skipFill_block_old hyU] at hyc hr
-    simp only [SkipMsg.fillBlock] at hxc hr
+    simp only [SkipData.fillBlock] at hxc hr
     exact sk.hgap y hyU (hyc.trans hxc.symm) (by omega) (by omega)
   · obtain ⟨m, hm1, hm2, rfl⟩ := sk.mem_freshIds.mp hyf
     have hxU : x ∈ U.ids := mem_ids_of_reaches hlm ((mem_history_iff hlm).mp hxo)
     rw [sk.skipFill_block_fresh] at hyc hr
     rw [sk.skipFill_block_old hxU] at hxc hr
-    simp only [SkipMsg.fillBlock] at hyc hr
+    simp only [SkipData.fillBlock] at hyc hr
     exact sk.hgap x hxU (hxc.trans hyc.symm) (by omega) (by omega)
   · -- both old: the donor's own cone, for which `DoSValid U` vouches
     have hxU : x ∈ U.ids := mem_ids_of_reaches hlm ((mem_history_iff hlm).mp hxo)
@@ -271,8 +271,8 @@ theorem dosValid_skipFill_of_covered (hdos : DoSValid U)
       subst hip
       have hpv : (sk.skipFill.block (sk.prev k)).creator = sk.v1 := by
         by_cases hb : k = sk.r0 + 1
-        · rw [SkipMsg.prev, if_pos hb, sk.skipFill_block_old sk.hB1]; exact sk.hB1c
-        · rw [SkipMsg.prev, if_neg hb, sk.skipFill_block_fresh]; rfl
+        · rw [SkipData.prev, if_pos hb, sk.skipFill_block_old sk.hB1]; exact sk.hB1c
+        · rw [SkipData.prev, if_neg hb, sk.skipFill_block_fresh]; rfl
       rw [hpv] at hxc hyc
       exact hne (hv1ne x hxU y hyU hxc hyc hr)
     · -- a donor citation: `DoSValid U` at the donor block

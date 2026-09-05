@@ -79,7 +79,7 @@ def skipFillD (sk : SkipMsg U) (D : Delivery U)
       obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
       have hR0 : sk.r0 = (U.block sk.B1).round := rfl
       rw [sk.skipFill_block_fresh] at hbc hbr
-      simp only [SkipMsg.fillBlock] at hbc hbr
+      simp only [SkipData.fillBlock] at hbc hbr
       subst hbc
       rw [hdown n (by omega) (by omega)]
       exact Finset.empty_subset _
@@ -160,7 +160,7 @@ theorem not_refsAccepted_skipFillD (hne : sk.r0 < sk.r)
   -- the anchor is cited by the fill, and was accepted by nobody in the gap
   have hB1mem : sk.B1 ∈ (sk.skipFill.block (sk.fresh (sk.r0 + 1))).refs := by
     rw [sk.skipFill_block_fresh]
-    simp only [SkipMsg.fillBlock, SkipMsg.prev]
+    simp only [SkipData.fillBlock, SkipData.prev]
     exact Finset.mem_insert_self _ _
   have hin : sk.B1 ∈ D.accepted sk.v1 sk.r0 := hsub hB1mem
   rw [hdown sk.r0 (le_refl _) hne] at hin

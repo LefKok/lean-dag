@@ -126,21 +126,21 @@ theorem honestNoEquiv_skipFill (sk : SkipMsg U) (hne : HonestNoEquiv U) :
     rw [sk.skipFill_block_old ho] at hij hround
     rw [sk.skipFill_block_fresh] at hij hround
     exact (sk.hgap i ho hij
-      (by simp only [SkipMsg.fillBlock] at hround; omega)
-      (by simp only [SkipMsg.fillBlock] at hround; omega)).elim
+      (by simp only [SkipData.fillBlock] at hround; omega)
+      (by simp only [SkipData.fillBlock] at hround; omega)).elim
   · -- fresh against old: the same, on the other side
     obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
     have hR0 : sk.r0 = (U.block sk.B1).round := rfl
     rw [sk.skipFill_block_old ho'] at hij hround
     rw [sk.skipFill_block_fresh] at hij hround
     exact (sk.hgap j ho' hij.symm
-      (by simp only [SkipMsg.fillBlock] at hround; omega)
-      (by simp only [SkipMsg.fillBlock] at hround; omega)).elim
+      (by simp only [SkipData.fillBlock] at hround; omega)
+      (by simp only [SkipData.fillBlock] at hround; omega)).elim
   · -- both fresh: equal rounds are equal gap indices
     obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
     obtain ⟨l, hl1, hl2, rfl⟩ := sk.mem_freshIds.mp hf'
     rw [sk.skipFill_block_fresh, sk.skipFill_block_fresh] at hround
-    simp only [SkipMsg.fillBlock] at hround
+    simp only [SkipData.fillBlock] at hround
     exact hround ▸ rfl
 
 end Fill

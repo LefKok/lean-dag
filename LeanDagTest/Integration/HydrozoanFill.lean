@@ -12,7 +12,7 @@ seven-replica universe fails `SelfParenting`. This one is a
 three-round DAG over four replicas in which replica `1` authors its
 genesis block and then stops — a crash with an anchor.
 
-Identifiers are `ℕ` rather than a `Fin`, which is what `SkipMsg.hidx`
+Identifiers are `ℕ` rather than a `Fin`, which is what `SkipData.hidx`
 forces: `idx (fresh k) = k` at every `k`, so `fresh` is injective on all
 of `ℕ` and cannot land in a finite type. The existing Safe Skip
 witnesses make the same choice.

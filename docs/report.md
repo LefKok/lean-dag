@@ -3022,17 +3022,25 @@ The model-side operator keeps the blocks at rounds `≥ G`, rebases rounds by
 layer becomes the new genesis layer:
 
 ```lean
-def chopBlock (U) (G : ℕ) (i : BlockId) : Block Validator BlockId Payload :=
-  if (U.block i).round ≤ G then
-    { U.block i with round := (U.block i).round - G, refs := ∅ }
+def chopBlk (blk : BlockId → Block Validator BlockId Payload) (G : ℕ)
+    (i : BlockId) : Block Validator BlockId Payload :=
+  if (blk i).round ≤ G then
+    { blk i with round := (blk i).round - G, refs := ∅ }
   else
-    { U.block i with round := (U.block i).round - G }
+    { blk i with round := (blk i).round - G }
 
 def chop (U) (G : ℕ) : BlockUniverse Validator BlockId Payload where
   ids := U.ids.filter fun i => G ≤ (U.block i).round
   block := chopBlock U G
   …
 ```
+
+The operator is stated over a bare block assignment rather than over a
+universe: the *data* of a cut is the same for every rule in this
+report, and only the invariants a universe carries differ. `chopBlock U`
+is `chopBlk U.block`, and the rules with their own universe records —
+Nemo (§13), FinWhale (§16) — take the same operator and discharge their
+own clauses (§11.4).
 
 Every validity clause of §2.2 constrains only rounds `> 0`, and the old
 genesis special case applies verbatim to the new base — so `chop U G` is a
@@ -3774,7 +3782,8 @@ re-derives after it, so recovery cannot disturb a decision (SS5, SS6).
 receiver verifies against its own DAG:
 
 ```lean
-structure SkipMsg (U : BlockUniverse Validator BlockId Payload) where
+structure SkipData (ids : Finset BlockId)
+    (blk : BlockId → Block Validator BlockId Payload) where
   v1 : Validator
   B1 : BlockId
   v2 : Validator
@@ -3783,9 +3792,15 @@ structure SkipMsg (U : BlockUniverse Validator BlockId Payload) where
   fresh : ℕ → BlockId
   idx : BlockId → ℕ
   …
-  hgap : ∀ b ∈ U.ids, (U.block b).creator = v1 →
-    (U.block B1).round < (U.block b).round → (U.block b).round ≤ r → False
+  hgap : ∀ b ∈ ids, (blk b).creator = v1 →
+    (blk B1).round < (blk b).round → (blk b).round ≤ r → False
 ```
+
+`SkipMsg U` abbreviates `SkipData U.ids U.block`. The record is stated
+over a bare block assignment for the reason `chopBlk` is (§9.1): the
+message's content and the receiver's checks are the same whatever
+validity rule the DAG satisfies, and a rule with its own universe record
+supplies only the invariant discharges its own denotation needs.
 
 `line` is the donor's history line — one block per round from
 `r0 := round B1` up to `r`, each referencing the one below, which is the
@@ -3818,8 +3833,8 @@ def prev (k : ℕ) : BlockId :=
 def fillBlock (k : ℕ) : Block Validator BlockId Payload where
   round := k
   creator := sk.v1
-  refs := insert (sk.prev k) (U.block (sk.line k)).refs
-  payload := (U.block (sk.line k)).payload
+  refs := insert (sk.prev k) (blk (sk.line k)).refs
+  payload := (blk (sk.line k)).payload
 ```
 
 and the denotation is the extension, with every old identifier looked up
@@ -12455,6 +12470,23 @@ def AllExposed (U : BlockUniverse Validator BlockId Payload) (m : ℕ) : Prop :=
 
 ### Garbage collection
 
+#### `chopBlk`
+
+*def, `GC.Chop.lean`*
+
+```lean
+def chopBlk (blk : BlockId → Block Validator BlockId Payload) (G : ℕ)
+    (i : BlockId) : Block Validator BlockId Payload :=
+  if (blk i).round ≤ G then
+    { blk i with round := (blk i).round - G, refs := ∅ }
+  else
+    { blk i with round := (blk i).round - G }
+```
+
+One block of the truncation, over the raw block assignment: the round is rebased by `−G`, and blocks at or below the cut — the new base layer, plus junk — lose their references.
+
+Stated over `blk` rather than over a universe because the *data* of a cut is the same for every rule in this development, and only the invariants a universe carries differ. Nemo and FinWhale keep their own universe records and take this unchanged (`docs/target-properties.md` §11.4).
+
 #### `chopBlock`
 
 *def, `GC.Chop.lean`*
@@ -12462,13 +12494,10 @@ def AllExposed (U : BlockUniverse Validator BlockId Payload) (m : ℕ) : Prop :=
 ```lean
 def chopBlock (U : BlockUniverse Validator BlockId Payload) (G : ℕ)
     (i : BlockId) : Block Validator BlockId Payload :=
-  if (U.block i).round ≤ G then
-    { U.block i with round := (U.block i).round - G, refs := ∅ }
-  else
-    { U.block i with round := (U.block i).round - G }
+  chopBlk U.block G i
 ```
 
-One block of the truncation: the round is rebased by `−G`, and blocks at or below the cut — the new base layer, plus junk — lose their references.
+The core's truncation of a block is that, at the core's universe.
 
 #### `chop`
 
@@ -12974,12 +13003,13 @@ The reactive three-round schedule: `ReactivePace`'s vote stage, plus the certifi
 
 ### Safe Skip: crash recovery in one message
 
-#### `SkipMsg`
+#### `SkipData`
 
 *structure, `SafeSkip.Basic.lean`*
 
 ```lean
-structure SkipMsg (U : BlockUniverse Validator BlockId Payload) where
+structure SkipData (ids : Finset BlockId)
+    (blk : BlockId → Block Validator BlockId Payload) where
   /-- The recovering validator. -/
   v1 : Validator
   /-- Its last block before the crash. -/
@@ -12999,35 +13029,46 @@ structure SkipMsg (U : BlockUniverse Validator BlockId Payload) where
   non-equivocation gives it for a correct `v1` (`hB1uniq_of_correct`),
   and the hybrid model of report §14 gives it for a *crash-prone* one,
   which is the case Safe Skip exists to serve. -/
-  hB1uniq : ∀ j ∈ U.ids, (U.block j).creator = v1 →
-    (U.block j).round = (U.block B1).round → j = B1
+  hB1uniq : ∀ j ∈ ids, (blk j).creator = v1 →
+    (blk j).round = (blk B1).round → j = B1
   hv12 : v1 ≠ v2
-  hB1 : B1 ∈ U.ids
-  hB1c : (U.block B1).creator = v1
-  hline_mem : ∀ k, (U.block B1).round ≤ k → k ≤ r → line k ∈ U.ids
-  hline_creator : ∀ k, (U.block B1).round ≤ k → k ≤ r →
-    (U.block (line k)).creator = v2
-  hline_round : ∀ k, (U.block B1).round ≤ k → k ≤ r →
-    (U.block (line k)).round = k
-  hline_chain : ∀ k, (U.block B1).round < k → k ≤ r →
-    line (k - 1) ∈ (U.block (line k)).refs
-  hfresh_new : ∀ k, fresh k ∉ U.ids
+  hB1 : B1 ∈ ids
+  hB1c : (blk B1).creator = v1
+  hline_mem : ∀ k, (blk B1).round ≤ k → k ≤ r → line k ∈ ids
+  hline_creator : ∀ k, (blk B1).round ≤ k → k ≤ r →
+    (blk (line k)).creator = v2
+  hline_round : ∀ k, (blk B1).round ≤ k → k ≤ r →
+    (blk (line k)).round = k
+  hline_chain : ∀ k, (blk B1).round < k → k ≤ r →
+    line (k - 1) ∈ (blk (line k)).refs
+  hfresh_new : ∀ k, fresh k ∉ ids
   hidx : ∀ k, idx (fresh k) = k
   /-- The crash: `v1` authored nothing in the gap. -/
-  hgap : ∀ b ∈ U.ids, (U.block b).creator = v1 →
-    (U.block B1).round < (U.block b).round → (U.block b).round ≤ r → False
+  hgap : ∀ b ∈ ids, (blk b).creator = v1 →
+    (blk B1).round < (blk b).round → (blk b).round ≤ r → False
 ```
 
 The denotation of a Safe Skip message, together with the freshness data an implementation supplies (new ids for the filled blocks and their decoder).
 
 `line` is `v2`'s history line: one block per round from `r0 := round B1` up to `r`, each referencing the one below — the chain the message's `B2` pins by following self-parents. `hgap` is the crash itself: `v1` authored nothing strictly between `B1` and `r`.
 
+#### `SkipMsg`
+
+*abbrev, `SafeSkip.Basic.lean`*
+
+```lean
+abbrev SkipMsg (U : BlockUniverse Validator BlockId Payload) :=
+  SkipData U.ids U.block
+```
+
+**A Safe Skip message at a core universe**: the same data, read off `U`. Stated over `ids`/`blk` rather than over a universe because the *data* of a fill is the same for every rule in this development, and only the invariants a universe carries differ — the shape `chopBlk` takes for the cut. Nemo and FinWhale build their own fills from it (`docs/target-properties.md` §11.4).
+
 #### `r0`
 
 *def, `SafeSkip.Basic.lean`*
 
 ```lean
-def r0 : ℕ := (U.block sk.B1).round
+def r0 : ℕ := (blk sk.B1).round
 ```
 
 The round of the anchor block — the bottom of the gap.
@@ -13051,11 +13092,27 @@ The self reference of the filled block at round `k`: the anchor at the boundary,
 def fillBlock (k : ℕ) : Block Validator BlockId Payload where
   round := k
   creator := sk.v1
-  refs := insert (sk.prev k) (U.block (sk.line k)).refs
-  payload := (U.block (sk.line k)).payload
+  refs := insert (sk.prev k) (blk (sk.line k)).refs
+  payload := (blk (sk.line k)).payload
 ```
 
 The filled block at gap round `k`: `v2`'s references at that round, plus the added self reference.
+
+#### `copyBlock`
+
+*def, `SafeSkip.Basic.lean`*
+
+```lean
+def copyBlock (k : ℕ) : Block Validator BlockId Payload where
+  round := k
+  creator := sk.v1
+  refs := (blk (sk.line k)).refs
+  payload := (blk (sk.line k)).payload
+```
+
+The filled block **without the self reference**: `v2`'s references at that round, re-authored.
+
+The self reference exists to satisfy the core's `ValidWrt.self_parent`, and it is the one thing about the fill a validity rule can object to: it grafts the anchor's reference set onto the donor's, and a rule that constrains what a *pair* of references may see together — FinWhale's `ValidHere.leader_clause` — is not preserved by that graft. A rule with no self-parent clause takes this block instead, and then validity is the donor's verbatim.
 
 #### `gap`
 
@@ -13321,7 +13378,7 @@ structure JumpMsg (U : BlockUniverse Validator BlockId Payload) where
   fresh : ℕ → BlockId
   idx : BlockId → ℕ
   /-- The anchor is `v1`'s only block at its round (see
-  `SkipMsg.hB1uniq` for why this is a field rather than derived from
+  `SkipData.hB1uniq` for why this is a field rather than derived from
   correctness). -/
   hB1uniq : ∀ j ∈ U.ids, (U.block j).creator = v1 →
     (U.block j).round = (U.block B1).round → j = B1
@@ -13663,7 +13720,7 @@ def skipFillD (sk : SkipMsg U) (D : Delivery U)
       obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
       have hR0 : sk.r0 = (U.block sk.B1).round := rfl
       rw [sk.skipFill_block_fresh] at hbc hbr
-      simp only [SkipMsg.fillBlock] at hbc hbr
+      simp only [SkipData.fillBlock] at hbc hbr
       subst hbc
       rw [hdown n (by omega) (by omega)]
       exact Finset.empty_subset _
@@ -24357,6 +24414,270 @@ def Statement : Prop :=
 
 **HZ9.** Hydrozoan is a lawful carrier; every verdict reads a band, two views agree, and it skips an unsupported slot given `qFast` blamers. Persistence and locality are the band applied, and truncation invariance follows from the band's offsets without being stated here.
 
+#### `chopFinWhale`
+
+*def, `Integration.FinWhaleMechanisms.lean`*
+
+```lean
+def chopFinWhale (D : Dag Validator BlockId Payload) (G : ℕ) :
+    Dag Validator BlockId Payload where
+  ids := D.ids.filter fun i => G ≤ (D.block i).round
+  block := chopBlk D.block G
+  complete := by
+    intro i hi j hj
+    rw [Finset.mem_filter] at hi
+    rcases Nat.lt_or_ge G (D.block i).round with h | h
+    · rw [chopBlk_refs_of_lt h] at hj
+      have hjr := (D.valid i hi.1).predecessor j hj
+      exact Finset.mem_filter.mpr ⟨D.complete i hi.1 j hj, by omega⟩
+    · rw [chopBlk_refs_of_le h] at hj
+      exact absurd hj (Finset.notMem_empty j)
+  valid := by
+    intro i hi
+    rw [Finset.mem_filter] at hi
+    have hv := D.valid i hi.1
+    rcases Nat.lt_or_ge G (D.block i).round with h | h
+    · refine ⟨?_, ?_, ?_, ?_⟩
+      · intro j hj
+        rw [chopBlk_refs_of_lt h] at hj
+        have := hv.predecessor j hj
+        rw [chopBlk_round, chopBlk_round]
+        omega
+      · intro a ha b hb hab
+        rw [chopBlk_refs_of_lt h] at ha hb
+        rw [chopBlk_creator, chopBlk_creator] at hab
+        exact hv.distinct_creators a ha b hb hab
+      · intro _
+        have hcr : creators (chopBlk D.block G) (chopBlk D.block G i) =
+            creators D.block (D.block i) := by
+          unfold creators
+          rw [chopBlk_refs_of_lt h, creatorsOf_chopBlk]
+        rw [hcr]
+        exact hv.quorum (by omega)
+      · -- the leader clause, at `G + 1` and above it
+        intro v
+        rcases Nat.lt_or_ge (G + 1) (D.block i).round with h1 | h1
+        · -- above the boundary: parents and grandparents are untouched
+          rcases hv.leader_clause v with hl | hr
+          · refine Or.inl ?_
+            intro a ha b hb x hx y hy hxv hyv
+            rw [chopBlk_refs_of_lt h] at ha hb
+            have har := hv.predecessor a ha
+            have hbr := hv.predecessor b hb
+            rw [chopBlk_refs_of_lt (by omega)] at hx
+            rw [chopBlk_refs_of_lt (by omega)] at hy
+            rw [chopBlk_creator] at hxv hyv
+            exact hl a ha b hb x hx y hy hxv hyv
+          · refine Or.inr ?_
+            intro a ha
+            rw [chopBlk_refs_of_lt h] at ha
+            rw [chopBlk_creator]
+            exact hr a ha
+        · -- the boundary round: every parent is a new genesis
+          refine Or.inl ?_
+          intro a ha b _ x hx
+          rw [chopBlk_refs_of_lt h] at ha
+          have har := hv.predecessor a ha
+          rw [chopBlk_refs_of_le (by omega)] at hx
+          exact absurd hx (Finset.notMem_empty x)
+    · -- the new base layer, and junk below it: no references
+      refine ⟨?_, ?_, ?_, ?_⟩
+      · intro j hj
+        rw [chopBlk_refs_of_le h] at hj
+        exact absurd hj (Finset.notMem_empty j)
+      · intro a ha
+        rw [chopBlk_refs_of_le h] at ha
+        exact absurd ha (Finset.notMem_empty a)
+      · intro hr
+        rw [chopBlk_round] at hr
+        omega
+      · intro v
+        refine Or.inr ?_
+        intro a ha
+        rw [chopBlk_refs_of_le h] at ha
+        exact absurd ha (Finset.notMem_empty a)
+  correct_single := by
+    intro i hi j hj hcorrect hcreator hround
+    rw [Finset.mem_filter] at hi hj
+    rw [chopBlk_creator] at hcorrect hcreator
+    rw [chopBlk_creator] at hcreator
+    rw [chopBlk_round, chopBlk_round] at hround
+    exact D.correct_single i hi.1 j hj.1 hcorrect hcreator (by omega)
+```
+
+**The cut, at FinWhale's DAG.** The blocks at or above the horizon, rounds rebased by `−G`, the round-`G` layer as the new geneses.
+
+#### `chopViewFinWhale`
+
+*def, `Integration.FinWhaleMechanisms.lean`*
+
+```lean
+def chopViewFinWhale (V : {V : Finset BlockId // IsView D V}) (G : ℕ) :
+    {V : Finset BlockId // IsView (chopFinWhale D G) V} :=
+  ⟨V.val.filter fun i => G ≤ (D.block i).round, by
+    constructor
+    · intro i hi
+      rw [Finset.mem_filter] at hi
+      exact mem_chopFinWhale_ids.mpr ⟨V.property.subset hi.1, hi.2⟩
+    · intro i hi j hj
+      rw [Finset.mem_filter] at hi
+      have hj' : j ∈ (chopBlk D.block G i).refs := hj
+      rcases Nat.lt_or_ge G (D.block i).round with h | h
+      · rw [chopBlk_refs_of_lt h] at hj'
+        have := (D.valid i (V.property.subset hi.1)).predecessor j hj'
+        exact Finset.mem_filter.mpr ⟨V.property.closed i hi.1 j hj', by omega⟩
+      · rw [chopBlk_refs_of_le h] at hj'
+        exact absurd hj' (Finset.notMem_empty j)⟩
+```
+
+The truncated view: keep what clears the cut.
+
+#### `skipFillFinWhale`
+
+*def, `Integration.FinWhaleMechanisms.lean`*
+
+```lean
+def skipFillFinWhale (D : Dag Validator BlockId Payload)
+    (sk : SkipData D.ids D.block) : Dag Validator BlockId Payload where
+  ids := D.ids ∪ sk.freshIds
+  block b := if b ∈ D.ids then D.block b else sk.copyBlock (sk.idx b)
+  complete := by
+    intro i hi j hj
+    rcases Finset.mem_union.mp hi with ho | hf
+    · rw [if_pos ho] at hj
+      exact Finset.mem_union_left _ (D.complete i ho j hj)
+    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
+      have hR0 : sk.r0 = (D.block sk.B1).round := rfl
+      rw [if_neg (sk.hfresh_new k), sk.hidx] at hj
+      simp only [SkipData.copyBlock] at hj
+      exact Finset.mem_union_left _
+        (D.complete _ (sk.hline_mem k (by omega) hk2) j hj)
+  valid := by
+    intro i hi
+    rcases Finset.mem_union.mp hi with ho | hf
+    · rw [if_pos ho]
+      have hv := D.valid i ho
+      refine ⟨?_, ?_, ?_, ?_⟩
+      · intro j hj
+        rw [if_pos (D.complete i ho j hj)]
+        exact hv.predecessor j hj
+      · intro a ha b hb hab
+        rw [if_pos (D.complete i ho a ha), if_pos (D.complete i ho b hb)] at hab
+        exact hv.distinct_creators a ha b hb hab
+      · intro hr
+        refine le_trans (hv.quorum hr) (Finset.card_le_card ?_)
+        intro c hc
+        unfold creators creatorsOf at hc ⊢
+        obtain ⟨j, hj, hjc⟩ := Finset.mem_image.mp hc
+        refine Finset.mem_image.mpr ⟨j, hj, ?_⟩
+        simp only
+        rw [if_pos (D.complete i ho j hj)]
+        exact hjc
+      · intro v
+        rcases hv.leader_clause v with hl | hr
+        · refine Or.inl ?_
+          intro a ha b hb x hx y hy hxv hyv
+          rw [if_pos (D.complete i ho a ha)] at hx
+          rw [if_pos (D.complete i ho b hb)] at hy
+          rw [if_pos (D.complete _ (D.complete i ho a ha) x hx)] at hxv
+          rw [if_pos (D.complete _ (D.complete i ho b hb) y hy)] at hyv
+          exact hl a ha b hb x hx y hy hxv hyv
+        · refine Or.inr ?_
+          intro a ha
+          rw [if_pos (D.complete i ho a ha)]
+          exact hr a ha
+    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
+      have hR0 : sk.r0 = (D.block sk.B1).round := rfl
+      rw [if_neg (sk.hfresh_new k), sk.hidx]
+      have hlm := sk.hline_mem k (by omega) hk2
+      have hlv := D.valid _ hlm
+      have hlr := sk.hline_round k (by omega) hk2
+      refine ⟨?_, ?_, ?_, ?_⟩
+      · intro j hj
+        simp only [SkipData.copyBlock] at hj ⊢
+        rw [if_pos (D.complete _ hlm j hj)]
+        have := hlv.predecessor j hj
+        omega
+      · intro a ha b hb hab
+        simp only [SkipData.copyBlock] at ha hb
+        rw [if_pos (D.complete _ hlm a ha), if_pos (D.complete _ hlm b hb)] at hab
+        exact hlv.distinct_creators a ha b hb hab
+      · intro _
+        have hq := hlv.quorum (by omega)
+        refine le_trans hq (Finset.card_le_card ?_)
+        intro c hc
+        unfold creators creatorsOf at hc ⊢
+        obtain ⟨j, hj, hjc⟩ := Finset.mem_image.mp hc
+        refine Finset.mem_image.mpr ⟨j, ?_, ?_⟩
+        · simp only [SkipData.copyBlock]; exact hj
+        · simp only
+          rw [if_pos (D.complete _ hlm j hj)]
+          exact hjc
+      · intro v
+        rcases hlv.leader_clause v with hl | hr
+        · refine Or.inl ?_
+          intro a ha b hb x hx y hy hxv hyv
+          simp only [SkipData.copyBlock] at ha hb
+          rw [if_pos (D.complete _ hlm a ha)] at hx
+          rw [if_pos (D.complete _ hlm b hb)] at hy
+          rw [if_pos (D.complete _ (D.complete _ hlm a ha) x hx)] at hxv
+          rw [if_pos (D.complete _ (D.complete _ hlm b hb) y hy)] at hyv
+          exact hl a ha b hb x hx y hy hxv hyv
+        · refine Or.inr ?_
+          intro a ha
+          simp only [SkipData.copyBlock] at ha
+          rw [if_pos (D.complete _ hlm a ha)]
+          exact hr a ha
+  correct_single := by
+    intro i hi j hj _ hcc hrr
+    rcases Finset.mem_union.mp hi with ho | hfr <;>
+      rcases Finset.mem_union.mp hj with ho' | hfr'
+    · rw [if_pos ho] at hcc hrr
+      rw [if_pos ho'] at hcc hrr
+      exact D.correct_single i ho j ho' (by rwa [if_pos ho] at *) hcc hrr
+    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hfr'
+      have hR0 : sk.r0 = (D.block sk.B1).round := rfl
+      rw [if_pos ho] at hcc hrr
+      rw [if_neg (sk.hfresh_new k), sk.hidx] at hcc hrr
+      exact (sk.hgap i ho hcc
+        (by simp only [SkipData.copyBlock] at hrr; omega)
+        (by simp only [SkipData.copyBlock] at hrr; omega)).elim
+    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hfr
+      have hR0 : sk.r0 = (D.block sk.B1).round := rfl
+      rw [if_neg (sk.hfresh_new k), sk.hidx] at hcc hrr
+      rw [if_pos ho'] at hcc hrr
+      exact (sk.hgap j ho' hcc.symm
+        (by simp only [SkipData.copyBlock] at hrr; omega)
+        (by simp only [SkipData.copyBlock] at hrr; omega)).elim
+    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hfr
+      obtain ⟨l, hl1, hl2, rfl⟩ := sk.mem_freshIds.mp hfr'
+      rw [if_neg (sk.hfresh_new k), sk.hidx] at hrr
+      rw [if_neg (sk.hfresh_new l), sk.hidx] at hrr
+      simp only [SkipData.copyBlock] at hrr
+      exact hrr ▸ rfl
+```
+
+**The recovery, at FinWhale's DAG.** `D`, extended with one block per gap round, authored by the recovering validator and carrying the donor's references at that round.
+
+`SkipData.copyBlock` rather than `SkipData.fillBlock`: FinWhale has no self-parent clause to satisfy, and the self reference the core's fill adds is exactly what `ValidHere.leader_clause` would object to. With the donor's references copied and nothing added, all four validity clauses are the donor's, read through lookups that agree on every old id.
+
+#### `liftViewFinWhale`
+
+*def, `Integration.FinWhaleMechanisms.lean`*
+
+```lean
+def liftViewFinWhale (V : {V : Finset BlockId // IsView D V}) :
+    {V : Finset BlockId // IsView (skipFillFinWhale D sk) V} :=
+  ⟨V.val, by
+    constructor
+    · exact fun _ hb => Finset.mem_union_left _ (V.property.subset hb)
+    · intro i hi j hj
+      rw [skipFillFinWhale_block_old (V.property.subset hi)] at hj
+      exact V.property.closed i hi j hj⟩
+```
+
+The pre-crash view, read in the repaired DAG: the same ids, and every one of them old.
+
 #### `chopHybrid`
 
 *def, `Integration.HybridMechanisms.lean`*
@@ -24802,6 +25123,198 @@ def View.ofCore {Payload : Type} {U' : LeanDag.BlockUniverse Replica BlockId Pay
 ```
 
 And a core view of any universe is a Hydrozoan view of its reading.
+
+#### `chopNemo`
+
+*def, `Integration.NemoMechanisms.lean`*
+
+```lean
+def chopNemo (U : Nemo.Universe Validator BlockId Payload) (G : ℕ) :
+    Nemo.Universe Validator BlockId Payload where
+  ids := U.ids.filter fun i => G ≤ (U.block i).round
+  block := chopBlk U.block G
+  complete := by
+    intro i hi j hj
+    rw [Finset.mem_filter] at hi
+    rcases Nat.lt_or_ge G (U.block i).round with h | h
+    · rw [chopBlk_refs_of_lt h] at hj
+      have hjr := U.round_of_mem_refs hi.1 hj
+      exact Finset.mem_filter.mpr ⟨U.complete i hi.1 j hj, by omega⟩
+    · rw [chopBlk_refs_of_le h] at hj
+      exact absurd hj (Finset.notMem_empty j)
+  valid := by
+    intro i hi
+    rw [Finset.mem_filter] at hi
+    have hv := U.valid i hi.1
+    rcases Nat.lt_or_ge G (U.block i).round with h | h
+    · refine ⟨?_, ?_⟩
+      · intro j hj
+        rw [chopBlk_refs_of_lt h] at hj
+        have hjr := hv.predecessor j hj
+        rw [chopBlk_round, chopBlk_round]
+        omega
+      · intro _
+        have hcr : creators (chopBlk U.block G) (chopBlk U.block G i) =
+            creators U.block (U.block i) := by
+          unfold creators
+          rw [chopBlk_refs_of_lt h, creatorsOf_chopBlk]
+        rw [hcr]
+        exact hv.quorum (by omega)
+    · refine ⟨?_, ?_⟩
+      · intro j hj
+        rw [chopBlk_refs_of_le h] at hj
+        exact absurd hj (Finset.notMem_empty j)
+      · intro hr
+        rw [chopBlk_round] at hr
+        omega
+  no_equivocation := by
+    intro i hi j hj hcreator hround
+    rw [Finset.mem_filter] at hi hj
+    rw [chopBlk_creator, chopBlk_creator] at hcreator
+    rw [chopBlk_round, chopBlk_round] at hround
+    exact U.no_equivocation i hi.1 j hj.1 hcreator (by omega)
+```
+
+**The cut, at Nemo's universe.** The blocks at or above the horizon, rounds rebased by `−G`, the round-`G` layer as the new geneses — the core's construction on the core's block operator, with Nemo's two invariants discharged in place of the core's four.
+
+The majority quorum survives because a block above the cut keeps its references and its authors; the base layer has none and owes nothing. Non-equivocation survives because the cut neither adds a block nor changes an author, and rebasing rounds by a constant is injective on what is left.
+
+#### `chopViewNemo`
+
+*def, `Integration.NemoMechanisms.lean`*
+
+```lean
+def chopViewNemo (V : Nemo.View Validator BlockId Payload U) (G : ℕ) :
+    Nemo.View Validator BlockId Payload (chopNemo U G) where
+  ids := V.ids.filter fun i => G ≤ (U.block i).round
+  subset_ids := by
+    intro i hi
+    rw [Finset.mem_filter] at hi
+    exact mem_chopNemo_ids.mpr ⟨V.subset_ids hi.1, hi.2⟩
+  complete := by
+    intro i hi j hj
+    rw [Finset.mem_filter] at hi
+    have hj' : j ∈ (chopBlk U.block G i).refs := hj
+    rcases Nat.lt_or_ge G (U.block i).round with h | h
+    · rw [chopBlk_refs_of_lt h] at hj'
+      have := U.round_of_mem_refs (V.subset_ids hi.1) hj'
+      exact Finset.mem_filter.mpr ⟨V.complete i hi.1 j hj', by omega⟩
+    · rw [chopBlk_refs_of_le h] at hj'
+      exact absurd hj' (Finset.notMem_empty j)
+```
+
+The truncated view: keep what clears the cut. Closure survives — a retained block's references sit one round below it, hence at or above the cut, except at the base layer, where they are gone.
+
+#### `skipFillNemo`
+
+*def, `Integration.NemoMechanisms.lean`*
+
+```lean
+def skipFillNemo (U : Nemo.Universe Validator BlockId Payload)
+    (sk : SkipData U.ids U.block) : Nemo.Universe Validator BlockId Payload where
+  ids := U.ids ∪ sk.freshIds
+  block b := if b ∈ U.ids then U.block b else sk.copyBlock (sk.idx b)
+  complete := by
+    intro i hi j hj
+    rcases Finset.mem_union.mp hi with ho | hf
+    · rw [if_pos ho] at hj
+      exact Finset.mem_union_left _ (U.complete i ho j hj)
+    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
+      have hR0 : sk.r0 = (U.block sk.B1).round := rfl
+      rw [if_neg (sk.hfresh_new k), sk.hidx] at hj
+      simp only [SkipData.copyBlock] at hj
+      exact Finset.mem_union_left _
+        (U.complete _ (sk.hline_mem k (by omega) hk2) j hj)
+  valid := by
+    intro i hi
+    rcases Finset.mem_union.mp hi with ho | hf
+    · rw [if_pos ho]
+      have hv := U.valid i ho
+      refine ⟨?_, ?_⟩
+      · intro j hj
+        rw [if_pos (U.complete i ho j hj)]
+        exact hv.predecessor j hj
+      · intro hr
+        refine le_trans (hv.quorum hr) (Finset.card_le_card ?_)
+        intro c hc
+        unfold creators creatorsOf at hc ⊢
+        obtain ⟨j, hj, hjc⟩ := Finset.mem_image.mp hc
+        refine Finset.mem_image.mpr ⟨j, hj, ?_⟩
+        simp only
+        rw [if_pos (U.complete i ho j hj)]
+        exact hjc
+    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
+      have hR0 : sk.r0 = (U.block sk.B1).round := rfl
+      rw [if_neg (sk.hfresh_new k), sk.hidx]
+      have hlm := sk.hline_mem k (by omega) hk2
+      have hlv := U.valid _ hlm
+      have hlr := sk.hline_round k (by omega) hk2
+      refine ⟨?_, ?_⟩
+      · intro j hj
+        simp only [SkipData.copyBlock] at hj ⊢
+        rw [if_pos (U.complete _ hlm j hj)]
+        have := hlv.predecessor j hj
+        omega
+      · intro _
+        have hq := hlv.quorum (by omega)
+        refine le_trans hq (Finset.card_le_card ?_)
+        intro c hc
+        unfold creators creatorsOf at hc ⊢
+        obtain ⟨j, hj, hjc⟩ := Finset.mem_image.mp hc
+        refine Finset.mem_image.mpr ⟨j, ?_, ?_⟩
+        · simp only [SkipData.copyBlock]; exact hj
+        · simp only
+          rw [if_pos (U.complete _ hlm j hj)]
+          exact hjc
+  no_equivocation := by
+    intro i hi j hj hcc hrr
+    rcases Finset.mem_union.mp hi with ho | hf <;>
+      rcases Finset.mem_union.mp hj with ho' | hf'
+    · rw [if_pos ho] at hcc hrr
+      rw [if_pos ho'] at hcc hrr
+      exact U.no_equivocation i ho j ho' hcc hrr
+    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf'
+      have hR0 : sk.r0 = (U.block sk.B1).round := rfl
+      rw [if_pos ho] at hcc hrr
+      rw [if_neg (sk.hfresh_new k), sk.hidx] at hcc hrr
+      exact (sk.hgap i ho hcc
+        (by simp only [SkipData.copyBlock] at hrr; omega)
+        (by simp only [SkipData.copyBlock] at hrr; omega)).elim
+    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
+      have hR0 : sk.r0 = (U.block sk.B1).round := rfl
+      rw [if_neg (sk.hfresh_new k), sk.hidx] at hcc hrr
+      rw [if_pos ho'] at hcc hrr
+      exact (sk.hgap j ho' hcc.symm
+        (by simp only [SkipData.copyBlock] at hrr; omega)
+        (by simp only [SkipData.copyBlock] at hrr; omega)).elim
+    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
+      obtain ⟨l, hl1, hl2, rfl⟩ := sk.mem_freshIds.mp hf'
+      rw [if_neg (sk.hfresh_new k), sk.hidx] at hrr
+      rw [if_neg (sk.hfresh_new l), sk.hidx] at hrr
+      simp only [SkipData.copyBlock] at hrr
+      exact hrr ▸ rfl
+```
+
+**The recovery, at Nemo's universe.** `U`, extended with one block per gap round, authored by the recovering validator and carrying the donor's references at that round — `SkipData.copyBlock`, the fill without the self reference the core's `self_parent` clause demands.
+
+Nemo's two invariants are discharged where they differ from the core's. The majority quorum is the donor's, because the filled block's references *are* the donor's and old ids are looked up unchanged. Non-equivocation is universal here, with no Byzantine exemption, and that is exactly what `hgap` supplies: the recovering validator authored nothing in the gap, so no old block collides with a filled one, and the filled ones are one per round.
+
+#### `liftViewNemo`
+
+*def, `Integration.NemoMechanisms.lean`*
+
+```lean
+def liftViewNemo (V : Nemo.View Validator BlockId Payload U) :
+    Nemo.View Validator BlockId Payload (skipFillNemo U sk) where
+  ids := V.ids
+  subset_ids := fun _ hb => Finset.mem_union_left _ (V.subset_ids hb)
+  complete := by
+    intro i hi j hj
+    rw [skipFillNemo_block_old (V.subset_ids hi)] at hj
+    exact V.complete i hi j hj
+```
+
+The pre-crash view, read in the repaired universe: the same ids, and every one of them old.
 
 #### `SoundOn`
 
@@ -25630,7 +26143,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 1069 theorems that either another module of the
+The 1077 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -28548,6 +29061,53 @@ theorem card_viewUpto_le_of_allExposed' {κ : ℕ} (hdos : DoSValid U)
 
 ### Garbage collection
 
+#### `chopBlk_creator`
+
+*theorem, `GC.Chop.lean`*
+
+```lean
+@[simp] theorem chopBlk_creator :
+    (chopBlk blk G i).creator = (blk i).creator
+```
+
+#### `chopBlk_round`
+
+*theorem, `GC.Chop.lean`*
+
+```lean
+@[simp] theorem chopBlk_round :
+    (chopBlk blk G i).round = (blk i).round - G
+```
+
+#### `chopBlk_refs_of_le`
+
+*theorem, `GC.Chop.lean`*
+
+```lean
+theorem chopBlk_refs_of_le
+    (h : (blk i).round ≤ G) : (chopBlk blk G i).refs = ∅
+```
+
+#### `chopBlk_refs_of_lt`
+
+*theorem, `GC.Chop.lean`*
+
+```lean
+theorem chopBlk_refs_of_lt
+    (h : G < (blk i).round) : (chopBlk blk G i).refs = (blk i).refs
+```
+
+#### `creatorsOf_chopBlk`
+
+*theorem, `GC.Chop.lean`*
+
+```lean
+theorem creatorsOf_chopBlk (s : Finset BlockId) :
+    creatorsOf (chopBlk blk G) s = creatorsOf blk s
+```
+
+Creators are untouched, so creator sets are, pointwise.
+
 #### `chopBlock_creator`
 
 *theorem, `GC.Chop.lean`*
@@ -28686,7 +29246,7 @@ theorem horizon_le_slotRound (hd : G ≤ S.slotRound d) (k : ℕ) :
     G ≤ S.slotRound (d + k)
 ```
 
-Every slot from the base slot on clears the horizon.
+Every slot from the base slot on clears the horizon. Stated with the fault model omitted: a rule with its own universe record still runs on the core's schedule, and the cut's base-slot condition is about the schedule alone.
 
 #### `mem_viewUpto`
 
@@ -36753,6 +37313,17 @@ theorem causal : Causal (finWhaleRule (Validator := Validator) (BlockId := Block
 
 FinWhale's DAGs are block DAGs.
 
+#### `agree`
+
+*theorem, `FinWhale.Carrier.lean`*
+
+```lean
+theorem agree : Agree (finWhaleRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload))
+```
+
+**Two views decide alike.** Lemma 12 under the property's name: the exclusions come from the DAG, the deterministic rule is the least candidate, and the downward induction runs on the two assignments' finiteness bounds together.
+
 #### `commitsCandidate`
 
 *theorem, `FinWhale.Carrier.lean`*
@@ -36763,6 +37334,19 @@ theorem commitsCandidate : CommitsCandidate
 ```
 
 **A commit names the slot's candidate.** The `slot` field of an assignment, read at the property's `IsCandidate` — which is where the schedule being pinned to the DAG earns its place.
+
+#### `banded`
+
+*theorem, `FinWhale.Carrier.lean`*
+
+```lean
+theorem banded : Banded (finWhaleRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload))
+```
+
+**FinWhale is banded.** The band runs from the slot's own round to two above the DAG's highest, and the argument is a downward induction on slots with `Band.lean`'s transport at each step.
+
+Three cases, and the third is the one with content. A slot the smaller view decided directly stays decided the same way, because a commit and a skip both survive a band. A slot it decided from an anchor keeps its anchor — the anchor's commit and the skips below it transport by the induction hypothesis — and then the tie-break is the same function of the same anchor. What is left is the larger view deciding *directly* a slot the smaller one decided from an anchor, and that is settled inside `D'` alone: a direct commit pins what the tie-break may name, and a direct skip bars it naming anything.
 
 #### `quorate`
 
@@ -38640,6 +39224,17 @@ theorem commitsDirect : CommitsDirect
 
 **And a direct commit is a verdict**, at Nemo's own direct predicate.
 
+#### `banded`
+
+*theorem, `NemoProperties.lean`*
+
+```lean
+theorem banded : Banded (nemoRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload))
+```
+
+**Nemo is banded.**
+
 #### `leaderCommits`
 
 *theorem, `NemoProperties.lean`*
@@ -39714,7 +40309,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 1051 lemmas used only within the file that proves
+The 1072 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -41286,13 +41881,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `spSkip_new` | And a candidate the band adds is skipped too. An old block two rounds above the slot carries a quorum of … |
 | `voters_subset` | Votes survive: an old voter is a voter. |
 
-### `FinWhale/Carrier.lean` (19)
+### `FinWhale/Carrier.lean` (17)
 
 | Lemma | Role |
 |:---|:---|
-| `agree` | Two views decide alike. Lemma 12 under the property's name: the exclusions come from the DAG, the … |
 | `assignment_passOf` | And it is an assignment. Well formed by `wellFormed_decOf`, committing only blocks of the slot by … |
-| `banded` | FinWhale is banded. The band runs from the slot's own round to two above the DAG's highest, and the … |
 | `commitsDirect` | And a direct commit is a verdict, at every schedule. `IsCandidate` places the block at the slot, … |
 | `decided_iff` | A verdict of this rule is the pass's verdict. One direction is the pass being an assignment; the other is … |
 | `decided_of_directCommit` | A direct commit in view is a verdict, at any schedule and with no side condition. |
@@ -41427,6 +42020,23 @@ subsection per module, in the layer order of Appendices B and C.
 | `adaptiveRun_commits_reactive` | Reliable-led slots commit, reactively. In any run, a slot past the first epoch led by a member of `T` … |
 | `adaptiveRun_exists_reactive` | The adaptive fixpoint exists over reactive Mysticeti. Under a policy that places runs, with the reactive … |
 | `exists_partialRun_reactive` | Partial runs exist at every height, reactively. |
+
+### `Integration/FinWhaleMechanisms.lean` (12)
+
+| Lemma | Role |
+|:---|:---|
+| `chopFinWhale_block` | — |
+| `decided_agree_chop_finwhale` | And cross-cut agreement, from an arbitrary view of the truncation. |
+| `decided_agree_skipFill_finwhale` | And agreement across it: a validator that recovered agrees with one that did not, from any view of the fill. |
+| `decided_chop_iff_finwhale` | Verdict transport across the cut, for FinWhale. |
+| `decided_skipFill_finwhale` | Verdicts survive the recovery, for FinWhale. |
+| `extends_skipFill_finwhale` | The fill is an extension of FinWhale's carrier. |
+| `mem_chopFinWhale_ids` | — |
+| `skipFillFinWhale_block_fresh` | — |
+| `skipFillFinWhale_block_old` | — |
+| `sustains_skipFill_finwhale` | What the fill sustains. Above `sk.r` the fill added nothing, so every block there is old and unchanged. |
+| `truncates_chop_finwhale` | The cut is a truncation of FinWhale's carrier. |
+| `viewAgreeAbove_chop_finwhale` | The chopped view agrees with the original above the cut. |
 
 ### `Integration/HybridMechanisms.lean` (6)
 
@@ -41579,6 +42189,23 @@ subsection per module, in the layer order of Appendices B and C.
 | `extends_skipFillHZ` | The fill is an extension. It holds every block the original held and denotes each of them unchanged. |
 | `sustains_skipFillHZ` | A fill sustains from the top of its gap. Above it the fill added nothing, so every block is old and … |
 
+### `Integration/NemoMechanisms.lean` (12)
+
+| Lemma | Role |
+|:---|:---|
+| `chopNemo_block` | — |
+| `decided_agree_chop_nemo` | And cross-cut agreement, from an arbitrary view of the truncation. |
+| `decided_agree_skipFill_nemo` | And agreement across it: a validator that recovered agrees with one that did not, from any view of the fill. |
+| `decided_chop_iff_nemo` | Verdict transport across the cut, for Nemo. |
+| `decided_skipFill_nemo` | Verdicts survive the recovery, for Nemo. The replica that recovered reaches every verdict it reached … |
+| `extends_skipFill_nemo` | The fill is an extension of Nemo's carrier. |
+| `mem_chopNemo_ids` | — |
+| `skipFillNemo_block_fresh` | — |
+| `skipFillNemo_block_old` | — |
+| `sustains_skipFill_nemo` | What the fill sustains. Above `sk.r` the fill added nothing, so every block there is old and unchanged. … |
+| `truncates_chop_nemo` | The cut is a truncation of Nemo's carrier. |
+| `viewAgreeAbove_chop_nemo` | The chopped view agrees with the original above the cut. |
+
 ### `Integration/Sound.lean` (4)
 
 | Lemma | Role |
@@ -41656,11 +42283,10 @@ subsection per module, in the layer order of Appendices B and C.
 | `nemoRule_ids` | — |
 | `nemoRule_viewIds` | — |
 
-### `NemoProperties.lean` (12)
+### `NemoProperties.lean` (11)
 
 | Lemma | Role |
 |:---|:---|
-| `banded` | Nemo is banded. |
 | `banded_aux` | Every verdict of Nemo reads a band of rounds. One induction, three cases. The direct case reads one round … |
 | `blockB` | — |
 | `blockB'` | — |

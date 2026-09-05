@@ -1947,14 +1947,57 @@ consumes a property is not finished until every theorem it states has
 been asked for from the properties — had been stated and not enforced.
 The audit enforces it.
 
-**What is left is the carrier's limit, not a missing property.** Four
-cells stand: garbage collection and crash recovery for Nemo and for
-FinWhale. Both rules have their own universe *record*, so neither can
-reuse the core's `chop` or `skipFill`, and `DagRule.Universe` is opaque
-— the property layer cannot construct one (§11.4). A fifth is closed by
-a counterexample rather than by work: Optimal-Hydrozoan's recovery
-breaks its own leader-exclusion rule (`not_leaderExcludedAll_Ufill`),
-which is why the mechanism is out of scope for it and not owed.
+**The remaining four cells were then collected too**, and the run now
+reports none open. They were garbage collection and crash recovery for
+Nemo and for FinWhale, the two rules that carry their own universe
+*record* rather than the core's. `DagRule.Universe` is opaque, so
+neither could reuse `chop` or `skipFill` as a whole; what each reused
+instead is the mechanism's *data*, and what each supplied is its own
+invariant discharge (§11.2e). A fifth cell is closed by a
+counterexample rather than by work: Optimal-Hydrozoan's recovery breaks
+its own leader-exclusion rule (`not_leaderExcludedAll_Ufill`), which is
+why `skipFill` is out of scope for it and not owed.
+
+### 11.2e What a rule with its own universe record supplies
+
+Nemo and FinWhale close their four cells in
+`Integration/NemoMechanisms.lean` and
+`Integration/FinWhaleMechanisms.lean`. Two things were changed to make
+that possible, and both are the same change.
+
+**The cut's block operator moved off the universe.** `chopBlk blk G` is
+stated over a bare block assignment; `chopBlock U G` is
+`chopBlk U.block G`. **The fill's message moved off the universe too.**
+`SkipData ids blk` carries the fields `SkipMsg U` carried, and
+`SkipMsg U` abbreviates `SkipData U.ids U.block`, so every existing
+statement about a core message reads unchanged. Neither change touches
+a proof: the fields instantiate to the same propositions.
+
+What each rule then writes is its own universe, and nothing else. Nemo's
+`chopNemo` discharges a majority parent quorum and universal
+non-equivocation; FinWhale's `chopFinWhale` discharges `ValidHere`'s
+four clauses and `correct_single`. The four transports —
+`decided_chop_iff`, `decided_agree_chop`, `decided_skipFill`,
+`decided_agree_skipFill` — are then `LocalTruncate.of_banded`,
+`decided_agree_truncate`, `Persist.of_banded` and
+`decided_agree_extends` applied, with no induction of their own.
+
+**The fill has a second form, and FinWhale needs it.**
+`SkipData.fillBlock` inserts a self reference, because the core's
+`ValidWrt.self_parent` demands a parent by the same author.
+`SkipData.copyBlock` does not: it takes the donor's references at that
+round and re-authors them. The distinction is not cosmetic. A self
+reference at the boundary round grafts the anchor's parents onto the
+donor's, and a validity clause that constrains what a block's parents
+*jointly* reference — FinWhale's `ValidHere.leader_clause`,
+Optimal-Hydrozoan's `LeaderExcludedAll` — is not preserved by that
+graft: nothing bounds the anchor's grandparents and the donor's
+together. With `copyBlock` the filled block's parents *are* the donor's,
+and every clause is the donor's verbatim.
+
+So the finding recorded against Optimal-Hydrozoan is a finding about
+`skipFill`, not about fills. Whether `copyBlock` closes that cell too
+has not been checked.
 
 ### 11.3 Against part 3: the mechanisms compose
 
@@ -2086,18 +2129,20 @@ looked for and is not there.
   whose only model is the mechanism that does nothing is the vacuity
   this arc has twice been caught by (§3.4, §3.6); keeping a third would
   invite someone to prove it for a real limiter and fail.
-- **Constructions, not properties.** Four mechanism × rule cells are
-  open (§11.2d): the cut and the fill for Nemo and for FinWhale. Both
-  rules carry their own universe *record* rather than the core's, so
-  neither can reuse `chop` or `skipFill`, and `DagRule.Universe` is
-  opaque — a property can read a universe and nothing in the carrier
-  can make one. What generalises is the *consequence*, a relation
-  between two universes one is given; what does not is the
-  construction. The residue splits into the witness's data, which a
-  bridge like `Integration/Hydrozoan/Transport.lean` already shares,
-  and its invariant, which is irreducible and sometimes false —
-  Optimal-Hydrozoan's fill breaks leader exclusion, and that is a
-  finding rather than a gap.
+- ~~**Constructions, not properties**~~ (**done**, §11.2e). The four
+  open cells — the cut and the fill for Nemo and for FinWhale — are
+  closed, and `audit-mechanisms.py` reports none open. The limit they
+  recorded is real and unchanged: `DagRule.Universe` is opaque, a
+  property can read a universe and nothing in the carrier can make one,
+  so a rule with its own universe record writes its own cut and its own
+  fill. What the closure shows is how the residue splits. The
+  *data* is shared — `chopBlk` and `SkipData` are stated over a bare
+  block assignment with no fault model — and what is irreducible is the
+  invariant discharge, which is small: Nemo's two clauses and FinWhale's
+  five. It is also sometimes false, and `copyBlock` locates where.
+  Optimal-Hydrozoan's fill breaks leader exclusion because `skipFill`
+  adds a self reference, not because it fills; the same clause in
+  FinWhale is discharged by the fill that adds no edge.
 - **One structural limit.** Two *sibling* transformations — two
   validators recovering from one universe with different fill messages —
   give universes neither of which extends the other, and `Agree`

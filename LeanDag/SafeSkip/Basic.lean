@@ -64,7 +64,8 @@ decoder).
 up to `r`, each referencing the one below — the chain the message's `B2`
 pins by following self-parents. `hgap` is the crash itself: `v1`
 authored nothing strictly between `B1` and `r`. -/
-structure SkipMsg (U : BlockUniverse Validator BlockId Payload) where
+structure SkipData (ids : Finset BlockId)
+    (blk : BlockId → Block Validator BlockId Payload) where
   /-- The recovering validator. -/
   v1 : Validator
   /-- Its last block before the crash. -/
@@ -84,23 +85,33 @@ structure SkipMsg (U : BlockUniverse Validator BlockId Payload) where
   non-equivocation gives it for a correct `v1` (`hB1uniq_of_correct`),
   and the hybrid model of report §14 gives it for a *crash-prone* one,
   which is the case Safe Skip exists to serve. -/
-  hB1uniq : ∀ j ∈ U.ids, (U.block j).creator = v1 →
-    (U.block j).round = (U.block B1).round → j = B1
+  hB1uniq : ∀ j ∈ ids, (blk j).creator = v1 →
+    (blk j).round = (blk B1).round → j = B1
   hv12 : v1 ≠ v2
-  hB1 : B1 ∈ U.ids
-  hB1c : (U.block B1).creator = v1
-  hline_mem : ∀ k, (U.block B1).round ≤ k → k ≤ r → line k ∈ U.ids
-  hline_creator : ∀ k, (U.block B1).round ≤ k → k ≤ r →
-    (U.block (line k)).creator = v2
-  hline_round : ∀ k, (U.block B1).round ≤ k → k ≤ r →
-    (U.block (line k)).round = k
-  hline_chain : ∀ k, (U.block B1).round < k → k ≤ r →
-    line (k - 1) ∈ (U.block (line k)).refs
-  hfresh_new : ∀ k, fresh k ∉ U.ids
+  hB1 : B1 ∈ ids
+  hB1c : (blk B1).creator = v1
+  hline_mem : ∀ k, (blk B1).round ≤ k → k ≤ r → line k ∈ ids
+  hline_creator : ∀ k, (blk B1).round ≤ k → k ≤ r →
+    (blk (line k)).creator = v2
+  hline_round : ∀ k, (blk B1).round ≤ k → k ≤ r →
+    (blk (line k)).round = k
+  hline_chain : ∀ k, (blk B1).round < k → k ≤ r →
+    line (k - 1) ∈ (blk (line k)).refs
+  hfresh_new : ∀ k, fresh k ∉ ids
   hidx : ∀ k, idx (fresh k) = k
   /-- The crash: `v1` authored nothing in the gap. -/
-  hgap : ∀ b ∈ U.ids, (U.block b).creator = v1 →
-    (U.block B1).round < (U.block b).round → (U.block b).round ≤ r → False
+  hgap : ∀ b ∈ ids, (blk b).creator = v1 →
+    (blk B1).round < (blk b).round → (blk b).round ≤ r → False
+
+
+/-- **A Safe Skip message at a core universe**: the same data, read off
+`U`. Stated over `ids`/`blk` rather than over a universe because the
+*data* of a fill is the same for every rule in this development, and
+only the invariants a universe carries differ — the shape `chopBlk`
+takes for the cut. Nemo and FinWhale build their own fills from it
+(`docs/target-properties.md` §11.4). -/
+abbrev SkipMsg (U : BlockUniverse Validator BlockId Payload) :=
+  SkipData U.ids U.block
 
 /-- **The boundary condition from correctness.** For a `v1` outside the
 ambient model's Byzantine set, non-equivocation pins its round-`r0`
@@ -115,12 +126,13 @@ theorem hB1uniq_of_correct {v1 : Validator} {B1 : BlockId}
       (U.block j).round = (U.block B1).round → j = B1 :=
   fun j hj hjc hjr => U.eq_of_creator_eq hj hB1 hv1 hjc hB1c hjr
 
-namespace SkipMsg
+namespace SkipData
 
-variable (sk : SkipMsg U)
+variable {ids : Finset BlockId} {blk : BlockId → Block Validator BlockId Payload}
+variable (sk : SkipData ids blk)
 
 /-- The round of the anchor block — the bottom of the gap. -/
-def r0 : ℕ := (U.block sk.B1).round
+def r0 : ℕ := (blk sk.B1).round
 
 /-- The self reference of the filled block at round `k`: the anchor at
 the boundary, the previous filled block above it. -/
@@ -132,8 +144,24 @@ plus the added self reference. -/
 def fillBlock (k : ℕ) : Block Validator BlockId Payload where
   round := k
   creator := sk.v1
-  refs := insert (sk.prev k) (U.block (sk.line k)).refs
-  payload := (U.block (sk.line k)).payload
+  refs := insert (sk.prev k) (blk (sk.line k)).refs
+  payload := (blk (sk.line k)).payload
+
+/-- The filled block **without the self reference**: `v2`'s references
+at that round, re-authored.
+
+The self reference exists to satisfy the core's `ValidWrt.self_parent`,
+and it is the one thing about the fill a validity rule can object to: it
+grafts the anchor's reference set onto the donor's, and a rule that
+constrains what a *pair* of references may see together — FinWhale's
+`ValidHere.leader_clause` — is not preserved by that graft. A rule with
+no self-parent clause takes this block instead, and then validity is the
+donor's verbatim. -/
+def copyBlock (k : ℕ) : Block Validator BlockId Payload where
+  round := k
+  creator := sk.v1
+  refs := (blk (sk.line k)).refs
+  payload := (blk (sk.line k)).payload
 
 /-- The gap rounds, as a `Finset`. -/
 def gap : Finset ℕ := (Finset.range (sk.r + 1)).filter (fun k => sk.r0 < k)
@@ -141,12 +169,21 @@ def gap : Finset ℕ := (Finset.range (sk.r + 1)).filter (fun k => sk.r0 < k)
 /-- The ids of the filled blocks. -/
 def freshIds : Finset BlockId := sk.gap.image sk.fresh
 
+omit [Fintype Validator] [DecidableEq Validator] F in
 theorem mem_freshIds {b : BlockId} :
     b ∈ sk.freshIds ↔ ∃ k, sk.r0 < k ∧ k ≤ sk.r ∧ b = sk.fresh k := by
   simp only [freshIds, gap, Finset.mem_image, Finset.mem_filter, Finset.mem_range]
   constructor
   · rintro ⟨k, ⟨h2, h1⟩, h3⟩; exact ⟨k, h1, by omega, h3.symm⟩
   · rintro ⟨k, h1, h2, h3⟩; exact ⟨k, ⟨by omega, h1⟩, h3.symm⟩
+
+end SkipData
+
+namespace SkipMsg
+
+open SkipData
+
+variable (sk : SkipMsg U)
 
 /-- **The denotation.** `U`, extended with one filled block per gap
 round; every old block looked up unchanged. -/

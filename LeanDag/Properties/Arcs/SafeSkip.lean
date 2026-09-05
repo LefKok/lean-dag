@@ -74,6 +74,7 @@ theorem decided_skipFill {R : DagRule Validator BlockId Payload} (hp : Persist R
     R.Decided S V' k v :=
   hp S U U' (extends_of_skipFill R sk hi hb hi' hb') V V' hV k v h
 
+omit [Faults Validator] in
 /-- **Agreement across the recovery.** A validator that recovered agrees
 with one that did not, from any view of the extension — the same shape
 as cross-cut agreement (`Arcs/GC.lean`), with `Persist` going up where
@@ -154,7 +155,7 @@ theorem sustains_skipFill (sk : SkipMsg U) :
         · exact ho
         · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
           rw [sk.skipFill_block_fresh] at hr
-          simp only [SkipMsg.fillBlock] at hr
+          simp only [SkipData.fillBlock] at hr
           omega
       exact ⟨hbU, by rw [sk.skipFill_block_old hbU] at hr; omega⟩
   round := fun b hb _ => by

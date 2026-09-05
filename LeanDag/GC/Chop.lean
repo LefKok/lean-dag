@@ -28,51 +28,94 @@ forgiven — and the witness file makes that visible on data.
 
 namespace LeanDag
 
+/-! ## The operator, over raw block data
+
+The *data* of a cut is the same for every rule in this development, and
+only the invariants a universe carries differ, so the block-level
+operator is stated over a bare assignment and no fault model. Nemo and
+FinWhale keep their own universe records and take it unchanged. -/
+
+section Data
+
+variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
+variable {G : ℕ} {i : BlockId} {blk : BlockId → Block Validator BlockId Payload}
+
+/-- One block of the truncation, over the raw block assignment: the round
+is rebased by `−G`, and blocks at or below the cut — the new base layer,
+plus junk — lose their references.
+
+Stated over `blk` rather than over a universe because the *data* of a
+cut is the same for every rule in this development, and only the
+invariants a universe carries differ. Nemo and FinWhale keep their own
+universe records and take this unchanged
+(`docs/target-properties.md` §11.4). -/
+def chopBlk (blk : BlockId → Block Validator BlockId Payload) (G : ℕ)
+    (i : BlockId) : Block Validator BlockId Payload :=
+  if (blk i).round ≤ G then
+    { blk i with round := (blk i).round - G, refs := ∅ }
+  else
+    { blk i with round := (blk i).round - G }
+
+@[simp] theorem chopBlk_creator :
+    (chopBlk blk G i).creator = (blk i).creator := by unfold chopBlk; split <;> rfl
+
+@[simp] theorem chopBlk_round :
+    (chopBlk blk G i).round = (blk i).round - G := by unfold chopBlk; split <;> rfl
+
+theorem chopBlk_refs_of_le
+    (h : (blk i).round ≤ G) : (chopBlk blk G i).refs = ∅ := by
+  unfold chopBlk; rw [if_pos h]
+
+theorem chopBlk_refs_of_lt
+    (h : G < (blk i).round) : (chopBlk blk G i).refs = (blk i).refs := by
+  unfold chopBlk; rw [if_neg (by omega)]
+
+/-- Creators are untouched, so creator sets are, pointwise. -/
+theorem creatorsOf_chopBlk (s : Finset BlockId) :
+    creatorsOf (chopBlk blk G) s = creatorsOf blk s :=
+  Finset.image_congr fun i _ => chopBlk_creator
+
+end Data
+
 variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator]
 variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 variable {U : BlockUniverse Validator BlockId Payload}
 variable {G : ℕ} {b i j : BlockId}
 
-/-! ## The operator -/
+/-! ## The core's universe -/
 
-/-- One block of the truncation: the round is rebased by `−G`, and blocks
-at or below the cut — the new base layer, plus junk — lose their
-references. -/
+/-- The core's truncation of a block is that, at the core's universe. -/
 def chopBlock (U : BlockUniverse Validator BlockId Payload) (G : ℕ)
     (i : BlockId) : Block Validator BlockId Payload :=
-  if (U.block i).round ≤ G then
-    { U.block i with round := (U.block i).round - G, refs := ∅ }
-  else
-    { U.block i with round := (U.block i).round - G }
+  chopBlk U.block G i
 
 /-- Truncation leaves authorship unchanged. -/
 @[simp]
 theorem chopBlock_creator :
     (chopBlock U G i).creator = (U.block i).creator := by
-  unfold chopBlock; split <;> rfl
+  unfold chopBlock chopBlk; split <;> rfl
 
 /-- Truncation rebases rounds by the cut. -/
 @[simp]
 theorem chopBlock_round :
     (chopBlock U G i).round = (U.block i).round - G := by
-  unfold chopBlock; split <;> rfl
+  unfold chopBlock chopBlk; split <;> rfl
 
 /-- Truncation leaves payloads unchanged. -/
 @[simp]
 theorem chopBlock_payload :
     (chopBlock U G i).payload = (U.block i).payload := by
-  unfold chopBlock; split <;> rfl
+  unfold chopBlock chopBlk; split <;> rfl
 
 /-- At or below the cut a block becomes a genesis: its references are dropped. -/
 theorem chopBlock_refs_of_le (h : (U.block i).round ≤ G) :
-    (chopBlock U G i).refs = ∅ := by
-  unfold chopBlock; rw [if_pos h]
+    (chopBlock U G i).refs = ∅ := chopBlk_refs_of_le h
 
 /-- Above the cut references are untouched. -/
 theorem chopBlock_refs_of_lt (h : G < (U.block i).round) :
-    (chopBlock U G i).refs = (U.block i).refs := by
-  unfold chopBlock; rw [if_neg (by omega)]
+    (chopBlock U G i).refs = (U.block i).refs := chopBlk_refs_of_lt h
 
 /-- The truncation's references never exceed the original's. -/
 theorem chopBlock_refs_subset :
@@ -83,9 +126,8 @@ theorem chopBlock_refs_subset :
 
 /-- Creators are untouched, so creator sets are, pointwise. -/
 theorem creatorsOf_chopBlock (s : Finset BlockId) :
-    creatorsOf (chopBlock U G) s = creatorsOf U.block s := by
-  unfold creatorsOf
-  exact Finset.image_congr fun i _ => chopBlock_creator
+    creatorsOf (chopBlock U G) s = creatorsOf U.block s :=
+  creatorsOf_chopBlk s
 
 /-- **The horizon** (`garbage.md` §2): the universe above the cut, rounds
 rebased, the round-`G` layer as the new geneses. -/

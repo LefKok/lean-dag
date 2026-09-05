@@ -47,7 +47,7 @@ theorem mem_ids_of_round_gt (sk : SkipMsg U) {b : BlockId}
   · exact ho
   · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
     rw [sk.skipFill_block_fresh] at hround
-    simp only [SkipMsg.fillBlock] at hround
+    simp only [SkipData.fillBlock] at hround
     omega
 
 /-- **I5, refuted.** The fill does not restore coverage. If the
@@ -101,13 +101,13 @@ theorem synchronisedOn_skipFill_of_notMem (sk : SkipMsg U) {T : Finset Validator
     · exact ho
     · obtain ⟨k, _, _, rfl⟩ := sk.mem_freshIds.mp hf
       rw [sk.skipFill_block_fresh] at hbc
-      exact absurd hbc (by simpa [SkipMsg.fillBlock] using hv1)
+      exact absurd hbc (by simpa [SkipData.fillBlock] using hv1)
   have hao : a ∈ U.ids := by
     rcases Finset.mem_union.mp ha with ho | hf
     · exact ho
     · obtain ⟨k, _, _, rfl⟩ := sk.mem_freshIds.mp hf
       rw [sk.skipFill_block_fresh] at hac
-      exact absurd hac (by simpa [SkipMsg.fillBlock] using hv1)
+      exact absurd hac (by simpa [SkipData.fillBlock] using hv1)
   rw [sk.skipFill_block_old hbo] at hbround hbc ⊢
   rw [sk.skipFill_block_old hao] at haround hac
   exact hs n hn b hbo hbround hbc a hao haround hac

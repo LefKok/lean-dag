@@ -129,7 +129,11 @@ theorem Slots.chop_leader (S : Slots Validator) {d : ℕ}
 
 variable [S : Slots Validator] {d : ℕ}
 
-/-- Every slot from the base slot on clears the horizon. -/
+omit [Fintype Validator] [DecidableEq Validator] F in
+/-- Every slot from the base slot on clears the horizon. Stated with the
+fault model omitted: a rule with its own universe record still runs on
+the core's schedule, and the cut's base-slot condition is about the
+schedule alone. -/
 theorem horizon_le_slotRound (hd : G ≤ S.slotRound d) (k : ℕ) :
     G ≤ S.slotRound (d + k) :=
   hd.trans (S.mono (Nat.le_add_right d k))
