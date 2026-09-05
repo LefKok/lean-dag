@@ -88,7 +88,7 @@ theorem all_decided_of_pass (pc : PaceCore U (Correct : Finset Validator) M)
     (wellFormed_decOf hhorizon choose)
     (fun n hRn hnN b hb hbc =>
       held_of_pace pc hids hblk hle card_correct hgst hv n hRn (by omega) b hb hbc)
-    hcommits hrr hN
+    hcommits hrr (fun _ _ => Iff.rfl) hN
 
 end FinWhale
 

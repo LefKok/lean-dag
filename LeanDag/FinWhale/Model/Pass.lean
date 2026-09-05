@@ -30,6 +30,14 @@ variable {ld : ℕ → Validator}
 def directCommits (ld : ℕ → Validator) (D : Dag Validator BlockId Payload) (r : ℕ) : Finset BlockId :=
   (slotBlocks ld D r).filter (fun l => DirectCommit D l)
 
+/-- The eligibility the pass computes at: a slot is an anchor candidate
+when it sits three rounds up. This is the identity-slot reading, which
+is what the pass enumerates; `Anchor` itself is stated at any
+eligibility (`Model/Verdict.lean`). -/
+def passElig (r a : ℕ) : Prop := r + 2 < a
+
+instance : DecidableRel passElig := fun _ _ => inferInstanceAs (Decidable (_ < _))
+
 /-- The candidates for the anchor of `r`: the slots above `r + 2` and
 below the horizon that the verdicts above do not skip. -/
 def anchorCands (N : ℕ) (above : ℕ → Verdict BlockId) (r : ℕ) : Finset ℕ :=

@@ -42,11 +42,11 @@ omit [DecidableEq BlockId] in
 assignments that agree wherever both have decided pick the same anchor,
 because the anchor is the first slot above `r + 2` that is not skipped,
 and a skip is a decision. -/
-theorem anchor_unique {dec dec' : ℕ → Verdict BlockId} {r a a' : ℕ}
-    (hagree : ∀ s, r + 2 < s → dec s ≠ Verdict.undecided → dec' s ≠ Verdict.undecided →
+theorem anchor_unique {Elig : ℕ → ℕ → Prop} {dec dec' : ℕ → Verdict BlockId} {r a a' : ℕ}
+    (hagree : ∀ s, Elig r s → dec s ≠ Verdict.undecided → dec' s ≠ Verdict.undecided →
       dec s = dec' s)
     (hda : dec a ≠ Verdict.undecided) (hda' : dec' a' ≠ Verdict.undecided)
-    (h : Anchor dec r a) (h' : Anchor dec' r a') : a = a' := by
+    (h : Anchor Elig dec r a) (h' : Anchor Elig dec' r a') : a = a' := by
   obtain ⟨hra, hna, hmin⟩ := h
   obtain ⟨hra', hna', hmin'⟩ := h'
   rcases lt_trichotomy a a' with hlt | heq | hgt
@@ -68,14 +68,15 @@ anchor, and then the anchors coincide. That last step is what the
 induction is for: if the anchors differed, the lower of the two is
 skipped by one validator and committed by the other, and it lies above
 `r`, so the induction hypothesis already forbids it. -/
-theorem lemma12
+theorem lemma12 {Elig : ℕ → ℕ → Prop}
     {dc dc' : ℕ → BlockId → Prop} {ds ds' : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec dec' : ℕ → Verdict BlockId}
     {Above : ℕ → BlockId → Prop}
-    (hwf : WellFormed dc ds choose dec) (hwf' : WellFormed dc' ds' choose dec')
+    (hwf : WellFormed Elig dc ds choose dec) (hwf' : WellFormed Elig dc' ds' choose dec')
     (hex : Exclusions dc dc' ds ds' choose Above)
-    (habove : ∀ r a A, r + 2 < a → dec a = Verdict.commit A → Above r A)
-    (habove' : ∀ r a A, r + 2 < a → dec' a = Verdict.commit A → Above r A)
+    (hlt : ∀ r a, Elig r a → r < a)
+    (habove : ∀ r a A, Elig r a → dec a = Verdict.commit A → Above r A)
+    (habove' : ∀ r a A, Elig r a → dec' a = Verdict.commit A → Above r A)
     {N : ℕ} (hbound : ∀ s, N ≤ s → dec s = Verdict.undecided ∧ dec' s = Verdict.undecided) :
     ∀ r, dec r ≠ Verdict.undecided → dec' r ≠ Verdict.undecided → dec r = dec' r := by
   suffices h : ∀ d r, N ≤ r + d →
@@ -154,11 +155,11 @@ theorem lemma12
             -- skipped by one validator and not by the other, and it lies
             -- above `r`, where the induction hypothesis already applies
             have heqa : a = a' :=
-              anchor_unique (fun s hs => IH s (by omega)) hda hda' ha ha'
+              anchor_unique (fun s hs => IH s (hlt r s hs)) hda hda' ha ha'
             subst heqa
             rcases hva : dec a with A | - | -
             · have hsame : dec' a = Verdict.commit A := by
-                rw [← IH a (by have := ha.1; omega) hda hda', hva]
+                rw [← IH a (hlt r a ha.1) hda hda', hva]
               rw [hwf.indirect_commit r a A hdc hds ha hva,
                 hwf'.indirect_commit r a A hdc' hds' ha' hsame]
             · exact absurd hva ha.2.1

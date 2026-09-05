@@ -63,7 +63,7 @@ theorem view_rounds_le (hv : v ∈ (Correct : Finset Validator)) :
 
 /-- Its verdicts follow the reverse pass. -/
 theorem wellFormed (hv : v ∈ (Correct : Finset Validator)) :
-    WellFormed (viewCommit run.leader run.dag (run.view v) (run.isView hv))
+    WellFormed passElig (viewCommit run.leader run.dag (run.view v) (run.isView hv))
       (viewSkip run.leader run.dag (run.view v) (run.isView hv)) run.choose (run.verdicts hv) :=
   wellFormed_decOf (run.view_rounds_le hv) run.choose
 
@@ -98,7 +98,7 @@ theorem decided (hv : v ∈ (Correct : Finset Validator)) {r : ℕ}
     (hr : max r run.stable + (3 * F.f + 5) ≤ run.liveHorizon) :
     run.verdicts hv r ≠ Verdict.undecided :=
   all_decided_of_view (run.isView hv) (run.wellFormed hv) (run.held hv) run.commits
-    run.roundRobin hr
+    run.roundRobin (fun _ _ => Iff.rfl) hr
 
 /-- Below a decided horizon a validator's sequence is complete. -/
 theorem decidedBelow (hv : v ∈ (Correct : Finset Validator)) {k : ℕ}
@@ -122,7 +122,8 @@ theorem agreement (hv : v ∈ (Correct : Finset Validator))
     (fun _ _ h => run.slot_of_verdicts hw h)
     (fun s (hs : run.horizon + 1 ≤ s) =>
       ⟨run.undecided_of_gt hv (by omega), run.undecided_of_gt hw (by omega)⟩)
-    (run.held hv) (run.held hw) run.commits run.roundRobin hk (histOf run.dag)
+    (run.held hv) (run.held hw) run.commits run.roundRobin hk (fun _ _ => Iff.rfl)
+    (histOf run.dag)
 
 /-- **Total order.** One validator's sequence is a prefix of another's,
 at any two horizons. Theorem 14 over Lemma 13. -/

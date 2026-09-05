@@ -50,6 +50,7 @@ namespace FinWhale
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
+variable {Elig : ℕ → ℕ → Prop}
 variable {D : Dag Validator BlockId Payload} {V : Finset BlockId}
 
 variable {hV : IsView D V}
@@ -428,25 +429,28 @@ which is what catching up means. -/
 their own views of one DAG deliver prefix-comparable sequences. -/
 theorem safety_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsView D V')
     {choose : BlockId → ℕ → Option BlockId} {dec dec' : ℕ → Verdict BlockId}
-    (hwf : WellFormed (viewCommit ld D V hV) (viewSkip ld D V hV) choose dec)
-    (hwf' : WellFormed (viewCommit ld D V' hV') (viewSkip ld D V' hV') choose dec')
+    (hwf : WellFormed Elig (viewCommit ld D V hV) (viewSkip ld D V hV) choose dec)
+    (hwf' : WellFormed Elig (viewCommit ld D V' hV') (viewSkip ld D V' hV') choose dec')
     (hch : ChooseSound ld D choose)
     (hslot : ∀ r A, dec r = Verdict.commit A → A ∈ slotBlocks ld D r)
     (hslot' : ∀ r A, dec' r = Verdict.commit A → A ∈ slotBlocks ld D r)
     {N : ℕ} (hbound : ∀ s, N ≤ s → dec s = Verdict.undecided ∧ dec' s = Verdict.undecided)
     {k k' : ℕ} (hk : ∀ s, s < k → dec s ≠ Verdict.undecided)
     (hk' : ∀ s, s < k' → dec' s ≠ Verdict.undecided)
+    (hEl : ∀ r a, Elig r a ↔ r + 2 < a)
     (hist : BlockId → List BlockId) :
     linearise hist (commitSeq dec k) <+: linearise hist (commitSeq dec' k') ∨
       linearise hist (commitSeq dec' k') <+: linearise hist (commitSeq dec k) := by
   have habove : ∀ (dq : ℕ → Verdict BlockId),
       (∀ r A, dq r = Verdict.commit A → A ∈ slotBlocks ld D r) →
-      ∀ r a A, r + 2 < a → dq a = Verdict.commit A → A ∈ D.ids ∧ r + 3 ≤ (D.block A).round := by
-    intro dq hq r a A hra hcom
+      ∀ r a A, Elig r a → dq a = Verdict.commit A → A ∈ D.ids ∧ r + 3 ≤ (D.block A).round := by
+    intro dq hq r a A hra₀ hcom
+    have hra := (hEl r a).mp hra₀
     have hA := hq a A hcom
     simp only [slotBlocks, blocksAt, Finset.mem_filter] at hA
     exact ⟨hA.1.1, by omega⟩
   rcases lemma13 (lemma12 hwf hwf' (exclusions_of_views hV hV' hch)
+      (fun r a h => by have := (hEl r a).mp h; omega)
       (habove dec hslot) (habove dec' hslot') hbound) hk hk' with h | h
   · exact Or.inl (theorem14 hist h)
   · exact Or.inr (theorem14 hist h)
@@ -487,20 +491,21 @@ to the horizon decides every slot below it. `hsees` is discharged by
 whatever direct commit is there. -/
 theorem all_decided_of_view {V : Finset BlockId} (hV : IsView D V)
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
-    (hwf : WellFormed (viewCommit ld D V hV) (viewSkip ld D V hV) choose dec) {R N r : ℕ}
+    (hwf : WellFormed Elig (viewCommit ld D V hV) (viewSkip ld D V hV) choose dec) {R N r : ℕ}
     (hheld : ∀ n, R ≤ n → n ≤ N → ∀ b ∈ blocksAt D n,
       (D.block b).creator ∈ (Correct : Finset Validator) → b ∈ V)
     (hcommits : CommitsCorrectLeaders ld D R N)
-    (hrr : RoundRobin ld) (hN : max r R + (3 * F.f + 5) ≤ N) :
+    (hrr : RoundRobin ld) (hEl : ∀ r a, Elig r a ↔ r + 2 < a)
+    (hN : max r R + (3 * F.f + 5) ≤ N) :
     dec r ≠ Verdict.undecided :=
-  all_decided hwf (sees_of_commits_of_held hV hcommits hheld) hrr hN
+  all_decided hwf (sees_of_commits_of_held hV hcommits hheld) hrr hEl hN
 
 /-- **Theorem 24, on two views.** Two validators that have caught up to
 the horizon deliver the same sequence. -/
 theorem agreement_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsView D V')
     {choose : BlockId → ℕ → Option BlockId} {dec dec' : ℕ → Verdict BlockId}
-    (hwf : WellFormed (viewCommit ld D V hV) (viewSkip ld D V hV) choose dec)
-    (hwf' : WellFormed (viewCommit ld D V' hV') (viewSkip ld D V' hV') choose dec')
+    (hwf : WellFormed Elig (viewCommit ld D V hV) (viewSkip ld D V hV) choose dec)
+    (hwf' : WellFormed Elig (viewCommit ld D V' hV') (viewSkip ld D V' hV') choose dec')
     (hch : ChooseSound ld D choose)
     (hslot : ∀ r A, dec r = Verdict.commit A → A ∈ slotBlocks ld D r)
     (hslot' : ∀ r A, dec' r = Verdict.commit A → A ∈ slotBlocks ld D r)
@@ -512,22 +517,25 @@ theorem agreement_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsVi
       (D.block b).creator ∈ (Correct : Finset Validator) → b ∈ V')
     (hcommits : CommitsCorrectLeaders ld D R N)
     (hrr : RoundRobin ld) (hkN : max k R + (3 * F.f + 5) ≤ N)
+    (hEl : ∀ r a, Elig r a ↔ r + 2 < a)
     (hist : BlockId → List BlockId) :
     linearise hist (commitSeq dec k) = linearise hist (commitSeq dec' k) := by
   have habove : ∀ (dq : ℕ → Verdict BlockId),
       (∀ r A, dq r = Verdict.commit A → A ∈ slotBlocks ld D r) →
-      ∀ r a A, r + 2 < a → dq a = Verdict.commit A → A ∈ D.ids ∧ r + 3 ≤ (D.block A).round := by
-    intro dq hq r a A hra hcom
+      ∀ r a A, Elig r a → dq a = Verdict.commit A → A ∈ D.ids ∧ r + 3 ≤ (D.block A).round := by
+    intro dq hq r a A hra₀ hcom
+    have hra := (hEl r a).mp hra₀
     have hA := hq a A hcom
     simp only [slotBlocks, blocksAt, Finset.mem_filter] at hA
     exact ⟨hA.1.1, by omega⟩
   refine theorem24
     (lemma12 hwf hwf' (exclusions_of_views hV hV' hch)
+      (fun r a h => by have := (hEl r a).mp h; omega)
       (habove dec hslot) (habove dec' hslot') hbound)
-    (fun s hs => all_decided_of_view hV hwf hheld hcommits hrr (by
+    (fun s hs => all_decided_of_view hV hwf hheld hcommits hrr hEl (by
       have : max s R ≤ max k R := max_le_max (by omega) le_rfl
       omega))
-    (fun s hs => all_decided_of_view hV' hwf' hheld' hcommits hrr (by
+    (fun s hs => all_decided_of_view hV' hwf' hheld' hcommits hrr hEl (by
       have : max s R ≤ max k R := max_le_max (by omega) le_rfl
       omega))
     hist

@@ -137,7 +137,7 @@ theorem round_le_of_directSkip {N r : ℕ} (hN : ∀ b ∈ D.ids, (D.block b).ro
 nonempty their least member is the first non-skipped slot above
 `r + 2`. -/
 theorem anchor_min' {r : ℕ} (hne : (anchorCands N (decOf ld D choose N) r).Nonempty) :
-    Anchor (decOf ld D choose N) r ((anchorCands N (decOf ld D choose N) r).min' hne) := by
+    Anchor passElig (decOf ld D choose N) r ((anchorCands N (decOf ld D choose N) r).min' hne) := by
   have hb : r + 2 < (anchorCands N (decOf ld D choose N) r).min' hne ∧
       (anchorCands N (decOf ld D choose N) r).min' hne ≤ N ∧
       decOf ld D choose N ((anchorCands N (decOf ld D choose N) r).min' hne) ≠ Verdict.skip := by
@@ -153,7 +153,7 @@ theorem anchor_min' {r : ℕ} (hne : (anchorCands N (decOf ld D choose N) r).Non
   omega
 
 /-- And an anchor below the horizon is that least member. -/
-theorem eq_min'_of_anchor {r a : ℕ} (hanc : Anchor (decOf ld D choose N) r a) (ha : a ≤ N) :
+theorem eq_min'_of_anchor {r a : ℕ} (hanc : Anchor passElig (decOf ld D choose N) r a) (ha : a ≤ N) :
     ∃ hne : (anchorCands N (decOf ld D choose N) r).Nonempty,
       (anchorCands N (decOf ld D choose N) r).min' hne = a := by
   have hmem : a ∈ anchorCands N (decOf ld D choose N) r := by
@@ -168,7 +168,7 @@ theorem eq_min'_of_anchor {r a : ℕ} (hanc : Anchor (decOf ld D choose N) r a) 
 
 /-- An anchor above the horizon means no candidate at all: everything
 between is skipped, and nothing above the horizon is decided. -/
-theorem anchorCands_eq_empty {r a : ℕ} (hanc : Anchor (decOf ld D choose N) r a) (ha : N < a) :
+theorem anchorCands_eq_empty {r a : ℕ} (hanc : Anchor passElig (decOf ld D choose N) r a) (ha : N < a) :
     ¬ (anchorCands N (decOf ld D choose N) r).Nonempty := by
   rintro ⟨t, ht⟩
   simp only [anchorCands, Finset.mem_filter, Finset.mem_Ioc] at ht
@@ -179,7 +179,7 @@ own, and `choose` is whatever deterministic rule the validator applies.
 `hN` is the horizon: no block of the view sits above it. -/
 theorem wellFormed_decOf {N : ℕ} (hN : ∀ b ∈ D.ids, (D.block b).round ≤ N)
     (choose : BlockId → ℕ → Option BlockId) :
-    WellFormed (fun r l => l ∈ slotBlocks ld D r ∧ DirectCommit D l)
+    WellFormed passElig (fun r l => l ∈ slotBlocks ld D r ∧ DirectCommit D l)
       (fun r => DirectSkip ld D r) choose (decOf ld D choose N) where
   direct_commit r l := by
     rintro ⟨hslot, hcom⟩
@@ -219,7 +219,7 @@ theorem wellFormed_decOf {N : ℕ} (hN : ∀ b ∈ D.ids, (D.block b).round ≤ 
       by_contra hbig
       rw [decOf_of_gt (by omega : N < a)] at hcom
       cases hcom
-    have hr : r ≤ N := by have := hanc.1; omega
+    have hr : r ≤ N := by have : r + 2 < a := hanc.1; omega
     have hne : ¬ (directCommits ld D r).Nonempty := by
       rintro ⟨l, hl⟩
       simp only [directCommits, Finset.mem_filter] at hl
@@ -305,7 +305,8 @@ theorem safety_of_pass {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsView D
   safety_of_views hV hV' (wellFormed_decOf hNV choose) (wellFormed_decOf hNV' choose) hch
     (fun _ _ h => mem_slotBlocks_of_decOf (fun _ => slotBlocks_restrict) hch h)
     (fun _ _ h => mem_slotBlocks_of_decOf (fun _ => slotBlocks_restrict) hch h)
-    (fun s (hs : N + 1 ≤ s) => ⟨decOf_of_gt (by omega), decOf_of_gt (by omega)⟩) hk hk' hist
+    (fun s (hs : N + 1 ≤ s) => ⟨decOf_of_gt (by omega), decOf_of_gt (by omega)⟩)
+    hk hk' (fun _ _ => Iff.rfl) hist
 
 
 end FinWhale

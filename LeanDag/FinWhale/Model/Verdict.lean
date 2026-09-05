@@ -46,34 +46,42 @@ inductive Verdict (BlockId : Type*) where
   | undecided
   deriving DecidableEq
 
-/-- **The anchor of `r`**: the first slot above `r + 2` that is not
-skipped. -/
-def Anchor (dec : ℕ → Verdict BlockId) (r a : ℕ) : Prop :=
-  r + 2 < a ∧ dec a ≠ Verdict.skip ∧ ∀ a', r + 2 < a' → a' < a → dec a' = Verdict.skip
+/-- **The anchor of `r`**: the first *eligible* slot above `r` that is
+not skipped.
+
+**Eligibility is a parameter**, where it used to be `r + 2 < a`. That
+reading is right only when slots are rounds, and it is what kept
+FinWhale's verdicts round-indexed and so kept the rule off
+`Properties.DagRule`, whose schedule maps slots to rounds
+(`docs/porting-plan.md`). Every use below is order-theoretic — the
+anchor is the least eligible non-skipped slot — so nothing here depends
+on which relation it is, only that an eligible slot is above. -/
+def Anchor (Elig : ℕ → ℕ → Prop) (dec : ℕ → Verdict BlockId) (r a : ℕ) : Prop :=
+  Elig r a ∧ dec a ≠ Verdict.skip ∧ ∀ a', Elig r a' → a' < a → dec a' = Verdict.skip
 
 /-- **The reverse pass, as a condition on the verdicts.** The direct
 rules are taken as parameters, because each validator evaluates them on
 its own view: `dcommit r l` is "this validator sees a direct commit of
 `l` at `r`", `dskip r` likewise. `choose` is the paper's deterministic
 rule and is *shared*, since it reads only the anchor and the round. -/
-structure WellFormed (dcommit : ℕ → BlockId → Prop) (dskip : ℕ → Prop)
+structure WellFormed (Elig : ℕ → ℕ → Prop) (dcommit : ℕ → BlockId → Prop) (dskip : ℕ → Prop)
     (choose : BlockId → ℕ → Option BlockId) (dec : ℕ → Verdict BlockId) : Prop where
   /-- A direct commit is taken. -/
   direct_commit : ∀ r l, dcommit r l → dec r = Verdict.commit l
   /-- A direct skip is taken. -/
   direct_skip : ∀ r, dskip r → dec r = Verdict.skip
   /-- Undecided where the anchor is undecided. -/
-  indirect_undecided : ∀ r a, (¬ ∃ l, dcommit r l) → ¬ dskip r → Anchor dec r a →
+  indirect_undecided : ∀ r a, (¬ ∃ l, dcommit r l) → ¬ dskip r → Anchor Elig dec r a →
     dec a = Verdict.undecided → dec r = Verdict.undecided
   /-- Decided by the anchor otherwise. -/
-  indirect_commit : ∀ r a A, (¬ ∃ l, dcommit r l) → ¬ dskip r → Anchor dec r a →
+  indirect_commit : ∀ r a A, (¬ ∃ l, dcommit r l) → ¬ dskip r → Anchor Elig dec r a →
     dec a = Verdict.commit A →
     dec r = (match choose A r with
       | some b => Verdict.commit b
       | none => Verdict.skip)
   /-- A slot decided without a direct rule was decided from an anchor. -/
   has_anchor : ∀ r, (¬ ∃ l, dcommit r l) → ¬ dskip r → dec r ≠ Verdict.undecided →
-    ∃ a, Anchor dec r a
+    ∃ a, Anchor Elig dec r a
 
 /-- **The exclusions Lemma 12 needs across two views**, as an interface.
 Each is a universe-level fact this arc proves — `direct_commit_unique`,

@@ -17364,35 +17364,37 @@ A validator's verdict for a leader slot.
 *def, `FinWhale.Model.Verdict.lean`*
 
 ```lean
-def Anchor (dec : ℕ → Verdict BlockId) (r a : ℕ) : Prop :=
-  r + 2 < a ∧ dec a ≠ Verdict.skip ∧ ∀ a', r + 2 < a' → a' < a → dec a' = Verdict.skip
+def Anchor (Elig : ℕ → ℕ → Prop) (dec : ℕ → Verdict BlockId) (r a : ℕ) : Prop :=
+  Elig r a ∧ dec a ≠ Verdict.skip ∧ ∀ a', Elig r a' → a' < a → dec a' = Verdict.skip
 ```
 
-**The anchor of `r`**: the first slot above `r + 2` that is not skipped.
+**The anchor of `r`**: the first *eligible* slot above `r` that is not skipped.
+
+**Eligibility is a parameter**, where it used to be `r + 2 < a`. That reading is right only when slots are rounds, and it is what kept FinWhale's verdicts round-indexed and so kept the rule off `Properties.DagRule`, whose schedule maps slots to rounds (`docs/porting-plan.md`). Every use below is order-theoretic — the anchor is the least eligible non-skipped slot — so nothing here depends on which relation it is, only that an eligible slot is above.
 
 #### `WellFormed`
 
 *structure, `FinWhale.Model.Verdict.lean`*
 
 ```lean
-structure WellFormed (dcommit : ℕ → BlockId → Prop) (dskip : ℕ → Prop)
+structure WellFormed (Elig : ℕ → ℕ → Prop) (dcommit : ℕ → BlockId → Prop) (dskip : ℕ → Prop)
     (choose : BlockId → ℕ → Option BlockId) (dec : ℕ → Verdict BlockId) : Prop where
   /-- A direct commit is taken. -/
   direct_commit : ∀ r l, dcommit r l → dec r = Verdict.commit l
   /-- A direct skip is taken. -/
   direct_skip : ∀ r, dskip r → dec r = Verdict.skip
   /-- Undecided where the anchor is undecided. -/
-  indirect_undecided : ∀ r a, (¬ ∃ l, dcommit r l) → ¬ dskip r → Anchor dec r a →
+  indirect_undecided : ∀ r a, (¬ ∃ l, dcommit r l) → ¬ dskip r → Anchor Elig dec r a →
     dec a = Verdict.undecided → dec r = Verdict.undecided
   /-- Decided by the anchor otherwise. -/
-  indirect_commit : ∀ r a A, (¬ ∃ l, dcommit r l) → ¬ dskip r → Anchor dec r a →
+  indirect_commit : ∀ r a A, (¬ ∃ l, dcommit r l) → ¬ dskip r → Anchor Elig dec r a →
     dec a = Verdict.commit A →
     dec r = (match choose A r with
       | some b => Verdict.commit b
       | none => Verdict.skip)
   /-- A slot decided without a direct rule was decided from an anchor. -/
   has_anchor : ∀ r, (¬ ∃ l, dcommit r l) → ¬ dskip r → dec r ≠ Verdict.undecided →
-    ∃ a, Anchor dec r a
+    ∃ a, Anchor Elig dec r a
 ```
 
 **The reverse pass, as a condition on the verdicts.** The direct rules are taken as parameters, because each validator evaluates them on its own view: `dcommit r l` is "this validator sees a direct commit of `l` at `r`", `dskip r` likewise. `choose` is the paper's deterministic rule and is *shared*, since it reads only the anchor and the round.
@@ -17469,6 +17471,16 @@ def directCommits (ld : ℕ → Validator) (D : Dag Validator BlockId Payload) (
 ```
 
 The blocks of a slot that are directly committed. At most one, by `direct_commit_unique`.
+
+#### `passElig`
+
+*def, `FinWhale.Model.Pass.lean`*
+
+```lean
+def passElig (r a : ℕ) : Prop := r + 2 < a
+```
+
+The eligibility the pass computes at: a slot is an anchor candidate when it sits three rounds up. This is the identity-slot reading, which is what the pass enumerates; `Anchor` itself is stated at any eligibility (`Model/Verdict.lean`).
 
 #### `anchorCands`
 
@@ -23511,7 +23523,7 @@ A verdict, as the property layer reads it: `some b` is a commit, `none` a skip, 
 structure Assignment (ld : ℕ → Validator) (D : Dag Validator BlockId Payload)
     (V : Finset BlockId) (hV : IsView D V) (dec : ℕ → Verdict BlockId) : Prop where
   /-- The reverse pass, as a condition on the verdicts. -/
-  wf : WellFormed (viewCommit ld D V hV) (viewSkip ld D V hV) (chooseLeast ld D) dec
+  wf : WellFormed passElig (viewCommit ld D V hV) (viewSkip ld D V hV) (chooseLeast ld D) dec
   /-- A commit names a block of the slot. -/
   slot : ∀ s A, dec s = Verdict.commit A → A ∈ slotBlocks ld D s
   /-- Nothing above some round is decided — the DAG is finite. -/
@@ -32672,14 +32684,15 @@ theorem spCertificate_round {b l : BlockId} (hb : b ∈ D.ids)
 *theorem, `FinWhale.Consistency.lean`*
 
 ```lean
-theorem lemma12
+theorem lemma12 {Elig : ℕ → ℕ → Prop}
     {dc dc' : ℕ → BlockId → Prop} {ds ds' : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec dec' : ℕ → Verdict BlockId}
     {Above : ℕ → BlockId → Prop}
-    (hwf : WellFormed dc ds choose dec) (hwf' : WellFormed dc' ds' choose dec')
+    (hwf : WellFormed Elig dc ds choose dec) (hwf' : WellFormed Elig dc' ds' choose dec')
     (hex : Exclusions dc dc' ds ds' choose Above)
-    (habove : ∀ r a A, r + 2 < a → dec a = Verdict.commit A → Above r A)
-    (habove' : ∀ r a A, r + 2 < a → dec' a = Verdict.commit A → Above r A)
+    (hlt : ∀ r a, Elig r a → r < a)
+    (habove : ∀ r a A, Elig r a → dec a = Verdict.commit A → Above r A)
+    (habove' : ∀ r a A, Elig r a → dec' a = Verdict.commit A → Above r A)
     {N : ℕ} (hbound : ∀ s, N ≤ s → dec s = Verdict.undecided ∧ dec' s = Verdict.undecided) :
     ∀ r, dec r ≠ Verdict.undecided → dec' r ≠ Verdict.undecided → dec r = dec' r
 ```
@@ -32791,7 +32804,7 @@ Above the horizon the pass decides nothing.
 ```lean
 theorem wellFormed_decOf {N : ℕ} (hN : ∀ b ∈ D.ids, (D.block b).round ≤ N)
     (choose : BlockId → ℕ → Option BlockId) :
-    WellFormed (fun r l => l ∈ slotBlocks ld D r ∧ DirectCommit D l)
+    WellFormed passElig (fun r l => l ∈ slotBlocks ld D r ∧ DirectCommit D l)
       (fun r => DirectSkip ld D r) choose (decOf ld D choose N) where
   direct_commit r l
 ```
@@ -32864,14 +32877,15 @@ theorem exclusions_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsV
 ```lean
 theorem safety_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsView D V')
     {choose : BlockId → ℕ → Option BlockId} {dec dec' : ℕ → Verdict BlockId}
-    (hwf : WellFormed (viewCommit ld D V hV) (viewSkip ld D V hV) choose dec)
-    (hwf' : WellFormed (viewCommit ld D V' hV') (viewSkip ld D V' hV') choose dec')
+    (hwf : WellFormed Elig (viewCommit ld D V hV) (viewSkip ld D V hV) choose dec)
+    (hwf' : WellFormed Elig (viewCommit ld D V' hV') (viewSkip ld D V' hV') choose dec')
     (hch : ChooseSound ld D choose)
     (hslot : ∀ r A, dec r = Verdict.commit A → A ∈ slotBlocks ld D r)
     (hslot' : ∀ r A, dec' r = Verdict.commit A → A ∈ slotBlocks ld D r)
     {N : ℕ} (hbound : ∀ s, N ≤ s → dec s = Verdict.undecided ∧ dec' s = Verdict.undecided)
     {k k' : ℕ} (hk : ∀ s, s < k → dec s ≠ Verdict.undecided)
     (hk' : ∀ s, s < k' → dec' s ≠ Verdict.undecided)
+    (hEl : ∀ r a, Elig r a ↔ r + 2 < a)
     (hist : BlockId → List BlockId) :
     linearise hist (commitSeq dec k) <+: linearise hist (commitSeq dec' k') ∨
       linearise hist (commitSeq dec' k') <+: linearise hist (commitSeq dec k)
@@ -32900,11 +32914,12 @@ theorem sees_of_commits_of_held {V : Finset BlockId} (hV : IsView D V) {R N : �
 ```lean
 theorem all_decided_of_view {V : Finset BlockId} (hV : IsView D V)
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
-    (hwf : WellFormed (viewCommit ld D V hV) (viewSkip ld D V hV) choose dec) {R N r : ℕ}
+    (hwf : WellFormed Elig (viewCommit ld D V hV) (viewSkip ld D V hV) choose dec) {R N r : ℕ}
     (hheld : ∀ n, R ≤ n → n ≤ N → ∀ b ∈ blocksAt D n,
       (D.block b).creator ∈ (Correct : Finset Validator) → b ∈ V)
     (hcommits : CommitsCorrectLeaders ld D R N)
-    (hrr : RoundRobin ld) (hN : max r R + (3 * F.f + 5) ≤ N) :
+    (hrr : RoundRobin ld) (hEl : ∀ r a, Elig r a ↔ r + 2 < a)
+    (hN : max r R + (3 * F.f + 5) ≤ N) :
     dec r ≠ Verdict.undecided
 ```
 
@@ -32917,8 +32932,8 @@ theorem all_decided_of_view {V : Finset BlockId} (hV : IsView D V)
 ```lean
 theorem agreement_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsView D V')
     {choose : BlockId → ℕ → Option BlockId} {dec dec' : ℕ → Verdict BlockId}
-    (hwf : WellFormed (viewCommit ld D V hV) (viewSkip ld D V hV) choose dec)
-    (hwf' : WellFormed (viewCommit ld D V' hV') (viewSkip ld D V' hV') choose dec')
+    (hwf : WellFormed Elig (viewCommit ld D V hV) (viewSkip ld D V hV) choose dec)
+    (hwf' : WellFormed Elig (viewCommit ld D V' hV') (viewSkip ld D V' hV') choose dec')
     (hch : ChooseSound ld D choose)
     (hslot : ∀ r A, dec r = Verdict.commit A → A ∈ slotBlocks ld D r)
     (hslot' : ∀ r A, dec' r = Verdict.commit A → A ∈ slotBlocks ld D r)
@@ -32930,6 +32945,7 @@ theorem agreement_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsVi
       (D.block b).creator ∈ (Correct : Finset Validator) → b ∈ V')
     (hcommits : CommitsCorrectLeaders ld D R N)
     (hrr : RoundRobin ld) (hkN : max k R + (3 * F.f + 5) ≤ N)
+    (hEl : ∀ r a, Elig r a ↔ r + 2 < a)
     (hist : BlockId → List BlockId) :
     linearise hist (commitSeq dec k) = linearise hist (commitSeq dec' k)
 ```
@@ -32943,7 +32959,8 @@ theorem agreement_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsVi
 ```lean
 theorem lemma23 {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
-    (hwf : WellFormed dc ds choose dec) {r a : ℕ} (hra : r < a)
+    (hEl : ∀ r a, Elig r a ↔ r + 2 < a)
+    (hwf : WellFormed Elig dc ds choose dec) {r a : ℕ} (hra : r < a)
     (htri : ∀ s, a ≤ s → s ≤ a + 2 → dec s ≠ Verdict.undecided ∧ dec s ≠ Verdict.skip) :
     dec r ≠ Verdict.undecided
 ```
@@ -32961,9 +32978,10 @@ The triple is what covers the three offsets: the anchor must sit above `r + 2`, 
 ```lean
 theorem all_decided {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
-    (hwf : WellFormed dc ds choose dec) {R N r : ℕ}
+    (hwf : WellFormed Elig dc ds choose dec) {R N r : ℕ}
     (hsees : SeesCommits ld D dc R N)
-    (hrr : RoundRobin ld) (hN : max r R + (3 * F.f + 5) ≤ N) :
+    (hrr : RoundRobin ld) (hEl : ∀ r a, Elig r a ↔ r + 2 < a)
+    (hN : max r R + (3 * F.f + 5) ≤ N) :
     dec r ≠ Verdict.undecided
 ```
 
@@ -33026,7 +33044,7 @@ theorem nodup_delivery [LinearOrder BlockId] (ls : List BlockId) :
 theorem theorem26_of_selfParent (hself : SelfParented D)
     {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
-    (hwf : WellFormed dc ds choose dec) {R N : ℕ}
+    (hwf : WellFormed Elig dc ds choose dec) {R N : ℕ}
     (hsees : SeesCommits ld D dc R N)
     (hrr : RoundRobin ld) [LinearOrder BlockId]
     {b : BlockId} {k : ℕ} (hb : b ∈ D.ids)

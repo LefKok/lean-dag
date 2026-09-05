@@ -78,7 +78,7 @@ view, committing only blocks of the slot, and finite. -/
 structure Assignment (ld : ℕ → Validator) (D : Dag Validator BlockId Payload)
     (V : Finset BlockId) (hV : IsView D V) (dec : ℕ → Verdict BlockId) : Prop where
   /-- The reverse pass, as a condition on the verdicts. -/
-  wf : WellFormed (viewCommit ld D V hV) (viewSkip ld D V hV) (chooseLeast ld D) dec
+  wf : WellFormed passElig (viewCommit ld D V hV) (viewSkip ld D V hV) (chooseLeast ld D) dec
   /-- A commit names a block of the slot. -/
   slot : ∀ s A, dec s = Verdict.commit A → A ∈ slotBlocks ld D s
   /-- Nothing above some round is decided — the DAG is finite. -/
@@ -124,6 +124,7 @@ theorem agree : Agree (finWhaleRule (Validator := Validator) (BlockId := BlockId
     exact ⟨hA.1.1, by omega⟩
   have hkey := lemma12 ha₁.wf ha₂.wf
     (exclusions_of_views V₁.property V₂.property chooseSound_least)
+    (fun _ _ h => by have : _ + 2 < _ := h; omega)
     (habove dec₁ ha₁.slot) (habove dec₂ ha₂.slot)
     (N := max N₁ N₂)
     (fun s hs => ⟨hN₁ s (by omega), hN₂ s (by omega)⟩)

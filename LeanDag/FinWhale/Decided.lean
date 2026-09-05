@@ -29,6 +29,7 @@ namespace LeanDag
 namespace FinWhale
 
 variable {BlockId : Type} [DecidableEq BlockId]
+variable {Elig : ℕ → ℕ → Prop}
 
 omit [DecidableEq BlockId] in
 /-- **Lemma 23.** Every slot below a committed triple is decided.
@@ -44,7 +45,8 @@ The triple is what covers the three offsets: the anchor must sit above
 members qualify. -/
 theorem lemma23 {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
-    (hwf : WellFormed dc ds choose dec) {r a : ℕ} (hra : r < a)
+    (hEl : ∀ r a, Elig r a ↔ r + 2 < a)
+    (hwf : WellFormed Elig dc ds choose dec) {r a : ℕ} (hra : r < a)
     (htri : ∀ s, a ≤ s → s ≤ a + 2 → dec s ≠ Verdict.undecided ∧ dec s ≠ Verdict.skip) :
     dec r ≠ Verdict.undecided := by
   classical
@@ -73,9 +75,10 @@ theorem lemma23 {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
   have hex : ∃ k, dec (m + 3 + k) ≠ Verdict.skip := ⟨w, hwskip⟩
   -- the first such slot is the anchor of `m`
   have hfind : Nat.find hex ≤ w := Nat.find_le hwskip
-  have hanchor : Anchor dec m (m + 3 + Nat.find hex) := by
-    refine ⟨by omega, Nat.find_spec hex, ?_⟩
-    intro t ht1 ht2
+  have hanchor : Anchor Elig dec m (m + 3 + Nat.find hex) := by
+    refine ⟨(hEl _ _).mpr (by omega), Nat.find_spec hex, ?_⟩
+    intro t ht1' ht2
+    have ht1 := (hEl _ _).mp ht1'
     have hlt : t - (m + 3) < Nat.find hex := by omega
     have hmin := Nat.find_min hex hlt
     rw [show m + 3 + (t - (m + 3)) = t by omega] at hmin
@@ -133,7 +136,7 @@ theorem sees_of_commits {R N : ℕ} (h : CommitsCorrectLeaders ld D R N) :
 /-- **A committed triple above every round.** -/
 theorem committed_triple {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
-    (hwf : WellFormed dc ds choose dec) {R N t : ℕ}
+    (hwf : WellFormed Elig dc ds choose dec) {R N t : ℕ}
     (hsees : SeesCommits ld D dc R N)
     (hrr : RoundRobin ld) (hR : R ≤ t) (hN : t + (3 * F.f + 5) ≤ N) :
     ∃ a, t < a ∧ a + 4 ≤ N ∧
@@ -155,13 +158,14 @@ which is why `R` enters through a maximum rather than as a floor on
 `r`. -/
 theorem all_decided {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
-    (hwf : WellFormed dc ds choose dec) {R N r : ℕ}
+    (hwf : WellFormed Elig dc ds choose dec) {R N r : ℕ}
     (hsees : SeesCommits ld D dc R N)
-    (hrr : RoundRobin ld) (hN : max r R + (3 * F.f + 5) ≤ N) :
+    (hrr : RoundRobin ld) (hEl : ∀ r a, Elig r a ↔ r + 2 < a)
+    (hN : max r R + (3 * F.f + 5) ≤ N) :
     dec r ≠ Verdict.undecided := by
   obtain ⟨a, hlo, -, htri⟩ :=
     committed_triple hwf hsees hrr (le_max_right r R) hN
-  exact lemma23 hwf (lt_of_le_of_lt (le_max_left r R) hlo) htri
+  exact lemma23 hEl hwf (lt_of_le_of_lt (le_max_left r R) hlo) htri
 
 end Triple
 
@@ -281,7 +285,7 @@ theorem agreement_of_commits {R N : ℕ}
     (hrr : RoundRobin ld)
     {dc dc' : ℕ → BlockId → Prop} {ds ds' : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec dec' : ℕ → Verdict BlockId}
-    (hwf : WellFormed dc ds choose dec) (hwf' : WellFormed dc' ds' choose dec')
+    (hwf : WellFormed Elig dc ds choose dec) (hwf' : WellFormed Elig dc' ds' choose dec')
     (hch : ChooseSound ld D choose)
     (hdc : ∀ r l, dc r l → l ∈ slotBlocks ld D r ∧ DirectCommit D l)
     (hdc' : ∀ r l, dc' r l → l ∈ slotBlocks ld D r ∧ DirectCommit D l)
@@ -290,23 +294,26 @@ theorem agreement_of_commits {R N : ℕ}
     (hslot : ∀ r A, dec r = Verdict.commit A → A ∈ slotBlocks ld D r)
     (hslot' : ∀ r A, dec' r = Verdict.commit A → A ∈ slotBlocks ld D r)
     {M : ℕ} (hbound : ∀ s, M ≤ s → dec s = Verdict.undecided ∧ dec' s = Verdict.undecided)
+    (hEl : ∀ r a, Elig r a ↔ r + 2 < a)
     {k : ℕ} (hkN : max k R + (3 * F.f + 5) ≤ N)
     (hist : BlockId → List BlockId) :
     linearise hist (commitSeq dec k) = linearise hist (commitSeq dec' k) := by
   have habove : ∀ (dq : ℕ → Verdict BlockId),
       (∀ r A, dq r = Verdict.commit A → A ∈ slotBlocks ld D r) →
-      ∀ r a A, r + 2 < a → dq a = Verdict.commit A → A ∈ D.ids ∧ r + 3 ≤ (D.block A).round := by
-    intro dq hq r a A hra hcom
+      ∀ r a A, Elig r a → dq a = Verdict.commit A → A ∈ D.ids ∧ r + 3 ≤ (D.block A).round := by
+    intro dq hq r a A hra' hcom
+    have hra := (hEl r a).mp hra'
     have hA := hq a A hcom
     simp only [slotBlocks, blocksAt, Finset.mem_filter] at hA
     exact ⟨hA.1.1, by omega⟩
   refine theorem24
     (lemma12 hwf hwf' (exclusions_of_dag hch hdc hdc' hds hds')
+      (fun r a h => by have := (hEl r a).mp h; omega)
       (habove dec hslot) (habove dec' hslot') hbound)
-    (fun s hs => all_decided hwf hsees hrr (by
+    (fun s hs => all_decided hwf hsees hrr hEl (by
       have : max s R ≤ max k R := max_le_max (by omega) le_rfl
       omega))
-    (fun s hs => all_decided hwf' hsees' hrr (by
+    (fun s hs => all_decided hwf' hsees' hrr hEl (by
       have : max s R ≤ max k R := max_le_max (by omega) le_rfl
       omega))
     hist

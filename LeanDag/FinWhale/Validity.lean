@@ -35,6 +35,7 @@ namespace FinWhale
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
+variable {Elig : ℕ → ℕ → Prop}
 variable {D : Dag Validator BlockId Payload} {ld : ℕ → Validator}
 
 /-- **A correct validator's blocks form a chain.** Each of its blocks
@@ -78,7 +79,7 @@ because the leader block is the *same validator's*, later. -/
 theorem theorem26_of_selfParent (hself : SelfParented D)
     {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
-    (hwf : WellFormed dc ds choose dec) {R N : ℕ}
+    (hwf : WellFormed Elig dc ds choose dec) {R N : ℕ}
     (hsees : SeesCommits ld D dc R N)
     (hrr : RoundRobin ld) [LinearOrder BlockId]
     {b : BlockId} {k : ℕ} (hb : b ∈ D.ids)

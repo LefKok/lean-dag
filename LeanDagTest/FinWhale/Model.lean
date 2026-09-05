@@ -491,17 +491,20 @@ def chooseW : Fin 4 → ℕ → Option (Fin 4) := fun _ r => if r = 0 then some 
 
 /-- **The anchor of slot `0` is slot `3`**, and nothing else: the slots
 between are skipped, and `3` is not. -/
-theorem anchorW : ∀ a, Anchor decW 0 a → a = 3 := by
+theorem anchorW : ∀ a, Anchor passElig decW 0 a → a = 3 := by
   rintro a ⟨h1, h2, h3⟩
+  have h1' : (0 : ℕ) + 2 < a := h1
   by_contra hne
   have hlt : 3 < a := by omega
-  have := h3 3 (by omega) hlt
+  have := h3 3 (show (0:ℕ) + 2 < 3 by omega) hlt
   simp [decW] at this
 
-example : Anchor decW 0 3 := ⟨by omega, by decide, by intro a' h1 h2; omega⟩
+example : Anchor passElig decW 0 3 :=
+  ⟨by show (0:ℕ) + 2 < 3; omega, by decide,
+   by intro a' h1 h2; have : (0:ℕ) + 2 < a' := h1; omega⟩
 
 /-- **The reverse pass is followed.** -/
-theorem wellFormedW : WellFormed dcW dsW chooseW decW where
+theorem wellFormedW : WellFormed passElig dcW dsW chooseW decW where
   direct_commit r l := by
     rintro ⟨h3, h5, rfl⟩
     simp only [decW, if_neg (by omega : ¬ r = 0), if_neg (by omega : ¬ r ≤ 2), if_pos h5]
@@ -534,7 +537,7 @@ theorem wellFormedW : WellFormed dcW dsW chooseW decW where
       · exact absurd ⟨0, by exact ⟨by omega, by omega, rfl⟩⟩ hdc
       · exact absurd ⟨0, by exact ⟨by omega, by omega, rfl⟩⟩ hdc
     · -- above the decided range no anchor is committed
-      have h1 : (6 : ℕ) ≤ a := by have := hanc.1; omega
+      have h1 : (6 : ℕ) ≤ a := by have : r + 2 < a := hanc.1; omega
       rw [show decW a = Verdict.undecided by
         simp only [decW, if_neg (by omega : ¬ a = 0), if_neg (by omega : ¬ a ≤ 2),
           if_neg (by omega : ¬ a ≤ 5)]] at hcom
@@ -543,7 +546,8 @@ theorem wellFormedW : WellFormed dcW dsW chooseW decW where
     intro hdc hds hdecided
     rcases Nat.lt_or_ge r 6 with hr | hr
     · interval_cases r
-      · exact ⟨3, by omega, by decide, by intro a' h1 h2; omega⟩
+      · exact ⟨3, show (0:ℕ) + 2 < 3 by omega, by decide,
+          by intro a' h1 h2; have : (0:ℕ) + 2 < a' := h1; omega⟩
       · exact absurd (Or.inl rfl) hds
       · exact absurd (Or.inr rfl) hds
       · exact absurd ⟨0, by exact ⟨by omega, by omega, rfl⟩⟩ hdc
@@ -556,7 +560,7 @@ theorem wellFormedW : WellFormed dcW dsW chooseW decW where
 /-- **Lemma 23 on data.** Slots `3`, `4` and `5` are a committed triple,
 and slot `0` lies below it, so the reverse pass decides it. -/
 example : decW 0 ≠ Verdict.undecided :=
-  lemma23 wellFormedW (show (0 : ℕ) < 3 by omega)
+  lemma23 (fun _ _ => Iff.rfl) wellFormedW (show (0 : ℕ) < 3 by omega)
     (fun s h1 h2 => by interval_cases s <;> exact ⟨by decide, by decide⟩)
 
 /-- Anti-vacuity: the triple is genuinely needed. Nothing above `5` is
