@@ -54,9 +54,14 @@ RULES = [
 # predicate a window count reads, `SkipsUnsupported` by one that skips
 # without waiting for an anchor.
 OBLIGATIONS = ["Causal", "Banded", "Agree", "CommitsCandidate",
-               "LeaderCommits", "Descends", "CommitsDirect", "SkipsUnsupported"]
+               "LeaderCommits", "Indirect", "CommitsDirect", "SkipsUnsupported"]
 REQUIRED = 6
-DERIVED = ["Persist", "LocalTruncate"]
+DERIVED = ["Persist", "LocalTruncate", "Descends"]
+# What each derived property follows from. `Descends` used to be an
+# obligation and is now the indirect rule with a downward induction on
+# top (`Properties/Derived/Descent.lean`).
+DERIVED_FROM = {"Persist": "Banded", "LocalTruncate": "Banded",
+                "Descends": "Indirect"}
 
 # Files that state the generic theory rather than an instance of it.
 GENERIC = re.compile(r"^LeanDag\.Properties\b")
@@ -117,13 +122,14 @@ def main():
     cols = OBLIGATIONS + ["|"] + DERIVED
     short = {"Causal": "caus", "Banded": "band", "Agree": "agre",
              "CommitsCandidate": "cand", "LeaderCommits": "lead",
-             "Descends": "desc", "CommitsDirect": "drct*",
+             "Indirect": "indr", "CommitsDirect": "drct*",
+             "Descends": "desc",
              "SkipsUnsupported": "skip*",
              "Persist": "pers", "LocalTruncate": "trnc",
              "|": "|"}
     width = max(len(name) for name, _, _ in RULES) + 1
     print("obligations, then what follows from them "
-          "(der = free, given Banded)\n")
+          "(der = free; desc = free, given indr)\n")
     print(" " * width + "  ".join(short[c].ljust(4) for c in cols))
     conforming = 0
     for name, carriers, note in RULES:
@@ -134,7 +140,7 @@ def main():
                 cells.append("|   ")
             elif carriers and has(c):
                 cells.append("yes ")
-            elif c in DERIVED and carriers and has("Banded"):
+            elif c in DERIVED and carriers and has(DERIVED_FROM[c]):
                 # a consequence of the band: nothing to show per protocol
                 cells.append("der ")
             else:

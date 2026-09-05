@@ -5,6 +5,7 @@ import LeanDag.Properties.Optional.Skip
 import LeanDag.Properties.Optional.Direct
 import LeanDag.Properties.Commit
 import LeanDag.Properties.Derived.Bounded
+import LeanDag.Properties.Derived.Descent
 import LeanDag.Properties.Band
 import LeanDag.Properties.Deliver
 import LeanDag.Properties.Derived.FromBand
@@ -987,6 +988,43 @@ theorem leaderCommits :
     by rw [hlead' k (by omega)]; exact hcr⟩ ?_
   rw [hround]; exact hin
 
+/-- **A3 as a property.** The two indirect constructors, by cases on a
+certified candidate at the slot — which is the whole proof, and is why
+the verdict survives a reassignment of leaders elsewhere: the case split
+reads slot `i`'s candidate and the anchor's history, and neither moves.
+This is `mysticetiLive_descent.indirect` and the case split inside
+`decided_below_of_committed_run`, stated once. -/
+theorem indirect :
+    Indirect (mysticetiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) (fun sr i j => sr i + 3 ≤ sr j) := by
+  intro S U V i j A helig hj hmid
+  letI := S
+  have he : Eligible Validator i j := eligible_iff.mpr helig
+  by_cases hc : ∃ L, IsLeaderBlock (S := S) U i L ∧ CertifiedIn U A L (S.slotRound i)
+  · obtain ⟨L, hL, hcert⟩ := hc
+    refine ⟨some L, fun S' hround hlead hj' hmid' => ?_⟩
+    have heq : Eligible Validator (S := S') i j := by
+      show _ < _; simp only [decisionRound, hround]; exact he
+    refine Decided.indirectCommit (S := S') (lt_of_eligible (S := S) he) heq hj'
+      (fun i' h1 h2 h3 => hmid' i' h1 h2 (by
+        simp only [Eligible, decisionRound, hround] at h3; omega)) ?_ ?_
+    · obtain ⟨hm, hr, hcr⟩ := hL
+      exact ⟨hm, by rw [hround]; exact hr, by rw [hlead]; exact hcr⟩
+    · rw [hround]; exact hcert
+  · push Not at hc
+    refine ⟨none, fun S' hround hlead hj' hmid' => ?_⟩
+    have heq : Eligible Validator (S := S') i j := by
+      show _ < _; simp only [decisionRound, hround]; exact he
+    refine Decided.indirectSkip (S := S') (lt_of_eligible (S := S) he) heq hj'
+      (fun i' h1 h2 h3 => hmid' i' h1 h2 (by
+        simp only [Eligible, decisionRound, hround] at h3; omega)) ?_
+    intro L hL'
+    have hL : IsLeaderBlock (S := S) U i L := by
+      obtain ⟨hm, hr, hcr⟩ := hL'
+      exact ⟨hm, by rw [← hround]; exact hr, by rw [← hlead]; exact hcr⟩
+    rw [hround]
+    exact hc L hL
+
 /-- **The core's own bounded relation lands in the derived one.**
 `DecidedWithin` still names the slots a derivation mentions, which is
 the tight information `LeaderCommits` and `Descends` need; this says
@@ -1000,99 +1038,17 @@ theorem decidedBelow_of_decidedWithin [S : Slots Validator]
     (decidedWithin_congr_of_slotRound (S₁ := S) (S₂ := S') hround.symm
       (fun m hm => (hlead m hm).symm) h).toDecided⟩
 
-/-- **The committed-run descent.** `c` consecutive commits decide every
-slot below them, and the derivations depend on no leader at or above the
-run's top — which is what `DecidedBelow` records, and what the old
-`DecidedWithin` relation was carried to record.
-
-The argument is the base `decided_below_of_committed_run`; what is added
-is that each derivation is rebuilt under any schedule sharing the round
-structure and the leader prefix, which is immediate because every slot
-the derivation names lies under the bound. -/
-theorem decidedBelow_of_committed_run [S : Slots Validator]
-    {U : BlockUniverse Validator BlockId Payload}
-    {V : View Validator BlockId Payload U} {b n : ℕ} (hbn : b ≤ n)
-    (hspan : ∀ i, i < b → Eligible Validator i n)
-    (hrun : ∀ j, b ≤ j → j ≤ n →
-      ∃ B', DecidedBelow mysticetiRule S (n + 1) V j (some B')) :
-    ∀ i, i < b → ∃ v, DecidedBelow mysticetiRule S (n + 1) V i v := by
-  classical
-  have key : ∀ d i, i < b → b - i ≤ d →
-      ∃ v, DecidedBelow mysticetiRule S (n + 1) V i v := by
-    intro d
-    induction d with
-    | zero => intro i hi hd; omega
-    | succ d ih =>
-      intro i hi hd
-      have hex : ∃ j, Eligible Validator i j ∧
-          ∃ B', DecidedBelow mysticetiRule S (n + 1) V j (some B') :=
-        ⟨n, hspan i hi, hrun n hbn (le_refl n)⟩
-      have hle : Nat.find hex ≤ n :=
-        Nat.find_le ⟨hspan i hi, hrun n hbn (le_refl n)⟩
-      obtain ⟨helig, B', hB⟩ := Nat.find_spec hex
-      have hmid : ∀ i', i < i' → i' < Nat.find hex → Eligible Validator i i' →
-          DecidedBelow mysticetiRule S (n + 1) V i' none := by
-        intro i' h1 h2 h3
-        have hnc : ¬ ∃ C, DecidedBelow mysticetiRule S (n + 1) V i' (some C) :=
-          fun hc => Nat.find_min hex h2 ⟨h3, hc⟩
-        have hi'b : i' < b := by
-          by_contra hge
-          exact hnc (hrun i' (by omega) (by omega))
-        obtain ⟨v, hv⟩ := ih i' hi'b (by omega)
-        cases v with
-        | none => exact hv
-        | some C => exact absurd ⟨C, hv⟩ hnc
-      have hin : i < n + 1 := by omega
-      by_cases hc : ∃ L, IsLeaderBlock U i L ∧ CertifiedIn U B' L (S.slotRound i)
-      · obtain ⟨L, hL, hcert⟩ := hc
-        refine ⟨some L, hin, Decided.indirectCommit (lt_of_eligible helig) helig
-          hB.toDecided (fun i' h1 h2 h3 => (hmid i' h1 h2 h3).toDecided) hL hcert, ?_⟩
-        intro S' hround hlead
-        have heq : ∀ x y, Eligible Validator (S := S') x y ↔ Eligible Validator (S := S) x y := by
-          intro x y; simp only [Eligible, decisionRound, hround]
-        have hL' : IsLeaderBlock (S := S') U i L := by
-          obtain ⟨hm, hr, hcr⟩ := hL
-          exact ⟨hm, by rw [hround]; exact hr, by rw [hlead i hin]; exact hcr⟩
-        refine Decided.indirectCommit (S := S') (lt_of_eligible (S := S) helig)
-          ((heq _ _).mpr helig)
-          (hB.2.2 S' hround hlead)
-          (fun i' h1 h2 h3 => (hmid i' h1 h2 ((heq _ _).mp h3)).2.2 S' hround hlead) hL' ?_
-        · rw [hround]; exact hcert
-      · push Not at hc
-        refine ⟨none, hin, Decided.indirectSkip (lt_of_eligible helig) helig
-          hB.toDecided (fun i' h1 h2 h3 => (hmid i' h1 h2 h3).toDecided) hc, ?_⟩
-        intro S' hround hlead
-        have heq : ∀ x y, Eligible Validator (S := S') x y ↔ Eligible Validator (S := S) x y := by
-          intro x y; simp only [Eligible, decisionRound, hround]
-        refine Decided.indirectSkip (S := S') (lt_of_eligible (S := S) helig)
-          ((heq _ _).mpr helig)
-          (hB.2.2 S' hround hlead)
-          (fun i' h1 h2 h3 => (hmid i' h1 h2 ((heq _ _).mp h3)).2.2 S' hround hlead) ?_
-        intro L hL'
-        have hL : IsLeaderBlock (S := S) U i L := by
-          obtain ⟨hm, hr, hcr⟩ := hL'
-          exact ⟨hm, by rw [← hround]; exact hr, by rw [← hlead i hin]; exact hcr⟩
-        rw [hround]
-        exact hc L hL
-  intro i hi
-  exact key (b - i) i hi (le_refl _)
-
 /-- **The descent as a property**, under the spanning hypothesis on the
-round structure. -/
+round structure. What stood here was a downward induction carrying the
+bound by hand; it is now `Descends.of_indirect`, and the only
+Mysticeti-specific step is reading `Eligible` as the round inequality
+the property is stated with. -/
 theorem descends {S : Slots Validator} {c : ℕ} (hc : 0 < c)
     (hspans : SpansEligible (Validator := Validator) (S := S) c) :
     Descends (mysticetiRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload)) S c := by
-  intro U V b hrun i hi
-  have hbc : b + c - 1 + 1 = b + c := by omega
-  have hrun' : ∀ j, b ≤ j → j ≤ b + c - 1 →
-      ∃ B', DecidedBelow mysticetiRule S (b + c - 1 + 1) V j (some B') := by
-    intro j hj1 hj2
-    obtain ⟨L, hL⟩ := hrun j hj1 (by omega)
-    exact ⟨L, by rw [hbc]; exact hL⟩
-  obtain ⟨v, hv⟩ := decidedBelow_of_committed_run (S := S) (U := U) (V := V) (b := b)
-    (n := b + c - 1) (by omega) (fun i hi => hspans b i hi) hrun' i hi
-  exact ⟨v, by rw [← hbc]; exact hv⟩
+      (Payload := Payload)) S c :=
+  Descends.of_indirect indirect hc (fun b i hi => eligible_iff.mp (hspans b i hi))
+
 
 end Bounded
 

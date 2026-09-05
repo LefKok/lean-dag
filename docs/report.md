@@ -22637,6 +22637,34 @@ def BaseRule.toDagRule (R : BaseRule Validator BlockId Payload) :
 
 **Every Barnacle rule is a carrier.** The fields `DagRule` asks for are a sub-record of `BaseRule`'s, view soundness included, so the coercion needs no laws: a rule is a carrier before it has proved anything, which is what lets the properties be the hypotheses of Barnacle's own theorems rather than a parallel interface.
 
+#### `LiveRule.elig`
+
+*def, `Barnacle.Helpers.Descent.lean`*
+
+```lean
+def LiveRule.elig (R : LiveRule Validator BlockId Payload) : (ℕ → ℕ) → ℕ → ℕ → Prop :=
+  fun sr i j => sr i + R.waveLength ≤ sr j
+```
+
+**A Barnacle rule's eligibility**, as the properties read it: an anchor decides a slot when it sits a full wave above it. Every rule of the development uses this and differs only in the wave.
+
+#### `LiveRule.GoodGives`
+
+*def, `Barnacle.Helpers.Descent.lean`*
+
+```lean
+def LiveRule.GoodGives (R : LiveRule Validator BlockId Payload) (slack : ℕ)
+    (Live : Slots Validator → ∀ {U : R.Universe}, R.View U → Finset Validator → ℕ → ℕ → Prop) :
+    Prop :=
+  ∀ (U : R.Universe) (Rnd N : ℕ), R.Good U Rnd N →
+    ∃ T : Finset Validator, Fintype.card Validator ≤ T.card + slack ∧
+      ∀ (S : Slots Validator) (V : R.View U) (κ : ℕ), R.toBaseRule.CoversUpto U V N →
+        Rnd ≤ S.slotRound κ → S.slotRound κ + R.waveLength ≤ N → S.leader κ ∈ T →
+        Live S V T κ (κ + 1)
+```
+
+**What a good DAG must give the protocol.** The rule-specific half of the bridge: on a DAG the rule calls good from `Rnd` to `N` there is a set `T` missing at most `slack` validators, and for a `T`-led slot whose wave fits under the horizon the protocol's own liveness precondition holds over that one slot.
+
 #### `adapt`
 
 *def, `Barnacle.Helpers.Hydrozoan.lean`*
@@ -24691,6 +24719,30 @@ def Descends (R : DagRule Validator BlockId Payload) (S : Slots Validator) (c : 
 
 **A committed run decides everything below it.** `c` consecutive slots from `b`, each committed within `b + c`, decide every slot below `b` within `b + c`.
 
+#### `Indirect`
+
+*def, `Properties.Commit.lean`*
+
+```lean
+def Indirect (R : DagRule Validator BlockId Payload)
+    (Elig : (ℕ → ℕ) → ℕ → ℕ → Prop) : Prop :=
+  ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (i j : ℕ) (A : BlockId),
+    Elig S.slotRound i j → R.Decided S V j (some A) →
+    (∀ i', i < i' → i' < j → Elig S.slotRound i i' → R.Decided S V i' none) →
+    ∃ v, ∀ S' : Slots Validator, S'.slotRound = S.slotRound → S'.leader i = S.leader i →
+      R.Decided S' V j (some A) →
+      (∀ i', i < i' → i' < j → Elig S.slotRound i i' → R.Decided S' V i' none) →
+      R.Decided S' V i v
+```
+
+**The indirect rule.** An anchor eligible for slot `i`, committed, with every eligible slot strictly between them skipped, decides `i`.
+
+`Elig` is a parameter and reads the **round structure alone**: every rule here makes an anchor eligible when it sits a wave above the slot, and the property does not care which wave. Reading only `slotRound` also means eligibility is unchanged by a reassignment of leaders, which the second quantifier needs.
+
+**The second quantifier is what makes this carry a bound.** A protocol that proves the indirect rule by cases on the evidence at slot `i` — which is how all of them prove it — proves this stronger form without extra work: the case split reads slot `i`'s own candidate and the anchor's history, and a schedule that renames leaders elsewhere changes neither. `Descends` is the payoff, derived in `Derived/Descent.lean` where it was three protocol-specific inductions.
+
+Taking `S' := S` gives the plain rule, which is what a mechanism that does not track bounds consumes.
+
 #### `CoversUpto`
 
 *def, `Properties.Deliver.lean`*
@@ -24986,7 +25038,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 963 theorems that either another module of the
+The 969 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -33459,9 +33511,10 @@ theorem liveOn_roundRobin {n : ℕ} (hn : 0 < n) {BlockId : Type} [DecidableEq B
 ```lean
 theorem mysticetiLive_descent [F : Faults Validator] :
     (mysticetiLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload)).Descent
-      F.f where
-  goodLeaders
+      F.f
 ```
+
+**Mysticeti has the descent laws at slack `f`** — from the properties, with no argument about `Decided` in this file.
 
 #### `odontoceti_laws`
 
@@ -33482,11 +33535,10 @@ The laws, for Odontoceti.
 ```lean
 theorem odontocetiLive_descent [F : Faults5 Validator] :
     (odontocetiLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload)).Descent
-      F.f where
-  goodLeaders
+      F.f
 ```
 
-The descent laws, for Odontoceti at slack `f`.
+**The descent laws, for Odontoceti at slack `f`** — from the properties, with no argument about `Decided` here.
 
 #### `nemo_laws`
 
@@ -35736,6 +35788,21 @@ theorem odontocetiLive_delivers {Validator : Type} [Fintype Validator] [Decidabl
 
 **Odontoceti delivers**, at slack `f`; the argument is the same, its `Good` being the same predicate. Its block identifiers carry an order, so the binders are restated rather than taken from the section.
 
+#### `descent_of_properties`
+
+*theorem, `Barnacle.Helpers.Descent.lean`*
+
+```lean
+theorem descent_of_properties (R : LiveRule Validator BlockId Payload) {slack : ℕ}
+    {Live : Slots Validator → ∀ {U : R.Universe}, R.View U → Finset Validator → ℕ → ℕ → Prop}
+    (hlc : Properties.LeaderCommits R.toBaseRule.toDagRule Live)
+    (hind : Properties.Indirect R.toBaseRule.toDagRule R.elig)
+    (hgood : R.GoodGives slack Live) : R.Descent slack where
+  goodLeaders
+```
+
+**The descent laws, from the properties.** A rule that shows `LeaderCommits` and `Indirect`, and whose good DAGs meet its own liveness precondition, has Barnacle's liveness interface — and so, by `Heads/Proof.lean`, `LiveOn` under round-robin at every leader count, with no further argument about its decision relation.
+
 #### `causalStructure`
 
 *theorem, `Barnacle.Helpers.Hydrozoan.lean`*
@@ -36036,6 +36103,20 @@ theorem leaderCommits :
 
 **Direct liveness as a property**: a slot led by a member of the reliable quorum commits, and the commit reads that one leader, so its bound is one above the slot.
 
+#### `indirect`
+
+*theorem, `Hydrozoan.Helpers.Commit.lean`*
+
+```lean
+theorem indirect :
+    Indirect (rule (Replica := Replica) (BlockId := BlockId))
+      (fun sr i j => sr i + 3 ≤ sr j)
+```
+
+**HZ6 as a property.** The graded rule is total: an eligible committed anchor, with the eligible slots between skipped, decides the slot. Three rungs, tried in order — a certified candidate, else the least weak-linked one, else a skip — and each rung reads the leaders at the slot it decides and at no other, which is why the same verdict stands under any schedule naming the same rounds and the same leader there. That clause is what `Descends` needs and what a mechanism tracking bounds consumes.
+
+The totality lemma this replaced was stated over `DecidedBelow` on both sides; the property takes plain verdicts per schedule instead, which is the same argument with the bookkeeping moved out to `Derived/Descent.lean`.
+
 #### `descends`
 
 *theorem, `Hydrozoan.Helpers.Commit.lean`*
@@ -36047,7 +36128,7 @@ theorem descends {S : LeanDag.Slots Replica} {c : ℕ} (hc : 0 < c)
     Descends (rule (Replica := Replica) (BlockId := BlockId)) S c
 ```
 
-**The descent as a property.**
+**The descent as a property.** Was two lemmas — the graded rule at a bound and a downward induction over the run; both are now `Descends.of_indirect`.
 
 #### `commitsCandidate`
 
@@ -37122,6 +37203,18 @@ theorem leaderCommits :
 
 **L4 as a property**: a `T`-led slot in the window commits, and the commit reads one leader, so its bound is one above the slot.
 
+#### `indirect`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem indirect :
+    Indirect (mysticetiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) (fun sr i j => sr i + 3 ≤ sr j)
+```
+
+**A3 as a property.** The two indirect constructors, by cases on a certified candidate at the slot — which is the whole proof, and is why the verdict survives a reassignment of leaders elsewhere: the case split reads slot `i`'s candidate and the anchor's history, and neither moves. This is `mysticetiLive_descent.indirect` and the case split inside `decided_below_of_committed_run`, stated once.
+
 #### `decidedBelow_of_decidedWithin`
 
 *theorem, `MysticetiProperties.lean`*
@@ -37146,7 +37239,7 @@ theorem descends {S : Slots Validator} {c : ℕ} (hc : 0 < c)
       (Payload := Payload)) S c
 ```
 
-**The descent as a property**, under the spanning hypothesis on the round structure.
+**The descent as a property**, under the spanning hypothesis on the round structure. What stood here was a downward induction carrying the bound by hand; it is now `Descends.of_indirect`, and the only Mysticeti-specific step is reading `Eligible` as the round inequality the property is stated with.
 
 #### `banded`
 
@@ -37169,6 +37262,32 @@ theorem agree : Agree (odontocetiRule (Validator := Validator) (BlockId := Block
 ```
 
 **Two views decide alike.** O5 under the property's name.
+
+#### `leaderCommits`
+
+*theorem, `OdontocetiProperties.lean`*
+
+```lean
+theorem leaderCommits :
+    LeaderCommits (odontocetiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) (fun S {U} V T lo K => odontocetiLive S (U := U) V T lo K)
+```
+
+**A reliably-led slot commits**, at a bound one above the slot: a direct commit reads that slot's leader and no other.
+
+#### `indirect`
+
+*theorem, `OdontocetiProperties.lean`*
+
+```lean
+theorem indirect :
+    Indirect (odontocetiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) (fun sr i j => sr i + 2 ≤ sr j)
+```
+
+**O-A3 as a property.** The two indirect constructors, by cases on a thick-linked candidate at the slot, committing the least one. The whole proof is that case split, which is why the verdict survives a reassignment of leaders elsewhere: it reads slot `i`'s candidates and the anchor's history, and a schedule naming the same leader at `i` and the same rounds changes neither. The minimality clause transports for the same reason.
+
+This is `odontoceti_descent.indirect` and the case split that stood inside the committed-run descent, stated once.
 
 #### `decided_agree_truncate`
 
@@ -37352,6 +37471,21 @@ theorem of_mem' (h : RebasedAbove R U U' G R₀) {b : BlockId} (hb : b ∈ R.ids
 ```
 
 A block of the target at or above the settling round is a block of the source, at the shifted round.
+
+#### `Indirect.decided`
+
+*theorem, `Properties.Commit.lean`*
+
+```lean
+theorem Indirect.decided {R : DagRule Validator BlockId Payload}
+    {Elig : (ℕ → ℕ) → ℕ → ℕ → Prop} (h : Indirect R Elig)
+    (S : Slots Validator) {U : R.Universe} (V : R.View U) {i j : ℕ} {A : BlockId}
+    (he : Elig S.slotRound i j) (hj : R.Decided S V j (some A))
+    (hmid : ∀ i', i < i' → i' < j → Elig S.slotRound i i' → R.Decided S V i' none) :
+    ∃ v, R.Decided S V i v
+```
+
+**The plain indirect rule**, at the schedule it was given.
 
 #### `trans`
 
@@ -38783,6 +38917,18 @@ subsection per module, in the layer order of Appendices B and C.
 | `decided_of_head_committed` | A slot is decided once the head a wave above it is committed: the intermediates are vacuous. From … |
 | `headsDecide` | BN9b. Heads of rounds `ρ + w, …, ρ + 2w − 1` `T`-led (with `T` from `goodLeaders`) and their waves under … |
 
+### `Barnacle/Helpers/MysticetiLive.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `mysticetiLive_goodGives` | A good DAG meets the timed core's precondition. `Good` and `coreLive` name the same three facts about the … |
+
+### `Barnacle/Helpers/Odontoceti.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `odontocetiLive_goodGives` | A good DAG meets Odontoceti's precondition. `Good` and `OdontocetiProperties.odontocetiLive` name the same … |
+
 ### `Network/Quorum.lean` (2)
 
 | Lemma | Role |
@@ -39143,11 +39289,12 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `optUniverseOf_toBlockUniverse` | — |
 
-### `Barnacle/HydrozoanLive/Proof.lean` (2)
+### `Barnacle/HydrozoanLive/Proof.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
 | `descent` | — |
+| `goodGives` | A good DAG meets Hydrozoan's precondition. `Good` and `hzLive` name the same facts about the same quorum; … |
 | `roundRobinLive` | — |
 
 ### `Barnacle/OptimalHydrozoanLive/Proof.lean` (2)
@@ -39239,13 +39386,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `rule_ids` | — |
 | `rule_viewIds` | — |
 
-### `Hydrozoan/Helpers/Commit.lean` (5)
+### `Hydrozoan/Helpers/Commit.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
 | `coversUpto_eq` | The carrier's coverage predicate is Hydrozoan's. |
-| `decidedBelow_of_anchor` | The graded rule is total, at a bound. `decided_of_anchor` with the schedule dependence tracked: every rung … |
-| `decidedBelow_of_committed_run` | A committed run decides everything below it, at a bound. The existing descent with `DecidedBelow` in place … |
 | `eligibleAsAnchor_sched` | — |
 | `exists_coversUpto_decides` | A caught-up replica reaches every verdict, at the band's own ceiling rather than a rule-specific round. … |
 
@@ -39430,7 +39575,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `soundOn_skipFill` | The fill preserves it, above the gap. The synchrony round must clear the filled round: inside the gap the … |
 | `soundOn_stack` | The stack preserves it, the offsets composing exactly as the two statements above suggest: the fill … |
 
-### `MysticetiProperties.lean` (34)
+### `MysticetiProperties.lean` (33)
 
 | Lemma | Role |
 |:---|:---|
@@ -39446,7 +39591,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `commitsDirect` | A direct commit is a verdict, at the core's own direct-commit predicate. `Decided.directCommit` under the … |
 | `coversUpto_eq` | The carrier's coverage predicate is the core's, on the nose. |
 | `creatorsOf_old` | — |
-| `decidedBelow_of_committed_run` | The committed-run descent. `c` consecutive commits decide every slot below them, and the derivations … |
 | `decided_mono_of_band` | L2 re-derived, with no induction of its own. View monotonicity (`decided_mono`, four cases in … |
 | `directCommitIn_band` | — |
 | `directCommitIn_mono` | — |
@@ -39469,7 +39613,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `votesIn_of_sustains` | The votes an old decision-round block counts are the votes it counted: its references are unchanged, and … |
 | `votesIn_old` | The votes an old certificate counts are the votes it counted. |
 
-### `OdontocetiProperties.lean` (16)
+### `OdontocetiProperties.lean` (14)
 
 | Lemma | Role |
 |:---|:---|
@@ -39478,11 +39622,9 @@ subsection per module, in the layer order of Appendices B and C.
 | `commitsCandidate` | A commit names the slot's candidate. |
 | `commitsDirect` | And a direct commit is a verdict, at Odontoceti's own direct predicate. |
 | `coneSupports_band` | The anchor's cone of supporters is the cone it was. Both inclusions at once: a supporter inside an old … |
-| `decidedBelow_of_committed_run` | The committed-run descent, at the derived bound. The same argument as … |
 | `decidedBelow_of_decidedWithin` | Odontoceti's bounded relation lands in the derived one. |
-| `descends` | And a committed run decides everything below it. |
+| `descends` | And a committed run decides everything below it. Was a downward induction carrying the bound by hand; it … |
 | `directCommitIn_band` | And so does the direct commit. |
-| `leaderCommits` | A reliably-led slot commits, at a bound one above the slot: a direct commit reads that slot's leader and … |
 | `not_thickLink_band_novel` | A candidate the band did not carry is thick-linked from no old anchor. Its supporters would have to sit in … |
 | `skipsUnsupported` | Odontoceti skips an unsupported slot from a correct quorum. |
 | `supportersIn_band` | Supporters survive the band. A block one round above the slot that referenced the candidate references it … |
@@ -39558,6 +39700,13 @@ subsection per module, in the layer order of Appendices B and C.
 | Lemma | Role |
 |:---|:---|
 | `lt_bound` | The decided slot lies below the bound. |
+
+### `Properties/Derived/Descent.lean` (2)
+
+| Lemma | Role |
+|:---|:---|
+| `Descends.of_indirect` | `Descends` is a consequence, not an obligation. The run is `c` consecutive commits from `b`; its top is `b … |
+| `decidedBelow_of_committed_run` | The committed-run descent. A stretch of slots `[b, n]`, each committed below `n + 1`, decides every slot … |
 
 ### `Properties/Derived/FromBand.lean` (2)
 

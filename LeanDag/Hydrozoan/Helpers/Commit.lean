@@ -4,6 +4,7 @@ import LeanDag.Hydrozoan.IndirectLiveness.Statement
 import LeanDag.Hydrozoan.DirectLiveness.Proof
 import LeanDag.Hydrozoan.SlotAgreement.Proof
 import LeanDag.Properties.Commit
+import LeanDag.Properties.Derived.Descent
 import LeanDag.Properties.Candidate
 import LeanDag.Properties.Deliver
 
@@ -96,58 +97,65 @@ theorem eligibleAsAnchor_sched {S S' : LeanDag.Slots Replica}
   change S'.slotRound x + 2 < S'.slotRound y ↔ S.slotRound x + 2 < S.slotRound y
   rw [hround]
 
-/-- **The graded rule is total, at a bound.** `decided_of_anchor` with
-the schedule dependence tracked: every rung reads the leaders at the
-slot it decides and at no other, so a verdict anchored below `B`
-survives reassignment at or above `B`. -/
-theorem decidedBelow_of_anchor {S : LeanDag.Slots Replica}
-    {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId} {V : LeanDag.Hydrozoan.View U}
-    {k j B : ℕ} {A : BlockId} (hkB : k < B)
-    (helig : LeanDag.Hydrozoan.EligibleAsAnchor (S := ofCoreSlots S) Replica k j)
-    (hj : DecidedBelow rule S B V j (some A))
-    (hmid : ∀ i, k < i → i < j →
-      LeanDag.Hydrozoan.EligibleAsAnchor (S := ofCoreSlots S) Replica k i →
-      DecidedBelow rule S B V i none) :
-    ∃ v, DecidedBelow rule S B V k v := by
+open Classical in
+/-- **HZ6 as a property.** The graded rule is total: an eligible
+committed anchor, with the eligible slots between skipped, decides the
+slot. Three rungs, tried in order — a certified candidate, else the
+least weak-linked one, else a skip — and each rung reads the leaders at
+the slot it decides and at no other, which is why the same verdict
+stands under any schedule naming the same rounds and the same leader
+there. That clause is what `Descends` needs and what a mechanism
+tracking bounds consumes.
+
+The totality lemma this replaced was stated over `DecidedBelow` on both
+sides; the property takes plain verdicts per schedule instead, which is
+the same argument with the bookkeeping moved out to
+`Derived/Descent.lean`. -/
+theorem indirect :
+    Indirect (rule (Replica := Replica) (BlockId := BlockId))
+      (fun sr i j => sr i + 3 ≤ sr j) := by
   classical
-  have hkj : k < j := lt_of_eligibleAsAnchor (S := ofCoreSlots S) helig
+  intro S U V k j A helig hj hmid
+  have hea : LeanDag.Hydrozoan.EligibleAsAnchor (S := ofCoreSlots S) Replica k j := by
+    change S.slotRound k + 2 < S.slotRound j; omega
+  have hmidE : ∀ i, k < i → i < j →
+      LeanDag.Hydrozoan.EligibleAsAnchor (S := ofCoreSlots S) Replica k i →
+      S.slotRound k + 3 ≤ S.slotRound i := by
+    intro i _ _ h3
+    change S.slotRound k + 2 < S.slotRound i at h3; omega
+  have hkj : k < j := lt_of_eligibleAsAnchor (S := ofCoreSlots S) hea
   have hmidD : ∀ i, k < i → i < j →
       LeanDag.Hydrozoan.EligibleAsAnchor (S := ofCoreSlots S) Replica k i →
       LeanDag.Hydrozoan.Decided (S := ofCoreSlots S) U V i none :=
-    fun i h1 h2 h3 => (hmid i h1 h2 h3).2.1
+    fun i h1 h2 h3 => hmid i h1 h2 (hmidE i h1 h2 h3)
   by_cases hc : ∃ L, LeanDag.Hydrozoan.IsLeaderBlock (S := ofCoreSlots S) U k L ∧
       LeanDag.Hydrozoan.CertifiedIn U A L ((ofCoreSlots S).slotRound k)
   · obtain ⟨L, hL, hcert⟩ := hc
-    refine ⟨some L, hkB, LeanDag.Hydrozoan.Decided.indirectCert (S := ofCoreSlots S) hkj helig hj.2.1
-      hmidD hL hcert, ?_⟩
-    intro S' hround hlead
+    refine ⟨some L, fun S' hround hlead hj' hmid' => ?_⟩
     exact LeanDag.Hydrozoan.Decided.indirectCert (S := ofCoreSlots S') hkj
-      ((eligibleAsAnchor_sched hround).mpr helig) (hj.2.2 S' hround hlead)
-      (fun i h1 h2 h3 => (hmid i h1 h2 ((eligibleAsAnchor_sched hround).mp h3)).2.2
-        S' hround hlead)
+      ((eligibleAsAnchor_sched hround).mpr hea) hj'
+      (fun i h1 h2 h3 => hmid' i h1 h2 (hmidE i h1 h2 ((eligibleAsAnchor_sched hround).mp h3)))
       (isLeaderBlock_sched (S₁ := ofCoreSlots S) (S₂ := ofCoreSlots S')
         (by change S.slotRound k = S'.slotRound k; rw [hround])
-        (by change S.leader k = S'.leader k; rw [hlead k hkB]) hL)
+        (by change S.leader k = S'.leader k; rw [hlead]) hL)
       (by change LeanDag.Hydrozoan.CertifiedIn U A L (S'.slotRound k); rw [hround]; exact hcert)
   · push Not at hc
     by_cases hw : ∃ L, LeanDag.Hydrozoan.IsLeaderBlock (S := ofCoreSlots S) U k L ∧
         LeanDag.Hydrozoan.WeakLinked U A L ((ofCoreSlots S).slotRound k)
     · obtain ⟨L₀, hL₀, hw₀, hleast⟩ := exists_least_weak_candidate (S := ofCoreSlots S) hw
-      refine ⟨some L₀, hkB, LeanDag.Hydrozoan.Decided.indirectWeak (S := ofCoreSlots S) hkj helig hj.2.1
-        hmidD hc hL₀ hw₀ hleast, ?_⟩
-      intro S' hround hlead
+      refine ⟨some L₀, fun S' hround hlead hj' hmid' => ?_⟩
       have hls : ∀ L', LeanDag.Hydrozoan.IsLeaderBlock (S := ofCoreSlots S') U k L' →
           LeanDag.Hydrozoan.IsLeaderBlock (S := ofCoreSlots S) U k L' := fun L' hL' =>
         isLeaderBlock_sched (S₁ := ofCoreSlots S') (S₂ := ofCoreSlots S)
           (by change S'.slotRound k = S.slotRound k; rw [hround])
-          (by change S'.leader k = S.leader k; rw [hlead k hkB]) hL'
+          (by change S'.leader k = S.leader k; rw [hlead]) hL'
       refine LeanDag.Hydrozoan.Decided.indirectWeak (S := ofCoreSlots S') hkj
-        ((eligibleAsAnchor_sched hround).mpr helig) (hj.2.2 S' hround hlead)
-        (fun i h1 h2 h3 => (hmid i h1 h2 ((eligibleAsAnchor_sched hround).mp h3)).2.2
-          S' hround hlead) ?_
+        ((eligibleAsAnchor_sched hround).mpr hea) hj'
+        (fun i h1 h2 h3 => hmid' i h1 h2
+          (hmidE i h1 h2 ((eligibleAsAnchor_sched hround).mp h3))) ?_
         (isLeaderBlock_sched (S₁ := ofCoreSlots S) (S₂ := ofCoreSlots S')
           (by change S.slotRound k = S'.slotRound k; rw [hround])
-          (by change S.leader k = S'.leader k; rw [hlead k hkB]) hL₀) ?_ ?_
+          (by change S.leader k = S'.leader k; rw [hlead]) hL₀) ?_ ?_
       · intro L' hL' hc'
         refine hc L' (hls L' hL') ?_
         change LeanDag.Hydrozoan.CertifiedIn U A L' (S'.slotRound k) at hc'
@@ -159,18 +167,16 @@ theorem decidedBelow_of_anchor {S : LeanDag.Slots Replica}
         change LeanDag.Hydrozoan.WeakLinked U A L' (S'.slotRound k) at hw'
         rw [hround] at hw'; exact hw'
     · push Not at hw
-      refine ⟨none, hkB, LeanDag.Hydrozoan.Decided.indirectSkip (S := ofCoreSlots S) hkj helig hj.2.1
-        hmidD hc hw, ?_⟩
-      intro S' hround hlead
+      refine ⟨none, fun S' hround hlead hj' hmid' => ?_⟩
       have hls : ∀ L', LeanDag.Hydrozoan.IsLeaderBlock (S := ofCoreSlots S') U k L' →
           LeanDag.Hydrozoan.IsLeaderBlock (S := ofCoreSlots S) U k L' := fun L' hL' =>
         isLeaderBlock_sched (S₁ := ofCoreSlots S') (S₂ := ofCoreSlots S)
           (by change S'.slotRound k = S.slotRound k; rw [hround])
-          (by change S'.leader k = S.leader k; rw [hlead k hkB]) hL'
+          (by change S'.leader k = S.leader k; rw [hlead]) hL'
       refine LeanDag.Hydrozoan.Decided.indirectSkip (S := ofCoreSlots S') hkj
-        ((eligibleAsAnchor_sched hround).mpr helig) (hj.2.2 S' hround hlead)
-        (fun i h1 h2 h3 => (hmid i h1 h2 ((eligibleAsAnchor_sched hround).mp h3)).2.2
-          S' hround hlead) ?_ ?_
+        ((eligibleAsAnchor_sched hround).mpr hea) hj'
+        (fun i h1 h2 h3 => hmid' i h1 h2
+          (hmidE i h1 h2 ((eligibleAsAnchor_sched hround).mp h3))) ?_ ?_
       · intro L' hL' hc'
         refine hc L' (hls L' hL') ?_
         change LeanDag.Hydrozoan.CertifiedIn U A L' (S'.slotRound k) at hc'
@@ -180,57 +186,18 @@ theorem decidedBelow_of_anchor {S : LeanDag.Slots Replica}
         change LeanDag.Hydrozoan.WeakLinked U A L' (S'.slotRound k) at hw'
         rw [hround] at hw'; exact hw'
 
-open Classical in
-/-- **A committed run decides everything below it, at a bound.** The
-existing descent with `DecidedBelow` in place of `Decided`: the nearest
-eligible committed anchor is found the same way, and totality closes
-each slot with `decidedBelow_of_anchor`. -/
-theorem decidedBelow_of_committed_run {S : LeanDag.Slots Replica}
-    {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId} {V : LeanDag.Hydrozoan.View U}
-    {b n B : ℕ} (hbn : b ≤ n) (hnB : n < B)
-    (hspan : ∀ i, i < b → LeanDag.Hydrozoan.EligibleAsAnchor (S := ofCoreSlots S) Replica i n)
-    (hrun : ∀ j, b ≤ j → j ≤ n → ∃ A, DecidedBelow rule S B V j (some A)) :
-    ∀ i, i < b → ∃ v, DecidedBelow rule S B V i v := by
-  have key : ∀ d i, i < b → b - i ≤ d → ∃ v, DecidedBelow rule S B V i v := by
-    intro d
-    induction d with
-    | zero => intro i hi hd; omega
-    | succ d ih =>
-      intro i hi hd
-      have hex : ∃ j, LeanDag.Hydrozoan.EligibleAsAnchor (S := ofCoreSlots S) Replica i j ∧
-          ∃ A, DecidedBelow rule S B V j (some A) :=
-        ⟨n, hspan i hi, hrun n hbn (le_refl n)⟩
-      have hle : Nat.find hex ≤ n :=
-        Nat.find_le ⟨hspan i hi, hrun n hbn (le_refl n)⟩
-      obtain ⟨helig, A, hA⟩ := Nat.find_spec hex
-      have hmid : ∀ i', i < i' → i' < Nat.find hex →
-          LeanDag.Hydrozoan.EligibleAsAnchor (S := ofCoreSlots S) Replica i i' →
-          DecidedBelow rule S B V i' none := by
-        intro i' h1 h2 h3
-        have hnc : ¬ ∃ C, DecidedBelow rule S B V i' (some C) :=
-          fun hcom => Nat.find_min hex h2 ⟨h3, hcom⟩
-        have hi'b : i' < b := by
-          by_contra he
-          exact hnc (hrun i' (by omega) (by omega))
-        obtain ⟨v, hv⟩ := ih i' hi'b (by omega)
-        cases v with
-        | none => exact hv
-        | some C => exact absurd ⟨C, hv⟩ hnc
-      exact decidedBelow_of_anchor (by omega) helig hA hmid
-  intro i hi
-  exact key (b - i) i hi (le_refl _)
-
-/-- **The descent as a property.** -/
+/-- **The descent as a property.** Was two lemmas — the graded rule at a
+bound and a downward induction over the run; both are now
+`Descends.of_indirect`. -/
 theorem descends {S : LeanDag.Slots Replica} {c : ℕ} (hc : 0 < c)
     (hspans : LeanDag.Hydrozoan.IndirectLiveness.SpansEligible
       (S := ofCoreSlots S) Replica c) :
-    Descends (rule (Replica := Replica) (BlockId := BlockId)) S c := by
-  intro U V b hrun i hi
-  have hrun' : ∀ j, b ≤ j → j ≤ b + c - 1 →
-      ∃ A, DecidedBelow rule S (b + c) V j (some A) :=
-    fun j h1 h2 => hrun j h1 (by omega)
-  exact decidedBelow_of_committed_run (by omega) (by omega)
-    (fun i hi => hspans b i hi) hrun' i hi
+    Descends (rule (Replica := Replica) (BlockId := BlockId)) S c :=
+  Descends.of_indirect indirect hc (fun b i hi => by
+    have := hspans b i hi
+    change S.slotRound i + 2 < S.slotRound (b + c - 1) at this
+    omega)
+
 
 /-- **A commit names the slot's candidate.** Hydrozoan's
 `isLeaderBlock_of_decided` under the property's name. Four commit

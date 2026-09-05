@@ -1,13 +1,17 @@
 import LeanDag.Barnacle.HydrozoanLive.Statement
 import LeanDag.Barnacle.Helpers.Heads
-import LeanDag.Hydrozoan.DirectLiveness.Proof
-import LeanDag.Hydrozoan.IndirectLiveness.Proof
+import LeanDag.Barnacle.Helpers.Descent
+import LeanDag.Hydrozoan.Helpers.Commit
 
 /-!
 # Barnacle over Hydrozoan — the live rule, proof
 
-Unaudited. `goodLeaders` is HZ5 and `indirect` is HZ6, each applied
-without adaptation; round-robin liveness is `liveOn_roundRobin` at
+Unaudited. `goodLeaders` was HZ5 and `indirect` was HZ6, each applied
+without adaptation. Both are properties now — `LeaderCommits` and
+`Indirect` — and `descent_of_properties` assembles them, so what is
+left is the bridge from Hydrozoan's good DAG to its own liveness
+precondition, which mentions no verdict. Round-robin liveness is
+`liveOn_roundRobin` at
 slack `f + c` and wave length three, whose bound `3·(f + c) + 1 ≤ n`
 is the committee bound, taken as a hypothesis rather than derived
 from the slack.
@@ -19,35 +23,32 @@ namespace Barnacle
 
 namespace HydrozoanLive
 
+/-- **A good DAG meets Hydrozoan's precondition.** `Good` and `hzLive`
+name the same facts about the same quorum; the window is the single
+slot, and its rounds fit because the wave does. -/
+theorem goodGives (Replica BlockId : Type) [Fintype Replica] [DecidableEq Replica]
+    [LinearOrder BlockId] [F : LeanDag.Hydrozoan.Faults Replica] :
+    (hydrozoanLive (Replica := Replica) (BlockId := BlockId)).GoodGives (F.f + F.c)
+      (fun S {U} V T lo K => LeanDag.Hydrozoan.hzLive S (U := U) V T lo K) := by
+  intro U Rnd N hGood
+  obtain ⟨T, hTC, hTq, hsync, hpop⟩ := hGood
+  refine ⟨T, ?_, ?_⟩
+  · have hcard := F.card_replicas
+    simp only [LeanDag.Hydrozoan.q] at hTq
+    omega
+  · intro S V κ hcov hRnd hwave hlead
+    have hw3 : (hydrozoanLive (Replica := Replica)
+        (BlockId := BlockId)).waveLength = 3 := rfl
+    rw [hw3] at hwave
+    refine ⟨hTC, hTq, Rnd, N, hsync, hRnd, hpop, hcov, ?_⟩
+    intro k hk
+    have := S.mono (Nat.lt_succ_iff.mp hk)
+    omega
+
 theorem descent : Descent := by
   intro Replica BlockId _ _ _ F
-  constructor
-  · intro U Rnd N hGood
-    obtain ⟨T, hTC, hTq, hsync, hpop⟩ := hGood
-    refine ⟨T, ?_, ?_⟩
-    · have hcard := F.card_replicas
-      simp only [LeanDag.Hydrozoan.q] at hTq
-      omega
-    · intro S V κ hcov hRnd hwave hlead
-      letI := slotsOf S
-      -- The wave length is three, and every arithmetic goal below is
-      -- stated in the interface's spelling of the slot round; the
-      -- Hydrozoan one is definitionally equal but a distinct atom to
-      -- `omega`.
-      have hw3 : (hydrozoanLive (Replica := Replica)
-          (BlockId := BlockId)).waveLength = 3 := rfl
-      rw [hw3] at hwave
-      have h0 := hpop (S.slotRound κ) hRnd (by omega)
-      have h1 := hpop (S.slotRound κ + 1) (by omega) (by omega)
-      have h2 := hpop (S.slotRound κ + 2) (by omega) (by omega)
-      obtain ⟨L, _, _, hd⟩ :=
-        LeanDag.Hydrozoan.DirectLiveness.holds Replica BlockId U T Rnd κ hTC hTq hsync hRnd
-          h0 h1 h2 hlead V
-          (fun b hb hr => hcov b hb (le_trans hr (show S.slotRound κ + 2 ≤ N by omega)))
-      exact ⟨L, hd⟩
-  · intro S U V i j A hij hdj hmid
-    letI := slotsOf S
-    exact (LeanDag.Hydrozoan.IndirectLiveness.holds Replica BlockId U).1 V i j A hij hdj hmid
+  exact descent_of_properties _ LeanDag.Hydrozoan.leaderCommits LeanDag.Hydrozoan.indirect
+    (goodGives Replica BlockId)
 
 theorem roundRobinLive : RoundRobinLive := by
   intro n hn BlockId _ F hck w hk m hm hmax

@@ -1,6 +1,7 @@
 import LeanDag.Odontoceti.Decision
 import LeanDag.MysticetiProperties
 import LeanDag.Properties.Band
+import LeanDag.Properties.Derived.Descent
 import LeanDag.Properties.Agree
 import LeanDag.Properties.Candidate
 import LeanDag.Properties.Optional.Direct
@@ -465,124 +466,82 @@ theorem leaderCommits :
     by rw [hlead' k (by omega)]; exact hcr⟩ ?_
   rw [hround]; exact hin
 
-/-- **The committed-run descent, at the derived bound.** The same
-argument as `Odontoceti.decidedWithin_below_of_committed_run`, carried
-in `DecidedBelow` so that every derivation is rebuilt under any schedule
-sharing the round structure and the leader prefix — which is immediate,
-since every slot the derivation names lies under the bound.
+/-- **O-A3 as a property.** The two indirect constructors, by cases on a
+thick-linked candidate at the slot, committing the least one. The whole
+proof is that case split, which is why the verdict survives a
+reassignment of leaders elsewhere: it reads slot `i`'s candidates and
+the anchor's history, and a schedule naming the same leader at `i` and
+the same rounds changes neither. The minimality clause transports for
+the same reason.
 
-The minimality clause is Odontoceti's own, and it transports for the
-reason the anchor does: a candidate is a candidate at either schedule
-when the two name the same leader at that slot. -/
-theorem decidedBelow_of_committed_run [S : Slots Validator]
-    {U : BlockUniverse Validator BlockId Payload}
-    {V : View Validator BlockId Payload U} {b n : ℕ} (hbn : b ≤ n)
-    (hspan : ∀ i, i < b → Odontoceti.Eligible Validator i n)
-    (hrun : ∀ j, b ≤ j → j ≤ n →
-      ∃ B', DecidedBelow (odontocetiRule (Payload := Payload)) S (n + 1) V j (some B')) :
-    ∀ i, i < b →
-      ∃ v, DecidedBelow (odontocetiRule (Payload := Payload)) S (n + 1) V i v := by
+This is `odontoceti_descent.indirect` and the case split that stood
+inside the committed-run descent, stated once. -/
+theorem indirect :
+    Indirect (odontocetiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) (fun sr i j => sr i + 2 ≤ sr j) := by
   classical
-  have key : ∀ d i, i < b → b - i ≤ d →
-      ∃ v, DecidedBelow (odontocetiRule (Payload := Payload)) S (n + 1) V i v := by
-    intro d
-    induction d with
-    | zero => intro i hi hd; omega
-    | succ d ih =>
-      intro i hi hd
-      have hex : ∃ j, Odontoceti.Eligible Validator i j ∧
-          ∃ B', DecidedBelow (odontocetiRule (Payload := Payload)) S (n + 1) V j (some B') :=
-        ⟨n, hspan i hi, hrun n hbn (le_refl n)⟩
-      have hle : Nat.find hex ≤ n :=
-        Nat.find_le ⟨hspan i hi, hrun n hbn (le_refl n)⟩
-      obtain ⟨helig, B', hB⟩ := Nat.find_spec hex
-      have hlt : i < Nat.find hex := Odontoceti.lt_of_eligible helig
-      set j0 := Nat.find hex with hj0
-      have hmid : ∀ i', i < i' → i' < j0 → Odontoceti.Eligible Validator i i' →
-          DecidedBelow (odontocetiRule (Payload := Payload)) S (n + 1) V i' none := by
-        intro i' h1 h2 h3
-        have hnc : ¬ ∃ C,
-            DecidedBelow (odontocetiRule (Payload := Payload)) S (n + 1) V i' (some C) :=
-          fun hc => Nat.find_min hex (hj0 ▸ h2) ⟨h3, hc⟩
-        have hi'b : i' < b := by
-          by_contra hge
-          exact hnc (hrun i' (by omega) (by omega))
-        obtain ⟨v, hv⟩ := ih i' hi'b (by omega)
-        cases v with
-        | none => exact hv
-        | some C => exact absurd ⟨C, hv⟩ hnc
-      have hin : i < n + 1 := by omega
-      have heligS : ∀ (S' : Slots Validator), S'.slotRound = S.slotRound →
-          ∀ x y, Odontoceti.Eligible Validator (S := S') x y ↔
-            Odontoceti.Eligible Validator (S := S) x y := by
-        intro S' hround x y
-        simp only [Odontoceti.Eligible, Odontoceti.decisionRound, hround]
-      by_cases hc : ∃ L, IsLeaderBlock U i L ∧ Odontoceti.ThickLink U B' L (S.slotRound i)
-      · have hCne : (U.ids.filter fun L => IsLeaderBlock U i L ∧
-            Odontoceti.ThickLink U B' L (S.slotRound i)).Nonempty := by
-          obtain ⟨L, hL, ht⟩ := hc
-          exact ⟨L, Finset.mem_filter.mpr ⟨hL.1, hL, ht⟩⟩
-        set Lm := (U.ids.filter fun L => IsLeaderBlock U i L ∧
-          Odontoceti.ThickLink U B' L (S.slotRound i)).min' hCne with hLm
-        have hmem := Finset.min'_mem _ hCne
-        rw [Finset.mem_filter] at hmem
-        have hminS : ∀ L', IsLeaderBlock U i L' →
-            Odontoceti.ThickLink U B' L' (S.slotRound i) → ¬ L' < Lm := by
-          intro L' hL' ht' hlt
-          exact absurd hlt (not_lt.mpr (Finset.min'_le _ L'
-            (Finset.mem_filter.mpr ⟨hL'.1, hL', ht'⟩)))
-        refine ⟨some Lm, hin, Odontoceti.Decided.indirectCommit hlt helig hB.toDecided
-          (fun i' h1 h2 h3 => (hmid i' h1 h2 h3).toDecided) hmem.2.1 hmem.2.2 hminS, ?_⟩
-        intro S' hround hlead
-        have hLm' : IsLeaderBlock (S := S') U i Lm := by
-          obtain ⟨hm, hr, hcr⟩ := hmem.2.1
-          exact ⟨hm, by rw [hround]; exact hr, by rw [hlead i hin]; exact hcr⟩
-        refine Odontoceti.Decided.indirectCommit (S := S') hlt
-          ((heligS S' hround i j0).mpr helig)
-          (hB.2.2 S' hround hlead)
-          (fun i' h1 h2 h3 => (hmid i' h1 h2
-            ((heligS S' hround i i').mp h3)).2.2 S' hround hlead)
-          hLm' (by rw [hround]; exact hmem.2.2) ?_
-        intro L' hL' ht'
-        refine hminS L' ?_ (by rw [← hround]; exact ht')
-        obtain ⟨hm, hr, hcr⟩ := hL'
-        exact ⟨hm, by rw [← hround]; exact hr, by rw [← hlead i hin]; exact hcr⟩
-      · push_neg at hc
-        refine ⟨none, hin, Odontoceti.Decided.indirectSkip hlt helig hB.toDecided
-          (fun i' h1 h2 h3 => (hmid i' h1 h2 h3).toDecided) hc, ?_⟩
-        intro S' hround hlead
-        refine Odontoceti.Decided.indirectSkip (S := S') hlt
-          ((heligS S' hround i j0).mpr helig)
-          (hB.2.2 S' hround hlead)
-          (fun i' h1 h2 h3 => (hmid i' h1 h2
-            ((heligS S' hround i i').mp h3)).2.2 S' hround hlead) ?_
-        intro L hL'
-        obtain ⟨hm, hr, hcr⟩ := hL'
-        have hLS : IsLeaderBlock (S := S) U i L :=
-          ⟨hm, by rw [← hround]; exact hr, by rw [← hlead i hin]; exact hcr⟩
-        have hnt := hc L hLS
-        show ¬ Odontoceti.ThickLink U B' L (S'.slotRound i)
-        rw [hround]
-        exact hnt
-  intro i hi
-  exact key (b - i) i hi (le_refl _)
+  intro S U V i j A helig hj hmid
+  letI := S
+  have he : Odontoceti.Eligible Validator i j := Odontoceti.eligible_iff.mpr helig
+  have hlt : i < j := Odontoceti.lt_of_eligible he
+  have heligS : ∀ (S' : Slots Validator), S'.slotRound = S.slotRound →
+      ∀ x y, Odontoceti.Eligible Validator (S := S') x y ↔
+        Odontoceti.Eligible Validator (S := S) x y := by
+    intro S' hround x y
+    simp only [Odontoceti.Eligible, Odontoceti.decisionRound, hround]
+  by_cases hc : ∃ L, IsLeaderBlock U i L ∧ Odontoceti.ThickLink U A L (S.slotRound i)
+  · have hCne : (U.ids.filter fun L => IsLeaderBlock U i L ∧
+        Odontoceti.ThickLink U A L (S.slotRound i)).Nonempty := by
+      obtain ⟨L, hL, ht⟩ := hc
+      exact ⟨L, Finset.mem_filter.mpr ⟨hL.1, hL, ht⟩⟩
+    set Lm := (U.ids.filter fun L => IsLeaderBlock U i L ∧
+      Odontoceti.ThickLink U A L (S.slotRound i)).min' hCne with hLm
+    have hmem := Finset.min'_mem _ hCne
+    rw [Finset.mem_filter] at hmem
+    have hminS : ∀ L', IsLeaderBlock U i L' →
+        Odontoceti.ThickLink U A L' (S.slotRound i) → ¬ L' < Lm := by
+      intro L' hL' ht' hlt'
+      exact absurd hlt' (not_lt.mpr (Finset.min'_le _ L'
+        (Finset.mem_filter.mpr ⟨hL'.1, hL', ht'⟩)))
+    refine ⟨some Lm, fun S' hround hlead hj' hmid' => ?_⟩
+    have hLm' : IsLeaderBlock (S := S') U i Lm := by
+      obtain ⟨hm, hr, hcr⟩ := hmem.2.1
+      exact ⟨hm, by rw [hround]; exact hr, by rw [hlead]; exact hcr⟩
+    refine Odontoceti.Decided.indirectCommit (S := S') hlt
+      ((heligS S' hround i j).mpr he) hj'
+      (fun i' h1 h2 h3 => hmid' i' h1 h2
+        (Odontoceti.eligible_iff (S := S) |>.mp ((heligS S' hround i i').mp h3)))
+      hLm' (by rw [hround]; exact hmem.2.2) ?_
+    intro L' hL' ht'
+    refine hminS L' ?_ (by rw [← hround]; exact ht')
+    obtain ⟨hm, hr, hcr⟩ := hL'
+    exact ⟨hm, by rw [← hround]; exact hr, by rw [← hlead]; exact hcr⟩
+  · push Not at hc
+    refine ⟨none, fun S' hround hlead hj' hmid' => ?_⟩
+    refine Odontoceti.Decided.indirectSkip (S := S') hlt
+      ((heligS S' hround i j).mpr he) hj'
+      (fun i' h1 h2 h3 => hmid' i' h1 h2
+        (Odontoceti.eligible_iff (S := S) |>.mp ((heligS S' hround i i').mp h3))) ?_
+    intro L hL'
+    obtain ⟨hm, hr, hcr⟩ := hL'
+    have hLS : IsLeaderBlock (S := S) U i L :=
+      ⟨hm, by rw [← hround]; exact hr, by rw [← hlead]; exact hcr⟩
+    have hnt := hc L hLS
+    show ¬ Odontoceti.ThickLink U A L (S'.slotRound i)
+    rw [hround]
+    exact hnt
 
-/-- **And a committed run decides everything below it.** -/
+
+/-- **And a committed run decides everything below it.** Was a downward
+induction carrying the bound by hand; it is now `Descends.of_indirect`,
+with `Eligible` read as the round inequality. -/
 theorem descends {S : Slots Validator} {c : ℕ} (hc : 0 < c)
     (hspans : Odontoceti.SpansEligible (Validator := Validator) (S := S) c) :
     Descends (odontocetiRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload)) S c := by
-  intro U V b hrun i hi
-  have hbc : b + c - 1 + 1 = b + c := by omega
-  have hrun' : ∀ j, b ≤ j → j ≤ b + c - 1 →
-      ∃ B', DecidedBelow (odontocetiRule (Payload := Payload)) S (b + c - 1 + 1) V j
-        (some B') := by
-    intro j hj1 hj2
-    obtain ⟨L, hL⟩ := hrun j hj1 (by omega)
-    exact ⟨L, by rw [hbc]; exact hL⟩
-  obtain ⟨v, hv⟩ := decidedBelow_of_committed_run (S := S) (U := U) (V := V)
-    (b := b) (n := b + c - 1) (by omega) (fun i hi => hspans b i hi) hrun' i hi
-  exact ⟨v, by rw [← hbc]; exact hv⟩
+      (Payload := Payload)) S c :=
+  Descends.of_indirect indirect hc
+    (fun b i hi => Odontoceti.eligible_iff.mp (hspans b i hi))
+
 
 end Bounded
 

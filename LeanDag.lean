@@ -101,6 +101,7 @@ import LeanDag.Properties.Derived.Bounded
 import LeanDag.Properties.Derived.FromBand
 import LeanDag.Properties.Derived.Progress
 import LeanDag.Properties.Derived.Truncate
+import LeanDag.Properties.Derived.Descent
 import LeanDag.Properties.Compose
 import LeanDag.Properties.Deliver
 import LeanDag.MysticetiProperties
@@ -114,6 +115,7 @@ import LeanDag.Hydrozoan.Helpers.Skippability
 import LeanDag.Hydrozoan.Properties.Statement
 import LeanDag.Hydrozoan.Properties.Proof
 import LeanDag.Barnacle.Helpers.DagRule
+import LeanDag.Barnacle.Helpers.Descent
 import LeanDag.Integration.Hydrozoan.Stack
 import LeanDag.Integration.Hydrozoan.Liveness
 import LeanDag.Integration.Hydrozoan.Deployment

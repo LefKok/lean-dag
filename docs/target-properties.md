@@ -50,9 +50,10 @@ derived from it — is exactly the part with two instances. Where the two
 collections overlap they now agree by construction: `Laws.agree` **is**
 `Agree` and `Laws.candidates` **is** `CommitsCandidate`
 (`Barnacle/Conformance.lean`). Where they do not,
-`Laws.decided_of_directCommitIn` has no counterpart here and
-`LiveRule.LiveOn` splits into `LeaderCommits` and `Descends` without
-being related to them. §11.2 records what follows.
+`Laws.decided_of_directCommitIn` has no counterpart here — until it was
+promoted to `CommitsDirect` — and `LiveRule.LiveOn` split into
+`LeaderCommits` and `Descends` without being related to them, until
+§11.2b related them. §11.2 records what follows.
 
 One mechanism stays rule-independent as far as this survey goes: the
 pacing and delivery layers. The denial-of-service arc left that
@@ -978,10 +979,17 @@ theorem:
   execution models has two preconditions and one relation (§4.3).
   `Live S V T lo K` is indexed by the schedule and by a slot window
   `[lo, K)`.
+- `Indirect R Elig` — an anchor eligible for slot `i`, committed, with
+  every eligible slot strictly between them skipped, decides `i`, and
+  the verdict is unchanged by a reassignment of leaders elsewhere.
+  `Elig` is a parameter and reads the round structure alone: every rule
+  here makes an anchor eligible a wave above the slot, and the property
+  does not care which wave.
 - `Descends R S c` — `c` consecutive slots committed within `b + c`
-  decide everything below `b` within `b + c`. The indirect rule's
-  descent; `c` and the round-structure hypothesis it needs are the
-  protocol's.
+  decide everything below `b` within `b + c`. **No longer an
+  obligation**: it is `Indirect` with a downward induction on top
+  (`Properties/Derived/Descent.lean`, §11.2b), and what a protocol
+  supplies for it is the round-structure hypothesis and `c`.
 
 `Adaptive/{Policy,Run,Liveness}.lean` are stated over `DagRule` and
 these, and name no protocol. `Adaptive.run_agree` uses `Agree` alone.
@@ -1416,7 +1424,7 @@ which one depending on whether it transforms the DAG or a view.
 | | `Agree` | two views of one universe under one schedule decide alike |
 | | `CommitsCandidate` | a commit names a block the DAG holds, at the slot's round, by the slot's leader |
 | | `LeaderCommits R Live` | under the protocol's own precondition, a reliably-led slot commits at a tight bound |
-| | `Descends R S c` | a run of `c` committed slots decides everything below it |
+| | `Indirect R Elig` | a committed anchor with the eligible slots below it skipped decides the slot, at a tight bound |
 | protocol, optional | `CommitsDirect R Direct` | a directly committed candidate is a commit verdict — owed when a mechanism counts the rule's direct predicate |
 | | `SkipsUnsupported R Ok` | an unsupported slot is skipped without waiting for an anchor |
 | mechanism, DAG | `Sustains R U U' G R₀` | above the settling round the transformed DAG holds the same blocks, at rounds `G` apart |
@@ -1430,10 +1438,12 @@ protocol's view type already carried the proof (§11.4d).
 | Derived | From |
 |---|---|
 | `Persist`, `LocalTruncate` | `Banded` |
+| `Descends R S c` | `Indirect` |
 | view monotonicity, a slot bound, `exists_coversUpto_decides` | `Banded` |
 | cross-cut and cross-horizon agreement | `Agree` + `LocalTruncate` |
 | agreement across an extension | `Agree` + `Persist` |
 | `decidedBelow_of_run` | `LeaderCommits` + `Descends` |
+| `LiveRule.Descent`, and so Barnacle's `LiveOn` | `LeaderCommits` + `Indirect` |
 | a commit's causal cone is real | `Causal` + `CommitsCandidate` |
 | the three liveness predicates, and composition | `Sustains` |
 | non-equivocation across a cut | `Truncates` |
@@ -1457,7 +1467,7 @@ recomputes this from `docs/decls.json`: a rule shows a property when
 some theorem concludes it at one of the rule's carriers, or when its
 conformance `Statement` lists it.
 
-| rule | `Causal` | `Banded` | `Agree` | `CommitsCandidate` | `LeaderCommits` | `Descends` | `CommitsDirect`* | `SkipsUnsupported`* |
+| rule | `Causal` | `Banded` | `Agree` | `CommitsCandidate` | `LeaderCommits` | `Indirect` | `CommitsDirect`* | `SkipsUnsupported`* |
 |---|---|---|---|---|---|---|---|---|
 | core Mysticeti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | reactive Mysticeti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -1476,6 +1486,10 @@ anchor. A dash there is not a gap.
 
 `Persist` and `LocalTruncate` are not columns: they follow from `Banded`
 for every rule that has it, so there is nothing per protocol to record.
+`Descends` is no longer one either — it follows from `Indirect`, which
+replaced it in the required set (§11.2b). Each protocol still states it,
+because the round-structure hypothesis it needs is the protocol's, but
+the statement is now three lines and no induction.
 
 **Four rules show the six**, and `Banded` has three instances —
 reactive Mysticeti shares the core's rule. Odontoceti is the third
@@ -1548,6 +1562,55 @@ What part 2 does not yet deliver:
   among the properties, and the liveness preconditions — `PlacesRuns`,
   the staged `Live` — are hypotheses the deployment meets, not things
   the properties discharge.
+
+### 11.2b Tier 3: Barnacle's liveness, through the properties
+
+Barnacle's liveness mechanism runs on `LiveRule.Descent`: two laws, from
+which `Heads/Proof.lean` derives the stretch descent, the heads
+argument, and `LiveOn` under round-robin at every leader count. Six
+rules proved `Descent` for themselves. Three now get it from the
+properties, and the two laws land differently.
+
+**`indirect` is a property that was missing.** It is the indirect rule —
+a committed anchor a wave above the slot, with the eligible slots
+between it and the slot skipped, decides the slot — and nothing in the
+collection implied it. `Descends` is weaker: it asks for a *run* of
+consecutive commits, which is what the descent produces after an
+induction, not what the rule provides in one step. The three protocols
+each carried that induction, and each carried the same case split at
+the bottom of it.
+
+`Properties.Indirect` is the case split. `Derived/Descent.lean` is the
+induction, once. `Descends` is a corollary and no longer an obligation,
+which is why the required set is still six: `Indirect` took its place.
+
+**`goodLeaders` is `LeaderCommits` with the bound thrown away.** The
+property is the stronger claim — it produces the commit at a *tight*
+bound, which Barnacle's law never asked for — so the derivation is one
+instantiation at the one-slot window `[κ, κ + 1)`.
+
+**What could not be generic, and why that is the right answer.** A rule's
+`Good` is a field of `LiveRule` and its `Live` is a parameter of
+`LeaderCommits`; each rule chooses both, so the bridge between them is
+rule-specific. `LiveRule.GoodGives` is that bridge, and the check that
+it is not smuggling anything is that it never mentions `Decided`: for
+all three rules it is the same repackaging of a synchronised, populated
+quorum, with the horizon read off the wave.
+
+**What it cost, per protocol.** One `Indirect` — for Mysticeti and
+Odontoceti the case split lifted verbatim out of the deleted induction,
+for Hydrozoan the three graded rungs likewise — and one `GoodGives`, ten
+lines. What it removed: three `decidedBelow_of_committed_run`
+inductions, Hydrozoan's `decidedBelow_of_anchor`, and the `Descent`
+proofs in `Barnacle/Helpers/{MysticetiLive,Odontoceti}.lean` and
+`Barnacle/HydrozoanLive/Proof.lean`. None of those three files now
+argues about `Decided`.
+
+**The three rules that keep bespoke `Descent` proofs** — Nemo, Orcaella
+and Optimal-Hydrozoan — keep them because they have no `LeaderCommits`
+and no `Indirect`, which is the instances gap of §11.4 seen from the
+liveness side rather than the safety side. Nothing about tier 3 blocks
+them; the band does.
 
 ### 11.3 Against part 3: the mechanisms compose
 

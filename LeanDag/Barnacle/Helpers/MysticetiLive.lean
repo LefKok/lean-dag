@@ -1,11 +1,19 @@
 import LeanDag.Barnacle.MysticetiLive.Statement
+import LeanDag.Barnacle.Helpers.Descent
+import LeanDag.MysticetiProperties
 
 /-!
 # Mysticeti liveness helpers
 
-Not part of the audit surface. The descent laws for Mysticeti:
-`goodLeaders` is L4 (`decided_of_leader_mem`), `indirect` the two
-indirect constructors of `Decided` by cases on a certified candidate.
+Not part of the audit surface. The descent laws for Mysticeti, and they
+are no longer proved here.
+
+`goodLeaders` was L4 applied and `indirect` was a case split on a
+certified candidate. Both are properties now — `LeaderCommits` and
+`Indirect` — and `descent_of_properties` assembles them. What is left in
+this file is the bridge: Mysticeti's notion of a good DAG is a
+synchronised, populated quorum, and that is `coreLive`'s precondition
+with the horizon read off the same numbers. It mentions no verdict.
 -/
 
 namespace LeanDag
@@ -15,39 +23,29 @@ namespace Barnacle
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 
+/-- **A good DAG meets the timed core's precondition.** `Good` and
+`coreLive` name the same three facts about the same quorum; the window
+is the single slot, and its rounds fit because the wave does. -/
+theorem mysticetiLive_goodGives [F : Faults Validator] :
+    (mysticetiLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload)).GoodGives
+      F.f (fun S {U} V T lo K => MysticetiProperties.coreLive S (U := U) V T lo K) := by
+  intro U Rnd N hgood
+  obtain ⟨T, -, hcard, hsync, hpop⟩ := hgood
+  refine ⟨T, by omega, ?_⟩
+  intro S V κ hcov hRnd hN hlead
+  change S.slotRound κ + 3 ≤ N at hN
+  refine ⟨hcard, Rnd, N, hsync, hRnd, hpop, hcov, ?_⟩
+  intro k hk
+  have := S.mono (Nat.lt_succ_iff.mp hk)
+  omega
+
+/-- **Mysticeti has the descent laws at slack `f`** — from the
+properties, with no argument about `Decided` in this file. -/
 theorem mysticetiLive_descent [F : Faults Validator] :
     (mysticetiLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload)).Descent
-      F.f where
-  goodLeaders := by
-    intro U Rnd N hgood
-    obtain ⟨T, -, hcard, hsync, hpop⟩ := hgood
-    refine ⟨T, by omega, ?_⟩
-    intro S V κ hcov hRnd hN hlead
-    letI := S
-    change S.slotRound κ + 3 ≤ N at hN
-    obtain ⟨L, hLb, hdc⟩ := directCommit_of_leader_mem hcard hsync hRnd
-      (hpop _ hRnd (by omega)) (hpop _ (by omega) (by omega)) (hpop _ (by omega) (by omega)) hlead
-    refine ⟨L, Decided.directCommit hLb ?_⟩
-    -- the certificates sit at `slotRound κ + 2`, a round the view covers
-    have hsub : certificates U L (S.slotRound κ) ⊆ V.ids := by
-      intro c hc
-      rw [certificates, Finset.mem_filter, mem_blocksAt] at hc
-      obtain ⟨⟨hcids, hcr⟩, -⟩ := hc
-      exact hcov c hcids (by show (U.block c).round ≤ N; omega)
-    show quorumCard Validator ≤ (creatorsOf U.block (certificatesIn U V L (S.slotRound κ))).card
-    rwa [certificatesIn, Finset.inter_eq_left.2 hsub]
-  indirect := by
-    intro S U V i j A hij hj hmid
-    letI := S
-    change S.slotRound i + 3 ≤ S.slotRound j at hij
-    have helig : Eligible Validator i j := eligible_iff.mpr hij
-    have hmid' : ∀ i', i < i' → i' < j → Eligible Validator i i' → Decided U V i' none :=
-      fun i' h1 h2 h3 => hmid i' h1 h2 (eligible_iff.mp h3)
-    by_cases hc : ∃ L, IsLeaderBlock U i L ∧ CertifiedIn U A L (S.slotRound i)
-    · obtain ⟨L, hL, hcert⟩ := hc
-      exact ⟨some L, Decided.indirectCommit (lt_of_eligible helig) helig hj hmid' hL hcert⟩
-    · push Not at hc
-      exact ⟨none, Decided.indirectSkip (lt_of_eligible helig) helig hj hmid' hc⟩
+      F.f :=
+  descent_of_properties _ MysticetiProperties.leaderCommits MysticetiProperties.indirect
+    mysticetiLive_goodGives
 
 #print axioms mysticetiLive_descent
 

@@ -627,6 +627,18 @@ committee bound `3f + 1 ≤ n` is exactly `g · slack + 1 ≤ n` at `g = 3`,
 on `n ≥ w · slack + 1` validators is live under round-robin at every
 count, with gap `n + w − 1`.
 
+**Three of the six no longer prove the descent laws here.** Mysticeti,
+Odontoceti and Hydrozoan get `Descent` from
+`Barnacle.descent_of_properties`: `goodLeaders` is
+`Properties.LeaderCommits` at a one-slot window with its bound thrown
+away, `indirect` is `Properties.Indirect` read at the schedule it is
+given, and all that is left in `Helpers/MysticetiLive.lean`,
+`Helpers/Odontoceti.lean` and `HydrozoanLive/Proof.lean` is a bridge
+from the rule's `Good` to its own liveness precondition — which mentions
+no verdict. Nemo, Orcaella and Optimal-Hydrozoan keep their own proofs,
+because they have neither property yet
+(`docs/target-properties.md` §11.2b).
+
 **Mysticeti (`MysticetiLive/`).** `mysticetiLive` is Mysticeti with the
 base development's own liveness interface as `Good` — a correct quorum
 synchronised from `Rnd` and populating the rounds to `N` — and the

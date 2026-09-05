@@ -57,6 +57,45 @@ def Descends (R : DagRule Validator BlockId Payload) (S : Slots Validator) (c : 
     (∀ j, b ≤ j → j < b + c → ∃ L, DecidedBelow R S (b + c) V j (some L)) →
     ∀ i, i < b → ∃ v, DecidedBelow R S (b + c) V i v
 
+/-- **The indirect rule.** An anchor eligible for slot `i`, committed,
+with every eligible slot strictly between them skipped, decides `i`.
+
+`Elig` is a parameter and reads the **round structure alone**: every
+rule here makes an anchor eligible when it sits a wave above the slot,
+and the property does not care which wave. Reading only `slotRound`
+also means eligibility is unchanged by a reassignment of leaders, which
+the second quantifier needs.
+
+**The second quantifier is what makes this carry a bound.** A protocol
+that proves the indirect rule by cases on the evidence at slot `i` —
+which is how all of them prove it — proves this stronger form without
+extra work: the case split reads slot `i`'s own candidate and the
+anchor's history, and a schedule that renames leaders elsewhere changes
+neither. `Descends` is the payoff, derived in `Derived/Descent.lean`
+where it was three protocol-specific inductions.
+
+Taking `S' := S` gives the plain rule, which is what a mechanism that
+does not track bounds consumes. -/
+def Indirect (R : DagRule Validator BlockId Payload)
+    (Elig : (ℕ → ℕ) → ℕ → ℕ → Prop) : Prop :=
+  ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (i j : ℕ) (A : BlockId),
+    Elig S.slotRound i j → R.Decided S V j (some A) →
+    (∀ i', i < i' → i' < j → Elig S.slotRound i i' → R.Decided S V i' none) →
+    ∃ v, ∀ S' : Slots Validator, S'.slotRound = S.slotRound → S'.leader i = S.leader i →
+      R.Decided S' V j (some A) →
+      (∀ i', i < i' → i' < j → Elig S.slotRound i i' → R.Decided S' V i' none) →
+      R.Decided S' V i v
+
+/-- **The plain indirect rule**, at the schedule it was given. -/
+theorem Indirect.decided {R : DagRule Validator BlockId Payload}
+    {Elig : (ℕ → ℕ) → ℕ → ℕ → Prop} (h : Indirect R Elig)
+    (S : Slots Validator) {U : R.Universe} (V : R.View U) {i j : ℕ} {A : BlockId}
+    (he : Elig S.slotRound i j) (hj : R.Decided S V j (some A))
+    (hmid : ∀ i', i < i' → i' < j → Elig S.slotRound i i' → R.Decided S V i' none) :
+    ∃ v, R.Decided S V i v := by
+  obtain ⟨v, hv⟩ := h S V i j A he hj hmid
+  exact ⟨v, hv S rfl rfl hj hmid⟩
+
 end Properties
 
 end LeanDag

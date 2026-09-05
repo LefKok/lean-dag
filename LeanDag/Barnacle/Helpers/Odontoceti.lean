@@ -1,5 +1,7 @@
 import LeanDag.Barnacle.Odontoceti.Statement
 import LeanDag.Barnacle.Helpers.Heads
+import LeanDag.Barnacle.Helpers.Descent
+import LeanDag.OdontocetiProperties
 
 /-!
 # Odontoceti instance helpers
@@ -26,53 +28,32 @@ theorem odontoceti_laws [Faults5 Validator] :
   decided_of_directCommitIn := fun _ {_} _ _ _ hL hdc => Odontoceti.Decided.directCommit hL hdc
   candidates := fun _ {_} _ _ _ h => Odontoceti.isLeaderBlock_of_decided h
 
-/-- The descent laws, for Odontoceti at slack `f`. -/
+/-- **A good DAG meets Odontoceti's precondition.** `Good` and
+`OdontocetiProperties.odontocetiLive` name the same three facts about
+the same quorum, at Odontoceti's own wavelength — the horizon sits one
+round above the slot, where the core's sits two. -/
+theorem odontocetiLive_goodGives [F : Faults5 Validator] :
+    (odontocetiLive (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)).GoodGives F.f
+      (fun S {U} V T lo K => OdontocetiProperties.odontocetiLive S (U := U) V T lo K) := by
+  intro U Rnd N hgood
+  obtain ⟨T, -, hcard, hsync, hpop⟩ := hgood
+  refine ⟨T, by omega, ?_⟩
+  intro S V κ hcov hRnd hN hlead
+  change S.slotRound κ + 2 ≤ N at hN
+  refine ⟨hcard, Rnd, N, hsync, hRnd, hpop, hcov, ?_⟩
+  intro k hk
+  have := S.mono (Nat.lt_succ_iff.mp hk)
+  omega
+
+/-- **The descent laws, for Odontoceti at slack `f`** — from the
+properties, with no argument about `Decided` here. -/
 theorem odontocetiLive_descent [F : Faults5 Validator] :
     (odontocetiLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload)).Descent
-      F.f where
-  goodLeaders := by
-    intro U Rnd N hgood
-    obtain ⟨T, -, hcard, hsync, hpop⟩ := hgood
-    refine ⟨T, by omega, ?_⟩
-    intro S V κ hcov hRnd hN hlead
-    letI := S
-    change S.slotRound κ + 2 ≤ N at hN
-    obtain ⟨L, hLb, hdc⟩ := Odontoceti.directCommit_of_leader_mem hcard hsync hRnd
-      (hpop _ hRnd (by omega)) (hpop _ (by omega) (by omega)) hlead
-    refine ⟨L, Odontoceti.Decided.directCommit hLb ?_⟩
-    -- the supporters sit one round up, which the view covers
-    have hsub : (blocksAt U (S.slotRound κ + 1)).filter (fun q => L ∈ (U.block q).refs) ⊆ V.ids := by
-      intro q hq
-      rw [Finset.mem_filter, mem_blocksAt] at hq
-      obtain ⟨⟨hqids, hqr⟩, -⟩ := hq
-      exact hcov q hqids (by show (U.block q).round ≤ N; omega)
-    show quorumCard Validator ≤ (Odontoceti.supportersIn U V L (S.slotRound κ)).card
-    rw [Odontoceti.supportersIn, Finset.inter_eq_left.2 hsub]
-    exact hdc
-  indirect := by
-    intro S U V i j A hij hj hmid
-    letI := S
-    change S.slotRound i + 2 ≤ S.slotRound j at hij
-    have helig : Odontoceti.Eligible Validator i j := Odontoceti.eligible_iff.mpr hij
-    have hmid' : ∀ i', i < i' → i' < j → Odontoceti.Eligible Validator i i' →
-        Odontoceti.Decided U V i' none :=
-      fun i' h1 h2 h3 => hmid i' h1 h2 (Odontoceti.eligible_iff.mp h3)
-    classical
-    -- The candidates of `i` with a thick link to the anchor.
-    by_cases hne : (U.ids.filter
-        (fun L => IsLeaderBlock U i L ∧ Odontoceti.ThickLink U A L (S.slotRound i))).Nonempty
-    · obtain ⟨_, hL, ht⟩ := Finset.mem_filter.mp (Finset.min'_mem _ hne)
-      refine ⟨some _, Odontoceti.Decided.indirectCommit
-        (Odontoceti.lt_of_eligible helig) helig hj hmid' hL ht ?_⟩
-      intro L' hL' ht' hlt
-      have hL's : L' ∈ U.ids.filter
-          (fun L => IsLeaderBlock U i L ∧ Odontoceti.ThickLink U A L (S.slotRound i)) :=
-        Finset.mem_filter.mpr ⟨hL'.1, hL', ht'⟩
-      exact absurd hlt (not_lt.mpr (Finset.min'_le _ L' hL's))
-    · refine ⟨none, Odontoceti.Decided.indirectSkip
-        (Odontoceti.lt_of_eligible helig) helig hj hmid' ?_⟩
-      intro L hL ht
-      exact hne ⟨L, Finset.mem_filter.mpr ⟨hL.1, hL, ht⟩⟩
+      F.f :=
+  descent_of_properties _ OdontocetiProperties.leaderCommits OdontocetiProperties.indirect
+    odontocetiLive_goodGives
+
 
 end Barnacle
 
