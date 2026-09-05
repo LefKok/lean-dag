@@ -3,6 +3,7 @@ import LeanDag.Integration.Hydrozoan.FillDecided
 import LeanDag.Properties.Sustain
 import LeanDag.Properties.Derived.Truncate
 import LeanDag.Properties.Arcs.GC
+import LeanDag.Properties.Arcs.SafeSkip
 
 /-!
 # The fill, re-derived through the target properties
@@ -68,10 +69,9 @@ theorem decided_fillHZ_of_persist (sk : SkipMsg (toCore U hsp))
     [S : LeanDag.Hydrozoan.Slots Replica] {V : LeanDag.Hydrozoan.View U}
     {k : ℕ} {v : Option BlockId} (h : LeanDag.Hydrozoan.Decided U V k v) :
     LeanDag.Hydrozoan.Decided (skipFillHZ U hsp sk) (liftViewHZ U hsp sk V) k v :=
-  LeanDag.Hydrozoan.Properties.persist_aux (extends_skipFillHZ sk)
-    (by
-      intro b hb
-      simpa using hb) h
+  Properties.Persist.of_banded LeanDag.Hydrozoan.banded
+    (LeanDag.Hydrozoan.toCoreSlots S) U (skipFillHZ U hsp sk) (extends_skipFillHZ sk)
+    V (liftViewHZ U hsp sk V) (fun b hb => by simpa using hb) k v h
 
 /-- **HI9's cross-fill agreement, from HZ9 and HZ3.** A verdict reached
 before the recovery and one reached after it agree. The deleted bespoke
@@ -83,8 +83,9 @@ theorem decided_fill_agreeHZ_of_properties (sk : SkipMsg (toCore U hsp))
     {W : LeanDag.Hydrozoan.View (skipFillHZ U hsp sk)} {k : ℕ} {v w : Option BlockId}
     (hV : LeanDag.Hydrozoan.Decided U V k v)
     (hW : LeanDag.Hydrozoan.Decided (skipFillHZ U hsp sk) W k w) : v = w :=
-  LeanDag.Hydrozoan.agree (LeanDag.Hydrozoan.toCoreSlots S) (liftViewHZ U hsp sk V) W k v w
-    (decided_fillHZ_of_persist sk hV) hW
+  Properties.Arcs.decided_agree_extends LeanDag.Hydrozoan.agree
+    (Properties.Persist.of_banded LeanDag.Hydrozoan.banded) (extends_skipFillHZ sk)
+    (V' := liftViewHZ U hsp sk V) (fun b hb => by simpa using hb) hV hW
 
 /-! ## What the two mechanisms sustain
 

@@ -4,6 +4,7 @@ import LeanDag.Properties.Optional.Skip
 import LeanDag.SafeSkip.Basic
 import LeanDag.SafeSkip.Invariance
 import LeanDag.MysticetiProperties
+import LeanDag.OdontocetiProperties
 
 /-!
 # Crash recovery, for any protocol with `Persist`
@@ -37,6 +38,8 @@ namespace Arcs
 
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
+section Faults
+
 variable [Faults Validator]
 
 /-- **The fill is an extension.** It holds every block the original
@@ -222,3 +225,42 @@ theorem decided_none_fresh [S : Slots Validator] (sk : SkipMsg U)
       (fun c hcV _ _ => V.subset_ids hcV))
 
 end Core
+
+end Faults
+
+/-! ### And for Odontoceti, whose universes are the core's
+
+`scripts/audit-mechanisms.py` asked for this cell. The four equations
+`extends_of_skipFill` is stated through are what makes it free: the two
+carriers project identically, so the rule's `ids` and `block` *are* the
+core universe's and every equation is `rfl`. A rule with its own
+universe record would have to build its own fill instead, which is the
+limit `docs/target-properties.md` §11.4 records. -/
+
+section Odontoceti
+
+variable [Faults5 Validator] {B : Type} [LinearOrder B]
+variable {W : BlockUniverse Validator B Payload}
+
+/-- **Verdicts survive the fill, for Odontoceti.** -/
+theorem decided_fill_odontoceti [S : Slots Validator] (sk : SkipMsg W)
+    {V : View Validator B Payload W} {k : ℕ} {v : Option B}
+    (h : Odontoceti.Decided W V k v) :
+    Odontoceti.Decided (U := sk.skipFill) (sk.liftView V) k v :=
+  decided_skipFill (R := OdontocetiProperties.odontocetiRule (Payload := Payload))
+    (Persist.of_banded OdontocetiProperties.banded) sk
+    (U := W) (U' := sk.skipFill) rfl rfl rfl rfl (fun _ hb => hb) h
+
+/-- **And agreement across it.** -/
+theorem decided_fill_agree_odontoceti [S : Slots Validator] (sk : SkipMsg W)
+    {V : View Validator B Payload W} {Y : View Validator B Payload sk.skipFill}
+    {k : ℕ} {v w : Option B}
+    (hv : Odontoceti.Decided W V k v)
+    (hw : Odontoceti.Decided (U := sk.skipFill) Y k w) : v = w :=
+  decided_agree_extends OdontocetiProperties.agree
+    (Persist.of_banded OdontocetiProperties.banded)
+    (extends_of_skipFill (OdontocetiProperties.odontocetiRule (Payload := Payload)) sk
+      (U := W) (U' := sk.skipFill) rfl rfl rfl rfl)
+    (V' := sk.liftView V) (fun _ hb => hb) hv hw
+
+end Odontoceti

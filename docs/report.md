@@ -24357,6 +24357,34 @@ def Statement : Prop :=
 
 **HZ9.** Hydrozoan is a lawful carrier; every verdict reads a band, two views agree, and it skips an unsupported slot given `qFast` blamers. Persistence and locality are the band applied, and truncation invariance follows from the band's offsets without being stated here.
 
+#### `chopHybrid`
+
+*def, `Integration.HybridMechanisms.lean`*
+
+```lean
+def chopHybrid (U : (HybridProperties.hybridRule (Validator := Validator)
+    (BlockId := BlockId) (Payload := Payload) kt).Universe) (G : ℕ) :
+    (HybridProperties.hybridRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) kt).Universe :=
+  ⟨chop U.val G, honestNoEquiv_chop U.property⟩
+```
+
+**The cut, at Hybrid's carrier.** The core's `chop` with the invariant its universe adds, which the cut preserves.
+
+#### `skipFillHybrid`
+
+*def, `Integration.HybridMechanisms.lean`*
+
+```lean
+def skipFillHybrid (U : (HybridProperties.hybridRule (Validator := Validator)
+    (BlockId := BlockId) (Payload := Payload) kt).Universe) (sk : SkipMsg U.val) :
+    (HybridProperties.hybridRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) kt).Universe :=
+  ⟨sk.skipFill, honestNoEquiv_skipFill sk U.property⟩
+```
+
+**The fill, at Hybrid's carrier.**
+
 #### `View.chopHZ`
 
 *def, `Integration.Hydrozoan.ChopDecided.lean`*
@@ -25570,7 +25598,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 1050 theorems that either another module of the
+The 1061 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -36685,6 +36713,28 @@ theorem commitsCandidate : CommitsCandidate
 
 **A commit names the slot's candidate.** The `slot` field of an assignment, read at the property's `IsCandidate` — which is where the schedule being pinned to the DAG earns its place.
 
+#### `quorate`
+
+*theorem, `Hybrid.Carrier.lean`*
+
+```lean
+theorem quorate (k : ℕ) : Quorate (hybridRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload) k) (coreReliability Validator)
+```
+
+**Hybrid's universes are quorate**, at the derived fault model: `f = fb + fc`, so a quorum of `n − fb − fc` distinct authors is what validity already asks for.
+
+#### `causal`
+
+*theorem, `Hybrid.Carrier.lean`*
+
+```lean
+theorem causal (k : ℕ) : Causal (hybridRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload) k)
+```
+
+Hybrid's universes are block DAGs — the core's argument, the underlying universe type being the core's.
+
 #### `agree`
 
 *theorem, `Hybrid.Carrier.lean`*
@@ -36836,6 +36886,18 @@ theorem exists_recoveryCorrect_recorder {x : CheckpointData Value}
 ```
 
 A finality quorum yields a recovery-correct validator that recorded the concrete checkpoint certificate before emitting its witness.
+
+#### `banded`
+
+*theorem, `HybridProperties.lean`*
+
+```lean
+theorem banded {kt : ℕ} (hpos : 0 < kt) :
+    Banded (hybridRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) kt)
+```
+
+**Hybrid reads a band**, at every threshold the committee admits.
 
 #### `leaderCommits`
 
@@ -37192,20 +37254,6 @@ theorem decided_none_of_unsupported {V : LeanDag.Hydrozoan.View U} {T : Finset R
 ```
 
 **The skip fires at `qFast` blamers.**
-
-#### `persist_aux`
-
-*theorem, `Hydrozoan.Properties.Proof.lean`*
-
-```lean
-theorem persist_aux [S : LeanDag.Hydrozoan.Slots Replica]
-    (he : Extends rule U U') {V : LeanDag.Hydrozoan.View U}
-    {V' : LeanDag.Hydrozoan.View U'} (hV : V.ids ⊆ V'.ids)
-    {k : ℕ} {v : Option BlockId} (h : LeanDag.Hydrozoan.Decided U V k v) :
-    LeanDag.Hydrozoan.Decided U' V' k v
-```
-
-**Hydrozoan's verdicts survive every extension**, at Hydrozoan's own schedule vocabulary, which is what the integration arc consumes.
 
 #### `holds`
 
@@ -38417,6 +38465,18 @@ theorem descends {S : Slots Validator} {c : ℕ} (hc : 0 < c)
 
 **The descent as a property**, under the spanning hypothesis on the round structure. What stood here was a downward induction carrying the bound by hand; it is now `Descends.of_indirect`, and the only Mysticeti-specific step is reading `Eligible` as the round inequality the property is stated with.
 
+#### `quorate`
+
+*theorem, `Nemo.Carrier.lean`*
+
+```lean
+theorem quorate (hn : 0 < Fintype.card Validator) :
+    Quorate (nemoRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+      (nemoReliability Validator hn)
+```
+
+**Nemo's universes are quorate**: `ValidWrt.quorum`, which asks for a majority of distinct authors, read at the carrier.
+
 #### `causal`
 
 *theorem, `Nemo.Carrier.lean`*
@@ -38485,6 +38545,28 @@ theorem indirect :
 ```
 
 **A3 as a property.** The two indirect constructors, by cases on a certified candidate at the slot — which is the whole proof, and is why the verdict survives a reassignment of leaders elsewhere: the case split reads slot `i`'s candidate and the anchor's history, and neither moves.
+
+#### `causal`
+
+*theorem, `Odontoceti.Carrier.lean`*
+
+```lean
+theorem causal : Causal (odontocetiRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload))
+```
+
+Odontoceti's universes are block DAGs — the same argument as the core's, the universe type being the same.
+
+#### `quorate`
+
+*theorem, `Odontoceti.Carrier.lean`*
+
+```lean
+theorem quorate : Quorate (odontocetiRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)) (coreReliability Validator)
+```
+
+**Odontoceti's universes are quorate**: the core's `BlockUniverse`, so the core's clause, at the five-fault committee.
 
 #### `agree`
 
@@ -38556,6 +38638,27 @@ theorem indirect :
 **O-A3 as a property.** The two indirect constructors, by cases on a thick-linked candidate at the slot, committing the least one. The whole proof is that case split, which is why the verdict survives a reassignment of leaders elsewhere: it reads slot `i`'s candidates and the anchor's history, and a schedule naming the same leader at `i` and the same rounds changes neither. The minimality clause transports for the same reason.
 
 This is `odontoceti_descent.indirect` and the case split that stood inside the committed-run descent, stated once.
+
+#### `causal`
+
+*theorem, `OptimalHydrozoan.Carrier.lean`*
+
+```lean
+theorem causal : Causal (optimalRule (Replica := Replica) (BlockId := BlockId))
+```
+
+Optimal's universes are block DAGs — Hydrozoan's argument, the underlying universe being Hydrozoan's.
+
+#### `quorate`
+
+*theorem, `OptimalHydrozoan.Carrier.lean`*
+
+```lean
+theorem quorate : Quorate (optimalRule (Replica := Replica) (BlockId := BlockId))
+    (LeanDag.Hydrozoan.hzReliability Replica)
+```
+
+**Optimal-Hydrozoan's universes are quorate.** The underlying universe is Hydrozoan's, so the clause and the fault model are Hydrozoan's.
 
 #### `agree`
 
@@ -38723,6 +38826,19 @@ theorem directCommit_chop {T : Finset Validator} {r : ℕ} {L : BlockId}
 
 **The reactive commit survives the cut** — the consumer test, from the obligation rather than from `chop` directly.
 
+#### `truncates_chop`
+
+*theorem, `Properties.Arcs.GC.lean`*
+
+```lean
+theorem truncates_chop (hd : G ≤ S.slotRound d) :
+    Truncates (MysticetiProperties.mysticetiRule (Payload := Payload))
+      U (chop U G) S (S.chop G d hd) G d where
+  mem
+```
+
+**The cut is a truncation.** The witness `Truncates` was written to have, exhibited before anything is proved from it.
+
 #### `decided_chop_iff`
 
 *theorem, `Properties.Arcs.GC.lean`*
@@ -38734,6 +38850,18 @@ theorem decided_chop_iff (hd : G ≤ S.slotRound d)
 ```
 
 **G3 re-derived, with no induction of its own.** Both directions of the cut's verdict transport, from the band.
+
+#### `viewAgreeAbove_chop`
+
+*theorem, `Properties.Arcs.GC.lean`*
+
+```lean
+theorem viewAgreeAbove_chop {V : View Validator BlockId Payload U} :
+    ViewAgreeAbove (MysticetiProperties.mysticetiRule (Payload := Payload))
+      V (V.chop G) G
+```
+
+**The chopped view agrees with the original above the cut**, which is the view hypothesis the two theorems below need.
 
 #### `decided_agree_chop`
 
@@ -38929,6 +39057,36 @@ theorem chain_quality
 ```
 
 **CQ7 (the capstone).** Chain quality in one statement, for any rule with a quorum law. Unconditionally: every commit's flush covers at least half the reliable validators at every round below it. Post-`R₀`, under a schedule that keeps returning to reliable leaders: every reliable block is in the flush of a slot the schedule fixes in advance.
+
+#### `extends_of_skipFill`
+
+*theorem, `Properties.Arcs.SafeSkip.lean`*
+
+```lean
+theorem extends_of_skipFill (R : DagRule Validator BlockId Payload)
+    {U U' : R.Universe} {D : BlockUniverse Validator BlockId Payload}
+    (sk : SkipMsg D)
+    (hi : R.ids U = D.ids) (hb : R.block U = D.block)
+    (hi' : R.ids U' = sk.skipFill.ids) (hb' : R.block U' = sk.skipFill.block) :
+    Extends R U U' where
+  subset
+```
+
+**The fill is an extension.** It holds every block the original held — `ids` is a union — and denotes each of them unchanged, which is `skipFill_block_old`. Stated through four equations rather than a type equality, so that a rule whose universes *are* core block universes can apply it with `rfl` and this file need name no protocol.
+
+#### `decided_agree_extends`
+
+*theorem, `Properties.Arcs.SafeSkip.lean`*
+
+```lean
+theorem decided_agree_extends {R : DagRule Validator BlockId Payload}
+    (ha : Agree R) (hp : Persist R) {S : Slots Validator} {U U' : R.Universe}
+    (he : Extends R U U') {V : R.View U} {V' W : R.View U'}
+    (hsub : R.viewIds V ⊆ R.viewIds V') {k : ℕ} {v w : Option BlockId}
+    (hV : R.Decided S V k v) (hW : R.Decided S W k w) : v = w
+```
+
+**Agreement across the recovery.** A validator that recovered agrees with one that did not, from any view of the extension — the same shape as cross-cut agreement (`Arcs/GC.lean`), with `Persist` going up where `LocalTruncate` goes down. Stated for any extension, so re-genesis and the fill both take it.
 
 #### `decided_fill_of_persist`
 
@@ -39436,7 +39594,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 1037 lemmas used only within the file that proves
+The 1034 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -41034,13 +41192,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `verdictIs_optOf` | And reading it back is the verdict, wherever the slot is decided. |
 | `view_bounded` | A view is finite, so its blocks stop at a round. |
 
-### `Hybrid/Carrier.lean` (2)
-
-| Lemma | Role |
-|:---|:---|
-| `causal` | Hybrid's universes are block DAGs — the core's argument, the underlying universe type being the core's. |
-| `quorate` | Hybrid's universes are quorate, at the derived fault model: `f = fb + fc`, so a quorum of `n − fb − fc` … |
-
 ### `Hybrid/Checkpoint/RecoveryProofs.lean` (14)
 
 | Lemma | Role |
@@ -41073,11 +41224,10 @@ subsection per module, in the layer order of Appendices B and C.
 | `mem_recoveryCorrect` | Recovery-correct membership excludes all three fault classes. |
 | `mem_reliableSigner` | Reliable signing excludes precisely the two classes allowed to equivocate. |
 
-### `HybridProperties.lean` (11)
+### `HybridProperties.lean` (10)
 
 | Lemma | Role |
 |:---|:---|
-| `banded` | Hybrid reads a band, at every threshold the committee admits. |
 | `banded_aux` | — |
 | `coneSupports_band` | The anchor's cone of supporters is the cone it was. |
 | `descends` | And a committed run decides everything below it. |
@@ -41137,6 +41287,12 @@ subsection per module, in the layer order of Appendices B and C.
 | `no_base_of_naive_shift` | A pure shift by a positive horizon admits no round-zero block, and a non-empty valid universe must have … |
 | `parents_empty_of_round_zero` | A block at round zero has no parents: the predecessor condition is unsatisfiable there. |
 
+### `Hydrozoan/Properties/Proof.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `persist_aux` | Hydrozoan's verdicts survive every extension, at Hydrozoan's own schedule vocabulary, which is what the … |
+
 ### `Integration/AdaptiveHydrozoan.lean` (4)
 
 | Lemma | Role |
@@ -41153,6 +41309,17 @@ subsection per module, in the layer order of Appendices B and C.
 | `adaptiveRun_commits_reactive` | Reliable-led slots commit, reactively. In any run, a slot past the first epoch led by a member of `T` … |
 | `adaptiveRun_exists_reactive` | The adaptive fixpoint exists over reactive Mysticeti. Under a policy that places runs, with the reactive … |
 | `exists_partialRun_reactive` | Partial runs exist at every height, reactively. |
+
+### `Integration/HybridMechanisms.lean` (6)
+
+| Lemma | Role |
+|:---|:---|
+| `decided_agree_chop_hybrid` | And cross-cut agreement, from an arbitrary view of the truncation: a validator that joined from the cut … |
+| `decided_agree_skipFill_hybrid` | And agreement across it: a validator that recovered agrees with one that did not, from any view of the fill. |
+| `decided_chop_iff_hybrid` | Verdict transport across the cut, for Hybrid. A validator that has pruned below the horizon reaches … |
+| `decided_skipFill_hybrid` | Verdicts survive the recovery, for Hybrid. The replica that recovered reaches every verdict it reached before. |
+| `extends_skipFill_hybrid` | The fill is an extension of Hybrid's carrier. |
+| `truncates_chop_hybrid` | The cut is a truncation of Hybrid's carrier. The core's witness, projected: the subtype's `ids` and … |
 
 ### `Integration/Hydrozoan/ChopDecided.lean` (7)
 
@@ -41339,14 +41506,13 @@ subsection per module, in the layer order of Appendices B and C.
 | `votesIn_of_sustains` | The votes an old decision-round block counts are the votes it counted: its references are unchanged, and … |
 | `votesIn_old` | The votes an old certificate counts are the votes it counted. |
 
-### `Nemo/Carrier.lean` (4)
+### `Nemo/Carrier.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
 | `nemoRule_block` | — |
 | `nemoRule_ids` | — |
 | `nemoRule_viewIds` | — |
-| `quorate` | Nemo's universes are quorate: `ValidWrt.quorum`, which asks for a majority of distinct authors, read at … |
 
 ### `NemoProperties.lean` (12)
 
@@ -41365,13 +41531,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `refsB` | — |
 | `supportersIn_band` | The supporters a view holds transport. A voting-round block the view held is a block of the shifted … |
 
-### `Odontoceti/Carrier.lean` (2)
-
-| Lemma | Role |
-|:---|:---|
-| `causal` | Odontoceti's universes are block DAGs — the same argument as the core's, the universe type being the same. |
-| `quorate` | Odontoceti's universes are quorate: the core's `BlockUniverse`, so the core's clause, at the five-fault … |
-
 ### `OdontocetiProperties.lean` (11)
 
 | Lemma | Role |
@@ -41388,13 +41547,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `thickLink_threshold_pos` | The thick-link threshold is positive: `Faults5` asks for `5f + 1` validators, so `card − 3f ≥ 2f + 1`. |
 | `toCore` | The two carriers project identically, so a band for one is a band for the other. |
 
-### `OptimalHydrozoan/Carrier.lean` (3)
+### `OptimalHydrozoan/Carrier.lean` (1)
 
 | Lemma | Role |
 |:---|:---|
 | `band_of` | A band at this carrier is a band at Hydrozoan's. The subtype's projections are the underlying universe's, … |
-| `causal` | Optimal's universes are block DAGs — Hydrozoan's argument, the underlying universe being Hydrozoan's. |
-| `quorate` | Optimal-Hydrozoan's universes are quorate. The underlying universe is Hydrozoan's, so the clause and the … |
 
 ### `OptimalHydrozoan/Helpers/Banded.lean` (13)
 
@@ -41414,7 +41571,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `witnessesEquivocation_bnd` | Witnessing an equivocation is the same event. Both directions: a witness on the larger side is voted for … |
 | `witnessesEquivocation_sched` | — |
 
-### `Properties/Arcs/GC.lean` (9)
+### `Properties/Arcs/GC.lean` (7)
 
 | Lemma | Role |
 |:---|:---|
@@ -41424,9 +41581,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `decided_of_truncate` | A verdict survives the cut, at the replica's own numbering. |
 | `decided_of_truncated` | And a verdict of the truncation is a verdict of the whole DAG, which is what lets a pruned replica be … |
 | `noEquivOn_chop` | And so does non-equivocation, from the truncation. |
-| `truncates_chop` | The cut is a truncation. The witness `Truncates` was written to have, exhibited before anything is proved … |
 | `truncates_chop_odontoceti` | The cut is a truncation of Odontoceti's carrier too. |
-| `viewAgreeAbove_chop` | The chopped view agrees with the original above the cut, which is the view hypothesis the two theorems … |
 
 ### `Properties/Arcs/Quality.lean` (1)
 
@@ -41439,10 +41594,10 @@ subsection per module, in the layer order of Appendices B and C.
 | Lemma | Role |
 |:---|:---|
 | `candidates_fresh` | Every candidate of a slot the recovering replica leads, at a gap round, is a filled block — the replica … |
-| `decided_agree_extends` | Agreement across the recovery. A validator that recovered agrees with one that did not, from any view of … |
+| `decided_fill_agree_odontoceti` | And agreement across it. |
+| `decided_fill_odontoceti` | Verdicts survive the fill, for Odontoceti. |
 | `decided_none_fresh` | SS3, as a verdict, from the properties. The slot the recovering replica leads at a gap round is decided … |
 | `decided_skipFill` | Verdicts survive the recovery, for any protocol that has proved persistence. The replica that recovered … |
-| `extends_of_skipFill` | The fill is an extension. It holds every block the original held — `ids` is a union — and denotes each of … |
 | `presentAt_liftView` | Presence in the pre-crash view is presence in the lifted one: the ids are the same and old blocks are … |
 
 ### `Properties/Band.lean` (3)

@@ -1841,6 +1841,61 @@ no mechanism could reach it; it moved to `Odontoceti/Carrier.lean`. A
 conformance layer has to be upstream of every mechanism or it cannot
 serve one, and nothing before this audit had forced the point.
 
+### 11.2d The audit that measured absence
+
+§11.2c closed the claim that mechanisms *borrow* from protocols.
+It did not close the claim that mechanisms *reach* them.
+`scripts/audit-mechanisms.py` is the difference, and it exists because
+of a question the other audits cannot answer.
+
+**Every audit here checks written code.** `audit-conformance.py` reads
+theorem conclusions and says which rules show which properties.
+`audit-bespoke.py` walks the dependency closure and says which
+mechanism proofs reach a protocol outside the properties. Both are
+computed from declarations. A mechanism nobody ever applied to a rule
+leaves **no declaration behind**, so neither audit sees it, and the two
+together read as a claim they do not make: "Hybrid shows all six" plus
+"no mechanism borrows" sounds like "Hybrid has every mechanism", and
+did not mean it.
+
+This is the same shape as the vacuity findings of §3.4 and §3.6 — a
+statement that is true and empty — moved up a level. There the danger
+was a property with no models; here it was a *claim* with no instances.
+
+**What it measures.** For each mechanism, the generic theorems a
+protocol instance applies; for each rule, whether any declaration
+applies one of them at one of its carriers. A cell is `open` when the
+rule shows everything the mechanism asks and no such declaration
+exists: not a defect, but work the properties have already paid for and
+nobody collected.
+
+**The first run found thirteen open cells**, and eight were collected
+the same day, which is the measurement worth keeping:
+
+| what it took | cells |
+|---|---|
+| chain quality, four rules | 4 lines each, in a test file |
+| garbage collection, Hybrid | the core's `chop` plus `honestNoEquiv_chop`, which already existed |
+| crash recovery, Hybrid | the core's `skipFill` plus `honestNoEquiv_skipFill`, likewise |
+| crash recovery, Odontoceti | four `rfl`s — its universe *is* the core's |
+| crash recovery, Hydrozoan | it had the results and had hand-composed them; now `Persist.of_banded` and `decided_agree_extends` applied |
+
+The Hydrozoan cell is the one to note: the mechanism was there, and the
+docstring already *claimed* it was `Arcs.decided_agree_extends`, while
+the proof inlined the same two steps. §11.3b's rule — an arc that
+consumes a property is not finished until every theorem it states has
+been asked for from the properties — had been stated and not enforced.
+The audit enforces it.
+
+**What is left is the carrier's limit, not a missing property.** Four
+cells stand: garbage collection and crash recovery for Nemo and for
+FinWhale. Both rules have their own universe *record*, so neither can
+reuse the core's `chop` or `skipFill`, and `DagRule.Universe` is opaque
+— the property layer cannot construct one (§11.4). A fifth is closed by
+a counterexample rather than by work: Optimal-Hydrozoan's recovery
+breaks its own leader-exclusion rule (`not_leaderExcludedAll_Ufill`),
+which is why the mechanism is out of scope for it and not owed.
+
 ### 11.3 Against part 3: the mechanisms compose
 
 **What a mechanism owes is a rebase, and rebases compose.**
@@ -1970,6 +2025,18 @@ looked for and is not there.
   whose only model is the mechanism that does nothing is the vacuity
   this arc has twice been caught by (§3.4, §3.6); keeping a third would
   invite someone to prove it for a real limiter and fail.
+- **Constructions, not properties.** Four mechanism × rule cells are
+  open (§11.2d): the cut and the fill for Nemo and for FinWhale. Both
+  rules carry their own universe *record* rather than the core's, so
+  neither can reuse `chop` or `skipFill`, and `DagRule.Universe` is
+  opaque — a property can read a universe and nothing in the carrier
+  can make one. What generalises is the *consequence*, a relation
+  between two universes one is given; what does not is the
+  construction. The residue splits into the witness's data, which a
+  bridge like `Integration/Hydrozoan/Transport.lean` already shares,
+  and its invariant, which is irreducible and sometimes false —
+  Optimal-Hydrozoan's fill breaks leader exclusion, and that is a
+  finding rather than a gap.
 - **One structural limit.** Two *sibling* transformations — two
   validators recovering from one universe with different fill messages —
   give universes neither of which extends the other, and `Agree`
