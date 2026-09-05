@@ -33,10 +33,21 @@ schedule gives a slot and the leader it names, `Anchor` is stated at an
 eligibility rather than at `r + 2 < a`, and `Decided` passes `S` straight
 through as `FinWhale.Sched`.
 
-That is what makes `CommitsDirect` statable. Its direct predicate is
-handed a view, a block and a round and never the schedule, so any
-conjunct of `Decided` constraining `S` would be undischargeable there —
-which is exactly what blocked it while the indexing was pinned.
+**Unpinning the schedule was two changes, not one.** Dropping the
+leader from the `Dag` is what let `Decided` take the schedule it is
+given; that alone left the *witness* pinned, because the reverse pass
+enumerated its anchors over an interval and so was well formed only at
+`r + 2 < a`. `anchorCands` now filters the eligible slots instead, and
+the pass runs at whatever eligibility it is handed, which is
+`Sched.Elig` — three rounds up — for both the protocol and this file.
+
+The remaining gap was a horizon. A view bounds *rounds* and the pass
+recurses down over *slots*, and only `Slots.slot_lt_of_slotRound_le`
+relates the two: `keyed` and a finite validator set stop a schedule from
+fitting unboundedly many slots below a round. With that, an assignment
+exists at every schedule, so `Agree` is not vacuous and `CommitsDirect`
+is provable — the property is quantified over all schedules, and until
+the witness was, it was out of reach.
 -/
 
 namespace LeanDag
@@ -71,18 +82,12 @@ def VerdictIs (dec : ℕ → Verdict BlockId) (r : ℕ) (v : Option BlockId) : P
   | some b => dec r = Verdict.commit b
   | none => dec r = Verdict.skip
 
-/-- **FinWhale's eligibility, slot-indexed**: an anchor sits three rounds
-above the slot it decides. At the identity schedule this is the pass's
-`r + 2 < a`; stated through the schedule it is what lets the carrier take
-the one it is given. -/
-def schedElig (S : Sched Validator) (r a : ℕ) : Prop := S.round r + 3 ≤ S.round a
-
 /-- **What a validator's verdict assignment is**: well-formed on its own
 view, committing only blocks of the slot, and finite. -/
 structure Assignment (S : Sched Validator) (D : Dag Validator BlockId Payload)
     (V : Finset BlockId) (hV : IsView D V) (dec : ℕ → Verdict BlockId) : Prop where
   /-- The reverse pass, as a condition on the verdicts. -/
-  wf : WellFormed (schedElig S) (viewCommit S D V hV) (viewSkip S D V hV) (chooseLeast S D) dec
+  wf : WellFormed (S.Elig) (viewCommit S D V hV) (viewSkip S D V hV) (chooseLeast S D) dec
   /-- A commit names a block of the slot. -/
   slot : ∀ s A, dec s = Verdict.commit A → A ∈ slotBlocks S D s
   /-- Nothing above some round is decided — the DAG is finite. -/
@@ -123,7 +128,7 @@ theorem agree : Agree (finWhaleRule (Validator := Validator) (BlockId := BlockId
   obtain ⟨N₂, hN₂⟩ := ha₂.finite
   have habove : ∀ (dq : ℕ → Verdict BlockId),
       (∀ s A, dq s = Verdict.commit A → A ∈ slotBlocks (schedOf S) D s) →
-      ∀ r a A, schedElig (schedOf S) r a → dq a = Verdict.commit A →
+      ∀ r a A, (schedOf S).Elig r a → dq a = Verdict.commit A →
         A ∈ D.ids ∧ (schedOf S).round r + 3 ≤ (D.block A).round := by
     intro dq hq r a A hra hcom
     have hA := hq a A hcom
@@ -167,23 +172,28 @@ theorem commitsCandidate : CommitsCandidate
   rw [mem_slotBlocks] at hA
   exact ⟨hA.1.1, hA.1.2, hA.2⟩
 
-/-! ## That the relation is inhabited
+/-! ## That the relation is inhabited, at every schedule
 
-`Decided` is *existential over assignments*, so `Agree` would hold for
-nothing if no assignment ever existed. That is the vacuity trap this arc
-has twice been caught by (§3.4, §3.6), and it matters more here than
-anywhere else: FinWhale is the only rule whose decision relation is a
-condition on a function rather than an inductive definition, so nothing
-about it is inhabited by construction.
+`Decided` is existential over assignments, so `Agree` would hold for
+nothing if none existed. That is the vacuity trap this arc has been
+caught by twice (§3.4, §3.6), and it matters most here: FinWhale is the
+only rule whose decision relation is a condition on a function rather
+than an inductive definition, so nothing about it is inhabited by
+construction.
 
-**This is not `CommitsDirect`, and the reason is the finding of the
-port.** `CommitsDirect R Direct` passes the direct predicate a view, a
-block and a round — and never the schedule. FinWhale's rules read the
-leader off the *DAG*, so relating them to `Slots` needs the pinning that
-`Decided` carries, and `Direct` cannot carry it. `CommitsCandidate` needs
-the same pinning and can have it, because `IsCandidate` is stated at `S`.
-So the property that can be stated is stated, and the one that cannot is
-replaced here by the theorem it would have followed from. -/
+The witness is FinWhale's own reverse pass, and it now runs at the
+schedule it is given — `anchorCands` filters the eligible slots rather
+than an interval, so the pass is well formed at whatever eligibility it
+is handed. That is what took the last pinning out. -/
+
+/-- Eligible slots are above: a schedule's rounds are monotone, so three
+rounds up is at least one slot up. -/
+theorem lt_of_elig {S : Slots Validator} {r a : ℕ}
+    (h : (schedOf S).Elig r a) : r < a := by
+  by_contra hge
+  have hm : S.slotRound a ≤ S.slotRound r := S.mono (Nat.le_of_not_lt hge)
+  have h' : S.slotRound r + 3 ≤ S.slotRound a := h
+  omega
 
 /-- A view is finite, so its blocks stop at a round. -/
 theorem view_bounded (D : Dag Validator BlockId Payload) (V : Finset BlockId)
@@ -194,75 +204,76 @@ theorem view_bounded (D : Dag Validator BlockId Payload) (V : Finset BlockId)
   fun b hb => Finset.le_sup (f := fun b => (D.block b).round) hb
 
 /-- A view's slot blocks are the universe's. -/
-theorem slotBlocks_restrict_subset (S : Sched Validator) (D : Dag Validator BlockId Payload)
-    (V : Finset BlockId) (hV : IsView D V) (r : ℕ) :
+theorem slotBlocks_restrict_subset (S : Sched Validator)
+    (D : Dag Validator BlockId Payload) (V : Finset BlockId) (hV : IsView D V) (r : ℕ) :
     LeanDag.FinWhale.slotBlocks S (LeanDag.FinWhale.restrict D V hV) r ⊆
       LeanDag.FinWhale.slotBlocks S D r := by
   intro b hb
   rw [mem_slotBlocks] at hb ⊢
   exact ⟨⟨hV.subset hb.1.1, hb.1.2⟩, hb.2⟩
 
-/-- **The relation is inhabited: a direct commit in view is a verdict.**
-FinWhale's own reverse pass, run on the view with the universe's
-tie-break, is an assignment — well formed by `wellFormed_decOf`,
-committing only blocks of the slot by `mem_slotBlocks_of_decOf`, and
-finite because a view is a finite set of blocks — and
-`WellFormed.direct_commit` reads the commit off it.
+/-- **The pass's horizon**: a slot index above every slot a view can
+decide. `Slots.slot_lt_of_slotRound_le` is what makes one exist — the
+view bounds the *rounds*, and a bound on rounds bounds the slots only
+because a schedule cannot fit unboundedly many slots into them. -/
+def viewHorizon (D : Dag Validator BlockId Payload) (V : Finset BlockId) : ℕ :=
+  (V.sup (fun b => (D.block b).round) + 1) * Fintype.card Validator
 
-The one schedule hypothesis is the indexing `Decided` carries: slots are
-rounds. The leader no longer has to be pinned to anything, the rules
-reading the one they are given. -/
+/-- **A direct commit in view is a verdict**, at any schedule and with
+no side condition. The reverse pass on the view is an assignment — well
+formed by `wellFormed_decOf`, committing only blocks of the slot by
+`mem_slotBlocks_of_decOf`, and finite because nothing above the horizon
+is decided — and `WellFormed.direct_commit` reads the commit off it. -/
 theorem decided_of_directCommit {D : Dag Validator BlockId Payload} {S : Slots Validator}
-    (hid : ∀ s, S.slotRound s = s)
-    {V : Finset BlockId} (hV : IsView D V)
-    {k : ℕ} {L : BlockId}
+    {V : Finset BlockId} (hV : IsView D V) {k : ℕ} {L : BlockId}
     (hslot : L ∈ LeanDag.FinWhale.slotBlocks (schedOf S)
       (LeanDag.FinWhale.restrict D V hV) k)
     (hcom : LeanDag.FinWhale.DirectCommit (LeanDag.FinWhale.restrict D V hV) L) :
     (finWhaleRule (Payload := Payload)).Decided S (U := D) ⟨V, hV⟩ k (some L) := by
   classical
-  have hEq : passElig = schedElig (schedOf S) := by
-    funext r a
-    simp only [passElig, schedElig, schedOf, hid]
-    exact propext (by omega)
-  refine ⟨decOf (schedOf S) (LeanDag.FinWhale.restrict D V hV)
-    (chooseLeast (schedOf S) D) (V.sup (fun b => (D.block b).round)), ?_, ?_⟩
+  have hrle : ∀ r, (schedOf S).round r ≤ V.sup (fun b => (D.block b).round) →
+      r ≤ viewHorizon D V := fun r h =>
+    Nat.le_of_lt (LeanDag.Slots.slot_lt_of_slotRound_le (S := S) h)
+  refine ⟨decOf (schedOf S) ((schedOf S).Elig) (LeanDag.FinWhale.restrict D V hV)
+    (chooseLeast (schedOf S) D) (viewHorizon D V), ?_, ?_⟩
   · exact
-      { wf := hEq ▸ wellFormed_decOf (view_bounded D V hV) hid
+      { wf := wellFormed_decOf (view_bounded D V hV) (fun _ _ => lt_of_elig) hrle
           (chooseLeast (schedOf S) D)
         slot := fun s A h => mem_slotBlocks_of_decOf
-          (slotBlocks_restrict_subset (schedOf S) D V hV) chooseSound_least h
-        finite := ⟨V.sup (fun b => (D.block b).round) + 1,
-          fun s hs => decOf_of_gt (by omega)⟩ }
-  · exact (wellFormed_decOf (view_bounded D V hV) hid
+          (slotBlocks_restrict_subset (schedOf S) D V hV) chooseSound_least
+          (fun _ _ => lt_of_elig) h
+        finite := ⟨viewHorizon D V + 1, fun s hs => decOf_of_gt (by omega)⟩ }
+  · exact (wellFormed_decOf (view_bounded D V hV) (fun _ _ => lt_of_elig) hrle
       (chooseLeast (schedOf S) D)).direct_commit k L ⟨hslot, hcom⟩
 
-/-! ## `CommitsDirect`: statable now, and what still stops it
 
-Removing the pinning from `Decided` made `CommitsDirect` **statable** —
-its direct predicate is handed a view, a block and a round and never the
-schedule, so while `Decided` carried `∀ s, S.slotRound s = s` the
-conclusion had a conjunct nothing could discharge.
+/-! ## The direct rule
 
-What stops it now is one named thing. `CommitsDirect` quantifies over
-*every* schedule, so proving it means exhibiting a well-formed assignment
-at `schedElig (schedOf S)` for an arbitrary `S`. The only assignment this
-development can exhibit is the reverse pass, and the pass enumerates its
-anchor candidates as an **interval**, `Finset.Ioc (r + 2) N`
-(`Model/Pass.lean`). So it is well formed at `passElig` and at nothing
-else.
+`CommitsDirect` is what tells a mechanism that a rule's direct-commit
+predicate is a predicate about verdicts. Barnacle's leader count reads
+it, and until the pass stopped pinning its schedule FinWhale could not
+state it: the witness assignment existed only where the schedule was the
+identity, so the property, which quantifies every schedule, was out of
+reach. -/
 
-The fix is to have `anchorCands` filter the eligible slots below the
-horizon rather than an interval, which needs the eligibility to carry
-decidability and its own `r < a`. Everything above the pass —
-`Anchor`, `WellFormed`, `lemma12`, and this carrier — is already generic
-in it.
+/-- **FinWhale's direct-commit predicate, as a view sees it**: the block
+is held, and the view's own restriction certifies it. The round is
+carried to match the property's shape and is not read — `IsCandidate`
+already says where the block sits. -/
+def DirectCommitIn {D : Dag Validator BlockId Payload}
+    (V : (finWhaleRule (Payload := Payload)).View D) (L : BlockId) (_r : ℕ) : Prop :=
+  L ∈ V.val ∧ LeanDag.FinWhale.DirectCommit (LeanDag.FinWhale.restrict D V.val V.property) L
 
-The same gap bounds `decided_of_directCommit` below, which is why that
-theorem asks for the identity schedule: **`Decided` is only known to be
-inhabited there**, and `Agree` is correspondingly only known to be
-non-vacuous there. -/
-
+/-- **And a direct commit is a verdict**, at every schedule.
+`IsCandidate` places the block at the slot, `DirectCommitIn` puts it in
+the view and certifies it, and `decided_of_directCommit` runs the pass
+that reads the commit off. -/
+theorem commitsDirect : CommitsDirect
+    (finWhaleRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+    (fun {_} V L r => DirectCommitIn V L r) := by
+  rintro S D V k L ⟨-, hround, hcreator⟩ ⟨hmem, hdir⟩
+  exact decided_of_directCommit V.property
+    (mem_slotBlocks.2 ⟨⟨hmem, hround⟩, hcreator⟩) hdir
 
 end FinWhaleProperties
 

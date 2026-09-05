@@ -1,4 +1,5 @@
 import LeanDag.Mysticeti
+import Mathlib.Data.Finset.Prod
 
 /-!
 # Leader schedules
@@ -115,6 +116,34 @@ term, which is how callers meet it. -/
 example [S : Slots Validator] (hsp : ∀ k, S.slotRound k = 3 * k) {k j : ℕ} (h : k < j) :
     Eligible Validator k j :=
   eligible_of_lt_of_spacing (fun k => by simp [hsp]; omega) h
+
+/-- **Slot indices do not outrun rounds.** `keyed` makes
+`k ↦ (slotRound k, leader k)` injective and `mono` makes the slots at
+round `N` or below an initial segment, so with finitely many validators
+those slots inject into `range (N + 1) ×ˢ univ` and their indices stop
+below `(N + 1) * card Validator`.
+
+A reverse pass is indexed by slot and a DAG is bounded by round, so
+without this there is no horizon to start such a pass from: a round
+bound on the blocks says nothing about how many slots sit under it. The
+bound is crude — every validator leading every round — and only its
+existence is used. -/
+theorem slot_lt_of_slotRound_le {Validator : Type*} [Fintype Validator]
+    [S : Slots Validator] {N k : ℕ} (h : S.slotRound k ≤ N) :
+    k < (N + 1) * Fintype.card Validator := by
+  classical
+  have hsub : ∀ j ∈ Finset.range (k + 1),
+      (S.slotRound j, S.leader j) ∈
+        (Finset.range (N + 1)) ×ˢ (Finset.univ : Finset Validator) := by
+    intro j hj
+    have hjk : j ≤ k := by simpa [Nat.lt_succ_iff] using Finset.mem_range.1 hj
+    have := S.mono hjk
+    simp only [Finset.mem_product, Finset.mem_range, Finset.mem_univ, and_true]
+    omega
+  have hinj : Set.InjOn (fun j => (S.slotRound j, S.leader j)) (Finset.range (k + 1)) :=
+    fun _ _ _ _ hab => S.keyed hab
+  have := Finset.card_le_card_of_injOn _ hsub hinj
+  simpa [Finset.card_product, Nat.lt_iff_add_one_le] using this
 
 end Slots
 

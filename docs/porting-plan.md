@@ -384,46 +384,67 @@ they are given — `slotBlocks S D k` is the blocks at `S.round k` by
 `CommitsCandidate` hold with nothing pinned, and `CommitsDirect` became
 **statable**, which it was not before.
 
-### The gaps, precisely
+### Gaps 1 to 3, closed
 
-**1. The pass enumerates an interval.** `anchorCands` is
-`Finset.Ioc (r + 2) N`, so the reverse pass is well formed at
-`passElig` and at nothing else. Everything above it — `Anchor`,
-`WellFormed`, `lemma12`, the carrier — is already generic in the
-eligibility. The fix is to filter the eligible slots below the horizon
-instead, which needs the eligibility to carry decidability and its own
-`r < a`.
+**1. The pass enumerated an interval.** `anchorCands` was
+`Finset.Ioc (r + 2) N`, so the reverse pass was well formed at one
+eligibility and no other. It is now
+`(Finset.Iic N).filter (fun a => Elig r a ∧ above a ≠ skip)`, with
+`Elig` and `[DecidableRel Elig]` threaded through `anchorVerdict`,
+`slotVerdict`, `passFrom` and `decOf`, and `passElig` deleted. The pass
+is well formed at whatever eligibility it is handed, given that
+eligibility's own `r < a`.
 
-**2. Which bounds inhabitation, and so bounds `Agree`.** The only
-assignment this development can exhibit is the pass, so
-`decided_of_directCommit` asks for the identity schedule. `Decided` is
-therefore known to be *inhabited* only there, and `Agree` is known to be
-*non-vacuous* only there. `Agree` is true as stated at every schedule;
-what is not yet shown is that it is saying anything at a general one.
-That is the honest reading and it is worth stating plainly, because a
-vacuously-true agreement property is exactly the trap §3.4 and §3.6
-record.
+FinWhale's own eligibility is now one definition, `Sched.Elig S r a`,
+`S.round r + 3 ≤ S.round a`, sitting in `Model/Rule.lean` beside
+`Sched`. The protocol and the carrier run the same pass at the same
+relation; under `Run.roundId` it unfolds to the old `r + 2 < a`, which
+is `Run.elig_iff`.
 
-**3. `CommitsDirect` needs (1).** It quantifies over every schedule, so
-proving it means exhibiting an assignment at `schedElig (schedOf S)` for
-an arbitrary `S` — which is (1).
+**A horizon had to be found, and that was the real content.** A view
+bounds *rounds*; the pass recurses down over *slots*; nothing in
+`Slots` related the two. `Slots.slot_lt_of_slotRound_le` does:
+`keyed` makes `k ↦ (slotRound k, leader k)` injective, `mono` makes the
+slots below a round an initial segment, so with `Fintype Validator`
+those slots inject into `range (N + 1) ×ˢ univ` and stop below
+`(N + 1) * card Validator`. `wellFormed_decOf` accordingly takes two
+bounds now — `N` for rounds, `M` for slots, related by
+`hrle : ∀ r, S.round r ≤ N → r ≤ M` — and the carrier discharges `hrle`
+from that lemma at `viewHorizon`.
 
-**4. `Banded` needs (1) and more.** It is still the theorem no other
-rule needs: the band must say the *reverse pass* is band-invariant,
-because FinWhale's verdicts are a function constrained by `WellFormed`
-rather than a derivation. Block-level transport of eight predicates, a
-downward induction from the finiteness bound, and `lemma12` to bridge an
-arbitrary assignment to the pass.
+**2. Inhabitation, and so non-vacuity of `Agree`, at every schedule.**
+`decided_of_directCommit` now takes an arbitrary `Slots` and no side
+condition: it exhibits the pass on the view, at `(schedOf S).Elig`, with
+horizon `viewHorizon`. `Decided` is inhabited wherever a view directly
+commits a block of a slot, so `Agree` is saying something at a general
+schedule and not only at the identity one. That was the trap §3.4 and
+§3.6 record, and FinWhale is out of it.
 
-**5. `LeaderCommits` and `Indirect` are untouched**, and both are
-reachable once (1) is done — `Indirect` is close to `lemma23`'s content
-and `LeaderCommits` to `CommitsCorrectLeaders`.
+**3. `CommitsDirect` holds.** `FinWhaleProperties.DirectCommitIn V L r`
+is `L ∈ V ∧ DirectCommit (restrict D V) L`, and `commitsDirect` is
+`IsCandidate` placing the block at the slot and
+`decided_of_directCommit` reading the commit off the pass. Barnacle's
+leader count can therefore be run on FinWhale.
+
+### What is genuinely left
+
+**4. `Banded`.** Still the theorem no other rule needs: the band must
+say the *reverse pass* is band-invariant, because FinWhale's verdicts
+are a function constrained by `WellFormed` rather than a derivation.
+Block-level transport of eight predicates, a downward induction from the
+finiteness bound, and `lemma12` to bridge an arbitrary assignment to the
+pass.
+
+**5. `LeaderCommits` and `Indirect` are untouched.** Both are now
+unblocked — `Indirect` is close to `lemma23`'s content and
+`LeaderCommits` to `CommitsCorrectLeaders`.
 
 ### What the identity assumption is now
 
 It used to be a conjunct of `Decided`, where nothing could discharge it.
-It is now a hypothesis of the theorems that construct a pass —
-`wellFormed_decOf`, the liveness capstones, `Run.roundId`. That is where
-it belongs: a FinWhale *execution* runs one slot per round, and saying so
-at the execution rather than in the decision relation is what let the
-carrier take an arbitrary schedule.
+Then it was a hypothesis of every theorem that constructs a pass. It is
+now a hypothesis of the *protocol* alone — `Run.roundId`, and the
+liveness capstones that count rounds — and of nothing in the carrier.
+That is where it belongs: a FinWhale execution runs one slot per round,
+and saying so at the execution rather than in the decision relation is
+what let the carrier take an arbitrary schedule.

@@ -497,7 +497,7 @@ def chooseW : Fin 4 → ℕ → Option (Fin 4) := fun _ r => if r = 0 then some 
 
 /-- **The anchor of slot `0` is slot `3`**, and nothing else: the slots
 between are skipped, and `3` is not. -/
-theorem anchorW : ∀ a, Anchor passElig decW 0 a → a = 3 := by
+theorem anchorW : ∀ a, Anchor (fun r a => r + 2 < a) decW 0 a → a = 3 := by
   rintro a ⟨h1, h2, h3⟩
   have h1' : (0 : ℕ) + 2 < a := h1
   by_contra hne
@@ -505,12 +505,12 @@ theorem anchorW : ∀ a, Anchor passElig decW 0 a → a = 3 := by
   have := h3 3 (show (0:ℕ) + 2 < 3 by omega) hlt
   simp [decW] at this
 
-example : Anchor passElig decW 0 3 :=
+example : Anchor (fun r a => r + 2 < a) decW 0 3 :=
   ⟨by show (0:ℕ) + 2 < 3; omega, by decide,
    by intro a' h1 h2; have : (0:ℕ) + 2 < a' := h1; omega⟩
 
 /-- **The reverse pass is followed.** -/
-theorem wellFormedW : WellFormed passElig dcW dsW chooseW decW where
+theorem wellFormedW : WellFormed (fun r a => r + 2 < a) dcW dsW chooseW decW where
   direct_commit r l := by
     rintro ⟨h3, h5, rfl⟩
     simp only [decW, if_neg (by omega : ¬ r = 0), if_neg (by omega : ¬ r ≤ 2), if_pos h5]
@@ -666,20 +666,20 @@ theorem dfast_horizon : ∀ b ∈ Dfast.ids, (Dfast.block b).round ≤ 3 := by d
 /-- **The pass commits slot `0`**, by its direct rule and whatever
 tie-break the validator applies. -/
 example (choose : Fin 36 → ℕ → Option (Fin 36)) :
-    decOf fwSched Dfast choose 3 0 = Verdict.commit 0 :=
-  (wellFormed_decOf dfast_horizon (fun _ => rfl) choose).direct_commit 0 0 ⟨by decide, Or.inl (by decide)⟩
+    decOf fwSched (fun r a => r + 2 < a) Dfast choose 3 0 = Verdict.commit 0 :=
+  (wellFormed_decOf dfast_horizon (fun _ _ h => by omega) (fun _ h => h) choose).direct_commit 0 0 ⟨by decide, Or.inl (by decide)⟩
 
 /-- And decides nothing above the horizon, which is the finiteness Lemma
 12 consumes. -/
 example (choose : Fin 36 → ℕ → Option (Fin 36)) (s : ℕ) (hs : 3 < s) :
-    decOf fwSched Dfast choose 3 s = Verdict.undecided :=
+    decOf fwSched (fun r a => r + 2 < a) Dfast choose 3 s = Verdict.undecided :=
   decOf_of_gt hs
 
 /-- The skipping execution decides its slot the other way, by the same
 route. -/
 example (choose : Fin 27 → ℕ → Option (Fin 27)) :
-    decOf fwSched Dskip choose 2 0 = Verdict.skip :=
-  (wellFormed_decOf (by decide) (fun _ => rfl) choose).direct_skip 0
+    decOf fwSched (fun r a => r + 2 < a) Dskip choose 2 0 = Verdict.skip :=
+  (wellFormed_decOf (by decide) (fun _ _ h => by omega) (fun _ h => h) choose).direct_skip 0
     ⟨by decide, {0, 1, 2, 3, 4, 5}, by decide, by decide⟩
 
 /-! ## The arc's axioms -/

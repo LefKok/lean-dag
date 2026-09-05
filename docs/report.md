@@ -17115,6 +17115,18 @@ FinWhale runs one slot per round, so `round` is the identity in every execution 
 
 It is FinWhale's own record rather than `LeanDag.Slots` so that the model stays independent of Mysticeti's; the carrier maps one to the other.
 
+#### `Sched.Elig`
+
+*def, `FinWhale.Model.Rule.lean`*
+
+```lean
+def Sched.Elig (S : Sched Validator) (r a : ℕ) : Prop := S.round r + 3 ≤ S.round a
+```
+
+**Which slots may anchor which.** The reverse pass reads an earlier slot's verdict off a later one, and the rules that let it do so live two rounds above the candidate, so the anchor's own candidate must sit at least three rounds up. Under the identity schedule this is `r + 2 < a`, which is the shape the protocol's runs meet it in.
+
+The pass is stated over an arbitrary eligibility and this is the one FinWhale supplies. Keeping it here, rather than at the conformance file, is what lets the protocol and the carrier run the same pass.
+
 #### `blocksAt`
 
 *def, `FinWhale.Model.Rule.lean`*
@@ -17490,36 +17502,30 @@ def directCommits (S : Sched Validator) (D : Dag Validator BlockId Payload) (r :
 
 The blocks of a slot that are directly committed. At most one, by `direct_commit_unique`.
 
-#### `passElig`
-
-*def, `FinWhale.Model.Pass.lean`*
-
-```lean
-def passElig (r a : ℕ) : Prop := r + 2 < a
-```
-
-The eligibility the pass computes at: a slot is an anchor candidate when it sits three rounds up. This is the identity-slot reading, which is what the pass enumerates; `Anchor` itself is stated at any eligibility (`Model/Verdict.lean`).
-
 #### `anchorCands`
 
 *def, `FinWhale.Model.Pass.lean`*
 
 ```lean
-def anchorCands (N : ℕ) (above : ℕ → Verdict BlockId) (r : ℕ) : Finset ℕ :=
-  (Finset.Ioc (r + 2) N).filter (fun a => above a ≠ Verdict.skip)
+def anchorCands (Elig : ℕ → ℕ → Prop) [DecidableRel Elig] (N : ℕ)
+    (above : ℕ → Verdict BlockId) (r : ℕ) : Finset ℕ :=
+  (Finset.Iic N).filter (fun a => Elig r a ∧ above a ≠ Verdict.skip)
 ```
 
-The candidates for the anchor of `r`: the slots above `r + 2` and below the horizon that the verdicts above do not skip.
+The candidates for the anchor of `r`: the **eligible** slots below the horizon that the verdicts above do not skip.
+
+Stated as a filter over `Iic N` rather than over the interval `Ioc (r + 2) N`. The interval was the identity-slot reading, and while the pass enumerated it the pass was well formed at that eligibility and no other — which is what confined FinWhale's carrier to schedules whose slots are their rounds (`docs/porting-plan.md`). Filtering leaves the pass well formed at whatever eligibility it is run with, which is how every other rule here reads its anchor.
 
 #### `anchorVerdict`
 
 *def, `FinWhale.Model.Pass.lean`*
 
 ```lean
-def anchorVerdict (choose : BlockId → ℕ → Option BlockId) (N : ℕ)
+def anchorVerdict (Elig : ℕ → ℕ → Prop) [DecidableRel Elig]
+    (choose : BlockId → ℕ → Option BlockId) (N : ℕ)
     (above : ℕ → Verdict BlockId) (r : ℕ) : Verdict BlockId :=
-  if hc : (anchorCands N above r).Nonempty then
-    match above ((anchorCands N above r).min' hc) with
+  if hc : (anchorCands Elig N above r).Nonempty then
+    match above ((anchorCands Elig N above r).min' hc) with
     | Verdict.commit A =>
         match choose A r with
         | some b => Verdict.commit b
@@ -17535,12 +17541,13 @@ def anchorVerdict (choose : BlockId → ℕ → Option BlockId) (N : ℕ)
 *def, `FinWhale.Model.Pass.lean`*
 
 ```lean
-def slotVerdict (S : Sched Validator) (D : Dag Validator BlockId Payload)
+def slotVerdict (S : Sched Validator) (Elig : ℕ → ℕ → Prop) [DecidableRel Elig]
+    (D : Dag Validator BlockId Payload)
     (choose : BlockId → ℕ → Option BlockId) (N : ℕ)
     (above : ℕ → Verdict BlockId) (r : ℕ) : Verdict BlockId :=
   if h : (directCommits S D r).Nonempty then Verdict.commit ((directCommits S D r).min' h)
   else if DirectSkip S D r then Verdict.skip
-  else anchorVerdict choose N above r
+  else anchorVerdict Elig choose N above r
 ```
 
 **One slot's verdict, from the verdicts above it.**
@@ -17550,12 +17557,13 @@ def slotVerdict (S : Sched Validator) (D : Dag Validator BlockId Payload)
 *def, `FinWhale.Model.Pass.lean`*
 
 ```lean
-def passFrom (S : Sched Validator) (D : Dag Validator BlockId Payload)
+def passFrom (S : Sched Validator) (Elig : ℕ → ℕ → Prop) [DecidableRel Elig]
+    (D : Dag Validator BlockId Payload)
     (choose : BlockId → ℕ → Option BlockId) (N : ℕ) (s : ℕ) : ℕ → Verdict BlockId :=
   if h : N < s then fun _ => Verdict.undecided
   else fun r =>
-    if r = s then slotVerdict S D choose N (passFrom S D choose N (s + 1)) s
-    else passFrom S D choose N (s + 1) r
+    if r = s then slotVerdict S Elig D choose N (passFrom S Elig D choose N (s + 1)) s
+    else passFrom S Elig D choose N (s + 1) r
 termination_by N + 1 - s
 decreasing_by all_goals omega
 ```
@@ -17567,9 +17575,10 @@ decreasing_by all_goals omega
 *def, `FinWhale.Model.Pass.lean`*
 
 ```lean
-def decOf (S : Sched Validator) (D : Dag Validator BlockId Payload)
+def decOf (S : Sched Validator) (Elig : ℕ → ℕ → Prop) [DecidableRel Elig]
+    (D : Dag Validator BlockId Payload)
     (choose : BlockId → ℕ → Option BlockId) (N : ℕ) : ℕ → Verdict BlockId :=
-  passFrom S D choose N 0
+  passFrom S Elig D choose N 0
 ```
 
 **The verdicts of a validator whose view is `D`.**
@@ -17898,7 +17907,8 @@ def view (v : Validator) : Finset BlockId := run.pace.holds v (settled run.pace)
 
 ```lean
 noncomputable def verdicts (hv : v ∈ (Correct : Finset Validator)) : ℕ → Verdict BlockId :=
-  decOf run.sched (restrict run.dag (run.view v) (run.isView hv)) run.choose run.horizon
+  decOf run.sched run.sched.Elig (restrict run.dag (run.view v) (run.isView hv))
+    run.choose run.horizon
 ```
 
 **The verdicts a validator reaches**, by running the reverse pass on its own view.
@@ -23538,16 +23548,6 @@ def VerdictIs (dec : ℕ → Verdict BlockId) (r : ℕ) (v : Option BlockId) : P
 
 A verdict, as the property layer reads it: `some b` is a commit, `none` a skip, and an undecided slot is not decided at all.
 
-#### `schedElig`
-
-*def, `FinWhale.Carrier.lean`*
-
-```lean
-def schedElig (S : Sched Validator) (r a : ℕ) : Prop := S.round r + 3 ≤ S.round a
-```
-
-**FinWhale's eligibility, slot-indexed**: an anchor sits three rounds above the slot it decides. At the identity schedule this is the pass's `r + 2 < a`; stated through the schedule it is what lets the carrier take the one it is given.
-
 #### `Assignment`
 
 *structure, `FinWhale.Carrier.lean`*
@@ -23556,7 +23556,7 @@ def schedElig (S : Sched Validator) (r a : ℕ) : Prop := S.round r + 3 ≤ S.ro
 structure Assignment (S : Sched Validator) (D : Dag Validator BlockId Payload)
     (V : Finset BlockId) (hV : IsView D V) (dec : ℕ → Verdict BlockId) : Prop where
   /-- The reverse pass, as a condition on the verdicts. -/
-  wf : WellFormed (schedElig S) (viewCommit S D V hV) (viewSkip S D V hV) (chooseLeast S D) dec
+  wf : WellFormed (S.Elig) (viewCommit S D V hV) (viewSkip S D V hV) (chooseLeast S D) dec
   /-- A commit names a block of the slot. -/
   slot : ∀ s A, dec s = Verdict.commit A → A ∈ slotBlocks S D s
   /-- Nothing above some round is decided — the DAG is finite. -/
@@ -23594,6 +23594,29 @@ def finWhaleRule : DagRule Validator BlockId Payload where
 ```
 
 **FinWhale as a carrier**, with the schedule passed through and nothing pinned.
+
+#### `viewHorizon`
+
+*def, `FinWhale.Carrier.lean`*
+
+```lean
+def viewHorizon (D : Dag Validator BlockId Payload) (V : Finset BlockId) : ℕ :=
+  (V.sup (fun b => (D.block b).round) + 1) * Fintype.card Validator
+```
+
+**The pass's horizon**: a slot index above every slot a view can decide. `Slots.slot_lt_of_slotRound_le` is what makes one exist — the view bounds the *rounds*, and a bound on rounds bounds the slots only because a schedule cannot fit unboundedly many slots into them.
+
+#### `DirectCommitIn`
+
+*def, `FinWhale.Carrier.lean`*
+
+```lean
+def DirectCommitIn {D : Dag Validator BlockId Payload}
+    (V : (finWhaleRule (Payload := Payload)).View D) (L : BlockId) (_r : ℕ) : Prop :=
+  L ∈ V.val ∧ LeanDag.FinWhale.DirectCommit (LeanDag.FinWhale.restrict D V.val V.property) L
+```
+
+**FinWhale's direct-commit predicate, as a view sees it**: the block is held, and the view's own restriction certifies it. The round is carried to match the property's shape and is not read — `IsCandidate` already says where the block sits.
 
 #### `hybridRule`
 
@@ -25285,7 +25308,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 993 theorems that either another module of the
+The 994 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -26249,6 +26272,22 @@ theorem reaches_of_quorum_support
 **T3 (Persistence).** If `b` is referenced by a quorum of round-`(r+1)` blocks, every block at round `r+2` or later has `b` in its causal history.
 
 Neither `b ∈ U.ids` nor `(U.block b).round = r` is assumed: both follow from the quorum hypothesis (`mem_ids_and_round_of_quorum_support`).
+
+### Slots and the schedule
+
+#### `slot_lt_of_slotRound_le`
+
+*theorem, `Schedule.lean`*
+
+```lean
+theorem slot_lt_of_slotRound_le {Validator : Type*} [Fintype Validator]
+    [S : Slots Validator] {N k : ℕ} (h : S.slotRound k ≤ N) :
+    k < (N + 1) * Fintype.card Validator
+```
+
+**Slot indices do not outrun rounds.** `keyed` makes `k ↦ (slotRound k, leader k)` injective and `mono` makes the slots at round `N` or below an initial segment, so with finitely many validators those slots inject into `range (N + 1) ×ˢ univ` and their indices stop below `(N + 1) * card Validator`.
+
+A reverse pass is indexed by slot and a DAG is bounded by round, so without this there is no horizon to start such a pass from: a round bound on the blocks says nothing about how many slots sit under it. The bound is crude — every validator leading every round — and only its existence is used.
 
 ### The commit rule, and the ledger
 
@@ -32835,7 +32874,7 @@ theorem theorem15 (hist : BlockId → List BlockId) (hnd : ∀ l, (hist l).Nodup
 *theorem, `FinWhale.Pass.lean`*
 
 ```lean
-theorem decOf_of_gt {r : ℕ} (hr : N < r) : decOf S D choose N r = Verdict.undecided
+theorem decOf_of_gt {r : ℕ} (hr : N < r) : decOf S Elig D choose N r = Verdict.undecided
 ```
 
 Above the horizon the pass decides nothing.
@@ -32845,10 +32884,12 @@ Above the horizon the pass decides nothing.
 *theorem, `FinWhale.Pass.lean`*
 
 ```lean
-theorem wellFormed_decOf {N : ℕ} (hN : ∀ b ∈ D.ids, (D.block b).round ≤ N)
-    (hid : ∀ k, S.round k = k) (choose : BlockId → ℕ → Option BlockId) :
-    WellFormed passElig (fun r l => l ∈ slotBlocks S D r ∧ DirectCommit D l)
-      (fun r => DirectSkip S D r) choose (decOf S D choose N) where
+theorem wellFormed_decOf {N M : ℕ} (hN : ∀ b ∈ D.ids, (D.block b).round ≤ N)
+    (hlt : ∀ r a, Elig r a → r < a)
+    (hrle : ∀ r, S.round r ≤ N → r ≤ M)
+    (choose : BlockId → ℕ → Option BlockId) :
+    WellFormed Elig (fun r l => l ∈ slotBlocks S D r ∧ DirectCommit D l)
+      (fun r => DirectSkip S D r) choose (decOf S Elig D choose M) where
   direct_commit r l
 ```
 
@@ -32862,7 +32903,8 @@ theorem wellFormed_decOf {N : ℕ} (hN : ∀ b ∈ D.ids, (D.block b).round ≤ 
 theorem mem_slotBlocks_of_decOf {D' : Dag Validator BlockId Payload} {N : ℕ}
     {choose : BlockId → ℕ → Option BlockId}
     (hsub : ∀ r, slotBlocks S D' r ⊆ slotBlocks S D r) (hch : ChooseSound S D choose)
-    {r : ℕ} {A : BlockId} (h : decOf S D' choose N r = Verdict.commit A) :
+    (hlt : ∀ r a, Elig r a → r < a)
+    {r : ℕ} {A : BlockId} (h : decOf S Elig D' choose N r = Verdict.commit A) :
     A ∈ slotBlocks S D r
 ```
 
@@ -32874,16 +32916,18 @@ theorem mem_slotBlocks_of_decOf {D' : Dag Validator BlockId Payload} {N : ℕ}
 
 ```lean
 theorem safety_of_pass {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsView D V')
-    {choose : BlockId → ℕ → Option BlockId} (hch : ChooseSound S D choose) {N : ℕ}
+    {choose : BlockId → ℕ → Option BlockId} (hch : ChooseSound S D choose) {N M : ℕ}
     (hNV : ∀ b ∈ V, (D.block b).round ≤ N) (hNV' : ∀ b ∈ V', (D.block b).round ≤ N)
     {k k' : ℕ}
-    (hk : ∀ s, s < k → decOf S (restrict D V hV) choose N s ≠ Verdict.undecided)
-    (hk' : ∀ s, s < k' → decOf S (restrict D V' hV') choose N s ≠ Verdict.undecided)
-    (hid : ∀ k, S.round k = k) (hist : BlockId → List BlockId) :
-    linearise hist (commitSeq (decOf S (restrict D V hV) choose N) k) <+:
-        linearise hist (commitSeq (decOf S (restrict D V' hV') choose N) k') ∨
-      linearise hist (commitSeq (decOf S (restrict D V' hV') choose N) k') <+:
-        linearise hist (commitSeq (decOf S (restrict D V hV) choose N) k)
+    (hk : ∀ s, s < k → decOf S Elig (restrict D V hV) choose M s ≠ Verdict.undecided)
+    (hk' : ∀ s, s < k' → decOf S Elig (restrict D V' hV') choose M s ≠ Verdict.undecided)
+    (hlt : ∀ r a, Elig r a → r < a) (hrle : ∀ r, S.round r ≤ N → r ≤ M)
+    (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ k, S.round k = k)
+    (hist : BlockId → List BlockId) :
+    linearise hist (commitSeq (decOf S Elig (restrict D V hV) choose M) k) <+:
+        linearise hist (commitSeq (decOf S Elig (restrict D V' hV') choose M) k') ∨
+      linearise hist (commitSeq (decOf S Elig (restrict D V' hV') choose M) k') <+:
+        linearise hist (commitSeq (decOf S Elig (restrict D V hV) choose M) k)
 ```
 
 **Safety, with the verdicts computed rather than assumed.** Two validators running the reverse pass on their own views of one DAG deliver prefix-comparable sequences.
@@ -38365,7 +38409,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 991 lemmas used only within the file that proves
+The 996 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -39402,13 +39446,16 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `all_decided_of_pass` | Every slot below the horizon is decided, by a validator whose view is its own holdings and whose verdicts … |
 
-### `FinWhale/Protocol.lean` (7)
+### `FinWhale/Protocol.lean` (10)
 
 | Lemma | Role |
 |:---|:---|
 | `decidedBelow` | Below a decided horizon a validator's sequence is complete. |
+| `elig_iff` | A run's schedule is the identity, so eligibility is the pass's `r + 2 < a` — three rounds up is three … |
 | `held` | Past the stable round, a validator holds every reliable block of every round below the horizon. |
 | `isView` | And what it holds is a view: part of the run, closed under references. |
+| `lt_of_elig` | And an eligible anchor is a later slot. |
+| `slot_le` | The pass's slot horizon is its round horizon, because the two agree under the identity schedule. |
 | `slot_of_verdicts` | A committed verdict names a block of its slot. |
 | `undecided_of_gt` | Nothing above the horizon is decided. |
 | `view_rounds_le` | The blocks a validator holds sit below the run's horizon. |
@@ -39889,14 +39936,16 @@ subsection per module, in the layer order of Appendices B and C.
 | `deliversOn_viewUpto` | The witness. The novelty budget's stores cover the correct validators from the settling round on, so a … |
 | `directCommitIn_viewUpto` | A rate-limited validator commits. Given a reliable quorum whose decision-round blocks certify `L`, a store … |
 
-### `FinWhale/Carrier.lean` (8)
+### `FinWhale/Carrier.lean` (10)
 
 | Lemma | Role |
 |:---|:---|
 | `agree` | Two views decide alike. Lemma 12 under the property's name: the exclusions come from the DAG, the … |
 | `causal` | FinWhale's DAGs are block DAGs. |
 | `commitsCandidate` | A commit names the slot's candidate. The `slot` field of an assignment, read at the property's … |
-| `decided_of_directCommit` | The relation is inhabited: a direct commit in view is a verdict. FinWhale's own reverse pass, run on the … |
+| `commitsDirect` | And a direct commit is a verdict, at every schedule. `IsCandidate` places the block at the slot, … |
+| `decided_of_directCommit` | A direct commit in view is a verdict, at any schedule and with no side condition. The reverse pass on the … |
+| `lt_of_elig` | Eligible slots are above: a schedule's rounds are monotone, so three rounds up is at least one slot up. |
 | `mem_blocksAt` | Membership of a round layer, unfolded once so the proofs below do not have to. |
 | `mem_slotBlocks` | And of a slot's blocks. |
 | `slotBlocks_restrict_subset` | A view's slot blocks are the universe's. |

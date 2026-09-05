@@ -43,7 +43,8 @@ theorem isView (hv : v ∈ (Correct : Finset Validator)) : IsView run.dag (run.v
 /-- **The verdicts a validator reaches**, by running the reverse pass on
 its own view. -/
 noncomputable def verdicts (hv : v ∈ (Correct : Finset Validator)) : ℕ → Verdict BlockId :=
-  decOf run.sched (restrict run.dag (run.view v) (run.isView hv)) run.choose run.horizon
+  decOf run.sched run.sched.Elig (restrict run.dag (run.view v) (run.isView hv))
+    run.choose run.horizon
 
 /-- **And what it delivers**: the causal histories of its committed
 leader blocks, in order, each block once. -/
@@ -61,16 +62,33 @@ theorem view_rounds_le (hv : v ∈ (Correct : Finset Validator)) :
     ∀ b ∈ run.view v, (run.dag.block b).round ≤ run.horizon :=
   fun b hb => run.rounds_le b ((run.isView hv).subset hb)
 
+/-- A run's schedule is the identity, so eligibility is the pass's
+`r + 2 < a` — three rounds up is three slots up. -/
+theorem elig_iff {r a : ℕ} : run.sched.Elig r a ↔ r + 2 < a := by
+  unfold Sched.Elig
+  rw [run.roundId, run.roundId]
+  omega
+
+/-- And an eligible anchor is a later slot. -/
+theorem lt_of_elig {r a : ℕ} (h : run.sched.Elig r a) : r < a := by
+  have := run.elig_iff.1 h; omega
+
+/-- The pass's slot horizon is its round horizon, because the two agree
+under the identity schedule. -/
+theorem slot_le : ∀ r, run.sched.round r ≤ run.horizon → r ≤ run.horizon := by
+  intro r h; rwa [run.roundId] at h
+
 /-- Its verdicts follow the reverse pass. -/
 theorem wellFormed (hv : v ∈ (Correct : Finset Validator)) :
-    WellFormed passElig (viewCommit run.sched run.dag (run.view v) (run.isView hv))
+    WellFormed run.sched.Elig (viewCommit run.sched run.dag (run.view v) (run.isView hv))
       (viewSkip run.sched run.dag (run.view v) (run.isView hv)) run.choose (run.verdicts hv) :=
-  wellFormed_decOf (run.view_rounds_le hv) run.roundId run.choose
+  wellFormed_decOf (run.view_rounds_le hv) (fun _ _ => run.lt_of_elig) run.slot_le run.choose
 
 /-- A committed verdict names a block of its slot. -/
 theorem slot_of_verdicts (hv : v ∈ (Correct : Finset Validator)) {r : ℕ} {A : BlockId}
     (h : run.verdicts hv r = Verdict.commit A) : A ∈ slotBlocks run.sched run.dag r :=
-  mem_slotBlocks_of_decOf (fun _ => slotBlocks_restrict) run.chooseSound h
+  mem_slotBlocks_of_decOf (fun _ => slotBlocks_restrict) run.chooseSound
+    (fun _ _ => run.lt_of_elig) h
 
 /-- Nothing above the horizon is decided. -/
 theorem undecided_of_gt (hv : v ∈ (Correct : Finset Validator)) {s : ℕ}
@@ -98,7 +116,7 @@ theorem decided (hv : v ∈ (Correct : Finset Validator)) {r : ℕ}
     (hr : max r run.stable + (3 * F.f + 5) ≤ run.liveHorizon) :
     run.verdicts hv r ≠ Verdict.undecided :=
   all_decided_of_view (run.isView hv) (run.wellFormed hv) (run.held hv) run.commits
-    run.roundRobin (fun _ _ => Iff.rfl) run.roundId hr
+    run.roundRobin (fun _ _ => run.elig_iff) run.roundId hr
 
 /-- Below a decided horizon a validator's sequence is complete. -/
 theorem decidedBelow (hv : v ∈ (Correct : Finset Validator)) {k : ℕ}
@@ -122,7 +140,7 @@ theorem agreement (hv : v ∈ (Correct : Finset Validator))
     (fun _ _ h => run.slot_of_verdicts hw h)
     (fun s (hs : run.horizon + 1 ≤ s) =>
       ⟨run.undecided_of_gt hv (by omega), run.undecided_of_gt hw (by omega)⟩)
-    (run.held hv) (run.held hw) run.commits run.roundRobin hk (fun _ _ => Iff.rfl) run.roundId
+    (run.held hv) (run.held hw) run.commits run.roundRobin hk (fun _ _ => run.elig_iff) run.roundId
     (histOf run.dag)
 
 /-- **Total order.** One validator's sequence is a prefix of another's,
@@ -134,7 +152,8 @@ theorem totalOrder (hv : v ∈ (Correct : Finset Validator))
     run.delivers hv k <+: run.delivers hw k' ∨ run.delivers hw k' <+: run.delivers hv k :=
   safety_of_pass (run.isView hv) (run.isView hw) run.chooseSound
     (run.view_rounds_le hv) (run.view_rounds_le hw)
-    (run.decidedBelow hv hk) (run.decidedBelow hw hk') run.roundId (histOf run.dag)
+    (run.decidedBelow hv hk) (run.decidedBelow hw hk') (fun _ _ => run.lt_of_elig) run.slot_le
+    (fun _ _ => run.elig_iff) run.roundId (histOf run.dag)
 
 /-- **Integrity.** No block is delivered twice. Theorem 15 at the
 concrete order, and it asks nothing of the run: the order appends only
