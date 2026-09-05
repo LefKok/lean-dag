@@ -109,24 +109,41 @@ def Conflicting (D : Dag Validator BlockId Payload) (l l' : BlockId) : Prop :=
 instance (D : Dag Validator BlockId Payload) (l l' : BlockId) :
     Decidable (Conflicting D l l') := inferInstanceAs (Decidable (_ ∧ _ ∧ _))
 
-/-- **Exposing equivocation, the parent-set reading.** Two parents of `b`
-vote for two different blocks of the round-`r` leader. This is the
-reading the validity rule is stated in, and the one Lemma 4 needs. -/
-def ExposesEquivocation (D : Dag Validator BlockId Payload) (b : BlockId) : Prop :=
+/-- **Exposing a validator's equivocation, the parent-set reading.** Two
+parents of `b` vote for two different blocks of `v`.
+
+**Stated at a validator rather than at a leader**, which is what makes it
+schedule-free: the old form read `D.leader ((D.block b).round - 2)`, and
+so both named the schedule and subtracted from a round. The subtraction
+was `scripts/audit-rounds.py`'s one FinWhale finding, and the leader read
+is what keeps FinWhale from a band
+(`docs/porting-plan.md`). `ExposesEquivocation` below is this at the
+leader, so nothing downstream changes meaning. -/
+def ExposesEquivocationBy (D : Dag Validator BlockId Payload) (b : BlockId)
+    (v : Validator) : Prop :=
   ∃ l ∈ (D.ids : Finset BlockId), ∃ l' ∈ (D.ids : Finset BlockId),
-    Conflicting D l l' ∧ (D.block l).creator = D.leader ((D.block b).round - 2) ∧
+    Conflicting D l l' ∧ (D.block l).creator = v ∧
       (parentsVoting D b l).Nonempty ∧ (parentsVoting D b l').Nonempty
+
+instance (D : Dag Validator BlockId Payload) (b : BlockId) (v : Validator) :
+    Decidable (ExposesEquivocationBy D b v) :=
+  inferInstanceAs (Decidable (∃ _ ∈ _, ∃ _ ∈ _, _))
+
+/-- The same, at the leader two rounds down — the form the validity rule
+is stated in and the one Lemma 4 needs. -/
+def ExposesEquivocation (D : Dag Validator BlockId Payload) (b : BlockId) : Prop :=
+  ExposesEquivocationBy D b (D.leader ((D.block b).round - 2))
 
 instance (D : Dag Validator BlockId Payload) (b : BlockId) :
     Decidable (ExposesEquivocation D b) :=
-  inferInstanceAs (Decidable (∃ _ ∈ _, ∃ _ ∈ _, _))
+  inferInstanceAs (Decidable (ExposesEquivocationBy _ _ _))
 
 /-- **FP-evidence**, the two branches of the paper's definition. A block
 that has seen the equivocation must carry `f + p` parents voting for `l`
 and fewer than `f + p` for anything conflicting; one that has not needs
 only `f + p − 1` voting for `l`. -/
 def FPEvidence (D : Dag Validator BlockId Payload) (b l : BlockId) : Prop :=
-  if ExposesEquivocation D b then
+  if ExposesEquivocationBy D b (D.block l).creator then
     F.f + P.p ≤ (parentsVoting D b l).card ∧
       ∀ l' ∈ (D.ids : Finset BlockId), Conflicting D l l' →
         (parentsVoting D b l').card + 1 ≤ F.f + P.p

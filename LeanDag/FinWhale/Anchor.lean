@@ -144,11 +144,13 @@ theorem indirectCommit_of_directCommit {A : BlockId} {r : ℕ} {l : BlockId}
     IndirectCommit D A r l := by
   have hl' := hl
   simp only [slotBlocks, blocksAt, Finset.mem_filter] at hl'
-  obtain ⟨⟨hlids, hlround⟩, -⟩ := hl'
+  obtain ⟨⟨hlids, hlround⟩, hlcr⟩ := hl'
+  have hlead : (D.block l).creator = D.leader ((D.block l).round) := by
+    rw [hlround]; exact hlcr
   refine ⟨hl, ?_⟩
   rcases hcom with hfast | hsp
   · refine Or.inr ?_
-    obtain ⟨ev, hev, hevb⟩ := reaches_fpEvidence_spQuorum hA hlids (by omega) hfast
+    obtain ⟨ev, hev, hevb⟩ := reaches_fpEvidence_spQuorum hA hlids (by omega) hlead hfast
     refine ⟨ev, hev, fun v hv => ?_⟩
     obtain ⟨b, hb, hreach, hbv, hfp⟩ := hevb v hv
     exact ⟨b, by rw [hlround] at hb; exact hb, hreach, hbv, hfp⟩

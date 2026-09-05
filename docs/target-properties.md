@@ -374,7 +374,7 @@ making that rule's band unprovable.
 | Hybrid | `slotRound k`, `+1` | reachable |
 | Optimal-Hydrozoan | `slotRound k`, `+1`, `+2` | reachable |
 | Mahi-Mahi | `slotRound k + w - 1`, `r + w - 2` | reachable, under `2 ≤ w` |
-| FinWhale | `leader (round b - 2)` | not as the rule stands |
+| FinWhale | ~~`leader (round b - 2)`~~ **fixed** | the read is gone; the band still needs a slot layer |
 
 **Mahi-Mahi's wave rounds truncate.** `votingRound w r = r + w - 2`,
 `decisionRoundAt w r = r + w - 1` and `decisionRound w k = slotRound k +
@@ -388,13 +388,20 @@ unconditional. `Banded R` is a predicate on the rule alone, so the width
 has to be fixed before the property is stated rather than appear inside
 it.
 
-**FinWhale indexes its leader by an absolute round**, in
-`ExposesEquivocation`: `D.leader ((D.block b).round - 2)`. The
-subtraction is the smaller half. `Dag.leader : ℕ → Validator` is indexed
-by round rather than by slot, and FinWhale's model has no `Slots`, so
-the band's slot-correspondence hypothesis has nothing to attach to.
-FinWhale needs the schedule layer before it can have a band, and that is
-a carrier gap rather than an offset one.
+**FinWhale indexed its leader by an absolute round**, and no longer
+does. `ExposesEquivocation D b` read `D.leader ((D.block b).round - 2)`:
+it named the schedule *and* subtracted from a round, either of which
+would defeat an offset band. It is now `ExposesEquivocationBy D b v`,
+stated at a validator rather than at a leader, with `FPEvidence D b l`
+reading it at `(D.block l).creator` — which is the same validator
+wherever the rule is used, since the candidate's author *is* the slot's
+leader. Both the schedule read and the subtraction went with one change,
+and `scripts/audit-rounds.py` now reports FinWhale clean.
+
+The band still needs the schedule out of the `Dag` and the verdicts
+indexed by slot (`docs/porting-plan.md`); what this removes is the
+smaller of the two blockers, and the one that was in the rule rather
+than in its formalisation.
 
 **A third difference, which is not a defect.** Odontoceti, Nemo,
 Mahi-Mahi and Hybrid define causal history by a depth bound taken from a

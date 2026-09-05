@@ -211,12 +211,19 @@ parents voting for anything conflicting. -/
 theorem lemma4 {b l : BlockId}
     (hb : b ∈ D.ids) (_hl : l ∈ D.ids)
     (hround : (D.block b).round = (D.block l).round + 2)
+    (hlead : (D.block l).creator = D.leader ((D.block l).round))
     (hfast : FastCommit D l) :
     FPEvidence D b l := by
+  have hr2 : (D.block b).round - 2 = (D.block l).round := by omega
+  have hcr : (D.block l).creator = D.leader ((D.block b).round - 2) := by
+    rw [hr2]; exact hlead
   simp only [FPEvidence]
-  by_cases hexp : ExposesEquivocation D b
+  by_cases hexp : ExposesEquivocationBy D b (D.block l).creator
   · rw [if_pos hexp]
-    have hbyz := parents_byzantine_lt hb (by omega) hexp
+    have hexp' : ExposesEquivocation D b := by
+      show ExposesEquivocationBy D b (D.leader ((D.block b).round - 2))
+      rw [← hcr]; exact hexp
+    have hbyz := parents_byzantine_lt hb (by omega) hexp'
     exact ⟨fpEvidence_equivocating hb hround hfast hbyz,
       fun l' _ hconf => conflicting_parents_lt hb hround hconf hfast hbyz⟩
   · rw [if_neg hexp]

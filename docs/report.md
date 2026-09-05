@@ -7479,7 +7479,7 @@ def FastCommit (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
   fastCard Validator ≤ (voters D l).card
 
 def FPEvidence (D : Dag Validator BlockId Payload) (b l : BlockId) : Prop :=
-  if ExposesEquivocation D b then
+  if ExposesEquivocationBy D b (D.block l).creator then
     F.f + P.p ≤ (parentsVoting D b l).card ∧
       ∀ l' ∈ (D.ids : Finset BlockId), Conflicting D l l' →
         (parentsVoting D b l').card + 1 ≤ F.f + P.p
@@ -17144,18 +17144,32 @@ def Conflicting (D : Dag Validator BlockId Payload) (l l' : BlockId) : Prop :=
 
 Two blocks of the same slot: one leader, one round, not equal.
 
+#### `ExposesEquivocationBy`
+
+*def, `FinWhale.Model.Rule.lean`*
+
+```lean
+def ExposesEquivocationBy (D : Dag Validator BlockId Payload) (b : BlockId)
+    (v : Validator) : Prop :=
+  ∃ l ∈ (D.ids : Finset BlockId), ∃ l' ∈ (D.ids : Finset BlockId),
+    Conflicting D l l' ∧ (D.block l).creator = v ∧
+      (parentsVoting D b l).Nonempty ∧ (parentsVoting D b l').Nonempty
+```
+
+**Exposing a validator's equivocation, the parent-set reading.** Two parents of `b` vote for two different blocks of `v`.
+
+**Stated at a validator rather than at a leader**, which is what makes it schedule-free: the old form read `D.leader ((D.block b).round - 2)`, and so both named the schedule and subtracted from a round. The subtraction was `scripts/audit-rounds.py`'s one FinWhale finding, and the leader read is what keeps FinWhale from a band (`docs/porting-plan.md`). `ExposesEquivocation` below is this at the leader, so nothing downstream changes meaning.
+
 #### `ExposesEquivocation`
 
 *def, `FinWhale.Model.Rule.lean`*
 
 ```lean
 def ExposesEquivocation (D : Dag Validator BlockId Payload) (b : BlockId) : Prop :=
-  ∃ l ∈ (D.ids : Finset BlockId), ∃ l' ∈ (D.ids : Finset BlockId),
-    Conflicting D l l' ∧ (D.block l).creator = D.leader ((D.block b).round - 2) ∧
-      (parentsVoting D b l).Nonempty ∧ (parentsVoting D b l').Nonempty
+  ExposesEquivocationBy D b (D.leader ((D.block b).round - 2))
 ```
 
-**Exposing equivocation, the parent-set reading.** Two parents of `b` vote for two different blocks of the round-`r` leader. This is the reading the validity rule is stated in, and the one Lemma 4 needs.
+The same, at the leader two rounds down — the form the validity rule is stated in and the one Lemma 4 needs.
 
 #### `FPEvidence`
 
@@ -17163,7 +17177,7 @@ def ExposesEquivocation (D : Dag Validator BlockId Payload) (b : BlockId) : Prop
 
 ```lean
 def FPEvidence (D : Dag Validator BlockId Payload) (b l : BlockId) : Prop :=
-  if ExposesEquivocation D b then
+  if ExposesEquivocationBy D b (D.block l).creator then
     F.f + P.p ≤ (parentsVoting D b l).card ∧
       ∀ l' ∈ (D.ids : Finset BlockId), Conflicting D l l' →
         (parentsVoting D b l').card + 1 ≤ F.f + P.p
@@ -32383,6 +32397,7 @@ theorem not_voter_of_conflicting {l l' : BlockId} (hconf : Conflicting D l l') :
 theorem lemma4 {b l : BlockId}
     (hb : b ∈ D.ids) (_hl : l ∈ D.ids)
     (hround : (D.block b).round = (D.block l).round + 2)
+    (hlead : (D.block l).creator = D.leader ((D.block l).round))
     (hfast : FastCommit D l) :
     FPEvidence D b l
 ```
@@ -32494,6 +32509,7 @@ The counts are by author, so the two sets meet in `f + 1` authors — and the ar
 theorem no_nonFPEvidence_of_fastCommit {b l : BlockId} {slot : Finset BlockId}
     (hb : b ∈ D.ids) (hl : l ∈ D.ids) (hlslot : l ∈ slot)
     (hround : (D.block b).round = (D.block l).round + 2)
+    (hlead : (D.block l).creator = D.leader ((D.block l).round))
     (hfast : FastCommit D l) :
     ¬ NonFPEvidence D b slot
 ```
@@ -32631,7 +32647,9 @@ theorem reaches_spCertificate {l : BlockId} {certs : Finset Validator}
 
 ```lean
 theorem reaches_fpEvidence_spQuorum {c l : BlockId} (hc : c ∈ D.ids) (hl : l ∈ D.ids)
-    (hround : (D.block l).round + 3 ≤ (D.block c).round) (hfast : FastCommit D l) :
+    (hround : (D.block l).round + 3 ≤ (D.block c).round)
+    (hlead : (D.block l).creator = D.leader ((D.block l).round))
+    (hfast : FastCommit D l) :
     ∃ ev : Finset Validator, spQuorum Validator ≤ ev.card ∧
       ∀ v ∈ ev, ∃ b ∈ blocksAt D ((D.block l).round + 2),
         ReachesFrom D.block c b ∧ (D.block b).creator = v ∧ FPEvidence D b l
@@ -38285,7 +38303,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 993 lemmas used only within the file that proves
+The 994 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -39247,14 +39265,15 @@ subsection per module, in the layer order of Appendices B and C.
 | `round_le_of_directSkip` | A slot with a direct skip lies two rounds below the horizon: the skip exhibits round-`(r+2)` blocks. |
 | `slotVerdict_congr` | The same, for the whole slot verdict: the direct rules read the DAG, not the verdicts. |
 
-### `FinWhale/View.lean` (23)
+### `FinWhale/View.lean` (24)
 
 | Lemma | Role |
 |:---|:---|
 | `blocksAt_restrict` | The population shrinks, so a round's blocks do. |
 | `directCommit_of_holds` | `hsees`, discharged. A view holding the two rounds above a slot sees whatever direct commit the universe … |
 | `directCommit_restrict` | So its direct commit is one of the universe: the condition safety took as a hypothesis. |
-| `exposes_restrict` | Exposing an equivocation is view-independent, for a block the view holds: the conflicting versions it … |
+| `exposesBy_restrict` | Exposing an equivocation is view-independent, for a block the view holds: the conflicting versions it … |
+| `exposes_restrict` | The same at the leader, which is the form the validity rule reads. |
 | `fastCommit_of_holds` | The liveness direction, fast path. A view holding round `r + 1` sees the fast commit the universe sees. |
 | `fastCommit_restrict` | A view's fast commit is one of the universe. |
 | `fpEvidence_restrict` | FP-evidence is view-independent for a block the view holds. The equivocating branch bounds the parents … |

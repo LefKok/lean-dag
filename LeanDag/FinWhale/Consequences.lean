@@ -76,7 +76,7 @@ theorem lemma2 {b l : BlockId} (hb : b ∈ D.ids) (hcert : SPCertificate D b l) 
   have hq : spQuorum Validator ≤ (parentsVoting D b l).card := hcert
   have := params_arith (Validator := Validator)
   simp only [FPEvidence]
-  by_cases hexp : ExposesEquivocation D b
+  by_cases hexp : ExposesEquivocationBy D b (D.block l).creator
   · rw [if_pos hexp]
     refine ⟨by simp only [spQuorum] at hq; omega, fun l' _ hconf => ?_⟩
     exact conflicting_le_of_spQuorum hb hconf hcert
@@ -121,10 +121,11 @@ theorem not_fpEvidence_conflicting {b l l' : BlockId}
     (hconf : Conflicting D l l') (hfast : FastCommit D l) :
     ¬ FPEvidence D b l' := by
   intro hev'
-  have hev : FPEvidence D b l := lemma4 hb hl hround hfast
+  have hev : FPEvidence D b l := lemma4 hb hl hround (by rw [hlead]; congr 1; omega) hfast
   have := params_arith (Validator := Validator)
-  simp only [FPEvidence] at hev hev'
-  by_cases hexp : ExposesEquivocation D b
+  have hcc : (D.block l').creator = (D.block l).creator := hconf.2.2.symm
+  simp only [FPEvidence, hcc] at hev hev'
+  by_cases hexp : ExposesEquivocationBy D b (D.block l).creator
   · -- it has seen the equivocation, so its own branch caps the parents
     -- voting for `l'` below what FP-evidence for `l'` would need
     rw [if_pos hexp] at hev hev'
@@ -135,7 +136,7 @@ theorem not_fpEvidence_conflicting {b l l' : BlockId}
     -- both; both counts are positive, which is the equivocation it would
     -- have to have seen
     rw [if_neg hexp] at hev hev'
-    refine hexp ⟨l, hl, l', hl', hconf, hlead, ?_, ?_⟩
+    refine hexp ⟨l, hl, l', hl', hconf, rfl, ?_, ?_⟩
     · rw [← Finset.card_pos]; omega
     · rw [← Finset.card_pos]; omega
 
@@ -156,12 +157,12 @@ theorem not_fpEvidence_of_spCertificate {c l l' : BlockId}
   have hcard : spQuorum Validator ≤ (parentsVoting D c l).card := hcert
   simp only [spQuorum] at hcard
   simp only [FPEvidence] at hev'
-  by_cases hexp : ExposesEquivocation D c
+  by_cases hexp : ExposesEquivocationBy D c (D.block l').creator
   · rw [if_pos hexp] at hev'
     have := hev'.2 l hl ⟨Ne.symm hconf.1, hconf.2.1.symm, hconf.2.2.symm⟩
     omega
   · rw [if_neg hexp] at hev'
-    refine hexp ⟨l, hl, l', hl', hconf, hlead, ?_, ?_⟩
+    refine hexp ⟨l, hl, l', hl', hconf, hconf.2.2, ?_, ?_⟩
     · rw [← Finset.card_pos]; omega
     · rw [← Finset.card_pos]; omega
 

@@ -136,14 +136,19 @@ theorem mem_view_of_voters (hV : IsView D V) {c l : BlockId} (hc : c ∈ V)
 /-- **Exposing an equivocation is view-independent**, for a block the view
 holds: the conflicting versions it finds are voted for by the block's own
 parents, so closure puts them in the view. -/
-theorem exposes_restrict {b : BlockId} (hb : b ∈ V) :
-    ExposesEquivocation (restrict D V hV) b ↔ ExposesEquivocation D b := by
+theorem exposesBy_restrict {b : BlockId} (hb : b ∈ V) (v : Validator) :
+    ExposesEquivocationBy (restrict D V hV) b v ↔ ExposesEquivocationBy D b v := by
   constructor
   · rintro ⟨l, hl, l', hl', hconf, hlead, h1, h2⟩
     exact ⟨l, hV.subset hl, l', hV.subset hl', hconf, hlead, h1, h2⟩
   · rintro ⟨l, -, l', -, hconf, hlead, h1, h2⟩
     exact ⟨l, mem_view_of_parentsVoting hV hb h1, l',
       mem_view_of_parentsVoting hV hb h2, hconf, hlead, h1, h2⟩
+
+/-- The same at the leader, which is the form the validity rule reads. -/
+theorem exposes_restrict {b : BlockId} (hb : b ∈ V) :
+    ExposesEquivocation (restrict D V hV) b ↔ ExposesEquivocation D b :=
+  exposesBy_restrict hb _
 
 /-- **FP-evidence is view-independent** for a block the view holds. The
 equivocating branch bounds the parents voting for anything conflicting;
@@ -152,9 +157,9 @@ holds of it for nothing. -/
 theorem fpEvidence_restrict {b l : BlockId} (hb : b ∈ V) :
     FPEvidence (restrict D V hV) b l ↔ FPEvidence D b l := by
   have := params_arith (Validator := Validator)
-  simp only [FPEvidence, parentsVoting_restrict]
-  by_cases hexp : ExposesEquivocation D b
-  · rw [if_pos ((exposes_restrict hb).2 hexp), if_pos hexp]
+  simp only [FPEvidence, parentsVoting_restrict, restrict_block]
+  by_cases hexp : ExposesEquivocationBy D b (D.block l).creator
+  · rw [if_pos ((exposesBy_restrict hb _).2 hexp), if_pos hexp]
     constructor
     · rintro ⟨h1, h2⟩
       refine ⟨h1, fun l' _ hconf => ?_⟩
@@ -163,7 +168,7 @@ theorem fpEvidence_restrict {b l : BlockId} (hb : b ∈ V) :
       · exact h2 l' (mem_view_of_parentsVoting hV hb hne) hconf
     · rintro ⟨h1, h2⟩
       exact ⟨h1, fun l' hl' hconf => h2 l' (hV.subset hl') hconf⟩
-  · rw [if_neg fun h => hexp ((exposes_restrict hb).1 h), if_neg hexp]
+  · rw [if_neg fun h => hexp ((exposesBy_restrict hb _).1 h), if_neg hexp]
 
 /-- Every FP-evidence block has a parent voting for what it is evidence
 for: both branches ask for at least `f + p − 1 ≥ 1`. -/
@@ -172,7 +177,7 @@ theorem parentsVoting_nonempty_of_fpEvidence {b l : BlockId} (h : FPEvidence D b
   have := params_arith (Validator := Validator)
   rw [← Finset.card_pos]
   simp only [FPEvidence] at h
-  by_cases hexp : ExposesEquivocation D b
+  by_cases hexp : ExposesEquivocationBy D b (D.block l).creator
   · rw [if_pos hexp] at h; omega
   · rw [if_neg hexp] at h; omega
 
@@ -280,7 +285,8 @@ theorem no_directSkip_of_commit_view {r : ℕ} {l : BlockId}
   rcases hcom with hfast | ⟨certs, hcerts, hcertb⟩
   · -- under a fast commit every round-`(r+2)` block is evidence (Lemma 4)
     have hfp : FPEvidence D b₀ l :=
-      lemma4 (hV.subset hb₀V) hlu.1 (by rw [hb₀round, hlu.2.1]) hfast
+      lemma4 (hV.subset hb₀V) hlu.1 (by rw [hb₀round, hlu.2.1])
+        (by rw [hlu.2.1]; exact hlu.2.2) hfast
     exact hnonfp₀ l hlslot ((fpEvidence_restrict hb₀V).2 hfp)
   · -- under a slow commit the two quorums meet in a correct author
     have hmeet := card_add_card_le_card_inter_add_card certs nonev
