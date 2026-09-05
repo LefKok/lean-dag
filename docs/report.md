@@ -23472,6 +23472,56 @@ def View.ofViewUpto (D : Delivery U) (v : Validator) (n : ℕ) :
 
 **A retained store is a view.** It holds only real blocks (`viewUpto_subset_ids`) and is closed under references (`mem_viewUpto_of_mem_refs`), which are the two things a view is.
 
+#### `VerdictIs`
+
+*def, `FinWhale.Carrier.lean`*
+
+```lean
+def VerdictIs (dec : ℕ → Verdict BlockId) (r : ℕ) (v : Option BlockId) : Prop :=
+  match v with
+  | some b => dec r = Verdict.commit b
+  | none => dec r = Verdict.skip
+```
+
+A verdict, as the property layer reads it: `some b` is a commit, `none` a skip, and an undecided slot is not decided at all.
+
+#### `Assignment`
+
+*structure, `FinWhale.Carrier.lean`*
+
+```lean
+structure Assignment (D : Dag Validator BlockId Payload) (V : Finset BlockId)
+    (hV : IsView D V) (dec : ℕ → Verdict BlockId) : Prop where
+  /-- The reverse pass, as a condition on the verdicts. -/
+  wf : WellFormed (viewCommit D V hV) (viewSkip D V hV) (chooseLeast D) dec
+  /-- A commit names a block of the slot. -/
+  slot : ∀ s A, dec s = Verdict.commit A → A ∈ slotBlocks D s
+  /-- Nothing above some round is decided — the DAG is finite. -/
+  finite : ∃ N, ∀ s, N ≤ s → dec s = Verdict.undecided
+```
+
+**What a validator's verdict assignment is**: well-formed on its own view, committing only blocks of the slot, and finite.
+
+#### `finWhaleRule`
+
+*def, `FinWhale.Carrier.lean`*
+
+```lean
+def finWhaleRule : DagRule Validator BlockId Payload where
+  Universe := Dag Validator BlockId Payload
+  View := fun D => {V : Finset BlockId // IsView D V}
+  block := fun D i => D.block i
+  ids := fun D => D.ids
+  viewIds := fun V => V.val
+  viewSound := fun V => V.property.subset
+  viewComplete := fun V => V.property.closed
+  Decided := fun S D V r v =>
+    (∀ s, S.slotRound s = s) ∧ (∀ s, S.leader s = D.leader s) ∧
+      ∃ dec, Assignment D V.val V.property dec ∧ VerdictIs dec r v
+```
+
+**FinWhale as a carrier.** The schedule is pinned to the DAG's own leader function, and slots are rounds.
+
 #### `hybridRule`
 
 *def, `Hybrid.Carrier.lean`*
@@ -38235,7 +38285,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 985 lemmas used only within the file that proves
+The 993 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -39760,6 +39810,19 @@ subsection per module, in the layer order of Appendices B and C.
 | `correct_mem_viewUpto` | What a rate-limited store holds. After the settling round a correct validator's store contains every … |
 | `deliversOn_viewUpto` | The witness. The novelty budget's stores cover the correct validators from the settling round on, so a … |
 | `directCommitIn_viewUpto` | A rate-limited validator commits. Given a reliable quorum whose decision-round blocks certify `L`, a store … |
+
+### `FinWhale/Carrier.lean` (8)
+
+| Lemma | Role |
+|:---|:---|
+| `agree` | Two views decide alike. Lemma 12 under the property's name: the exclusions come from the DAG, the … |
+| `causal` | FinWhale's DAGs are block DAGs. |
+| `commitsCandidate` | A commit names the slot's candidate. The `slot` field of an assignment, read at the property's … |
+| `decided_of_directCommit` | The relation is inhabited: a direct commit in view is a verdict. FinWhale's own reverse pass, run on the … |
+| `mem_blocksAt` | Membership of a round layer, unfolded once so the proofs below do not have to. |
+| `mem_slotBlocks` | And of a slot's blocks. |
+| `slotBlocks_restrict_subset` | A view's slot blocks are the universe's. |
+| `view_bounded` | A view is finite, so its blocks stop at a round. |
 
 ### `Hybrid/Carrier.lean` (1)
 

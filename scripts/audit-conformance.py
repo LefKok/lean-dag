@@ -45,7 +45,7 @@ RULES = [
     ("Mahi-Mahi",          [], "no carrier; band conditional on `2 <= w` (3.4c)"),
     ("Hybrid / Orcaella",  ["HybridProperties.hybridRule",
                             "Barnacle.orcaellaRule"],           "two carriers, one per threshold"),
-    ("FinWhale",           [], "no carrier; no `Slots` layer at all (3.4c)"),
+    ("FinWhale",           ["FinWhaleProperties.finWhaleRule"],  "round-indexed; band blocked (porting-plan)"),
     ("Black Marlin",       [], "no carrier; commits by round, no slot-indexed relation"),
 ]
 

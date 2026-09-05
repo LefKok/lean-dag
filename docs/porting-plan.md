@@ -54,7 +54,7 @@ went through (§11.4e). The carrier is over `OptUniverse` with
 `block := fun U => U.toBlockUniverse.block`; `DagRule.Universe` is an
 arbitrary type, so nothing in the carrier resists this.
 
-**4. FinWhale.** Two blockers, and the first is not conformance work.
+**4. FinWhale — carrier and three properties done; the band needs a rewrite.** Two blockers, and the first is not conformance work.
 
 * **No slot layer.** Commits and skips are per-round predicates over a
   `Dag`, and verdicts are a `Verdict` inductive with `WellFormed`. There
@@ -222,3 +222,66 @@ stopped it:
 carrying verdicts across the cut, which is what `LocalTruncate.of_banded`
 replaces. That deletion cascade is the payoff and is why this rule was
 ordered third rather than last.
+
+## FinWhale: what it has, and what the band actually costs
+
+`FinWhale/Carrier.lean` has the carrier, `Causal`, `Agree`,
+`CommitsCandidate`, and — the one that matters most here — a proof that
+the relation is **inhabited**.
+
+**Its `Decided` is existential, which is why inhabitation matters.**
+FinWhale has no inductive decision relation. Every other rule derives
+verdicts inductively; FinWhale assigns them by a *function*
+`dec : ℕ → Verdict BlockId` constrained by `WellFormed`, the paper's
+reverse pass read as a condition rather than a construction. So
+`Decided S U V r v` says *some* well-formed assignment on this view gives
+`v` at `r`, with two further conjuncts that are facts about a real
+validator's assignment rather than inventions: it commits only blocks of
+the slot, and it is finite.
+
+An existential relation can be empty, and then `Agree` holds for nothing.
+This arc has been caught by vacuity twice (§3.4, §3.6), so
+`decided_of_directCommit` is proved: FinWhale's own reverse pass, run on
+the view with the universe's tie-break, *is* an assignment — well formed,
+committing only slot blocks, finite because a view is a finite set — and
+`WellFormed.direct_commit` reads the commit off it.
+
+**Two properties are blocked, and by one cause.** FinWhale reads its
+leader schedule off the **`Dag`**, as a field, where every other rule
+takes it from a `Slots` instance; and it indexes verdicts by **round**,
+where the properties index by slot. So the carrier's `Decided` has to
+*pin* the two together — slots are rounds, and the schedule's leaders are
+the DAG's — and the pinning is a conjunct that has to be proved wherever
+`Decided` is concluded.
+
+* `CommitsCandidate` **can** have it, because `IsCandidate` is stated at
+  the schedule, so the pinning is available as a hypothesis.
+* `CommitsDirect` **cannot**: its direct predicate is passed a view, a
+  block and a round, and never the schedule, so nothing can supply the
+  pinning. The theorem it would have followed from is proved instead.
+* `Banded` cannot either, and for the sharper reason: `AgreeBand`
+  constrains ids, blocks and references, and says nothing about a DAG's
+  `leader` field — so two DAGs in a band may name different leaders and
+  decide differently. The band is *false* as the rule stands.
+
+**What the fix is, and what it costs.** Not a property and not the
+carrier: FinWhale's decision layer has to read the schedule from a
+`Slots` instance rather than from the `Dag`, and index by slot rather
+than by round. Concretely, `slotBlocks D r` becomes
+`blocksAt D (S.slotRound k)` filtered by `S.leader k`, every `r + 2`
+becomes `S.slotRound k + 2`, and `Anchor`'s `r + 2 < a` becomes a
+condition on slot rounds. That reaches `Verdict`, `WellFormed`, `Anchor`,
+the reverse pass, Lemma 12's downward induction and the ledger order —
+about 5000 lines whose arithmetic is round arithmetic.
+
+Worth noting what this does *not* say. The obligations are not wrong for
+FinWhale, and no property needed weakening or grading. What the port
+found is that a rule which puts its schedule inside its universe cannot
+be related to another DAG by a band, because a band is a statement about
+blocks. That is a fact about the rule's formalisation, and it is the
+same fact §3.4c recorded from the other end when it said FinWhale has no
+`Slots` layer.
+
+**The absolute-round read is a second, smaller blocker** and is
+unchanged: `ExposesEquivocation` uses truncated subtraction on a round,
+so even after the slot-indexing it would need restating as a comparison.
