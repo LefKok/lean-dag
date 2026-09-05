@@ -6,7 +6,7 @@ because their rule has no `Banded` to route through:
 
 | rule | bespoke links | where |
 |---|---|---|
-| Optimal-Hydrozoan | 8 | `Barnacle/OptimalHydrozoan{,Live}/Proof`, `Integration/Hydrozoan/OptimalChopDecided` |
+| Optimal-Hydrozoan | 8 | carrier done; band open |
 | Hybrid / Orcaella | ~~4~~ **0** | routed (`Hybrid/Carrier.lean`, `HybridProperties.lean`) |
 | Nemo | ~~3~~ **0** | routed (`Nemo/Carrier.lean`, `NemoProperties.lean`) |
 | FinWhale | 0 | — |
@@ -45,7 +45,7 @@ universe. Barnacle already solved this: its Orcaella carrier takes
 of the object rather than a premise of the theorem. A native carrier does
 the same, one per admissible threshold. Nothing else here is unusual.
 
-**3. Optimal-Hydrozoan.** The biggest payoff, because four of its eight
+**3. Optimal-Hydrozoan — carrier done, band open.** The biggest payoff, because four of its eight
 links are `Integration/Hydrozoan/OptimalChopDecided.lean` — three
 inductions carrying verdicts across the cut, which is precisely what
 `LocalTruncate.of_banded` replaces. Expect the deletion cascade that
@@ -170,3 +170,55 @@ one.
 liveness half, and the reason to believe the repair was a repair rather
 than a tightening. A skip rule no quorum can trigger would be sound and
 useless.
+
+## Optimal-Hydrozoan, half done
+
+**The carrier is built, and the obstacle it raised was the sharpest of
+the four.** `OptUniverse` is *indexed by the schedule* — `leader_excluded`
+reads `S.leader k` and `decisionRound k` — so `OptUniverse` at `S` and at
+`S'` are different types. `DagRule.Universe` is one type and `Banded`
+compares verdicts across schedules, so a carrier over `OptUniverse` could
+not state the band at all. The cut says the same from the other side:
+`optChopHZ` lands in a *different universe type* from the one it starts
+in, which `Truncates` cannot relate.
+
+The escape was already in the development. `LeaderExcludedAll`
+quantifies the same exclusion over rounds and validators instead of over
+slots, so it is schedule-free, and `optUniverseOf` rebuilds the indexed
+universe at any schedule. The carrier's universe is the subtype it cuts
+out — the shape Hybrid needed for `HonestNoEquiv` — and the schedule
+re-enters in `Decided`, where `DagRule` puts it.
+
+So neither the interface nor the rule had to change. What had to change
+is reading the invariant in the vocabulary that does not mention the
+schedule, and the rule already had it. That is worth more than the port:
+it says a schedule-indexed universe is not a counterexample to the
+carrier, provided the invariant can be stated schedule-free — and if one
+ever cannot be, *that* is the counterexample.
+
+**What is left.** `Banded`, and it is the largest of the four: six
+constructors, and rules the other three do not have — fast evidence with
+a threshold that depends on whether the block witnesses an equivocation,
+`IsNoFastEvidence` quantified negatively over the slot's candidates, and
+the anchor-linked evidence quorum. Most of it should come from
+Hydrozoan's band helpers, which Optimal's universe shares; the
+Optimal-specific part is roughly eight lemmas.
+
+Two things checked ahead of writing it, because either would have
+stopped it:
+
+* **The skip needs no repair.** Unlike the core, Odontoceti and Hybrid,
+  Optimal's `SkippedLeaderOptInView` already counts blames at the *slot*
+  rather than per candidate. Its `IsNoFastEvidence` clause is the
+  negative universal, and a candidate the band did not carry is fast
+  evidence for nothing, since no old block votes for it — provided the
+  thresholds are positive, which `tPlain_pos` gives.
+* **Equivocation witnesses do not appear from nowhere.** A fresh
+  candidate cannot be one of the two a decision block witnesses, because
+  witnessing needs an old block to vote for it.
+
+**Then the eight links**, four of which are
+`Integration/Hydrozoan/OptimalChopDecided.lean` — three inductions
+carrying verdicts across the cut, which is what `LocalTruncate.of_banded`
+replaces. That deletion cascade is the payoff and is why this rule was
+ordered third rather than last.
