@@ -8860,6 +8860,26 @@ EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.mk.inj	LeanDag.Hybr
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.mk.inj	LeanDag.Hybrid.Checkpoint.Model.Execution.CertificatePayload.checkpoint
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.mk.inj	LeanDag.Hybrid.Checkpoint.Model.Execution
 NODE	LeanDagTest.Hydrozoan.lk13._proof_8	LeanDagTest.Hydrozoan.LivenessHardening	thm
+NODE	LeanDag.OptimalHydrozoanProperties.commitsDirect	LeanDag.OptimalHydrozoan.Carrier	thm
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsDirect	LeanDag.Properties.DagRule.Decided
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsDirect	LeanDag.Hydrozoan.BlockUniverse
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsDirect	LeanDag.OptimalHydrozoan.OptimalFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsDirect	LeanDag.Slots.slotRound
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsDirect	LeanDag.OptimalHydrozoan.FastCommitOptInView
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsDirect	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_3
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsDirect	LeanDag.OptimalHydrozoanProperties.optimalRule
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsDirect	LeanDag.OptimalHydrozoan.DecidedOpt.directSlow
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsDirect	LeanDag.OptimalHydrozoan.DecidedOpt.directFast
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsDirect	LeanDag.Barnacle.OptimalHydrozoan.LeaderExcludedAll
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsDirect	LeanDag.Barnacle.OptimalHydrozoan.optUniverseOf
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsDirect	LeanDag.Properties.CommitsDirect
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsDirect	LeanDag.OptimalHydrozoan.OptimalFaults.toFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsDirect	LeanDag.Properties.DagRule.IsCandidate
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsDirect	LeanDag.Slots
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsDirect	LeanDag.Properties.DagRule.View
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsDirect	LeanDag.Properties.DagRule.Universe
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsDirect	LeanDag.Hydrozoan.ofCoreSlots
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsDirect	LeanDag.Hydrozoan.SlowCommitInView
 NODE	LeanDag.MahiMahi.goodCard._proof_1_2	LeanDag.MahiMahi.Helpers.Counting	thm
 EDGE	LeanDag.MahiMahi.goodCard._proof_1_2	LeanDag.creatorsOf
 EDGE	LeanDag.MahiMahi.goodCard._proof_1_2	LeanDag.Faults
@@ -12443,6 +12463,21 @@ EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_9	LeanDag.BlockUniv
 EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_9	LeanDag.Block.round
 EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_9	LeanDag.BlockUniverse
 EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_9	LeanDag.Faults5.toFaults
+NODE	LeanDag.OptimalHydrozoanProperties.agree	LeanDag.OptimalHydrozoan.Carrier	thm
+EDGE	LeanDag.OptimalHydrozoanProperties.agree	LeanDag.Properties.DagRule.Decided
+EDGE	LeanDag.OptimalHydrozoanProperties.agree	LeanDag.Hydrozoan.BlockUniverse
+EDGE	LeanDag.OptimalHydrozoanProperties.agree	LeanDag.OptimalHydrozoan.OptimalFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.agree	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_3
+EDGE	LeanDag.OptimalHydrozoanProperties.agree	LeanDag.OptimalHydrozoanProperties.optimalRule
+EDGE	LeanDag.OptimalHydrozoanProperties.agree	LeanDag.Properties.Agree
+EDGE	LeanDag.OptimalHydrozoanProperties.agree	LeanDag.Barnacle.OptimalHydrozoan.LeaderExcludedAll
+EDGE	LeanDag.OptimalHydrozoanProperties.agree	LeanDag.Barnacle.OptimalHydrozoan.optUniverseOf
+EDGE	LeanDag.OptimalHydrozoanProperties.agree	LeanDag.OptimalHydrozoan.OptimalFaults.toFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.agree	LeanDag.Slots
+EDGE	LeanDag.OptimalHydrozoanProperties.agree	LeanDag.Properties.DagRule.View
+EDGE	LeanDag.OptimalHydrozoanProperties.agree	LeanDag.OptimalHydrozoan.SlotAgreement.decided_unique
+EDGE	LeanDag.OptimalHydrozoanProperties.agree	LeanDag.Properties.DagRule.Universe
+EDGE	LeanDag.OptimalHydrozoanProperties.agree	LeanDag.Hydrozoan.ofCoreSlots
 NODE	LeanDag.reaches_pred_of_round_le._proof_1_2	LeanDag.Support	thm
 EDGE	LeanDag.reaches_pred_of_round_le._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.reaches_pred_of_round_le._proof_1_2	LeanDag.BlockUniverse.block
@@ -14708,6 +14743,15 @@ EDGE	LeanDagTest.run7._proof_3	LeanDag.MysticetiProperties.decidedBelow_of_decid
 EDGE	LeanDagTest.run7._proof_3	LeanDagTest.demotePolicy
 EDGE	LeanDagTest.run7._proof_3	LeanDagTest.vd7
 EDGE	LeanDagTest.run7._proof_3	LeanDag.decidedWithin_congr
+NODE	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_1	LeanDag.OptimalHydrozoan.Carrier	thm
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_1	LeanDag.Hydrozoan.View.subset_ids
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_1	LeanDag.Hydrozoan.BlockUniverse
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_1	LeanDag.OptimalHydrozoan.OptimalFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_1	LeanDag.Barnacle.OptimalHydrozoan.LeaderExcludedAll
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_1	LeanDag.OptimalHydrozoan.OptimalFaults.toFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_1	LeanDag.Hydrozoan.View
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_1	LeanDag.Hydrozoan.View.ids
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_1	LeanDag.Hydrozoan.BlockUniverse.ids
 NODE	LeanDag.decidableDirectCommit._aux_1	LeanDag.Mysticeti	def
 EDGE	LeanDag.decidableDirectCommit._aux_1	LeanDag.creatorsOf
 EDGE	LeanDag.decidableDirectCommit._aux_1	LeanDag.Faults
@@ -16253,6 +16297,22 @@ EDGE	LeanDagTest.BlackMarlin.Ubm._proof_1	LeanDag.Block.refs
 NODE	LeanDag.PaceCore.reached._proof_1_3	LeanDag.ViewPace	thm
 EDGE	LeanDag.PaceCore.reached._proof_1_3	LeanDag.Faults
 EDGE	LeanDag.PaceCore.reached._proof_1_3	LeanDag.Faults.f
+NODE	LeanDag.OptimalHydrozoanProperties.causal	LeanDag.OptimalHydrozoan.Carrier	thm
+EDGE	LeanDag.OptimalHydrozoanProperties.causal	LeanDag.Hydrozoan.BlockUniverse
+EDGE	LeanDag.OptimalHydrozoanProperties.causal	LeanDag.Properties.DagRule.ids
+EDGE	LeanDag.OptimalHydrozoanProperties.causal	LeanDag.OptimalHydrozoan.OptimalFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.causal	LeanDag.Hydrozoan.BlockUniverse.complete
+EDGE	LeanDag.OptimalHydrozoanProperties.causal	LeanDag.Properties.Causal
+EDGE	LeanDag.OptimalHydrozoanProperties.causal	LeanDag.Hydrozoan.ValidWrt.predecessor
+EDGE	LeanDag.OptimalHydrozoanProperties.causal	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.OptimalHydrozoanProperties.causal	LeanDag.Block.refs
+EDGE	LeanDag.OptimalHydrozoanProperties.causal	LeanDag.OptimalHydrozoanProperties.optimalRule
+EDGE	LeanDag.OptimalHydrozoanProperties.causal	LeanDag.Barnacle.OptimalHydrozoan.LeaderExcludedAll
+EDGE	LeanDag.OptimalHydrozoanProperties.causal	LeanDag.OptimalHydrozoan.OptimalFaults.toFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.causal	LeanDag.CausalStructure.mk
+EDGE	LeanDag.OptimalHydrozoanProperties.causal	LeanDag.Hydrozoan.BlockUniverse.block
+EDGE	LeanDag.OptimalHydrozoanProperties.causal	LeanDag.Hydrozoan.BlockUniverse.valid
+EDGE	LeanDag.OptimalHydrozoanProperties.causal	LeanDag.Properties.DagRule.Universe
 NODE	LeanDagTest.Barnacle.Majority.promise_m1_r1._proof_1_1	LeanDagTest.Barnacle.Majority	thm
 NODE	LeanDag.Integration.Hydrozoan.fastCommitInView_fill	LeanDag.Integration.Hydrozoan.FillDecided	thm
 EDGE	LeanDag.Integration.Hydrozoan.fastCommitInView_fill	LeanDag.Hydrozoan.BlockUniverse
@@ -29799,6 +29859,16 @@ NODE	LeanDagTest.Barnacle.OrcaellaLive.S1._proof_2	LeanDagTest.Barnacle.Orcaella
 NODE	LeanDagTest.BlackMarlin.Utie'._proof_1	LeanDagTest.BlackMarlin.Divergence	thm
 EDGE	LeanDagTest.BlackMarlin.Utie'._proof_1	LeanDag.Block.refs
 EDGE	LeanDagTest.BlackMarlin.Utie'._proof_1	LeanDagTest.BlackMarlin.tieBlk'
+NODE	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_2	LeanDag.OptimalHydrozoan.Carrier	thm
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_2	LeanDag.Hydrozoan.Block.parents
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_2	LeanDag.Hydrozoan.BlockUniverse
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_2	LeanDag.OptimalHydrozoan.OptimalFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_2	LeanDag.Hydrozoan.View.complete
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_2	LeanDag.Barnacle.OptimalHydrozoan.LeaderExcludedAll
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_2	LeanDag.OptimalHydrozoan.OptimalFaults.toFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_2	LeanDag.Hydrozoan.View
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_2	LeanDag.Hydrozoan.View.ids
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_2	LeanDag.Hydrozoan.BlockUniverse.block
 NODE	LeanDag.CausalStructure.refs_empty_of_round_zero	LeanDag.Causality	thm
 EDGE	LeanDag.CausalStructure.refs_empty_of_round_zero	LeanDag.Block
 EDGE	LeanDag.CausalStructure.refs_empty_of_round_zero	LeanDag.CausalStructure.refs_round
@@ -41046,6 +41116,21 @@ EDGE	LeanDag.MahiMahi.Safety.CertificateUniqueness	LeanDag.BlockUniverse.block
 EDGE	LeanDag.MahiMahi.Safety.CertificateUniqueness	LeanDag.Block.round
 EDGE	LeanDag.MahiMahi.Safety.CertificateUniqueness	LeanDag.BlockUniverse
 EDGE	LeanDag.MahiMahi.Safety.CertificateUniqueness	LeanDag.Block.creator
+NODE	LeanDag.OptimalHydrozoanProperties.commitsCandidate	LeanDag.OptimalHydrozoan.Carrier	thm
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsCandidate	LeanDag.Properties.CommitsCandidate
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsCandidate	LeanDag.Properties.DagRule.Decided
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsCandidate	LeanDag.Hydrozoan.BlockUniverse
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsCandidate	LeanDag.OptimalHydrozoan.OptimalFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsCandidate	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_3
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsCandidate	LeanDag.OptimalHydrozoanProperties.optimalRule
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsCandidate	LeanDag.OptimalHydrozoan.isLeaderBlock_of_decidedOpt
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsCandidate	LeanDag.Barnacle.OptimalHydrozoan.LeaderExcludedAll
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsCandidate	LeanDag.Barnacle.OptimalHydrozoan.optUniverseOf
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsCandidate	LeanDag.OptimalHydrozoan.OptimalFaults.toFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsCandidate	LeanDag.Slots
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsCandidate	LeanDag.Properties.DagRule.View
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsCandidate	LeanDag.Properties.DagRule.Universe
+EDGE	LeanDag.OptimalHydrozoanProperties.commitsCandidate	LeanDag.Hydrozoan.ofCoreSlots
 NODE	LeanDag.ReactiveM.committed_of_correct_block._proof_1_1	LeanDag.Reactive.Mysticeti	thm
 EDGE	LeanDag.ReactiveM.committed_of_correct_block._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.ReactiveM.committed_of_correct_block._proof_1_1	LeanDag.Slots.slotRound
@@ -59189,6 +59274,11 @@ EDGE	LeanDag.Integration.history_addGenesis	LeanDag.history
 EDGE	LeanDag.Integration.history_addGenesis	LeanDag.BlockUniverse
 EDGE	LeanDag.Integration.history_addGenesis	LeanDag.Block.creator
 EDGE	LeanDag.Integration.history_addGenesis	LeanDag.Reaches
+NODE	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_3	LeanDag.OptimalHydrozoan.Carrier	thm
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_3	LeanDag.Hydrozoan.BlockUniverse
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_3	LeanDag.OptimalHydrozoan.OptimalFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_3	LeanDag.Barnacle.OptimalHydrozoan.LeaderExcludedAll
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_3	LeanDag.OptimalHydrozoan.OptimalFaults.toFaults
 NODE	LeanDag.Barnacle.Healthy.holds._proof_1_4	LeanDag.Barnacle.Healthy.Proof	thm
 EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_4	LeanDag.Barnacle.Params.maxLeaders
 EDGE	LeanDag.Barnacle.Healthy.holds._proof_1_4	LeanDag.Barnacle.BaseRule.Universe
@@ -67616,6 +67706,25 @@ EDGE	LeanDag.card_historyBlocksOf_le'._proof_1_3	LeanDag.Faults
 EDGE	LeanDag.card_historyBlocksOf_le'._proof_1_3	LeanDag.BlockUniverse
 EDGE	LeanDag.card_historyBlocksOf_le'._proof_1_3	LeanDag.Faults.f
 EDGE	LeanDag.card_historyBlocksOf_le'._proof_1_3	LeanDag.exposedTo
+NODE	LeanDag.OptimalHydrozoanProperties.optimalRule	LeanDag.OptimalHydrozoan.Carrier	def
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule	LeanDag.Hydrozoan.BlockUniverse
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule	LeanDag.OptimalHydrozoan.OptimalFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule	LeanDag.Hydrozoan.adaptBlock
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_1
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_3
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule	LeanDag.Barnacle.OptimalHydrozoan.LeaderExcludedAll
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule	LeanDag.Barnacle.OptimalHydrozoan.optUniverseOf
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_2
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule	LeanDag.OptimalHydrozoan.OptimalFaults.toFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule	LeanDag.Hydrozoan.View
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule	LeanDag.Hydrozoan.View.ids
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule	LeanDag.Hydrozoan.BlockUniverse.block
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule	LeanDag.OptimalHydrozoan.DecidedOpt
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule	LeanDag.Properties.DagRule.mk
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule	LeanDag.Properties.DagRule
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule	LeanDag.Slots
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule	LeanDag.Hydrozoan.ofCoreSlots
+EDGE	LeanDag.OptimalHydrozoanProperties.optimalRule	LeanDag.Hydrozoan.BlockUniverse.ids
 NODE	LeanDag.FinWhale.lemma22._proof_1_1	LeanDag.FinWhale.Rotation	thm
 EDGE	LeanDag.FinWhale.lemma22._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.FinWhale.lemma22._proof_1_1	LeanDag.Faults.byzantine

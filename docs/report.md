@@ -24584,6 +24584,28 @@ def odontocetiLive (S : Slots Validator) {U : BlockUniverse Validator BlockId Pa
 
 **What Odontoceti's liveness route asks of a deployment**, at its own wavelength: the horizon is one round above the slot, where the core's is two.
 
+#### `optimalRule`
+
+*def, `OptimalHydrozoan.Carrier.lean`*
+
+```lean
+def optimalRule : DagRule Replica BlockId Unit where
+  Universe := {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId //
+    Barnacle.OptimalHydrozoan.LeaderExcludedAll U}
+  View := fun U => LeanDag.Hydrozoan.View U.val
+  block := fun U i => LeanDag.Hydrozoan.adaptBlock (U.val.block i)
+  ids := fun U => U.val.ids
+  viewIds := fun V => V.ids
+  viewSound := fun V => V.subset_ids
+  viewComplete := fun V => V.complete
+  Decided := fun S U V k v =>
+    letI := LeanDag.Hydrozoan.ofCoreSlots S
+    LeanDag.OptimalHydrozoan.DecidedOpt
+      (Barnacle.OptimalHydrozoan.optUniverseOf U.val U.property) V k v
+```
+
+**Optimal-Hydrozoan as a carrier.**
+
 #### `Agree`
 
 *def, `Properties.Agree.lean`*
@@ -38213,7 +38235,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 981 lemmas used only within the file that proves
+The 985 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -40105,6 +40127,15 @@ subsection per module, in the layer order of Appendices B and C.
 | `thickLink_band` | So the indirect test reads the same. |
 | `thickLink_threshold_pos` | The thick-link threshold is positive: `Faults5` asks for `5f + 1` validators, so `card − 3f ≥ 2f + 1`. |
 | `toCore` | The two carriers project identically, so a band for one is a band for the other. |
+
+### `OptimalHydrozoan/Carrier.lean` (4)
+
+| Lemma | Role |
+|:---|:---|
+| `agree` | Two views decide alike. OH5 under the property's name, and unconditional because the exclusion invariant … |
+| `causal` | Optimal's universes are block DAGs — Hydrozoan's argument, the underlying universe being Hydrozoan's. |
+| `commitsCandidate` | A commit names the slot's candidate. |
+| `commitsDirect` | And a direct commit is a verdict, at Optimal's own direct predicate — a *disjunction*, the fast path or … |
 
 ### `Properties/Arcs/GC.lean` (9)
 

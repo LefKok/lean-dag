@@ -108,6 +108,7 @@ import LeanDag.MysticetiProperties
 import LeanDag.Odontoceti.Carrier
 import LeanDag.Nemo.Carrier
 import LeanDag.Hybrid.Carrier
+import LeanDag.OptimalHydrozoan.Carrier
 import LeanDag.HybridProperties
 import LeanDag.NemoProperties
 import LeanDag.OdontocetiProperties
