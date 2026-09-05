@@ -13874,6 +13874,32 @@ def DirectSkipIn (U : BlockUniverse Validator BlockId Payload)
 
 Direct skip, as judged from a single view.
 
+#### `slotBlamers`
+
+*def, `Hybrid.Decision.lean`*
+
+```lean
+def slotBlamers (U : BlockUniverse Validator BlockId Payload) (s : ℕ) : Finset BlockId :=
+  (blocksAt U (S.slotRound s + 1)).filter
+    (fun p => ∀ j ∈ (U.block p).refs, ¬ IsLeaderBlock U s j)
+```
+
+The voting-round blocks that reference **no** candidate of the slot.
+
+#### `DirectSkipSlotIn`
+
+*def, `Hybrid.Decision.lean`*
+
+```lean
+def DirectSkipSlotIn (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (s : ℕ) : Prop :=
+  q Validator ≤ (creatorsOf U.block (slotBlamers U s ∩ V.ids)).card
+```
+
+**The slot is directly skipped, as judged from a view**: a hybrid quorum of distinct validators holds a voting-round block, in view, that references no candidate of the slot.
+
+Strictly stronger than the per-candidate `DirectSkipIn`, which it implies and which a slot with no candidate satisfies for nothing. The core and Odontoceti were repaired the same way and for the same reason (`docs/target-properties.md` §3.2): a rule whose skip quantifies over the candidates that happen to exist is not invariant under a mechanism that adds one, so it cannot be `Banded`.
+
 #### `Decided`
 
 *inductive, `Hybrid.Decision.lean`*
@@ -13888,8 +13914,7 @@ inductive Decided (k : ℕ) (U : BlockUniverse Validator BlockId Payload)
   /-- The direct rule blames every candidate — vacuously, when the
   leader produced nothing. -/
   | directSkip {s : ℕ} :
-      (∀ L, IsLeaderBlock U s L → DirectSkipIn U V L (S.slotRound s)) →
-      Decided k U V s none
+      DirectSkipSlotIn U V s → Decided k U V s none
   /-- Anchored on the nearest eligible committed slot, the least
   candidate passing the indirect test is committed. -/
   | indirectCommit {s j : ℕ} {A L : BlockId} :
@@ -23446,6 +23471,24 @@ def View.ofViewUpto (D : Delivery U) (v : Validator) (n : ℕ) :
 ```
 
 **A retained store is a view.** It holds only real blocks (`viewUpto_subset_ids`) and is closed under references (`mem_viewUpto_of_mem_refs`), which are the two things a view is.
+
+#### `hybridRule`
+
+*def, `Hybrid.Carrier.lean`*
+
+```lean
+def hybridRule (k : ℕ) : DagRule Validator BlockId Payload where
+  Universe := {U : BlockUniverse Validator BlockId Payload // HonestNoEquiv U}
+  View := fun U => View Validator BlockId Payload U.val
+  block := fun U i => U.val.block i
+  ids := fun U => U.val.ids
+  viewIds := fun V => V.ids
+  viewSound := fun V => V.subset_ids
+  viewComplete := fun V => V.complete
+  Decided := fun S U V s v => Hybrid.Decided (S := S) k U.val V s v
+```
+
+**Hybrid as a carrier**, one per indirect threshold.
 
 #### `History`
 
@@ -38085,7 +38128,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 968 lemmas used only within the file that proves
+The 973 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -38662,12 +38705,13 @@ subsection per module, in the layer order of Appendices B and C.
 | `mem_coneSupports` | — |
 | `thickLink_of_directCommit_aux` | — |
 
-### `Hybrid/Decision.lean` (9)
+### `Hybrid/Decision.lean` (10)
 
 | Lemma | Role |
 |:---|:---|
 | `anchor_round_le` | The anchor's round clears the slot's decision round by one — enough for H4 to read the whole certificate … |
 | `directCommit_of_directCommitIn` | A view can only under-report: its direct commit is genuine. |
+| `directSkipIn_of_directSkipSlotIn` | The slot-level skip implies the per-candidate one, so every theorem stated over `DirectSkipIn` — H3 in … |
 | `directSkip_of_directSkipIn` | A view can only under-report: its direct skip is genuine. |
 | `eq_of_directCommitIn` | Cross-view twin uniqueness: two direct commits for one slot agree. |
 | `eq_of_directCommitIn_of_thickLink` | H5, from a view: a view-level direct commit is the only same-slot candidate that can pass the indirect … |
@@ -39604,6 +39648,15 @@ subsection per module, in the layer order of Appendices B and C.
 | `correct_mem_viewUpto` | What a rate-limited store holds. After the settling round a correct validator's store contains every … |
 | `deliversOn_viewUpto` | The witness. The novelty budget's stores cover the correct validators from the settling round on, so a … |
 | `directCommitIn_viewUpto` | A rate-limited validator commits. Given a reliable quorum whose decision-round blocks certify `L`, a store … |
+
+### `Hybrid/Carrier.lean` (4)
+
+| Lemma | Role |
+|:---|:---|
+| `agree` | Two views decide alike. H6 under the property's name, and unconditional because non-equivocation is now a … |
+| `causal` | Hybrid's universes are block DAGs — the core's argument, the underlying universe type being the core's. |
+| `commitsCandidate` | A commit names the slot's candidate. |
+| `commitsDirect` | And a direct commit is a verdict, at Hybrid's own direct predicate. |
 
 ### `Hybrid/Checkpoint/RecoveryProofs.lean` (14)
 

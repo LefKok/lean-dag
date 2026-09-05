@@ -112,10 +112,13 @@ theorem ul_slot0 : Hybrid.Decided (S := S1) 2 UL (View.full UL) 0 (some 0) :=
   Decided.directCommit (S := S1) (by decide) (by decide)
 
 /-- Slot `3` (round `3`, leader `3`): the crashed validator has no
-candidate — the vacuous direct skip. -/
-theorem ul_slot3 : Hybrid.Decided (S := S1) 2 UL (View.full UL) 3 none := by
-  have hall : ∀ L : Fin 28, ¬ OL.IsLeaderBlock S1 OUL 3 L := by decide
-  exact Decided.directSkip (S := S1) (fun L hL => absurd hL (hall L))
+candidate, and under the repaired skip rule that is **not** enough. A
+skip is now a quorum of round-`4` blocks referencing no candidate, so a
+slot with no candidate is skipped only when the DAG carries the
+evidence — which is the whole point of the repair
+(`LeanDagTest/Hybrid.lean`, `docs/porting-plan.md`). -/
+theorem ul_slot3 : Hybrid.Decided (S := S1) 2 UL (View.full UL) 3 none :=
+  Decided.directSkip (S := S1) (by decide)
 
 /-- The theorem's verdict for slot `0` is the hand commit. -/
 theorem promise_slot0 :

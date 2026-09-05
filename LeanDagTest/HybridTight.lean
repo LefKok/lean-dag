@@ -190,11 +190,7 @@ theorem hybrid_bound_necessary (k : ℕ) :
         have := hall L' hL'
         subst this
         exact absurd hlt (lt_irrefl _)
-    · refine Decided.directSkip (fun L' hL' => ?_)
-      have hall : ∀ M : Fin 29, IsLeaderBlock UtightA 0 M → M = 1 := by decide
-      have := hall L' hL'
-      subst this
-      decide
+    · exact Decided.directSkip (by decide)
   · -- link integrity fails: committed directly, skipped indirectly
     refine ⟨UtightB, 1, by decide,
       Decided.directCommit (by decide) (by decide), ?_⟩

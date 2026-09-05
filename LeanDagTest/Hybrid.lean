@@ -99,12 +99,22 @@ theorem uhyb4_slot1 :
     Hybrid.Decided 2 Uhyb4 (View.full Uhyb4) 1 (some 5) :=
   Decided.directCommit (by decide) (by decide)
 
-/-- **The crashed validator's slot is skipped vacuously**: validator
-`3` authored nothing at round `3`, so there is no candidate. -/
-theorem uhyb4_slot3 :
-    Hybrid.Decided 2 Uhyb4 (View.full Uhyb4) 3 none := by
-  have hall : ∀ L : Fin 13, ¬ IsLeaderBlock Uhyb4 3 L := by decide
-  exact Decided.directSkip (fun L hL => absurd hL (hall L))
+/-- **The crashed validator's slot is not directly skipped here**, and
+this is the repair's finding rather than a gap in the universe.
+
+The theorem that stood here claimed the slot *was* skipped, on the
+vacuous premise `∀ L, IsLeaderBlock U 3 L → …`: validator `3` authored
+nothing at round `3`, so there is no candidate, so the premise holds for
+nothing. Under the repaired rule a skip is a quorum of round-`4` blocks
+referencing no candidate, and `Uhyb4` stops at round `3` — so there is
+no evidence, and the slot is undecided in this DAG.
+
+That is the same defect the band found in the core (§3.2) and in
+Odontoceti (§3.12), found a third time by the same means. A rule whose
+skip quantifies over the candidates that happen to exist is not
+invariant under a mechanism that adds one, and so cannot be `Banded`. -/
+theorem uhyb4_slot3_not_directSkip :
+    ¬ Hybrid.DirectSkipSlotIn Uhyb4 (View.full Uhyb4) 3 := by decide
 
 -- Agreement, exercised across the two routes at the admissible
 -- threshold.

@@ -90,6 +90,44 @@ def DirectSkipIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
   q Validator ≤ (blamesIn U V L r).card
 
+/-- The voting-round blocks that reference **no** candidate of the slot. -/
+def slotBlamers (U : BlockUniverse Validator BlockId Payload) (s : ℕ) : Finset BlockId :=
+  (blocksAt U (S.slotRound s + 1)).filter
+    (fun p => ∀ j ∈ (U.block p).refs, ¬ IsLeaderBlock U s j)
+
+/-- **The slot is directly skipped, as judged from a view**: a hybrid
+quorum of distinct validators holds a voting-round block, in view, that
+references no candidate of the slot.
+
+Strictly stronger than the per-candidate `DirectSkipIn`, which it
+implies and which a slot with no candidate satisfies for nothing. The
+core and Odontoceti were repaired the same way and for the same reason
+(`docs/target-properties.md` §3.2): a rule whose skip quantifies over
+the candidates that happen to exist is not invariant under a mechanism
+that adds one, so it cannot be `Banded`. -/
+def DirectSkipSlotIn (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (s : ℕ) : Prop :=
+  q Validator ≤ (creatorsOf U.block (slotBlamers U s ∩ V.ids)).card
+
+instance decidableDirectSkipSlotIn (V : View Validator BlockId Payload U) (s : ℕ) :
+    Decidable (DirectSkipSlotIn U V s) :=
+  inferInstanceAs (Decidable (q Validator ≤
+    (creatorsOf U.block (slotBlamers U s ∩ V.ids)).card))
+
+/-- **The slot-level skip implies the per-candidate one**, so every
+theorem stated over `DirectSkipIn` — H3 in particular — applies to it
+unchanged. A block referencing no candidate references not `L`. -/
+theorem directSkipIn_of_directSkipSlotIn {V : View Validator BlockId Payload U} {s : ℕ}
+    (h : DirectSkipSlotIn U V s) {L : BlockId} (hL : IsLeaderBlock U s L) :
+    DirectSkipIn U V L (S.slotRound s) := by
+  refine le_trans h (Finset.card_le_card (Finset.image_subset_image ?_))
+  intro p hp
+  rw [Finset.mem_inter] at hp
+  obtain ⟨hpb, hpV⟩ := hp
+  rw [slotBlamers, Finset.mem_filter] at hpb
+  rw [Finset.mem_inter, Finset.mem_filter]
+  exact ⟨⟨hpb.1, fun hmem => hpb.2 L hmem hL⟩, hpV⟩
+
 instance {V : View Validator BlockId Payload U} :
     Decidable (DirectCommitIn U V L r) :=
   inferInstanceAs (Decidable (_ ≤ _))
@@ -176,8 +214,7 @@ inductive Decided (k : ℕ) (U : BlockUniverse Validator BlockId Payload)
   /-- The direct rule blames every candidate — vacuously, when the
   leader produced nothing. -/
   | directSkip {s : ℕ} :
-      (∀ L, IsLeaderBlock U s L → DirectSkipIn U V L (S.slotRound s)) →
-      Decided k U V s none
+      DirectSkipSlotIn U V s → Decided k U V s none
   /-- Anchored on the nearest eligible committed slot, the least
   candidate passing the indirect test is committed. -/
   | indirectCommit {s j : ℕ} {A L : BlockId} :
@@ -239,8 +276,8 @@ theorem decided_unique (hne : HonestNoEquiv U)
     | directCommit hL₂ h₂ =>
       exact congrArg some (eq_of_directCommitIn hne hL hL₂ h h₂)
     | directSkip hskip =>
-      exact absurd (not_directSkipIn_of_directCommitIn hne h (hskip L hL))
-        not_false
+      exact absurd (not_directSkipIn_of_directCommitIn hne h
+        (directSkipIn_of_directSkipSlotIn hskip hL)) not_false
     | indirectCommit _ _ _ _ hL₂ ht₂ _ =>
       exact congrArg some
         (eq_of_directCommitIn_of_thickLink hne hka hL hL₂ h ht₂)
@@ -251,11 +288,12 @@ theorem decided_unique (hne : HonestNoEquiv U)
     intro V₂ v₂ h₂
     cases h₂ with
     | @directCommit _ L₂ hL₂ h₂ =>
-      exact absurd (not_directSkipIn_of_directCommitIn hne h₂ (hskip L₂ hL₂))
-        not_false
+      exact absurd (not_directSkipIn_of_directCommitIn hne h₂
+        (directSkipIn_of_directSkipSlotIn hskip hL₂)) not_false
     | directSkip _ => rfl
     | indirectCommit _ _ _ _ hL₂ ht₂ _ =>
-      exact absurd ht₂ (not_thickLink_of_directSkipIn hne hka (hskip _ hL₂) _)
+      exact absurd ht₂ (not_thickLink_of_directSkipIn hne hka
+        (directSkipIn_of_directSkipSlotIn hskip hL₂) _)
     | indirectSkip _ _ _ _ _ => rfl
   | @indirectCommit s j A L hkj helig hj hmid hL ht hmin ihj ihmid =>
     intro V₂ v₂ h₂
@@ -264,7 +302,8 @@ theorem decided_unique (hne : HonestNoEquiv U)
       exact congrArg some
         (eq_of_directCommitIn_of_thickLink hne hka hL₂ hL h₂ ht).symm
     | directSkip hskip₂ =>
-      exact absurd ht (not_thickLink_of_directSkipIn hne hka (hskip₂ _ hL) _)
+      exact absurd ht (not_thickLink_of_directSkipIn hne hka
+        (directSkipIn_of_directSkipSlotIn hskip₂ hL) _)
     | @indirectCommit _ j₂ A₂ L₂ hkj₂ helig₂ hj₂ hmid₂ hL₂ ht₂ hmin₂ =>
       obtain ⟨rfl, rfl⟩ := anchor_eq hkj helig hkj₂ helig₂ hj₂ hmid₂ ihj ihmid
       exact congrArg some (le_antisymm
