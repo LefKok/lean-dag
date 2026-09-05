@@ -8,12 +8,12 @@ because their rule has no `Banded` to route through:
 |---|---|---|
 | Optimal-Hydrozoan | 8 | `Barnacle/OptimalHydrozoan{,Live}/Proof`, `Integration/Hydrozoan/OptimalChopDecided` |
 | Hybrid / Orcaella | 4 | `Barnacle/{Helpers/Orcaella,Orcaella/Proof}`, `Integration/{Sound,Stack}` |
-| Nemo | 3 | `Barnacle/{Helpers/NemoLive,Nemo/Proof,Live/Proof}` |
+| Nemo | ~~3~~ **0** | routed (`Nemo/Carrier.lean`, `NemoProperties.lean`) |
 | FinWhale | 0 | — |
 
 FinWhale has none, and that is itself the finding: nothing consumes
 FinWhale's verdicts, because it has no slot-indexed decision relation for
-a mechanism to consume. Porting it buys no separation. It buys the only
+a mechanism to consume. Porting it removes no bespoke code. What it supplies is the one
 thing §11.4 says is still missing — evidence that the six obligations are
 the right six, tested against the rule least like Mysticeti.
 
@@ -31,7 +31,7 @@ carrier; for the fourth it is a modelling job first.
 
 ## Order, and why
 
-**1. Nemo.** The cheapest and the pattern-setter: it has every ingredient,
+**1. Nemo — done.** The cheapest and the pattern-setter: it has every ingredient,
 five constructors, and a wave of two — its decision relation mirrors
 Odontoceti's, whose `Banded` is the template (122 lines). If the port is
 not routine here it will not be routine anywhere, so this is the one that
@@ -66,7 +66,7 @@ arbitrary type, so nothing in the carrier resists this.
   is unprovable until that is restated as a comparison. This is
   independent of the slot layer and has to go first.
 
-If either turns out to reshape FinWhale's model rather than wrap it, the
+If either reshapes FinWhale's model rather than wraps it, the
 right answer is to stop and record why — a rule that cannot carry the
 obligations without being rewritten is *evidence about the obligations*,
 which is what porting FinWhale is for.
@@ -104,3 +104,32 @@ Three things, each of which is worth more than the port succeeding:
 * **A mechanism law with no property at all.** Already seen once, in
   Hydrozoan's `CommitLiveness` and its slow threshold. A second instance
   would be a candidate for a new obligation rather than a gap.
+
+## Nemo, done
+
+The estimate held. What it took:
+
+* **`Nemo/Carrier.lean`** — the carrier, `Causal`, `Agree`,
+  `CommitsCandidate`, `CommitsDirect`. Nemo's agreement is
+  hypothesis-free, because non-equivocation is a *field* of its
+  `Universe` rather than a premise: the model is crash-only. That is why
+  `Agree` holds at the bare universe here and will not for Hybrid.
+* **`NemoProperties.lean`** — `Banded` (one induction, three cases),
+  then `Indirect`, `LeaderCommits` and `descends` on top.
+* **Five generic band helpers**, lifted into `Properties/Band.lean`. They
+  existed only at the core's carrier, where they were written, and every
+  rule's band proof needs them. Nemo needed local wrappers anyway,
+  phrased in `U.block` rather than `R.block U` — the two are equal by
+  definition and distinct atoms to `omega`, so saying it once per rule
+  keeps the proofs in one vocabulary.
+* **The three links**, converted: `Laws` reads the three properties, and
+  `Descent` is `descent_of_properties` with a ten-line `GoodGives`.
+
+**`SkipsUnsupported` is not owed and the table's dash is right.** Nemo
+has three constructors and no direct skip: a slot with no candidate waits
+for an anchor. That is exactly the case the property was made optional
+for (§11.4c), and it is the first time a rule has exercised the
+distinction rather than simply having the property.
+
+**Nothing was falsified.** No graded property was needed, the band went
+through as stated, and every mechanism law had a counterpart.

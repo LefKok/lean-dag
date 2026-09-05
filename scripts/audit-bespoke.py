@@ -49,6 +49,7 @@ CONFORMANCE = (
     "LeanDag.Reactive.MysticetiProperties", "LeanDag.Hydrozoan.Properties",
     "LeanDag.Hydrozoan.Helpers.Commit", "LeanDag.Hydrozoan.Helpers.Banded",
     "LeanDag.Hydrozoan.Helpers.Carrier", "LeanDag.Odontoceti.Carrier",
+    "LeanDag.Nemo.Carrier", "LeanDag.NemoProperties",
     "LeanDag.Barnacle.Conformance",
     "LeanDag.Barnacle.Helpers.DagRule", "LeanDag.Barnacle.Helpers.Descent",
 )
@@ -59,6 +60,7 @@ CONFORMING = (
     "LeanDag.Mysticeti", "LeanDag.Liveness", "LeanDag.Persistence",
     "LeanDag.Support", "LeanDag.Schedule", "LeanDag.WaveRobin",
     "LeanDag.Participation", "LeanDag.Hydrozoan.", "LeanDag.Odontoceti.",
+    "LeanDag.Nemo.",
     "LeanDag.Reactive.Mysticeti", "LeanDag.Reactive.Odontoceti",
 )
 
@@ -166,7 +168,7 @@ def main():
                   f"{sorted(x.replace('LeanDag.', '') for x in b)}")
     extra = sum(len(v) for v in allowed.values())
     print(f"\n{extra} more, for rules with no `Banded` to route through "
-          f"(Optimal-Hydrozoan, Nemo, Hybrid/Orcaella): not a gap in the arc.")
+          f"(Optimal-Hydrozoan, Hybrid/Orcaella): not a gap in the arc.")
 
     bad = sorted(live - recorded)
     stale = sorted(recorded - live)

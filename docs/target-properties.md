@@ -1474,7 +1474,7 @@ conformance `Statement` lists it.
 | Hydrozoan | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — | ✓ |
 | Optimal-Hydrozoan | — | — | ✓ | ✓ | — | — | — | — |
 | Odontoceti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Nemo | — | — | ✓ | ✓ | — | — | ✓ | — |
+| Nemo | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
 | Hybrid / Orcaella | — | — | ✓ | ✓ | — | — | — | — |
 | Mahi-Mahi | — | — | — | — | — | — | — | — |
 | FinWhale | — | — | — | — | — | — | — | — |
@@ -1491,7 +1491,7 @@ replaced it in the required set (§11.2b). Each protocol still states it,
 because the round-structure hypothesis it needs is the protocol's, but
 the statement is now three lines and no induction.
 
-**Four rules show the six**, and `Banded` has three instances —
+**Five rules show the six**, and `Banded` has four instances —
 reactive Mysticeti shares the core's rule. Odontoceti is the third
 (§3.12) and the first that was not written with the properties in view;
 what it cost, and the defect it found on the way, are recorded there.

@@ -24459,6 +24459,39 @@ def coreLive (S : Slots Validator) {U : BlockUniverse Validator BlockId Payload}
 
 **The timed core's liveness precondition**, over a slot window: a quorum `T` synchronised from some round `R₀` at or below the window's first slot, the DAG populated by `T` from `R₀` to a horizon `N`, the view caught up to `N`, and every slot of the window two rounds under `N`. It reads no leader, so it holds under every schedule with the same rounds.
 
+#### `nemoRule`
+
+*def, `Nemo.Carrier.lean`*
+
+```lean
+def nemoRule : DagRule Validator BlockId Payload where
+  Universe := Nemo.Universe Validator BlockId Payload
+  View := fun U => Nemo.View Validator BlockId Payload U
+  block := fun U i => U.block i
+  ids := fun U => U.ids
+  viewIds := fun V => V.ids
+  viewSound := fun V => V.subset_ids
+  viewComplete := fun V => V.complete
+  Decided := fun S _ V k v => Nemo.Decided (S := S) _ V k v
+```
+
+**Nemo as a carrier**, at its own namespace rather than through `Barnacle.nemoRule`: a protocol's conformance should not route through a mechanism.
+
+#### `nemoLive`
+
+*def, `NemoProperties.lean`*
+
+```lean
+def nemoLive (S : Slots Validator) {U : Nemo.Universe Validator BlockId Payload}
+    (V : Nemo.View Validator BlockId Payload U) (T : Finset Validator) (lo K : ℕ) : Prop :=
+  Nemo.majority Validator ≤ T.card ∧
+    ∃ R₀ N, Nemo.SynchronisedOn U T R₀ ∧ R₀ ≤ S.slotRound lo ∧
+      (∀ r, R₀ ≤ r → r ≤ N → Nemo.PopulatedOn U T r) ∧ V.CoversUpto N ∧
+      ∀ k, k < K → S.slotRound k + 1 ≤ N
+```
+
+**Nemo's liveness precondition**, over a slot window. Its wavelength is two, so the horizon sits one round above the slot where the core's sits two, and the quorum is a *majority* rather than a Byzantine quorum — the model is crash-only.
+
 #### `odontocetiRule`
 
 *def, `Odontoceti.Carrier.lean`*
@@ -25048,7 +25081,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 976 theorems that either another module of the
+The 987 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -30546,6 +30579,18 @@ theorem directCommit_of_leader_mem
 
 **The commit half.** Post-`R`, a `T`-led slot is directly committed: coverage makes every `T` block at the decision round reference the leader's block, and `T` carries the majority. Two populated rounds — propose and decide, wavelength two.
 
+#### `directCommitIn_of_coversUpto`
+
+*theorem, `Nemo.Liveness.lean`*
+
+```lean
+theorem directCommitIn_of_coversUpto {V : View Validator BlockId Payload U} {r : ℕ}
+    (h : DirectCommit U L r) (hcov : V.CoversUpto (r + 1)) :
+    DirectCommitIn U V L r
+```
+
+A view caught up to the decision round sees every supporter, so a direct commit in the universe is a direct commit in the view.
+
 #### `decided_of_leader_mem`
 
 *theorem, `Nemo.Liveness.lean`*
@@ -33520,11 +33565,10 @@ The laws, for Nemo-Nemo.
 ```lean
 theorem nemoLive_descent [Nemo.CrashFaults Validator] :
     (nemoLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload)).Descent
-      (Fintype.card Validator - Nemo.majority Validator) where
-  goodLeaders
+      (Fintype.card Validator - Nemo.majority Validator)
 ```
 
-The descent laws, for Nemo-Nemo, at the slack a majority may miss: `n − majority`.
+**The descent laws, for Nemo at the slack a majority may miss** — from the properties, with no argument about `Decided` here.
 
 #### `majority_bound`
 
@@ -37312,6 +37356,75 @@ theorem descends {S : Slots Validator} {c : ℕ} (hc : 0 < c)
 
 **The descent as a property**, under the spanning hypothesis on the round structure. What stood here was a downward induction carrying the bound by hand; it is now `Descends.of_indirect`, and the only Mysticeti-specific step is reading `Eligible` as the round inequality the property is stated with.
 
+#### `causal`
+
+*theorem, `Nemo.Carrier.lean`*
+
+```lean
+theorem causal : Causal (nemoRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload))
+```
+
+Nemo's universes are block DAGs. Completeness is a field; the round condition comes from validity, where the core reads it off directly.
+
+#### `agree`
+
+*theorem, `Nemo.Carrier.lean`*
+
+```lean
+theorem agree : Agree (nemoRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload))
+```
+
+**Two views decide alike.** Nemo's `decided_unique` under the property's name.
+
+#### `commitsCandidate`
+
+*theorem, `Nemo.Carrier.lean`*
+
+```lean
+theorem commitsCandidate : CommitsCandidate
+    (nemoRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+```
+
+**A commit names the slot's candidate.**
+
+#### `commitsDirect`
+
+*theorem, `Nemo.Carrier.lean`*
+
+```lean
+theorem commitsDirect : CommitsDirect
+    (nemoRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+    (fun {U} V L r => Nemo.DirectCommitIn U V L r)
+```
+
+**And a direct commit is a verdict**, at Nemo's own direct predicate.
+
+#### `leaderCommits`
+
+*theorem, `NemoProperties.lean`*
+
+```lean
+theorem leaderCommits :
+    LeaderCommits (nemoRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) (fun S {U} V T lo K => nemoLive S (U := U) V T lo K)
+```
+
+**A reliably-led slot commits**, at a bound one above the slot: a direct commit reads that slot's leader and no other.
+
+#### `indirect`
+
+*theorem, `NemoProperties.lean`*
+
+```lean
+theorem indirect :
+    Indirect (nemoRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) (fun sr i j => sr i + 2 ≤ sr j)
+```
+
+**A3 as a property.** The two indirect constructors, by cases on a certified candidate at the slot — which is the whole proof, and is why the verdict survives a reassignment of leaders elsewhere: the case split reads slot `i`'s candidate and the anchor's history, and neither moves.
+
 #### `agree`
 
 *theorem, `Odontoceti.Carrier.lean`*
@@ -37579,6 +37692,59 @@ theorem reaches_old (hc : Causal R) (h : AgreeBand R U U' lo hi g g')
 ```
 
 **And a path of `U'` that stays above the floor is a path of `U`.**
+
+#### `mem_band`
+
+*theorem, `Properties.Band.lean`*
+
+```lean
+theorem mem_band (h : AgreeBand R U U' lo hi g g') {b : BlockId}
+    (hb : b ∈ R.ids U) (h1 : lo ≤ (R.block U b).round + g)
+    (h2 : (R.block U b).round + g ≤ hi) : b ∈ R.ids U'
+```
+
+A block inside the band is a block of the other universe.
+
+#### `block_band`
+
+*theorem, `Properties.Band.lean`*
+
+```lean
+theorem block_band (h : AgreeBand R U U' lo hi g g') {b : BlockId}
+    (hb : b ∈ R.ids U) (h1 : lo ≤ (R.block U b).round + g)
+    (h2 : (R.block U b).round + g ≤ hi) :
+    (R.block U' b).round + g' = (R.block U b).round + g ∧
+      (R.block U' b).creator = (R.block U b).creator
+```
+
+At the shifted round, with the author it had.
+
+#### `block_band'`
+
+*theorem, `Properties.Band.lean`*
+
+```lean
+theorem block_band' (h : AgreeBand R U U' lo hi g g') {b : BlockId}
+    (hb : b ∈ R.ids U) (hb' : b ∈ R.ids U')
+    (h1 : lo ≤ (R.block U' b).round + g') (h2 : (R.block U' b).round + g' ≤ hi) :
+    (R.block U' b).round + g' = (R.block U b).round + g ∧
+      (R.block U' b).creator = (R.block U b).creator
+```
+
+The same, read from the other side: a block the shift already placed inside the band.
+
+#### `refs_band`
+
+*theorem, `Properties.Band.lean`*
+
+```lean
+theorem refs_band (h : AgreeBand R U U' lo hi g g') {b : BlockId}
+    (hb : b ∈ R.ids U) (h1 : lo < (R.block U b).round + g)
+    (h2 : (R.block U b).round + g ≤ hi) :
+    (R.block U' b).refs = (R.block U b).refs
+```
+
+And, strictly above the floor, referencing what it referenced.
 
 #### `of_mem'`
 
@@ -37919,7 +38085,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 951 lemmas used only within the file that proves
+The 968 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -38601,7 +38767,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `slot_eq_of_decided_commit` | A committed block belongs to one slot. The ledger reads verdicts off in slot order, so without this a … |
 | `slot_eq_of_isLeaderBlock` | A block is the candidate of at most one slot — what `Slots.keyed` yields: two slots sharing a round are … |
 
-### `Nemo/Liveness.lean` (9)
+### `Nemo/Liveness.lean` (8)
 
 | Lemma | Role |
 |:---|:---|
@@ -38611,7 +38777,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `all_decided_below_of_fairRun_live` | Liveness at `T := Live` — the whole live class, which the tight committee `n = 2f + 1` requires exactly. |
 | `decided_of_leader_of_populated` | The commit half against a horizon: two rounds read off it. `T ⊆ Live` is consumed here and only here, … |
 | `directCommitIn_mono` | A larger view can only see more supporters. |
-| `directCommitIn_of_coversUpto` | A view caught up to the decision round sees every supporter, so a direct commit in the universe is a … |
 | `majority_le_card_live` | The bridge — the arc's only consumer of the fault bound: the live class carries the majority quorum, since … |
 | `mem_live` | — |
 
@@ -39049,6 +39214,12 @@ subsection per module, in the layer order of Appendices B and C.
 | Lemma | Role |
 |:---|:---|
 | `odontocetiLive_goodGives` | A good DAG meets Odontoceti's precondition. `Good` and `OdontocetiProperties.odontocetiLive` name the same … |
+
+### `Barnacle/Helpers/NemoLive.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `nemoLive_goodGives` | A good DAG meets Nemo's precondition. `Good` and `nemoLive` name the same three facts about the same set; … |
 
 ### `Network/Quorum.lean` (2)
 
@@ -39732,6 +39903,31 @@ subsection per module, in the layer order of Appendices B and C.
 | `votesIn_of_sustains` | The votes an old decision-round block counts are the votes it counted: its references are unchanged, and … |
 | `votesIn_old` | The votes an old certificate counts are the votes it counted. |
 
+### `Nemo/Carrier.lean` (3)
+
+| Lemma | Role |
+|:---|:---|
+| `nemoRule_block` | — |
+| `nemoRule_ids` | — |
+| `nemoRule_viewIds` | — |
+
+### `NemoProperties.lean` (12)
+
+| Lemma | Role |
+|:---|:---|
+| `banded` | Nemo is banded. |
+| `banded_aux` | Every verdict of Nemo reads a band of rounds. One induction, three cases. The direct case reads one round … |
+| `blockB` | — |
+| `blockB'` | — |
+| `certifiedIn_band` | The anchor certifies what it certified. Both directions: a certificate inside an old anchor's history is … |
+| `descends` | And a committed run decides everything below it, from `Indirect` with no induction of its own. |
+| `directCommitIn_band` | And so does the direct commit. |
+| `isLeaderBlock_band` | A candidate of a slot is a candidate of the slot the shift names. |
+| `memB` | — |
+| `not_certifiedIn_band_novel` | A candidate the band did not carry is certified from no old anchor. Its certificate would have to lie in … |
+| `refsB` | — |
+| `supportersIn_band` | The supporters a view holds transport. A voting-round block the view held is a block of the shifted … |
+
 ### `Odontoceti/Carrier.lean` (1)
 
 | Lemma | Role |
@@ -39779,10 +39975,12 @@ subsection per module, in the layer order of Appendices B and C.
 | `extends_of_skipFill` | The fill is an extension. It holds every block the original held — `ids` is a union — and denotes each of … |
 | `presentAt_liftView` | Presence in the pre-crash view is presence in the lifted one: the ids are the same and old blocks are … |
 
-### `Properties/Band.lean` (1)
+### `Properties/Band.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
+| `creators_band` | And a set inside the band has the authors it had. |
+| `layer_band` | A round layer lands on the layer the shift names. Stated over the filter rather than over any protocol's … |
 | `of_agreeAbove` | Agreement above a round carries every band whose floor is at or above it. |
 
 ### `Properties/Candidate.lean` (4)

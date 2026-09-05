@@ -1,13 +1,23 @@
 import LeanDag.Barnacle.Nemo.Statement
 import LeanDag.Barnacle.Helpers.Heads
+import LeanDag.Barnacle.Helpers.Descent
+import LeanDag.NemoProperties
 
 /-!
 # Nemo instance helpers — the laws
 
-Not part of the audit surface. The laws are `Nemo.decided_agree`, the
-direct constructor and `isLeaderBlock_of_decided`; the descent laws are
-`Nemo.decided_of_leader_mem` and the two indirect constructors, at the
-slack a majority may miss.
+Not part of the audit surface. Every law here is a **property**: `Agree`,
+`CommitsDirect` and `CommitsCandidate` for the base laws, and
+`LeaderCommits` with `Indirect` for the descent, assembled by
+`descent_of_properties`. `Nemo/Carrier.lean` and `NemoProperties.lean`
+are where `Nemo.decided_agree`, the direct constructor,
+`isLeaderBlock_of_decided` and `decided_of_leader_mem` are read; this
+file does not reach past them (`docs/porting-plan.md` step 1).
+
+What is left of the descent is the bridge from Nemo's notion of a good
+DAG to its own liveness precondition, which mentions no verdict. Nemo's
+slack is `n − majority`, not `f`: the strength is in the weaker `Good`,
+and that is unchanged.
 -/
 
 namespace LeanDag
@@ -22,51 +32,37 @@ theorem nemo_laws :
     BaseRule.Laws (nemo (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) where
   full_ids := fun _ => rfl
   historyView_ids := fun _ _ _ => rfl
-  agree := fun _ {_} _ _ _ _ _ h₁ h₂ => Nemo.decided_agree h₁ h₂
-  decided_of_directCommitIn := fun _ {_} _ _ _ hL hdc => Nemo.Decided.directCommit hL hdc
-  candidates := fun _ {_} _ _ _ h => Nemo.isLeaderBlock_of_decided h
+  agree := fun S {_} V₁ V₂ k v₁ v₂ h₁ h₂ => NemoProperties.agree S V₁ V₂ k v₁ v₂ h₁ h₂
+  decided_of_directCommitIn := fun S {_} V k L hL hdc =>
+    NemoProperties.commitsDirect S _ V k L hL hdc
+  candidates := fun S {_} V k L h => NemoProperties.commitsCandidate S _ V k L h
 
-/-- The descent laws, for Nemo-Nemo, at the slack a majority may miss:
-`n − majority`. -/
+/-- **A good DAG meets Nemo's precondition.** `Good` and `nemoLive` name
+the same three facts about the same set; the window is the single slot,
+and its rounds fit because the wave does. -/
+theorem nemoLive_goodGives [Nemo.CrashFaults Validator] :
+    (nemoLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload)).GoodGives
+      (Fintype.card Validator - Nemo.majority Validator)
+      (fun S {U} V T lo K => NemoProperties.nemoLive S (U := U) V T lo K) := by
+  intro U Rnd N hgood
+  obtain ⟨T, -, hcard, hsync, hpop⟩ := hgood
+  refine ⟨T, ?_, ?_⟩
+  · have := Nat.sub_le (Fintype.card Validator) (Nemo.majority Validator)
+    omega
+  intro S V κ hcov hRnd hN hlead
+  change S.slotRound κ + 2 ≤ N at hN
+  refine ⟨hcard, Rnd, N, hsync, hRnd, hpop, hcov, ?_⟩
+  intro k hk
+  have := S.mono (Nat.lt_succ_iff.mp hk)
+  omega
+
+/-- **The descent laws, for Nemo at the slack a majority may miss** —
+from the properties, with no argument about `Decided` here. -/
 theorem nemoLive_descent [Nemo.CrashFaults Validator] :
     (nemoLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload)).Descent
-      (Fintype.card Validator - Nemo.majority Validator) where
-  goodLeaders := by
-    intro U Rnd N hgood
-    obtain ⟨T, -, hcard, hsync, hpop⟩ := hgood
-    refine ⟨T, ?_, ?_⟩
-    · have := Nat.sub_le (Fintype.card Validator) (Nemo.majority Validator)
-      omega
-    intro S V κ hcov hRnd hN hlead
-    letI := S
-    change S.slotRound κ + 2 ≤ N at hN
-    obtain ⟨L, hLb, hdc⟩ := Nemo.directCommit_of_leader_mem hcard hsync hRnd
-      (hpop _ hRnd (by omega)) (hpop _ (by omega) (by omega)) hlead
-    refine ⟨L, Nemo.Decided.directCommit hLb ?_⟩
-    -- the supporters sit one round up, which the view covers
-    have hsub : (Nemo.blocksAt U (S.slotRound κ + 1)).filter
-        (fun p => L ∈ (U.block p).refs) ⊆ V.ids := by
-      intro q hq
-      rw [Finset.mem_filter, Nemo.mem_blocksAt] at hq
-      obtain ⟨⟨hqids, hqr⟩, -⟩ := hq
-      exact hcov q hqids (by show (U.block q).round ≤ N; omega)
-    show Nemo.majority Validator ≤ (Nemo.supportersIn U V L (S.slotRound κ)).card
-    rw [Nemo.supportersIn, Finset.inter_eq_left.2 hsub]
-    exact hdc
-  indirect := by
-    intro S U V i j A hij hj hmid
-    letI := S
-    change S.slotRound i + 2 ≤ S.slotRound j at hij
-    have helig : Nemo.Eligible Validator i j := Nemo.eligible_iff.mpr hij
-    have hmid' : ∀ i', i < i' → i' < j → Nemo.Eligible Validator i i' →
-        Nemo.Decided U V i' none :=
-      fun i' h1 h2 h3 => hmid i' h1 h2 (Nemo.eligible_iff.mp h3)
-    by_cases hc : ∃ L, Nemo.IsLeaderBlock U i L ∧ Nemo.CertifiedIn U A L (S.slotRound i)
-    · obtain ⟨L, hL, hcert⟩ := hc
-      exact ⟨some L, Nemo.Decided.indirectCommit (Nemo.lt_of_eligible helig) helig hj hmid'
-        hL hcert⟩
-    · push Not at hc
-      exact ⟨none, Nemo.Decided.indirectSkip (Nemo.lt_of_eligible helig) helig hj hmid' hc⟩
+      (Fintype.card Validator - Nemo.majority Validator) :=
+  descent_of_properties _ NemoProperties.leaderCommits NemoProperties.indirect
+    nemoLive_goodGives
 
 /-- The pigeonhole's committee bound holds for the majority slack at
 every `n`: `2 · (n − majority) + 1 ≤ n`. -/

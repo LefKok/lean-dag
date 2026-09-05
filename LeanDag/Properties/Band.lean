@@ -173,6 +173,66 @@ theorem reaches_old (hc : Causal R) (h : AgreeBand R U U' lo hi g g')
       have hroundU := (hc U).refs_round b hbU c hstep'
       exact ⟨(hc U).complete b hbU c hstep', hbre.tail hstep', by omega⟩
 
+/-! ## Reading a band, at any carrier
+
+Five projections that every rule's band proof needs and that existed
+only at the core's carrier, where they were written. `MysticetiProperties`
+keeps its own copies, which these subsume; a rule being ported states
+none of them (`docs/porting-plan.md`).
+
+The two that are not field projections are the two that matter: a round
+layer lands on the layer the shift names, and a set of blocks inside the
+band has the authors it had. -/
+
+variable {U U' : R.Universe} {lo hi g g' : ℕ}
+
+/-- A block inside the band is a block of the other universe. -/
+theorem mem_band (h : AgreeBand R U U' lo hi g g') {b : BlockId}
+    (hb : b ∈ R.ids U) (h1 : lo ≤ (R.block U b).round + g)
+    (h2 : (R.block U b).round + g ≤ hi) : b ∈ R.ids U' := h.mem b hb h1 h2
+
+/-- At the shifted round, with the author it had. -/
+theorem block_band (h : AgreeBand R U U' lo hi g g') {b : BlockId}
+    (hb : b ∈ R.ids U) (h1 : lo ≤ (R.block U b).round + g)
+    (h2 : (R.block U b).round + g ≤ hi) :
+    (R.block U' b).round + g' = (R.block U b).round + g ∧
+      (R.block U' b).creator = (R.block U b).creator :=
+  h.block b hb (Or.inl ⟨h1, h2⟩)
+
+/-- The same, read from the other side: a block the shift already
+placed inside the band. -/
+theorem block_band' (h : AgreeBand R U U' lo hi g g') {b : BlockId}
+    (hb : b ∈ R.ids U) (hb' : b ∈ R.ids U')
+    (h1 : lo ≤ (R.block U' b).round + g') (h2 : (R.block U' b).round + g' ≤ hi) :
+    (R.block U' b).round + g' = (R.block U b).round + g ∧
+      (R.block U' b).creator = (R.block U b).creator :=
+  h.block b hb (Or.inr ⟨hb', h1, h2⟩)
+
+/-- And, strictly above the floor, referencing what it referenced. -/
+theorem refs_band (h : AgreeBand R U U' lo hi g g') {b : BlockId}
+    (hb : b ∈ R.ids U) (h1 : lo < (R.block U b).round + g)
+    (h2 : (R.block U b).round + g ≤ hi) :
+    (R.block U' b).refs = (R.block U b).refs := h.refs b hb h1 h2
+
+/-- **A round layer lands on the layer the shift names.** Stated over the
+filter rather than over any protocol's `blocksAt`, which is that filter
+under a name. -/
+theorem layer_band (h : AgreeBand R U U' lo hi g g') {r r' : ℕ}
+    (hrr : r + g = r' + g') (h1 : lo ≤ r + g) (h2 : r + g ≤ hi) :
+    (R.ids U).filter (fun b => (R.block U b).round = r) ⊆
+      (R.ids U').filter (fun b => (R.block U' b).round = r') := by
+  intro b hb
+  rw [Finset.mem_filter] at hb ⊢
+  have hbb := block_band h hb.1 (by omega) (by omega)
+  exact ⟨mem_band h hb.1 (by omega) (by omega), by omega⟩
+
+/-- **And a set inside the band has the authors it had.** -/
+theorem creators_band (h : AgreeBand R U U' lo hi g g') {s : Finset BlockId}
+    (hs : ∀ b ∈ s, b ∈ R.ids U ∧ lo ≤ (R.block U b).round + g ∧
+      (R.block U b).round + g ≤ hi) :
+    s.image (fun i => (R.block U' i).creator) = s.image (fun i => (R.block U i).creator) :=
+  Finset.image_congr fun i hi' => (block_band h (hs i hi').1 (hs i hi').2.1 (hs i hi').2.2).2
+
 end AgreeBand
 
 /-- **Every verdict reads a band of rounds.** From the slot's own round
