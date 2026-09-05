@@ -4,7 +4,10 @@ import LeanDag.Liveness
 /-!
 # Decisions survive the cut
 
-`garbage.md` **G3** and **G4** at the `Decided` level. The per-slot verdicts
+`garbage.md` **G3** and **G4** used to be proved here, by structural
+induction over the decision relation; they are now
+`Properties/Arcs/GC.lean`, from `Banded` and `Agree`. What remains is
+the construction the witness needs. The per-slot verdicts
 (`directCommit_chop` and friends) said each *rule* reads only the window
 above the horizon; this file lifts that to the full decision relation — the
 recursion through anchors and intermediate skips included — and closes with
@@ -131,229 +134,23 @@ theorem horizon_le_slotRound (hd : G ≤ S.slotRound d) (k : ℕ) :
     G ≤ S.slotRound (d + k) :=
   hd.trans (S.mono (Nat.le_add_right d k))
 
-/-! ## The rules, transported -/
+/-! ## Where the rest of this file went
 
-theorem isLeaderBlock_chop (hd : G ≤ S.slotRound d) {k : ℕ} {L : BlockId} :
-    IsLeaderBlock (S := S.chop G d hd) (chop U G) k L ↔
-      IsLeaderBlock U (d + k) L := by
-  have hGk := horizon_le_slotRound hd k
-  unfold IsLeaderBlock
-  rw [chop_block_eq]
-  simp only [chopBlock_round, chopBlock_creator, mem_chop_ids,
-    Slots.chop_slotRound, Slots.chop_leader]
-  constructor
-  · rintro ⟨⟨hL, hLr⟩, hround, hcreator⟩
-    exact ⟨hL, by omega, hcreator⟩
-  · rintro ⟨hL, hround, hcreator⟩
-    exact ⟨⟨hL, by omega⟩, by omega, hcreator⟩
+`isLeaderBlock_chop` and seven more transport lemmas stood here, and
+above them G3 — `decided_chop`, both directions by structural induction
+over the decision relation — and G4, cross-cut agreement. All of it is
+now `Properties/Arcs/GC.lean`: `decided_chop_iff` and
+`decided_agree_chop` are the same statements, reached from `Banded` and
+`Agree` for any rule with a band, and `truncates_chop` is the witness
+that the cut stands in the relation they read.
 
-theorem eligible_chop (hd : G ≤ S.slotRound d) {k j : ℕ} :
-    Eligible (S := S.chop G d hd) Validator k j ↔
-      Eligible Validator (d + k) (d + j) := by
-  have hk := horizon_le_slotRound hd k
-  have hj := horizon_le_slotRound hd j
-  rw [eligible_iff (S := S.chop G d hd), eligible_iff (S := S)]
-  simp only [Slots.chop_slotRound]
-  omega
+What stays here is the *construction* — `chop`, `Slots.chop`,
+`View.chop` and the facts relating their fields — which the witness
+needs and which no property can supply. After this file no theorem of
+the garbage-collection mechanism mentions `Decided`.
 
-omit S in
-/-- The view filter is invisible to the certificate count: certificates for
-a slot above the cut live two rounds higher still. -/
-theorem certificatesIn_chop {V : View Validator BlockId Payload U}
-    {L : BlockId} (s : ℕ) :
-    certificatesIn (chop U G) (V.chop G) L s = certificatesIn U V L (G + s) := by
-  unfold certificatesIn
-  rw [certificates_chop]
-  ext C
-  simp only [Finset.mem_inter, View.chop_ids, Finset.mem_filter, mem_certificates]
-  constructor
-  · rintro ⟨hC, hv, -⟩
-    exact ⟨hC, hv⟩
-  · rintro ⟨⟨hC, hCr, hcert⟩, hv⟩
-    exact ⟨⟨hC, hCr, hcert⟩, hv, by omega⟩
-
-omit S in
-theorem directCommitIn_chop {V : View Validator BlockId Payload U}
-    {L : BlockId} (s : ℕ) :
-    DirectCommitIn (chop U G) (V.chop G) L s ↔ DirectCommitIn U V L (G + s) := by
-  unfold DirectCommitIn
-  rw [certificatesIn_chop, chop_block_eq, creatorsOf_chopBlock]
-
-omit S in
-theorem directSkipIn_chop {V : View Validator BlockId Payload U}
-    {L : BlockId} (s : ℕ) :
-    DirectSkipIn (chop U G) (V.chop G) L s ↔ DirectSkipIn U V L (G + s) := by
-  unfold DirectSkipIn
-  rw [chop_block_eq, blocksAt_chop, creatorsOf_chopBlock]
-  have hset : ((blocksAt U (G + (s + 1))).filter
-        fun q => L ∉ (chopBlock U G q).refs) ∩ (V.chop G).ids
-      = ((blocksAt U (G + s + 1)).filter fun q => L ∉ (U.block q).refs) ∩ V.ids := by
-    ext q
-    simp only [Finset.mem_inter, Finset.mem_filter, mem_blocksAt, View.chop_ids]
-    constructor
-    · rintro ⟨⟨⟨hq, hqr⟩, hnot⟩, hv, -⟩
-      rw [chopBlock_refs_of_lt (by omega)] at hnot
-      exact ⟨⟨⟨hq, by omega⟩, hnot⟩, hv⟩
-    · rintro ⟨⟨⟨hq, hqr⟩, hnot⟩, hv⟩
-      refine ⟨⟨⟨hq, by omega⟩, ?_⟩, hv, by omega⟩
-      rw [chopBlock_refs_of_lt (by omega)]
-      exact hnot
-  rw [hset]
-
-/-- The blamer set of a slot, in view, is the same on both sides of the
-cut: it is read at the voting round, which sits above the horizon
-whenever the slot does, and the candidates it quantifies over
-correspond. -/
-theorem slotBlamersIn_chop (hd : G ≤ S.slotRound d)
-    {V : View Validator BlockId Payload U} {k : ℕ} :
-    slotBlamers (S := S.chop G d hd) (chop U G) k ∩ (V.chop G).ids
-      = slotBlamers U (d + k) ∩ V.ids := by
-  have hGk := horizon_le_slotRound hd k
-  ext q
-  simp only [Finset.mem_inter, slotBlamers, Finset.mem_filter, mem_blocksAt,
-    mem_chop_ids, View.chop_ids, chop_block_eq, chopBlock_round, Slots.chop_slotRound]
-  constructor
-  · rintro ⟨⟨⟨⟨hq, hqG⟩, hqr⟩, hnot⟩, hv, -⟩
-    refine ⟨⟨⟨hq, by omega⟩, fun j hj hjL => ?_⟩, hv⟩
-    rw [chopBlock_refs_of_lt (by omega)] at hnot
-    exact hnot j hj ((isLeaderBlock_chop hd).mpr hjL)
-  · rintro ⟨⟨⟨hq, hqr⟩, hnot⟩, hv⟩
-    refine ⟨⟨⟨⟨hq, by omega⟩, by omega⟩, fun j hj hjL => ?_⟩, hv, by omega⟩
-    rw [chopBlock_refs_of_lt (by omega)] at hj
-    exact hnot j hj ((isLeaderBlock_chop hd).mp hjL)
-
-/-- **The slot-level skip survives the cut.** -/
-theorem directSkipSlotIn_chop (hd : G ≤ S.slotRound d)
-    {V : View Validator BlockId Payload U} {k : ℕ} :
-    DirectSkipSlotIn (S := S.chop G d hd) (chop U G) (V.chop G) k ↔
-      DirectSkipSlotIn U V (d + k) := by
-  unfold DirectSkipSlotIn
-  rw [chop_block_eq, creatorsOf_chopBlock, slotBlamersIn_chop hd]
-
-/-- The anchor of a decided slot at or past the base slot survives the cut. -/
-theorem anchor_mem_chop_ids (hd : G ≤ S.slotRound d) {j : ℕ} {A : BlockId}
-    (h : IsLeaderBlock U (d + j) A) : A ∈ (chop U G).ids := by
-  obtain ⟨hA, hAr, -⟩ := h
-  have := horizon_le_slotRound hd j
-  exact mem_chop_ids.mpr ⟨hA, by omega⟩
-
-/-! ## G3 — the decision relation survives the cut -/
-
-/-- Forward: a decision reached on the truncation, from a truncated view, is
-the original decision. Structural induction; anchors re-index by `d`. -/
-theorem decided_of_decided_chop (hd : G ≤ S.slotRound d)
-    {V : View Validator BlockId Payload U} {k : ℕ} {v : Option BlockId}
-    (h : Decided (S := S.chop G d hd) (chop U G) (V.chop G) k v) :
-    Decided U V (d + k) v := by
-  induction h with
-  | @directCommit k L hL hc =>
-    have hGk := horizon_le_slotRound hd k
-    refine Decided.directCommit ((isLeaderBlock_chop hd).mp hL) ?_
-    have := (directCommitIn_chop (V := V) (S.slotRound (d + k) - G)).mp hc
-    rwa [Nat.add_sub_cancel' hGk] at this
-  | @directSkip k hskip =>
-    have hGk := horizon_le_slotRound hd k
-    exact Decided.directSkip ((directSkipSlotIn_chop hd).mp hskip)
-  | @indirectCommit k j A L hkj helig hanchor hmid hL hcert ihj ihmid =>
-    have hGk := horizon_le_slotRound hd k
-    have hA : A ∈ (chop U G).ids :=
-      (isLeaderBlock_of_decided (S := S.chop G d hd) hanchor).1
-    refine Decided.indirectCommit (by omega) ((eligible_chop hd).mp helig)
-      ihj ?_ ((isLeaderBlock_chop hd).mp hL) ?_
-    · intro i h1 h2 he
-      obtain ⟨i', rfl⟩ : ∃ i', i = d + i' := ⟨i - d, by omega⟩
-      exact ihmid i' (by omega) (by omega) ((eligible_chop hd).mpr he)
-    · have := (certifiedIn_chop hA (S.slotRound (d + k) - G)).mp hcert
-      rwa [Nat.add_sub_cancel' hGk] at this
-  | @indirectSkip k j A hkj helig hanchor hmid hnone ihj ihmid =>
-    have hGk := horizon_le_slotRound hd k
-    have hA : A ∈ (chop U G).ids :=
-      (isLeaderBlock_of_decided (S := S.chop G d hd) hanchor).1
-    refine Decided.indirectSkip (by omega) ((eligible_chop hd).mp helig)
-      ihj ?_ ?_
-    · intro i h1 h2 he
-      obtain ⟨i', rfl⟩ : ∃ i', i = d + i' := ⟨i - d, by omega⟩
-      exact ihmid i' (by omega) (by omega) ((eligible_chop hd).mpr he)
-    · intro L hL hcert
-      have hup : CertifiedIn U A L (G + (S.slotRound (d + k) - G)) := by
-        rwa [Nat.add_sub_cancel' hGk]
-      exact hnone L ((isLeaderBlock_chop hd).mpr hL)
-        ((certifiedIn_chop hA _).mpr hup)
-
-/-- Backward: the original decision is reached on the truncation. Stated
-over an arbitrary slot `n = d + k` so the induction can move through
-anchors. -/
-theorem decided_chop_of_decided (hd : G ≤ S.slotRound d)
-    {V : View Validator BlockId Payload U} {n : ℕ} {v : Option BlockId}
-    (h : Decided U V n v) :
-    ∀ k, n = d + k → Decided (S := S.chop G d hd) (chop U G) (V.chop G) k v := by
-  induction h with
-  | @directCommit n L hL hc =>
-    rintro k rfl
-    have hGk := horizon_le_slotRound hd k
-    refine Decided.directCommit (S := S.chop G d hd) ((isLeaderBlock_chop hd).mpr hL) ?_
-    show DirectCommitIn (chop U G) (V.chop G) L (S.slotRound (d + k) - G)
-    refine (directCommitIn_chop _).mpr ?_
-    rwa [Nat.add_sub_cancel' hGk]
-  | @directSkip n hskip =>
-    rintro k rfl
-    have hGk := horizon_le_slotRound hd k
-    exact Decided.directSkip (S := S.chop G d hd) ((directSkipSlotIn_chop hd).mpr hskip)
-  | @indirectCommit n j A L hkj helig hanchor hmid hL hcert ihj ihmid =>
-    rintro k rfl
-    have hGk := horizon_le_slotRound hd k
-    obtain ⟨j', rfl⟩ : ∃ j', j = d + j' := ⟨j - d, by omega⟩
-    have hA : A ∈ (chop U G).ids :=
-      anchor_mem_chop_ids hd (isLeaderBlock_of_decided hanchor)
-    refine Decided.indirectCommit (S := S.chop G d hd) (by omega)
-      ((eligible_chop hd).mpr helig) (ihj j' rfl) ?_ ((isLeaderBlock_chop hd).mpr hL) ?_
-    · intro i' h1 h2 he
-      exact ihmid (d + i') (by omega) (by omega)
-        ((eligible_chop hd).mp he) i' rfl
-    · show CertifiedIn (chop U G) A L (S.slotRound (d + k) - G)
-      refine (certifiedIn_chop hA _).mpr ?_
-      rwa [Nat.add_sub_cancel' hGk]
-  | @indirectSkip n j A hkj helig hanchor hmid hnone ihj ihmid =>
-    rintro k rfl
-    have hGk := horizon_le_slotRound hd k
-    obtain ⟨j', rfl⟩ : ∃ j', j = d + j' := ⟨j - d, by omega⟩
-    have hA : A ∈ (chop U G).ids :=
-      anchor_mem_chop_ids hd (isLeaderBlock_of_decided hanchor)
-    refine Decided.indirectSkip (S := S.chop G d hd) (by omega)
-      ((eligible_chop hd).mpr helig) (ihj j' rfl) ?_ ?_
-    · intro i' h1 h2 he
-      exact ihmid (d + i') (by omega) (by omega)
-        ((eligible_chop hd).mp he) i' rfl
-    · intro L hL hcert
-      refine hnone L ((isLeaderBlock_chop hd).mp hL) ?_
-      have := (certifiedIn_chop hA (S.slotRound (d + k) - G)).mp hcert
-      rwa [Nat.add_sub_cancel' hGk] at this
-
-/-- **G3.** The decision relation survives the cut, both ways: a validator
-re-running Mysticeti on the truncation, from its truncated view, decides
-slot `k` exactly as it decided slot `d + k` on the full universe. The only
-condition is that the base slot clears the horizon — no synchrony, no
-liveness, nothing about the prefix. -/
-theorem decided_chop (hd : G ≤ S.slotRound d)
-    {V : View Validator BlockId Payload U} {k : ℕ} {v : Option BlockId} :
-    Decided (S := S.chop G d hd) (chop U G) (V.chop G) k v ↔
-      Decided U V (d + k) v :=
-  ⟨decided_of_decided_chop hd, fun h => decided_chop_of_decided hd h k rfl⟩
-
-/-! ## G4 — cross-cut agreement -/
-
-/-- **G4.** A validator that joined from the truncation — holding an
-**arbitrary** view `W` of `chop U G`, with no history below the cut and no
-relation to any full-history view — agrees slot for slot with every
-full-history validator. `decided_unique` runs inside the truncation against
-the truncated full-history view, and `decided_chop` carries the verdict
-across the cut. -/
-theorem decided_agree_chop (hd : G ≤ S.slotRound d)
-    {W : View Validator BlockId Payload (chop U G)}
-    {V : View Validator BlockId Payload U} {k : ℕ} {w v : Option BlockId}
-    (hW : Decided (S := S.chop G d hd) (chop U G) W k w)
-    (hV : Decided U V (d + k) v) :
-    w = v :=
-  decided_unique (S := S.chop G d hd) hW (V.chop G) v (decided_chop_of_decided hd hV k rfl)
+`docs/target-properties.md` §11.4c records why the duplicates went: two
+proofs of one statement is redundancy rather than a cross-check, since
+Lean already guarantees the types agree. -/
 
 end LeanDag

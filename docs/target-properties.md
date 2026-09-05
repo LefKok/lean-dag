@@ -336,9 +336,10 @@ what a band implies.
 neither proves truncation. Hydrozoan's truncation file lost its
 induction and went from 528 lines to 176, keeping the `TruncatesHZ`
 witness and the `no_base_of_naive_shift` record. The garbage-collection
-arc's two transport theorems, which `GC/ChopDecided.lean` proves by
+arc's two transport theorems, which `GC/ChopDecided.lean` proved by
 structural induction over the decision relation, come back out of
-`LocalTruncate.of_banded` in one application. The cost was threading
+`LocalTruncate.of_banded` in one application — and that induction has
+since been deleted (§11.4c). The cost was threading
 four naturals through every band lemma of both protocols, paid once.
 
 **What could still fail it.** A rule that reads an *absolute* round — a
@@ -1310,8 +1311,8 @@ directory, hence the one flat module.
   `LocalTruncate` applied, and `LocalTruncate` is the band applied, so
   the arc holds the `Truncates` witness for the canonical cut and
   nothing else. Its consumer test is `decided_chop_iff`, which
-  `GC/ChopDecided.lean` proves by induction and the arc re-derives in
-  one application.
+  `GC/ChopDecided.lean` proved by induction and the arc re-derives in
+  one application; the induction has since been deleted (§11.4c).
 - **G3** Discharge them for Hydrozoan (**done**) — HZ9 states
   `Causal`, `Banded`, `Agree`, `Persist` and `SkipsUnsupported` at grade
   `qFast ≤ |T|` (§3.7). Persistence is unconditional, as §3.2 predicts
@@ -1600,7 +1601,8 @@ no history below the cut and no relation to anyone's full-history view,
 and must still agree.
 
 `GC/ChopDecided.lean` proved that for the core (G4), `GC/Horizon.lean`
-across two horizons (G8), and `Integration/Hydrozoan/ChopDecided.lean`
+across two horizons (G8) — both since deleted (§11.4c) — and
+`Integration/Hydrozoan/ChopDecided.lean`
 again for Hydrozoan. **None of it was necessary.** `Agree` compares two
 views of one universe; `LocalTruncate` puts the full-history verdict
 into the truncation; the two compose. `Arcs/GC.decided_agree_truncate`
@@ -1737,6 +1739,43 @@ mechanisms rather than from their consumers — which is how `Reindex`
 pattern has appeared. The second was billing what survived as *the
 additive counterpart to `Sustains`*; it is not a counterpart to
 anything, being vacuous wherever the fault model and the carrier agree.
+
+### 11.4c The mechanism stops carrying its own proof
+
+The garbage-collection arc proved verdict transport and cross-cut
+agreement twice: once by structural induction over the decision relation
+in `GC/ChopDecided.lean` and `GC/Horizon.lean`, and once from `Banded`
+and `Agree` in `Properties/Arcs/GC.lean`. The duplicates are gone.
+
+**Why keeping them was not the safer choice.** The argument for keeping
+was that they are the comparison — that a claim of the form *re-derived
+with no induction of its own* is checkable only while the induction is
+there. It does not survive inspection: `Arcs.decided_chop_iff` has
+literally the same type as `GC.decided_chop`, and Lean guarantees that.
+Two proofs of one statement is redundancy, not a cross-check; a
+cross-check would need them to prove different things that ought to
+agree. What the duplicates did offer was an invitation to the next
+protocol author to copy them instead of proving the properties.
+
+**What went, and what it took.** `bootstrap_agree` was the one live
+consumer, and it routes through `Arcs.decided_agree_chop` — acyclic,
+since `GC/Bootstrap.lean` is a sibling of `Arcs/GC.lean` rather than
+upstream of it. With that moved and the dead `decided_agree_horizons`
+dropped, a closed cluster of twelve declarations became unreachable:
+G3 both directions, G4, and the eight transport lemmas that existed only
+to feed them. `GC/ChopDecided.lean` went from 359 lines to 153.
+
+**What stays, and why it must.** The *construction* — `chop`,
+`Slots.chop`, `View.chop`, and the facts relating their fields. A
+witness that the cut stands in the `Truncates` relation has to mention
+the cut, and no property can supply that. The test is sharp: after this,
+no theorem of the garbage-collection mechanism mentions `Decided`.
+
+**What this does not touch.** The protocol. `Mysticeti.lean` and
+`Liveness.lean` keep every direct argument, and must: the properties are
+proved *from* them, so a protocol consuming its own conformance would be
+an import cycle. The shape is protocol → properties → mechanisms, and
+only the last arrow lost a duplicate.
 
 ### 11.4b Obligation or consequence
 

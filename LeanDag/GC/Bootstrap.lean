@@ -1,6 +1,7 @@
 import LeanDag.GC.Window
 import LeanDag.GC.AttestedBase
 import LeanDag.GC.ChopDecided
+import LeanDag.Properties.Arcs.GC
 
 /-!
 # Bootstrap: the joiner's view, assembled and bounded
@@ -41,9 +42,9 @@ applies to it verbatim.
 
 namespace LeanDag
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator]
-variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
+variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 variable {U : BlockUniverse Validator BlockId Payload}
 variable {D : Delivery U} {v w : Validator} {y : BlockId} {G : ℕ}
 
@@ -188,7 +189,7 @@ theorem joinView_ids {R m t : ℕ} (hs : Synchronised U R)
 attested base and a correct peer's window, and runs Mysticeti on the
 truncation, never conflicts with any full-history validator on any slot.
 The composition *is* the proof: `joinView` is a view of `chop U G`, and
-`decided_agree_chop` never asked whose view it was. -/
+cross-cut agreement never asked whose view it was. -/
 theorem bootstrap_agree [S : Slots Validator] {d : ℕ}
     (hd : G ≤ S.slotRound d) {R m t : ℕ} (hs : Synchronised U R)
     (hw : w ∈ (Correct : Finset Validator)) (hcar : Populated U (m + 1))
@@ -198,7 +199,7 @@ theorem bootstrap_agree [S : Slots Validator] {d : ℕ}
       (joinView (D := D) hs hw hcar hpop hR hmt) k jv)
     (hV : Decided U V (d + k) fv) :
     jv = fv :=
-  decided_agree_chop hd hJ hV
+  Properties.Arcs.decided_agree_chop hd hJ hV
 
 /-! ## G7 — the windowed relay obligation -/
 

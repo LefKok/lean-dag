@@ -23273,11 +23273,11 @@ EDGE	LeanDag.bootstrap_agree	LeanDag.chop
 EDGE	LeanDag.bootstrap_agree	LeanDag.Correct
 EDGE	LeanDag.bootstrap_agree	LeanDag.joinView
 EDGE	LeanDag.bootstrap_agree	LeanDag.BlockUniverse
-EDGE	LeanDag.bootstrap_agree	LeanDag.decided_agree_chop
 EDGE	LeanDag.bootstrap_agree	LeanDag.Slots.chop
 EDGE	LeanDag.bootstrap_agree	LeanDag.Slots
 EDGE	LeanDag.bootstrap_agree	LeanDag.View
 EDGE	LeanDag.bootstrap_agree	LeanDag.Synchronised
+EDGE	LeanDag.bootstrap_agree	LeanDag.Properties.Arcs.decided_agree_chop
 NODE	LeanDagTest.FinWhale.decB	LeanDagTest.FinWhale.Model	def
 EDGE	LeanDagTest.FinWhale.decB	LeanDag.FinWhale.Verdict.undecided
 EDGE	LeanDagTest.FinWhale.decB	LeanDag.FinWhale.Verdict

@@ -45,7 +45,7 @@ protocol rule *reference only what you accepted*. New objects here:
 
 **The headline results.**
 
-- **Safety crosses the cut unconditionally** (`decided_chop`,
+- **Safety crosses the cut unconditionally** (`decided_chop_iff`,
   `decided_agree_chop`). A validator re-running Mysticeti on the
   truncation decides every slot exactly as on the full universe, and a
   joiner holding *any* view of the truncation agrees with *any*
@@ -68,7 +68,7 @@ protocol rule *reference only what you accepted*. New objects here:
   attestations *are* blocks, no signatures — and its decisions equal
   every full-history validator's. Bases sampled from different peers
   need not match; verdicts still do.
-- **Horizons are local** (`chop_chop`, `decided_agree_horizons`,
+- **Horizons are local** (`chop_chop`, `decided_agree_horizons_chop`,
   `viewUpto_subset_viewUpto_succ`). Different validators cut at
   different rounds; a deeper cut is just another cut, verdicts are
   horizon-independent, and post-`R` possession universalises in one
@@ -154,7 +154,7 @@ rule layer
 (`supporters`/`certificates`/`DirectCommit`/`DirectSkip`/`CertifiedIn`)
 is round-indexed and **never consults the schedule**, so all of G2 and
 per-slot G3 close with no correspondence at all; the schedule enters
-only at the `Decided` level, where the correspondence (`decided_chop`)
+only at the `Decided` level, where the correspondence (`decided_chop_iff`)
 goes through by structural induction with the base-slot condition as the
 *only* premise. And the base-slot condition is what makes the induced
 schedule's keying survive: `G ≤ slotRound d` pins the rebased rounds
@@ -178,7 +178,7 @@ Two invariants make a horizon *admissible* for a validator:
   never be decided — the ledger stalls below the validator's own cut. A
   liveness-of-output failure, never a safety one. A1 is a policy-layer
   invariant (§6), not a hypothesis of the safety transfer — none of
-  `decided_chop`/`decided_agree_chop`/`bootstrap_agree` assumes it. It
+  `decided_chop_iff`/`decided_agree_chop`/`bootstrap_agree` assumes it. It
   is also *dischargeable*: a committed run decides everything below it
   (`all_decided_below_of_fairRun`), so post-`R` the frontier below a
   commit is total.
@@ -261,7 +261,7 @@ alternatives:
 **Breaks, by design, and is replaced.** Global downward closure and
 "full history available to all". The replacement, proved: for everything
 the protocol still *does* — validate new blocks (G1), decide slots
-(`decided_chop`), stay live (`live_chopD`), bound storage
+(`decided_chop_iff`), stay live (`live_chopD`), bound storage
 (`card_retained_le`) — the truncated universe is as good as the full
 one.
 
@@ -290,23 +290,25 @@ results, in that idiom:
   work; the rule layer is round-indexed and schedule-free, so no slot
   correspondence appears at this level.
 - **G3 (decision invariance)** — per slot, and for the **full decision
-  relation**: `decided_chop` (`ChopDecided.lean`). A validator
+  relation**: `decided_chop_iff` (`Properties/Arcs/GC.lean`). A validator
   re-running Mysticeti on the truncation from its truncated view
   decides slot `k` exactly as it decided slot `d + k` on the full
-  universe — structural induction through anchors and intermediate
-  skips, both directions; the indirect verdict consults its anchor only
-  through the anchor's cone, which is entirely above the slot. The only
-  premise is `G ≤ slotRound d` — no synchrony, no liveness, and A1 is
-  *not* a hypothesis (§2).
-- **G4 (cross-cut agreement)** — `decided_agree_chop`, and it is
+  universe. It was a structural induction through anchors and
+  intermediate skips, both directions, in `ChopDecided.lean`; it is now
+  `LocalTruncate` applied to the witness that the cut is a `Truncates`,
+  and so holds for every rule with a band rather than for the core
+  alone. The only premise is `G ≤ slotRound d` — no synchrony, no
+  liveness, and A1 is *not* a hypothesis (§2).
+- **G4 (cross-cut agreement)** — `decided_agree_chop`
+  (`Properties/Arcs/GC.lean`), and it is
   deliberately asymmetric: outright **equality of verdicts** between a
   full-history validator and a joiner holding an **arbitrary** view of
   the truncation. The asymmetry matters: a joiner's view is never
   `V.chop` for any full-history `V` (lifted to `U` it would not be
   downward closed), so `decided_unique` is played *inside* the
-  truncation against a truncated view, and `decided_chop` carries the
+  truncation against a truncated view, and `LocalTruncate` carries the
   verdict across the cut. Agreement across *different* horizons
-  `G_v ≠ G_w` is `decided_agree_horizons` (§6).
+  `G_v ≠ G_w` is `decided_agree_horizons_chop` (§6).
 
 Safety needs no new quorum argument anywhere: it inherits T0/T3/M-series
 through G1, and G2–G4 are locality and correspondence bookkeeping — the
@@ -370,7 +372,7 @@ exclusive:
   is round-synchronous with static views, so a clock-lag constant has
   no carrier here; what it proves instead is that skew **does not need
   bounding for correctness** — verdicts at different horizons are equal
-  outright (`decided_agree_horizons`), and different horizons compose
+  outright (`decided_agree_horizons_chop`), and different horizons compose
   (`chop_chop`: `chop (chop U G₁) (G₂−G₁) = chop U G₂` — a deeper cut
   is just another cut, so validators at different `G` sit on one tower
   of truncations, never in incomparable worlds). No agreement protocol;
@@ -396,7 +398,7 @@ pinned to its theorem.
 
 | bound | source | what breaks below it |
 |---|---|---|
-| — (any `G` is safe) | `decided_chop`, `decided_agree_chop`, `bootstrap_agree` | nothing — commit safety carries no lag hypothesis at all; its only premise is `G ≤ slotRound d` |
+| — (any `G` is safe) | `decided_chop_iff`, `decided_agree_chop`, `bootstrap_agree` | nothing — commit safety carries no lag hypothesis at all; its only premise is `G ≤ slotRound d` |
 | `Λ ≥ 0` vs the *decided* frontier | A1 / `all_decided_below_of_fairRun` | ledger totality: a slot reads rounds `slotRound k … +2`, so cutting above an undecided slot discards its certificates and the slot is undecidable forever — output stalls, safety unharmed |
 | `Λ ≥ 1` | G9, `viewUpto_subset_viewUpto_succ` | no-desync among correct peers: possession universalises in exactly one round, so at `Λ = 0` a peer may still lack what you discard |
 | `Λ ≥ 2` | G11, `accepted_mem_base` (`t ≥ m + 2`, tight on data) | base completeness for joiners: below it, an accepted round-`G` block can be missing from the attested base and a window block dangles — the `Dexcl` witness realises this at `t = m + 1` |
@@ -527,7 +529,7 @@ the G6 constant.
 
 **And safety never depended on any of it** (the D14 note, restated for
 GC): commit safety is quorum arithmetic; exclusion and forgiveness are a
-DoS-layer economy. The cross-cut safety results (`decided_chop`,
+DoS-layer economy. The cross-cut safety results (`decided_chop_iff`,
 `decided_agree_chop`, `bootstrap_agree`) carry **no** exclusion, budget,
 or exposure hypothesis — their only premise is the base-slot condition
 `G ≤ slotRound d`. A world that forgives every equivocation still
@@ -571,7 +573,7 @@ commits the same blocks; it just stores more junk.
 | module | contents |
 |---|---|
 | `LeanDag/GC/Chop.lean` | the operator; universe laws; `dosValid_chop`; per-slot verdict invariance (G1, G2, per-slot G3) |
-| `LeanDag/GC/ChopDecided.lean` | `View.chop`, `Slots.chop`, rule correspondences, `decided_chop`, `decided_agree_chop` (G3, G4) |
+| `LeanDag/GC/ChopDecided.lean` | `View.chop`, `Slots.chop`, rule correspondences, `decided_chop_iff`, `decided_agree_chop` (G3, G4) |
 | `LeanDag/GC/Window.lean` | `chopD`, windowed novelty and store correspondence, liveness transfer, `card_retained_le` (G5, G6, G13, G14) |
 | `LeanDag/GC/AttestedBase.lean` | `attesters`, `Base`, the sandwich (G10) |
 | `LeanDag/GC/Bootstrap.lean` | `accepted_mem_base`, `joinIds`/`joinView`, `card_joinIds_le`, `card_serve_le`, `bootstrap_agree` (G11, G6b, G7, G12) |

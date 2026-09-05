@@ -1,3 +1,4 @@
+import LeanDag.Properties.Arcs.GC
 import LeanDag.GC.Horizon
 import LeanDagTest.GC.Bootstrap
 
@@ -18,7 +19,7 @@ computation and derived from the theorem.
 
 **G8 on data — heterogeneous horizons agree**: a joiner truncated at
 `G = 1` and one truncated at `G = 2` each decide their own slot 0 — the
-same absolute slot 1 — and `decided_agree_horizons` pins the verdicts to
+same absolute slot 1 — and cross-horizon agreement pins the verdicts to
 each other. Both actually decide `some 11`, by computation inside each
 truncation.
 -/
@@ -78,10 +79,10 @@ example {w₁ w₂ fv : Option (Fin 20)}
       (View.full (chop Uexcl 2)) 0 w₂)
     (hV : Decided Uexcl (View.full Uexcl) 1 fv) :
     w₁ = w₂ :=
-  decided_agree_horizons (by decide) (by decide) rfl hW₁ hW₂ hV
+  Properties.Arcs.decided_agree_horizons_chop (by decide) (by decide) rfl hW₁ hW₂ hV
 
 #print axioms chop_chop
 #print axioms viewUpto_subset_viewUpto_succ
-#print axioms decided_agree_horizons
+#print axioms LeanDag.Properties.Arcs.decided_agree_horizons_chop
 
 end LeanDagTest

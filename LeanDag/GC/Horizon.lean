@@ -95,25 +95,12 @@ theorem chop_chop {G₁ G₂ : ℕ} (hG : G₁ ≤ G₂) :
   · rintro ⟨hi, h2⟩
     exact ⟨⟨hi, by omega⟩, by omega⟩
 
-/-! ## G8 — agreement across heterogeneous horizons -/
+/-! ## G8 — agreement across heterogeneous horizons
 
-/-- **G8.** Validators truncated at *different* horizons agree on every
-shared slot, from arbitrary views of their respective truncations —
-matched through the absolute slot index. The full-history verdict both
-are compared against is supplied under liveness by L8/L10. Horizons need
-never be negotiated: each admissible cut sees the same ledger. -/
-theorem decided_agree_horizons [S : Slots Validator]
-    {G₁ G₂ d₁ d₂ : ℕ} (hd₁ : G₁ ≤ S.slotRound d₁) (hd₂ : G₂ ≤ S.slotRound d₂)
-    {W₁ : View Validator BlockId Payload (chop U G₁)}
-    {W₂ : View Validator BlockId Payload (chop U G₂)}
-    {V : View Validator BlockId Payload U}
-    {k₁ k₂ : ℕ} (halign : d₁ + k₁ = d₂ + k₂) {w₁ w₂ fv : Option BlockId}
-    (hW₁ : Decided (S := S.chop G₁ d₁ hd₁) (chop U G₁) W₁ k₁ w₁)
-    (hW₂ : Decided (S := S.chop G₂ d₂ hd₂) (chop U G₂) W₂ k₂ w₂)
-    (hV : Decided U V (d₁ + k₁) fv) :
-    w₁ = w₂ :=
-  (decided_agree_chop hd₁ hW₁ hV).trans
-    (decided_agree_chop hd₂ hW₂ (halign ▸ hV)).symm
+`decided_agree_horizons` stood here, chaining G4 twice. It is now
+`Properties.Arcs.decided_agree_horizons_chop`, the same statement from
+`Agree` and `LocalTruncate`, and holds for any rule with a band rather
+than for the core alone. -/
 
 /-! ## G9 — the depth rule -/
 

@@ -24986,7 +24986,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 965 theorems that either another module of the
+The 963 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -28072,34 +28072,6 @@ theorem horizon_le_slotRound (hd : G ≤ S.slotRound d) (k : ℕ) :
 
 Every slot from the base slot on clears the horizon.
 
-#### `decided_chop`
-
-*theorem, `GC.ChopDecided.lean`*
-
-```lean
-theorem decided_chop (hd : G ≤ S.slotRound d)
-    {V : View Validator BlockId Payload U} {k : ℕ} {v : Option BlockId} :
-    Decided (S := S.chop G d hd) (chop U G) (V.chop G) k v ↔
-      Decided U V (d + k) v
-```
-
-**G3.** The decision relation survives the cut, both ways: a validator re-running Mysticeti on the truncation, from its truncated view, decides slot `k` exactly as it decided slot `d + k` on the full universe. The only condition is that the base slot clears the horizon — no synchrony, no liveness, nothing about the prefix.
-
-#### `decided_agree_chop`
-
-*theorem, `GC.ChopDecided.lean`*
-
-```lean
-theorem decided_agree_chop (hd : G ≤ S.slotRound d)
-    {W : View Validator BlockId Payload (chop U G)}
-    {V : View Validator BlockId Payload U} {k : ℕ} {w v : Option BlockId}
-    (hW : Decided (S := S.chop G d hd) (chop U G) W k w)
-    (hV : Decided U V (d + k) v) :
-    w = v
-```
-
-**G4.** A validator that joined from the truncation — holding an **arbitrary** view `W` of `chop U G`, with no history below the cut and no relation to any full-history view — agrees slot for slot with every full-history validator. `decided_unique` runs inside the truncation against the truncated full-history view, and `decided_chop` carries the verdict across the cut.
-
 #### `mem_viewUpto`
 
 *theorem, `GC.Window.lean`*
@@ -28277,7 +28249,7 @@ theorem bootstrap_agree [S : Slots Validator] {d : ℕ}
     jv = fv
 ```
 
-**G12 (bootstrap safety).** A joiner that assembles its view from the attested base and a correct peer's window, and runs Mysticeti on the truncation, never conflicts with any full-history validator on any slot. The composition *is* the proof: `joinView` is a view of `chop U G`, and `decided_agree_chop` never asked whose view it was.
+**G12 (bootstrap safety).** A joiner that assembles its view from the attested base and a correct peer's window, and runs Mysticeti on the truncation, never conflicts with any full-history validator on any slot. The composition *is* the proof: `joinView` is a view of `chop U G`, and cross-cut agreement never asked whose view it was.
 
 #### `card_serve_le`
 
@@ -28306,25 +28278,6 @@ theorem chop_chop {G₁ G₂ : ℕ} (hG : G₁ ≤ G₂) :
 ```
 
 **G8, the composition law.** A deeper cut is just another cut: two admissible horizons are always related by the one operator, so every transfer theorem composes along the tower of truncations.
-
-#### `decided_agree_horizons`
-
-*theorem, `GC.Horizon.lean`*
-
-```lean
-theorem decided_agree_horizons [S : Slots Validator]
-    {G₁ G₂ d₁ d₂ : ℕ} (hd₁ : G₁ ≤ S.slotRound d₁) (hd₂ : G₂ ≤ S.slotRound d₂)
-    {W₁ : View Validator BlockId Payload (chop U G₁)}
-    {W₂ : View Validator BlockId Payload (chop U G₂)}
-    {V : View Validator BlockId Payload U}
-    {k₁ k₂ : ℕ} (halign : d₁ + k₁ = d₂ + k₂) {w₁ w₂ fv : Option BlockId}
-    (hW₁ : Decided (S := S.chop G₁ d₁ hd₁) (chop U G₁) W₁ k₁ w₁)
-    (hW₂ : Decided (S := S.chop G₂ d₂ hd₂) (chop U G₂) W₂ k₂ w₂)
-    (hV : Decided U V (d₁ + k₁) fv) :
-    w₁ = w₂
-```
-
-**G8.** Validators truncated at *different* horizons agree on every shared slot, from arbitrary views of their respective truncations — matched through the absolute slot index. The full-history verdict both are compared against is supplied under liveness by L8/L10. Horizons need never be negotiated: each admissible cut sees the same ledger.
 
 #### `viewUpto_subset_viewUpto_succ`
 
@@ -37111,6 +37064,19 @@ theorem persist : Persist
 
 **The core persists unconditionally**, as an evidence-backed rule must — now a corollary of the band rather than an induction of its own. The grade `Quorate` that stood here before was not a property of the protocol but the missing half of its skip rule.
 
+#### `subset_blamers`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem subset_blamers {V : View Validator BlockId Payload U} {T : Finset Validator} {k : ℕ}
+    (hpres : PresentAt mysticetiRule V T (S.slotRound k + 1))
+    (huns : Unsupported mysticetiRule S U V T k) :
+    T ⊆ creatorsOf U.block (slotBlamers U k ∩ V.ids)
+```
+
+Every member of `T` blames the slot: its voting-round block is in view and references no candidate, which is what `Unsupported` says.
+
 #### `skipsUnsupported`
 
 *theorem, `MysticetiProperties.lean`*
@@ -37701,7 +37667,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 969 lemmas used only within the file that proves
+The 958 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -38054,23 +38020,13 @@ subsection per module, in the layer order of Appendices B and C.
 | `supporters_chop` | — |
 | `votesIn_chop` | — |
 
-### `GC/ChopDecided.lean` (13)
+### `GC/ChopDecided.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
 | `Slots.chop_leader` | — |
 | `Slots.chop_slotRound` | — |
 | `View.chop_ids` | — |
-| `anchor_mem_chop_ids` | The anchor of a decided slot at or past the base slot survives the cut. |
-| `certificatesIn_chop` | The view filter is invisible to the certificate count: certificates for a slot above the cut live two … |
-| `decided_chop_of_decided` | Backward: the original decision is reached on the truncation. Stated over an arbitrary slot `n = d + k` so … |
-| `decided_of_decided_chop` | Forward: a decision reached on the truncation, from a truncated view, is the original decision. Structural … |
-| `directCommitIn_chop` | — |
-| `directSkipIn_chop` | — |
-| `directSkipSlotIn_chop` | The slot-level skip survives the cut. |
-| `eligible_chop` | — |
-| `isLeaderBlock_chop` | — |
-| `slotBlamersIn_chop` | The blamer set of a slot, in view, is the same on both sides of the cut: it is read at the voting round, … |
 
 ### `GC/Window.lean` (4)
 
@@ -39479,7 +39435,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `soundOn_skipFill` | The fill preserves it, above the gap. The synchrony round must clear the filled round: inside the gap the … |
 | `soundOn_stack` | The stack preserves it, the offsets composing exactly as the two statements above suggest: the fill … |
 
-### `MysticetiProperties.lean` (35)
+### `MysticetiProperties.lean` (34)
 
 | Lemma | Role |
 |:---|:---|
@@ -39514,7 +39470,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `not_mem_refs_novel` | An old block votes for nothing the extension added. |
 | `quorumCard_pos` | Two quorums share a correct validator, so a quorum is not empty. |
 | `slotBlamers_congr` | The slot-level skip reads the schedule only at its own slot, so two schedules naming the same round and … |
-| `subset_blamers` | Every member of `T` blames the slot: its voting-round block is in view and references no candidate, which … |
 | `votesIn_band` | The votes an in-band certificate counts are the votes it counted. |
 | `votesIn_of_sustains` | The votes an old decision-round block counts are the votes it counted: its references are unchanged, and … |
 | `votesIn_old` | The votes an old certificate counts are the votes it counted. |

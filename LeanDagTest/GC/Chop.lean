@@ -1,3 +1,4 @@
+import LeanDag.Properties.Arcs.GC
 import LeanDag.GC.Window
 import LeanDag.GC.AttestedBase
 import LeanDag.GC.ChopDecided
@@ -79,7 +80,8 @@ example : Decided Uexcl (View.full Uexcl) 1 (some 11) :=
 -- G3 applied: the truncated view re-decides it as slot 0 of the truncation.
 example : Decided (S := fairSlots.chop 2 1 (by decide)) (chop Uexcl 2)
     ((View.full Uexcl).chop 2) 0 (some 11) :=
-  (decided_chop (by decide)).mpr (Decided.directCommit (by decide) (by decide))
+  (Properties.Arcs.decided_chop_iff (by decide)).mp
+    (Decided.directCommit (by decide) (by decide))
 
 -- A joiner's decision, derived *inside the truncation alone*: the full view
 -- of `chop Uexcl 2` is not `V.chop` for any full-history `V`, and the
@@ -95,7 +97,7 @@ example {w v : Option (Fin 20)}
     (hW : Decided (S := fairSlots.chop 2 1 (by decide)) (chop Uexcl 2)
       (View.full (chop Uexcl 2)) 0 w)
     (hV : Decided Uexcl (View.full Uexcl) 1 v) : w = v :=
-  decided_agree_chop (by decide) hW hV
+  Properties.Arcs.decided_agree_chop (by decide) hW hV
 
 /-! ## The statute of limitations, on data -/
 
