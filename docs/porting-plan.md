@@ -329,3 +329,47 @@ requires the round shift to match the slot shift. The remaining work is
 assignment has to be well formed at *every* round, including below the
 band's floor, which is the one place this rule's shape differs from the
 other five.
+
+## What completing FinWhale now costs, and why it is not the next thing
+
+The schedule extraction removed the *structural* blocker. What is left is
+three properties, and their cost is now measurable rather than unknown.
+
+**`Banded` is a different theorem here from the other five.** Everywhere
+else the band is an induction over a *derivation*. FinWhale has none: its
+verdicts are a function constrained by `WellFormed`, so the band has to
+say that the **reverse pass is band-invariant**. The route is clear and
+was worked out before writing any of it:
+
+1. Transport the block-level rules across the band — `slotBlocks`,
+   `voters`/`FastCommit`, `parentsVoting`/`SPCertificate`/`SPCommit`,
+   `SPSkip`, `NonFPEvidence`, `DirectSkip`, `IndirectCommit`, and
+   `FPEvidence` with the novel-candidate clause the other rules also
+   needed.
+2. Show `decOf` — the pass itself — takes the same verdicts on both
+   sides, by downward induction from the finiteness bound. The band's
+   `top` is `S.slotRound N` for the assignment's own `N`, so every slot
+   the pass reads at or above `k` is inside it.
+3. Bridge an arbitrary assignment to the pass with `lemma12`: both are
+   well formed on the same view with the same tie-break, so they agree
+   wherever both decide.
+
+**`CommitsDirect` is still blocked, and by the last piece of pinning.**
+`Decided` asks for `S.slotRound s = s`, and `CommitsDirect`'s direct
+predicate never sees the schedule, so that conjunct cannot be discharged.
+Removing it means indexing `Verdict`, `WellFormed` and `Anchor` by slot
+rather than round — and `Anchor`'s `r + 2 < a` becomes a condition on
+slot rounds, which `lemma12`'s downward induction is stated in the
+arithmetic of. That is the deep change, and it is what `LeaderCommits`
+and `Indirect` would need too.
+
+**So FinWhale is three substantial theorems and one model change away
+from the six, and it removes no bespoke link when it gets there** — it
+has none. Its value is coverage: evidence that the obligations are right,
+tested against the rule least like Mysticeti. That is worth having and it
+is not the most urgent thing.
+
+**The most urgent thing is Optimal-Hydrozoan**, which is the only rule
+still standing between the development and *every mechanism running on
+the properties alone*: eight links, four of them the chop transport that
+`LocalTruncate.of_banded` replaces outright.
