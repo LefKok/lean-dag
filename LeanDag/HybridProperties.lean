@@ -109,7 +109,7 @@ theorem coneSupports_band (h : AgreeBand (hybridRule (Payload := Payload) k) U U
       · rw [MysticetiProperties.band_refs (toCore h) hqU (by omega) (by omega)]; exact hqL
       · exact (mem_history_iff (U := U'.val) hA').mpr
           (AgreeBand.reaches_of MysticetiProperties.causal (toCore h) hA hAhi hqre
-            (by show lo < (U.val.block q).round + g; omega))
+            (by show lo ≤ (U.val.block q).round + g; omega))
   unfold Hybrid.coneSupports
   rw [hset]
   refine MysticetiProperties.creatorsOf_band (toCore h) ?_

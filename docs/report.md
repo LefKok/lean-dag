@@ -24819,6 +24819,38 @@ structure SoundOn (U : BlockUniverse Validator BlockId Payload)
 
 **What a universe must still supply after being transformed.** The two conditions every safety result of the hybrid arc consumes: correct validators do not equivocate, and the DAG is covered from round `R` on.
 
+#### `mahiMahiRule`
+
+*def, `MahiMahi.Carrier.lean`*
+
+```lean
+def mahiMahiRule (w : ℕ) : DagRule Validator BlockId Payload where
+  Universe := BlockUniverse Validator BlockId Payload
+  View := fun U => View Validator BlockId Payload U
+  block := fun U i => U.block i
+  ids := fun U => U.ids
+  viewIds := fun V => V.ids
+  viewSound := fun V => V.subset_ids
+  viewComplete := fun V => V.complete
+  Decided := fun S _ V k v => MahiMahi.Decided (S := S) w _ V k v
+```
+
+**Mahi-Mahi as a carrier**, one per wave width.
+
+#### `mahiLive`
+
+*def, `MahiMahiProperties.lean`*
+
+```lean
+def mahiLive (w : ℕ) (S : Slots Validator)
+    {U : BlockUniverse Validator BlockId Payload} (V : View Validator BlockId Payload U)
+    (T : Finset Validator) (lo K : ℕ) : Prop :=
+  ∃ N, (∀ k, k < K → MahiMahi.decisionRound Validator w k ≤ N) ∧ V.CoversUpto N ∧
+    ∀ k, lo ≤ k → k < K → S.leader k ∈ T → S.leader k ∈ MahiMahi.good (S := S) U w k
+```
+
+**Mahi-Mahi's liveness precondition**, over a slot window: the view is caught up to a horizon the window's decision rounds sit under, and every `T`-led slot of the window has a good leader.
+
 #### `mysticetiRule`
 
 *def, `MysticetiProperties.lean`*
@@ -25598,7 +25630,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 1061 theorems that either another module of the
+The 1069 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -31349,6 +31381,15 @@ theorem certifiedIn_of_directCommit {w : ℕ} {L : BlockId} {r : ℕ} (h : Direc
 
 The commit half of M4: a directly committed candidate is certified in the cone of every block above its decision round.
 
+#### `isLeaderBlock_of_decided`
+
+*theorem, `MahiMahi.Helpers.Decision.lean`*
+
+```lean
+theorem isLeaderBlock_of_decided {w : ℕ} {V : View Validator BlockId Payload U} {j : ℕ}
+    {A : BlockId} (h : Decided w U V j (some A)) : IsLeaderBlock U j A
+```
+
 #### `decided_unique`
 
 *theorem, `MahiMahi.Helpers.Decision.lean`*
@@ -31452,6 +31493,16 @@ theorem multiLeader [S : Slots Validator] {w : ℕ} {T : Finset Validator} {r : 
 ```
 
 **MM2b.** `f + 1` good correct validators and `2f + 1` leaders cannot be disjoint in `3f + 1`.
+
+#### `lt_of_eligible`
+
+*theorem, `MahiMahi.Helpers.Liveness.lean`*
+
+```lean
+theorem lt_of_eligible {w k j : ℕ} (hw : 1 ≤ w) (h : Eligible Validator w k j) : k < j
+```
+
+An eligible anchor lies strictly above the slot; the one property of eligibility the descent uses. Needs a wave of at least one round: at `w = 0` truncated subtraction lets a slot anchor itself.
 
 #### `decided_of_mem_good`
 
@@ -38036,6 +38087,63 @@ theorem decided_chopHZ_of_localTruncate [S : LeanDag.Hydrozoan.Slots Replica] {G
 
 **HI7's transport, from HZ9.** A replica that has pruned below the horizon reaches exactly the verdicts it would have reached with its whole history, at the re-indexed slot — without an induction, and without a Hydrozoan-specific truncation relation. `ChopDecided.lean` proved this by two inductions until they were deleted.
 
+#### `causal`
+
+*theorem, `MahiMahi.Carrier.lean`*
+
+```lean
+theorem causal (w : ℕ) : Causal (mahiMahiRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload) w)
+```
+
+Mahi-Mahi's universes are block DAGs — the core's argument, the universe type being the core's.
+
+#### `quorate`
+
+*theorem, `MahiMahi.Carrier.lean`*
+
+```lean
+theorem quorate (w : ℕ) : Quorate (mahiMahiRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload) w) (coreReliability Validator)
+```
+
+**And they are quorate**, at the core's fault model: validity's counting clause read at the carrier, which is what chain quality reads (`Properties/Arcs/Quality.lean`).
+
+#### `agree`
+
+*theorem, `MahiMahi.Carrier.lean`*
+
+```lean
+theorem agree {w : ℕ} (hw : 2 ≤ w) :
+    Agree (mahiMahiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload) w)
+```
+
+**Two views decide alike.** MM2 under the property's name, at the widths its safety arc covers.
+
+#### `commitsCandidate`
+
+*theorem, `MahiMahi.Carrier.lean`*
+
+```lean
+theorem commitsCandidate (w : ℕ) :
+    CommitsCandidate (mahiMahiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) w)
+```
+
+**A commit names the slot's candidate.** Both committing constructors carry `IsLeaderBlock`.
+
+#### `banded`
+
+*theorem, `MahiMahiProperties.lean`*
+
+```lean
+theorem banded (hw : 2 ≤ w) :
+    Banded (mahiMahiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) w)
+```
+
+**Mahi-Mahi reads a band**, at every width its rules are stated for.
+
 #### `isLeaderBlock_congr`
 
 *theorem, `MysticetiProperties.lean`*
@@ -38126,6 +38234,16 @@ theorem quorate : Quorate (mysticetiRule (Validator := Validator) (BlockId := Bl
 ```
 
 **The core's universes are quorate**, at the core's fault model: validity's counting clause read at the carrier. This is what chain quality reads (`Properties/Arcs/Quality.lean`), and it is one line because `ValidWrt` already says it.
+
+#### `quorumCard_pos`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem quorumCard_pos : 0 < quorumCard Validator
+```
+
+Two quorums share a correct validator, so a quorum is not empty.
 
 #### `band_mem`
 
@@ -39169,11 +39287,13 @@ Agreement on a band gives agreement on any narrower one.
 ```lean
 theorem reaches_of (hc : Causal R) (h : AgreeBand R U U' lo hi g g')
     {A : BlockId} (hA : A ∈ R.ids U) (hAhi : (R.block U A).round + g ≤ hi) :
-    ∀ {C : BlockId}, ReachesFrom (R.block U) A C → lo < (R.block U C).round + g →
+    ∀ {C : BlockId}, ReachesFrom (R.block U) A C → lo ≤ (R.block U C).round + g →
       ReachesFrom (R.block U') A C
 ```
 
 **Causal history inside the band is the same history.**
+
+The floor is included, and deliberately: a path *into* the floor reads the references of the layer above it, which the band preserves, so the last step survives even though the floor's own references do not. Only a path that started below the floor would need them, and there is none — `lo ≤ (R.block U C).round + g` is the hypothesis. Mahi-Mahi is what forced the strengthening: its votes are read from a cone at the slot's *propose* round, which is the floor exactly.
 
 #### `reaches_old`
 
@@ -39594,7 +39714,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 1034 lemmas used only within the file that proves
+The 1051 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -40309,7 +40429,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `votesIn_spec` | A vote counted by a decision-round certificate is a voting-round block of the universe. |
 | `votes_iff_mem_refs` | At the round below a block, a vote is a direct reference: the cone at that round is the reference set, and … |
 
-### `MahiMahi/Helpers/Decision.lean` (16)
+### `MahiMahi/Helpers/Decision.lean` (15)
 
 | Lemma | Role |
 |:---|:---|
@@ -40326,7 +40446,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `eligible_three_iff` | — |
 | `eq_of_directCommitIn` | — |
 | `eq_of_hasCertificate` | Two candidates of one slot with certificates coincide. |
-| `isLeaderBlock_of_decided` | — |
 | `not_certifiedIn_of_directSkip` | The skip half of M4: a skipped slot's candidates are certified nowhere. |
 | `not_directSkipIn_of_directCommitIn` | A committed candidate's slot is not skipped, across views. |
 
@@ -40338,7 +40457,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `nonempty_of_quorum` | A reliable quorum is nonempty. |
 | `votes_of_reaches` | Reaching a correct block is voting for it: it is in the cone, and no other block of that author and round … |
 
-### `MahiMahi/Helpers/Liveness.lean` (16)
+### `MahiMahi/Helpers/Liveness.lean` (15)
 
 | Lemma | Role |
 |:---|:---|
@@ -40357,7 +40476,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `certificatesIn_full` | — |
 | `directCommitIn_full` | — |
 | `holds_roundBlocks_eventually` | Every reliable round-`n` block is held by every reliable validator by `max (latest n) gst + delay`: its … |
-| `lt_of_eligible` | An eligible anchor lies strictly above the slot; the one property of eligibility the descent uses. Needs a … |
 
 ### `MahiMahi/Helpers/Synchrony.lean` (1)
 
@@ -41470,7 +41588,32 @@ subsection per module, in the layer order of Appendices B and C.
 | `soundOn_skipFill` | The fill preserves it, above the gap. The synchrony round must clear the filled round: inside the gap the … |
 | `soundOn_stack` | The stack preserves it, the offsets composing exactly as the two statements above suggest: the fill … |
 
-### `MysticetiProperties.lean` (31)
+### `MahiMahi/Carrier.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `commitsDirect` | And a direct commit is a verdict, at Mahi-Mahi's own direct predicate. |
+
+### `MahiMahiProperties.lean` (14)
+
+| Lemma | Role |
+|:---|:---|
+| `banded_aux` | — |
+| `blames_band` | And a blame is the blame it was. The skip rule reads a *cone* rather than the universe's candidates, and a … |
+| `candidatesAt_band` | The candidates a block's cone holds at a round are the ones it held. Both inclusions: a block inside an … |
+| `certificates_band` | Certificates survive the band. |
+| `certifiedIn_band` | — |
+| `certifies_band` | A certificate certifies what it certified. Its votes are cast by its own references, one round below it, … |
+| `directCommitIn_band` | And so does the direct commit. |
+| `directCommitIn_of_coversUpto` | A view caught up to the decision round holds every certificate, so it commits what the DAG commits. |
+| `directSkipIn_band` | And the direct skip. A blamer stays a blamer, and a candidate the band added changes nothing: the blame … |
+| `indirect` | The indirect rule, with its bound. The anchor is the committed slot `j`; the eligible slots between are … |
+| `leaderCommits` | A good leader's slot commits, at a bound one above the slot: the commit reads that slot's round and leader … |
+| `not_certifiedIn_band_novel` | — |
+| `toCore` | The two carriers project identically, so a band for one is a band for the other. |
+| `votes_band` | A vote is the vote it was. Both clauses read the same cone, and `candidatesAt_band` settles it as an … |
+
+### `MysticetiProperties.lean` (30)
 
 | Lemma | Role |
 |:---|:---|
@@ -41500,7 +41643,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `not_certifiedIn_band_novel` | A candidate the band did not carry is certified by nothing an old anchor can see. |
 | `not_certifiedIn_novel` | A new candidate is certified by nothing an old anchor can see. |
 | `not_mem_refs_novel` | An old block votes for nothing the extension added. |
-| `quorumCard_pos` | Two quorums share a correct validator, so a quorum is not empty. |
 | `slotBlamers_congr` | The slot-level skip reads the schedule only at its own slot, so two schedules naming the same round and … |
 | `votesIn_band` | The votes an in-band certificate counts are the votes it counted. |
 | `votesIn_of_sustains` | The votes an old decision-round block counts are the votes it counted: its references are unchanged, and … |
@@ -41571,16 +41713,19 @@ subsection per module, in the layer order of Appendices B and C.
 | `witnessesEquivocation_bnd` | Witnessing an equivocation is the same event. Both directions: a witness on the larger side is voted for … |
 | `witnessesEquivocation_sched` | — |
 
-### `Properties/Arcs/GC.lean` (7)
+### `Properties/Arcs/GC.lean` (10)
 
 | Lemma | Role |
 |:---|:---|
+| `decided_agree_chop_mahimahi` | And cross-cut agreement, from an arbitrary view of the truncation. |
 | `decided_agree_chop_odontoceti` | And cross-cut agreement, from an arbitrary view of the truncation. |
 | `decided_agree_horizons_chop` | G8 re-derived. Validators at different horizons agree. |
+| `decided_chop_iff_mahimahi` | Verdict transport across the cut, for Mahi-Mahi. |
 | `decided_chop_iff_odontoceti` | Verdict transport across the cut, for Odontoceti. |
 | `decided_of_truncate` | A verdict survives the cut, at the replica's own numbering. |
 | `decided_of_truncated` | And a verdict of the truncation is a verdict of the whole DAG, which is what lets a pruned replica be … |
 | `noEquivOn_chop` | And so does non-equivocation, from the truncation. |
+| `truncates_chop_mahimahi` | The cut is a truncation of Mahi-Mahi's carrier too. |
 | `truncates_chop_odontoceti` | The cut is a truncation of Odontoceti's carrier too. |
 
 ### `Properties/Arcs/Quality.lean` (1)
@@ -41589,12 +41734,14 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `card_correct_le_two_mul_coveredAt` | CQ2 (the half, where the committee gives it). Every cone carries, at every round below it, blocks from at … |
 
-### `Properties/Arcs/SafeSkip.lean` (6)
+### `Properties/Arcs/SafeSkip.lean` (8)
 
 | Lemma | Role |
 |:---|:---|
 | `candidates_fresh` | Every candidate of a slot the recovering replica leads, at a gap round, is a filled block — the replica … |
+| `decided_fill_agree_mahimahi` | And agreement across it. |
 | `decided_fill_agree_odontoceti` | And agreement across it. |
+| `decided_fill_mahimahi` | Verdicts survive the fill, for Mahi-Mahi. |
 | `decided_fill_odontoceti` | Verdicts survive the fill, for Odontoceti. |
 | `decided_none_fresh` | SS3, as a verdict, from the properties. The slot the recovering replica leads at a gap round is decided … |
 | `decided_skipFill` | Verdicts survive the recovery, for any protocol that has proved persistence. The replica that recovered … |

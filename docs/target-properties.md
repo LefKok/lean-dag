@@ -373,7 +373,7 @@ making that rule's band unprovable.
 | Nemo | `slotRound k`, `+1` | reachable |
 | Hybrid | `slotRound k`, `+1` | reachable |
 | Optimal-Hydrozoan | `slotRound k`, `+1`, `+2` | reachable |
-| Mahi-Mahi | `slotRound k + w - 1`, `r + w - 2` | reachable, under `2 ≤ w` |
+| Mahi-Mahi | `slotRound k + w - 1`, `r + w - 2` | proved, under `2 ≤ w` (§3.16) |
 | FinWhale | ~~`leader (round b - 2)`~~ **fixed** | the read is gone, and the band followed (§3.13) |
 
 **Mahi-Mahi's wave rounds truncate.** `votingRound w r = r + w - 2`,
@@ -1124,6 +1124,66 @@ that its own construction is a `Truncates` or a `Sustains` — and that is
 not a gap in the properties but a limit of the carrier, which has no way
 to *build* a universe (§11.4).
 
+## 3.16 The rule that was never asked
+
+Mahi-Mahi had `--` in every column of every table, and the recorded
+reason was `audit-conformance.py`'s note: *"no carrier; band conditional
+on `2 ≤ w` (§3.4c), so it needs a carrier per width."*
+
+**Both halves of that reason had already been answered by Hybrid.**
+`hybridRule (k : ℕ)` is a carrier per indirect threshold, and
+`HybridProperties.banded` takes `0 < kt` while its `agree` takes
+`Admissible` — a conditional band at a per-index carrier is exactly what
+Mahi-Mahi needed, and it had shipped. Nothing re-read the note.
+`docs/porting-plan.md`'s table lists four rules to port and Mahi-Mahi is
+not among them; that is the whole of why the row stayed empty.
+
+This is §11.2d's finding one level up. The six audits check *written
+code*; nothing checks a recorded reason for absence. "Needs a carrier
+per width" stopped being a reason the day Hybrid shipped one, and three
+arcs went by with the row still printing dashes.
+
+**What the port actually cost.** The four properties that need no
+induction are a line each — Mahi-Mahi's universe is the core's
+`BlockUniverse` at the core's `Faults`, `decided_unique` is `Agree`,
+`isLeaderBlock_of_decided` is `CommitsCandidate`, the direct constructor
+is `CommitsDirect`. What is Mahi-Mahi's own is the band, and it has one
+idea in it.
+
+**Every Mahi-Mahi rule reads a cone.** A vote is the least block of its
+author and round in the voting block's causal *history*; a blame is the
+absence of any such block. `candidatesAt_band` is the whole transport,
+and it settles that set as an **equality**, both directions at once —
+`reaches_old` says a block inside an old cone is old, `reaches_of` says
+an old one stays inside.
+
+That has a consequence worth naming. §3.2's defect is a negative clause
+a larger DAG can falsify, and it cost the core, Odontoceti and Hybrid a
+repair each. **Mahi-Mahi's skip cannot have it**, because the skip
+quantifies over a *cone* rather than over the universe's candidates, and
+a candidate a band adds is in no old block's history. FinWhale (§3.13)
+and Optimal-Hydrozoan (§3.14) escaped the same shape by an argument
+about references; Mahi-Mahi escapes it by construction.
+
+**One strengthening in the property layer.** `AgreeBand.reaches_of`
+required `lo < round C + g` and now requires `lo ≤`. Mahi-Mahi forced
+it: its votes are read from a cone at the slot's *propose* round, which
+is the band's floor exactly. The proof needed no change — a path *into*
+the floor reads the references of the layer above it, which the band
+preserves — and every other rule's band is unaffected.
+
+**And the mechanisms came free.** Because the universe is the core's,
+garbage collection and crash recovery are the core's `chop` and
+`skipFill` with four `rfl`s each, and chain quality is four lines.
+`scripts/audit-mechanisms.py` went from four open cells for Mahi-Mahi to
+none: adaptive leaders is out of scope, Mahi-Mahi having no `BaseRule`
+instance, and the other three are collected.
+
+**Nine rules of ten now show the six.** Black Marlin is the last, and it
+is the one case where the recorded reason still holds: it commits by
+round with no slot-indexed decision relation, so there is nothing to
+state a property *at* until it has a schedule layer.
+
 ## 4. Properties for the schedule mechanisms
 
 `Barnacle.BaseRule` and its `Laws` are one working interface: any two
@@ -1667,7 +1727,7 @@ conformance `Statement` lists it.
 | Odontoceti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Nemo | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
 | Hybrid / Orcaella | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Mahi-Mahi | — | — | — | — | — | — | — | — |
+| Mahi-Mahi | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
 | FinWhale | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
 | Black Marlin | — | — | — | — | — | — | — | — |
 
@@ -1722,8 +1782,8 @@ width and its band is conditional on `2 ≤ w` (§3.4c), so it needs a
 carrier per width. FinWhale had no `Slots` layer at all and Black Marlin
 commits by round with no slot-indexed relation — for those two the
 carrier was not the first step, the schedule layer was. FinWhale has
-since been given one and shows all six (§3.13); Mahi-Mahi and Black
-Marlin stand.
+since been given one and shows all six (§3.13), and Mahi-Mahi's
+per-width carrier is four lines (§3.16). Black Marlin stands.
 
 The consumer tests passed. Each is a former bespoke induction
 re-derived with none — and the six named first have since had the
@@ -2005,12 +2065,13 @@ looked for and is not there.
 
 - **Instances.** Seven rules had none when this was written: Barnacle's
   six, Odontoceti, Nemo, Mahi-Mahi, Optimal-Hydrozoan, Hybrid and
-  FinWhale. All but Mahi-Mahi have since been instantiated, and
-  Mahi-Mahi's band is conditional on `2 ≤ w`. That was the gap testing
-  whether the six obligations are the right six, and the answer is that
-  they are: eight rules meet them, two needed a repair to do so (§3.2,
-  §3.12), two met the same shape and did not (§3.13, §3.14), and none
-  needed a seventh property.
+  FinWhale. All seven have since been instantiated. That was the gap
+  testing whether the six obligations are the right six, and the answer
+  is that they are: nine rules of ten meet them, three needed a repair
+  to do so (§3.2, §3.12, and Hybrid's), three met the same shape and did
+  not (§3.13, §3.14, §3.16), and none needed a seventh property. Black
+  Marlin is the last, and the reason it has none still holds: it commits
+  by round with no slot-indexed relation to state a property at.
 - ~~**A carrier law for chain quality**~~ (**done**, §3.15).
   `Properties.Quorate` is the clause, as a property rather than a field,
   and the whole arc moved to `Properties/Arcs/Quality.lean`. Every

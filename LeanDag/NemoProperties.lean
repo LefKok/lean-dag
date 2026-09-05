@@ -133,7 +133,7 @@ theorem certifiedIn_band (h : AgreeBand (nemoRule (Payload := Payload)) U U' lo 
     have hb := blockB h hpU (by omega) (by omega)
     refine ⟨p, (Nemo.mem_history_iff hA').mpr
       (AgreeBand.reaches_of causal h hA hAhi hpre (by
-        show lo < (U.block p).round + g; omega)), by omega, ?_⟩
+        show lo ≤ (U.block p).round + g; omega)), by omega, ?_⟩
     rw [refsB h hpU (by omega) (by omega)]; exact hpL
 
 /-- **A candidate the band did not carry is certified from no old

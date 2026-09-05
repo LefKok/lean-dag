@@ -142,6 +142,7 @@ import LeanDag.MahiMahi.Model.Rules
 import LeanDag.MahiMahi.Model.Decision
 import LeanDag.MahiMahi.Helpers.Rules
 import LeanDag.MahiMahi.Helpers.Decision
+import LeanDag.MahiMahi.Carrier
 import LeanDag.MahiMahi.Safety.Statement
 import LeanDag.MahiMahi.Safety.Proof
 import LeanDag.MahiMahi.Model.Good
@@ -152,6 +153,7 @@ import LeanDag.MahiMahi.Model.Unpredictable
 import LeanDag.MahiMahi.Liveness.Statement
 import LeanDag.MahiMahi.Helpers.Liveness
 import LeanDag.MahiMahi.Liveness.Proof
+import LeanDag.MahiMahiProperties
 import LeanDag.MahiMahi.Synchrony.Statement
 import LeanDag.MahiMahi.Helpers.Synchrony
 import LeanDag.MahiMahi.Synchrony.Proof

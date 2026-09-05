@@ -43,7 +43,8 @@ RULES = [
                             "Barnacle.odontocetiRule"], "two carriers"),
     ("Nemo",               ["NemoProperties.nemoRule",
                             "Barnacle.nemoRule"],                "two carriers"),
-    ("Mahi-Mahi",          [], "no carrier; band conditional on `2 <= w` (3.4c)"),
+    ("Mahi-Mahi",          ["MahiMahiProperties.mahiMahiRule"],
+                           "one carrier per wave width"),
     ("Hybrid / Orcaella",  ["HybridProperties.hybridRule",
                             "Barnacle.orcaellaRule"],           "two carriers, one per threshold"),
     ("FinWhale",           ["FinWhaleProperties.finWhaleRule"],  "band transported one rule at a time (Band.lean)"),
@@ -168,8 +169,8 @@ def main():
         print(f"{len(without)} with no carrier: " + ", ".join(without) + ".")
     print("* CommitsDirect, SkipsUnsupported and Quorate are optional "
           "(`Properties/Optional/`): owed\n  only when a mechanism reads the "
-          "rule's direct predicate, or the rule skips\n  without waiting for an "
-          "anchor.")
+          "rule's direct predicate, when the rule skips\n  without waiting for an "
+          "anchor, or when a deployment quotes chain quality.")
     return 0
 
 

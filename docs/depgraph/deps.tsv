@@ -1091,6 +1091,14 @@ EDGE	LeanDagTest.ugrowHonest._proof_3	LeanDag.BlockUniverse.ids
 EDGE	LeanDagTest.ugrowHonest._proof_3	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.ugrowHonest._proof_3	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ugrowHonest._proof_3	LeanDag.Block.creator
+NODE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_7	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_7	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_7	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_7	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_7	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_7	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_7	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_7	LeanDag.MahiMahi.decisionRoundAt
 NODE	LeanDag.card_viewUpto_filter_correct_le._simp_1_3	LeanDag.DoS.Novelty	thm
 NODE	LeanDag.slotRound_le_of_boundedSpacing	LeanDag.Quantitative	thm
 EDGE	LeanDag.slotRound_le_of_boundedSpacing	LeanDag.Slots.slotRound
@@ -2431,6 +2439,21 @@ EDGE	LeanDag.Odontoceti.not_directSkip_of_directCommit._proof_1_2	LeanDag.Faults
 NODE	LeanDag.OptimalHydrozoan.bandedOpt_aux._proof_1_8	LeanDag.OptimalHydrozoan.Helpers.Banded	thm
 EDGE	LeanDag.OptimalHydrozoan.bandedOpt_aux._proof_1_8	LeanDag.Hydrozoan.Slots
 EDGE	LeanDag.OptimalHydrozoan.bandedOpt_aux._proof_1_8	LeanDag.Hydrozoan.Slots.slotRound
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_23	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_23	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_23	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_23	LeanDag.MahiMahi.instDecidableEligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_23	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_23	LeanDag.MahiMahi.Eligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_23	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_23	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_23	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_23	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_23	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_23	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_23	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_23	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_23	LeanDag.View
 NODE	LeanDag.Integration.Hydrozoan.populatedOn_stackHZ	LeanDag.Integration.Hydrozoan.Liveness	thm
 EDGE	LeanDag.Integration.Hydrozoan.populatedOn_stackHZ	LeanDag.SkipMsg.v1
 EDGE	LeanDag.Integration.Hydrozoan.populatedOn_stackHZ	LeanDag.Hydrozoan.BlockUniverse
@@ -2481,6 +2504,13 @@ EDGE	LeanDag.Hybrid.decided_of_leader_of_populated._proof_1_1	LeanDag.HybridFaul
 EDGE	LeanDag.Hybrid.decided_of_leader_of_populated._proof_1_1	LeanDag.Slots.slotRound
 EDGE	LeanDag.Hybrid.decided_of_leader_of_populated._proof_1_1	LeanDag.Hybrid.q
 EDGE	LeanDag.Hybrid.decided_of_leader_of_populated._proof_1_1	LeanDag.Slots
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_4	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_4	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_4	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_4	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_4	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_4	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_4	LeanDag.Slots
 NODE	LeanDagTest.OptimalHydrozoan.lkE._proof_3	LeanDagTest.OptimalHydrozoan.SlotAgreement	thm
 NODE	LeanDagTest.mmFullBlk._proof_5	LeanDagTest.MahiMahi.Model	thm
 NODE	LeanDag.FinWhale.passFrom_of_ge._proof_1_5	LeanDag.FinWhale.Pass	thm
@@ -2628,6 +2658,23 @@ NODE	LeanDagTest.u7_round_le	LeanDagTest.Adaptive	thm
 EDGE	LeanDagTest.u7_round_le	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.u7_round_le	LeanDag.Block.round
 NODE	LeanDagTest.ugrowSkewPace._simp_7	LeanDagTest.ViewPace	thm
+NODE	LeanDag.Properties.Arcs.decided_agree_chop_mahimahi	LeanDag.Properties.Arcs.GC	thm
+EDGE	LeanDag.Properties.Arcs.decided_agree_chop_mahimahi	LeanDag.View.chop
+EDGE	LeanDag.Properties.Arcs.decided_agree_chop_mahimahi	LeanDag.Faults
+EDGE	LeanDag.Properties.Arcs.decided_agree_chop_mahimahi	LeanDag.Slots.slotRound
+EDGE	LeanDag.Properties.Arcs.decided_agree_chop_mahimahi	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.Properties.Arcs.decided_agree_chop_mahimahi	LeanDag.chop
+EDGE	LeanDag.Properties.Arcs.decided_agree_chop_mahimahi	LeanDag.MahiMahiProperties.agree
+EDGE	LeanDag.Properties.Arcs.decided_agree_chop_mahimahi	LeanDag.Properties.Arcs.truncates_chop_mahimahi
+EDGE	LeanDag.Properties.Arcs.decided_agree_chop_mahimahi	LeanDag.BlockUniverse
+EDGE	LeanDag.Properties.Arcs.decided_agree_chop_mahimahi	LeanDag.Slots.chop
+EDGE	LeanDag.Properties.Arcs.decided_agree_chop_mahimahi	LeanDag.MahiMahiProperties.banded
+EDGE	LeanDag.Properties.Arcs.decided_agree_chop_mahimahi	LeanDag.Properties.Arcs.decided_agree_truncate
+EDGE	LeanDag.Properties.Arcs.decided_agree_chop_mahimahi	LeanDag.Properties.Arcs.viewAgreeAbove_chop
+EDGE	LeanDag.Properties.Arcs.decided_agree_chop_mahimahi	LeanDag.Slots
+EDGE	LeanDag.Properties.Arcs.decided_agree_chop_mahimahi	LeanDag.Properties.LocalTruncate.of_banded
+EDGE	LeanDag.Properties.Arcs.decided_agree_chop_mahimahi	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.Properties.Arcs.decided_agree_chop_mahimahi	LeanDag.View
 NODE	LeanDag.Odontoceti.AdaptiveRun._sizeOf_inst	LeanDag.Adaptive.Odontoceti	def
 EDGE	LeanDag.Odontoceti.AdaptiveRun._sizeOf_inst	LeanDag.Odontoceti.AdaptiveRun._sizeOf_1
 EDGE	LeanDag.Odontoceti.AdaptiveRun._sizeOf_inst	LeanDag.Faults5
@@ -3282,6 +3329,12 @@ EDGE	LeanDag.Nemo.Reaches.of_mem_refs	LeanDag.Nemo.Universe.block
 EDGE	LeanDag.Nemo.Reaches.of_mem_refs	LeanDag.Block.refs
 EDGE	LeanDag.Nemo.Reaches.of_mem_refs	LeanDag.Nemo.Reaches
 NODE	LeanDagTest.Hydrozoan.lk5._proof_3	LeanDagTest.Hydrozoan.SlotAgreement	thm
+NODE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_3	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_3	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_3	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_3	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_3	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_3	LeanDag.MahiMahi.votingRound
 NODE	LeanDag.BlackMarlin.SupportedIn.congr_simp	LeanDag.BlackMarlin.Helpers.Decision	thm
 EDGE	LeanDag.BlackMarlin.SupportedIn.congr_simp	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.SupportedIn.congr_simp	LeanDag.BlockUniverse
@@ -3607,6 +3660,21 @@ EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.ChkWitness.mk.sizeOf_spec	LeanDag
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.ChkWitness.mk.sizeOf_spec	LeanDag.Hybrid.Checkpoint.Model
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.ChkWitness.mk.sizeOf_spec	LeanDag.Hybrid.Checkpoint.Model.Execution.CheckpointQC
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.ChkWitness.mk.sizeOf_spec	LeanDag.Hybrid.Checkpoint.Model.Execution
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_14	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_14	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_14	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_14	LeanDag.MahiMahi.instDecidableEligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_14	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_14	LeanDag.MahiMahi.Eligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_14	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_14	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_14	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_14	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_14	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_14	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_14	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_14	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_14	LeanDag.View
 NODE	LeanDag.BlackMarlin.Descent.DescendTotal	LeanDag.BlackMarlin.Descent.Statement	def
 EDGE	LeanDag.BlackMarlin.Descent.DescendTotal	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.Descent.DescendTotal	LeanDag.BlackMarlin.strongOf
@@ -3689,6 +3757,7 @@ EDGE	LeanDag.NemoProperties.certifiedIn_band	LeanDag.Nemo.Reaches
 EDGE	LeanDag.NemoProperties.certifiedIn_band	LeanDag.NemoProperties.certifiedIn_band._proof_1_8
 EDGE	LeanDag.NemoProperties.certifiedIn_band	LeanDag.NemoProperties.refsB
 EDGE	LeanDag.NemoProperties.certifiedIn_band	LeanDag.NemoProperties.certifiedIn_band._proof_1_2
+EDGE	LeanDag.NemoProperties.certifiedIn_band	LeanDag.NemoProperties.certifiedIn_band._proof_1_10
 EDGE	LeanDag.NemoProperties.certifiedIn_band	LeanDag.NemoProperties.causal
 EDGE	LeanDag.NemoProperties.certifiedIn_band	LeanDag.CausalStructure.mem_ids_of_reaches
 EDGE	LeanDag.NemoProperties.certifiedIn_band	LeanDag.Block.creator
@@ -3832,6 +3901,9 @@ EDGE	LeanDag.OptimalHydrozoan.OptUniverse.noConfusionType	LeanDag.Hydrozoan.Slot
 EDGE	LeanDag.OptimalHydrozoan.OptUniverse.noConfusionType	LeanDag.OptimalHydrozoan.OptUniverse.casesOn
 EDGE	LeanDag.OptimalHydrozoan.OptUniverse.noConfusionType	LeanDag.Hydrozoan.Faults
 EDGE	LeanDag.OptimalHydrozoan.OptUniverse.noConfusionType	LeanDag.Hydrozoan.BlockUniverse.ids
+NODE	LeanDag.MahiMahiProperties.indirect._proof_1_4	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.indirect._proof_1_4	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.indirect._proof_1_4	LeanDag.Slots
 NODE	LeanDagTest.ugrowReactive._proof_26	LeanDagTest.Reactive	thm
 EDGE	LeanDagTest.ugrowReactive._proof_26	LeanDag.Slots.slotRound
 EDGE	LeanDagTest.ugrowReactive._proof_26	LeanDagTest.rrSlots
@@ -5972,6 +6044,15 @@ EDGE	LeanDag.Properties.Arcs.decided_agree_horizons_chop	LeanDag.Slots
 EDGE	LeanDag.Properties.Arcs.decided_agree_horizons_chop	LeanDag.Properties.LocalTruncate.of_banded
 EDGE	LeanDag.Properties.Arcs.decided_agree_horizons_chop	LeanDag.View
 EDGE	LeanDag.Properties.Arcs.decided_agree_horizons_chop	LeanDag.MysticetiProperties.agree
+NODE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_7	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_7	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_7	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_7	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_7	LeanDag.MahiMahi.votesIn
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_7	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_7	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_7	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_7	LeanDag.MahiMahi.decisionRoundAt
 NODE	LeanDag.Odontoceti.PartialRun.coherent	LeanDag.Adaptive.Odontoceti	thm
 EDGE	LeanDag.Odontoceti.PartialRun.coherent	LeanDag.Odontoceti.PartialRun.assign
 EDGE	LeanDag.Odontoceti.PartialRun.coherent	LeanDag.Faults5
@@ -6844,6 +6925,12 @@ EDGE	LeanDag.Barnacle.HydrozoanLive.holds	LeanDag.Barnacle.HydrozoanLive.descent
 EDGE	LeanDag.Barnacle.HydrozoanLive.holds	LeanDag.Barnacle.HydrozoanLive.roundRobinLive
 EDGE	LeanDag.Barnacle.HydrozoanLive.holds	LeanDag.Barnacle.HydrozoanLive.Statement
 NODE	LeanDagTest.Integration.no_witness_Ux._simp_1_3	LeanDagTest.Integration.HydrozoanOptimal	thm
+NODE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_4	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_4	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_4	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_4	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_4	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_4	LeanDag.MahiMahi.votingRound
 NODE	LeanDag.Decided.brecOn	LeanDag.Mysticeti	thm
 EDGE	LeanDag.Decided.brecOn	LeanDag.Decided.rec
 EDGE	LeanDag.Decided.brecOn	LeanDag.Decided.below.indirectSkip
@@ -6880,6 +6967,12 @@ EDGE	LeanDag.Hybrid.Decided.below	LeanDag.Hybrid.Decided
 EDGE	LeanDag.Hybrid.Decided.below	LeanDag.BlockUniverse
 EDGE	LeanDag.Hybrid.Decided.below	LeanDag.Slots
 EDGE	LeanDag.Hybrid.Decided.below	LeanDag.View
+NODE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_2	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_2	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_2	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_2	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_2	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_2	LeanDag.MahiMahi.decisionRoundAt
 NODE	LeanDag.Adaptive.partialRun_agree_extends._proof_1_2	LeanDag.Adaptive.Growth	thm
 EDGE	LeanDag.Adaptive.partialRun_agree_extends._proof_1_2	LeanDag.Adaptive.Policy
 EDGE	LeanDag.Adaptive.partialRun_agree_extends._proof_1_2	LeanDag.epochOf
@@ -7612,6 +7705,53 @@ EDGE	LeanDag.card_history_le_of_stepNovelty_aux._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.card_history_le_of_stepNovelty_aux._proof_1_2	LeanDag.BlockUniverse.block
 EDGE	LeanDag.card_history_le_of_stepNovelty_aux._proof_1_2	LeanDag.Block.round
 EDGE	LeanDag.card_history_le_of_stepNovelty_aux._proof_1_2	LeanDag.BlockUniverse
+NODE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_9
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.creatorsOf
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.MahiMahi.certificates
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.Properties.DagRule.ids
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.mem_history_iff
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_5
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_8
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_2
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.BlockUniverse.complete
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.Block.refs
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.MahiMahi.Certifies
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.MahiMahi.CertifiedIn
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.Properties.AgreeBand.reaches_old
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_7
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_6
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.MysticetiProperties.band_mem
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.MahiMahi.votesIn
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.MahiMahi.instDecidableCertifies
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.ReachesFrom
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_1
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.history
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.MahiMahi.Votes
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_3
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.blocksAt
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.MysticetiProperties.causal
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.Faults.f
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_4
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.MahiMahi.candidatesAt
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.MysticetiProperties.band_refs
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.BlockUniverse.round_of_mem_refs
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.MahiMahiProperties.toCore
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.MahiMahi.decisionRoundAt
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.MahiMahi.instDecidableVotes
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.Block.creator
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.mem_blocksAt
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.Reaches
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel	LeanDag.MysticetiProperties.quorumCard_pos
 NODE	LeanDag.BlackMarlin.Pace.driftOn_of_catchup	LeanDag.BlackMarlin.Helpers.Reactive	thm
 EDGE	LeanDag.BlackMarlin.Pace.driftOn_of_catchup	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.Pace.driftOn_of_catchup	LeanDag.DriftOn
@@ -12763,6 +12903,12 @@ EDGE	LeanDag.decidableDirectSkipIn._aux_1	LeanDag.BlockUniverse
 EDGE	LeanDag.decidableDirectSkipIn._aux_1	LeanDag.blocksAt
 EDGE	LeanDag.decidableDirectSkipIn._aux_1	LeanDag.Faults.f
 EDGE	LeanDag.decidableDirectSkipIn._aux_1	LeanDag.View
+NODE	LeanDag.MahiMahiProperties.certificates_band._proof_1_3	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_3	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_3	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_3	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_3	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_3	LeanDag.MahiMahi.decisionRoundAt
 NODE	LeanDag.Integration.honestNoEquiv_chop	LeanDag.Integration.Preservation	thm
 EDGE	LeanDag.Integration.honestNoEquiv_chop	LeanDag.HybridFaults
 EDGE	LeanDag.Integration.honestNoEquiv_chop	LeanDag.mem_chop_ids
@@ -13623,6 +13769,21 @@ EDGE	LeanDag.card_topsOf_le_pow._proof_1_2	LeanDag.PedigreeTo
 EDGE	LeanDag.card_topsOf_le_pow._proof_1_2	LeanDag.BlockUniverse.block
 EDGE	LeanDag.card_topsOf_le_pow._proof_1_2	LeanDag.BlockUniverse
 EDGE	LeanDag.card_topsOf_le_pow._proof_1_2	LeanDag.Block.creator
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_15	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_15	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_15	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_15	LeanDag.MahiMahi.instDecidableEligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_15	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_15	LeanDag.MahiMahi.Eligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_15	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_15	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_15	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_15	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_15	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_15	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_15	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_15	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_15	LeanDag.View
 NODE	LeanDag.Properties.AgreeBand.refs	LeanDag.Properties.Band	thm
 EDGE	LeanDag.Properties.AgreeBand.refs	LeanDag.Properties.DagRule.ids
 EDGE	LeanDag.Properties.AgreeBand.refs	LeanDag.Properties.DagRule.block
@@ -13956,6 +14117,14 @@ NODE	LeanDag.PopulatedFrom	LeanDag.Participation	def
 EDGE	LeanDag.PopulatedFrom	LeanDag.Block
 EDGE	LeanDag.PopulatedFrom	LeanDag.Block.round
 EDGE	LeanDag.PopulatedFrom	LeanDag.Block.creator
+NODE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_6	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_6	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_6	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_6	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_6	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_6	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_6	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_6	LeanDag.MahiMahi.decisionRoundAt
 NODE	LeanDag.PaceCore.populatedOn	LeanDag.ViewPace	thm
 EDGE	LeanDag.PaceCore.populatedOn	LeanDag.PaceCore.built_of_le_top
 EDGE	LeanDag.PaceCore.populatedOn	LeanDag.Faults
@@ -14138,6 +14307,21 @@ NODE	LeanDag.FinWhale.Exclusions.recOn	LeanDag.FinWhale.Model.Verdict	def
 EDGE	LeanDag.FinWhale.Exclusions.recOn	LeanDag.FinWhale.Exclusions
 EDGE	LeanDag.FinWhale.Exclusions.recOn	LeanDag.FinWhale.Exclusions.mk
 EDGE	LeanDag.FinWhale.Exclusions.recOn	LeanDag.FinWhale.Exclusions.rec
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_26	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_26	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_26	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_26	LeanDag.MahiMahi.instDecidableEligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_26	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_26	LeanDag.MahiMahi.Eligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_26	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_26	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_26	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_26	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_26	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_26	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_26	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_26	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_26	LeanDag.View
 NODE	LeanDag.Barnacle.Orcaella.RoundRobinLive	LeanDag.Barnacle.Orcaella.Statement	def
 EDGE	LeanDag.Barnacle.Orcaella.RoundRobinLive	LeanDag.HybridFaults
 EDGE	LeanDag.Barnacle.Orcaella.RoundRobinLive	LeanDag.Barnacle.orcaellaLive
@@ -15204,6 +15388,21 @@ EDGE	LeanDag.chop_chop._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.chop_chop._proof_1_2	LeanDag.BlockUniverse.block
 EDGE	LeanDag.chop_chop._proof_1_2	LeanDag.Block.round
 EDGE	LeanDag.chop_chop._proof_1_2	LeanDag.BlockUniverse
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_29	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_29	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_29	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_29	LeanDag.MahiMahi.instDecidableEligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_29	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_29	LeanDag.MahiMahi.Eligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_29	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_29	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_29	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_29	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_29	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_29	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_29	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_29	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_29	LeanDag.View
 NODE	LeanDag.MahiMahi.isLeaderBlock_of_decided	LeanDag.MahiMahi.Helpers.Decision	thm
 EDGE	LeanDag.MahiMahi.isLeaderBlock_of_decided	LeanDag.MahiMahi.DirectSkipIn
 EDGE	LeanDag.MahiMahi.isLeaderBlock_of_decided	LeanDag.Faults
@@ -15542,7 +15741,6 @@ EDGE	LeanDagTest.Barnacle.Utwin6'._proof_2	LeanDag.instDecidableValidWrtOfDecida
 EDGE	LeanDagTest.Barnacle.Utwin6'._proof_2	LeanDagTest.Barnacle.twinBlk'
 EDGE	LeanDagTest.Barnacle.Utwin6'._proof_2	LeanDag.Faults5.toFaults
 EDGE	LeanDagTest.Barnacle.Utwin6'._proof_2	LeanDag.ValidWrt
-NODE	LeanDagTest.Integration.lkf._proof_1	LeanDagTest.Integration.HydrozoanFill	thm
 NODE	LeanDag.Integration.Hydrozoan.chopHZ_parents_of_lt	LeanDag.Integration.Hydrozoan.ChopDecided	thm
 EDGE	LeanDag.Integration.Hydrozoan.chopHZ_parents_of_lt	LeanDag.Hydrozoan.Block.parents
 EDGE	LeanDag.Integration.Hydrozoan.chopHZ_parents_of_lt	LeanDag.Hydrozoan.BlockUniverse
@@ -15564,6 +15762,11 @@ EDGE	LeanDag.MahiMahi.mem_candidatesAt._simp_1_3	LeanDag.Block.round
 EDGE	LeanDag.MahiMahi.mem_candidatesAt._simp_1_3	LeanDag.BlockUniverse
 EDGE	LeanDag.MahiMahi.mem_candidatesAt._simp_1_3	LeanDag.blocksAt
 EDGE	LeanDag.MahiMahi.mem_candidatesAt._simp_1_3	LeanDag.mem_blocksAt
+NODE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_3	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_3	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_3	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_3	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_3	LeanDag.BlockUniverse
 NODE	LeanDagTest.Utwin	LeanDagTest.DoS.Density	def
 EDGE	LeanDagTest.Utwin	LeanDagTest.Utwin._proof_2
 EDGE	LeanDagTest.Utwin	LeanDag.BlockUniverse.mk
@@ -16013,6 +16216,14 @@ EDGE	LeanDag.chopD._proof_9	LeanDag.Delivery.includes
 EDGE	LeanDag.chopD._proof_9	LeanDag.Block.creator
 NODE	LeanDagTest.OptimalHydrozoan.oe_slot0_ladder._proof_1_1	LeanDagTest.OptimalHydrozoan.IndirectLiveness	thm
 NODE	LeanDagTest.BlackMarlin.bmRRv._proof_1	LeanDagTest.BlackMarlin.ViewLiveness	thm
+NODE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_3	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_3	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_3	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_3	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_3	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_3	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_3	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_3	LeanDag.MahiMahi.decisionRoundAt
 NODE	LeanDag.BlackMarlin.recurrence	LeanDag.BlackMarlin.Helpers.Liveness	thm
 EDGE	LeanDag.BlackMarlin.recurrence	LeanDag.BlackMarlin.recurrence._proof_1_5
 EDGE	LeanDag.BlackMarlin.recurrence	LeanDag.BlackMarlin.Liveness.CommitsAtRound
@@ -16564,6 +16775,16 @@ EDGE	LeanDag.ReactiveM.mk.sizeOf_spec	LeanDag.Slots
 EDGE	LeanDag.ReactiveM.mk.sizeOf_spec	LeanDag.ReactiveM.mk
 EDGE	LeanDag.ReactiveM.mk.sizeOf_spec	LeanDag.ReactivePace
 EDGE	LeanDag.ReactiveM.mk.sizeOf_spec	LeanDag.Block.creator
+NODE	LeanDag.MahiMahiProperties.leaderCommits._proof_1_1	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.leaderCommits._proof_1_1	LeanDag.MahiMahi.decisionRound
+EDGE	LeanDag.MahiMahiProperties.leaderCommits._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.leaderCommits._proof_1_1	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.leaderCommits._proof_1_1	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.leaderCommits._proof_1_1	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.leaderCommits._proof_1_1	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.leaderCommits._proof_1_1	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.leaderCommits._proof_1_1	LeanDag.MahiMahi.decisionRoundAt
+EDGE	LeanDag.MahiMahiProperties.leaderCommits._proof_1_1	LeanDag.Properties.DagRule.Universe
 NODE	LeanDagTest.Barnacle.OrcaellaIndirect.U5._proof_1	LeanDagTest.Barnacle.OrcaellaIndirect	thm
 EDGE	LeanDagTest.Barnacle.OrcaellaIndirect.U5._proof_1	LeanDag.Block.refs
 EDGE	LeanDagTest.Barnacle.OrcaellaIndirect.U5._proof_1	LeanDagTest.Barnacle.OrcaellaIndirect.blk5
@@ -17339,6 +17560,11 @@ EDGE	LeanDag.FinWhale.Run.slot_le	LeanDag.FinWhale.Run.roundId
 EDGE	LeanDag.FinWhale.Run.slot_le	LeanDag.FinWhale.Params
 EDGE	LeanDag.FinWhale.Run.slot_le	LeanDag.FinWhale.Run
 EDGE	LeanDag.FinWhale.Run.slot_le	LeanDag.FinWhale.Run.sched
+NODE	LeanDag.MahiMahi.Eligible.eq_1	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahi.Eligible.eq_1	LeanDag.MahiMahi.decisionRound
+EDGE	LeanDag.MahiMahi.Eligible.eq_1	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahi.Eligible.eq_1	LeanDag.MahiMahi.Eligible
+EDGE	LeanDag.MahiMahi.Eligible.eq_1	LeanDag.Slots
 NODE	LeanDag.Integration.mem_ids_of_round_gt._proof_1_1	LeanDag.Integration.Coverage	thm
 EDGE	LeanDag.Integration.mem_ids_of_round_gt._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.Integration.mem_ids_of_round_gt._proof_1_1	LeanDag.SkipMsg.r
@@ -18240,6 +18466,26 @@ EDGE	LeanDag.Hydrozoan.mem_historyUpto_of_reaches	LeanDag.Hydrozoan.RefStep
 EDGE	LeanDag.Hydrozoan.mem_historyUpto_of_reaches	LeanDag.Hydrozoan.BlockUniverse.valid
 EDGE	LeanDag.Hydrozoan.mem_historyUpto_of_reaches	LeanDag.Hydrozoan.Faults
 EDGE	LeanDag.Hydrozoan.mem_historyUpto_of_reaches	LeanDag.Hydrozoan.BlockUniverse.ids
+NODE	LeanDag.MahiMahiProperties.directCommitIn_of_coversUpto	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_of_coversUpto	LeanDag.MahiMahiProperties.directCommitIn_of_coversUpto._proof_1_1
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_of_coversUpto	LeanDag.creatorsOf
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_of_coversUpto	LeanDag.MahiMahi.certificates
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_of_coversUpto	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_of_coversUpto	LeanDag.MahiMahi.DirectCommit
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_of_coversUpto	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_of_coversUpto	LeanDag.MahiMahi.Certifies
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_of_coversUpto	LeanDag.MahiMahi.DirectCommitIn
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_of_coversUpto	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_of_coversUpto	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_of_coversUpto	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_of_coversUpto	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_of_coversUpto	LeanDag.Faults.f
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_of_coversUpto	LeanDag.MahiMahi.certificatesIn
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_of_coversUpto	LeanDag.View.CoversUpto
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_of_coversUpto	LeanDag.MahiMahi.decisionRoundAt
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_of_coversUpto	LeanDag.View
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_of_coversUpto	LeanDag.Block.creator
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_of_coversUpto	LeanDag.MahiMahi.mem_certificates
 NODE	LeanDag.ReactivePace.no_timeout_of_fast_gst._proof_1_1	LeanDag.Reactive.Basic	thm
 EDGE	LeanDag.ReactivePace.no_timeout_of_fast_gst._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.ReactivePace.no_timeout_of_fast_gst._proof_1_1	LeanDag.Slots.slotRound
@@ -19781,6 +20027,17 @@ EDGE	LeanDag.OptimalHydrozoan.Grounding.horizonOptUniverse	LeanDag.Hydrozoan.Gro
 EDGE	LeanDag.OptimalHydrozoan.Grounding.horizonOptUniverse	LeanDag.OptimalHydrozoan.OptimalFaults.toFaults
 EDGE	LeanDag.OptimalHydrozoan.Grounding.horizonOptUniverse	LeanDag.OptimalHydrozoan.OptUniverse
 EDGE	LeanDag.OptimalHydrozoan.Grounding.horizonOptUniverse	LeanDag.OptimalHydrozoan.Grounding.horizonOptUniverse._proof_1
+NODE	LeanDag.MahiMahiProperties.commitsDirect	LeanDag.MahiMahi.Carrier	thm
+EDGE	LeanDag.MahiMahiProperties.commitsDirect	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.commitsDirect	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.commitsDirect	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.commitsDirect	LeanDag.MahiMahi.DirectCommitIn
+EDGE	LeanDag.MahiMahiProperties.commitsDirect	LeanDag.Properties.CommitsDirect
+EDGE	LeanDag.MahiMahiProperties.commitsDirect	LeanDag.Properties.DagRule.IsCandidate
+EDGE	LeanDag.MahiMahiProperties.commitsDirect	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.commitsDirect	LeanDag.MahiMahi.Decided.directCommit
+EDGE	LeanDag.MahiMahiProperties.commitsDirect	LeanDag.Properties.DagRule.View
+EDGE	LeanDag.MahiMahiProperties.commitsDirect	LeanDag.Properties.DagRule.Universe
 NODE	LeanDag.FinWhale.Trigger.ctorElimType	LeanDag.FinWhale.Model.Creation	def
 EDGE	LeanDag.FinWhale.Trigger.ctorElimType	LeanDag.FinWhale.Trigger.roundQuorum
 EDGE	LeanDag.FinWhale.Trigger.ctorElimType	LeanDag.FinWhale.Trigger.timeout
@@ -20203,6 +20460,16 @@ EDGE	LeanDagTest.Hydrozoan.u7_synchronised._proof_1_1	LeanDagTest.Hydrozoan.U7
 EDGE	LeanDagTest.Hydrozoan.u7_synchronised._proof_1_1	LeanDag.Hydrozoan.Block.round
 EDGE	LeanDagTest.Hydrozoan.u7_synchronised._proof_1_1	LeanDag.Hydrozoan.BlockUniverse.block
 NODE	LeanDagTest.Hydrozoan.lk8._proof_3	LeanDagTest.Hydrozoan.IndirectLiveness	thm
+NODE	LeanDag.MahiMahiProperties.toCore	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.toCore	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.toCore	LeanDag.Properties.AgreeBand.mem
+EDGE	LeanDag.MahiMahiProperties.toCore	LeanDag.Properties.AgreeBand.refs
+EDGE	LeanDag.MahiMahiProperties.toCore	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.toCore	LeanDag.Properties.AgreeBand.block
+EDGE	LeanDag.MahiMahiProperties.toCore	LeanDag.Properties.AgreeBand.mk
+EDGE	LeanDag.MahiMahiProperties.toCore	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.MahiMahiProperties.toCore	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.toCore	LeanDag.BlockUniverse
 NODE	LeanDagTest.Barnacle.OrcaellaIndirect.x9_slot3	LeanDagTest.Barnacle.OrcaellaIndirect	thm
 EDGE	LeanDagTest.Barnacle.OrcaellaIndirect.x9_slot3	LeanDag.View.full
 EDGE	LeanDagTest.Barnacle.OrcaellaIndirect.x9_slot3	LeanDag.Slots.slotRound
@@ -21465,6 +21732,12 @@ EDGE	LeanDag.FinWhale.Run.commits	LeanDag.FinWhale.Params
 EDGE	LeanDag.FinWhale.Run.commits	LeanDag.FinWhale.Run
 EDGE	LeanDag.FinWhale.Run.commits	LeanDag.FinWhale.CommitsCorrectLeaders
 EDGE	LeanDag.FinWhale.Run.commits	LeanDag.FinWhale.Run.sched
+NODE	LeanDag.MahiMahiProperties.certificates_band._proof_1_4	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_4	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_4	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_4	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_4	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_4	LeanDag.MahiMahi.decisionRoundAt
 NODE	LeanDag.MysticetiProperties.banded_aux._proof_1_10	LeanDag.MysticetiProperties	thm
 EDGE	LeanDag.MysticetiProperties.banded_aux._proof_1_10	LeanDag.Faults
 EDGE	LeanDag.MysticetiProperties.banded_aux._proof_1_10	LeanDag.Slots.slotRound
@@ -24765,6 +25038,11 @@ EDGE	LeanDag.Hydrozoan.certificates_eq_empty_of_skipped	LeanDag.Hydrozoan.BlockU
 NODE	LeanDagTest.Barnacle.runP1v._proof_4	LeanDagTest.Barnacle.Progress	thm
 EDGE	LeanDagTest.Barnacle.runP1v._proof_4	LeanDag.Barnacle.Params.interval
 EDGE	LeanDagTest.Barnacle.runP1v._proof_4	LeanDagTest.Barnacle.bnP1
+NODE	LeanDag.NemoProperties.certifiedIn_band._proof_1_10	LeanDag.NemoProperties	thm
+EDGE	LeanDag.NemoProperties.certifiedIn_band._proof_1_10	LeanDag.Nemo.Universe
+EDGE	LeanDag.NemoProperties.certifiedIn_band._proof_1_10	LeanDag.Nemo.Universe.block
+EDGE	LeanDag.NemoProperties.certifiedIn_band._proof_1_10	LeanDag.Block.round
+EDGE	LeanDag.NemoProperties.certifiedIn_band._proof_1_10	LeanDag.Block.creator
 NODE	LeanDagTest.ugrowReactive._proof_23	LeanDagTest.Reactive	thm
 EDGE	LeanDagTest.ugrowReactive._proof_23	LeanDagTest.Ugrow
 EDGE	LeanDagTest.ugrowReactive._proof_23	LeanDag.Slots.slotRound
@@ -25874,6 +26152,14 @@ EDGE	LeanDag.OptimalHydrozoan.bandedOpt_aux._proof_1_22	LeanDag.Hydrozoan.Eligib
 EDGE	LeanDag.OptimalHydrozoan.bandedOpt_aux._proof_1_22	LeanDag.Hydrozoan.BlockUniverse.ids
 NODE	LeanDagTest.Barnacle.uskip_indirect._proof_1_1	LeanDagTest.Barnacle.Instances	thm
 NODE	LeanDagTest.exclAcc_eq_empty._proof_1_6	LeanDagTest.GC.Bootstrap	thm
+NODE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_3	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_3	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_3	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_3	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_3	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_3	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_3	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_3	LeanDag.MahiMahi.decisionRoundAt
 NODE	LeanDag.Integration.decided_agree_chop_hybrid	LeanDag.Integration.HybridMechanisms	thm
 EDGE	LeanDag.Integration.decided_agree_chop_hybrid	LeanDag.HybridFaults
 EDGE	LeanDag.Integration.decided_agree_chop_hybrid	LeanDag.View.chop
@@ -26136,7 +26422,6 @@ EDGE	LeanDag.Hydrozoan.View.complete	LeanDag.Hydrozoan.Faults
 NODE	LeanDagTest.Integration.lkf	LeanDagTest.Integration.HydrozoanFill	def
 EDGE	LeanDagTest.Integration.lkf	LeanDag.Hydrozoan.Block.mk
 EDGE	LeanDagTest.Integration.lkf	LeanDag.Hydrozoan.Block
-EDGE	LeanDagTest.Integration.lkf	LeanDagTest.Integration.lkf._proof_1
 NODE	LeanDagTest.dtwin_byz._proof_1_1	LeanDagTest.DoS.Novelty	thm
 NODE	LeanDag.MahiMahi.Eligible	LeanDag.MahiMahi.Model.Decision	def
 EDGE	LeanDag.MahiMahi.Eligible	LeanDag.MahiMahi.decisionRound
@@ -27444,6 +27729,21 @@ EDGE	LeanDag.Integration.Hydrozoan.PrunedOpt.mk._flat_ctor	LeanDag.Integration.H
 EDGE	LeanDag.Integration.Hydrozoan.PrunedOpt.mk._flat_ctor	LeanDag.Hydrozoan.Slots.slotRound
 EDGE	LeanDag.Integration.Hydrozoan.PrunedOpt.mk._flat_ctor	LeanDag.Integration.Hydrozoan.HybridCommittee
 EDGE	LeanDag.Integration.Hydrozoan.PrunedOpt.mk._flat_ctor	LeanDag.Integration.Hydrozoan.SelfParenting
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_19	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_19	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_19	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_19	LeanDag.MahiMahi.instDecidableEligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_19	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_19	LeanDag.MahiMahi.Eligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_19	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_19	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_19	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_19	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_19	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_19	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_19	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_19	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_19	LeanDag.View
 NODE	LeanDagTest.uexcl_slot1_commit	LeanDagTest.Quality.Model	thm
 EDGE	LeanDagTest.uexcl_slot1_commit	LeanDag.View.full
 EDGE	LeanDagTest.uexcl_slot1_commit	LeanDag.Slots.slotRound
@@ -27803,10 +28103,23 @@ EDGE	LeanDag.Properties.CommitsCandidate.mem	LeanDag.Slots
 EDGE	LeanDag.Properties.CommitsCandidate.mem	LeanDag.Properties.DagRule.View
 EDGE	LeanDag.Properties.CommitsCandidate.mem	LeanDag.Block.creator
 EDGE	LeanDag.Properties.CommitsCandidate.mem	LeanDag.Properties.DagRule.Universe
+NODE	LeanDagTest.mahiMahi_card_correct_le_two_mul._proof_1_1	LeanDagTest.Quality.Generic	thm
+EDGE	LeanDagTest.mahiMahi_card_correct_le_two_mul._proof_1_1	LeanDag.Faults
+EDGE	LeanDagTest.mahiMahi_card_correct_le_two_mul._proof_1_1	LeanDag.Correct
+EDGE	LeanDagTest.mahiMahi_card_correct_le_two_mul._proof_1_1	LeanDag.BlockUniverse.block
+EDGE	LeanDagTest.mahiMahi_card_correct_le_two_mul._proof_1_1	LeanDag.Block.round
+EDGE	LeanDagTest.mahiMahi_card_correct_le_two_mul._proof_1_1	LeanDag.BlockUniverse
+EDGE	LeanDagTest.mahiMahi_card_correct_le_two_mul._proof_1_1	LeanDag.Faults.f
 NODE	LeanDag.Hydrozoan.supporters.congr_simp	LeanDag.Hydrozoan.Helpers.SlotAgreement	thm
 EDGE	LeanDag.Hydrozoan.supporters.congr_simp	LeanDag.Hydrozoan.BlockUniverse
 EDGE	LeanDag.Hydrozoan.supporters.congr_simp	LeanDag.Hydrozoan.Faults
 EDGE	LeanDag.Hydrozoan.supporters.congr_simp	LeanDag.Hydrozoan.supporters
+NODE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_2	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_2	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_2	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_2	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_2	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_2	LeanDag.MahiMahi.decisionRoundAt
 NODE	LeanDag.Properties.Arcs.coveredAt_subset_correct	LeanDag.Properties.Arcs.Quality	thm
 EDGE	LeanDag.Properties.Arcs.coveredAt_subset_correct	LeanDag.Reliability
 EDGE	LeanDag.Properties.Arcs.coveredAt_subset_correct	LeanDag.Reliability.correct
@@ -28094,6 +28407,34 @@ EDGE	LeanDag.SkipMsg.noConfusionType	LeanDag.BlockUniverse
 EDGE	LeanDag.SkipMsg.noConfusionType	LeanDag.SkipMsg.casesOn
 EDGE	LeanDag.SkipMsg.noConfusionType	LeanDag.SkipMsg
 EDGE	LeanDag.SkipMsg.noConfusionType	LeanDag.Block.creator
+NODE	LeanDag.MahiMahiProperties.leaderCommits	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.leaderCommits	LeanDag.MahiMahi.good
+EDGE	LeanDag.MahiMahiProperties.leaderCommits	LeanDag.MahiMahi.decisionRound
+EDGE	LeanDag.MahiMahiProperties.leaderCommits	LeanDag.MahiMahiProperties.mahiLive
+EDGE	LeanDag.MahiMahiProperties.leaderCommits	LeanDag.Properties.DagRule.Decided
+EDGE	LeanDag.MahiMahiProperties.leaderCommits	LeanDag.Properties.DecidedBelow
+EDGE	LeanDag.MahiMahiProperties.leaderCommits	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.leaderCommits	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.leaderCommits	LeanDag.MahiMahi.mem_goodAt
+EDGE	LeanDag.MahiMahiProperties.leaderCommits	LeanDag.MahiMahi.DirectCommit
+EDGE	LeanDag.MahiMahiProperties.leaderCommits	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.leaderCommits	LeanDag.Properties.LeaderCommits
+EDGE	LeanDag.MahiMahiProperties.leaderCommits	LeanDag.View.CoversUpto.mono
+EDGE	LeanDag.MahiMahiProperties.leaderCommits	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.leaderCommits	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.MahiMahiProperties.leaderCommits	LeanDag.MahiMahi.goodAt
+EDGE	LeanDag.MahiMahiProperties.leaderCommits	LeanDag.MahiMahi.DirectCommitIn
+EDGE	LeanDag.MahiMahiProperties.leaderCommits	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.leaderCommits	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.leaderCommits	LeanDag.View.CoversUpto
+EDGE	LeanDag.MahiMahiProperties.leaderCommits	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.leaderCommits	LeanDag.MahiMahiProperties.leaderCommits._proof_1_1
+EDGE	LeanDag.MahiMahiProperties.leaderCommits	LeanDag.MahiMahi.Decided.directCommit
+EDGE	LeanDag.MahiMahiProperties.leaderCommits	LeanDag.MahiMahi.decisionRoundAt
+EDGE	LeanDag.MahiMahiProperties.leaderCommits	LeanDag.MahiMahiProperties.directCommitIn_of_coversUpto
+EDGE	LeanDag.MahiMahiProperties.leaderCommits	LeanDag.Properties.DagRule.View
+EDGE	LeanDag.MahiMahiProperties.leaderCommits	LeanDag.Block.creator
+EDGE	LeanDag.MahiMahiProperties.leaderCommits	LeanDag.Properties.DagRule.Universe
 NODE	LeanDag.card_history_le'._proof_1_3	LeanDag.DoS.Pedigree	thm
 EDGE	LeanDag.card_history_le'._proof_1_3	LeanDag.Faults
 EDGE	LeanDag.card_history_le'._proof_1_3	LeanDag.BlockUniverse
@@ -28133,6 +28474,15 @@ EDGE	LeanDag.FinWhaleProperties.banded._proof_1_3	LeanDag.FinWhale.Params
 EDGE	LeanDag.FinWhaleProperties.banded._proof_1_3	LeanDag.Properties.DagRule.Universe
 NODE	LeanDagTest.Hydrozoan.lk12._proof_8	LeanDagTest.Hydrozoan.LivenessHardening	thm
 EDGE	LeanDagTest.Hydrozoan.lk12._proof_8	LeanDagTest.Hydrozoan.lk12._proof_3
+NODE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_8	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_8	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_8	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_8	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_8	LeanDag.MahiMahi.votesIn
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_8	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_8	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_8	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_8	LeanDag.MahiMahi.decisionRoundAt
 NODE	LeanDag.Integration.Hydrozoan.toCore	LeanDag.Integration.Hydrozoan.Universe	def
 EDGE	LeanDag.Integration.Hydrozoan.toCore	LeanDag.Hydrozoan.BlockUniverse
 EDGE	LeanDag.Integration.Hydrozoan.toCore	LeanDag.Integration.Hydrozoan.toHybrid
@@ -28185,6 +28535,14 @@ EDGE	LeanDag.Odontoceti.Decided	LeanDag.BlockUniverse
 EDGE	LeanDag.Odontoceti.Decided	LeanDag.Slots
 EDGE	LeanDag.Odontoceti.Decided	LeanDag.View
 EDGE	LeanDag.Odontoceti.Decided	LeanDag.Faults5.toFaults
+NODE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_4	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_4	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_4	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_4	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_4	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_4	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_4	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_4	LeanDag.MahiMahi.decisionRoundAt
 NODE	LeanDag.Barnacle.BaseRule.Laws.historyView_ids	LeanDag.Barnacle.Model.Rule	thm
 EDGE	LeanDag.Barnacle.BaseRule.Laws.historyView_ids	LeanDag.Barnacle.BaseRule.Universe
 EDGE	LeanDag.Barnacle.BaseRule.Laws.historyView_ids	LeanDag.Barnacle.BaseRule.block
@@ -28359,6 +28717,21 @@ EDGE	LeanDag.BlackMarlin.Pace.casesOn	LeanDag.BlackMarlin.Rotation
 EDGE	LeanDag.BlackMarlin.Pace.casesOn	LeanDag.PaceCore.proc
 EDGE	LeanDag.BlackMarlin.Pace.casesOn	LeanDag.BlackMarlin.Pace.rec
 EDGE	LeanDag.BlackMarlin.Pace.casesOn	LeanDag.Block.creator
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_9	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_9	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_9	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_9	LeanDag.MahiMahi.instDecidableEligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_9	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_9	LeanDag.MahiMahi.Eligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_9	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_9	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_9	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_9	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_9	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_9	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_9	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_9	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_9	LeanDag.View
 NODE	LeanDag.MahiMahi.instDecidableDirectCommitIn	LeanDag.MahiMahi.Model.Decision	def
 EDGE	LeanDag.MahiMahi.instDecidableDirectCommitIn	LeanDag.Faults
 EDGE	LeanDag.MahiMahi.instDecidableDirectCommitIn	LeanDag.MahiMahi.instDecidableDirectCommitIn._aux_1
@@ -28772,6 +29145,12 @@ EDGE	LeanDagTest.OptimalHydrozoan.uc_synchronised._proof_1_1	LeanDag.Hydrozoan.B
 EDGE	LeanDagTest.OptimalHydrozoan.uc_synchronised._proof_1_1	LeanDag.OptimalHydrozoan.OptimalFaults.toFaults
 EDGE	LeanDagTest.OptimalHydrozoan.uc_synchronised._proof_1_1	LeanDag.Hydrozoan.BlockUniverse.block
 EDGE	LeanDagTest.OptimalHydrozoan.uc_synchronised._proof_1_1	LeanDagTest.OptimalHydrozoan.threeReplicasCrashOnly
+NODE	LeanDag.MahiMahiProperties.certificates_band._proof_1_2	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_2	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_2	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_2	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_2	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_2	LeanDag.MahiMahi.decisionRoundAt
 NODE	LeanDagTest.Routes.synchronised_of_viewPace	LeanDagTest.Routes	thm
 EDGE	LeanDagTest.Routes.synchronised_of_viewPace	LeanDag.ViewPace.toPaceCore
 EDGE	LeanDagTest.Routes.synchronised_of_viewPace	LeanDag.Faults
@@ -28926,7 +29305,6 @@ EDGE	LeanDagTest.Integration.skcr	LeanDag.SkipMsg
 EDGE	LeanDagTest.Integration.skcr	LeanDag.Integration.Hydrozoan.toCore
 EDGE	LeanDagTest.Integration.skcr	LeanDagTest.Integration.skcr._proof_6
 EDGE	LeanDagTest.Integration.skcr	LeanDagTest.Integration.skcr._proof_9
-EDGE	LeanDagTest.Integration.skcr	LeanDagTest.Integration.lkf._proof_1
 NODE	LeanDag.FinWhale.no_skip_of_quorum._proof_1_2	LeanDag.FinWhale.Skip	thm
 EDGE	LeanDag.FinWhale.no_skip_of_quorum._proof_1_2	LeanDag.FinWhale.nonVoters
 EDGE	LeanDag.FinWhale.no_skip_of_quorum._proof_1_2	LeanDag.Faults
@@ -29598,6 +29976,11 @@ NODE	LeanDag.JumpMsg.v2	LeanDag.SafeSkip.Jump	def
 EDGE	LeanDag.JumpMsg.v2	LeanDag.Faults
 EDGE	LeanDag.JumpMsg.v2	LeanDag.JumpMsg
 EDGE	LeanDag.JumpMsg.v2	LeanDag.BlockUniverse
+NODE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_7	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_7	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_7	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_7	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_7	LeanDag.BlockUniverse
 NODE	LeanDag.Barnacle.PartialRun.rangeLedger	LeanDag.Barnacle.Model.Run	def
 EDGE	LeanDag.Barnacle.PartialRun.rangeLedger	LeanDag.Barnacle.Params.maxLeaders
 EDGE	LeanDag.Barnacle.PartialRun.rangeLedger	LeanDag.Barnacle.BaseRule.Universe
@@ -30573,7 +30956,6 @@ EDGE	LeanDagTest.Integration.skcr._proof_3	LeanDagTest.Integration.factFour
 EDGE	LeanDagTest.Integration.skcr._proof_3	LeanDagTest.Integration.Ucr
 EDGE	LeanDagTest.Integration.skcr._proof_3	LeanDag.Integration.Hydrozoan.toCore
 EDGE	LeanDagTest.Integration.skcr._proof_3	LeanDag.Block.creator
-EDGE	LeanDagTest.Integration.skcr._proof_3	LeanDagTest.Integration.lkf._proof_1
 NODE	LeanDag.Properties.Rebases.casesOn	LeanDag.Properties.Truncate	def
 EDGE	LeanDag.Properties.Rebases.casesOn	LeanDag.Slots.slotRound
 EDGE	LeanDag.Properties.Rebases.casesOn	LeanDag.Properties.Rebases
@@ -30703,6 +31085,23 @@ EDGE	LeanDag.Barnacle.BaseRule.SlotDirect	LeanDag.Barnacle.BaseRule.IsLeaderBloc
 EDGE	LeanDag.Barnacle.BaseRule.SlotDirect	LeanDag.Barnacle.BaseRule.DirectCommitIn
 EDGE	LeanDag.Barnacle.BaseRule.SlotDirect	LeanDag.Slots
 EDGE	LeanDag.Barnacle.BaseRule.SlotDirect	LeanDag.Barnacle.BaseRule
+NODE	LeanDag.Properties.Arcs.decided_fill_mahimahi	LeanDag.Properties.Arcs.SafeSkip	thm
+EDGE	LeanDag.Properties.Arcs.decided_fill_mahimahi	LeanDag.Block
+EDGE	LeanDag.Properties.Arcs.decided_fill_mahimahi	LeanDag.Properties.DagRule.ids
+EDGE	LeanDag.Properties.Arcs.decided_fill_mahimahi	LeanDag.Faults
+EDGE	LeanDag.Properties.Arcs.decided_fill_mahimahi	LeanDag.Properties.Arcs.decided_skipFill
+EDGE	LeanDag.Properties.Arcs.decided_fill_mahimahi	LeanDag.Properties.Persist.of_banded
+EDGE	LeanDag.Properties.Arcs.decided_fill_mahimahi	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.Properties.Arcs.decided_fill_mahimahi	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.Properties.Arcs.decided_fill_mahimahi	LeanDag.SkipMsg.skipFill
+EDGE	LeanDag.Properties.Arcs.decided_fill_mahimahi	LeanDag.BlockUniverse
+EDGE	LeanDag.Properties.Arcs.decided_fill_mahimahi	LeanDag.MahiMahiProperties.banded
+EDGE	LeanDag.Properties.Arcs.decided_fill_mahimahi	LeanDag.Properties.DagRule.viewIds
+EDGE	LeanDag.Properties.Arcs.decided_fill_mahimahi	LeanDag.Slots
+EDGE	LeanDag.Properties.Arcs.decided_fill_mahimahi	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.Properties.Arcs.decided_fill_mahimahi	LeanDag.SkipMsg
+EDGE	LeanDag.Properties.Arcs.decided_fill_mahimahi	LeanDag.View
+EDGE	LeanDag.Properties.Arcs.decided_fill_mahimahi	LeanDag.SkipMsg.liftView
 NODE	LeanDagTest.BlackMarlin.bmFullBlk	LeanDagTest.BlackMarlin.Liveness	def
 EDGE	LeanDagTest.BlackMarlin.bmFullBlk	LeanDag.Block
 EDGE	LeanDagTest.BlackMarlin.bmFullBlk	LeanDagTest.BlackMarlin.bmFullBlk.match_1
@@ -30912,6 +31311,27 @@ EDGE	LeanDag.Hydrozoan.Grounding.horizonUniverse_ids	LeanDag.Hydrozoan.q
 EDGE	LeanDag.Hydrozoan.Grounding.horizonUniverse_ids	LeanDag.Hydrozoan.Grounding.horizonUniverse
 EDGE	LeanDag.Hydrozoan.Grounding.horizonUniverse_ids	LeanDag.Hydrozoan.Faults
 EDGE	LeanDag.Hydrozoan.Grounding.horizonUniverse_ids	LeanDag.Hydrozoan.BlockUniverse.ids
+NODE	LeanDagTest.mahiMahi_card_correct_le_two_mul	LeanDagTest.Quality.Generic	thm
+EDGE	LeanDagTest.mahiMahi_card_correct_le_two_mul	LeanDag.Reliability.slack
+EDGE	LeanDagTest.mahiMahi_card_correct_le_two_mul	LeanDag.Properties.DagRule.Decided
+EDGE	LeanDagTest.mahiMahi_card_correct_le_two_mul	LeanDag.Faults
+EDGE	LeanDagTest.mahiMahi_card_correct_le_two_mul	LeanDag.two_f_add_one_le_card_correct
+EDGE	LeanDagTest.mahiMahi_card_correct_le_two_mul	LeanDag.Properties.Arcs.card_correct_le_two_mul_coveredAt_of_decided
+EDGE	LeanDagTest.mahiMahi_card_correct_le_two_mul	LeanDag.Reliability.correct
+EDGE	LeanDagTest.mahiMahi_card_correct_le_two_mul	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDagTest.mahiMahi_card_correct_le_two_mul	LeanDag.MahiMahiProperties.quorate
+EDGE	LeanDagTest.mahiMahi_card_correct_le_two_mul	LeanDag.MahiMahiProperties.causal
+EDGE	LeanDagTest.mahiMahi_card_correct_le_two_mul	LeanDag.Properties.Arcs.coveredAt
+EDGE	LeanDagTest.mahiMahi_card_correct_le_two_mul	LeanDag.Correct
+EDGE	LeanDagTest.mahiMahi_card_correct_le_two_mul	LeanDag.MahiMahiProperties.commitsCandidate
+EDGE	LeanDagTest.mahiMahi_card_correct_le_two_mul	LeanDag.BlockUniverse.block
+EDGE	LeanDagTest.mahiMahi_card_correct_le_two_mul	LeanDag.Block.round
+EDGE	LeanDagTest.mahiMahi_card_correct_le_two_mul	LeanDag.BlockUniverse
+EDGE	LeanDagTest.mahiMahi_card_correct_le_two_mul	LeanDag.Faults.f
+EDGE	LeanDagTest.mahiMahi_card_correct_le_two_mul	LeanDag.coreReliability
+EDGE	LeanDagTest.mahiMahi_card_correct_le_two_mul	LeanDagTest.mahiMahi_card_correct_le_two_mul._proof_1_1
+EDGE	LeanDagTest.mahiMahi_card_correct_le_two_mul	LeanDag.Slots
+EDGE	LeanDagTest.mahiMahi_card_correct_le_two_mul	LeanDag.View
 NODE	LeanDag.Barnacle.mysticetiRule_commitsCandidate	LeanDag.Barnacle.Conformance	thm
 EDGE	LeanDag.Barnacle.mysticetiRule_commitsCandidate	LeanDag.Properties.CommitsCandidate
 EDGE	LeanDag.Barnacle.mysticetiRule_commitsCandidate	LeanDag.Faults
@@ -31096,6 +31516,15 @@ EDGE	LeanDag.card_history_le_of_card_exposedTo_le_one._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.card_history_le_of_card_exposedTo_le_one._proof_1_1	LeanDag.BlockUniverse
 EDGE	LeanDag.card_history_le_of_card_exposedTo_le_one._proof_1_1	LeanDag.exposedTo
 NODE	LeanDagTest.ugrow_decided._proof_1_1	LeanDagTest.Growth	thm
+NODE	LeanDag.MahiMahiProperties.agree	LeanDag.MahiMahi.Carrier	thm
+EDGE	LeanDag.MahiMahiProperties.agree	LeanDag.Properties.DagRule.Decided
+EDGE	LeanDag.MahiMahiProperties.agree	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.agree	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.agree	LeanDag.Properties.Agree
+EDGE	LeanDag.MahiMahiProperties.agree	LeanDag.MahiMahi.decided_unique
+EDGE	LeanDag.MahiMahiProperties.agree	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.agree	LeanDag.Properties.DagRule.View
+EDGE	LeanDag.MahiMahiProperties.agree	LeanDag.Properties.DagRule.Universe
 NODE	LeanDag.Barnacle.Window.HistoryInView	LeanDag.Barnacle.Window.Statement	def
 EDGE	LeanDag.Barnacle.Window.HistoryInView	LeanDag.Barnacle.BaseRule.Universe
 EDGE	LeanDag.Barnacle.Window.HistoryInView	LeanDag.Barnacle.BaseRule.block
@@ -33086,6 +33515,21 @@ EDGE	LeanDagTest.BlackMarlin.Vbm	LeanDagTest.BlackMarlin.Vbm._proof_1
 EDGE	LeanDagTest.BlackMarlin.Vbm	LeanDagTest.BlackMarlin.Vbm._proof_2
 EDGE	LeanDagTest.BlackMarlin.Vbm	LeanDagTest.BlackMarlin.Ubm
 EDGE	LeanDagTest.BlackMarlin.Vbm	LeanDag.View
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_21	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_21	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_21	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_21	LeanDag.MahiMahi.instDecidableEligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_21	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_21	LeanDag.MahiMahi.Eligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_21	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_21	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_21	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_21	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_21	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_21	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_21	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_21	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_21	LeanDag.View
 NODE	LeanDag.Integration.Hydrozoan.extends_skipFillHZ	LeanDag.Integration.Hydrozoan.ViaProperties	thm
 EDGE	LeanDag.Integration.Hydrozoan.extends_skipFillHZ	LeanDag.Block
 EDGE	LeanDag.Integration.Hydrozoan.extends_skipFillHZ	LeanDag.Hydrozoan.BlockUniverse
@@ -33377,6 +33821,30 @@ EDGE	LeanDag.Integration.Hydrozoan.View.toCore	LeanDag.Integration.Hydrozoan.Sel
 NODE	LeanDagTest.forkTwo	LeanDagTest.HybridCheckpoint	def
 EDGE	LeanDagTest.forkTwo	LeanDag.Hybrid.Checkpoint.CheckpointData.mk
 EDGE	LeanDagTest.forkTwo	LeanDag.Hybrid.Checkpoint.CheckpointData
+NODE	LeanDag.MahiMahiProperties.certificates_band	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.certificates_band	LeanDag.MahiMahi.certificates
+EDGE	LeanDag.MahiMahiProperties.certificates_band	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.certificates_band	LeanDag.MahiMahiProperties.certifies_band
+EDGE	LeanDag.MahiMahiProperties.certificates_band	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.certificates_band	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.MahiMahiProperties.certificates_band	LeanDag.MahiMahi.Certifies
+EDGE	LeanDag.MahiMahiProperties.certificates_band	LeanDag.MahiMahiProperties.certificates_band._proof_1_3
+EDGE	LeanDag.MahiMahiProperties.certificates_band	LeanDag.MahiMahi.instDecidableCertifies
+EDGE	LeanDag.MahiMahiProperties.certificates_band	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.certificates_band	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.certificates_band	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.certificates_band	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.certificates_band	LeanDag.blocksAt
+EDGE	LeanDag.MahiMahiProperties.certificates_band	LeanDag.MahiMahiProperties.certificates_band._proof_1_4
+EDGE	LeanDag.MahiMahiProperties.certificates_band	LeanDag.MahiMahiProperties.certificates_band._proof_1_6
+EDGE	LeanDag.MahiMahiProperties.certificates_band	LeanDag.MahiMahiProperties.certificates_band._proof_1_1
+EDGE	LeanDag.MahiMahiProperties.certificates_band	LeanDag.MahiMahiProperties.certificates_band._proof_1_7
+EDGE	LeanDag.MahiMahiProperties.certificates_band	LeanDag.MysticetiProperties.blocksAt_band
+EDGE	LeanDag.MahiMahiProperties.certificates_band	LeanDag.MahiMahiProperties.toCore
+EDGE	LeanDag.MahiMahiProperties.certificates_band	LeanDag.MahiMahiProperties.certificates_band._proof_1_2
+EDGE	LeanDag.MahiMahiProperties.certificates_band	LeanDag.MahiMahi.decisionRoundAt
+EDGE	LeanDag.MahiMahiProperties.certificates_band	LeanDag.MahiMahiProperties.certificates_band._proof_1_5
+EDGE	LeanDag.MahiMahiProperties.certificates_band	LeanDag.mem_blocksAt
 NODE	LeanDag.FinWhale.parentSet	LeanDag.FinWhale.Model.Rule	def
 EDGE	LeanDag.FinWhale.parentSet	LeanDag.creatorsOf
 EDGE	LeanDag.FinWhale.parentSet	LeanDag.Faults
@@ -33412,6 +33880,12 @@ EDGE	LeanDag.MysticetiProperties.commitsDirect	LeanDag.Properties.DagRule.IsCand
 EDGE	LeanDag.MysticetiProperties.commitsDirect	LeanDag.Slots
 EDGE	LeanDag.MysticetiProperties.commitsDirect	LeanDag.Properties.DagRule.View
 EDGE	LeanDag.MysticetiProperties.commitsDirect	LeanDag.Properties.DagRule.Universe
+NODE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_1	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_1	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_1	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_1	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_1	LeanDag.MahiMahi.votingRound
 NODE	LeanDagTest.Hydrozoan.lk9._proof_3	LeanDagTest.Hydrozoan.IndirectLiveness	thm
 NODE	LeanDagTest.invalid_fork_payload_rejected	LeanDagTest.HybridCheckpoint	thm
 EDGE	LeanDagTest.invalid_fork_payload_rejected	LeanDag.Hybrid.Checkpoint.ChkProp.mk
@@ -34776,7 +35250,6 @@ EDGE	LeanDagTest.Integration.skcr._proof_10	LeanDagTest.Integration.Ucr
 EDGE	LeanDagTest.Integration.skcr._proof_10	LeanDagTest.Integration.skcr._proof_1
 EDGE	LeanDagTest.Integration.skcr._proof_10	LeanDag.Integration.Hydrozoan.toCore
 EDGE	LeanDagTest.Integration.skcr._proof_10	LeanDag.Block.creator
-EDGE	LeanDagTest.Integration.skcr._proof_10	LeanDagTest.Integration.lkf._proof_1
 NODE	LeanDagTest.Minnow.Dpart	LeanDagTest.Minnow.Safety	def
 EDGE	LeanDagTest.Minnow.Dpart	LeanDagTest.Minnow.Dpart._proof_1
 EDGE	LeanDagTest.Minnow.Dpart	LeanDag.Minnow.Dag.mk
@@ -34874,6 +35347,12 @@ EDGE	LeanDagTest.full4._proof_3	LeanDag.Correct
 EDGE	LeanDagTest.full4._proof_3	LeanDag.Block.round
 EDGE	LeanDagTest.full4._proof_3	LeanDag.Block.creator
 EDGE	LeanDagTest.full4._proof_3	LeanDagTest.mmFullBlk
+NODE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_8	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_8	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_8	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_8	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_8	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_8	LeanDag.MahiMahi.decisionRoundAt
 NODE	LeanDag.FinWhale.all_decided	LeanDag.FinWhale.Decided	thm
 EDGE	LeanDag.FinWhale.all_decided	LeanDag.FinWhale.WellFormed
 EDGE	LeanDag.FinWhale.all_decided	LeanDag.FinWhale.RoundRobin
@@ -35678,7 +36157,6 @@ EDGE	LeanDagTest.Integration.skcr._proof_15	LeanDagTest.Integration.factFour
 EDGE	LeanDagTest.Integration.skcr._proof_15	LeanDagTest.Integration.Ucr
 EDGE	LeanDagTest.Integration.skcr._proof_15	LeanDag.Integration.Hydrozoan.toCore
 EDGE	LeanDagTest.Integration.skcr._proof_15	LeanDag.Block.creator
-EDGE	LeanDagTest.Integration.skcr._proof_15	LeanDagTest.Integration.lkf._proof_1
 NODE	LeanDag.Hydrozoan.BlockUniverse.ctorIdx	LeanDag.Hydrozoan.Model.BlockUniverse	def
 EDGE	LeanDag.Hydrozoan.BlockUniverse.ctorIdx	LeanDag.Hydrozoan.BlockUniverse
 EDGE	LeanDag.Hydrozoan.BlockUniverse.ctorIdx	LeanDag.Hydrozoan.Faults
@@ -36148,6 +36626,12 @@ EDGE	LeanDag.Hydrozoan.BlockUniverse.mk.congr_simp	LeanDag.Hydrozoan.Block.round
 EDGE	LeanDag.Hydrozoan.BlockUniverse.mk.congr_simp	LeanDag.Hydrozoan.NonByzantine
 EDGE	LeanDag.Hydrozoan.BlockUniverse.mk.congr_simp	LeanDag.Hydrozoan.ValidWrt
 EDGE	LeanDag.Hydrozoan.BlockUniverse.mk.congr_simp	LeanDag.Hydrozoan.Faults
+NODE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_9	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_9	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_9	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_9	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_9	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_9	LeanDag.Block.creator
 NODE	LeanDagTest.ugrowHonest._proof_1	LeanDagTest.Partial	thm
 EDGE	LeanDagTest.ugrowHonest._proof_1	LeanDagTest.Ugrow
 EDGE	LeanDagTest.ugrowHonest._proof_1	LeanDag.BlockUniverse.ids
@@ -36584,6 +37068,10 @@ EDGE	LeanDag.FinWhale.spCertificate_round	LeanDag.FinWhale.parent_round
 EDGE	LeanDag.FinWhale.spCertificate_round	LeanDag.FinWhale.Dag
 EDGE	LeanDag.FinWhale.spCertificate_round	LeanDag.FinWhale.params_arith
 EDGE	LeanDag.FinWhale.spCertificate_round	LeanDag.Block.creator
+NODE	LeanDag.MahiMahi.decisionRound.eq_1	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahi.decisionRound.eq_1	LeanDag.MahiMahi.decisionRound
+EDGE	LeanDag.MahiMahi.decisionRound.eq_1	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahi.decisionRound.eq_1	LeanDag.Slots
 NODE	LeanDag.MahiMahi.certifiedIn_three_iff	LeanDag.MahiMahi.Helpers.Decision	thm
 EDGE	LeanDag.MahiMahi.certifiedIn_three_iff	LeanDag.MahiMahi.certificates
 EDGE	LeanDag.MahiMahi.certifiedIn_three_iff	LeanDag.Faults
@@ -36670,6 +37158,21 @@ EDGE	LeanDagTest.OptimalHydrozoan.vds_gDs	LeanDagTest.OptimalHydrozoan.VDs'
 EDGE	LeanDagTest.OptimalHydrozoan.vds_gDs	LeanDag.Hydrozoan.Slots.leader
 EDGE	LeanDagTest.OptimalHydrozoan.vds_gDs	LeanDagTest.OptimalHydrozoan.fourSlotsOpt
 EDGE	LeanDagTest.OptimalHydrozoan.vds_gDs	LeanDag.Hydrozoan.BlockUniverse.ids
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_24	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_24	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_24	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_24	LeanDag.MahiMahi.instDecidableEligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_24	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_24	LeanDag.MahiMahi.Eligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_24	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_24	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_24	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_24	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_24	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_24	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_24	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_24	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_24	LeanDag.View
 NODE	LeanDag.Barnacle.PartialRun.anchor_commits	LeanDag.Barnacle.Model.Run	thm
 EDGE	LeanDag.Barnacle.PartialRun.anchor_commits	LeanDag.Barnacle.Params.maxLeaders
 EDGE	LeanDag.Barnacle.PartialRun.anchor_commits	LeanDag.Barnacle.BaseRule.Universe
@@ -39325,6 +39828,9 @@ EDGE	LeanDag.Properties.AgreeBand.mono	LeanDag.Properties.AgreeBand
 EDGE	LeanDag.Properties.AgreeBand.mono	LeanDag.Properties.AgreeBand.mono._proof_1_1
 EDGE	LeanDag.Properties.AgreeBand.mono	LeanDag.Properties.DagRule
 EDGE	LeanDag.Properties.AgreeBand.mono	LeanDag.Properties.DagRule.Universe
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_3	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_3	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_3	LeanDag.Slots
 NODE	LeanDagTest.OptimalHydrozoan.lkS._proof_4	LeanDagTest.OptimalHydrozoan.EventualDecision	thm
 NODE	LeanDag.Hydrozoan.mem_certificates	LeanDag.Hydrozoan.Helpers.Counting	thm
 EDGE	LeanDag.Hydrozoan.mem_certificates	LeanDag.Hydrozoan.BlockUniverse
@@ -39396,6 +39902,21 @@ EDGE	LeanDag.Properties.Truncates.mk._flat_ctor	LeanDag.Properties.Truncates
 NODE	LeanDag.Hydrozoan.Faults.rec	LeanDag.Hydrozoan.Model.Faults	rec
 EDGE	LeanDag.Hydrozoan.Faults.rec	LeanDag.Hydrozoan.Faults.mk
 EDGE	LeanDag.Hydrozoan.Faults.rec	LeanDag.Hydrozoan.Faults
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_18	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_18	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_18	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_18	LeanDag.MahiMahi.instDecidableEligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_18	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_18	LeanDag.MahiMahi.Eligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_18	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_18	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_18	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_18	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_18	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_18	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_18	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_18	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_18	LeanDag.View
 NODE	LeanDag.FinWhale.Band.directCommit._proof_1_1	LeanDag.FinWhale.Band	thm
 EDGE	LeanDag.FinWhale.Band.directCommit._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.FinWhale.Band.directCommit._proof_1_1	LeanDag.FinWhale.Dag.block
@@ -39594,6 +40115,12 @@ NODE	LeanDagTest.Barnacle.twinBlk'	LeanDagTest.Barnacle.Instances	def
 EDGE	LeanDagTest.Barnacle.twinBlk'	LeanDag.Block
 EDGE	LeanDagTest.Barnacle.twinBlk'	LeanDag.Block.mk
 EDGE	LeanDagTest.Barnacle.twinBlk'	LeanDagTest.twinBlk
+NODE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_10	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_10	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_10	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_10	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_10	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_10	LeanDag.Block.creator
 NODE	LeanDag.View.chop	LeanDag.GC.ChopDecided	def
 EDGE	LeanDag.View.chop	LeanDag.View.mk
 EDGE	LeanDag.View.chop	LeanDag.Faults
@@ -40071,6 +40598,7 @@ EDGE	LeanDag.Properties.AgreeBand.reaches_of	LeanDag.Properties.AgreeBand.reache
 EDGE	LeanDag.Properties.AgreeBand.reaches_of	LeanDag.CausalStructure.round_le_of_reaches
 EDGE	LeanDag.Properties.AgreeBand.reaches_of	LeanDag.RefStepFrom
 EDGE	LeanDag.Properties.AgreeBand.reaches_of	LeanDag.Properties.DagRule.ids
+EDGE	LeanDag.Properties.AgreeBand.reaches_of	LeanDag.Properties.AgreeBand.reaches_of._proof_1_3
 EDGE	LeanDag.Properties.AgreeBand.reaches_of	LeanDag.Properties.AgreeBand.reaches_of._proof_1_2
 EDGE	LeanDag.Properties.AgreeBand.reaches_of	LeanDag.Properties.AgreeBand.refs
 EDGE	LeanDag.Properties.AgreeBand.reaches_of	LeanDag.Properties.Causal
@@ -41804,6 +42332,21 @@ EDGE	LeanDag.Integration.Hydrozoan.isVote_chopHZ	LeanDag.Integration.Hydrozoan.H
 EDGE	LeanDag.Integration.Hydrozoan.isVote_chopHZ	LeanDag.Hydrozoan.Faults
 EDGE	LeanDag.Integration.Hydrozoan.isVote_chopHZ	LeanDag.Integration.Hydrozoan.chopHZ
 EDGE	LeanDag.Integration.Hydrozoan.isVote_chopHZ	LeanDag.Integration.Hydrozoan.SelfParenting
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_16	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_16	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_16	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_16	LeanDag.MahiMahi.instDecidableEligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_16	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_16	LeanDag.MahiMahi.Eligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_16	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_16	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_16	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_16	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_16	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_16	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_16	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_16	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_16	LeanDag.View
 NODE	LeanDag.Hydrozoan.Slots.mk.noConfusion	LeanDag.Hydrozoan.Model.Slots	def
 EDGE	LeanDag.Hydrozoan.Slots.mk.noConfusion	LeanDag.Hydrozoan.Slots.mk
 EDGE	LeanDag.Hydrozoan.Slots.mk.noConfusion	LeanDag.Hydrozoan.Slots
@@ -42112,6 +42655,21 @@ EDGE	LeanDag.Hydrozoan.exists_nonByzantine_mem_inter	LeanDag.Hydrozoan.Faults.ca
 EDGE	LeanDag.Hydrozoan.exists_nonByzantine_mem_inter	LeanDag.Hydrozoan.exists_nonByzantine_mem_inter._proof_1_1
 EDGE	LeanDag.Hydrozoan.exists_nonByzantine_mem_inter	LeanDag.Hydrozoan.Faults.f
 EDGE	LeanDag.Hydrozoan.exists_nonByzantine_mem_inter	LeanDag.Hydrozoan.Faults
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_20	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_20	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_20	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_20	LeanDag.MahiMahi.instDecidableEligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_20	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_20	LeanDag.MahiMahi.Eligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_20	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_20	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_20	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_20	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_20	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_20	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_20	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_20	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_20	LeanDag.View
 NODE	LeanDag.Nemo.SpansEligible	LeanDag.Nemo.Liveness	def
 EDGE	LeanDag.Nemo.SpansEligible	LeanDag.Nemo.Eligible
 EDGE	LeanDag.Nemo.SpansEligible	LeanDag.Slots
@@ -42624,6 +43182,17 @@ EDGE	LeanDag.Faults5.toHybrid	LeanDag.HybridFaults.mk
 EDGE	LeanDag.Faults5.toHybrid	LeanDag.Faults5.toFaults
 NODE	LeanDag.Reliability.mk	LeanDag.Density	ctor
 EDGE	LeanDag.Reliability.mk	LeanDag.Reliability
+NODE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_4	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_4	LeanDag.creatorsOf
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_4	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_4	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_4	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_4	LeanDag.MahiMahi.votesIn
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_4	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_4	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_4	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_4	LeanDag.Faults.f
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_4	LeanDag.MahiMahi.decisionRoundAt
 NODE	LeanDag.OptimalHydrozoan.evidenceLinked_bnd._proof_1_1	LeanDag.OptimalHydrozoan.Helpers.Banded	thm
 EDGE	LeanDag.OptimalHydrozoan.evidenceLinked_bnd._proof_1_1	LeanDag.Hydrozoan.BlockUniverse
 EDGE	LeanDag.OptimalHydrozoan.evidenceLinked_bnd._proof_1_1	LeanDag.Hydrozoan.Slots
@@ -43290,6 +43859,12 @@ EDGE	LeanDag.Integration.Hydrozoan.selfParenting_chopHZ	LeanDag.Integration.Hydr
 EDGE	LeanDag.Integration.Hydrozoan.selfParenting_chopHZ	LeanDag.Hydrozoan.Faults
 EDGE	LeanDag.Integration.Hydrozoan.selfParenting_chopHZ	LeanDag.Integration.Hydrozoan.chopHZ
 EDGE	LeanDag.Integration.Hydrozoan.selfParenting_chopHZ	LeanDag.Integration.Hydrozoan.SelfParenting
+NODE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_11	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_11	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_11	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_11	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_11	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_11	LeanDag.Block.creator
 NODE	LeanDag.FinWhale.commitSeq._unsafe_rec	LeanDag.FinWhale.Model.Order	def
 EDGE	LeanDag.FinWhale.commitSeq._unsafe_rec	LeanDag.FinWhale.Verdict
 EDGE	LeanDag.FinWhale.commitSeq._unsafe_rec	LeanDag.FinWhale.commitSeq.match_1
@@ -43762,6 +44337,9 @@ EDGE	LeanDag.Nemo.majority_le_card_live	LeanDag.Nemo.Live
 EDGE	LeanDag.Nemo.majority_le_card_live	LeanDag.Nemo.CrashFaults.f
 EDGE	LeanDag.Nemo.majority_le_card_live	LeanDag.Nemo.CrashFaults.crashed
 EDGE	LeanDag.Nemo.majority_le_card_live	LeanDag.Nemo.CrashFaults
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_6	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_6	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_6	LeanDag.Slots
 NODE	LeanDag.ReactiveM.certifies	LeanDag.Reactive.Mysticeti	thm
 EDGE	LeanDag.ReactiveM.certifies	LeanDag.votesIn
 EDGE	LeanDag.ReactiveM.certifies	LeanDag.ReactiveM.certifies._proof_1_3
@@ -44072,6 +44650,7 @@ EDGE	LeanDag.CausalStructure.round_le_of_reaches	LeanDag.Block.round
 EDGE	LeanDag.CausalStructure.round_le_of_reaches	LeanDag.CausalStructure
 EDGE	LeanDag.CausalStructure.round_le_of_reaches	LeanDag.CausalStructure.round_le_of_reaches._proof_1_1
 EDGE	LeanDag.CausalStructure.round_le_of_reaches	LeanDag.CausalStructure.mem_ids_of_reaches
+NODE	LeanDag.MahiMahiProperties.candidatesAt_band._simp_1_1	LeanDag.MahiMahiProperties	thm
 NODE	LeanDag.Integration.Hydrozoan.View.ofCore_ids	LeanDag.Integration.Hydrozoan.Universe	thm
 EDGE	LeanDag.Integration.Hydrozoan.View.ofCore_ids	LeanDag.Integration.Hydrozoan.toHybrid
 EDGE	LeanDag.Integration.Hydrozoan.View.ofCore_ids	LeanDag.HybridFaults.toFaults
@@ -44186,6 +44765,12 @@ EDGE	LeanDag.FinWhaleProperties.pass_indirect	LeanDag.Slots
 EDGE	LeanDag.FinWhaleProperties.pass_indirect	LeanDag.FinWhale.Sched.leader
 EDGE	LeanDag.FinWhaleProperties.pass_indirect	LeanDag.FinWhaleProperties.schedOf
 EDGE	LeanDag.FinWhaleProperties.pass_indirect	LeanDag.FinWhale.Verdict.ctorIdx
+NODE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_9	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_9	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_9	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_9	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_9	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_9	LeanDag.MahiMahi.decisionRoundAt
 NODE	LeanDagTest.FinWhalePace.fwReactive._proof_19	LeanDagTest.FinWhale.Pace	thm
 EDGE	LeanDagTest.FinWhalePace.fwReactive._proof_19	LeanDagTest.FinWhalePace.fwSlots
 EDGE	LeanDagTest.FinWhalePace.fwReactive._proof_19	LeanDagTest.Ugrow
@@ -44913,6 +45498,32 @@ EDGE	LeanDag.Barnacle.BaseRule._sizeOf_1	LeanDag.Block.refs
 EDGE	LeanDag.Barnacle.BaseRule._sizeOf_1	LeanDag.Barnacle.BaseRule.rec
 EDGE	LeanDag.Barnacle.BaseRule._sizeOf_1	LeanDag.Slots
 EDGE	LeanDag.Barnacle.BaseRule._sizeOf_1	LeanDag.Barnacle.BaseRule
+NODE	LeanDag.MahiMahiProperties.directCommitIn_band	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band	LeanDag.creatorsOf
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band	LeanDag.MahiMahi.certificates
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band	LeanDag.MahiMahi.Certifies
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band	LeanDag.MahiMahiProperties.directCommitIn_band._proof_1_2
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band	LeanDag.MahiMahi.DirectCommitIn
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band	LeanDag.MahiMahi.instDecidableCertifies
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band	LeanDag.MahiMahiProperties.directCommitIn_band._proof_1_1
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band	LeanDag.blocksAt
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band	LeanDag.Faults.f
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band	LeanDag.MahiMahi.certificatesIn
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band	LeanDag.MysticetiProperties.band_block
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band	LeanDag.MahiMahiProperties.certificates_band
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band	LeanDag.MahiMahiProperties.toCore
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band	LeanDag.MahiMahi.decisionRoundAt
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band	LeanDag.View
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band	LeanDag.Block.creator
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band	LeanDag.mem_blocksAt
 NODE	LeanDagTest.Barnacle.rr_headsRun_data	LeanDagTest.Barnacle.Heads	thm
 EDGE	LeanDagTest.Barnacle.rr_headsRun_data	LeanDagTest.Barnacle.rr_headsRun_data._simp_1_5
 EDGE	LeanDagTest.Barnacle.rr_headsRun_data	LeanDagTest.Barnacle.rr_headsRun_data._proof_1_2
@@ -45129,6 +45740,12 @@ EDGE	LeanDag.Hybrid.Checkpoint.ChkProp.mk.sizeOf_spec	LeanDag.Hybrid.Checkpoint.
 EDGE	LeanDag.Hybrid.Checkpoint.ChkProp.mk.sizeOf_spec	LeanDag.Hybrid.Checkpoint.CheckpointData
 EDGE	LeanDag.Hybrid.Checkpoint.ChkProp.mk.sizeOf_spec	LeanDag.Hybrid.Checkpoint.ChkProp._sizeOf_inst
 EDGE	LeanDag.Hybrid.Checkpoint.ChkProp.mk.sizeOf_spec	LeanDag.Hybrid.Checkpoint.CheckpointData._sizeOf_inst
+NODE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_2	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_2	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_2	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_2	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_2	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_2	LeanDag.MahiMahi.votingRound
 NODE	LeanDagTest.Barnacle.Majority.hand1_slot1._proof_1_1	LeanDagTest.Barnacle.Majority	thm
 NODE	LeanDag.Accepted.inj	LeanDag.DoS.Acceptance	thm
 EDGE	LeanDag.Accepted.inj	LeanDag.Faults
@@ -46143,6 +46760,17 @@ EDGE	LeanDag.Properties.RebasedAbove.rec	LeanDag.Block.round
 EDGE	LeanDag.Properties.RebasedAbove.rec	LeanDag.Properties.DagRule
 EDGE	LeanDag.Properties.RebasedAbove.rec	LeanDag.Block.creator
 EDGE	LeanDag.Properties.RebasedAbove.rec	LeanDag.Properties.DagRule.Universe
+NODE	LeanDag.MahiMahiProperties.blames_band	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.blames_band	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.blames_band	LeanDag.MahiMahiProperties.candidatesAt_band
+EDGE	LeanDag.MahiMahiProperties.blames_band	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.blames_band	LeanDag.MahiMahi.Blames
+EDGE	LeanDag.MahiMahiProperties.blames_band	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.MahiMahiProperties.blames_band	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.blames_band	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.blames_band	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.blames_band	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.blames_band	LeanDag.MahiMahi.candidatesAt
 NODE	LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.EpochTransition.ctorIdx	LeanDag.Hybrid.Checkpoint.RecoverySpec	def
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.EpochTransition.ctorIdx	LeanDag.HybridFaults
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.EpochTransition.ctorIdx	LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound
@@ -51015,6 +51643,21 @@ NODE	LeanDagTest.OptimalHydrozoan.lkD._proof_10	LeanDagTest.OptimalHydrozoan.Dec
 EDGE	LeanDagTest.OptimalHydrozoan.lkD._proof_10	LeanDagTest.OptimalHydrozoan.lkD._proof_2
 NODE	LeanDagTest.Minnow.sfLead._proof_2	LeanDagTest.Minnow.Safety	thm
 EDGE	LeanDagTest.Minnow.sfLead._proof_2	LeanDagTest.Minnow.sfLead._proof_1
+NODE	LeanDag.Properties.Arcs.decided_chop_iff_mahimahi	LeanDag.Properties.Arcs.GC	thm
+EDGE	LeanDag.Properties.Arcs.decided_chop_iff_mahimahi	LeanDag.View.chop
+EDGE	LeanDag.Properties.Arcs.decided_chop_iff_mahimahi	LeanDag.Faults
+EDGE	LeanDag.Properties.Arcs.decided_chop_iff_mahimahi	LeanDag.Slots.slotRound
+EDGE	LeanDag.Properties.Arcs.decided_chop_iff_mahimahi	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.Properties.Arcs.decided_chop_iff_mahimahi	LeanDag.chop
+EDGE	LeanDag.Properties.Arcs.decided_chop_iff_mahimahi	LeanDag.Properties.Arcs.truncates_chop_mahimahi
+EDGE	LeanDag.Properties.Arcs.decided_chop_iff_mahimahi	LeanDag.BlockUniverse
+EDGE	LeanDag.Properties.Arcs.decided_chop_iff_mahimahi	LeanDag.Slots.chop
+EDGE	LeanDag.Properties.Arcs.decided_chop_iff_mahimahi	LeanDag.MahiMahiProperties.banded
+EDGE	LeanDag.Properties.Arcs.decided_chop_iff_mahimahi	LeanDag.Properties.Arcs.viewAgreeAbove_chop
+EDGE	LeanDag.Properties.Arcs.decided_chop_iff_mahimahi	LeanDag.Slots
+EDGE	LeanDag.Properties.Arcs.decided_chop_iff_mahimahi	LeanDag.Properties.LocalTruncate.of_banded
+EDGE	LeanDag.Properties.Arcs.decided_chop_iff_mahimahi	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.Properties.Arcs.decided_chop_iff_mahimahi	LeanDag.View
 NODE	LeanDagTest.Hydrozoan.eightReplicas._proof_2	LeanDagTest.Hydrozoan.LivenessHardening	thm
 EDGE	LeanDagTest.Hydrozoan.eightReplicas._proof_2	LeanDagTest.Hydrozoan.eightReplicas._proof_1
 NODE	LeanDag.Integration.exists_commonAt	LeanDag.Integration.CommonTarget	thm
@@ -51037,6 +51680,17 @@ EDGE	LeanDag.Integration.Hydrozoan.Deployment.numbering	LeanDag.Integration.Hydr
 EDGE	LeanDag.Integration.Hydrozoan.Deployment.numbering	LeanDag.Integration.Hydrozoan.Deployment.horizon
 EDGE	LeanDag.Integration.Hydrozoan.Deployment.numbering	LeanDag.Hydrozoan.Faults
 EDGE	LeanDag.Integration.Hydrozoan.Deployment.numbering	LeanDag.Integration.Hydrozoan.slotsChopHZ
+NODE	LeanDag.MahiMahiProperties.causal	LeanDag.MahiMahi.Carrier	thm
+EDGE	LeanDag.MahiMahiProperties.causal	LeanDag.Properties.DagRule.ids
+EDGE	LeanDag.MahiMahiProperties.causal	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.causal	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.causal	LeanDag.BlockUniverse.complete
+EDGE	LeanDag.MahiMahiProperties.causal	LeanDag.Properties.Causal
+EDGE	LeanDag.MahiMahiProperties.causal	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.MahiMahiProperties.causal	LeanDag.Block.refs
+EDGE	LeanDag.MahiMahiProperties.causal	LeanDag.CausalStructure.mk
+EDGE	LeanDag.MahiMahiProperties.causal	LeanDag.BlockUniverse.round_of_mem_refs
+EDGE	LeanDag.MahiMahiProperties.causal	LeanDag.Properties.DagRule.Universe
 NODE	LeanDag.Nemo.Universe.refs_subset	LeanDag.Nemo.Basic	thm
 EDGE	LeanDag.Nemo.Universe.refs_subset	LeanDag.Nemo.Universe.complete
 EDGE	LeanDag.Nemo.Universe.refs_subset	LeanDag.Nemo.Universe
@@ -51095,6 +51749,42 @@ EDGE	LeanDag.Barnacle.Hydrozoan.adapt	LeanDag.Hydrozoan.Block.author
 EDGE	LeanDag.Barnacle.Hydrozoan.adapt	LeanDag.Hydrozoan.Block
 EDGE	LeanDag.Barnacle.Hydrozoan.adapt	LeanDag.Block.mk
 EDGE	LeanDag.Barnacle.Hydrozoan.adapt	LeanDag.Hydrozoan.Block.round
+NODE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.MahiMahi.certificates
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.Properties.DagRule.ids
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_4
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.MahiMahiProperties.certifies_band
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_6
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_8
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_1
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.MahiMahi.Certifies
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.MahiMahi.CertifiedIn
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_5
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.Properties.AgreeBand.reaches_old
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.Properties.AgreeBand.reaches_of
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.MysticetiProperties.band_mem
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.MahiMahi.instDecidableCertifies
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.ReachesFrom
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_2
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.blocksAt
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.MysticetiProperties.causal
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_3
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.MahiMahiProperties.certificates_band
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.MahiMahiProperties.toCore
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.MahiMahi.decisionRoundAt
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_9
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_7
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.mem_blocksAt
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band	LeanDag.Reaches
 NODE	LeanDag.byzPool	LeanDag.DoS.Novelty	def
 EDGE	LeanDag.byzPool	LeanDag.Delivery
 EDGE	LeanDag.byzPool	LeanDag.Faults
@@ -51586,6 +52276,15 @@ EDGE	LeanDag.Hydrozoan.ValidWrt.rec	LeanDag.Hydrozoan.Block
 EDGE	LeanDag.Hydrozoan.ValidWrt.rec	LeanDag.Hydrozoan.Block.round
 EDGE	LeanDag.Hydrozoan.ValidWrt.rec	LeanDag.Hydrozoan.ValidWrt
 EDGE	LeanDag.Hydrozoan.ValidWrt.rec	LeanDag.Hydrozoan.Faults
+NODE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_5	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_5	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_5	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_5	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_5	LeanDag.MahiMahi.votesIn
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_5	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_5	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_5	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_5	LeanDag.MahiMahi.decisionRoundAt
 NODE	LeanDag.Odontoceti.partialRun_agree._proof_1_5	LeanDag.Adaptive.Odontoceti	thm
 EDGE	LeanDag.Odontoceti.partialRun_agree._proof_1_5	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.partialRun_agree._proof_1_5	LeanDag.MysticetiProperties.mysticetiRule
@@ -51887,6 +52586,29 @@ NODE	LeanDagTest.Barnacle.odoCorrect	LeanDagTest.Barnacle.Instances	thm
 EDGE	LeanDagTest.Barnacle.odoCorrect	LeanDag.Correct
 EDGE	LeanDagTest.Barnacle.odoCorrect	LeanDagTest.instFaults5FinOfNatNat_leanDagTest
 EDGE	LeanDagTest.Barnacle.odoCorrect	LeanDag.Faults5.toFaults
+NODE	LeanDag.MahiMahiProperties.certifies_band	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.certifies_band	LeanDag.creatorsOf
+EDGE	LeanDag.MahiMahiProperties.certifies_band	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.certifies_band	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.certifies_band	LeanDag.BlockUniverse.complete
+EDGE	LeanDag.MahiMahiProperties.certifies_band	LeanDag.MysticetiProperties.creatorsOf_band
+EDGE	LeanDag.MahiMahiProperties.certifies_band	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.MahiMahiProperties.certifies_band	LeanDag.Block.refs
+EDGE	LeanDag.MahiMahiProperties.certifies_band	LeanDag.MahiMahi.Certifies
+EDGE	LeanDag.MahiMahiProperties.certifies_band	LeanDag.MahiMahi.votesIn
+EDGE	LeanDag.MahiMahiProperties.certifies_band	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.certifies_band	LeanDag.MahiMahiProperties.certifies_band._proof_1_1
+EDGE	LeanDag.MahiMahiProperties.certifies_band	LeanDag.MahiMahi.Votes
+EDGE	LeanDag.MahiMahiProperties.certifies_band	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.certifies_band	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.certifies_band	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.certifies_band	LeanDag.Faults.f
+EDGE	LeanDag.MahiMahiProperties.certifies_band	LeanDag.MahiMahiProperties.certifies_band._proof_1_2
+EDGE	LeanDag.MahiMahiProperties.certifies_band	LeanDag.MysticetiProperties.band_refs
+EDGE	LeanDag.MahiMahiProperties.certifies_band	LeanDag.BlockUniverse.round_of_mem_refs
+EDGE	LeanDag.MahiMahiProperties.certifies_band	LeanDag.MahiMahiProperties.toCore
+EDGE	LeanDag.MahiMahiProperties.certifies_band	LeanDag.MahiMahi.instDecidableVotes
+EDGE	LeanDag.MahiMahiProperties.certifies_band	LeanDag.MahiMahiProperties.votes_band
 NODE	LeanDagTest.FinWhalePace.fwPaceCore_built	LeanDagTest.FinWhale.Pace	thm
 EDGE	LeanDagTest.FinWhalePace.fwPaceCore_built	LeanDagTest.Ugrow
 EDGE	LeanDagTest.FinWhalePace.fwPaceCore_built	LeanDag.PaceCore.built
@@ -51922,6 +52644,11 @@ EDGE	LeanDag.Properties.Arcs.sustains_chop._proof_1_1	LeanDag.MysticetiPropertie
 EDGE	LeanDag.Properties.Arcs.sustains_chop._proof_1_1	LeanDag.BlockUniverse.block
 EDGE	LeanDag.Properties.Arcs.sustains_chop._proof_1_1	LeanDag.Block.round
 EDGE	LeanDag.Properties.Arcs.sustains_chop._proof_1_1	LeanDag.BlockUniverse
+NODE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_8	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_8	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_8	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_8	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_8	LeanDag.BlockUniverse
 NODE	LeanDag.encodeList_injOn._proof_1_4	LeanDag.DoS.Pedigree	thm
 NODE	LeanDag.Hybrid.Checkpoint.Model.mk	LeanDag.Hybrid.Checkpoint.BaseSpec	ctor
 EDGE	LeanDag.Hybrid.Checkpoint.Model.mk	LeanDag.HybridFaults
@@ -53000,6 +53727,15 @@ EDGE	LeanDag.FinWhale.Dag.ofDoSValid._proof_1	LeanDag.ValidWrt.predecessor
 EDGE	LeanDag.FinWhale.Dag.ofDoSValid._proof_1	LeanDag.BlockUniverse.valid
 EDGE	LeanDag.FinWhale.Dag.ofDoSValid._proof_1	LeanDag.FinWhale.ValidHere
 EDGE	LeanDag.FinWhale.Dag.ofDoSValid._proof_1	LeanDag.ValidWrt.quorum
+NODE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_6	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_6	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_6	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_6	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_6	LeanDag.MahiMahi.votesIn
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_6	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_6	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_6	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_6	LeanDag.MahiMahi.decisionRoundAt
 NODE	LeanDag.viewUpto_chopD._proof_1_1	LeanDag.GC.Window	thm
 EDGE	LeanDag.viewUpto_chopD._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.viewUpto_chopD._proof_1_1	LeanDag.BlockUniverse.block
@@ -53877,6 +54613,12 @@ EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_4	LeanDag.BlockUniv
 EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_4	LeanDag.Block.round
 EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_4	LeanDag.BlockUniverse
 EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_4	LeanDag.Faults5.toFaults
+NODE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_1	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_1	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_1	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_1	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_1	LeanDag.MahiMahi.decisionRoundAt
 NODE	LeanDag.Slots.recOn	LeanDag.Mysticeti	def
 EDGE	LeanDag.Slots.recOn	LeanDag.Slots.mk
 EDGE	LeanDag.Slots.recOn	LeanDag.Slots.rec
@@ -54036,6 +54778,12 @@ EDGE	LeanDag.OptimalHydrozoan.fastCommitOptInView_mono	LeanDag.Hydrozoan.View.id
 EDGE	LeanDag.OptimalHydrozoan.fastCommitOptInView_mono	LeanDag.Hydrozoan.BlockUniverse.block
 EDGE	LeanDag.OptimalHydrozoan.fastCommitOptInView_mono	LeanDag.OptimalHydrozoan.qFastOpt
 EDGE	LeanDag.OptimalHydrozoan.fastCommitOptInView_mono	LeanDag.Hydrozoan.supportersInView
+NODE	LeanDag.MahiMahiProperties.votes_band._proof_1_1	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.votes_band._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.votes_band._proof_1_1	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.votes_band._proof_1_1	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.votes_band._proof_1_1	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.votes_band._proof_1_1	LeanDag.Block.creator
 NODE	LeanDagTest.OptimalHydrozoan.lkC._proof_4	LeanDagTest.OptimalHydrozoan.PrefixAgreement	thm
 EDGE	LeanDagTest.OptimalHydrozoan.lkC._proof_4	LeanDagTest.OptimalHydrozoan.lkC._proof_1
 NODE	LeanDag.Barnacle.Ledger.holds	LeanDag.Barnacle.Ledger.Proof	thm
@@ -54262,6 +55010,21 @@ EDGE	LeanDag.OptimalHydrozoan.qFastOpt_le_card_correct	LeanDag.OptimalHydrozoan.
 EDGE	LeanDag.OptimalHydrozoan.qFastOpt_le_card_correct	LeanDag.Hydrozoan.Faults.crashed
 EDGE	LeanDag.OptimalHydrozoan.qFastOpt_le_card_correct	LeanDag.OptimalHydrozoan.pOpt
 EDGE	LeanDag.OptimalHydrozoan.qFastOpt_le_card_correct	LeanDag.OptimalHydrozoan.qFastOpt
+NODE	LeanDag.MahiMahiProperties.votes_band	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.votes_band	LeanDag.MahiMahiProperties.votes_band._proof_1_1
+EDGE	LeanDag.MahiMahiProperties.votes_band	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.votes_band	LeanDag.MahiMahiProperties.candidatesAt_band
+EDGE	LeanDag.MahiMahiProperties.votes_band	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.votes_band	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.MahiMahiProperties.votes_band	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.votes_band	LeanDag.MahiMahi.Votes
+EDGE	LeanDag.MahiMahiProperties.votes_band	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.votes_band	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.votes_band	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.votes_band	LeanDag.MahiMahi.candidatesAt
+EDGE	LeanDag.MahiMahiProperties.votes_band	LeanDag.MysticetiProperties.band_block
+EDGE	LeanDag.MahiMahiProperties.votes_band	LeanDag.MahiMahiProperties.toCore
+EDGE	LeanDag.MahiMahiProperties.votes_band	LeanDag.Block.creator
 NODE	LeanDag.exists_certificate_reaches_of_directCommit	LeanDag.Mysticeti	thm
 EDGE	LeanDag.exists_certificate_reaches_of_directCommit	LeanDag.creatorsOf
 EDGE	LeanDag.exists_certificate_reaches_of_directCommit	LeanDag.mem_creatorsOf
@@ -55150,6 +55913,19 @@ EDGE	LeanDagTest.Barnacle.candidates32	LeanDag.Barnacle.BaseRule.toDagRule
 EDGE	LeanDagTest.Barnacle.candidates32	LeanDagTest.Barnacle.laws32
 EDGE	LeanDagTest.Barnacle.candidates32	LeanDag.Barnacle.commitsCandidate_toDagRule
 EDGE	LeanDagTest.Barnacle.candidates32	LeanDagTest.Barnacle.bnRule32
+NODE	LeanDag.MahiMahiProperties.mahiMahiRule	LeanDag.MahiMahi.Carrier	def
+EDGE	LeanDag.MahiMahiProperties.mahiMahiRule	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.mahiMahiRule	LeanDag.View.subset_ids
+EDGE	LeanDag.MahiMahiProperties.mahiMahiRule	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.MahiMahiProperties.mahiMahiRule	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.mahiMahiRule	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.mahiMahiRule	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.mahiMahiRule	LeanDag.Properties.DagRule.mk
+EDGE	LeanDag.MahiMahiProperties.mahiMahiRule	LeanDag.View.complete
+EDGE	LeanDag.MahiMahiProperties.mahiMahiRule	LeanDag.Properties.DagRule
+EDGE	LeanDag.MahiMahiProperties.mahiMahiRule	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.mahiMahiRule	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.MahiMahiProperties.mahiMahiRule	LeanDag.View
 NODE	LeanDag.SkipMsg.reaches_fill_old	LeanDag.SafeSkip.Invariance	thm
 EDGE	LeanDag.SkipMsg.reaches_fill_old	LeanDag.Block
 EDGE	LeanDag.SkipMsg.reaches_fill_old	LeanDag.RefStepFrom
@@ -55722,6 +56498,25 @@ EDGE	LeanDag.SkipMsg.skipFill._proof_5	LeanDag.BlockUniverse
 EDGE	LeanDag.SkipMsg.skipFill._proof_5	LeanDag.SkipMsg
 EDGE	LeanDag.SkipMsg.skipFill._proof_5	LeanDag.SkipMsg.r0
 EDGE	LeanDag.SkipMsg.skipFill._proof_5	LeanDag.SkipMsg.B1
+NODE	LeanDag.Properties.Arcs.truncates_chop_mahimahi	LeanDag.Properties.Arcs.GC	thm
+EDGE	LeanDag.Properties.Arcs.truncates_chop_mahimahi	LeanDag.Faults
+EDGE	LeanDag.Properties.Arcs.truncates_chop_mahimahi	LeanDag.Properties.RebasedAbove.creator
+EDGE	LeanDag.Properties.Arcs.truncates_chop_mahimahi	LeanDag.Slots.slotRound
+EDGE	LeanDag.Properties.Arcs.truncates_chop_mahimahi	LeanDag.Properties.RebasedAbove.round
+EDGE	LeanDag.Properties.Arcs.truncates_chop_mahimahi	LeanDag.Properties.RebasedAbove.mk
+EDGE	LeanDag.Properties.Arcs.truncates_chop_mahimahi	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.Properties.Arcs.truncates_chop_mahimahi	LeanDag.Properties.RebasedAbove.refs
+EDGE	LeanDag.Properties.Arcs.truncates_chop_mahimahi	LeanDag.chop
+EDGE	LeanDag.Properties.Arcs.truncates_chop_mahimahi	LeanDag.Properties.Arcs.truncates_chop
+EDGE	LeanDag.Properties.Arcs.truncates_chop_mahimahi	LeanDag.Properties.Truncates.toRebasedAbove
+EDGE	LeanDag.Properties.Arcs.truncates_chop_mahimahi	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.Properties.Arcs.truncates_chop_mahimahi	LeanDag.Properties.RebasedAbove.mem
+EDGE	LeanDag.Properties.Arcs.truncates_chop_mahimahi	LeanDag.BlockUniverse
+EDGE	LeanDag.Properties.Arcs.truncates_chop_mahimahi	LeanDag.Slots.chop
+EDGE	LeanDag.Properties.Arcs.truncates_chop_mahimahi	LeanDag.Properties.Truncates.mk
+EDGE	LeanDag.Properties.Arcs.truncates_chop_mahimahi	LeanDag.Slots
+EDGE	LeanDag.Properties.Arcs.truncates_chop_mahimahi	LeanDag.Properties.Truncates.toRebases
+EDGE	LeanDag.Properties.Arcs.truncates_chop_mahimahi	LeanDag.Properties.Truncates
 NODE	LeanDag.FinWhale.Run.block_eq	LeanDag.FinWhale.Model.Protocol	thm
 EDGE	LeanDag.FinWhale.Run.block_eq	LeanDag.Block
 EDGE	LeanDag.FinWhale.Run.block_eq	LeanDag.Faults
@@ -55808,6 +56603,75 @@ EDGE	LeanDag.ReactiveM.cert_or_wait	LeanDag.PaceCore.timeout
 EDGE	LeanDag.ReactiveM.cert_or_wait	LeanDag.IsLeaderBlock
 EDGE	LeanDag.ReactiveM.cert_or_wait	LeanDag.Slots
 EDGE	LeanDag.ReactiveM.cert_or_wait	LeanDag.Block.creator
+NODE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahi.decisionRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.directSkipIn_band
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahi.DirectSkipIn
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahi.isLeaderBlock_of_decided
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_11
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_17
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_29
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.Properties.AgreeBand.mono
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_12
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_27
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_7
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_23
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MysticetiProperties.isLeaderBlock_band_old
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahi.Decided.directSkip
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_24
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_30
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahi.instDecidableEligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_6
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_15
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahi.Eligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_31
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_21
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_25
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahi.Decided.rec
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_10
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahi.CertifiedIn
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_14
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_5
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_3
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_1
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahi.DirectCommitIn
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_26
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_13
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_8
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_20
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.directCommitIn_band
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_19
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_32
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahi.Decided.indirectCommit
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.certifiedIn_band
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.IsLeaderBlock
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_2
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_28
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_22
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_16
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.toCore
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_18
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahi.Decided.indirectSkip
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahi.Decided.directCommit
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.Slots.mono
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.View
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MysticetiProperties.isLeaderBlock_band
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.Block.creator
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_9
+EDGE	LeanDag.MahiMahiProperties.banded_aux	LeanDag.MahiMahiProperties.banded_aux._proof_1_4
 NODE	LeanDagTest.BlackMarlin.vBlockFull.match_1.eq_2	LeanDagTest.BlackMarlin.Divergence	thm
 EDGE	LeanDagTest.BlackMarlin.vBlockFull.match_1.eq_2	LeanDagTest.BlackMarlin.vBlockFull.match_1
 NODE	LeanDag.OdontocetiProperties.banded_aux._proof_1_27	LeanDag.OdontocetiProperties	thm
@@ -55995,6 +56859,15 @@ EDGE	LeanDag.MysticetiProperties.certifies_old	LeanDag.Faults.f
 EDGE	LeanDag.MysticetiProperties.certifies_old	LeanDag.MysticetiProperties.votesIn_old
 NODE	LeanDag.Hydrozoan.PrefixAgreement.commitSeq	LeanDag.Hydrozoan.PrefixAgreement.Statement	def
 NODE	LeanDagTest.ucrashMsg._proof_6	LeanDagTest.SafeSkip	thm
+NODE	LeanDag.MahiMahiProperties.commitsCandidate	LeanDag.MahiMahi.Carrier	thm
+EDGE	LeanDag.MahiMahiProperties.commitsCandidate	LeanDag.Properties.CommitsCandidate
+EDGE	LeanDag.MahiMahiProperties.commitsCandidate	LeanDag.MahiMahi.isLeaderBlock_of_decided
+EDGE	LeanDag.MahiMahiProperties.commitsCandidate	LeanDag.Properties.DagRule.Decided
+EDGE	LeanDag.MahiMahiProperties.commitsCandidate	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.commitsCandidate	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.commitsCandidate	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.commitsCandidate	LeanDag.Properties.DagRule.View
+EDGE	LeanDag.MahiMahiProperties.commitsCandidate	LeanDag.Properties.DagRule.Universe
 NODE	LeanDag.Hybrid.Checkpoint.Model.Execution.CertificatePayload.Valid	LeanDag.Hybrid.Checkpoint.BaseSpec	def
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.CertificatePayload.Valid	LeanDag.Hybrid.Checkpoint.ChkProp.mk
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.CertificatePayload.Valid	LeanDag.HybridFaults
@@ -56280,6 +57153,11 @@ EDGE	LeanDag.FinWhaleProperties.banded._proof_1_11	LeanDag.Slots
 EDGE	LeanDag.FinWhaleProperties.banded._proof_1_11	LeanDag.Properties.DagRule.View
 EDGE	LeanDag.FinWhaleProperties.banded._proof_1_11	LeanDag.Properties.DagRule.Universe
 EDGE	LeanDag.FinWhaleProperties.banded._proof_1_11	LeanDag.FinWhaleProperties.schedOf
+NODE	LeanDag.Properties.AgreeBand.reaches_of._proof_1_3	LeanDag.Properties.Band	thm
+EDGE	LeanDag.Properties.AgreeBand.reaches_of._proof_1_3	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.Properties.AgreeBand.reaches_of._proof_1_3	LeanDag.Block.round
+EDGE	LeanDag.Properties.AgreeBand.reaches_of._proof_1_3	LeanDag.Properties.DagRule
+EDGE	LeanDag.Properties.AgreeBand.reaches_of._proof_1_3	LeanDag.Properties.DagRule.Universe
 NODE	LeanDag.FinWhale.agreement_of_commits._proof_1_5	LeanDag.FinWhale.Decided	thm
 EDGE	LeanDag.FinWhale.agreement_of_commits._proof_1_5	LeanDag.Faults
 EDGE	LeanDag.FinWhale.agreement_of_commits._proof_1_5	LeanDag.Faults.f
@@ -56611,6 +57489,21 @@ EDGE	LeanDag.FinWhale.lemma23._proof_1_3	LeanDag.FinWhale.instDecidableEqVerdict
 EDGE	LeanDag.FinWhale.lemma23._proof_1_3	LeanDag.FinWhale.Verdict
 NODE	LeanDagTest.BlackMarlin.fullBlock.eq_2	LeanDagTest.BlackMarlin.Ledger	thm
 EDGE	LeanDagTest.BlackMarlin.fullBlock.eq_2	LeanDagTest.BlackMarlin.fullBlock
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_13	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_13	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_13	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_13	LeanDag.MahiMahi.instDecidableEligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_13	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_13	LeanDag.MahiMahi.Eligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_13	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_13	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_13	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_13	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_13	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_13	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_13	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_13	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_13	LeanDag.View
 NODE	LeanDag.Hydrozoan.supporters_capped_of_skipped	LeanDag.Hydrozoan.Helpers.SlotAgreement	thm
 EDGE	LeanDag.Hydrozoan.supporters_capped_of_skipped	LeanDag.Hydrozoan.BlockUniverse
 EDGE	LeanDag.Hydrozoan.supporters_capped_of_skipped	LeanDag.Hydrozoan.Slots
@@ -56965,6 +57858,9 @@ EDGE	LeanDag.card_serve_le._proof_1_2	LeanDag.BlockUniverse
 EDGE	LeanDag.card_serve_le._proof_1_2	LeanDag.Faults.f
 EDGE	LeanDag.card_serve_le._proof_1_2	LeanDag.viewUpto
 NODE	LeanDag.FinWhale.exists_round_led_by._proof_1_2	LeanDag.FinWhale.Rotation	thm
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_1	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_1	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_1	LeanDag.Slots
 NODE	LeanDag.Adaptive.partialRun_agree_extends._proof_1_1	LeanDag.Adaptive.Growth	thm
 EDGE	LeanDag.Adaptive.partialRun_agree_extends._proof_1_1	LeanDag.Adaptive.Policy
 EDGE	LeanDag.Adaptive.partialRun_agree_extends._proof_1_1	LeanDag.epochOf
@@ -57125,6 +58021,11 @@ EDGE	LeanDag.Hydrozoan.banded_aux._proof_1_64	LeanDag.Hydrozoan.Slots.slotRound
 EDGE	LeanDag.Hydrozoan.banded_aux._proof_1_64	LeanDag.Hydrozoan.Slots.leader
 EDGE	LeanDag.Hydrozoan.banded_aux._proof_1_64	LeanDag.Hydrozoan.Faults
 EDGE	LeanDag.Hydrozoan.banded_aux._proof_1_64	LeanDag.Hydrozoan.EligibleAsAnchor
+NODE	LeanDag.MahiMahiProperties.certifies_band._proof_1_1	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.certifies_band._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.certifies_band._proof_1_1	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.certifies_band._proof_1_1	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.certifies_band._proof_1_1	LeanDag.BlockUniverse
 NODE	LeanDag.votesIn_chop	LeanDag.GC.Chop	thm
 EDGE	LeanDag.votesIn_chop	LeanDag.Block
 EDGE	LeanDag.votesIn_chop	LeanDag.votesIn
@@ -57625,6 +58526,12 @@ EDGE	LeanDag.Integration.Hydrozoan.noEvidenceQuorumInView_chopHZ._proof_1_1	Lean
 EDGE	LeanDag.Integration.Hydrozoan.noEvidenceQuorumInView_chopHZ._proof_1_1	LeanDag.Integration.Hydrozoan.chopHZ
 EDGE	LeanDag.Integration.Hydrozoan.noEvidenceQuorumInView_chopHZ._proof_1_1	LeanDag.Hydrozoan.authorsOf
 EDGE	LeanDag.Integration.Hydrozoan.noEvidenceQuorumInView_chopHZ._proof_1_1	LeanDag.Integration.Hydrozoan.SelfParenting
+NODE	LeanDag.MahiMahiProperties.certificates_band._proof_1_6	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_6	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_6	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_6	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_6	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_6	LeanDag.MahiMahi.decisionRoundAt
 NODE	LeanDag.OptimalHydrozoan.mem_votesFor_of_nonByzantine	LeanDag.OptimalHydrozoan.Helpers.SlotAgreement	thm
 EDGE	LeanDag.OptimalHydrozoan.mem_votesFor_of_nonByzantine	LeanDag.Hydrozoan.round_of_mem_parents
 EDGE	LeanDag.OptimalHydrozoan.mem_votesFor_of_nonByzantine	LeanDag.Hydrozoan.Block.parents
@@ -58263,6 +59170,15 @@ EDGE	LeanDag.Hybrid.eq_of_directCommitIn_of_thickLink	LeanDag.Slots
 EDGE	LeanDag.Hybrid.eq_of_directCommitIn_of_thickLink	LeanDag.Hybrid.eq_of_directCommit_of_thickLink
 EDGE	LeanDag.Hybrid.eq_of_directCommitIn_of_thickLink	LeanDag.View
 EDGE	LeanDag.Hybrid.eq_of_directCommitIn_of_thickLink	LeanDag.Block.creator
+NODE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_9	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_9	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_9	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_9	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_9	LeanDag.MahiMahi.votesIn
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_9	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_9	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_9	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_9	LeanDag.MahiMahi.decisionRoundAt
 NODE	LeanDag.eq_of_mem_history_of_round_eq	LeanDag.History	thm
 EDGE	LeanDag.eq_of_mem_history_of_round_eq	LeanDag.Faults
 EDGE	LeanDag.eq_of_mem_history_of_round_eq	LeanDag.BlockUniverse.ids
@@ -58612,6 +59528,35 @@ EDGE	LeanDagTest.OptimalHydrozoan.spansEligible_fourOpt4	LeanDag.Hydrozoan.Indir
 EDGE	LeanDagTest.OptimalHydrozoan.spansEligible_fourOpt4	LeanDagTest.OptimalHydrozoan.fourSlotsOpt
 EDGE	LeanDagTest.OptimalHydrozoan.spansEligible_fourOpt4	LeanDag.Hydrozoan.EligibleAsAnchor
 NODE	LeanDag.FinWhale.slotBlocks_restrict._simp_1_1	LeanDag.FinWhale.View	thm
+NODE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.MahiMahi.DirectSkipIn
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_1
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.MahiMahi.instDecidableBlames
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.MahiMahi.Blames
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.MahiMahiProperties.blames_band
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_4
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_5
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_6
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.MahiMahi.blamersIn
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.blocksAt
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.Faults.f
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.MysticetiProperties.blocksAt_band
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_2
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.MysticetiProperties.band_block
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.MahiMahiProperties.toCore
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.View
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_3
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.Block.creator
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.mem_blocksAt
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band	LeanDag.MahiMahi.votingRound
 NODE	LeanDag.PedigreeTo.casesOn	LeanDag.DoS.Pedigree	def
 EDGE	LeanDag.PedigreeTo.casesOn	LeanDag.Faults
 EDGE	LeanDag.PedigreeTo.casesOn	LeanDag.PedigreeTo
@@ -59021,6 +59966,21 @@ EDGE	LeanDag.exists_mem_refs_of_correct_support_of_card	LeanDag.Faults.f
 EDGE	LeanDag.exists_mem_refs_of_correct_support_of_card	LeanDag.exists_mem_refs_of_correct_support
 EDGE	LeanDag.exists_mem_refs_of_correct_support_of_card	LeanDag.exists_mem_refs_of_correct_support_of_card._proof_1_1
 EDGE	LeanDag.exists_mem_refs_of_correct_support_of_card	LeanDag.Block.creator
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_8	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_8	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_8	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_8	LeanDag.MahiMahi.instDecidableEligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_8	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_8	LeanDag.MahiMahi.Eligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_8	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_8	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_8	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_8	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_8	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_8	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_8	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_8	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_8	LeanDag.View
 NODE	LeanDag.directSkipIn_of_directSkipSlotIn	LeanDag.Mysticeti	thm
 EDGE	LeanDag.directSkipIn_of_directSkipSlotIn	LeanDag.creatorsOf
 EDGE	LeanDag.directSkipIn_of_directSkipSlotIn	LeanDag.Faults
@@ -59479,6 +60439,9 @@ EDGE	LeanDag.Hydrozoan.mem_nonByzantine._simp_1	LeanDag.Hydrozoan.Faults.byzanti
 EDGE	LeanDag.Hydrozoan.mem_nonByzantine._simp_1	LeanDag.Hydrozoan.mem_nonByzantine
 EDGE	LeanDag.Hydrozoan.mem_nonByzantine._simp_1	LeanDag.Hydrozoan.NonByzantine
 EDGE	LeanDag.Hydrozoan.mem_nonByzantine._simp_1	LeanDag.Hydrozoan.Faults
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_7	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_7	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_7	LeanDag.Slots
 NODE	LeanDag.FinWhale.viewCommit_congr	LeanDag.FinWhale.Band	thm
 EDGE	LeanDag.FinWhale.viewCommit_congr	LeanDag.FinWhale.restrict
 EDGE	LeanDag.FinWhale.viewCommit_congr	LeanDag.FinWhale.slotBlocks_congr
@@ -60877,6 +61840,21 @@ EDGE	LeanDag.Hydrozoan.blamesInView.eq_1	LeanDag.Hydrozoan.Slots.leader
 EDGE	LeanDag.Hydrozoan.blamesInView.eq_1	LeanDag.Hydrozoan.Faults
 EDGE	LeanDag.Hydrozoan.blamesInView.eq_1	LeanDag.Hydrozoan.authorsOf
 EDGE	LeanDag.Hydrozoan.blamesInView.eq_1	LeanDag.Hydrozoan.BlockUniverse.ids
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_31	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_31	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_31	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_31	LeanDag.MahiMahi.instDecidableEligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_31	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_31	LeanDag.MahiMahi.Eligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_31	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_31	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_31	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_31	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_31	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_31	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_31	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_31	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_31	LeanDag.View
 NODE	LeanDag.HybridProperties.banded_aux._proof_1_21	LeanDag.HybridProperties	thm
 EDGE	LeanDag.HybridProperties.banded_aux._proof_1_21	LeanDag.HybridFaults
 EDGE	LeanDag.HybridProperties.banded_aux._proof_1_21	LeanDag.Slots.slotRound
@@ -61732,6 +62710,21 @@ EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution._sizeOf_inst	LeanDag.HybridFaults
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution._sizeOf_inst	LeanDag.Hybrid.Checkpoint.Model.Execution._sizeOf_1
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution._sizeOf_inst	LeanDag.Hybrid.Checkpoint.Model
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution._sizeOf_inst	LeanDag.Hybrid.Checkpoint.Model.Execution
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_30	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_30	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_30	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_30	LeanDag.MahiMahi.instDecidableEligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_30	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_30	LeanDag.MahiMahi.Eligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_30	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_30	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_30	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_30	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_30	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_30	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_30	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_30	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_30	LeanDag.View
 NODE	LeanDagTest.Barnacle.runP1._proof_12	LeanDagTest.Barnacle.Agreement	thm
 EDGE	LeanDagTest.Barnacle.runP1._proof_12	LeanDagTest.Barnacle.runP1._simp_5
 EDGE	LeanDagTest.Barnacle.runP1._proof_12	LeanDagTest.Barnacle.runP1._proof_1
@@ -62356,6 +63349,21 @@ EDGE	LeanDagTest.Hydrozoan.lk4	LeanDagTest.Hydrozoan.lk4._proof_10
 EDGE	LeanDagTest.Hydrozoan.lk4	LeanDagTest.Hydrozoan.lk4._proof_5
 EDGE	LeanDagTest.Hydrozoan.lk4	LeanDagTest.Hydrozoan.lk4._proof_6
 EDGE	LeanDagTest.Hydrozoan.lk4	LeanDagTest.Hydrozoan.lk4._proof_9
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_22	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_22	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_22	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_22	LeanDag.MahiMahi.instDecidableEligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_22	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_22	LeanDag.MahiMahi.Eligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_22	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_22	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_22	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_22	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_22	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_22	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_22	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_22	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_22	LeanDag.View
 NODE	LeanDag.BlackMarlin.Flush.ctorIdx	LeanDag.BlackMarlin.Model.Ledger	def
 EDGE	LeanDag.BlackMarlin.Flush.ctorIdx	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.Flush.ctorIdx	LeanDag.BlackMarlin.Flush
@@ -62513,6 +63521,12 @@ NODE	LeanDag.BlackMarlin.Supported.congr_simp	LeanDag.BlackMarlin.Helpers.Rules	
 EDGE	LeanDag.BlackMarlin.Supported.congr_simp	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.Supported.congr_simp	LeanDag.BlockUniverse
 EDGE	LeanDag.BlackMarlin.Supported.congr_simp	LeanDag.BlackMarlin.Supported
+NODE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_5	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_5	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_5	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_5	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_5	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_5	LeanDag.MahiMahi.votingRound
 NODE	LeanDag.Odontoceti.decided_below_of_committed_run._proof_1_4	LeanDag.Odontoceti.Liveness	thm
 EDGE	LeanDag.Odontoceti.decided_below_of_committed_run._proof_1_4	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.decided_below_of_committed_run._proof_1_4	LeanDag.Odontoceti.Eligible
@@ -63199,6 +64213,12 @@ EDGE	LeanDag.history_eq_insert_ofAccepted	LeanDag.View.ids
 EDGE	LeanDag.history_eq_insert_ofAccepted	LeanDag.history
 EDGE	LeanDag.history_eq_insert_ofAccepted	LeanDag.BlockUniverse
 EDGE	LeanDag.history_eq_insert_ofAccepted	LeanDag.mem_history_succ_iff
+NODE	LeanDag.MahiMahiProperties.certificates_band._proof_1_5	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_5	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_5	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_5	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_5	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_5	LeanDag.MahiMahi.decisionRoundAt
 NODE	LeanDag.SkipMsg.mem_freshIds._proof_1_7	LeanDag.SafeSkip.Basic	thm
 EDGE	LeanDag.SkipMsg.mem_freshIds._proof_1_7	LeanDag.Faults
 EDGE	LeanDag.SkipMsg.mem_freshIds._proof_1_7	LeanDag.SkipMsg.r
@@ -64538,6 +65558,13 @@ EDGE	LeanDag.Hydrozoan.not_weakLinked_bnd_novel._proof_1_1	LeanDag.Hydrozoan.Blo
 EDGE	LeanDag.Hydrozoan.not_weakLinked_bnd_novel._proof_1_1	LeanDag.Hydrozoan.Faults
 EDGE	LeanDag.Hydrozoan.not_weakLinked_bnd_novel._proof_1_1	LeanDag.Hydrozoan.authorsOf
 NODE	LeanDag.Hybrid.lt_of_eligible._proof_1_1	LeanDag.Hybrid.Decision	thm
+NODE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_4	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_4	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_4	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_4	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_4	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_4	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_4	LeanDag.BlockUniverse
 NODE	LeanDag.FinWhaleProperties.finWhaleElig	LeanDag.FinWhale.Carrier	def
 NODE	LeanDagTest.ucrash_ids	LeanDagTest.SafeSkip	thm
 EDGE	LeanDagTest.ucrash_ids	LeanDag.BlockUniverse.ids
@@ -66027,6 +67054,25 @@ EDGE	LeanDag.FinWhale.Band.mem_slotBlocks_of_old._proof_1_6	LeanDag.Block.round
 EDGE	LeanDag.FinWhale.Band.mem_slotBlocks_of_old._proof_1_6	LeanDag.FinWhale.Sched
 EDGE	LeanDag.FinWhale.Band.mem_slotBlocks_of_old._proof_1_6	LeanDag.FinWhale.Dag
 EDGE	LeanDag.FinWhale.Band.mem_slotBlocks_of_old._proof_1_6	LeanDag.Block.creator
+NODE	LeanDag.Properties.Arcs.decided_fill_agree_mahimahi	LeanDag.Properties.Arcs.SafeSkip	thm
+EDGE	LeanDag.Properties.Arcs.decided_fill_agree_mahimahi	LeanDag.Block
+EDGE	LeanDag.Properties.Arcs.decided_fill_agree_mahimahi	LeanDag.Properties.DagRule.ids
+EDGE	LeanDag.Properties.Arcs.decided_fill_agree_mahimahi	LeanDag.Faults
+EDGE	LeanDag.Properties.Arcs.decided_fill_agree_mahimahi	LeanDag.Properties.Persist.of_banded
+EDGE	LeanDag.Properties.Arcs.decided_fill_agree_mahimahi	LeanDag.Properties.Arcs.decided_agree_extends
+EDGE	LeanDag.Properties.Arcs.decided_fill_agree_mahimahi	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.Properties.Arcs.decided_fill_agree_mahimahi	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.Properties.Arcs.decided_fill_agree_mahimahi	LeanDag.SkipMsg.skipFill
+EDGE	LeanDag.Properties.Arcs.decided_fill_agree_mahimahi	LeanDag.MahiMahiProperties.agree
+EDGE	LeanDag.Properties.Arcs.decided_fill_agree_mahimahi	LeanDag.Properties.Arcs.extends_of_skipFill
+EDGE	LeanDag.Properties.Arcs.decided_fill_agree_mahimahi	LeanDag.BlockUniverse
+EDGE	LeanDag.Properties.Arcs.decided_fill_agree_mahimahi	LeanDag.MahiMahiProperties.banded
+EDGE	LeanDag.Properties.Arcs.decided_fill_agree_mahimahi	LeanDag.Properties.DagRule.viewIds
+EDGE	LeanDag.Properties.Arcs.decided_fill_agree_mahimahi	LeanDag.Slots
+EDGE	LeanDag.Properties.Arcs.decided_fill_agree_mahimahi	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.Properties.Arcs.decided_fill_agree_mahimahi	LeanDag.SkipMsg
+EDGE	LeanDag.Properties.Arcs.decided_fill_agree_mahimahi	LeanDag.View
+EDGE	LeanDag.Properties.Arcs.decided_fill_agree_mahimahi	LeanDag.SkipMsg.liftView
 NODE	LeanDagTest.skewHolds.eq_1	LeanDagTest.ViewPace	thm
 EDGE	LeanDagTest.skewHolds.eq_1	LeanDagTest.skewHolds
 NODE	LeanDag.Hydrozoan.IsCertificate.congr_simp	LeanDag.Hydrozoan.Helpers.Counting	thm
@@ -66269,6 +67315,14 @@ EDGE	LeanDag.BlackMarlin.linked_of_linkedIn	LeanDag.BlackMarlin.linkers
 EDGE	LeanDag.BlackMarlin.linked_of_linkedIn	LeanDag.BlackMarlin.Rotation
 EDGE	LeanDag.BlackMarlin.linked_of_linkedIn	LeanDag.BlackMarlin.LinkedIn
 EDGE	LeanDag.BlackMarlin.linked_of_linkedIn	LeanDag.View
+NODE	LeanDag.MahiMahiProperties.candidatesAt_band._simp_1_2	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._simp_1_2	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._simp_1_2	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._simp_1_2	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._simp_1_2	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._simp_1_2	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._simp_1_2	LeanDag.blocksAt
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._simp_1_2	LeanDag.mem_blocksAt
 NODE	LeanDag.SkipMsg.skipFill._proof_14	LeanDag.SafeSkip.Basic	thm
 EDGE	LeanDag.SkipMsg.skipFill._proof_14	LeanDag.Block
 EDGE	LeanDag.SkipMsg.skipFill._proof_14	LeanDag.Faults
@@ -67263,6 +68317,12 @@ EDGE	LeanDagTest.Uodo._proof_2	LeanDagTest.odoBlk
 EDGE	LeanDagTest.Uodo._proof_2	LeanDag.instDecidableValidWrtOfDecidableEq
 EDGE	LeanDagTest.Uodo._proof_2	LeanDag.Faults5.toFaults
 EDGE	LeanDagTest.Uodo._proof_2	LeanDag.ValidWrt
+NODE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_1	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_1	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_1	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_1	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_1	LeanDag.MahiMahi.decisionRoundAt
 NODE	LeanDag.Slots.chop._proof_3	LeanDag.GC.ChopDecided	thm
 EDGE	LeanDag.Slots.chop._proof_3	LeanDag.Slots.slotRound
 EDGE	LeanDag.Slots.chop._proof_3	LeanDag.Slots
@@ -67423,6 +68483,12 @@ EDGE	LeanDag.FinWhale.Band.fpEvidence_iff._proof_1_1	LeanDag.Block.round
 EDGE	LeanDag.FinWhale.Band.fpEvidence_iff._proof_1_1	LeanDag.Faults.f
 EDGE	LeanDag.FinWhale.Band.fpEvidence_iff._proof_1_1	LeanDag.FinWhale.Params.p
 EDGE	LeanDag.FinWhale.Band.fpEvidence_iff._proof_1_1	LeanDag.FinWhale.Dag
+NODE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_6	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_6	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_6	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_6	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_6	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.directSkipIn_band._proof_1_6	LeanDag.MahiMahi.votingRound
 NODE	LeanDagTest.Hydrozoan.lk3._proof_3	LeanDagTest.Hydrozoan.Decided	thm
 NODE	LeanDagTest.skipBlk	LeanDagTest.Odontoceti.Model	def
 EDGE	LeanDagTest.skipBlk	LeanDag.Block
@@ -67760,6 +68826,12 @@ EDGE	LeanDag.FinWhale.Creation.lemma20	LeanDag.FinWhale.Sched.leader
 EDGE	LeanDag.FinWhale.Creation.lemma20	LeanDag.FinWhale.Creation
 EDGE	LeanDag.FinWhale.Creation.lemma20	LeanDag.Block.creator
 EDGE	LeanDag.FinWhale.Creation.lemma20	LeanDag.PaceCore.delay
+NODE	LeanDag.MahiMahiProperties.directCommitIn_band._proof_1_1	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band._proof_1_1	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band._proof_1_1	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band._proof_1_1	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band._proof_1_1	LeanDag.MahiMahi.decisionRoundAt
 NODE	LeanDagTest.Minnow.Dfull._proof_1	LeanDagTest.Minnow.Safety	thm
 EDGE	LeanDagTest.Minnow.Dfull._proof_1	LeanDag.Block.refs
 EDGE	LeanDagTest.Minnow.Dfull._proof_1	LeanDagTest.Minnow.sfBlk
@@ -69424,6 +70496,30 @@ EDGE	LeanDag.OptimalHydrozoan.leaderExcluded_of_bounded._proof_1_2	LeanDag.Hydro
 EDGE	LeanDag.OptimalHydrozoan.leaderExcluded_of_bounded._proof_1_2	LeanDag.Hydrozoan.BlockUniverse.block
 EDGE	LeanDag.OptimalHydrozoan.leaderExcluded_of_bounded._proof_1_2	LeanDag.Hydrozoan.Slots.slotRound
 EDGE	LeanDag.OptimalHydrozoan.leaderExcluded_of_bounded._proof_1_2	LeanDag.Hydrozoan.Faults
+NODE	LeanDag.MahiMahiProperties.indirect	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.indirect	LeanDag.MahiMahi.decisionRound
+EDGE	LeanDag.MahiMahiProperties.indirect	LeanDag.MahiMahiProperties.indirect._proof_1_1
+EDGE	LeanDag.MahiMahiProperties.indirect	LeanDag.Properties.DagRule.Decided
+EDGE	LeanDag.MahiMahiProperties.indirect	LeanDag.MahiMahiProperties.indirect._proof_1_4
+EDGE	LeanDag.MahiMahiProperties.indirect	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.indirect	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.indirect	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.indirect	LeanDag.MahiMahi.Eligible
+EDGE	LeanDag.MahiMahiProperties.indirect	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.indirect	LeanDag.MahiMahi.lt_of_eligible
+EDGE	LeanDag.MahiMahiProperties.indirect	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.MahiMahiProperties.indirect	LeanDag.MahiMahi.CertifiedIn
+EDGE	LeanDag.MahiMahiProperties.indirect	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.indirect	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.indirect	LeanDag.MahiMahi.Decided.indirectCommit
+EDGE	LeanDag.MahiMahiProperties.indirect	LeanDag.IsLeaderBlock
+EDGE	LeanDag.MahiMahiProperties.indirect	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.indirect	LeanDag.MahiMahi.Decided.indirectSkip
+EDGE	LeanDag.MahiMahiProperties.indirect	LeanDag.Slots.mono
+EDGE	LeanDag.MahiMahiProperties.indirect	LeanDag.Properties.Indirect
+EDGE	LeanDag.MahiMahiProperties.indirect	LeanDag.Properties.DagRule.View
+EDGE	LeanDag.MahiMahiProperties.indirect	LeanDag.Block.creator
+EDGE	LeanDag.MahiMahiProperties.indirect	LeanDag.Properties.DagRule.Universe
 NODE	LeanDag.Integration.Hydrozoan.leaderExcludedAll_chopHZ._proof_1_2	LeanDag.Integration.Hydrozoan.OptimalTransport	thm
 EDGE	LeanDag.Integration.Hydrozoan.leaderExcludedAll_chopHZ._proof_1_2	LeanDag.Hydrozoan.BlockUniverse
 EDGE	LeanDag.Integration.Hydrozoan.leaderExcludedAll_chopHZ._proof_1_2	LeanDag.Hydrozoan.Block.round
@@ -69437,6 +70533,21 @@ EDGE	LeanDag.Minnow.slotBlocks	LeanDag.Block.round
 EDGE	LeanDag.Minnow.slotBlocks	LeanDag.Minnow.Dag.block
 EDGE	LeanDag.Minnow.slotBlocks	LeanDag.Minnow.Dag.ids
 EDGE	LeanDag.Minnow.slotBlocks	LeanDag.Block.creator
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_10	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_10	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_10	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_10	LeanDag.MahiMahi.instDecidableEligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_10	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_10	LeanDag.MahiMahi.Eligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_10	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_10	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_10	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_10	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_10	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_10	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_10	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_10	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_10	LeanDag.View
 NODE	LeanDagTest.excl_round_le	LeanDagTest.GC.Bootstrap	thm
 EDGE	LeanDagTest.excl_round_le	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.excl_round_le	LeanDag.Block.round
@@ -70798,6 +71909,12 @@ EDGE	LeanDagTest.Minnow.Dfull	LeanDagTest.Minnow.Dfull._proof_1
 EDGE	LeanDagTest.Minnow.Dfull	LeanDagTest.Minnow.Dfull._proof_3
 EDGE	LeanDagTest.Minnow.Dfull	LeanDag.Minnow.Dag
 EDGE	LeanDagTest.Minnow.Dfull	LeanDagTest.Minnow.sfBlk
+NODE	LeanDag.MahiMahiProperties.certificates_band._proof_1_1	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_1	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_1	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_1	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_1	LeanDag.MahiMahi.decisionRoundAt
 NODE	LeanDag.FinWhale.agreement_of_views._proof_1_3	LeanDag.FinWhale.View	thm
 EDGE	LeanDag.FinWhale.agreement_of_views._proof_1_3	LeanDag.Faults
 EDGE	LeanDag.FinWhale.agreement_of_views._proof_1_3	LeanDag.Faults.f
@@ -72001,6 +73118,21 @@ EDGE	LeanDagTest.Integration.Ucr._proof_2	LeanDagTest.Hydrozoan.fourReplicas
 EDGE	LeanDagTest.Integration.Ucr._proof_2	LeanDag.Hydrozoan.instDecidableValidWrtOfDecidableEq
 EDGE	LeanDagTest.Integration.Ucr._proof_2	LeanDag.Hydrozoan.ValidWrt
 EDGE	LeanDagTest.Integration.Ucr._proof_2	LeanDagTest.Integration.lkf
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_11	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_11	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_11	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_11	LeanDag.MahiMahi.instDecidableEligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_11	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_11	LeanDag.MahiMahi.Eligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_11	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_11	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_11	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_11	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_11	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_11	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_11	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_11	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_11	LeanDag.View
 NODE	LeanDag.NemoProperties.banded_aux._proof_1_3	LeanDag.NemoProperties	thm
 EDGE	LeanDag.NemoProperties.banded_aux._proof_1_3	LeanDag.Slots.slotRound
 EDGE	LeanDag.NemoProperties.banded_aux._proof_1_3	LeanDag.Slots
@@ -72012,7 +73144,6 @@ EDGE	LeanDagTest.Hydrozoan.U10._proof_2	LeanDag.Hydrozoan.ValidWrt
 NODE	LeanDagTest.doubleFaults._proof_3	LeanDagTest.DoS.Doubling	thm
 EDGE	LeanDagTest.doubleFaults._proof_3	LeanDagTest.doubleFaults._proof_1
 NODE	LeanDagTest.Integration.skcr._proof_4	LeanDagTest.Integration.HydrozoanFill	thm
-EDGE	LeanDagTest.Integration.skcr._proof_4	LeanDagTest.Integration.lkf._proof_1
 NODE	LeanDag.Hydrozoan.indirect._proof_1_2	LeanDag.Hydrozoan.Helpers.Commit	thm
 EDGE	LeanDag.Hydrozoan.indirect._proof_1_2	LeanDag.Slots.slotRound
 EDGE	LeanDag.Hydrozoan.indirect._proof_1_2	LeanDag.Slots
@@ -72291,6 +73422,41 @@ EDGE	LeanDagTest.pipe_eligible_add_three._simp_1_1	LeanDag.Slots
 NODE	LeanDag.Hybrid.Checkpoint.ChkProp.mk	LeanDag.Hybrid.Checkpoint.BaseSpec	ctor
 EDGE	LeanDag.Hybrid.Checkpoint.ChkProp.mk	LeanDag.Hybrid.Checkpoint.ChkProp
 EDGE	LeanDag.Hybrid.Checkpoint.ChkProp.mk	LeanDag.Hybrid.Checkpoint.CheckpointData
+NODE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_4
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.Properties.DagRule.ids
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.mem_history_iff
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_3
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.MahiMahiProperties.candidatesAt_band._simp_1_2
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_11
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_7
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_9
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.Properties.AgreeBand.reaches_old
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.Properties.AgreeBand.reaches_of
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.MysticetiProperties.band_mem
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.ReachesFrom
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_6
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.history
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_5
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.MahiMahiProperties.candidatesAt_band._simp_1_1
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_10
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.blocksAt
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.MysticetiProperties.causal
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.MahiMahi.candidatesAt
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_8
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.MysticetiProperties.band_block
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.MahiMahiProperties.toCore
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.Block.creator
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band	LeanDag.Reaches
 NODE	LeanDag.Properties.AgreeBand.layer_band	LeanDag.Properties.Band	thm
 EDGE	LeanDag.Properties.AgreeBand.layer_band	LeanDag.Properties.AgreeBand.layer_band._proof_1_2
 EDGE	LeanDag.Properties.AgreeBand.layer_band	LeanDag.Properties.DagRule.ids
@@ -74299,6 +75465,11 @@ EDGE	LeanDag.BlackMarlin.Pace.built_succ_le_of_fast._proof_1_3	LeanDag.BlockUniv
 EDGE	LeanDag.BlackMarlin.Pace.built_succ_le_of_fast._proof_1_3	LeanDag.Block.round
 EDGE	LeanDag.BlackMarlin.Pace.built_succ_le_of_fast._proof_1_3	LeanDag.BlockUniverse
 EDGE	LeanDag.BlackMarlin.Pace.built_succ_le_of_fast._proof_1_3	LeanDag.Faults.f
+NODE	LeanDag.MahiMahiProperties.certifies_band._proof_1_2	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.certifies_band._proof_1_2	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.certifies_band._proof_1_2	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.certifies_band._proof_1_2	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.certifies_band._proof_1_2	LeanDag.BlockUniverse
 NODE	LeanDag.View.ofAccepted_mono	LeanDag.DoS.Acceptance	thm
 EDGE	LeanDag.View.ofAccepted_mono	LeanDag.View.ofAccepted
 EDGE	LeanDag.View.ofAccepted_mono	LeanDag.Faults
@@ -74323,6 +75494,9 @@ EDGE	LeanDag.Integration.addGenesis_block_old	LeanDag.BlockUniverse.block
 EDGE	LeanDag.Integration.addGenesis_block_old	LeanDag.BlockUniverse
 EDGE	LeanDag.Integration.addGenesis_block_old	LeanDag.Block.creator
 NODE	LeanDagTest.hyb9._proof_1	LeanDagTest.Hybrid	thm
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_2	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_2	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_2	LeanDag.Slots
 NODE	LeanDag.Barnacle.LiveRule.ctorIdx	LeanDag.Barnacle.Model.Live	def
 EDGE	LeanDag.Barnacle.LiveRule.ctorIdx	LeanDag.Barnacle.LiveRule
 NODE	LeanDag.MysticetiProperties.blocksAt_band._proof_1_5	LeanDag.MysticetiProperties	thm
@@ -74353,6 +75527,9 @@ EDGE	LeanDag.Base	LeanDag.BlockUniverse
 EDGE	LeanDag.Base	LeanDag.blocksAt
 EDGE	LeanDag.Base	LeanDag.Faults.f
 NODE	LeanDag.SkipMsg.mem_freshIds._simp_1_4	LeanDag.SafeSkip.Basic	thm
+NODE	LeanDag.MahiMahiProperties.indirect._proof_1_1	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.indirect._proof_1_1	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.indirect._proof_1_1	LeanDag.Slots
 NODE	LeanDagTest.FinWhale.wellFormedW._proof_1_7	LeanDagTest.FinWhale.Model	thm
 NODE	LeanDag.BlackMarlin.descentSUpto_reaches._proof_1_10	LeanDag.BlackMarlin.Helpers.Repair	thm
 EDGE	LeanDag.BlackMarlin.descentSUpto_reaches._proof_1_10	LeanDag.Faults
@@ -74374,6 +75551,12 @@ EDGE	LeanDag.Hydrozoan.View.mk.inj	LeanDag.Hydrozoan.BlockUniverse.block
 EDGE	LeanDag.Hydrozoan.View.mk.inj	LeanDag.Hydrozoan.View.mk.noConfusion
 EDGE	LeanDag.Hydrozoan.View.mk.inj	LeanDag.Hydrozoan.Faults
 EDGE	LeanDag.Hydrozoan.View.mk.inj	LeanDag.Hydrozoan.BlockUniverse.ids
+NODE	LeanDag.MahiMahiProperties.directCommitIn_of_coversUpto._proof_1_1	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_of_coversUpto._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_of_coversUpto._proof_1_1	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_of_coversUpto._proof_1_1	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_of_coversUpto._proof_1_1	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_of_coversUpto._proof_1_1	LeanDag.MahiMahi.decisionRoundAt
 NODE	LeanDagTest.Hydrozoan.instSlotsFinOfNatNat_leanDagTest_2	LeanDagTest.Hydrozoan.IndirectLiveness	def
 EDGE	LeanDagTest.Hydrozoan.instSlotsFinOfNatNat_leanDagTest_2	LeanDag.Hydrozoan.Slots
 EDGE	LeanDagTest.Hydrozoan.instSlotsFinOfNatNat_leanDagTest_2	LeanDagTest.Hydrozoan.instSlotsFinOfNatNat_leanDagTest_2._proof_3
@@ -74598,6 +75781,26 @@ EDGE	LeanDag.FinWhale.restrict.congr_simp	LeanDag.FinWhale.Params
 EDGE	LeanDag.FinWhale.restrict.congr_simp	LeanDag.FinWhale.IsView
 EDGE	LeanDag.FinWhale.restrict.congr_simp	LeanDag.FinWhale.Dag
 NODE	LeanDagTest.Barnacle.Majority.blk3._proof_2	LeanDagTest.Barnacle.Majority	thm
+NODE	LeanDag.MahiMahiProperties.banded	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded	LeanDag.Properties.DagRule.Decided
+EDGE	LeanDag.MahiMahiProperties.banded	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.banded	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.banded	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.MahiMahiProperties.banded	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.banded	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.banded	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded	LeanDag.MahiMahiProperties.banded_aux
+EDGE	LeanDag.MahiMahiProperties.banded	LeanDag.Properties.Banded
+EDGE	LeanDag.MahiMahiProperties.banded	LeanDag.Properties.DagRule.viewIds
+EDGE	LeanDag.MahiMahiProperties.banded	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.banded	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.MahiMahiProperties.banded	LeanDag.View
+EDGE	LeanDag.MahiMahiProperties.banded	LeanDag.Properties.DagRule.View
+EDGE	LeanDag.MahiMahiProperties.banded	LeanDag.Properties.DagRule.Universe
 NODE	LeanDag.MysticetiProperties.blocksAt_band	LeanDag.MysticetiProperties	thm
 EDGE	LeanDag.MysticetiProperties.blocksAt_band	LeanDag.Faults
 EDGE	LeanDag.MysticetiProperties.blocksAt_band	LeanDag.BlockUniverse.ids
@@ -75436,7 +76639,6 @@ EDGE	LeanDagTest.Integration.skcr._proof_6	LeanDagTest.Integration.factFour
 EDGE	LeanDagTest.Integration.skcr._proof_6	LeanDagTest.Integration.Ucr
 EDGE	LeanDagTest.Integration.skcr._proof_6	LeanDag.Integration.Hydrozoan.toCore
 EDGE	LeanDagTest.Integration.skcr._proof_6	LeanDag.Block.creator
-EDGE	LeanDagTest.Integration.skcr._proof_6	LeanDagTest.Integration.lkf._proof_1
 NODE	LeanDag.MahiMahi.not_mem_refs_of_blames	LeanDag.MahiMahi.Helpers.Rules	thm
 EDGE	LeanDag.MahiMahi.not_mem_refs_of_blames	LeanDag.Faults
 EDGE	LeanDag.MahiMahi.not_mem_refs_of_blames	LeanDag.BlockUniverse.complete
@@ -76310,6 +77512,21 @@ EDGE	LeanDag.Properties.Arcs.decided_chop_iff	LeanDag.Properties.LocalTruncate.o
 EDGE	LeanDag.Properties.Arcs.decided_chop_iff	LeanDag.View
 NODE	LeanDag.Barnacle.Params.num	LeanDag.Barnacle.Model.Window	def
 EDGE	LeanDag.Barnacle.Params.num	LeanDag.Barnacle.Params
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_12	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_12	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_12	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_12	LeanDag.MahiMahi.instDecidableEligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_12	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_12	LeanDag.MahiMahi.Eligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_12	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_12	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_12	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_12	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_12	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_12	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_12	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_12	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_12	LeanDag.View
 NODE	LeanDag.BlackMarlin.Liveness.Inclusion	LeanDag.BlackMarlin.Liveness.Statement	def
 EDGE	LeanDag.BlackMarlin.Liveness.Inclusion	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.Liveness.Inclusion	LeanDag.BlockUniverse.ids
@@ -77321,6 +78538,12 @@ EDGE	LeanDag.Barnacle.MysticetiLive.Descent	LeanDag.Faults
 EDGE	LeanDag.Barnacle.MysticetiLive.Descent	LeanDag.Barnacle.mysticetiLive
 EDGE	LeanDag.Barnacle.MysticetiLive.Descent	LeanDag.Barnacle.LiveRule.Descent
 EDGE	LeanDag.Barnacle.MysticetiLive.Descent	LeanDag.Faults.f
+NODE	LeanDag.MahiMahiProperties.directCommitIn_band._proof_1_2	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band._proof_1_2	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band._proof_1_2	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band._proof_1_2	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band._proof_1_2	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.directCommitIn_band._proof_1_2	LeanDag.MahiMahi.decisionRoundAt
 NODE	LeanDag.BlackMarlin.nxt	LeanDag.BlackMarlin.Helpers.Liveness	def
 EDGE	LeanDag.BlackMarlin.nxt	LeanDag.BlackMarlin.nxt._proof_1
 NODE	LeanDag.Integration.Hydrozoan.hybridCommittee_of_slack._proof_1_1	LeanDag.Integration.Hydrozoan.Faults	thm
@@ -77421,6 +78644,14 @@ EDGE	LeanDagTest.Barnacle.bnLive_liveOn1	LeanDagTest.Barnacle.transport_full
 EDGE	LeanDagTest.Barnacle.bnLive_liveOn1	LeanDagTest.Barnacle.Usun
 EDGE	LeanDagTest.Barnacle.bnLive_liveOn1	LeanDag.decidableDirectCommitIn
 EDGE	LeanDagTest.Barnacle.bnLive_liveOn1	LeanDag.Barnacle.LiveRule.Good
+NODE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_5	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_5	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_5	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_5	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_5	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_5	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_5	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.certifiedIn_band._proof_1_5	LeanDag.MahiMahi.decisionRoundAt
 NODE	LeanDag.joinView	LeanDag.GC.Bootstrap	def
 EDGE	LeanDag.joinView	LeanDag.Delivery
 EDGE	LeanDag.joinView	LeanDag.View.mk
@@ -80426,6 +81657,13 @@ EDGE	LeanDag.certificates_eq_empty_of_directSkip	LeanDag.DirectSkip
 EDGE	LeanDag.certificates_eq_empty_of_directSkip	LeanDag.supporters
 EDGE	LeanDag.certificates_eq_empty_of_directSkip	LeanDag.certificates
 EDGE	LeanDag.certificates_eq_empty_of_directSkip	LeanDag.Block.creator
+NODE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_5	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_5	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_5	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_5	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_5	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_5	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_5	LeanDag.BlockUniverse
 NODE	LeanDag.FinWhale.round_le_of_directSkip._proof_1_3	LeanDag.FinWhale.Pass	thm
 EDGE	LeanDag.FinWhale.round_le_of_directSkip._proof_1_3	LeanDag.FinWhale.Sched.round
 EDGE	LeanDag.FinWhale.round_le_of_directSkip._proof_1_3	LeanDag.Faults
@@ -81047,6 +82285,15 @@ EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_12	LeanDag.Block.ro
 EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_12	LeanDag.BlockUniverse
 EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_12	LeanDag.Faults5.toFaults
 NODE	LeanDagTest.Barnacle.vdP1	LeanDagTest.Barnacle.Agreement	def
+NODE	LeanDag.MahiMahiProperties.mahiLive	LeanDag.MahiMahiProperties	def
+EDGE	LeanDag.MahiMahiProperties.mahiLive	LeanDag.MahiMahi.good
+EDGE	LeanDag.MahiMahiProperties.mahiLive	LeanDag.MahiMahi.decisionRound
+EDGE	LeanDag.MahiMahiProperties.mahiLive	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.mahiLive	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.mahiLive	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.mahiLive	LeanDag.View.CoversUpto
+EDGE	LeanDag.MahiMahiProperties.mahiLive	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.mahiLive	LeanDag.View
 NODE	LeanDag.FinWhale.spCertificate_round._simp_1_3	LeanDag.FinWhale.Propagation	thm
 NODE	LeanDag.OptimalHydrozoan.bandedOpt_aux._proof_1_33	LeanDag.OptimalHydrozoan.Helpers.Banded	thm
 EDGE	LeanDag.OptimalHydrozoan.bandedOpt_aux._proof_1_33	LeanDag.OptimalHydrozoan.OptUniverse.toBlockUniverse
@@ -81884,6 +83131,21 @@ EDGE	LeanDagTest.ugrowReactive._proof_3	LeanDagTest.Ugrow
 EDGE	LeanDagTest.ugrowReactive._proof_3	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.ugrowReactive._proof_3	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ugrowReactive._proof_3	LeanDag.Block.creator
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_28	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_28	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_28	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_28	LeanDag.MahiMahi.instDecidableEligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_28	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_28	LeanDag.MahiMahi.Eligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_28	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_28	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_28	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_28	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_28	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_28	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_28	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_28	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_28	LeanDag.View
 NODE	LeanDagTest.nemoBlk._proof_8	LeanDagTest.Nemo	thm
 EDGE	LeanDagTest.nemoBlk._proof_8	LeanDagTest.nemoBlk._proof_2
 NODE	LeanDagTest.Hydrozoan.lk14._proof_12	LeanDagTest.Hydrozoan.LivenessHardening	thm
@@ -83190,6 +84452,13 @@ EDGE	LeanDag.SkipMsg.line_eq_lineOf._proof_1_1	LeanDag.BlockUniverse
 EDGE	LeanDag.SkipMsg.line_eq_lineOf._proof_1_1	LeanDag.SkipMsg
 EDGE	LeanDag.SkipMsg.line_eq_lineOf._proof_1_1	LeanDag.SkipMsg.r0
 EDGE	LeanDag.SkipMsg.line_eq_lineOf._proof_1_1	LeanDag.SkipMsg.B1
+NODE	LeanDag.MahiMahiProperties.quorate	LeanDag.MahiMahi.Carrier	thm
+EDGE	LeanDag.MahiMahiProperties.quorate	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.quorate	LeanDag.Properties.Quorate
+EDGE	LeanDag.MahiMahiProperties.quorate	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.quorate	LeanDag.BlockUniverse.quorateOn
+EDGE	LeanDag.MahiMahiProperties.quorate	LeanDag.coreReliability
+EDGE	LeanDag.MahiMahiProperties.quorate	LeanDag.Properties.DagRule.Universe
 NODE	LeanDagTest.Integration.factFour	LeanDagTest.Integration.HydrozoanUniverse	thm
 EDGE	LeanDagTest.Integration.factFour	LeanDag.Hydrozoan.Faults.c
 EDGE	LeanDagTest.Integration.factFour	LeanDagTest.Hydrozoan.fourReplicas
@@ -83877,6 +85146,21 @@ EDGE	LeanDag.Hydrozoan.Properties.Statement	LeanDag.Hydrozoan.qFast
 EDGE	LeanDag.Hydrozoan.Properties.Statement	LeanDag.Properties.Banded
 EDGE	LeanDag.Hydrozoan.Properties.Statement	LeanDag.Hydrozoan.Faults
 NODE	LeanDagTest.Barnacle.OrcaellaIndirect.blkX._proof_1	LeanDagTest.Barnacle.OrcaellaIndirect	thm
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_25	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_25	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_25	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_25	LeanDag.MahiMahi.instDecidableEligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_25	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_25	LeanDag.MahiMahi.Eligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_25	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_25	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_25	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_25	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_25	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_25	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_25	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_25	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_25	LeanDag.View
 NODE	LeanDagTest.ugapPace._simp_8	LeanDagTest.Unbounded	thm
 EDGE	LeanDagTest.ugapPace._simp_8	LeanDagTest.mem_omitRefs
 EDGE	LeanDagTest.ugapPace._simp_8	LeanDagTest.omitRefs
@@ -85508,6 +86792,12 @@ EDGE	LeanDagTest.Barnacle.OrcaellaIndirect.x9_least._proof_1_1	LeanDagTest.Barna
 EDGE	LeanDagTest.Barnacle.OrcaellaIndirect.x9_least._proof_1_1	LeanDag.Barnacle.BaseRule.waveLength
 EDGE	LeanDagTest.Barnacle.OrcaellaIndirect.x9_least._proof_1_1	LeanDag.Barnacle.LiveRule.toBaseRule
 EDGE	LeanDagTest.Barnacle.OrcaellaIndirect.x9_least._proof_1_1	LeanDagTest.hyb9
+NODE	LeanDag.MahiMahiProperties.certificates_band._proof_1_7	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_7	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_7	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_7	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_7	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.certificates_band._proof_1_7	LeanDag.MahiMahi.decisionRoundAt
 NODE	LeanDag.OptimalHydrozoan.bandedOpt_aux._proof_1_48	LeanDag.OptimalHydrozoan.Helpers.Banded	thm
 EDGE	LeanDag.OptimalHydrozoan.bandedOpt_aux._proof_1_48	LeanDag.Hydrozoan.Block.parents
 EDGE	LeanDag.OptimalHydrozoan.bandedOpt_aux._proof_1_48	LeanDag.Hydrozoan.Block.author
@@ -87326,6 +88616,21 @@ EDGE	LeanDagTest.ucrash_populated._proof_1_4	LeanDag.SkipMsg.r0
 NODE	LeanDag.Hydrozoan.authorsOf	LeanDag.Hydrozoan.Model.Block	def
 EDGE	LeanDag.Hydrozoan.authorsOf	LeanDag.Hydrozoan.Block.author
 EDGE	LeanDag.Hydrozoan.authorsOf	LeanDag.Hydrozoan.Block
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_27	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_27	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_27	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_27	LeanDag.MahiMahi.instDecidableEligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_27	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_27	LeanDag.MahiMahi.Eligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_27	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_27	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_27	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_27	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_27	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_27	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_27	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_27	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_27	LeanDag.View
 NODE	LeanDag.Hydrozoan.Faults.c	LeanDag.Hydrozoan.Model.Faults	def
 EDGE	LeanDag.Hydrozoan.Faults.c	LeanDag.Hydrozoan.Faults
 NODE	LeanDagTest.BlackMarlin.Vbm._proof_2	LeanDagTest.BlackMarlin.Model	thm
@@ -88753,6 +90058,13 @@ EDGE	LeanDag.Properties.RebasedAbove.mk._flat_ctor	LeanDag.Block.round
 EDGE	LeanDag.Properties.RebasedAbove.mk._flat_ctor	LeanDag.Properties.DagRule
 EDGE	LeanDag.Properties.RebasedAbove.mk._flat_ctor	LeanDag.Block.creator
 EDGE	LeanDag.Properties.RebasedAbove.mk._flat_ctor	LeanDag.Properties.DagRule.Universe
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_5	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_5	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_5	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_5	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_5	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_5	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_5	LeanDag.Slots
 NODE	LeanDag.CausalStructure.eq_of_mem_history_of_round_eq	LeanDag.Causality	thm
 EDGE	LeanDag.CausalStructure.eq_of_mem_history_of_round_eq	LeanDag.Block
 EDGE	LeanDag.CausalStructure.eq_of_mem_history_of_round_eq	LeanDag.CausalStructure.refs_round
@@ -88972,6 +90284,21 @@ EDGE	LeanDag.Properties.Banded	LeanDag.Properties.DagRule.viewIds
 EDGE	LeanDag.Properties.Banded	LeanDag.Slots
 EDGE	LeanDag.Properties.Banded	LeanDag.Properties.DagRule.View
 EDGE	LeanDag.Properties.Banded	LeanDag.Properties.DagRule.Universe
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_17	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_17	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_17	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_17	LeanDag.MahiMahi.instDecidableEligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_17	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_17	LeanDag.MahiMahi.Eligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_17	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_17	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_17	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_17	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_17	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_17	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_17	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_17	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_17	LeanDag.View
 NODE	LeanDag.Hydrozoan.historyUpto.eq_1	LeanDag.Hydrozoan.Helpers.History	thm
 EDGE	LeanDag.Hydrozoan.historyUpto.eq_1	LeanDag.Hydrozoan.BlockUniverse
 EDGE	LeanDag.Hydrozoan.historyUpto.eq_1	LeanDag.Hydrozoan.historyUpto
@@ -89916,6 +91243,21 @@ EDGE	LeanDag.OdontocetiProperties.coneSupports_band._proof_1_6	LeanDag.Faults5.t
 NODE	LeanDagTest.Barnacle.Majority.U3._proof_1	LeanDagTest.Barnacle.Majority	thm
 EDGE	LeanDagTest.Barnacle.Majority.U3._proof_1	LeanDagTest.Barnacle.Majority.blk3
 EDGE	LeanDagTest.Barnacle.Majority.U3._proof_1	LeanDag.Block.refs
+NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_32	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_32	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_32	LeanDag.Slots.slotRound
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_32	LeanDag.MahiMahi.instDecidableEligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_32	LeanDag.MahiMahiProperties.mahiMahiRule
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_32	LeanDag.MahiMahi.Eligible
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_32	LeanDag.Slots.leader
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_32	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_32	LeanDag.View.ids
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_32	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_32	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_32	LeanDag.BlockUniverse
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_32	LeanDag.Slots
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_32	LeanDag.MahiMahi.Decided
+EDGE	LeanDag.MahiMahiProperties.banded_aux._proof_1_32	LeanDag.View
 NODE	LeanDag.blocksAt_eq_atRound	LeanDag.DoS.Counting	thm
 EDGE	LeanDag.blocksAt_eq_atRound	LeanDag.Faults
 EDGE	LeanDag.blocksAt_eq_atRound	LeanDag.BlockUniverse.ids
@@ -89928,6 +91270,13 @@ EDGE	LeanDagTest.ugap_not_synchronisedOn	LeanDagTest.Uomit
 EDGE	LeanDagTest.ugap_not_synchronisedOn	LeanDag.Correct
 EDGE	LeanDagTest.ugap_not_synchronisedOn	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ugap_not_synchronisedOn	LeanDag.SynchronisedOn
+NODE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_6	LeanDag.MahiMahiProperties	thm
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_6	LeanDag.Faults
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_6	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_6	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_6	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_6	LeanDag.Block.round
+EDGE	LeanDag.MahiMahiProperties.candidatesAt_band._proof_1_6	LeanDag.BlockUniverse
 NODE	LeanDag.Minnow.Dag.rec	LeanDag.Minnow.Model.Rule	rec
 EDGE	LeanDag.Minnow.Dag.rec	LeanDag.Block
 EDGE	LeanDag.Minnow.Dag.rec	LeanDag.Faults

@@ -4,6 +4,7 @@ import LeanDag.GC.Chop
 import LeanDag.GC.ChopDecided
 import LeanDag.MysticetiProperties
 import LeanDag.OdontocetiProperties
+import LeanDag.MahiMahiProperties
 import LeanDag.Properties.Band
 import LeanDag.Properties.Derived.Truncate
 
@@ -305,6 +306,52 @@ theorem decided_agree_chop_odontoceti (hd : G ≤ S.slotRound d)
     (truncates_chop_odontoceti hd) viewAgreeAbove_chop hW hV
 
 end OdontocetiTruncate
+
+/-! ## And for Mahi-Mahi, at each wave width
+
+The third rule to take these lines, and the cheapest: its universes are
+the core's at the core's fault model, so the witness is the core's
+projected and the two theorems are the generic ones at Mahi-Mahi's band.
+`2 ≤ w` travels with the band and nothing else here notices the wave.
+
+`scripts/audit-mechanisms.py` asked for this cell. -/
+
+section MahiMahiTruncate
+
+variable [Faults Validator] {B : Type} [LinearOrder B]
+variable {U : BlockUniverse Validator B Payload}
+variable {S : Slots Validator} {G d w : ℕ}
+
+/-- **The cut is a truncation of Mahi-Mahi's carrier too.** -/
+theorem truncates_chop_mahimahi (hd : G ≤ S.slotRound d) :
+    Truncates (MahiMahiProperties.mahiMahiRule (BlockId := B) (Payload := Payload) w)
+      U (chop U G) S (S.chop G d hd) G d :=
+  let h := truncates_chop (Validator := Validator) (BlockId := B) (Payload := Payload)
+    (U := U) (S := S) (G := G) (d := d) hd
+  { mem := h.mem, round := h.round, creator := h.creator, refs := h.refs
+    slotRound := h.slotRound, leader := h.leader, base := h.base }
+
+/-- **Verdict transport across the cut, for Mahi-Mahi.** -/
+theorem decided_chop_iff_mahimahi (hw : 2 ≤ w) (hd : G ≤ S.slotRound d)
+    {V : View Validator B Payload U} {k : ℕ} {v : Option B} :
+    MahiMahi.Decided w U V (d + k) v ↔
+      MahiMahi.Decided (S := S.chop G d hd) w (chop U G) (V.chop G) k v :=
+  LocalTruncate.of_banded (MahiMahiProperties.banded hw)
+    S (S.chop G d hd) U (chop U G) G d (truncates_chop_mahimahi hd) V (V.chop G)
+    viewAgreeAbove_chop k v
+
+/-- **And cross-cut agreement**, from an arbitrary view of the
+truncation. -/
+theorem decided_agree_chop_mahimahi (hw : 2 ≤ w) (hd : G ≤ S.slotRound d)
+    {W : View Validator B Payload (chop U G)}
+    {V : View Validator B Payload U} {k : ℕ} {w' v : Option B}
+    (hW : MahiMahi.Decided (S := S.chop G d hd) w (chop U G) W k w')
+    (hV : MahiMahi.Decided w U V (d + k) v) : w' = v :=
+  decided_agree_truncate (MahiMahiProperties.agree hw)
+    (LocalTruncate.of_banded (MahiMahiProperties.banded hw))
+    (truncates_chop_mahimahi hd) viewAgreeAbove_chop hW hV
+
+end MahiMahiTruncate
 
 end Arcs
 

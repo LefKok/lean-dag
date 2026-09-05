@@ -123,10 +123,18 @@ theorem mono {U U' : R.Universe} {lo hi lo' hi' g g' : ℕ} (h : AgreeBand R U U
 
 variable {U U' : R.Universe} {lo hi g g' : ℕ}
 
-/-- **Causal history inside the band is the same history.** -/
+/-- **Causal history inside the band is the same history.**
+
+The floor is included, and deliberately: a path *into* the floor reads
+the references of the layer above it, which the band preserves, so the
+last step survives even though the floor's own references do not. Only a
+path that started below the floor would need them, and there is none —
+`lo ≤ (R.block U C).round + g` is the hypothesis. Mahi-Mahi is what
+forced the strengthening: its votes are read from a cone at the slot's
+*propose* round, which is the floor exactly. -/
 theorem reaches_of (hc : Causal R) (h : AgreeBand R U U' lo hi g g')
     {A : BlockId} (hA : A ∈ R.ids U) (hAhi : (R.block U A).round + g ≤ hi) :
-    ∀ {C : BlockId}, ReachesFrom (R.block U) A C → lo < (R.block U C).round + g →
+    ∀ {C : BlockId}, ReachesFrom (R.block U) A C → lo ≤ (R.block U C).round + g →
       ReachesFrom (R.block U') A C := by
   intro C hre
   induction hre with
