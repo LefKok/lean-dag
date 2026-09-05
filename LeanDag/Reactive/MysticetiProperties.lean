@@ -64,6 +64,41 @@ theorem leaderCommits_reactive :
     by rw [hlead' k (by omega)]; exact hLc⟩ ?_
   rw [hround]; exact hin
 
+/-! ## What a mechanism needs from a reactive execution
+
+`LiveReachable` asks a rule's precondition to follow from coverage, and
+a reactive execution does not have coverage — `SynchronisedOn` is false
+in one by design. That antecedent is the strongest fact statable in
+`ids`, `block` and `refs` alone, which is why the properties use it; it
+is not what a *mechanism* needs.
+
+What a mechanism needs is weaker and is already named: `CertifiesAt`,
+the certificates the commit rule counts. The reactive discipline
+delivers it — that is what `cert_or_wait` is for — and
+`MysticetiProperties.directCommit_of_sustains` consumes it, carrying the
+commit to the transformed DAG with no pacing structure transported.
+Certificates are made of references, and `Sustains` preserves
+references.
+-/
+
+/-- **The reactive commit survives any sustaining mechanism.** The
+reactive execution supplies the certificates and the production; the
+mechanism supplies `Sustains`; neither knows about the other. -/
+theorem directCommit_of_reactive_sustains [S : Slots Validator]
+    {U U' : BlockUniverse Validator BlockId Payload} {T : Finset Validator} {N : ℕ}
+    {G R₀ : ℕ} (hsus : Sustains (mysticetiRule (Payload := Payload)) U U' G R₀)
+    (rm : ReactiveM (S := S) U T N) {R k : ℕ} {L : BlockId}
+    (hT : T ⊆ (Correct : Finset Validator)) (hcard : quorumCard Validator ≤ T.card)
+    (hgst : rm.gst ≤ R)
+    (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n)
+    (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
+    (hR₀ : R₀ ≤ S.slotRound k) (hG : G ≤ S.slotRound k)
+    (hlead : S.leader k ∈ T) (hL : IsLeaderBlock U k L) :
+    DirectCommit U' L (S.slotRound k - G) :=
+  MysticetiProperties.directCommit_of_sustains hsus hR₀ hG hcard
+    (rm.toPaceCore.populatedOn hcard (S.slotRound k + 2) hN)
+    (rm.certifies hT hcard hgst hto hR hN hlead hL)
+
 end MysticetiProperties
 
 end LeanDag

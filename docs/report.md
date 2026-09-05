@@ -26161,7 +26161,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 1078 theorems that either another module of the
+The 1080 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -30398,6 +30398,19 @@ So the two mechanisms are coupled by one inequality: *garbage collection at lag 
     {hsev : ∀ b ∈ V.ids, (V.block b).creator ≠ v} :
     (addGenesis V v g p hg hsev).block g = ⟨0, v, ∅, p⟩
 ```
+
+#### `sustains_addGenesis`
+
+*theorem, `Integration.ReGenesis.lean`*
+
+```lean
+theorem sustains_addGenesis :
+    Properties.Sustains (MysticetiProperties.mysticetiRule (Payload := Payload))
+      V (addGenesis V v g p hg hsev) 0 1 where
+  mem
+```
+
+**And it rebases from round one at no offset.** The block it adds sits at round zero, so at and above round one the two universes hold the same blocks. Below that the relation says nothing, which is exactly where the mechanism does its work.
 
 #### `populatedOn_addGenesis`
 
@@ -40298,6 +40311,26 @@ theorem leaderCommits_reactive :
 
 **Reactive Mysticeti commits its reliable leaders** — `ReactiveM.decided` as the property, on any view caught up to the horizon.
 
+#### `directCommit_of_reactive_sustains`
+
+*theorem, `Reactive.MysticetiProperties.lean`*
+
+```lean
+theorem directCommit_of_reactive_sustains [S : Slots Validator]
+    {U U' : BlockUniverse Validator BlockId Payload} {T : Finset Validator} {N : ℕ}
+    {G R₀ : ℕ} (hsus : Sustains (mysticetiRule (Payload := Payload)) U U' G R₀)
+    (rm : ReactiveM (S := S) U T N) {R k : ℕ} {L : BlockId}
+    (hT : T ⊆ (Correct : Finset Validator)) (hcard : quorumCard Validator ≤ T.card)
+    (hgst : rm.gst ≤ R)
+    (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n)
+    (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
+    (hR₀ : R₀ ≤ S.slotRound k) (hG : G ≤ S.slotRound k)
+    (hlead : S.leader k ∈ T) (hL : IsLeaderBlock U k L) :
+    DirectCommit U' L (S.slotRound k - G)
+```
+
+**The reactive commit survives any sustaining mechanism.** The reactive execution supplies the certificates and the production; the mechanism supplies `Sustains`; neither knows about the other.
+
 #### `waveRobin_fairRun`
 
 *theorem, `WaveRobin.lean`*
@@ -40337,7 +40370,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 1082 lemmas used only within the file that proves
+The 1084 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -40843,7 +40876,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `chopMsg_r0` | The rebased crash round: the truncation sees the gap starting `G` lower, as it sees every round. |
 | `chopMsg_v1` | The induced message keeps the anchor and the recovering validator, and its gap is the original's shifted — … |
 
-### `Integration/ReGenesis.lean` (14)
+### `Integration/ReGenesis.lean` (13)
 
 | Lemma | Role |
 |:---|:---|
@@ -40859,7 +40892,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `reaches_addGenesis` | Reachability is unchanged among old blocks: the new block references nothing, and nothing references it. |
 | `rejoin_populated` | — |
 | `stack_block_fresh_horizon` | The cut turns the boundary fill block into a genesis block. At a horizon inside the gap, `v1`'s filled … |
-| `sustains_addGenesis` | And it rebases from round one at no offset. The block it adds sits at round zero, so at and above round … |
 | `sustains_rejoinChop` | Rejoin, then prune. The two mechanisms compose without either knowing about the other: … |
 
 ### `Integration/Stack.lean` (4)
@@ -42237,6 +42269,14 @@ subsection per module, in the layer order of Appendices B and C.
 | `sustains_skipFill_nemo` | What the fill sustains. Above `sk.r` the fill added nothing, so every block there is old and unchanged. … |
 | `truncates_chop_nemo` | The cut is a truncation of Nemo's carrier. |
 | `viewAgreeAbove_chop_nemo` | The chopped view agrees with the original above the cut. |
+
+### `Integration/ReactiveMechanisms.lean` (3)
+
+| Lemma | Role |
+|:---|:---|
+| `directCommit_addGenesis_reactive` | And re-genesis. A validator that rejoined with a fresh chain holds every reactive commit it held before. |
+| `directCommit_chop_reactive` | The reactive commit survives the cut. A validator that committed reactively still holds the commit in the … |
+| `directCommit_skipFill_reactive` | And the fill. A validator recovering by Safe Skip does not lose a commit the reactive discipline reached. |
 
 ### `Integration/Sound.lean` (4)
 

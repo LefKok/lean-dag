@@ -2557,6 +2557,40 @@ admissible way, by a witness — `ugrowReactiveLive` and
 `ugrowReactive_leaderCommits` in `LeanDagTest/Reactive.lean` exhibit a
 reactive execution that satisfies it and the verdict it yields.
 
+### 11.6a Coverage is the wrong antecedent for a mechanism
+
+`LiveReachable` reads coverage because coverage is the strongest fact
+statable in `ids`, `block` and `refs` alone, and a property may use no
+other vocabulary. That makes it the right antecedent for an obligation
+and the wrong one for a reactive execution, and the question it leaves
+open is whether a reactive commit survives a mechanism.
+
+**It does, and coverage was never what the mechanism needed.** What a
+mechanism reads is `CertifiesAt` — the certificates the commit rule
+counts — and `MysticetiProperties.directCommit_of_sustains` carries
+those across any `Sustains`, because a certificate is made of references
+and `Sustains` preserves references. The reactive discipline delivers
+`CertifiesAt` (`ReactiveM.certifies`, from `cert_or_wait`), which is
+precisely what it is designed to deliver in place of coverage. So the
+composition needs no pacing structure on the far side: no `ReactiveM` is
+built for the truncation or the fill, and none is wanted.
+
+`Integration/ReactiveMechanisms.lean` writes the three cells —
+`directCommit_chop_reactive`, `directCommit_skipFill_reactive`,
+`directCommit_addGenesis_reactive` — each the same two theorems composed
+at a different `Sustains` witness.
+
+**Why the weaker interface cannot be the property.** `CertifiesAt`
+counts in the *rule's* vocabulary, and `DagRule` has none: a carrier
+knows `ids`, `block` and `refs`, and every rule's certificate is a
+different threshold over them — the core's `quorumCard`, Nemo's
+majority, FinWhale's `spQuorum`, Mahi-Mahi's cone. There is therefore no
+rule-independent weakening of coverage that a reactive execution
+satisfies, and the split is structural rather than an omission:
+coverage is the antecedent a *property* can state, `CertifiesAt` is the
+interface a *mechanism* consumes, and a rule supplies whichever of them
+its execution model gives.
+
 `audit-conformance.py` scores `LiveReachable` per *carrier*, so reactive
 Mysticeti reads `yes` on the strength of the core's discharge — the two
 share `mysticetiRule`. A second precondition on a shared carrier is not
