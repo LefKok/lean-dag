@@ -28,12 +28,24 @@ Two exclusions, both deliberate:
   measures nothing; restricting the targets to the 115 protocol theorems
   that name a decision relation gives 49 and measures the claim.
 * **A rule with no `Banded` has nothing to route through.** Fifteen
-  links for Optimal-Hydrozoan, Nemo and Hybrid/Orcaella are the instances
-  gap of §11.4 seen from a third side, not a defect of the arc. The
-  script reports them separately and they do not fail a run.
+  links for Optimal-Hydrozoan, Nemo and Hybrid/Orcaella were the
+  instances gap of §11.4 seen from a third side, not a defect of the
+  arc. The script reported them separately and they did not fail a run.
 
 That left **35 links, for the four rules that show the six**. The script
 still runs, and now fails on any new one.
+
+**The second exclusion is now empty.** Nemo, Hybrid/Orcaella, FinWhale
+and Optimal-Hydrozoan have since been given bands, and their links —
+eight, all Optimal's — were closed the same way as the original 35:
+`Barnacle.OptimalHydrozoan.holds` reads the three properties instead of
+`SlotAgreement.holds` and the constructors,
+`Barnacle.OptimalHydrozoanLive` is `descent_of_properties` over
+`LeaderCommits` and `Indirect`, and
+`Integration.Hydrozoan.decidedOpt_chopHZ` is `LocalTruncate.of_banded`
+over a `Truncates` — two more inductions over a decision relation
+deleted. Every rule with a carrier now shows the six, so the audit's
+separate column has nothing left to report.
 
 ## A. Agreement — `Properties.Agree` (10)
 
@@ -129,8 +141,9 @@ before this audit had forced the point.
 
 ## What the audit does not claim
 
-The fifteen links for Optimal-Hydrozoan, Nemo and Hybrid/Orcaella stand,
-and will until those rules have a band. They are the same gap §11.4
-records: six obligations validated against four rules is a thin basis
-for claiming they are the right six, and the liveness side says so as
-loudly as the safety side.
+It says nothing about the two rules with no carrier. Mahi-Mahi's band is
+conditional on `2 ≤ w` and Black Marlin commits by round with no
+slot-indexed relation, so neither has a `DagRule` to state a property
+at; a mechanism over either would be bespoke by construction, and none
+is in the development. What the count now covers is the eight rules that
+do have carriers, and for those it is zero.

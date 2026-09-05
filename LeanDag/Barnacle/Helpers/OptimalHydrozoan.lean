@@ -127,6 +127,17 @@ def optUniverseOf (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
         rw [hround]; unfold LeanDag.Hydrozoan.decisionRound; omega
       exact h b hb (S.leader k) h2 (by rw [hr]; exact hwit) j hj }
 
+/-- **Its exclusion clause, named.** A structure projection re-synthesises
+the schedule its type is indexed by, which a statement quantifying over
+schedules cannot afford (`OptimalHydrozoan/Helpers/Banded.lean`), so the
+field is read once here where the schedule is ambient. -/
+theorem optUniverseOf_leader_excluded
+    (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) (h : LeaderExcludedAll U) :
+    ∀ b ∈ U.ids, ∀ k, (U.block b).round = LeanDag.Hydrozoan.decisionRound Replica k →
+      LeanDag.OptimalHydrozoan.WitnessesEquivocation U k b →
+      ∀ j ∈ (U.block b).parents, (U.block j).author ≠ S.leader k :=
+  (optUniverseOf U h).leader_excluded
+
 @[simp] theorem optUniverseOf_toBlockUniverse
     (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) (h : LeaderExcludedAll U) :
     (optUniverseOf U h).toBlockUniverse = U := rfl

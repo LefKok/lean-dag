@@ -1,14 +1,18 @@
 import LeanDag.Barnacle.OptimalHydrozoan.Statement
-import LeanDag.OptimalHydrozoan.SlotAgreement.Proof
+import LeanDag.OptimalHydrozoan.Carrier
 
 /-!
 # Barnacle over Optimal-Hydrozoan — proof
 
-Unaudited. As for Hydrozoan: six of the seven laws are read off the
-`View` structure and the `DecidedOpt` constructors, and `agree` is OH3
-applied. The carrier's exclusion field is consumed only by
-`optUniverseOf`, which turns it into the `OptUniverse` the decision
-relation needs at whatever schedule the interface supplies.
+Unaudited. Two laws are read off the `View` structure and the other
+three are the properties Optimal-Hydrozoan's own carrier shows: `agree`
+is `Agree`, `candidates` is `CommitsCandidate`, and
+`decided_of_directCommitIn` is `CommitsDirect` — which is what that
+optional property is for. Nothing here inspects `DecidedOpt`.
+
+The two carriers agree on the decision relation by construction:
+`Barnacle.slotsOf` and `Hydrozoan.ofCoreSlots` build the same schedule
+from the same fields, and both rules read `optUniverseOf` at it.
 -/
 
 namespace LeanDag
@@ -17,35 +21,17 @@ namespace Barnacle
 
 namespace OptimalHydrozoan
 
-set_option maxHeartbeats 1000000 in
--- unification works through two layers at once here: the carrier is a
--- subtype, and `optUniverseOf` rebuilds an `OptUniverse` from its field
--- at every constructor the laws inspect
 theorem holds : Statement := by
   intro Replica BlockId _ _ _ _
-  refine
-    {
-      full_ids := fun _ => rfl
+  exact
+    { full_ids := fun _ => rfl
       historyView_ids := fun _ _ _ => rfl
-      agree := ?_
-      decided_of_directCommitIn := ?_
-      candidates := ?_ }
-  · intro S U V₁ V₂ k v₁ v₂ h₁ h₂
-    letI := slotsOf S
-    exact LeanDag.OptimalHydrozoan.SlotAgreement.holds Replica BlockId
-      (OptimalHydrozoan.optUniverseOf U.val U.property) V₁ V₂ k v₁ v₂ h₁ h₂
-  · intro S U V k L hL hc
-    letI := slotsOf S
-    rcases hc with h | h
-    · exact LeanDag.OptimalHydrozoan.DecidedOpt.directFast hL h
-    · exact LeanDag.OptimalHydrozoan.DecidedOpt.directSlow hL h
-  · intro S U V k L h
-    letI := slotsOf S
-    cases h with
-    | directFast hL _ => exact hL
-    | directSlow hL _ => exact hL
-    | indirectCert _ _ _ _ hL _ => exact hL
-    | indirectEvidence _ _ _ _ _ hL _ => exact hL
+      agree := fun S {_} V₁ V₂ k v₁ v₂ h₁ h₂ =>
+        LeanDag.OptimalHydrozoanProperties.agree S V₁ V₂ k v₁ v₂ h₁ h₂
+      decided_of_directCommitIn := fun S {_} V k L hL hdc =>
+        LeanDag.OptimalHydrozoanProperties.commitsDirect S _ V k L hL hdc
+      candidates := fun S {_} V k L h =>
+        LeanDag.OptimalHydrozoanProperties.commitsCandidate S _ V k L h }
 
 end OptimalHydrozoan
 

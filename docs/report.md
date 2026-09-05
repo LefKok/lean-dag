@@ -24846,6 +24846,24 @@ def optimalRule : DagRule Replica BlockId Unit where
 
 **Optimal-Hydrozoan as a carrier.**
 
+#### `optLive`
+
+*def, `OptimalHydrozoan.Carrier.lean`*
+
+```lean
+def optLive (S : LeanDag.Slots Replica)
+    {U : (optimalRule (Replica := Replica) (BlockId := BlockId)).Universe}
+    (V : LeanDag.Hydrozoan.View U.val) (T : Finset Replica) (lo K : ℕ) : Prop :=
+  T ⊆ (LeanDag.Hydrozoan.Correct : Finset Replica) ∧
+    LeanDag.Hydrozoan.q Replica ≤ T.card ∧
+    ∃ R₀ N, LeanDag.Hydrozoan.SynchronisedOn U.val T R₀ ∧ R₀ ≤ S.slotRound lo ∧
+      (∀ r, R₀ ≤ r → r ≤ N → LeanDag.Hydrozoan.PopulatedOn U.val T r) ∧
+      LeanDag.Hydrozoan.View.CoversUpto V N ∧
+      ∀ k, k < K → S.slotRound k + 2 ≤ N
+```
+
+**Optimal-Hydrozoan's liveness precondition**, over a slot window. Hydrozoan's, unchanged: the slow path is the one that carries the guarantee, and Optimal leaves it alone — the fast path is about latency, not liveness.
+
 #### `Agree`
 
 *def, `Properties.Agree.lean`*
@@ -25402,7 +25420,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 1002 theorems that either another module of the
+The 1028 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -35212,6 +35230,16 @@ Universe-level: a slow commit leaves fewer than `qCert` blames.
 theorem holds : Statement
 ```
 
+#### `tPlain_pos`
+
+*theorem, `OptimalHydrozoan.Helpers.SlotAgreement.lean`*
+
+```lean
+theorem tPlain_pos : 1 ≤ tPlain Replica
+```
+
+`1 ≤ t_plain`, from the committee bound and `f + c ≥ 1`.
+
 #### `qCert_le_q_opt`
 
 *theorem, `OptimalHydrozoan.Helpers.SlotAgreement.lean`*
@@ -35659,6 +35687,16 @@ Universe-level: a slow commit leaves fewer than `qCert` blames.
 ```lean
 theorem holds : Statement
 ```
+
+#### `tPlain_pos`
+
+*theorem, `OptimalHydrozoan.Helpers.SlotAgreement.lean`*
+
+```lean
+theorem tPlain_pos : 1 ≤ tPlain Replica
+```
+
+`1 ≤ t_plain`, from the committee bound and `f + c ≥ 1`.
 
 #### `qCert_le_q_opt`
 
@@ -36199,6 +36237,20 @@ theorem causalStructure (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) :
 
 **A Hydrozoan universe is a causal structure.** Completeness is its own field; the predecessor condition is the first field of its validity. Nothing else of `BlockUniverse` is read, which is what makes the history layer available without a bridge.
 
+#### `optUniverseOf_leader_excluded`
+
+*theorem, `Barnacle.Helpers.OptimalHydrozoan.lean`*
+
+```lean
+theorem optUniverseOf_leader_excluded
+    (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) (h : LeaderExcludedAll U) :
+    ∀ b ∈ U.ids, ∀ k, (U.block b).round = LeanDag.Hydrozoan.decisionRound Replica k →
+      LeanDag.OptimalHydrozoan.WitnessesEquivocation U k b →
+      ∀ j ∈ (U.block b).parents, (U.block j).author ≠ S.leader k
+```
+
+**Its exclusion clause, named.** A structure projection re-synthesises the schedule its type is indexed by, which a statement quantifying over schedules cannot afford (`OptimalHydrozoan/Helpers/Banded.lean`), so the field is read once here where the schedule is ambient.
+
 #### `orcaella_laws`
 
 *theorem, `Barnacle.Helpers.Orcaella.lean`*
@@ -36561,6 +36613,174 @@ theorem indirect (kt : ℕ) :
 
 **H-A3 as a property.** The two indirect constructors, by cases on a thick-linked candidate at the slot, committing the least one.
 
+#### `bnd_parents`
+
+*theorem, `Hydrozoan.Helpers.Banded.lean`*
+
+```lean
+theorem bnd_parents (h : AgreeBand rule U U' lo hi g g') {b : BlockId} (hb : b ∈ U.ids)
+    (h1 : lo < (U.block b).round + g) (h2 : (U.block b).round + g ≤ hi) :
+    (U'.block b).parents = (U.block b).parents
+```
+
+#### `blocksAt_bnd`
+
+*theorem, `Hydrozoan.Helpers.Banded.lean`*
+
+```lean
+theorem blocksAt_bnd (h : AgreeBand rule U U' lo hi g g') {n n' : ℕ}
+    (hnn : n + g = n' + g') (h1 : lo ≤ n + g) (h2 : n + g ≤ hi) :
+    LeanDag.Hydrozoan.blocksAt U n ⊆ LeanDag.Hydrozoan.blocksAt U' n'
+```
+
+A round layer inside the band is carried across. Containment, not equality: `U'` may hold blocks there that `U` did not.
+
+#### `isVote_bnd`
+
+*theorem, `Hydrozoan.Helpers.Banded.lean`*
+
+```lean
+theorem isVote_bnd (h : AgreeBand rule U U' lo hi g g') {b L : BlockId} (hb : b ∈ U.ids)
+    (h1 : lo < (U.block b).round + g) (h2 : (U.block b).round + g ≤ hi) :
+    LeanDag.Hydrozoan.IsVote U' b L ↔ LeanDag.Hydrozoan.IsVote U b L
+```
+
+#### `authorsOf_bnd`
+
+*theorem, `Hydrozoan.Helpers.Banded.lean`*
+
+```lean
+theorem authorsOf_bnd (h : AgreeBand rule U U' lo hi g g') {s : Finset BlockId}
+    (hs : ∀ b ∈ s, b ∈ U.ids ∧ lo ≤ (U.block b).round + g ∧ (U.block b).round + g ≤ hi) :
+    LeanDag.Hydrozoan.authorsOf U'.block s = LeanDag.Hydrozoan.authorsOf U.block s
+```
+
+#### `isLeaderBlock_bnd`
+
+*theorem, `Hydrozoan.Helpers.Banded.lean`*
+
+```lean
+theorem isLeaderBlock_bnd (h : AgreeBand rule U U' lo hi g g')
+    {S S' : LeanDag.Hydrozoan.Slots Replica} {k k' : ℕ}
+    (hkk : S.slotRound k + g = S'.slotRound k' + g') (hlead : S.leader k = S'.leader k')
+    (h1 : lo ≤ S.slotRound k + g) (h2 : S.slotRound k + g ≤ hi) {L : BlockId}
+    (hL : LeanDag.Hydrozoan.IsLeaderBlock (S := S) U k L) :
+    LeanDag.Hydrozoan.IsLeaderBlock (S := S') U' k' L
+```
+
+#### `isLeaderBlock_bnd_old`
+
+*theorem, `Hydrozoan.Helpers.Banded.lean`*
+
+```lean
+theorem isLeaderBlock_bnd_old (h : AgreeBand rule U U' lo hi g g')
+    {S S' : LeanDag.Hydrozoan.Slots Replica} {k k' : ℕ}
+    (hkk : S.slotRound k + g = S'.slotRound k' + g') (hlead : S.leader k = S'.leader k')
+    (h1 : lo ≤ S.slotRound k + g) (h2 : S.slotRound k + g ≤ hi) {L : BlockId}
+    (hLU : L ∈ U.ids) (hL : LeanDag.Hydrozoan.IsLeaderBlock (S := S') U' k' L) :
+    LeanDag.Hydrozoan.IsLeaderBlock (S := S) U k L
+```
+
+The other direction, for a candidate the band already had. Nothing says the larger universe has no fresh candidates; the anchored skips below dispose of those separately.
+
+#### `supportersInView_bnd`
+
+*theorem, `Hydrozoan.Helpers.Banded.lean`*
+
+```lean
+theorem supportersInView_bnd (h : AgreeBand rule U U' lo hi g g')
+    {V : LeanDag.Hydrozoan.View U} {V' : LeanDag.Hydrozoan.View U'}
+    (hv : ∀ b, b ∈ V.ids → lo ≤ (U.block b).round + g → (U.block b).round + g ≤ hi →
+      b ∈ V'.ids)
+    {L : BlockId} {n n' : ℕ} (hnn : n + g = n' + g') (h1 : lo < n + g) (h2 : n + g ≤ hi) :
+    LeanDag.Hydrozoan.supportersInView U V L n
+      ⊆ LeanDag.Hydrozoan.supportersInView U' V' L n'
+```
+
+#### `voteBlocks_bnd`
+
+*theorem, `Hydrozoan.Helpers.Banded.lean`*
+
+```lean
+theorem voteBlocks_bnd (h : AgreeBand rule U U' lo hi g g') {C L : BlockId}
+    (hC : C ∈ U.ids) (h1 : lo + 1 < (U.block C).round + g)
+    (h2 : (U.block C).round + g ≤ hi) :
+    LeanDag.Hydrozoan.voteBlocks U' C L = LeanDag.Hydrozoan.voteBlocks U C L
+```
+
+Two rounds of slack: a certificate counts votes cast by its own parents.
+
+#### `certifiersInView_bnd`
+
+*theorem, `Hydrozoan.Helpers.Banded.lean`*
+
+```lean
+theorem certifiersInView_bnd (h : AgreeBand rule U U' lo hi g g')
+    {V : LeanDag.Hydrozoan.View U} {V' : LeanDag.Hydrozoan.View U'}
+    (hv : ∀ b, b ∈ V.ids → lo ≤ (U.block b).round + g → (U.block b).round + g ≤ hi →
+      b ∈ V'.ids)
+    {L : BlockId} {n n' : ℕ} (hnn : n + g = n' + g') (h1 : lo ≤ n + g)
+    (h2 : n + 2 + g ≤ hi) :
+    LeanDag.Hydrozoan.certifiersInView U V L n
+      ⊆ LeanDag.Hydrozoan.certifiersInView U' V' L n'
+```
+
+#### `blamesInView_bnd`
+
+*theorem, `Hydrozoan.Helpers.Banded.lean`*
+
+```lean
+theorem blamesInView_bnd (h : AgreeBand rule U U' lo hi g g')
+    {V : LeanDag.Hydrozoan.View U} {V' : LeanDag.Hydrozoan.View U'}
+    (hv : ∀ b, b ∈ V.ids → lo ≤ (U.block b).round + g → (U.block b).round + g ≤ hi →
+      b ∈ V'.ids)
+    {S S' : LeanDag.Hydrozoan.Slots Replica} {k k' : ℕ}
+    (hkk : S.slotRound k + g = S'.slotRound k' + g') (hlead : S.leader k = S'.leader k')
+    (h1 : lo ≤ S.slotRound k + g) (h2 : S.slotRound k + 1 + g ≤ hi) :
+    LeanDag.Hydrozoan.blamesInView (S := S) U V k
+      ⊆ LeanDag.Hydrozoan.blamesInView (S := S') U' V' k'
+```
+
+**The blame set is carried across.** A blamer references no candidate, its parents are the parents it had, and a candidate the band did not carry is not among them — so it blames the slot still.
+
+#### `certifiedIn_bnd`
+
+*theorem, `Hydrozoan.Helpers.Banded.lean`*
+
+```lean
+theorem certifiedIn_bnd (h : AgreeBand rule U U' lo hi g g') {A L : BlockId} {n n' : ℕ}
+    (hA : A ∈ U.ids) (hAlo : lo ≤ (U.block A).round + g)
+    (hAhi : (U.block A).round + g ≤ hi) (hnn : n + g = n' + g')
+    (h1 : lo ≤ n + g) (h2 : n + 2 + g ≤ hi)
+    (hc : LeanDag.Hydrozoan.CertifiedIn U A L n) :
+    LeanDag.Hydrozoan.CertifiedIn U' A L n'
+```
+
+#### `certifiedIn_bnd_old`
+
+*theorem, `Hydrozoan.Helpers.Banded.lean`*
+
+```lean
+theorem certifiedIn_bnd_old (h : AgreeBand rule U U' lo hi g g') {A L : BlockId} {n n' : ℕ}
+    (hA : A ∈ U.ids) (hAlo : lo ≤ (U.block A).round + g)
+    (hAhi : (U.block A).round + g ≤ hi) (hnn : n + g = n' + g')
+    (h1 : lo ≤ n + g) (h2 : n + 2 + g ≤ hi)
+    (hc : LeanDag.Hydrozoan.CertifiedIn U' A L n') :
+    LeanDag.Hydrozoan.CertifiedIn U A L n
+```
+
+#### `not_certifiedIn_bnd_novel`
+
+*theorem, `Hydrozoan.Helpers.Banded.lean`*
+
+```lean
+theorem not_certifiedIn_bnd_novel (h : AgreeBand rule U U' lo hi g g') {A L : BlockId}
+    {n n' : ℕ} (hA : A ∈ U.ids) (hAlo : lo ≤ (U.block A).round + g)
+    (hAhi : (U.block A).round + g ≤ hi) (hnn : n + g = n' + g')
+    (h1 : lo ≤ n + g) (h2 : n + 2 + g ≤ hi) (hL : L ∉ U.ids) :
+    ¬ LeanDag.Hydrozoan.CertifiedIn U' A L n'
+```
+
 #### `isLeaderBlock_sched`
 
 *theorem, `Hydrozoan.Helpers.Banded.lean`*
@@ -36633,6 +36853,17 @@ theorem leaderCommits :
 ```
 
 **Direct liveness as a property**: a slot led by a member of the reliable quorum commits, and the commit reads that one leader, so its bound is one above the slot.
+
+#### `eligibleAsAnchor_sched`
+
+*theorem, `Hydrozoan.Helpers.Commit.lean`*
+
+```lean
+theorem eligibleAsAnchor_sched {S S' : LeanDag.Slots Replica}
+    (hround : S'.slotRound = S.slotRound) {x y : ℕ} :
+    LeanDag.Hydrozoan.EligibleAsAnchor (S := ofCoreSlots S') Replica x y ↔
+      LeanDag.Hydrozoan.EligibleAsAnchor (S := ofCoreSlots S) Replica x y
+```
 
 #### `indirect`
 
@@ -37263,20 +37494,26 @@ theorem decided_of_anchor_stackHZ [LinearOrder BlockId]
 *theorem, `Integration.Hydrozoan.OptimalChopDecided.lean`*
 
 ```lean
-theorem decidedOpt_chopHZ (hd : G ≤ S.slotRound d) {k : ℕ} {v : Option BlockId} :
+theorem decidedOpt_chopHZ [LinearOrder BlockId] (hd : G ≤ S.slotRound d)
+    {k : ℕ} {v : Option BlockId} :
     DecidedOpt (S := slotsChopHZ hd) (optChopHZ (hsp := hsp) hd hle)
         (View.chopHZ V hsp G) k v
       ↔ DecidedOpt (S := S) (LeanDag.Barnacle.OptimalHydrozoan.optUniverseOf U hle) V (d + k) v
 ```
 
-**HI7 for `DecidedOpt`.** A replica running Optimal-Hydrozoan that has pruned below the horizon reaches exactly the verdicts it would have reached with its whole history, at the re-indexed slot. The base-slot premise and leader exclusion are the only conditions.
+**HI7 for `DecidedOpt`, from OH9.** A replica running Optimal-Hydrozoan that has pruned below the horizon reaches exactly the verdicts it would have reached with its whole history, at the re-indexed slot.
+
+Two inductions over `DecidedOpt`'s six constructors stood here and are gone; what survives above is the *statement* of what the cut preserves, rule by rule, which is the content. `LocalTruncate.of_banded` supplies the rest and knows nothing about Optimal-Hydrozoan.
+
+`LinearOrder BlockId` enters through the band and nowhere else: `Banded` for this rule is proved by reading Optimal's band as Hydrozoan's, and Hydrozoan's carrier carries a tie-break. Every committee this arc instantiates has one.
 
 #### `decides`
 
 *theorem, `Integration.Hydrozoan.OptimalChopDecided.lean`*
 
 ```lean
-theorem decides {V : LeanDag.Hydrozoan.View D.network} {k : ℕ} {v : Option BlockId} :
+theorem decides [LinearOrder BlockId] {V : LeanDag.Hydrozoan.View D.network} {k : ℕ}
+    {v : Option BlockId} :
     DecidedOpt (S := D.numbering) D.held (View.chopHZ V D.selfParents D.horizon) k v
       ↔ DecidedOpt (S := S)
           (LeanDag.Barnacle.OptimalHydrozoan.optUniverseOf D.network D.excluded) V
@@ -37449,6 +37686,34 @@ theorem decided_fill_agreeHZ_of_properties (sk : SkipMsg (toCore U hsp))
 ```
 
 **HI9's cross-fill agreement, from HZ9 and HZ3.** A verdict reached before the recovery and one reached after it agree. The deleted bespoke version composed its induction with slot agreement by hand; this is `Arcs.decided_agree_extends`, which every rule with `Agree` and `Persist` has.
+
+#### `sustains_chopHZ`
+
+*theorem, `Integration.Hydrozoan.ViaProperties.lean`*
+
+```lean
+theorem sustains_chopHZ {G : ℕ} :
+    Sustains LeanDag.Hydrozoan.rule U (chopHZ U hsp G) G G where
+  mem
+```
+
+**A truncation sustains from its horizon.** At and above the cut a block keeps its author and, strictly above, its references.
+
+#### `truncates_chopHZ`
+
+*theorem, `Integration.Hydrozoan.ViaProperties.lean`*
+
+```lean
+theorem truncates_chopHZ [S : LeanDag.Hydrozoan.Slots Replica] {G d : ℕ}
+    (hd : G ≤ S.slotRound d) :
+    Properties.Truncates LeanDag.Hydrozoan.rule U (chopHZ U hsp G)
+      (LeanDag.Hydrozoan.toCoreSlots S)
+      (LeanDag.Hydrozoan.toCoreSlots (slotsChopHZ hd)) G d
+```
+
+**The truncation is a truncation**, in the carrier's vocabulary. This is the check the failed re-indexing property never received: a relation with no models proves nothing, and exhibiting a witness before proving anything about it is the discipline that catches it.
+
+The block half is `sustains_chopHZ` below, since `Truncates` is `RebasedAbove` at `R₀ = G` plus the schedule; only the three schedule clauses are proved here.
 
 #### `decided_chopHZ_of_localTruncate`
 
@@ -38021,6 +38286,116 @@ theorem indirect :
 **O-A3 as a property.** The two indirect constructors, by cases on a thick-linked candidate at the slot, committing the least one. The whole proof is that case split, which is why the verdict survives a reassignment of leaders elsewhere: it reads slot `i`'s candidates and the anchor's history, and a schedule naming the same leader at `i` and the same rounds changes neither. The minimality clause transports for the same reason.
 
 This is `odontoceti_descent.indirect` and the case split that stood inside the committed-run descent, stated once.
+
+#### `agree`
+
+*theorem, `OptimalHydrozoan.Carrier.lean`*
+
+```lean
+theorem agree : Agree (optimalRule (Replica := Replica) (BlockId := BlockId))
+```
+
+**Two views decide alike.** OH5 under the property's name, and unconditional because the exclusion invariant is a field of the universe.
+
+#### `commitsCandidate`
+
+*theorem, `OptimalHydrozoan.Carrier.lean`*
+
+```lean
+theorem commitsCandidate :
+    CommitsCandidate (optimalRule (Replica := Replica) (BlockId := BlockId))
+```
+
+**A commit names the slot's candidate.**
+
+#### `commitsDirect`
+
+*theorem, `OptimalHydrozoan.Carrier.lean`*
+
+```lean
+theorem commitsDirect :
+    CommitsDirect (optimalRule (Replica := Replica) (BlockId := BlockId))
+      (fun {U} V L r => LeanDag.OptimalHydrozoan.FastCommitOptInView U.val V L r ∨
+        LeanDag.Hydrozoan.SlowCommitInView U.val V L r)
+```
+
+**And a direct commit is a verdict**, at Optimal's own direct predicate — a *disjunction*, the fast path or the slow one.
+
+#### `banded`
+
+*theorem, `OptimalHydrozoan.Carrier.lean`*
+
+```lean
+theorem banded [LinearOrder BlockId] :
+    Banded (optimalRule (Replica := Replica) (BlockId := BlockId))
+```
+
+**Optimal-Hydrozoan reads a band.**
+
+#### `leaderCommits`
+
+*theorem, `OptimalHydrozoan.Carrier.lean`*
+
+```lean
+theorem leaderCommits :
+    LeaderCommits (optimalRule (Replica := Replica) (BlockId := BlockId))
+      (fun S {U} V T lo K => optLive S (U := U) V T lo K)
+```
+
+**A reliably-led slot commits**, at a bound one above the slot: the slow commit reads that one leader, so a reassignment of the others leaves it standing.
+
+#### `indirect`
+
+*theorem, `OptimalHydrozoan.Carrier.lean`*
+
+```lean
+theorem indirect :
+    Indirect (optimalRule (Replica := Replica) (BlockId := BlockId))
+      (fun sr i j => sr i + 3 ≤ sr j)
+```
+
+**The graded rule is total, at a bound.** Three rungs and three cases: an anchor-linked certificate, an anchor-linked evidence quorum, or neither, in which case the slot skips. Every clause reads slot `k`'s own candidates and the anchor's history, and neither moves when the leaders of other slots are reassigned — which is the second quantifier.
+
+Shorter than Hydrozoan's by one clause: the evidence rung carries no tie-break, two candidates being unable to clear it at once (decision D3), so no least candidate has to be chosen.
+
+#### `evidenceLinked_sched`
+
+*theorem, `OptimalHydrozoan.Helpers.Banded.lean`*
+
+```lean
+theorem evidenceLinked_sched {S₁ S₂ : LeanDag.Hydrozoan.Slots Replica} {k : ℕ}
+    {A L : BlockId} (hround : S₁.slotRound k = S₂.slotRound k)
+    (hk : S₁.leader k = S₂.leader k) :
+    EvidenceLinked (S := S₁) U A L k ↔ EvidenceLinked (S := S₂) U A L k
+```
+
+#### `bandedOpt_aux`
+
+*theorem, `OptimalHydrozoan.Helpers.Banded.lean`*
+
+```lean
+theorem bandedOpt_aux {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
+    (hle : ∀ b ∈ U.ids, ∀ m, (U.block b).round = LeanDag.Hydrozoan.decisionRound Replica m →
+      WitnessesEquivocation U m b →
+      ∀ j ∈ (U.block b).parents, (U.block j).author ≠ S.leader m)
+    {V : LeanDag.Hydrozoan.View U} {k : ℕ} {v : Option BlockId}
+    (hd : DecidedOpt { U with leader_excluded := hle } V k v) :
+    ∃ top, S.slotRound k + 2 ≤ top ∧
+      ∀ (g g' d d' : ℕ) (S' : LeanDag.Hydrozoan.Slots Replica)
+        (U' : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
+        (hle' : ∀ b ∈ U'.ids, ∀ m,
+          (U'.block b).round = LeanDag.Hydrozoan.decisionRound (S := S') Replica m →
+          WitnessesEquivocation (S := S') U' m b →
+          ∀ j ∈ (U'.block b).parents, (U'.block j).author ≠ S'.leader m)
+        (V' : LeanDag.Hydrozoan.View U') (k' : ℕ),
+        k + d' = k' + d →
+        (∀ m m', m + d' = m' + d → S.slotRound m + g = S'.slotRound m' + g') →
+        (∀ m m', m + d' = m' + d → S.slotRound m ≤ top → S.leader m = S'.leader m') →
+        AgreeBand rule U U' (S.slotRound k + g) (top + g) g g' →
+        (∀ b, b ∈ V.ids → S.slotRound k ≤ (U.block b).round →
+          (U.block b).round ≤ top → b ∈ V'.ids) →
+        DecidedOpt (S := S') { U' with leader_excluded := hle' } V' k' v
+```
 
 #### `decided_agree_truncate`
 
@@ -38611,7 +38986,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 1035 lemmas used only within the file that proves
+The 1030 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -39887,7 +40262,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `noEvidenceQuorumInView_iff_filter` | The in-view no-evidence quorum through its canonical witness set. |
 | `noEvidenceQuorum_iff_filter` | The no-evidence quorum through its canonical witness set: the filter of no-evidence decision-round blocks. |
 
-### `OptimalHydrozoan/Helpers/SlotAgreement.lean` (14)
+### `OptimalHydrozoan/Helpers/SlotAgreement.lean` (13)
 
 | Lemma | Role |
 |:---|:---|
@@ -39904,7 +40279,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `nf_add_tEquiv_le` | `n + f + t_equiv ≤ q_fast + q + 1` (the `EvidenceEquiv` row). |
 | `qCert_pos_opt` | `1 ≤ q_cert`. |
 | `qFastOpt_add_q_eq` | `q_fast + q = n + f + t_plain` (the `EvidencePlain` row). |
-| `tPlain_pos` | `1 ≤ t_plain`, from the committee bound and `f + c ≥ 1`. |
 
 ### `OptimalHydrozoan/SlotAgreement/Proof.lean` (1)
 
@@ -39973,7 +40347,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `noEvidenceQuorumInView_iff_filter` | The in-view no-evidence quorum through its canonical witness set. |
 | `noEvidenceQuorum_iff_filter` | The no-evidence quorum through its canonical witness set: the filter of no-evidence decision-round blocks. |
 
-### `OptimalHydrozoan/Helpers/SlotAgreement.lean` (14)
+### `OptimalHydrozoan/Helpers/SlotAgreement.lean` (13)
 
 | Lemma | Role |
 |:---|:---|
@@ -39990,7 +40364,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `nf_add_tEquiv_le` | `n + f + t_equiv ≤ q_fast + q + 1` (the `EvidenceEquiv` row). |
 | `qCert_pos_opt` | `1 ≤ q_cert`. |
 | `qFastOpt_add_q_eq` | `q_fast + q = n + f + t_plain` (the `EvidencePlain` row). |
-| `tPlain_pos` | `1 ≤ t_plain`, from the committee bound and `f + c ≥ 1`. |
 
 ### `OptimalHydrozoan/SlotAgreement/Proof.lean` (1)
 
@@ -40122,11 +40495,12 @@ subsection per module, in the layer order of Appendices B and C.
 | `goodGives` | A good DAG meets Hydrozoan's precondition. `Good` and `hzLive` name the same facts about the same quorum; … |
 | `roundRobinLive` | — |
 
-### `Barnacle/OptimalHydrozoanLive/Proof.lean` (2)
+### `Barnacle/OptimalHydrozoanLive/Proof.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
 | `descent` | — |
+| `goodGives` | A good DAG meets Optimal-Hydrozoan's precondition. `Good` and `optLive` name the same facts about the same … |
 | `roundRobinLive` | — |
 
 ### `DoS/Delivers.lean` (4)
@@ -40251,33 +40625,20 @@ subsection per module, in the layer order of Appendices B and C.
 | `thickLink_band` | So the indirect test reads the same. |
 | `toCore` | The band at Hybrid's carrier is the band at the core's, the universe being the core's under a predicate. |
 
-### `Hydrozoan/Helpers/Banded.lean` (26)
+### `Hydrozoan/Helpers/Banded.lean` (13)
 
 | Lemma | Role |
 |:---|:---|
-| `authorsOf_bnd` | — |
-| `blamesInView_bnd` | The blame set is carried across. A blamer references no candidate, its parents are the parents it had, and … |
 | `blamesInView_sched` | — |
-| `blocksAt_bnd` | A round layer inside the band is carried across. Containment, not equality: `U'` may hold blocks there … |
 | `bnd_author` | — |
 | `bnd_mem` | — |
-| `bnd_parents` | — |
 | `bnd_round` | — |
 | `bnd_round'` | Read from the other side, for a block the band already had. |
 | `certificates_bnd` | — |
 | `certificates_bnd_old` | And back, for a certificate the band already had. |
-| `certifiedIn_bnd` | — |
-| `certifiedIn_bnd_old` | — |
-| `certifiersInView_bnd` | — |
 | `isCertificate_bnd` | — |
-| `isLeaderBlock_bnd` | — |
-| `isLeaderBlock_bnd_old` | The other direction, for a candidate the band already had. Nothing says the larger universe has no fresh … |
-| `isVote_bnd` | — |
-| `not_certifiedIn_bnd_novel` | — |
 | `not_weakLinked_bnd_novel` | — |
 | `of_mem_blocksAt_old` | What a block of `U'` at a band round supplies, when it is a block the band already had. |
-| `supportersInView_bnd` | — |
-| `voteBlocks_bnd` | Two rounds of slack: a certificate counts votes cast by its own parents. |
 | `votesSet_bnd` | — |
 | `weakLinked_bnd` | — |
 | `weakLinked_bnd_old` | — |
@@ -40292,12 +40653,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `rule_ids` | — |
 | `rule_viewIds` | — |
 
-### `Hydrozoan/Helpers/Commit.lean` (3)
+### `Hydrozoan/Helpers/Commit.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
 | `coversUpto_eq` | The carrier's coverage predicate is Hydrozoan's. |
-| `eligibleAsAnchor_sched` | — |
 | `exists_coversUpto_decides` | A caught-up replica reaches every verdict, at the band's own ceiling rather than a rule-specific round. … |
 
 ### `Hydrozoan/Helpers/Skippability.lean` (1)
@@ -40396,8 +40756,6 @@ subsection per module, in the layer order of Appendices B and C.
 | Lemma | Role |
 |:---|:---|
 | `blocksAt_decision_chopHZ` | A decision-round block of the truncation is a decision-round block of the original, and sits far enough … |
-| `decidedOpt_chopHZ_of_decided` | Verdicts survive the cut. |
-| `decidedOpt_of_decidedOpt_chopHZ` | And a verdict of the truncation is a verdict of the universe it came from. |
 | `decisionRound_chopHZ` | The decision round re-indexes by the horizon, like every other round the rules name. |
 | `decision_block_guards` | What membership at the decision round supplies: presence, and the round guard every lemma above needs. |
 | `evidenceLinked_chopHZ` | Rung 2 is preserved. The witness set is the same set of blocks: each sits at the decision round, is fast … |
@@ -40406,6 +40764,8 @@ subsection per module, in the layer order of Appendices B and C.
 | `isNoFastEvidence_chopHZ` | And so is being evidence for nothing. |
 | `noEvidenceQuorumInView_chopHZ` | The skip's no-evidence half is preserved, by the same witness set, with the view's membership carried by … |
 | `skippedLeaderOptInView_chopHZ` | And the skip is, being the blame count and the no-evidence quorum together. |
+| `sustains_opt` | Optimal's carrier reads Hydrozoan's sustaining. The subtype's projections are the underlying universe's, … |
+| `truncates_chopOpt` | The cut is a truncation of Optimal's carrier. The block half is Hydrozoan's `sustains_chopHZ`, read … |
 | `votesFor_chopHZ` | The vote count a block casts is unchanged above the cut. |
 | `witnessesEquivocation_chopHZ` | Witnessing is preserved, at the re-indexed slot. The guard is two rounds above the horizon because a vote … |
 
@@ -40462,15 +40822,13 @@ subsection per module, in the layer order of Appendices B and C.
 | `toCore_block` | — |
 | `toCore_ids` | — |
 
-### `Integration/Hydrozoan/ViaProperties.lean` (5)
+### `Integration/Hydrozoan/ViaProperties.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
 | `decided_agree_chopHZ_of_properties` | HI8's cross-cut agreement, from HZ9. A replica that has pruned below the horizon and one that has not … |
 | `extends_skipFillHZ` | The fill is an extension. It holds every block the original held and denotes each of them unchanged. |
-| `sustains_chopHZ` | A truncation sustains from its horizon. At and above the cut a block keeps its author and, strictly above, … |
 | `sustains_skipFillHZ` | A fill sustains from the top of its gap. Above it the fill added nothing, so every block is old and … |
-| `truncates_chopHZ` | The truncation is a truncation, in the carrier's vocabulary. This is the check the failed re-indexing … |
 
 ### `Integration/Sound.lean` (4)
 
@@ -40564,14 +40922,30 @@ subsection per module, in the layer order of Appendices B and C.
 | `thickLink_threshold_pos` | The thick-link threshold is positive: `Faults5` asks for `5f + 1` validators, so `card − 3f ≥ 2f + 1`. |
 | `toCore` | The two carriers project identically, so a band for one is a band for the other. |
 
-### `OptimalHydrozoan/Carrier.lean` (4)
+### `OptimalHydrozoan/Carrier.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
-| `agree` | Two views decide alike. OH5 under the property's name, and unconditional because the exclusion invariant … |
+| `band_of` | A band at this carrier is a band at Hydrozoan's. The subtype's projections are the underlying universe's, … |
 | `causal` | Optimal's universes are block DAGs — Hydrozoan's argument, the underlying universe being Hydrozoan's. |
-| `commitsCandidate` | A commit names the slot's candidate. |
-| `commitsDirect` | And a direct commit is a verdict, at Optimal's own direct predicate — a *disjunction*, the fast path or … |
+
+### `OptimalHydrozoan/Helpers/Banded.lean` (13)
+
+| Lemma | Role |
+|:---|:---|
+| `evidenceLinked_bnd` | — |
+| `evidenceLinked_bnd_old` | — |
+| `fastCommitOptInView_bnd` | The fast commit is Hydrozoan's vote count at a lower threshold, so Hydrozoan's containment carries it. |
+| `isFastEvidence_bnd` | Fast evidence is the same evidence. The counts are equal, the equivocation test is the same test, and the … |
+| `isFastEvidence_sched` | — |
+| `isNoFastEvidence_bnd` | A block that was evidence for no candidate still is. The old candidates by the equivalence above, and a … |
+| `noEvidenceQuorumInView_bnd` | The no-evidence quorum is carried across. Each block of it stays at the decision round, stays in view, and … |
+| `not_evidenceLinked_bnd_novel` | — |
+| `skippedLeaderOptInView_bnd` | And so is the direct skip. Blames by Hydrozoan's containment, the no-evidence half by the one above. |
+| `votesFor_bnd` | A block's parents vote the same way in both universes, for every candidate whatever. Two rounds of slack, … |
+| `votesFor_eq_empty_of_novel` | And a candidate the band added collects none. An old block's parents are old and reference only old blocks. |
+| `witnessesEquivocation_bnd` | Witnessing an equivocation is the same event. Both directions: a witness on the larger side is voted for … |
+| `witnessesEquivocation_sched` | — |
 
 ### `Properties/Arcs/GC.lean` (9)
 

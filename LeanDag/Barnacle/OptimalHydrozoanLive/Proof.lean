@@ -1,14 +1,18 @@
 import LeanDag.Barnacle.OptimalHydrozoanLive.Statement
 import LeanDag.Barnacle.Helpers.Heads
-import LeanDag.OptimalHydrozoan.DirectLiveness.Proof
-import LeanDag.OptimalHydrozoan.IndirectLiveness.Proof
+import LeanDag.Barnacle.Helpers.Descent
+import LeanDag.OptimalHydrozoan.Carrier
 
 /-!
 # Barnacle over Optimal-Hydrozoan — the live rule, proof
 
-Unaudited, and the mirror of `Barnacle/HydrozoanLive/Proof.lean`:
-`goodLeaders` is OH5, `indirect` is OH6, and round-robin liveness is
-`liveOn_roundRobin` at slack `f + c` and wave length three.
+Unaudited, and the mirror of `Barnacle/HydrozoanLive/Proof.lean`.
+`goodLeaders` was OH5 and `indirect` was OH6, each applied without
+adaptation; both are properties now — `LeaderCommits` and `Indirect` —
+and `descent_of_properties` assembles them, so what is left is the
+bridge from Optimal's good DAG to its own liveness precondition, which
+mentions no verdict. Round-robin liveness is `liveOn_roundRobin` at
+slack `f + c` and wave length three.
 -/
 
 namespace LeanDag
@@ -17,36 +21,34 @@ namespace Barnacle
 
 namespace OptimalHydrozoanLive
 
-set_option maxHeartbeats 1000000 in
--- as for the base rule's laws: the carrier is a subtype and
--- `optUniverseOf` is unfolded at each descent obligation
+/-- **A good DAG meets Optimal-Hydrozoan's precondition.** `Good` and
+`optLive` name the same facts about the same quorum; the window is the
+single slot, and its rounds fit because the wave does. -/
+theorem goodGives (Replica BlockId : Type) [Fintype Replica] [DecidableEq Replica]
+    [DecidableEq BlockId] [LeanDag.OptimalHydrozoan.OptimalFaults Replica] :
+    (optimalHydrozoanLive (Replica := Replica) (BlockId := BlockId)).GoodGives
+      (LeanDag.Hydrozoan.Faults.f Replica + LeanDag.Hydrozoan.Faults.c Replica)
+      (fun S {U} V T lo K =>
+        LeanDag.OptimalHydrozoanProperties.optLive S (U := U) V T lo K) := by
+  intro U Rnd N hGood
+  obtain ⟨T, hTC, hTq, hsync, hpop⟩ := hGood
+  refine ⟨T, ?_, ?_⟩
+  · have hcard := LeanDag.Hydrozoan.Faults.card_replicas (Replica := Replica)
+    simp only [LeanDag.Hydrozoan.q] at hTq
+    omega
+  · intro S V κ hcov hRnd hwave hlead
+    have hw3 : (optimalHydrozoanLive (Replica := Replica)
+        (BlockId := BlockId)).waveLength = 3 := rfl
+    rw [hw3] at hwave
+    refine ⟨hTC, hTq, Rnd, N, hsync, hRnd, hpop, hcov, ?_⟩
+    intro k hk
+    have := S.mono (Nat.lt_succ_iff.mp hk)
+    omega
+
 theorem descent : Descent := by
   intro Replica BlockId _ _ _ _
-  constructor
-  · intro U Rnd N hGood
-    obtain ⟨T, hTC, hTq, hsync, hpop⟩ := hGood
-    refine ⟨T, ?_, ?_⟩
-    · have hcard := LeanDag.Hydrozoan.Faults.card_replicas (Replica := Replica)
-      simp only [LeanDag.Hydrozoan.q] at hTq
-      omega
-    · intro S V κ hcov hRnd hwave hlead
-      letI := slotsOf S
-      have hw3 : (optimalHydrozoanLive (Replica := Replica)
-          (BlockId := BlockId)).waveLength = 3 := rfl
-      rw [hw3] at hwave
-      have h0 := hpop (S.slotRound κ) hRnd (by omega)
-      have h1 := hpop (S.slotRound κ + 1) (by omega) (by omega)
-      have h2 := hpop (S.slotRound κ + 2) (by omega) (by omega)
-      obtain ⟨L, _, _, hd⟩ :=
-        (LeanDag.OptimalHydrozoan.DirectLiveness.holds Replica BlockId
-          (OptimalHydrozoan.optUniverseOf U.val U.property)).1
-          T Rnd κ hTC hTq hsync hRnd h0 h1 h2 hlead V
-          (fun b hb hr => hcov b hb (le_trans hr (show S.slotRound κ + 2 ≤ N by omega)))
-      exact ⟨L, hd⟩
-  · intro S U V i j A hij hdj hmid
-    letI := slotsOf S
-    exact (LeanDag.OptimalHydrozoan.IndirectLiveness.holds Replica BlockId
-      (OptimalHydrozoan.optUniverseOf U.val U.property)).1 V i j A hij hdj hmid
+  exact descent_of_properties _ LeanDag.OptimalHydrozoanProperties.leaderCommits
+    LeanDag.OptimalHydrozoanProperties.indirect (goodGives Replica BlockId)
 
 theorem roundRobinLive : RoundRobinLive := by
   intro n hn BlockId _ _ hb w hk m hm hmax

@@ -51,6 +51,7 @@ CONFORMANCE = (
     "LeanDag.Hydrozoan.Helpers.Carrier", "LeanDag.Odontoceti.Carrier",
     "LeanDag.Nemo.Carrier", "LeanDag.NemoProperties",
     "LeanDag.Hybrid.Carrier", "LeanDag.HybridProperties",
+    "LeanDag.OptimalHydrozoan.Carrier", "LeanDag.OptimalHydrozoan.Helpers.Banded",
     "LeanDag.Barnacle.Conformance",
     "LeanDag.Barnacle.Helpers.DagRule", "LeanDag.Barnacle.Helpers.Descent",
 )
@@ -61,7 +62,7 @@ CONFORMING = (
     "LeanDag.Mysticeti", "LeanDag.Liveness", "LeanDag.Persistence",
     "LeanDag.Support", "LeanDag.Schedule", "LeanDag.WaveRobin",
     "LeanDag.Participation", "LeanDag.Hydrozoan.", "LeanDag.Odontoceti.",
-    "LeanDag.Nemo.", "LeanDag.Hybrid.",
+    "LeanDag.Nemo.", "LeanDag.Hybrid.", "LeanDag.OptimalHydrozoan.",
     "LeanDag.Reactive.Mysticeti", "LeanDag.Reactive.Odontoceti",
 )
 
@@ -168,8 +169,9 @@ def main():
             print(f"    {mark:10s} {short:52s} <- "
                   f"{sorted(x.replace('LeanDag.', '') for x in b)}")
     extra = sum(len(v) for v in allowed.values())
-    print(f"\n{extra} more, for rules with no `Banded` to route through "
-          f"(Optimal-Hydrozoan): not a gap in the arc.")
+    if extra:
+        print(f"\n{extra} more, for rules with no `Banded` to route through: "
+              f"not a gap in the arc.")
 
     bad = sorted(live - recorded)
     stale = sorted(recorded - live)

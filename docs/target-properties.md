@@ -1016,6 +1016,60 @@ everywhere and non-vacuous in one place.
 well. Optimal-Hydrozoan is the only carrier left short, and its `Banded`
 is the last source of bespoke links in `docs/bespoke-links.md`.
 
+## 3.14 The last carrier, and the reuse it allowed
+
+Optimal-Hydrozoan was the carrier left short: `Agree`,
+`CommitsCandidate`, `Causal` and `CommitsDirect` from the day it was
+written, and no `Banded`, `LeaderCommits` or `Indirect`. It was also the
+last source of bespoke links — eight of them, against a rule with no
+band to route them through.
+
+**Its `Decided` is Hydrozoan's with the fast path substituted**, so the
+question was how much of Hydrozoan's band could be reused rather than
+rewritten. The answer is all of it: `AgreeBand` reads a rule's `ids` and
+`block` and nothing else, and this carrier's universe is a subtype of
+Hydrozoan's, so `band_of` turns a band at one rule into a band at the
+other in four lines. `Hydrozoan/Helpers/Banded.lean` then carries the
+blocks, votes, certificates, blames and rung 1 unchanged, and what had
+to be written is the fast path: `votesFor`, `WitnessesEquivocation`,
+`IsFastEvidence`, `IsNoFastEvidence`, `NoEvidenceQuorumInView`,
+`SkippedLeaderOptInView` and the three directions of `EvidenceLinked`.
+
+**The skip escapes §3.2's defect for the same reason FinWhale's does**
+(§3.13), and the coincidence is worth naming. `IsNoFastEvidence`
+quantifies over the slot's candidates and denies evidence for each; a
+band may add a candidate. But fast evidence is counted over a block's
+*parents*, an old block's parents are old, and an old block references
+only old blocks — so a candidate the band added collects no votes at
+all, and `t_plain` and `t_equiv` are both at least one. Three rules met
+this shape and were repaired (§3.2, §3.12); two met it and did not need
+to be. What separates them is not the quantifier, it is whether the
+absence being asserted can be witnessed by evidence that a larger DAG
+could contradict.
+
+**`LeaderCommits` and `Indirect` were the cheap half.** Both come from
+the fact that every rule Optimal applies at a slot reads the schedule at
+that slot alone, which is the tightness `DecidedBelow` and `Indirect`'s
+second quantifier ask for. `Indirect` is Hydrozoan's argument minus one
+clause: the evidence rung carries no tie-break, two candidates being
+unable to clear it at once.
+
+**What it closed.** Every rule with a carrier now shows all six.
+`docs/bespoke-links.md`'s second exclusion — links a rule with no band
+has nothing to route through — is empty, and the audit's separate column
+reports nothing. `Barnacle.OptimalHydrozoan.holds` reads the three
+properties; `Barnacle.OptimalHydrozoanLive` is `descent_of_properties`;
+and `Integration.Hydrozoan.decidedOpt_chopHZ` is
+`LocalTruncate.of_banded`, which deleted the last two hand-written
+inductions over a decision relation in the development.
+
+**One hypothesis to record.** `Banded` for this rule carries
+`[LinearOrder BlockId]`, which the rule itself does not need — it enters
+only through Hydrozoan's carrier, whose `Decided` has a tie-break, and
+which the band proof reads. The other six properties are free of it, so
+Barnacle's laws and the liveness route, which quantify over `BlockId`
+with decidable equality alone, are unaffected.
+
 ## 4. Properties for the schedule mechanisms
 
 `Barnacle.BaseRule` and its `Laws` are one working interface: any two
@@ -1555,7 +1609,7 @@ conformance `Statement` lists it.
 | core Mysticeti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | reactive Mysticeti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Hydrozoan | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — | ✓ |
-| Optimal-Hydrozoan | — | — | ✓ | ✓ | — | — | — | — |
+| Optimal-Hydrozoan | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
 | Odontoceti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Nemo | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
 | Hybrid / Orcaella | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -1614,7 +1668,8 @@ width and its band is conditional on `2 ≤ w` (§3.4c), so it needs a
 carrier per width. FinWhale had no `Slots` layer at all and Black Marlin
 commits by round with no slot-indexed relation — for those two the
 carrier was not the first step, the schedule layer was. FinWhale has
-since been given one and shows all six (§3.13); the other two stand.
+since been given one and shows all six (§3.13); Mahi-Mahi and Black
+Marlin stand.
 
 The consumer tests passed. Each is a former bespoke induction
 re-derived with none — and the six named first have since had the
@@ -1841,12 +1896,12 @@ looked for and is not there.
 
 - **Instances.** Seven rules had none when this was written: Barnacle's
   six, Odontoceti, Nemo, Mahi-Mahi, Optimal-Hydrozoan, Hybrid and
-  FinWhale. Odontoceti, Nemo, Hybrid and FinWhale have since been
-  instantiated; Mahi-Mahi's band is conditional on `2 ≤ w`, and
-  Optimal-Hydrozoan's is the one still open. That was the gap testing
-  whether the six obligations are the right six, and the answer so far
-  is that they are — two rules needed a repair to meet them (§3.2,
-  §3.12) and none needed a seventh property.
+  FinWhale. All but Mahi-Mahi have since been instantiated, and
+  Mahi-Mahi's band is conditional on `2 ≤ w`. That was the gap testing
+  whether the six obligations are the right six, and the answer is that
+  they are: eight rules meet them, two needed a repair to do so (§3.2,
+  §3.12), two met the same shape and did not (§3.13, §3.14), and none
+  needed a seventh property.
 - **A carrier law for chain quality.** `Quality/Coverage.card_coveredAt_ge`
   rests on a block referencing a quorum of the round below, and
   `DagRule` has no validity field. The last place that calls for a new
@@ -2223,8 +2278,8 @@ slots when it means a dependence bound — *the verdict is settled by slot
    all six, and the attempt found a defect in its skip rule first — the
    core's own, repaired with the core's fix. Nemo, Hybrid and FinWhale
    followed; FinWhale is the one with no induction to run, and §3.13
-   records what took its place. Optimal-Hydrozoan is the last carrier
-   without a band.
+   records what took its place. Optimal-Hydrozoan closed it (§3.14), so
+   every rule with a carrier now has a band.
 4. **~~A commit names the slot's candidate~~** (**done**, §3.9).
    `CommitsCandidate`, which seven protocols had proved separately.
 5. **~~Re-genesis as an `Extends`~~** (**done**, §3.10). Two witnesses

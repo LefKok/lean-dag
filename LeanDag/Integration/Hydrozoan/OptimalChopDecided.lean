@@ -1,12 +1,13 @@
 import LeanDag.Integration.Hydrozoan.OptimalTransport
-import LeanDag.OptimalHydrozoan.Helpers.Decided
+import LeanDag.OptimalHydrozoan.Carrier
+import LeanDag.Integration.Hydrozoan.ViaProperties
 
 /-!
 # HI7 for `DecidedOpt` — the rules Optimal-Hydrozoan reads, across the cut
 
 P7's second half. `ChopDecided.lean` carries Hydrozoan's rules through a
 truncation; this file carries the three that differ, and
-`OptimalSimulation.lean` runs the induction.
+`Properties.LocalTruncate` carries the verdicts.
 
 Optimal-Hydrozoan applies every rule predicate to `U.toBlockUniverse`,
 so the shared rules — candidacy, anchor eligibility, the slow path, and
@@ -209,15 +210,18 @@ theorem skippedLeaderOptInView_chopHZ (hd : G ≤ S.slotRound d) (k : ℕ) :
 
 /-! ## HI7 for `DecidedOpt`
 
-The induction, both ways. `optUniverseOf` rebuilds the Optimal universe
-on each side from the schedule-free clause, at that side's own
-schedule — which is what §4.1's resolution exists to allow, and what
-makes the two `OptUniverse`s statable in one theorem at all.
+`optUniverseOf` rebuilds the Optimal universe on each side from the
+schedule-free clause, at that side's own schedule — which is what §4.1's
+resolution exists to allow, and what makes the two `OptUniverse`s
+statable in one theorem at all.
 
-This is the third hand-written induction over a decision relation in
-this arc, and `docs/transformer-interface.md` §2 is the entry that
-would remove it: the six cases below differ from Hydrozoan's only in
-which rung test rung 2 names and in the absence of a tie-break. -/
+**Two inductions over `DecidedOpt`'s six constructors stood here**, the
+third and last hand-written pair in this arc. They are gone. What
+survives above is the statement of what the cut preserves, rule by rule
+and biconditionally, which is the content; the verdicts follow from
+`Properties.LocalTruncate.of_banded` over the band
+`OptimalHydrozoanProperties.banded` supplies, and that theorem knows
+nothing about Optimal-Hydrozoan. -/
 
 section Induction
 
@@ -230,135 +234,63 @@ abbrev optChopHZ (hd : G ≤ S.slotRound d) (hle : LeaderExcludedAll U) :
   LeanDag.Barnacle.OptimalHydrozoan.optUniverseOf (S := slotsChopHZ hd)
     (chopHZ U hsp G) (leaderExcludedAll_chopHZ hle)
 
-/-- **Verdicts survive the cut.** -/
-theorem decidedOpt_chopHZ_of_decided (hd : G ≤ S.slotRound d) {n : ℕ}
-    {v : Option BlockId}
-    (h : DecidedOpt (S := S) (LeanDag.Barnacle.OptimalHydrozoan.optUniverseOf U hle) V n v) :
-    ∀ k, n = d + k →
-      DecidedOpt (S := slotsChopHZ hd) (optChopHZ (hsp := hsp) hd hle)
-        (View.chopHZ V hsp G) k v := by
-  induction h with
-  | @directFast n L hL hc =>
-      rintro k rfl
-      refine DecidedOpt.directFast (S := slotsChopHZ hd) ((isLeaderBlockHZ_chop hd).mpr hL) ?_
-      refine (fastCommitOptInView_chopHZ (V := V) L ((slotsChopHZ hd).slotRound k)).mpr ?_
-      rwa [chopRound_add hd k]
-  | @directSlow n L hL hc =>
-      rintro k rfl
-      refine DecidedOpt.directSlow (S := slotsChopHZ hd) ((isLeaderBlockHZ_chop hd).mpr hL) ?_
-      refine (slowCommitInView_chopHZ (V := V) L ((slotsChopHZ hd).slotRound k)).mpr ?_
-      rwa [chopRound_add hd k]
-  | @directSkip n hskip =>
-      rintro k rfl
-      exact DecidedOpt.directSkip (S := slotsChopHZ hd)
-        ((skippedLeaderOptInView_chopHZ (V := V) hd k).mpr hskip)
-  | @indirectCert n j A L hkj helig hanchor hmid hL hcert ihj ihmid =>
-      rintro k rfl
-      obtain ⟨j', rfl⟩ : ∃ j', j = d + j' := ⟨j - d, by omega⟩
-      have hA : A ∈ U.ids := (isLeaderBlock_of_decidedOpt hanchor).1
-      refine DecidedOpt.indirectCert (S := slotsChopHZ hd) (by omega)
-        ((eligibleAsAnchorHZ_chop hd).mpr helig) (ihj j' rfl) ?_
-        ((isLeaderBlockHZ_chop hd).mpr hL) ((certifiedIn_chopHZ hd hA k).mpr hcert)
-      intro i' h1 h2 he
-      exact ihmid (d + i') (by omega) (by omega)
-        ((eligibleAsAnchorHZ_chop hd).mp he) i' rfl
-  | @indirectEvidence n j A L hkj helig hanchor hmid hnocert hL hevid ihj ihmid =>
-      rintro k rfl
-      obtain ⟨j', rfl⟩ : ∃ j', j = d + j' := ⟨j - d, by omega⟩
-      have hA : A ∈ U.ids := (isLeaderBlock_of_decidedOpt hanchor).1
-      refine DecidedOpt.indirectEvidence (S := slotsChopHZ hd) (by omega)
-        ((eligibleAsAnchorHZ_chop hd).mpr helig) (ihj j' rfl) ?_ ?_
-        ((isLeaderBlockHZ_chop hd).mpr hL) ((evidenceLinked_chopHZ hd hA k).mpr hevid)
-      · intro i' h1 h2 he
-        exact ihmid (d + i') (by omega) (by omega)
-          ((eligibleAsAnchorHZ_chop hd).mp he) i' rfl
-      · intro L' hL' hcert
-        exact hnocert L' ((isLeaderBlockHZ_chop hd).mp hL')
-          ((certifiedIn_chopHZ hd hA k).mp hcert)
-  | @indirectSkip n j A hkj helig hanchor hmid hnocert hnoevid ihj ihmid =>
-      rintro k rfl
-      obtain ⟨j', rfl⟩ : ∃ j', j = d + j' := ⟨j - d, by omega⟩
-      have hA : A ∈ U.ids := (isLeaderBlock_of_decidedOpt hanchor).1
-      refine DecidedOpt.indirectSkip (S := slotsChopHZ hd) (by omega)
-        ((eligibleAsAnchorHZ_chop hd).mpr helig) (ihj j' rfl) ?_ ?_ ?_
-      · intro i' h1 h2 he
-        exact ihmid (d + i') (by omega) (by omega)
-          ((eligibleAsAnchorHZ_chop hd).mp he) i' rfl
-      · intro L' hL' hcert
-        exact hnocert L' ((isLeaderBlockHZ_chop hd).mp hL')
-          ((certifiedIn_chopHZ hd hA k).mp hcert)
-      · intro L' hL' hev
-        exact hnoevid L' ((isLeaderBlockHZ_chop hd).mp hL')
-          ((evidenceLinked_chopHZ hd hA k).mp hev)
+/-- **Optimal's carrier reads Hydrozoan's sustaining.** The subtype's
+projections are the underlying universe's, so a `Sustains` at one rule
+is a `Sustains` at the other, field for field. -/
+theorem sustains_opt [LinearOrder BlockId] {g g' : ℕ}
+    {W W' : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
+    {hW : LeaderExcludedAll W} {hW' : LeaderExcludedAll W'}
+    (h : Properties.Sustains LeanDag.Hydrozoan.rule W W' g g') :
+    Properties.Sustains
+      (LeanDag.OptimalHydrozoanProperties.optimalRule (Replica := Replica) (BlockId := BlockId))
+      ⟨W, hW⟩ ⟨W', hW'⟩ g g' where
+  mem := h.mem
+  round := h.round
+  creator := h.creator
+  refs := h.refs
 
-/-- **And a verdict of the truncation is a verdict of the universe it
-came from.** -/
-theorem decidedOpt_of_decidedOpt_chopHZ (hd : G ≤ S.slotRound d) {k : ℕ}
-    {v : Option BlockId}
-    (h : DecidedOpt (S := slotsChopHZ hd) (optChopHZ (hsp := hsp) hd hle)
-      (View.chopHZ V hsp G) k v) :
-    DecidedOpt (S := S) (LeanDag.Barnacle.OptimalHydrozoan.optUniverseOf U hle) V (d + k) v := by
-  induction h with
-  | @directFast k L hL hc =>
-      have hGk := horizon_le_slotRoundHZ (S := S) hd k
-      refine DecidedOpt.directFast ((isLeaderBlockHZ_chop hd).mp hL) ?_
-      have h2 := (fastCommitOptInView_chopHZ (V := V) L ((slotsChopHZ hd).slotRound k)).mp hc
-      rwa [chopRound_add hd k] at h2
-  | @directSlow k L hL hc =>
-      have hGk := horizon_le_slotRoundHZ (S := S) hd k
-      refine DecidedOpt.directSlow ((isLeaderBlockHZ_chop hd).mp hL) ?_
-      have h2 := (slowCommitInView_chopHZ (V := V) L ((slotsChopHZ hd).slotRound k)).mp hc
-      rwa [chopRound_add hd k] at h2
-  | @directSkip k hskip =>
-      exact DecidedOpt.directSkip ((skippedLeaderOptInView_chopHZ (V := V) hd k).mp hskip)
-  | @indirectCert k j A L hkj helig hanchor hmid hL hcert ihj ihmid =>
-      have hGk := horizon_le_slotRoundHZ (S := S) hd k
-      have hA : A ∈ U.ids :=
-        (mem_chopHZ_ids.mp (isLeaderBlock_of_decidedOpt (S := slotsChopHZ hd) hanchor).1).1
-      refine DecidedOpt.indirectCert (by omega)
-        ((eligibleAsAnchorHZ_chop hd).mp helig) ihj ?_
-        ((isLeaderBlockHZ_chop hd).mp hL) ((certifiedIn_chopHZ hd hA k).mp hcert)
-      intro i h1 h2 he
-      obtain ⟨i', rfl⟩ : ∃ i', i = d + i' := ⟨i - d, by omega⟩
-      exact ihmid i' (by omega) (by omega) ((eligibleAsAnchorHZ_chop hd).mpr he)
-  | @indirectEvidence k j A L hkj helig hanchor hmid hnocert hL hevid ihj ihmid =>
-      have hGk := horizon_le_slotRoundHZ (S := S) hd k
-      have hA : A ∈ U.ids :=
-        (mem_chopHZ_ids.mp (isLeaderBlock_of_decidedOpt (S := slotsChopHZ hd) hanchor).1).1
-      refine DecidedOpt.indirectEvidence (by omega)
-        ((eligibleAsAnchorHZ_chop hd).mp helig) ihj ?_ ?_
-        ((isLeaderBlockHZ_chop hd).mp hL) ((evidenceLinked_chopHZ hd hA k).mp hevid)
-      · intro i h1 h2 he
-        obtain ⟨i', rfl⟩ : ∃ i', i = d + i' := ⟨i - d, by omega⟩
-        exact ihmid i' (by omega) (by omega) ((eligibleAsAnchorHZ_chop hd).mpr he)
-      · intro L' hL' hcert
-        exact hnocert L' ((isLeaderBlockHZ_chop hd).mpr hL')
-          ((certifiedIn_chopHZ hd hA k).mpr hcert)
-  | @indirectSkip k j A hkj helig hanchor hmid hnocert hnoevid ihj ihmid =>
-      have hGk := horizon_le_slotRoundHZ (S := S) hd k
-      have hA : A ∈ U.ids :=
-        (mem_chopHZ_ids.mp (isLeaderBlock_of_decidedOpt (S := slotsChopHZ hd) hanchor).1).1
-      refine DecidedOpt.indirectSkip (by omega)
-        ((eligibleAsAnchorHZ_chop hd).mp helig) ihj ?_ ?_ ?_
-      · intro i h1 h2 he
-        obtain ⟨i', rfl⟩ : ∃ i', i = d + i' := ⟨i - d, by omega⟩
-        exact ihmid i' (by omega) (by omega) ((eligibleAsAnchorHZ_chop hd).mpr he)
-      · intro L' hL' hcert
-        exact hnocert L' ((isLeaderBlockHZ_chop hd).mpr hL')
-          ((certifiedIn_chopHZ hd hA k).mpr hcert)
-      · intro L' hL' hev
-        exact hnoevid L' ((isLeaderBlockHZ_chop hd).mpr hL')
-          ((evidenceLinked_chopHZ hd hA k).mpr hev)
+/-- **The cut is a truncation of Optimal's carrier.** The block half is
+Hydrozoan's `sustains_chopHZ`, read through `sustains_opt`; the three
+schedule clauses are `truncates_chopHZ`'s. -/
+theorem truncates_chopOpt [LinearOrder BlockId] (hd : G ≤ S.slotRound d)
+    (hle : LeaderExcludedAll U) :
+    Properties.Truncates
+      (LeanDag.OptimalHydrozoanProperties.optimalRule (Replica := Replica) (BlockId := BlockId))
+      ⟨U, hle⟩ ⟨chopHZ U hsp G, leaderExcludedAll_chopHZ hle⟩
+      (LeanDag.Hydrozoan.toCoreSlots S)
+      (LeanDag.Hydrozoan.toCoreSlots (slotsChopHZ hd)) G d :=
+  { sustains_opt (hW := hle) (hW' := leaderExcludedAll_chopHZ hle)
+      (sustains_chopHZ (hsp := hsp) (G := G)) with
+    slotRound := (truncates_chopHZ (hsp := hsp) (U := U) hd).slotRound
+    leader := (truncates_chopHZ (hsp := hsp) (U := U) hd).leader
+    base := hd }
 
-/-- **HI7 for `DecidedOpt`.** A replica running Optimal-Hydrozoan that
-has pruned below the horizon reaches exactly the verdicts it would have
-reached with its whole history, at the re-indexed slot. The base-slot
-premise and leader exclusion are the only conditions. -/
-theorem decidedOpt_chopHZ (hd : G ≤ S.slotRound d) {k : ℕ} {v : Option BlockId} :
+/-- **HI7 for `DecidedOpt`, from OH9.** A replica running
+Optimal-Hydrozoan that has pruned below the horizon reaches exactly the
+verdicts it would have reached with its whole history, at the re-indexed
+slot.
+
+Two inductions over `DecidedOpt`'s six constructors stood here and are
+gone; what survives above is the *statement* of what the cut preserves,
+rule by rule, which is the content. `LocalTruncate.of_banded` supplies
+the rest and knows nothing about Optimal-Hydrozoan.
+
+`LinearOrder BlockId` enters through the band and nowhere else:
+`Banded` for this rule is proved by reading Optimal's band as
+Hydrozoan's, and Hydrozoan's carrier carries a tie-break. Every
+committee this arc instantiates has one. -/
+theorem decidedOpt_chopHZ [LinearOrder BlockId] (hd : G ≤ S.slotRound d)
+    {k : ℕ} {v : Option BlockId} :
     DecidedOpt (S := slotsChopHZ hd) (optChopHZ (hsp := hsp) hd hle)
         (View.chopHZ V hsp G) k v
       ↔ DecidedOpt (S := S) (LeanDag.Barnacle.OptimalHydrozoan.optUniverseOf U hle) V (d + k) v :=
-  ⟨decidedOpt_of_decidedOpt_chopHZ hd, fun h => decidedOpt_chopHZ_of_decided hd h k rfl⟩
+  (Properties.LocalTruncate.of_banded LeanDag.OptimalHydrozoanProperties.banded
+    (LeanDag.Hydrozoan.toCoreSlots S) (LeanDag.Hydrozoan.toCoreSlots (slotsChopHZ hd))
+    ⟨U, hle⟩ ⟨chopHZ U hsp G, leaderExcludedAll_chopHZ hle⟩ G d
+    (truncates_chopOpt (hsp := hsp) hd hle) V (View.chopHZ V hsp G)
+    (fun b hb hbr => by
+      change b ∈ V.ids ↔ b ∈ (View.chopHZ V hsp G).ids
+      exact (mem_viewChopHZ (V := V) hbr).symm) k v).symm
 
 end Induction
 
@@ -415,7 +347,8 @@ abbrev numbering : LeanDag.Hydrozoan.Slots Replica := slotsChopHZ D.retains
 /-- **The replica reaches exactly the verdicts it would have reached
 with its whole history**, at its own numbering. Pruning below the
 horizon is invisible to the decision rule. -/
-theorem decides {V : LeanDag.Hydrozoan.View D.network} {k : ℕ} {v : Option BlockId} :
+theorem decides [LinearOrder BlockId] {V : LeanDag.Hydrozoan.View D.network} {k : ℕ}
+    {v : Option BlockId} :
     DecidedOpt (S := D.numbering) D.held (View.chopHZ V D.selfParents D.horizon) k v
       ↔ DecidedOpt (S := S)
           (LeanDag.Barnacle.OptimalHydrozoan.optUniverseOf D.network D.excluded) V
