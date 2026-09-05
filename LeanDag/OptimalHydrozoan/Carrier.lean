@@ -5,6 +5,7 @@ import LeanDag.Hydrozoan.Helpers.Carrier
 import LeanDag.Hydrozoan.Helpers.Commit
 import LeanDag.OptimalHydrozoan.DirectLiveness.Proof
 import LeanDag.Properties.Commit
+import LeanDag.Properties.Live
 import LeanDag.Properties.Agree
 import LeanDag.Properties.Candidate
 import LeanDag.Properties.Optional.Direct
@@ -163,6 +164,23 @@ def optLive (S : LeanDag.Slots Replica)
       (∀ r, R₀ ≤ r → r ≤ N → LeanDag.Hydrozoan.PopulatedOn U.val T r) ∧
       LeanDag.Hydrozoan.View.CoversUpto V N ∧
       ∀ k, k < K → S.slotRound k + 2 ≤ N
+
+/-- **Optimal-Hydrozoan's precondition is reachable**
+(`Properties/Live.lean`). Optimal leaves the slow path alone, so the
+reachability is Hydrozoan's, at the same reliable set and wavelength. -/
+theorem liveReachable :
+    LiveReachable (optimalRule (Replica := Replica) (BlockId := BlockId))
+      (LeanDag.Hydrozoan.hzReliability Replica) 2
+      (fun S {U} V T lo K => optLive S (U := U) V T lo K) := by
+  intro U Rnd N hs hpop S V k hcov hRnd hN
+  refine ⟨Finset.Subset.rfl, LeanDag.Hydrozoan.q_le_card_correct, Rnd, N, hs, hRnd,
+    ?_, hcov, ?_⟩
+  · intro r h1 h2 v hv
+    obtain ⟨b, hb, hbc, hbr⟩ := hpop r h1 h2 v hv
+    exact ⟨b, hb, hbr, hbc⟩
+  · intro j hj
+    have := S.mono (Nat.lt_succ_iff.mp hj)
+    omega
 
 /-- **A reliably-led slot commits**, at a bound one above the slot: the
 slow commit reads that one leader, so a reassignment of the others

@@ -2493,6 +2493,82 @@ indirect-anchor generalisation. And `DecidedBelow B` reads as a range of
 slots when it means a dependence bound — *the verdict is settled by slot
 `B`*.
 
+### 11.6 The guard on the liveness precondition
+
+`LeaderCommits R Live` says that *wherever* the protocol's own
+precondition holds, a slot led by a reliable validator commits. It does
+not say the precondition ever holds, and `Live` is a parameter the rule
+supplies, so a rule that chose an unsatisfiable one would prove
+`LeaderCommits` with nothing in it — and `decidedBelow_of_run`, chain
+quality (§3.15) and Barnacle's `LiveOn` would all inherit the emptiness.
+That is the vacuity of §3.4 and §3.6 on the liveness side, and it was
+unguarded.
+
+`Properties/Live.lean` is the guard. The obligation is not to prove
+`Live`, which is false on a DAG where the network stalled and should be.
+It is the implication
+
+    synchronised + populated + the view caught up   ⟹   Live
+
+`LiveReachable R rel wave Live`, with the antecedent fixed to the three
+predicates §11.3c names and no free predicate to hide in.
+`exists_decided_of_reachable` is the consumer test: it concludes that a
+reliably-led slot commits, and mentions `Live` nowhere.
+
+**The shape existed and was in the wrong place.**
+`Barnacle.LiveRule.GoodGives` is this implication, and six rules
+discharged it. Two things are gained by stating it at the properties.
+It becomes available to a rule with no `LiveRule` instance — FinWhale
+and Mahi-Mahi have none, so neither could write `GoodGives` at all. And
+it closes the vacuity rather than moving it: `GoodGives` quantifies over
+`LiveRule.Good`, itself an opaque field, so a rule could satisfy it with
+a `Good` nothing satisfies.
+
+**Eight of the nine rules with a carrier discharge it.** Six are the
+`GoodGives` argument at the properties, and two were new work:
+
+| rule | what the discharge cost |
+|---|---|
+| core, Odontoceti, Nemo, Hybrid, Hydrozoan, Optimal-Hydrozoan | the record built: their `Live` *is* the conjunction of the three predicates and a window bound |
+| Mahi-Mahi | `MM5a` applied. Its `Live` asks that the slot's leader be **good** — that a direct commit already stands — which is close to what `LeaderCommits` concludes, so the property alone said little until this was proved |
+| FinWhale | a new theorem, `spCommitBy_of_synchronisedOn`: coverage and production give the slow path at every correct-led slot, with no clock |
+
+Mahi-Mahi is the case that shows the guard is not a formality. Its
+precondition assumes the commit, so `leaderCommits` is nearly a
+projection; what carries the liveness is `good_of_synchronisedOn`, and
+until `LiveReachable` there was nothing forcing the two to be joined.
+
+FinWhale's is the case where the guard produced a theorem. Its
+precondition asks for `CommitsCorrectLeaders`, which the arc supplied
+only from a timing model — `commits_of_reactive` from the reactive wait
+clauses, `commits_of_creation` from the block-creation conditions.
+`spCommitBy_of_synchronisedOn` is a third route and the one the
+properties want: every correct block one round above a correct leader
+references it, so all of them vote; a correct block two rounds above
+references all of those; and `n + 1 = 3f + 2p` with `p ≥ 1` puts the
+slow-path quorum inside `Correct`.
+
+**The ninth is reactive Mysticeti, and it is a finding rather than a
+gap.** Its `reactiveLive` cannot meet this antecedent and is not meant
+to: the point of the reactive discipline is to commit *without* waiting
+for the main line, so `SynchronisedOn` is false in a reactive execution
+by design (`Reactive/Basic.lean`). Its precondition is guarded the other
+admissible way, by a witness — `ugrowReactiveLive` and
+`ugrowReactive_leaderCommits` in `LeanDagTest/Reactive.lean` exhibit a
+reactive execution that satisfies it and the verdict it yields.
+
+`audit-conformance.py` scores `LiveReachable` per *carrier*, so reactive
+Mysticeti reads `yes` on the strength of the core's discharge — the two
+share `mysticetiRule`. A second precondition on a shared carrier is not
+measured, which the audit's legend says.
+
+**One side effect.** `Properties.PopulatedOn` and the protocols'
+`PopulatedOn` had the same two conjuncts in opposite orders, which cost
+a bridge lemma per protocol. Both are now `PopulatedFrom` at the rule's
+block assignment, as `SynchronisedOn` already was, so
+`MysticetiProperties.populatedOn_ofCore` and its converse are the
+identity.
+
 ### 11.5 Next steps, in order
 
 1. **~~`Compose.lean`~~** (**done**, §11.3). The three composition

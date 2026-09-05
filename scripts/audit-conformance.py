@@ -52,13 +52,24 @@ RULES = [
 ]
 
 # The obligations, in the order 11.1 lists them.
-# The six every rule owes, then the three in `Properties/Optional/`, owed
-# only when a mechanism asks: `CommitsDirect` by a rule whose direct
-# predicate a window count reads, `SkipsUnsupported` by one that skips
-# without waiting for an anchor, and `Quorate` by chain quality.
+# The six every rule owes, then `LiveReachable`, then the three in
+# `Properties/Optional/`, owed only when a mechanism asks:
+# `CommitsDirect` by a rule whose direct predicate a window count reads,
+# `SkipsUnsupported` by one that skips without waiting for an anchor,
+# and `Quorate` by chain quality.
+#
+# `LiveReachable` is not a seventh obligation but the guard on the
+# fifth. `LeaderCommits R Live` is stated against a precondition the
+# rule supplies, so it is true and empty for a rule whose `Live` nothing
+# satisfies; `LiveReachable` is the implication from coverage and
+# production to that precondition. It is scored per *carrier*, so a rule
+# that shares a carrier and adds a second precondition — reactive
+# Mysticeti, whose `reactiveLive` deliberately does not assume coverage
+# — reads `yes` here on the strength of the first. Its own guard is a
+# witness (`LeanDagTest/Reactive.lean`).
 OBLIGATIONS = ["Causal", "Banded", "Agree", "CommitsCandidate",
-               "LeaderCommits", "Indirect", "CommitsDirect", "SkipsUnsupported",
-               "Quorate"]
+               "LeaderCommits", "Indirect", "LiveReachable", "CommitsDirect",
+               "SkipsUnsupported", "Quorate"]
 REQUIRED = 6
 DERIVED = ["Persist", "LocalTruncate", "Descends"]
 # What each derived property follows from. `Descends` used to be an
@@ -126,7 +137,8 @@ def main():
     cols = OBLIGATIONS + ["|"] + DERIVED
     short = {"Causal": "caus", "Banded": "band", "Agree": "agre",
              "CommitsCandidate": "cand", "LeaderCommits": "lead",
-             "Indirect": "indr", "CommitsDirect": "drct*",
+             "Indirect": "indr", "LiveReachable": "live",
+             "CommitsDirect": "drct*",
              "Descends": "desc",
              "SkipsUnsupported": "skip*", "Quorate": "quor*",
              "Persist": "pers", "LocalTruncate": "trnc",
@@ -171,6 +183,10 @@ def main():
           "(`Properties/Optional/`): owed\n  only when a mechanism reads the "
           "rule's direct predicate, when the rule skips\n  without waiting for an "
           "anchor, or when a deployment quotes chain quality.")
+    print("`live` is the guard on `lead`, not a seventh obligation: without it "
+          "`LeaderCommits`\n  is true of a rule whose precondition nothing "
+          "satisfies. It is scored per carrier,\n  so a second precondition on a "
+          "shared carrier is not measured here.")
     return 0
 
 

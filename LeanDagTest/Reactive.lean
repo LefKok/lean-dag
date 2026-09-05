@@ -1,5 +1,6 @@
 import LeanDag.Reactive.Mysticeti
 import LeanDag.Reactive.Odontoceti
+import LeanDag.Reactive.MysticetiProperties
 import LeanDagTest.Quantitative
 
 /-!
@@ -283,6 +284,44 @@ example : ∃ k', 1 < rrSlots.slotRound k' ∧ rrSlots.leader k' = 2 ∧
     decide
   · simp only [ugrow_block, rrBlock_round]
 
+/-! ## The reactive precondition is inhabited
+
+`Properties/Live.lean` guards `LeaderCommits` by asking that the rule's
+own precondition be reachable from coverage and production. Reactive
+Mysticeti cannot meet that antecedent, and does not want to: the point
+of the reactive discipline is to commit *without* waiting for the main
+line, so `SynchronisedOn` is false in a reactive execution by design
+(`Reactive/Basic.lean`). `reactiveLive` is guarded the other admissible
+way instead — by a witness. `ugrowReactive` is a reactive execution, and
+below it satisfies the precondition and yields a verdict, so
+`leaderCommits_reactive` is not a statement about an empty hypothesis.
+-/
+
+/-- **`reactiveLive` holds on this execution**, at the single-slot
+window `LeaderCommits` reads. -/
+theorem ugrowReactiveLive (N k : ℕ) (hN : rrSlots.slotRound k + 2 ≤ N) :
+    MysticetiProperties.reactiveLive (S := rrSlots) (U := Ugrow N)
+      (View.full (Ugrow N)) ({1, 2, 3} : Finset (Fin 4)) k (k + 1) := by
+  refine ⟨by decide, by decide, N, 0, ugrowReactive N, Nat.le_refl 0,
+    (fun n _ => by change 2 * 2 + 5 ≤ 9; omega), Nat.zero_le _,
+    View.coversUpto_full (Ugrow N) N, ?_⟩
+  intro j hj
+  have := rrSlots.mono (Nat.lt_succ_iff.mp hj)
+  omega
+
+/-- **And the verdict it yields.** The consumer test for the pair: a
+reliably-led slot of this execution is committed, with the bound
+`LeaderCommits` promises. -/
+theorem ugrowReactive_leaderCommits (N k : ℕ) (hN : rrSlots.slotRound k + 2 ≤ N)
+    (hlead : rrSlots.leader k ∈ ({1, 2, 3} : Finset (Fin 4))) :
+    ∃ L, Properties.DecidedBelow (MysticetiProperties.mysticetiRule (Payload := Unit))
+      rrSlots (k + 1) (View.full (Ugrow N)) k (some L) :=
+  MysticetiProperties.leaderCommits_reactive rrSlots (View.full (Ugrow N))
+    ({1, 2, 3} : Finset (Fin 4)) k (k + 1) (ugrowReactiveLive N k hN) k
+    (Nat.le_refl k) (Nat.lt_succ_self k) hlead
+
+#print axioms ugrowReactiveLive
+#print axioms ugrowReactive_leaderCommits
 #print axioms ugrowReactive_decided
 #print axioms ugrowReactive_fast
 #print axioms LeanDag.ReactiveM.decided

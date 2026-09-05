@@ -4,6 +4,7 @@ import LeanDag.Hydrozoan.IndirectLiveness.Statement
 import LeanDag.Hydrozoan.DirectLiveness.Proof
 import LeanDag.Hydrozoan.SlotAgreement.Proof
 import LeanDag.Properties.Commit
+import LeanDag.Properties.Live
 import LeanDag.Properties.Optional.Direct
 import LeanDag.Properties.Derived.Descent
 import LeanDag.Properties.Candidate
@@ -54,6 +55,22 @@ def hzLive (S : LeanDag.Slots Replica) {U : LeanDag.Hydrozoan.BlockUniverse Repl
       (∀ r, R₀ ≤ r → r ≤ N → LeanDag.Hydrozoan.PopulatedOn U T r) ∧
       LeanDag.Hydrozoan.View.CoversUpto V N ∧
       ∀ k, k < K → S.slotRound k + 2 ≤ N
+
+/-- **Hydrozoan's precondition is reachable** (`Properties/Live.lean`).
+The reliable set is `Correct`, which carries the quorum, and the
+wavelength is two. -/
+theorem liveReachable :
+    LiveReachable (rule (Replica := Replica) (BlockId := BlockId))
+      (hzReliability Replica) 2
+      (fun S {U} V T lo K => hzLive S (U := U) V T lo K) := by
+  intro U Rnd N hs hpop S V k hcov hRnd hN
+  refine ⟨Finset.Subset.rfl, q_le_card_correct, Rnd, N, hs, hRnd, ?_, hcov, ?_⟩
+  · intro r h1 h2 v hv
+    obtain ⟨b, hb, hbc, hbr⟩ := hpop r h1 h2 v hv
+    exact ⟨b, hb, hbr, hbc⟩
+  · intro j hj
+    have := S.mono (Nat.lt_succ_iff.mp hj)
+    omega
 
 /-- **Direct liveness as a property**: a slot led by a member of the
 reliable quorum commits, and the commit reads that one leader, so its

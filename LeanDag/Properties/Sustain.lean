@@ -1,5 +1,6 @@
 import LeanDag.Properties.Extends
 import LeanDag.Properties.Truncate
+import LeanDag.Participation
 
 /-!
 # What a mechanism owes a protocol, so liveness survives
@@ -75,7 +76,7 @@ def NoEquivOn (R : DagRule Validator BlockId Payload) (U : R.Universe)
 /-- **Production**: every member of `T` has a block at round `r`. -/
 def PopulatedOn (R : DagRule Validator BlockId Payload) (U : R.Universe)
     (T : Finset Validator) (r : ℕ) : Prop :=
-  ∀ v ∈ T, ∃ b, b ∈ R.ids U ∧ (R.block U b).round = r ∧ (R.block U b).creator = v
+  PopulatedFrom (R.block U) (R.ids U) T r
 
 /-- **What the liveness route needs of delivery**: from round `r` on,
 every `T`-block one round up holds every `T`-block below it as a
@@ -89,10 +90,7 @@ here and this was transported by hand, once per mechanism
 references like the other two, so it travels for the same reason. -/
 def SynchronisedOn (R : DagRule Validator BlockId Payload) (U : R.Universe)
     (T : Finset Validator) (r : ℕ) : Prop :=
-  ∀ n, r ≤ n → ∀ b, b ∈ R.ids U → (R.block U b).round = n + 1 →
-    (R.block U b).creator ∈ T →
-    ∀ a, a ∈ R.ids U → (R.block U a).round = n → (R.block U a).creator ∈ T →
-      a ∈ (R.block U b).refs
+  SynchronisedFrom (R.block U) (R.ids U) T r
 
 /-! ## The additive half
 
@@ -195,11 +193,11 @@ theorem synchronisedOn_of (h : Sustains R U U' G R₀) {T : Finset Validator} {r
 theorem populatedOn_of (h : Sustains R U U' G R₀) {T : Finset Validator} {r : ℕ}
     (hr : R₀ ≤ r) (hG : G ≤ r) (hp : PopulatedOn R U T r) : PopulatedOn R U' T (r - G) := by
   intro v hvT
-  obtain ⟨b, hb, hbr, hbc⟩ := hp v hvT
+  obtain ⟨b, hb, hbc, hbr⟩ := hp v hvT
   have hb' := ((h.mem b).mp ⟨hb, by omega⟩).1
   refine ⟨b, hb', ?_, ?_⟩
-  · have := h.round b hb (by omega); omega
   · rw [h.creator b hb (by omega)]; exact hbc
+  · have := h.round b hb (by omega); omega
 
 end RebasedAbove
 

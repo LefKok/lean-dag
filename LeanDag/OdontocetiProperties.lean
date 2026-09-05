@@ -6,6 +6,7 @@ import LeanDag.Properties.Agree
 import LeanDag.Properties.Candidate
 import LeanDag.Properties.Optional.Direct
 import LeanDag.Properties.Commit
+import LeanDag.Properties.Live
 import LeanDag.Properties.Derived.Bounded
 import LeanDag.Adaptive.Odontoceti
 
@@ -413,6 +414,18 @@ def odontocetiLive (S : Slots Validator) {U : BlockUniverse Validator BlockId Pa
     ∃ R₀ N, SynchronisedOn U T R₀ ∧ R₀ ≤ S.slotRound lo ∧
       (∀ r, R₀ ≤ r → r ≤ N → PopulatedOn U T r) ∧ V.CoversUpto N ∧
       ∀ k, k < K → S.slotRound k + 1 ≤ N
+
+/-- **Odontoceti's precondition is reachable** (`Properties/Live.lean`),
+at its own wavelength: the horizon sits one round above the slot. -/
+theorem liveReachable :
+    LiveReachable (odontocetiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) (coreReliability Validator) 1
+      (fun S {U} V T lo K => odontocetiLive S (U := U) V T lo K) := by
+  intro U Rnd N hs hpop S V k hcov hRnd hN
+  refine ⟨card_correct, Rnd, N, hs, hRnd, hpop, hcov, ?_⟩
+  intro j hj
+  have := S.mono (Nat.lt_succ_iff.mp hj)
+  omega
 
 /-- **A reliably-led slot commits**, at a bound one above the slot: a
 direct commit reads that slot's leader and no other. -/

@@ -4,6 +4,8 @@ import LeanDag.Properties.Band
 import LeanDag.Properties.Derived.FromBand
 import LeanDag.Properties.Commit
 import LeanDag.MahiMahi.Helpers.Liveness
+import LeanDag.MahiMahi.Helpers.Synchrony
+import LeanDag.Properties.Live
 
 /-!
 # Mahi-Mahi's band, and the two liveness properties
@@ -494,6 +496,36 @@ def mahiLive (w : ℕ) (S : Slots Validator)
     (T : Finset Validator) (lo K : ℕ) : Prop :=
   ∃ N, (∀ k, k < K → MahiMahi.decisionRound Validator w k ≤ N) ∧ V.CoversUpto N ∧
     ∀ k, lo ≤ k → k < K → S.leader k ∈ T → S.leader k ∈ MahiMahi.good (S := S) U w k
+
+/-- **Mahi-Mahi's precondition is reachable** (`Properties/Live.lean`),
+and here the guard is not a formality. `mahiLive` asks that the slot's
+leader be **good** — that its block already carries a direct commit —
+which is close to the conclusion `LeaderCommits` draws, so the property
+alone says little until this is proved. `MM5a`
+(`good_of_synchronisedOn`) is what proves it: a reliable leader on a
+synchronised, populated DAG is good, and the counting is the wave's.
+
+The wavelength is `w − 1`, which is `decisionRound` measured from the
+slot's round. -/
+theorem liveReachable {w : ℕ} (hw : 4 ≤ w) :
+    LiveReachable (mahiMahiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) w) (coreReliability Validator) (w - 1)
+      (fun S {U} V T lo K => mahiLive w S (U := U) V T lo K) := by
+  intro U Rnd N hs hpop S V k hcov hRnd hN
+  letI : Slots Validator := S
+  have hdr : MahiMahi.decisionRound Validator w k = S.slotRound k + w - 1 := rfl
+  have hdN : MahiMahi.decisionRound Validator w k ≤ N := by rw [hdr]; omega
+  refine ⟨N, ?_, hcov, ?_⟩
+  · intro j hj
+    have := S.mono (Nat.lt_succ_iff.mp hj)
+    show S.slotRound j + w - 1 ≤ N
+    omega
+  · intro j hlo hj hlead
+    have hjk : j = k := by omega
+    subst hjk
+    exact MahiMahi.good_of_synchronisedOn hw Finset.Subset.rfl card_correct hs hRnd
+      (hpop _ hRnd (by omega)) (hpop _ (by omega) (by omega))
+      (hpop _ (by rw [hdr]; omega) hdN) hlead
 
 /-- **A good leader's slot commits**, at a bound one above the slot:
 the commit reads that slot's round and leader and no others. -/

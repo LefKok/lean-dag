@@ -1,4 +1,5 @@
 import Mathlib.Order.Interval.Finset.Nat
+import LeanDag.Properties.Live
 import Mathlib.Data.Finset.Lattice.Fold
 import LeanDag.Hybrid.Carrier
 import LeanDag.Hybrid.Liveness
@@ -384,6 +385,19 @@ def hybridLive (S : Slots Validator)
     ∃ R₀ N, SynchronisedOn U.val T R₀ ∧ R₀ ≤ S.slotRound lo ∧
       (∀ r, R₀ ≤ r → r ≤ N → PopulatedOn U.val T r) ∧ V.CoversUpto N ∧
       ∀ k, k < K → S.slotRound k + 1 ≤ N
+
+/-- **Hybrid's precondition is reachable** (`Properties/Live.lean`).
+The reliable set is the fully-correct class, which carries the hybrid
+quorum (`Hybrid.q_le_card_correct`), and the wavelength is one. -/
+theorem liveReachable (kt : ℕ) :
+    LiveReachable (hybridRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) kt) (coreReliability Validator) 1
+      (fun S {U} V T lo K => hybridLive S (U := U) V T lo K) := by
+  intro U Rnd N hs hpop S V k hcov hRnd hN
+  refine ⟨Hybrid.q_le_card_correct, Rnd, N, hs, hRnd, hpop, hcov, ?_⟩
+  intro j hj
+  have := S.mono (Nat.lt_succ_iff.mp hj)
+  omega
 
 /-- **A reliably-led slot commits**, at a bound one above the slot. -/
 theorem leaderCommits (kt : ℕ) :

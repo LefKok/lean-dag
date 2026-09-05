@@ -5,6 +5,7 @@ import LeanDag.Properties.Agree
 import LeanDag.Properties.Candidate
 import LeanDag.Properties.Optional.Direct
 import LeanDag.Properties.Optional.Quorate
+import LeanDag.Properties.Live
 
 /-!
 # FinWhale as a carrier
@@ -565,6 +566,77 @@ def finWhaleLive (S : Slots Validator) {D : Dag Validator BlockId Payload}
       R ≤ S.slotRound lo ∧ (∀ k, k < K → S.slotRound k + 2 ≤ N) ∧
       ∀ n, R ≤ n → n ≤ N → ∀ b ∈ LeanDag.FinWhale.blocksAt D n,
         (D.block b).creator ∈ T → b ∈ V.val
+
+/-- **The slow-path quorum fits inside the correct set.** `n + 1 = 3f + 2p`
+with `p ≥ 1` gives `2f + p ≤ n − f`. -/
+theorem spQuorum_le_card_correct :
+    LeanDag.FinWhale.spQuorum Validator ≤ (Correct : Finset Validator).card := by
+  have hq : quorumCard Validator ≤ (Correct : Finset Validator).card := card_correct
+  have hc := P.card_add_one
+  have hp := P.p_pos
+  have hf := P.p_le_f
+  have hqc : quorumCard Validator = Fintype.card Validator - F.f := rfl
+  have hsp : LeanDag.FinWhale.spQuorum Validator = 2 * F.f + P.p := rfl
+  omega
+
+/-- **Every correct validator certifies a correct leader**, on a
+synchronised and populated DAG. The leader's block sits at round `r`;
+every correct block at `r + 1` references it, because coverage says a
+correct block holds every correct block below it, so every one of them
+votes; and a correct block at `r + 2` references all of those, so its
+parents voting for the leader are all of `Correct`, which carries the
+slow-path quorum. -/
+theorem spCommitBy_of_synchronisedOn {D : Dag Validator BlockId Payload} {Rnd r : ℕ}
+    (hs : SynchronisedFrom D.block D.ids (Correct : Finset Validator) Rnd)
+    (hpop1 : PopulatedFrom D.block D.ids (Correct : Finset Validator) (r + 1))
+    (hpop2 : PopulatedFrom D.block D.ids (Correct : Finset Validator) (r + 2))
+    (hR : Rnd ≤ r) {L : BlockId} (hL : L ∈ D.ids) (hLr : (D.block L).round = r)
+    (hLc : (D.block L).creator ∈ (Correct : Finset Validator)) :
+    LeanDag.FinWhale.SPCommitBy D L (Correct : Finset Validator) := by
+  refine ⟨(Correct : Finset Validator), Finset.Subset.rfl, spQuorum_le_card_correct, ?_⟩
+  intro v hv
+  obtain ⟨b, hb, hbc, hbr⟩ := hpop2 v hv
+  refine ⟨b, mem_blocksAt.mpr ⟨hb, by rw [hbr, hLr]⟩, hbc, ?_⟩
+  refine le_trans spQuorum_le_card_correct (Finset.card_le_card ?_)
+  intro w hw
+  obtain ⟨q, hq, hqc, hqr⟩ := hpop1 w hw
+  have hvote : L ∈ (D.block q).refs :=
+    hs r hR q hq hqr (by rw [hqc]; exact hw) L hL hLr hLc
+  have hpar : q ∈ (D.block b).refs :=
+    hs (r + 1) (by omega) b hb hbr (by rw [hbc]; exact hv) q hq hqr (by rw [hqc]; exact hw)
+  unfold LeanDag.FinWhale.parentsVoting creatorsOf
+  exact Finset.mem_image.mpr ⟨q, Finset.mem_filter.mpr ⟨hpar, hvote⟩, hqc⟩
+
+/-- **FinWhale's precondition is reachable** (`Properties/Live.lean`).
+`finWhaleLive` asks for `CommitsCorrectLeaders`, which the arc supplies
+from a timing model — `commits_of_reactive` from the reactive wait
+clauses, `commits_of_creation` from the block-creation conditions. This
+is the third route and the one the properties want: coverage and
+production alone, with no clock, give the slow path at every
+correct-led slot. -/
+theorem liveReachable :
+    LiveReachable (finWhaleRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) (coreReliability Validator) 2
+      (fun S {D} V T lo K => finWhaleLive S (D := D) V T lo K) := by
+  intro D Rnd N hs hpop S V k hcov hRnd hN
+  refine ⟨rfl, Rnd, N, ?_, hRnd, ?_, ?_⟩
+  · intro s hR hs2 hlead
+    have hR' : Rnd ≤ S.slotRound s := hR
+    have hs2' : S.slotRound s + 2 ≤ N := hs2
+    obtain ⟨L, hL, hLc, hLr⟩ := hpop (S.slotRound s) hR' (by omega) (S.leader s) hlead
+    have hLc' : (LeanDag.FinWhale.Dag.block D L).creator = S.leader s := hLc
+    have hLr' : (LeanDag.FinWhale.Dag.block D L).round = S.slotRound s := hLr
+    exact ⟨L, mem_slotBlocks.mpr ⟨⟨hL, hLr'⟩, hLc'⟩,
+      spCommitBy_of_synchronisedOn hs (hpop _ (by omega) (by omega))
+        (hpop _ (by omega) (by omega)) hR' hL hLr' (by rw [hLc']; exact hlead)⟩
+  · intro j hj
+    have := S.mono (Nat.lt_succ_iff.mp hj)
+    omega
+  · intro n hR hn b hb _
+    obtain ⟨hbD, hbr⟩ := mem_blocksAt.mp hb
+    refine hcov b hbD ?_
+    show (LeanDag.FinWhale.Dag.block D b).round ≤ N
+    rw [hbr]; exact hn
 
 /-- **A reliably-led slot commits**, at a bound one above the slot: the
 commit is direct, and a direct commit reads that slot's round and leader

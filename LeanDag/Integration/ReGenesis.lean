@@ -254,9 +254,9 @@ theorem populatedOn_addGenesis {hg : g ∉ V.ids}
       (fun w hw => by
         obtain rfl := Finset.mem_singleton.mp hw
         refine ⟨g, mem_addGenesis (v := w) (p := p) (hg := hg) (hsev := hsev), ?_, ?_⟩
-        · show ((addGenesis V w g p hg hsev).block g).round = 0
-          rw [addGenesis_block_new]
         · show ((addGenesis V w g p hg hsev).block g).creator = w
+          rw [addGenesis_block_new]
+        · show ((addGenesis V w g p hg hsev).block g).round = 0
           rw [addGenesis_block_new])
       (MysticetiProperties.populatedOn_ofCore hpop))
 

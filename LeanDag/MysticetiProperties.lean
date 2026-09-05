@@ -5,6 +5,7 @@ import LeanDag.Properties.Optional.Skip
 import LeanDag.Properties.Optional.Direct
 import LeanDag.Properties.Optional.Quorate
 import LeanDag.Properties.Commit
+import LeanDag.Properties.Live
 import LeanDag.Properties.Derived.Bounded
 import LeanDag.Properties.Derived.Descent
 import LeanDag.Properties.Band
@@ -111,16 +112,15 @@ def mysticetiRule : DagRule Validator BlockId Payload where
 
 variable {U U' : BlockUniverse Validator BlockId Payload} {G R₀ : ℕ}
 
-/-- The carrier's production predicate and the core's are the same
-statement with the conjuncts in the other order — the one per-protocol
-agreement `Sustains` asks for, here a reordering rather than `rfl`. -/
+/-- The carrier's production predicate is the core's, on the nose: both
+are `PopulatedFrom` over the same block assignment and the same ids.
+They differed by the order of two conjuncts until `LiveReachable` needed
+them interchangeable in five files at once. -/
 theorem populatedOn_ofCore {T : Finset Validator} {r : ℕ}
-    (h : LeanDag.PopulatedOn U T r) : Properties.PopulatedOn mysticetiRule U T r :=
-  fun v hv => let ⟨b, hb, hc, hr⟩ := h v hv; ⟨b, hb, hr, hc⟩
+    (h : LeanDag.PopulatedOn U T r) : Properties.PopulatedOn mysticetiRule U T r := h
 
 theorem populatedOn_toCore {T : Finset Validator} {r : ℕ}
-    (h : Properties.PopulatedOn mysticetiRule U T r) : LeanDag.PopulatedOn U T r :=
-  fun v hv => let ⟨b, hb, hr, hc⟩ := h v hv; ⟨b, hb, hc, hr⟩
+    (h : Properties.PopulatedOn mysticetiRule U T r) : LeanDag.PopulatedOn U T r := h
 
 /-- The carrier's synchrony predicate is the core's, on the nose. -/
 theorem synchronisedOn_eq {T : Finset Validator} {r : ℕ} :
@@ -1007,6 +1007,20 @@ def coreLive (S : Slots Validator) {U : BlockUniverse Validator BlockId Payload}
     ∃ R₀ N, SynchronisedOn U T R₀ ∧ R₀ ≤ S.slotRound lo ∧
       (∀ r, R₀ ≤ r → r ≤ N → PopulatedOn U T r) ∧ V.CoversUpto N ∧
       ∀ k, k < K → S.slotRound k + 2 ≤ N
+
+/-- **The core's precondition is reachable** (`Properties/Live.lean`):
+`coreLive` is the conjunction of the three carrier-level facts and the
+window bound, so the discharge is the record built. The core reads two
+rounds above a slot, which is its wave. -/
+theorem liveReachable :
+    LiveReachable (mysticetiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) (coreReliability Validator) 2
+      (fun S {U} V T lo K => coreLive S (U := U) V T lo K) := by
+  intro U Rnd N hs hpop S V k hcov hRnd hN
+  refine ⟨card_correct, Rnd, N, hs, hRnd, hpop, hcov, ?_⟩
+  intro j hj
+  have := S.mono (Nat.lt_succ_iff.mp hj)
+  omega
 
 /-- **L4 as a property**: a `T`-led slot in the window commits, and the
 commit reads one leader, so its bound is one above the slot. -/
