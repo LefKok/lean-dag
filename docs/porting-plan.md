@@ -7,7 +7,7 @@ because their rule has no `Banded` to route through:
 | rule | bespoke links | where |
 |---|---|---|
 | Optimal-Hydrozoan | 8 | `Barnacle/OptimalHydrozoan{,Live}/Proof`, `Integration/Hydrozoan/OptimalChopDecided` |
-| Hybrid / Orcaella | 4 | `Barnacle/{Helpers/Orcaella,Orcaella/Proof}`, `Integration/{Sound,Stack}` |
+| Hybrid / Orcaella | ~~4~~ **0** | routed (`Hybrid/Carrier.lean`, `HybridProperties.lean`) |
 | Nemo | ~~3~~ **0** | routed (`Nemo/Carrier.lean`, `NemoProperties.lean`) |
 | FinWhale | 0 | — |
 
@@ -37,7 +37,7 @@ Odontoceti's, whose `Banded` is the template (122 lines). If the port is
 not routine here it will not be routine anywhere, so this is the one that
 tests the estimate.
 
-**2. Hybrid / Orcaella.** One real obstacle, and it has a known answer.
+**2. Hybrid / Orcaella — done.** One real obstacle, and it has a known answer.
 `Hybrid.decided_unique` is **conditional on `HonestNoEquiv U`**, so
 `Properties.Agree` — which is unconditional — cannot hold at the bare
 universe. Barnacle already solved this: its Orcaella carrier takes
@@ -133,3 +133,40 @@ distinction rather than simply having the property.
 
 **Nothing was falsified.** No graded property was needed, the band went
 through as stated, and every mechanism law had a counterpart.
+
+## Hybrid / Orcaella, done — and the plan's first falsification fired
+
+Both predictions held, and one of them was the interesting kind.
+
+**The subtype carrier works.** `Hybrid.decided_unique` is conditional on
+`HonestNoEquiv`, and `Properties.Agree` is unconditional with no graded
+form. Taking `Universe := {U // HonestNoEquiv U}` makes the hypothesis
+part of the object, and `Agree` then holds outright — which is what
+Barnacle's carrier already did and what the plan said to copy. No
+property had to be weakened.
+
+**The band was false, and the rule was wrong.** `Decided.directSkip`
+quantified over the candidates a slot happens to have; a slot with none
+satisfied it for nothing, and a mechanism adding one defeats it. This is
+the *third* rule with that defect — the core (§3.2), Odontoceti (§3.12),
+now Hybrid — and each time the band is what found it. The repair is the
+same each time: `DirectSkipSlotIn`, a quorum of voting-round blocks
+referencing no candidate at all, with the per-candidate form recovered
+as a corollary so nothing stated over it changes.
+
+Hybrid's quorum is its own, `q = n − fb − fc`, so unlike Odontoceti it
+could not reuse the core's predicate verbatim — the shape transferred,
+the threshold did not.
+
+**One witness was vacuous and is now a refutation.** `uhyb4_slot3`
+claimed the crashed validator's slot was skipped. Under the repaired
+rule it is not: `Uhyb4` stops at round `3`, so no evidence exists and
+the slot is undecided there. Saying that is worth more than the claim it
+replaced. The Orcaella witness at `UL` survived, its DAG carrying the
+round-`4` blocks, so the repair cost one vacuous theorem and no real
+one.
+
+**`SkipsUnsupported` came with it**, as it did for Odontoceti: the
+liveness half, and the reason to believe the repair was a repair rather
+than a tightening. A skip rule no quorum can trigger would be sound and
+useless.

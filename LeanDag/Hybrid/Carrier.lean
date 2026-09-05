@@ -33,7 +33,7 @@ open LeanDag.Properties
 
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [H : HybridFaults Validator]
-variable {BlockId : Type} [DecidableEq BlockId] [LinearOrder BlockId] {Payload : Type}
+variable {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
 
 /-- **Hybrid as a carrier**, one per indirect threshold. -/
 def hybridRule (k : ℕ) : DagRule Validator BlockId Payload where

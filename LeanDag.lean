@@ -107,6 +107,8 @@ import LeanDag.Properties.Deliver
 import LeanDag.MysticetiProperties
 import LeanDag.Odontoceti.Carrier
 import LeanDag.Nemo.Carrier
+import LeanDag.Hybrid.Carrier
+import LeanDag.HybridProperties
 import LeanDag.NemoProperties
 import LeanDag.OdontocetiProperties
 import LeanDag.Properties.Arcs.SafeSkip

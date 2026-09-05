@@ -23894,6 +23894,22 @@ def toCheckpointQC (payload : CertificatePayload (Validator := Validator)
 
 A payload accepted by the verifier yields a genuine checkpoint QC.
 
+#### `hybridLive`
+
+*def, `HybridProperties.lean`*
+
+```lean
+def hybridLive (S : Slots Validator)
+    {U : {U : BlockUniverse Validator BlockId Payload // HonestNoEquiv U}}
+    (V : View Validator BlockId Payload U.val) (T : Finset Validator) (lo K : ℕ) : Prop :=
+  Hybrid.q Validator ≤ T.card ∧
+    ∃ R₀ N, SynchronisedOn U.val T R₀ ∧ R₀ ≤ S.slotRound lo ∧
+      (∀ r, R₀ ≤ r → r ≤ N → PopulatedOn U.val T r) ∧ V.CoversUpto N ∧
+      ∀ k, k < K → S.slotRound k + 1 ≤ N
+```
+
+**Hybrid's liveness precondition**, over a slot window, at the hybrid quorum `q = n − fb − fc` and a wavelength of two.
+
 #### `adaptBlock`
 
 *def, `Hydrozoan.Helpers.Carrier.lean`*
@@ -25124,7 +25140,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 987 theorems that either another module of the
+The 993 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -29865,6 +29881,18 @@ theorem directCommit_of_leader_mem
 ```
 
 **H7, commit half (O7's mirror).** Post-`R`, a `T`-led slot is directly committed: coverage makes every `T` block at the decision round reference the leader's block, and `T` carries the quorum. Two populated rounds — propose and decide.
+
+#### `directCommitIn_of_coversUpto`
+
+*theorem, `Hybrid.Liveness.lean`*
+
+```lean
+theorem directCommitIn_of_coversUpto {V : View Validator BlockId Payload U} {r : ℕ}
+    (h : DirectCommit U L r) (hcov : V.CoversUpto (r + 1)) :
+    DirectCommitIn U V L r
+```
+
+A view caught up to the decision round sees every supporter, so a direct commit in the universe is a direct commit in the view.
 
 #### `decided_of_leader_mem`
 
@@ -35882,11 +35910,10 @@ The laws, for Orcaella at an admissible threshold.
 ```lean
 theorem orcaellaLive_descent [H : HybridFaults Validator] {k : ℕ} :
     (orcaellaLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload) k).Descent
-      (H.fb + H.fc) where
-  goodLeaders
+      (H.fb + H.fc)
 ```
 
-The descent laws, for Orcaella at slack `fb + fc`.
+**The descent laws, for Orcaella at slack `fb + fc`** — from the properties, with no argument about `Decided` here.
 
 #### `holds`
 
@@ -35959,6 +35986,40 @@ theorem holds : Statement
 ```lean
 theorem holds : Statement
 ```
+
+#### `agree`
+
+*theorem, `Hybrid.Carrier.lean`*
+
+```lean
+theorem agree {k : ℕ} (hk : Hybrid.Admissible Validator k) :
+    Agree (hybridRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload) k)
+```
+
+**Two views decide alike.** H6 under the property's name, and unconditional because non-equivocation is now a field of the universe rather than a premise.
+
+#### `commitsCandidate`
+
+*theorem, `Hybrid.Carrier.lean`*
+
+```lean
+theorem commitsCandidate (k : ℕ) : CommitsCandidate
+    (hybridRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload) k)
+```
+
+**A commit names the slot's candidate.**
+
+#### `commitsDirect`
+
+*theorem, `Hybrid.Carrier.lean`*
+
+```lean
+theorem commitsDirect (k : ℕ) : CommitsDirect
+    (hybridRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload) k)
+    (fun {U} V L r => Hybrid.DirectCommitIn U.val V L r)
+```
+
+**And a direct commit is a verdict**, at Hybrid's own direct predicate.
 
 #### `select_isSelected`
 
@@ -36077,6 +36138,30 @@ theorem exists_recoveryCorrect_recorder {x : CheckpointData Value}
 ```
 
 A finality quorum yields a recovery-correct validator that recorded the concrete checkpoint certificate before emitting its witness.
+
+#### `leaderCommits`
+
+*theorem, `HybridProperties.lean`*
+
+```lean
+theorem leaderCommits (kt : ℕ) :
+    LeaderCommits (hybridRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) kt) (fun S {U} V T lo K => hybridLive S (U := U) V T lo K)
+```
+
+**A reliably-led slot commits**, at a bound one above the slot.
+
+#### `indirect`
+
+*theorem, `HybridProperties.lean`*
+
+```lean
+theorem indirect (kt : ℕ) :
+    Indirect (hybridRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) kt) (fun sr i j => sr i + 2 ≤ sr j)
+```
+
+**H-A3 as a property.** The two indirect constructors, by cases on a thick-linked candidate at the slot, committing the least one.
 
 #### `isLeaderBlock_sched`
 
@@ -38128,7 +38213,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 973 lemmas used only within the file that proves
+The 981 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -38720,13 +38805,12 @@ subsection per module, in the layer order of Appendices B and C.
 | `thickLink_of_directCommitIn` | H4, from a view: a view-level direct commit passes the indirect test at every block two rounds up. |
 | `thickLink_of_directCommitIn_at_anchor` | Visibility from an anchor. A slot committed directly carries a thick link at any eligible anchor above it … |
 
-### `Hybrid/Liveness.lean` (4)
+### `Hybrid/Liveness.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
 | `all_decided_below_of_fairRun_correct` | H7 at `T := Correct` — the whole fully-correct class, which the tight committee requires exactly. |
 | `decided_of_leader_of_populated` | H7 against a horizon: two rounds read off it. |
-| `directCommitIn_of_coversUpto` | A view caught up to the decision round sees every supporter, so a direct commit in the universe is a … |
 | `q_le_card_correct` | The fully-correct class carries the hybrid quorum: liveness's card hypothesis is satisfiable at `T := … |
 
 ### `Hybrid/Conservativity.lean` (5)
@@ -39625,6 +39709,12 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `optUniverseOf_toBlockUniverse` | — |
 
+### `Barnacle/Helpers/Orcaella.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `orcaellaLive_goodGives` | A good DAG meets Hybrid's precondition. `Good` and `hybridLive` name the same three facts about the same … |
+
 ### `Barnacle/HydrozoanLive/Proof.lean` (3)
 
 | Lemma | Role |
@@ -39649,14 +39739,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `deliversOn_viewUpto` | The witness. The novelty budget's stores cover the correct validators from the settling round on, so a … |
 | `directCommitIn_viewUpto` | A rate-limited validator commits. Given a reliable quorum whose decision-round blocks certify `L`, a store … |
 
-### `Hybrid/Carrier.lean` (4)
+### `Hybrid/Carrier.lean` (1)
 
 | Lemma | Role |
 |:---|:---|
-| `agree` | Two views decide alike. H6 under the property's name, and unconditional because non-equivocation is now a … |
 | `causal` | Hybrid's universes are block DAGs — the core's argument, the underlying universe type being the core's. |
-| `commitsCandidate` | A commit names the slot's candidate. |
-| `commitsDirect` | And a direct commit is a verdict, at Hybrid's own direct predicate. |
 
 ### `Hybrid/Checkpoint/RecoveryProofs.lean` (14)
 
@@ -39689,6 +39776,22 @@ subsection per module, in the layer order of Appendices B and C.
 | `finalityQC_compatible` | Two finality certificates in one epoch cannot finalize conflicting histories. |
 | `mem_recoveryCorrect` | Recovery-correct membership excludes all three fault classes. |
 | `mem_reliableSigner` | Reliable signing excludes precisely the two classes allowed to equivocate. |
+
+### `HybridProperties.lean` (11)
+
+| Lemma | Role |
+|:---|:---|
+| `banded` | Hybrid reads a band, at every threshold the committee admits. |
+| `banded_aux` | — |
+| `coneSupports_band` | The anchor's cone of supporters is the cone it was. |
+| `descends` | And a committed run decides everything below it. |
+| `directCommitIn_band` | And so does the direct commit. |
+| `directSkipSlotIn_band` | And the slot-level skip transports, which is what the repair was for. Blockers stay blockers: a … |
+| `not_thickLink_band_novel` | A candidate the band did not carry passes the indirect test from no old anchor. Its supporters would sit … |
+| `skipsUnsupported` | Hybrid skips an unsupported slot from a hybrid quorum. |
+| `supportersIn_band` | Supporters survive the band. |
+| `thickLink_band` | So the indirect test reads the same. |
+| `toCore` | The band at Hybrid's carrier is the band at the core's, the universe being the core's under a predicate. |
 
 ### `Hydrozoan/Helpers/Banded.lean` (26)
 

@@ -119,6 +119,23 @@ NODE	LeanDagTest.checkpointFaults._proof_2	LeanDagTest.HybridCheckpoint	thm
 EDGE	LeanDagTest.checkpointFaults._proof_2	LeanDagTest.checkpointFaults._proof_1
 NODE	LeanDagTest.Minnow.sBlk._proof_1	LeanDagTest.Minnow.Deadlock	thm
 EDGE	LeanDagTest.Minnow.sBlk._proof_1	LeanDagTest.Minnow.sBlk._proof_3
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_15	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_15	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_15	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_15	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_15	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_15	LeanDag.Hybrid.Decided
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_15	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_15	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_15	LeanDag.Hybrid.Eligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_15	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_15	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_15	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_15	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_15	LeanDag.Hybrid.decidableEligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_15	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_15	LeanDag.View
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_15	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.Hybrid.Checkpoint.Model.Execution.ChkWitness.recOn	LeanDag.Hybrid.Checkpoint.BaseSpec	def
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.ChkWitness.recOn	LeanDag.HybridFaults
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.ChkWitness.recOn	LeanDag.Hybrid.Checkpoint.CheckpointData
@@ -2280,6 +2297,37 @@ EDGE	LeanDag.Hybrid.decided_of_leader_of_populated._proof_1_1	LeanDag.Slots
 NODE	LeanDagTest.OptimalHydrozoan.lkE._proof_3	LeanDagTest.OptimalHydrozoan.SlotAgreement	thm
 NODE	LeanDagTest.mmFullBlk._proof_5	LeanDagTest.MahiMahi.Model	thm
 NODE	LeanDag.FinWhale.passFrom_of_ge._proof_1_5	LeanDag.FinWhale.Pass	thm
+NODE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.Hybrid.slotBlamers.eq_1
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.creatorsOf
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.Hybrid.Decided.directSkip
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.Properties.Unsupported
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.View.subset_ids
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.Hybrid.slotBlamers
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.Block.refs
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.decidableIsLeaderBlock
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.Properties.SkipsUnsupported
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.blocksAt
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.Hybrid.q
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.IsLeaderBlock
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.Properties.DagRule.viewIds
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.Properties.DagRule.View
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.Block.creator
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.Properties.DagRule.Universe
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.Properties.PresentAt
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.HybridProperties.hybridRule
+EDGE	LeanDag.HybridProperties.skipsUnsupported	LeanDag.mem_blocksAt
 NODE	LeanDag.Integration.recoveryMsg	LeanDag.Integration.ReGenesis	def
 EDGE	LeanDag.Integration.recoveryMsg	LeanDag.Integration.recoveryMsg._proof_12
 EDGE	LeanDag.Integration.recoveryMsg	LeanDag.Faults
@@ -2726,6 +2774,19 @@ EDGE	LeanDag.Integration.skipFillD._proof_1	LeanDag.BlockUniverse
 EDGE	LeanDag.Integration.skipFillD._proof_1	LeanDag.SkipMsg
 EDGE	LeanDag.Integration.skipFillD._proof_1	LeanDag.SkipMsg.r0
 EDGE	LeanDag.Integration.skipFillD._proof_1	LeanDag.SkipMsg.B1
+NODE	LeanDag.HybridProperties.agree	LeanDag.Hybrid.Carrier	thm
+EDGE	LeanDag.HybridProperties.agree	LeanDag.Properties.DagRule.Decided
+EDGE	LeanDag.HybridProperties.agree	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.agree	LeanDag.Hybrid.decided_unique
+EDGE	LeanDag.HybridProperties.agree	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.agree	LeanDag.Hybrid.Admissible
+EDGE	LeanDag.HybridProperties.agree	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.agree	LeanDag.Properties.Agree
+EDGE	LeanDag.HybridProperties.agree	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.agree	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.agree	LeanDag.Properties.DagRule.View
+EDGE	LeanDag.HybridProperties.agree	LeanDag.Properties.DagRule.Universe
+EDGE	LeanDag.HybridProperties.agree	LeanDag.HybridProperties.hybridRule
 NODE	LeanDagTest.OptimalHydrozoan.lkS._proof_10	LeanDagTest.OptimalHydrozoan.EventualDecision	thm
 EDGE	LeanDagTest.OptimalHydrozoan.lkS._proof_10	LeanDagTest.OptimalHydrozoan.lkS._proof_3
 NODE	LeanDag.DecidedWithin.lt_bound	LeanDag.MysticetiProperties	thm
@@ -3378,13 +3439,66 @@ EDGE	LeanDag.Properties.RebasedAbove.synchronisedOn_of._proof_1_7	LeanDag.Proper
 EDGE	LeanDag.Properties.RebasedAbove.synchronisedOn_of._proof_1_7	LeanDag.Block.round
 EDGE	LeanDag.Properties.RebasedAbove.synchronisedOn_of._proof_1_7	LeanDag.Properties.DagRule
 EDGE	LeanDag.Properties.RebasedAbove.synchronisedOn_of._proof_1_7	LeanDag.Properties.DagRule.Universe
+NODE	LeanDag.HybridProperties.leaderCommits	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.Properties.DagRule.Decided
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.Properties.DecidedBelow
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.HybridProperties.leaderCommits._proof_1_4
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.HybridProperties.leaderCommits._proof_1_2
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.Hybrid.DirectCommit
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.Properties.LeaderCommits
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.View.CoversUpto.mono
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.Hybrid.DirectCommitIn
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.PopulatedOn
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.Hybrid.directCommit_of_leader_mem
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.Hybrid.directCommitIn_of_coversUpto
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.Hybrid.q
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.HybridProperties.hybridLive
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.IsLeaderBlock
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.View.CoversUpto
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.Hybrid.Decided.directCommit
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.SynchronisedOn
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.HybridProperties.leaderCommits._proof_1_1
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.Slots.mono
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.HybridProperties.leaderCommits._proof_1_3
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.Properties.DagRule.View
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.Block.creator
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.Properties.DagRule.Universe
+EDGE	LeanDag.HybridProperties.leaderCommits	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.mem_novelty	LeanDag.DoS.Novelty	thm
 EDGE	LeanDag.mem_novelty	LeanDag.Faults
 EDGE	LeanDag.mem_novelty	LeanDag.history
 EDGE	LeanDag.mem_novelty	LeanDag.BlockUniverse
 EDGE	LeanDag.mem_novelty	LeanDag.novelty
+NODE	LeanDag.HybridProperties.leaderCommits._proof_1_3	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.leaderCommits._proof_1_3	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.leaderCommits._proof_1_3	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.leaderCommits._proof_1_3	LeanDag.Hybrid.q
+EDGE	LeanDag.HybridProperties.leaderCommits._proof_1_3	LeanDag.Slots
 NODE	LeanDag.exists_correct_common_support._simp_1_8	LeanDag.CommonCore	thm
 NODE	LeanDag.Hydrozoan.mem_certificates._simp_1_2	LeanDag.Hydrozoan.Helpers.Counting	thm
+NODE	LeanDag.HybridProperties.thickLink_band	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.thickLink_band	LeanDag.Hybrid.ThickLink
+EDGE	LeanDag.HybridProperties.thickLink_band	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.thickLink_band	LeanDag.Hybrid.coneSupports
+EDGE	LeanDag.HybridProperties.thickLink_band	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.thickLink_band	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.thickLink_band	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.HybridProperties.thickLink_band	LeanDag.HybridProperties.coneSupports_band
+EDGE	LeanDag.HybridProperties.thickLink_band	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.thickLink_band	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.thickLink_band	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.thickLink_band	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.thickLink_band	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.SkipMsg.skipFill._proof_4	LeanDag.SafeSkip.Basic	thm
 EDGE	LeanDag.SkipMsg.skipFill._proof_4	LeanDag.Faults
 EDGE	LeanDag.SkipMsg.skipFill._proof_4	LeanDag.BlockUniverse.block
@@ -5907,6 +6021,23 @@ EDGE	LeanDag.lineOf_mem._proof_1_1	LeanDag.BlockUniverse.block
 EDGE	LeanDag.lineOf_mem._proof_1_1	LeanDag.Block.round
 EDGE	LeanDag.lineOf_mem._proof_1_1	LeanDag.BlockUniverse
 NODE	LeanDagTest.ugrowLag._proof_6	LeanDagTest.Collapse	thm
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_31	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_31	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_31	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_31	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_31	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_31	LeanDag.Hybrid.Decided
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_31	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_31	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_31	LeanDag.Hybrid.Eligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_31	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_31	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_31	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_31	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_31	LeanDag.Hybrid.decidableEligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_31	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_31	LeanDag.View
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_31	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.FinWhale.commits_of_creation._proof_1_1	LeanDag.FinWhale.Creation	thm
 EDGE	LeanDag.FinWhale.commits_of_creation._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.FinWhale.commits_of_creation._proof_1_1	LeanDag.PaceCore.gst
@@ -6385,6 +6516,23 @@ EDGE	LeanDag.Nemo.directCommitIn_of_coversUpto	LeanDag.Nemo.blocksAt
 EDGE	LeanDag.Nemo.directCommitIn_of_coversUpto	LeanDag.Nemo.DirectCommit
 EDGE	LeanDag.Nemo.directCommitIn_of_coversUpto	LeanDag.Nemo.DirectCommitIn
 EDGE	LeanDag.Nemo.directCommitIn_of_coversUpto	LeanDag.Nemo.Universe.ids
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_16	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_16	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_16	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_16	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_16	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_16	LeanDag.Hybrid.Decided
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_16	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_16	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_16	LeanDag.Hybrid.Eligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_16	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_16	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_16	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_16	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_16	LeanDag.Hybrid.decidableEligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_16	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_16	LeanDag.View
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_16	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.Nemo.CrashFaults.noConfusion	LeanDag.Nemo.Liveness	def
 EDGE	LeanDag.Nemo.CrashFaults.noConfusion	LeanDag.Nemo.CrashFaults.casesOn
 EDGE	LeanDag.Nemo.CrashFaults.noConfusion	LeanDag.Nemo.CrashFaults
@@ -6468,6 +6616,13 @@ EDGE	LeanDag.OptimalHydrozoan.PrefixAgreement.prefixConsistency	LeanDag.OptimalH
 EDGE	LeanDag.OptimalHydrozoan.PrefixAgreement.prefixConsistency	LeanDag.Hydrozoan.View
 EDGE	LeanDag.OptimalHydrozoan.PrefixAgreement.prefixConsistency	LeanDag.OptimalHydrozoan.PrefixAgreement.DecidesBelow
 EDGE	LeanDag.OptimalHydrozoan.PrefixAgreement.prefixConsistency	LeanDag.OptimalHydrozoan.OptUniverse
+NODE	LeanDag.Barnacle.orcaellaLive_goodGives._proof_1_2	LeanDag.Barnacle.Helpers.Orcaella	thm
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives._proof_1_2	LeanDag.HybridFaults
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives._proof_1_2	LeanDag.HybridFaults.fc
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives._proof_1_2	LeanDag.Slots.slotRound
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives._proof_1_2	LeanDag.Hybrid.q
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives._proof_1_2	LeanDag.HybridFaults.fb
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives._proof_1_2	LeanDag.Slots
 NODE	LeanDagTest.ugrowStuckPace._proof_22	LeanDagTest.ViewPace	thm
 EDGE	LeanDagTest.ugrowStuckPace._proof_22	LeanDagTest.Ugrow
 EDGE	LeanDagTest.ugrowStuckPace._proof_22	LeanDagTest.ugrowStuckPace._proof_10
@@ -6753,13 +6908,6 @@ EDGE	LeanDag.Properties.Extends.block	LeanDag.Properties.DagRule.block
 EDGE	LeanDag.Properties.Extends.block	LeanDag.Properties.Extends
 EDGE	LeanDag.Properties.Extends.block	LeanDag.Properties.DagRule
 EDGE	LeanDag.Properties.Extends.block	LeanDag.Properties.DagRule.Universe
-NODE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_3	LeanDag.Barnacle.Helpers.Orcaella	thm
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_3	LeanDag.HybridFaults
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_3	LeanDag.HybridFaults.fc
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_3	LeanDag.Slots.slotRound
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_3	LeanDag.Hybrid.q
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_3	LeanDag.HybridFaults.fb
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_3	LeanDag.Slots
 NODE	LeanDag.Integration.fairScheduleOn_chop	LeanDag.Integration.ScheduleShape	thm
 EDGE	LeanDag.Integration.fairScheduleOn_chop	LeanDag.Faults
 EDGE	LeanDag.Integration.fairScheduleOn_chop	LeanDag.Slots.slotRound
@@ -10360,6 +10508,76 @@ EDGE	LeanDagTest.Uomit	LeanDag.BlockUniverse
 EDGE	LeanDagTest.Uomit	LeanDagTest.Uomit._proof_8
 EDGE	LeanDagTest.Uomit	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.Uomit	LeanDagTest.Uomit._proof_9
+NODE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.Hybrid.ThickLink
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.Hybrid.Decided.indirectCommit
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_16
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_21
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_5
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.Properties.AgreeBand.mono
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.Hybrid.Decided.directSkip
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_18
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.MysticetiProperties.isLeaderBlock_band_old
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.directCommitIn_band
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.Hybrid.isLeaderBlock_of_decided
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_12
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_3
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_15
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_25
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_1
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_23
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_31
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_14
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_17
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_4
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_29
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.Hybrid.Decided
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_2
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_24
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.Hybrid.DirectCommitIn
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.not_thickLink_band_novel
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.Hybrid.Eligible
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_6
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.Hybrid.DirectSkipSlotIn
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.Hybrid.decidableEligible
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_11
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_9
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_8
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_26
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.thickLink_band
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_30
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.directSkipSlotIn_band
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_27
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.Hybrid.Decided.rec
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.Hybrid.Decided.indirectSkip
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.IsLeaderBlock
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.Hybrid.decisionRound
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_7
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_19
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.Hybrid.Decided.directCommit
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.toCore
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_10
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_20
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.Slots.mono
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_13
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.View
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.MysticetiProperties.isLeaderBlock_band
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_22
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.Block.creator
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.banded_aux._proof_1_28
+EDGE	LeanDag.HybridProperties.banded_aux	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.not_directSkip_of_directCommitIn	LeanDag.Mysticeti	thm
 EDGE	LeanDag.not_directSkip_of_directCommitIn	LeanDag.Faults
 EDGE	LeanDag.not_directSkip_of_directCommitIn	LeanDag.Slots.slotRound
@@ -10954,6 +11172,9 @@ EDGE	LeanDag.OptimalHydrozoan.not_witnessesEquivocation_of_noEquivocation	LeanDa
 EDGE	LeanDag.OptimalHydrozoan.not_witnessesEquivocation_of_noEquivocation	LeanDag.Hydrozoan.Slots.leader
 EDGE	LeanDag.OptimalHydrozoan.not_witnessesEquivocation_of_noEquivocation	LeanDag.Hydrozoan.Faults
 EDGE	LeanDag.OptimalHydrozoan.not_witnessesEquivocation_of_noEquivocation	LeanDag.Hydrozoan.BlockUniverse.ids
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_3	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_3	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_3	LeanDag.Slots
 NODE	LeanDagTest.uodo_decidedWithin_slot1_swap	LeanDagTest.Adaptive	thm
 EDGE	LeanDagTest.uodo_decidedWithin_slot1_swap	LeanDag.Odontoceti.instDecidableDirectCommitIn
 EDGE	LeanDagTest.uodo_decidedWithin_slot1_swap	LeanDag.View.full
@@ -11502,6 +11723,18 @@ EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.FinalityQC.messages	LeanDag.Hybri
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.FinalityQC.messages	LeanDag.Hybrid.Checkpoint.Model
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.FinalityQC.messages	LeanDag.Hybrid.Checkpoint.Model.Execution
 NODE	LeanDagTest.Barnacle.Majority.S1._proof_1	LeanDagTest.Barnacle.Majority	thm
+NODE	LeanDag.HybridProperties.toCore	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.toCore	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.toCore	LeanDag.Properties.AgreeBand.mem
+EDGE	LeanDag.HybridProperties.toCore	LeanDag.Properties.AgreeBand.refs
+EDGE	LeanDag.HybridProperties.toCore	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.toCore	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.toCore	LeanDag.Properties.AgreeBand.block
+EDGE	LeanDag.HybridProperties.toCore	LeanDag.Properties.AgreeBand.mk
+EDGE	LeanDag.HybridProperties.toCore	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.HybridProperties.toCore	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.toCore	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.toCore	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.Integration.Hydrozoan.Deployment.recovery	LeanDag.Integration.Hydrozoan.Deployment	def
 EDGE	LeanDag.Integration.Hydrozoan.Deployment.recovery	LeanDag.Integration.Hydrozoan.toHybrid
 EDGE	LeanDag.Integration.Hydrozoan.Deployment.recovery	LeanDag.Hydrozoan.Slots
@@ -11567,6 +11800,23 @@ EDGE	LeanDag.Hydrozoan.decided_below_of_committed_run._proof_1_2	LeanDag.Hydrozo
 EDGE	LeanDag.Hydrozoan.decided_below_of_committed_run._proof_1_2	LeanDag.Hydrozoan.View
 EDGE	LeanDag.Hydrozoan.decided_below_of_committed_run._proof_1_2	LeanDag.Hydrozoan.Faults
 EDGE	LeanDag.Hydrozoan.decided_below_of_committed_run._proof_1_2	LeanDag.Hydrozoan.EligibleAsAnchor
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_23	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_23	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_23	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_23	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_23	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_23	LeanDag.Hybrid.Decided
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_23	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_23	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_23	LeanDag.Hybrid.Eligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_23	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_23	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_23	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_23	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_23	LeanDag.Hybrid.decidableEligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_23	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_23	LeanDag.View
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_23	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.BlackMarlin.mem_maxAnchor	LeanDag.BlackMarlin.Helpers.Descent	thm
 EDGE	LeanDag.BlackMarlin.mem_maxAnchor	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.mem_maxAnchor	LeanDag.BlackMarlin.maxAnchorRound
@@ -12384,9 +12634,9 @@ EDGE	LeanDag.Integration.hybrid_agree_stack	LeanDag.HybridFaults
 EDGE	LeanDag.Integration.hybrid_agree_stack	LeanDag.HybridFaults.toFaults
 EDGE	LeanDag.Integration.hybrid_agree_stack	LeanDag.Hybrid.Admissible
 EDGE	LeanDag.Integration.hybrid_agree_stack	LeanDag.Integration.honestNoEquiv_stack
+EDGE	LeanDag.Integration.hybrid_agree_stack	LeanDag.HybridProperties.agree
 EDGE	LeanDag.Integration.hybrid_agree_stack	LeanDag.HonestNoEquiv
 EDGE	LeanDag.Integration.hybrid_agree_stack	LeanDag.Hybrid.Decided
-EDGE	LeanDag.Integration.hybrid_agree_stack	LeanDag.Hybrid.decided_agree
 EDGE	LeanDag.Integration.hybrid_agree_stack	LeanDag.Integration.stack
 EDGE	LeanDag.Integration.hybrid_agree_stack	LeanDag.BlockUniverse
 EDGE	LeanDag.Integration.hybrid_agree_stack	LeanDag.Slots
@@ -12692,6 +12942,23 @@ EDGE	LeanDag.dosValid_chop	LeanDag.DoSValid
 EDGE	LeanDag.dosValid_chop	LeanDag.BlockUniverse
 EDGE	LeanDag.dosValid_chop	LeanDag.Block.creator
 EDGE	LeanDag.dosValid_chop	LeanDag.exposedIn_of_exposedIn_chop
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_12	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_12	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_12	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_12	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_12	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_12	LeanDag.Hybrid.Decided
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_12	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_12	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_12	LeanDag.Hybrid.Eligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_12	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_12	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_12	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_12	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_12	LeanDag.Hybrid.decidableEligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_12	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_12	LeanDag.View
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_12	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.ReactivePace.no_timeout_of_fast	LeanDag.Reactive.Basic	thm
 EDGE	LeanDag.ReactivePace.no_timeout_of_fast	LeanDag.Faults
 EDGE	LeanDag.ReactivePace.no_timeout_of_fast	LeanDag.Slots.slotRound
@@ -13443,6 +13710,20 @@ EDGE	LeanDag.OptimalHydrozoan.isLeaderBlock_of_decidedOpt	LeanDag.OptimalHydrozo
 EDGE	LeanDag.OptimalHydrozoan.isLeaderBlock_of_decidedOpt	LeanDag.Hydrozoan.Slots.slotRound
 EDGE	LeanDag.OptimalHydrozoan.isLeaderBlock_of_decidedOpt	LeanDag.Hydrozoan.EligibleAsAnchor
 EDGE	LeanDag.OptimalHydrozoan.isLeaderBlock_of_decidedOpt	LeanDag.Hydrozoan.SlowCommitInView
+NODE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_8	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_8	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_8	LeanDag.creatorsOf
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_8	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_8	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_8	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_8	LeanDag.Hybrid.slotBlamers
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_8	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_8	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_8	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_8	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_8	LeanDag.Hybrid.q
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_8	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_8	LeanDag.View
 NODE	LeanDag.mem_topsOf._simp_1_2	LeanDag.DoS.Adoption	thm
 NODE	LeanDag.Hydrozoan.eligibleAsAnchor_iff	LeanDag.Hydrozoan.Helpers.IndirectRules	thm
 EDGE	LeanDag.Hydrozoan.eligibleAsAnchor_iff	LeanDag.Hydrozoan.Slots
@@ -14303,6 +14584,33 @@ EDGE	LeanDag.populated_and_card_viewUpto_le	LeanDag.BlockUniverse
 EDGE	LeanDag.populated_and_card_viewUpto_le	LeanDag.Faults.f
 EDGE	LeanDag.populated_and_card_viewUpto_le	LeanDag.viewUpto
 EDGE	LeanDag.populated_and_card_viewUpto_le	LeanDag.card_viewUpto_le
+NODE	LeanDag.Barnacle.orcaellaLive_goodGives	LeanDag.Barnacle.Helpers.Orcaella	thm
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives	LeanDag.HybridFaults
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives	LeanDag.HybridFaults.fc
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives	LeanDag.Barnacle.BaseRule.Universe
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives	LeanDag.Slots.slotRound
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives	LeanDag.Barnacle.BaseRule.CoversUpto
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives	LeanDag.Barnacle.orcaellaLive
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives	LeanDag.Barnacle.orcaellaLive_goodGives._proof_1_2
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives	LeanDag.Barnacle.BaseRule.waveLength
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives	LeanDag.HonestNoEquiv
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives	LeanDag.Slots.leader
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives	LeanDag.Barnacle.orcaellaLive_goodGives._proof_1_1
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives	LeanDag.Correct
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives	LeanDag.Barnacle.LiveRule.toBaseRule
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives	LeanDag.PopulatedOn
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives	LeanDag.Barnacle.BaseRule.View
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives	LeanDag.BlockUniverse
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives	LeanDag.Hybrid.q
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives	LeanDag.HybridProperties.hybridLive
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives	LeanDag.Barnacle.LiveRule.GoodGives
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives	LeanDag.View.CoversUpto
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives	LeanDag.HybridFaults.fb
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives	LeanDag.SynchronisedOn
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives	LeanDag.Slots
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives	LeanDag.Slots.mono
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives	LeanDag.Barnacle.LiveRule.Good
 NODE	LeanDag.MahiMahi.AgreeUpto.casesOn	LeanDag.MahiMahi.Model.Unpredictable	def
 EDGE	LeanDag.MahiMahi.AgreeUpto.casesOn	LeanDag.Block
 EDGE	LeanDag.MahiMahi.AgreeUpto.casesOn	LeanDag.Faults
@@ -14827,6 +15135,15 @@ EDGE	LeanDagTest.ucut_severed	LeanDagTest.Ucut
 EDGE	LeanDagTest.ucut_severed	LeanDag.BlockUniverse.block
 EDGE	LeanDagTest.ucut_severed	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ucut_severed	LeanDag.Block.creator
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_6	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_6	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_6	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_6	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_6	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_6	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_6	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_6	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_6	LeanDag.Slots
 NODE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_1	LeanDag.BlackMarlin.Helpers.Agreement	thm
 EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_1	LeanDag.PaceCore.gst
@@ -15610,6 +15927,11 @@ EDGE	LeanDagTest.Barnacle.runSk._proof_7	LeanDagTest.Barnacle.runP1v._proof_3
 NODE	LeanDag.Properties.exists_decidedBelow._proof_1_2	LeanDag.Properties.Derived.FromBand	thm
 EDGE	LeanDag.Properties.exists_decidedBelow._proof_1_2	LeanDag.Slots.slotRound
 EDGE	LeanDag.Properties.exists_decidedBelow._proof_1_2	LeanDag.Slots
+NODE	LeanDag.HybridProperties.leaderCommits._proof_1_1	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.leaderCommits._proof_1_1	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.leaderCommits._proof_1_1	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.leaderCommits._proof_1_1	LeanDag.Hybrid.q
+EDGE	LeanDag.HybridProperties.leaderCommits._proof_1_1	LeanDag.Slots
 NODE	LeanDag.Odontoceti.epoch_closes._proof_1_8	LeanDag.Adaptive.Odontoceti	thm
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_8	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_8	LeanDag.Slots.slotRound
@@ -17847,6 +18169,23 @@ EDGE	LeanDag.PaceCore.mk.inj	LeanDag.PaceCore.mk
 EDGE	LeanDag.PaceCore.mk.inj	LeanDag.Faults.f
 EDGE	LeanDag.PaceCore.mk.inj	LeanDag.PaceCore.mk.noConfusion
 EDGE	LeanDag.PaceCore.mk.inj	LeanDag.Block.creator
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_19	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_19	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_19	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_19	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_19	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_19	LeanDag.Hybrid.Decided
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_19	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_19	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_19	LeanDag.Hybrid.Eligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_19	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_19	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_19	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_19	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_19	LeanDag.Hybrid.decidableEligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_19	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_19	LeanDag.View
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_19	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.Faults.mk._flat_ctor	LeanDag.Validators	def
 EDGE	LeanDag.Faults.mk._flat_ctor	LeanDag.Faults
 EDGE	LeanDag.Faults.mk._flat_ctor	LeanDag.Faults.mk
@@ -17998,6 +18337,7 @@ EDGE	LeanDagTest.FinWhaleEquiv.eqReactive._proof_7	LeanDag.PaceCore.proc
 EDGE	LeanDagTest.FinWhaleEquiv.eqReactive._proof_7	LeanDag.IsLeaderBlock
 EDGE	LeanDagTest.FinWhaleEquiv.eqReactive._proof_7	LeanDagTest.FinWhaleEquiv.eqReactive._proof_4
 EDGE	LeanDagTest.FinWhaleEquiv.eqReactive._proof_7	LeanDag.Block.creator
+NODE	LeanDag.HybridProperties.directSkipSlotIn_band._simp_1_1	LeanDag.HybridProperties	thm
 NODE	LeanDag.Barnacle.OptimalHydrozoan.Statement	LeanDag.Barnacle.OptimalHydrozoan.Statement	def
 EDGE	LeanDag.Barnacle.OptimalHydrozoan.Statement	LeanDag.Barnacle.OptimalHydrozoan.Laws
 NODE	LeanDag.OptimalHydrozoan.Grounding.horizonOptUniverse	LeanDag.OptimalHydrozoan.Helpers.Grounding	def
@@ -18478,6 +18818,14 @@ EDGE	LeanDagTest.Hydrozoan.lk9	LeanDagTest.Hydrozoan.lk9._proof_14
 EDGE	LeanDagTest.Hydrozoan.lk9	LeanDagTest.Hydrozoan.lk9._proof_11
 EDGE	LeanDagTest.Hydrozoan.lk9	LeanDagTest.Hydrozoan.lk9._proof_16
 EDGE	LeanDagTest.Hydrozoan.lk9	LeanDagTest.Hydrozoan.lk9._proof_15
+NODE	LeanDag.HybridProperties.coneSupports_band._simp_1_2	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.coneSupports_band._simp_1_2	LeanDag.Faults
+EDGE	LeanDag.HybridProperties.coneSupports_band._simp_1_2	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.HybridProperties.coneSupports_band._simp_1_2	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.coneSupports_band._simp_1_2	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.coneSupports_band._simp_1_2	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.coneSupports_band._simp_1_2	LeanDag.blocksAt
+EDGE	LeanDag.HybridProperties.coneSupports_band._simp_1_2	LeanDag.mem_blocksAt
 NODE	LeanDag.Synchronised	LeanDag.Liveness	def
 EDGE	LeanDag.Synchronised	LeanDag.Faults
 EDGE	LeanDag.Synchronised	LeanDag.Correct
@@ -19790,6 +20138,18 @@ NODE	LeanDag.Hydrozoan.EligibleAsAnchor	LeanDag.Hydrozoan.Model.IndirectRules	de
 EDGE	LeanDag.Hydrozoan.EligibleAsAnchor	LeanDag.Hydrozoan.Slots
 EDGE	LeanDag.Hydrozoan.EligibleAsAnchor	LeanDag.Hydrozoan.decisionRound
 EDGE	LeanDag.Hydrozoan.EligibleAsAnchor	LeanDag.Hydrozoan.Slots.slotRound
+NODE	LeanDag.HybridProperties.leaderCommits._proof_1_4	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.leaderCommits._proof_1_4	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.leaderCommits._proof_1_4	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.leaderCommits._proof_1_4	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.leaderCommits._proof_1_4	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.leaderCommits._proof_1_4	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.leaderCommits._proof_1_4	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.leaderCommits._proof_1_4	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.leaderCommits._proof_1_4	LeanDag.Hybrid.q
+EDGE	LeanDag.HybridProperties.leaderCommits._proof_1_4	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.leaderCommits._proof_1_4	LeanDag.Properties.DagRule.Universe
+EDGE	LeanDag.HybridProperties.leaderCommits._proof_1_4	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.Integration.extends_addGenesis	LeanDag.Integration.ReGenesis	thm
 EDGE	LeanDag.Integration.extends_addGenesis	LeanDag.Integration.addGenesis_block_old
 EDGE	LeanDag.Integration.extends_addGenesis	LeanDag.Properties.DagRule.ids
@@ -19925,6 +20285,20 @@ EDGE	LeanDag.Hydrozoan.not_certifiedIn_of_fastCommit	LeanDag.Hydrozoan.Reaches
 EDGE	LeanDag.Hydrozoan.not_certifiedIn_of_fastCommit	LeanDag.Hydrozoan.certificates_eq_empty_of_fastCommit
 EDGE	LeanDag.Hydrozoan.not_certifiedIn_of_fastCommit	LeanDag.Hydrozoan.BlockUniverse.block
 EDGE	LeanDag.Hydrozoan.not_certifiedIn_of_fastCommit	LeanDag.Hydrozoan.Faults
+NODE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_7	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_7	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_7	LeanDag.creatorsOf
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_7	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_7	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_7	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_7	LeanDag.Hybrid.slotBlamers
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_7	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_7	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_7	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_7	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_7	LeanDag.Hybrid.q
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_7	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_7	LeanDag.View
 NODE	LeanDag.Integration.Hydrozoan.spansEligible_eq	LeanDag.Integration.Hydrozoan.Schedule	thm
 EDGE	LeanDag.Integration.Hydrozoan.spansEligible_eq	LeanDag.Hydrozoan.Slots
 EDGE	LeanDag.Integration.Hydrozoan.spansEligible_eq	LeanDag.Integration.Hydrozoan.toCoreSlots
@@ -20634,6 +21008,20 @@ EDGE	LeanDag.Nemo.CrashFaults.casesOn	LeanDag.Nemo.CrashFaults.rec
 NODE	LeanDag.Faults.card_validators	LeanDag.Validators	thm
 EDGE	LeanDag.Faults.card_validators	LeanDag.Faults
 EDGE	LeanDag.Faults.card_validators	LeanDag.Faults.f
+NODE	LeanDag.HybridProperties.causal	LeanDag.Hybrid.Carrier	thm
+EDGE	LeanDag.HybridProperties.causal	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.causal	LeanDag.Properties.DagRule.ids
+EDGE	LeanDag.HybridProperties.causal	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.causal	LeanDag.BlockUniverse.complete
+EDGE	LeanDag.HybridProperties.causal	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.causal	LeanDag.Properties.Causal
+EDGE	LeanDag.HybridProperties.causal	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.HybridProperties.causal	LeanDag.Block.refs
+EDGE	LeanDag.HybridProperties.causal	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.causal	LeanDag.CausalStructure.mk
+EDGE	LeanDag.HybridProperties.causal	LeanDag.BlockUniverse.round_of_mem_refs
+EDGE	LeanDag.HybridProperties.causal	LeanDag.Properties.DagRule.Universe
+EDGE	LeanDag.HybridProperties.causal	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.Hydrozoan.Grounding.horizonUniverse._proof_4	LeanDag.Hydrozoan.Helpers.Grounding	thm
 EDGE	LeanDag.Hydrozoan.Grounding.horizonUniverse._proof_4	LeanDag.Hydrozoan.Block.parents
 EDGE	LeanDag.Hydrozoan.Grounding.horizonUniverse._proof_4	LeanDag.Hydrozoan.Block.author
@@ -20648,6 +21036,15 @@ EDGE	LeanDag.Hydrozoan.View.rec	LeanDag.Hydrozoan.View
 EDGE	LeanDag.Hydrozoan.View.rec	LeanDag.Hydrozoan.BlockUniverse.block
 EDGE	LeanDag.Hydrozoan.View.rec	LeanDag.Hydrozoan.Faults
 EDGE	LeanDag.Hydrozoan.View.rec	LeanDag.Hydrozoan.BlockUniverse.ids
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_5	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_5	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_5	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_5	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_5	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_5	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_5	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_5	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_5	LeanDag.Slots
 NODE	LeanDag.Hydrozoan.weakLinked_bnd_old._proof_1_4	LeanDag.Hydrozoan.Helpers.Banded	thm
 EDGE	LeanDag.Hydrozoan.weakLinked_bnd_old._proof_1_4	LeanDag.Hydrozoan.BlockUniverse
 EDGE	LeanDag.Hydrozoan.weakLinked_bnd_old._proof_1_4	LeanDag.Hydrozoan.qWeak
@@ -20712,13 +21109,6 @@ EDGE	LeanDag.exists_self_ancestor	LeanDag.history
 EDGE	LeanDag.exists_self_ancestor	LeanDag.Block.round
 EDGE	LeanDag.exists_self_ancestor	LeanDag.BlockUniverse
 EDGE	LeanDag.exists_self_ancestor	LeanDag.Block.creator
-NODE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_4	LeanDag.Barnacle.Helpers.Orcaella	thm
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_4	LeanDag.HybridFaults
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_4	LeanDag.HybridFaults.fc
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_4	LeanDag.Slots.slotRound
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_4	LeanDag.Hybrid.q
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_4	LeanDag.HybridFaults.fb
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_4	LeanDag.Slots
 NODE	LeanDag.Hydrozoan.Decided.below.rec	LeanDag.Hydrozoan.Model.Decided	rec
 EDGE	LeanDag.Hydrozoan.Decided.below.rec	LeanDag.Hydrozoan.Decided.indirectSkip
 EDGE	LeanDag.Hydrozoan.Decided.below.rec	LeanDag.Hydrozoan.Decided
@@ -20817,6 +21207,23 @@ EDGE	LeanDagTest.ugrowHonest	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ugrowHonest	LeanDag.Delivery.mk
 EDGE	LeanDagTest.ugrowHonest	LeanDagTest.ugrowHonest._proof_4
 EDGE	LeanDagTest.ugrowHonest	LeanDag.Block.creator
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_7	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_7	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_7	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_7	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_7	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_7	LeanDag.Hybrid.Decided
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_7	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_7	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_7	LeanDag.Hybrid.Eligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_7	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_7	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_7	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_7	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_7	LeanDag.Hybrid.decidableEligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_7	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_7	LeanDag.View
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_7	LeanDag.HybridProperties.hybridRule
 NODE	LeanDagTest.FinWhaleEquiv.Vmiss	LeanDagTest.FinWhale.Equivocation	def
 NODE	LeanDag.Hydrozoan.banded_aux._proof_1_18	LeanDag.Hydrozoan.Helpers.Banded	thm
 EDGE	LeanDag.Hydrozoan.banded_aux._proof_1_18	LeanDag.Hydrozoan.Decided
@@ -21524,6 +21931,13 @@ EDGE	LeanDag.Nemo.instDecidableDirectCommitIn	LeanDag.Nemo.Universe
 EDGE	LeanDag.Nemo.instDecidableDirectCommitIn	LeanDag.Nemo.instDecidableDirectCommitIn._aux_1
 EDGE	LeanDag.Nemo.instDecidableDirectCommitIn	LeanDag.Nemo.View
 EDGE	LeanDag.Nemo.instDecidableDirectCommitIn	LeanDag.Nemo.DirectCommitIn
+NODE	LeanDag.HybridProperties.supportersIn_band._proof_1_4	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_4	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_4	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_4	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_4	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_4	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_4	LeanDag.BlockUniverse
 NODE	LeanDag.MahiMahi.lt_of_eligible	LeanDag.MahiMahi.Helpers.Liveness	thm
 EDGE	LeanDag.MahiMahi.lt_of_eligible	LeanDag.Slots.slotRound
 EDGE	LeanDag.MahiMahi.lt_of_eligible	LeanDag.MahiMahi.Eligible
@@ -22669,6 +23083,9 @@ EDGE	LeanDag.BlackMarlin.committed_of_run	LeanDag.BlackMarlin.mem_linkers
 EDGE	LeanDag.BlackMarlin.committed_of_run	LeanDag.BlackMarlin.Supported
 EDGE	LeanDag.BlackMarlin.committed_of_run	LeanDag.votesAt_of_synchronisedOn
 EDGE	LeanDag.BlackMarlin.committed_of_run	LeanDag.Block.creator
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_1	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_1	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_1	LeanDag.Slots
 NODE	LeanDagTest.Barnacle.bnSched1	LeanDagTest.Barnacle.Model	def
 EDGE	LeanDagTest.Barnacle.bnSched1	LeanDagTest.Barnacle.bnP1._proof_1
 EDGE	LeanDagTest.Barnacle.bnSched1	LeanDagTest.Barnacle.bnWin
@@ -24597,6 +25014,9 @@ EDGE	LeanDag.Adaptive.epoch_closes._proof_1_6	LeanDag.Adaptive.Policy
 EDGE	LeanDag.Adaptive.epoch_closes._proof_1_6	LeanDag.Adaptive.Policy.W
 EDGE	LeanDag.Adaptive.epoch_closes._proof_1_6	LeanDag.Properties.DagRule
 EDGE	LeanDag.Adaptive.epoch_closes._proof_1_6	LeanDag.Slots
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_4	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_4	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_4	LeanDag.Slots
 NODE	LeanDag.ViewPace.decided_of_wait	LeanDag.ViewPace	thm
 EDGE	LeanDag.ViewPace.decided_of_wait	LeanDag.ViewPace.toPaceCore
 EDGE	LeanDag.ViewPace.decided_of_wait	LeanDag.ViewPace.directCommit_of_wait
@@ -25666,11 +26086,6 @@ EDGE	LeanDag.BlackMarlin.Pace.casesOn	LeanDag.BlackMarlin.Rotation
 EDGE	LeanDag.BlackMarlin.Pace.casesOn	LeanDag.PaceCore.proc
 EDGE	LeanDag.BlackMarlin.Pace.casesOn	LeanDag.BlackMarlin.Pace.rec
 EDGE	LeanDag.BlackMarlin.Pace.casesOn	LeanDag.Block.creator
-NODE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_1	LeanDag.Barnacle.Helpers.Orcaella	thm
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_1	LeanDag.HybridFaults
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_1	LeanDag.HybridFaults.fc
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_1	LeanDag.Hybrid.q
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_1	LeanDag.HybridFaults.fb
 NODE	LeanDag.MahiMahi.instDecidableDirectCommitIn	LeanDag.MahiMahi.Model.Decision	def
 EDGE	LeanDag.MahiMahi.instDecidableDirectCommitIn	LeanDag.Faults
 EDGE	LeanDag.MahiMahi.instDecidableDirectCommitIn	LeanDag.MahiMahi.instDecidableDirectCommitIn._aux_1
@@ -27294,6 +27709,20 @@ NODE	LeanDag.Integration.fairRunOn_chop._proof_1_2	LeanDag.Integration.ScheduleS
 EDGE	LeanDag.Integration.fairRunOn_chop._proof_1_2	LeanDag.Slots.slotRound
 EDGE	LeanDag.Integration.fairRunOn_chop._proof_1_2	LeanDag.Slots
 NODE	LeanDagTest.BlackMarlin.ugrowBM._simp_1	LeanDagTest.BlackMarlin.Reactive	thm
+NODE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_5	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_5	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_5	LeanDag.creatorsOf
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_5	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_5	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_5	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_5	LeanDag.Hybrid.slotBlamers
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_5	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_5	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_5	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_5	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_5	LeanDag.Hybrid.q
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_5	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_5	LeanDag.View
 NODE	LeanDag.BlackMarlin.linkersIn_full._simp_1_3	LeanDag.BlackMarlin.Helpers.Liveness	thm
 NODE	LeanDagTest.Barnacle.run2._proof_11	LeanDagTest.Barnacle.Agreement	thm
 EDGE	LeanDagTest.Barnacle.run2._proof_11	LeanDagTest.Barnacle.run2._proof_3
@@ -28957,6 +29386,20 @@ EDGE	LeanDag.View.ofAccepted_subset	LeanDag.View.ids
 EDGE	LeanDag.View.ofAccepted_subset	LeanDag.history
 EDGE	LeanDag.View.ofAccepted_subset	LeanDag.BlockUniverse
 EDGE	LeanDag.View.ofAccepted_subset	LeanDag.Reaches
+NODE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_9	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_9	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_9	LeanDag.creatorsOf
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_9	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_9	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_9	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_9	LeanDag.Hybrid.slotBlamers
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_9	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_9	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_9	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_9	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_9	LeanDag.Hybrid.q
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_9	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_9	LeanDag.View
 NODE	LeanDagTest.ugrowStuckPace._proof_16	LeanDagTest.ViewPace	thm
 EDGE	LeanDagTest.ugrowStuckPace._proof_16	LeanDagTest.Ugrow
 EDGE	LeanDagTest.ugrowStuckPace._proof_16	LeanDagTest.ugrowSkewPace._simp_8
@@ -29219,6 +29662,7 @@ EDGE	LeanDagTest.ugrowLag._proof_49	LeanDagTest.lagBuilt
 EDGE	LeanDagTest.ugrowLag._proof_49	LeanDagTest.lagStamp
 EDGE	LeanDagTest.ugrowLag._proof_49	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ugrowLag._proof_49	LeanDag.Block.creator
+NODE	LeanDag.HybridProperties.not_thickLink_band_novel._simp_1_1	LeanDag.HybridProperties	thm
 NODE	LeanDag.Hydrozoan.banded_aux._proof_1_68	LeanDag.Hydrozoan.Helpers.Banded	thm
 EDGE	LeanDag.Hydrozoan.banded_aux._proof_1_68	LeanDag.Hydrozoan.Decided
 EDGE	LeanDag.Hydrozoan.banded_aux._proof_1_68	LeanDag.Hydrozoan.Block.author
@@ -29248,6 +29692,23 @@ EDGE	LeanDag.Integration.Hydrozoan.chopHZ_parents_subset	LeanDag.Integration.Hyd
 EDGE	LeanDag.Integration.Hydrozoan.chopHZ_parents_subset	LeanDag.Hydrozoan.Faults
 EDGE	LeanDag.Integration.Hydrozoan.chopHZ_parents_subset	LeanDag.Integration.Hydrozoan.chopHZ
 EDGE	LeanDag.Integration.Hydrozoan.chopHZ_parents_subset	LeanDag.Integration.Hydrozoan.SelfParenting
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_28	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_28	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_28	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_28	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_28	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_28	LeanDag.Hybrid.Decided
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_28	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_28	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_28	LeanDag.Hybrid.Eligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_28	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_28	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_28	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_28	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_28	LeanDag.Hybrid.decidableEligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_28	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_28	LeanDag.View
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_28	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.card_filter_not_correct_le._simp_1_1	LeanDag.DoS.Novelty	thm
 EDGE	LeanDag.card_filter_not_correct_le._simp_1_1	LeanDag.Faults
 EDGE	LeanDag.card_filter_not_correct_le._simp_1_1	LeanDag.Faults.byzantine
@@ -32051,6 +32512,15 @@ EDGE	LeanDag.viewUpto_subset_ids	LeanDag.viewUpto_succ
 EDGE	LeanDag.viewUpto_subset_ids	LeanDag.history_subset_ids
 EDGE	LeanDag.viewUpto_subset_ids	LeanDag.viewUpto
 NODE	LeanDagTest.OptimalHydrozoan.threeReplicasCrashOnly._proof_1	LeanDagTest.OptimalHydrozoan.Thresholds	thm
+NODE	LeanDag.HybridProperties.coneSupports_band._proof_1_6	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_6	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_6	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_6	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_6	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_6	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_6	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_6	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_6	LeanDag.BlockUniverse
 NODE	LeanDagTest.ugrowCatchPace._proof_21	LeanDagTest.Catchup	thm
 NODE	LeanDagTest.ugrowCatchPace._proof_16	LeanDagTest.Catchup	thm
 NODE	LeanDagTest.oBase._proof_1	LeanDagTest.Adaptive	thm
@@ -32128,6 +32598,23 @@ EDGE	LeanDag.blocksAt_chop._proof_1_3	LeanDag.Faults
 EDGE	LeanDag.blocksAt_chop._proof_1_3	LeanDag.BlockUniverse.block
 EDGE	LeanDag.blocksAt_chop._proof_1_3	LeanDag.Block.round
 EDGE	LeanDag.blocksAt_chop._proof_1_3	LeanDag.BlockUniverse
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_22	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_22	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_22	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_22	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_22	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_22	LeanDag.Hybrid.Decided
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_22	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_22	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_22	LeanDag.Hybrid.Eligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_22	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_22	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_22	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_22	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_22	LeanDag.Hybrid.decidableEligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_22	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_22	LeanDag.View
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_22	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.Adaptive.PartialRun.ctorIdx	LeanDag.Adaptive.Run	def
 EDGE	LeanDag.Adaptive.PartialRun.ctorIdx	LeanDag.Adaptive.Policy
 EDGE	LeanDag.Adaptive.PartialRun.ctorIdx	LeanDag.Properties.DagRule
@@ -32413,60 +32900,20 @@ EDGE	LeanDag.FinWhale.agreement_of_views._proof_1_2	LeanDag.FinWhale.Dag.leader
 EDGE	LeanDag.FinWhale.agreement_of_views._proof_1_2	LeanDag.Block.creator
 NODE	LeanDag.Barnacle.PartialRun.zero._proof_5	LeanDag.Barnacle.Helpers.Progress	thm
 NODE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Barnacle.Helpers.Orcaella	thm
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Barnacle.orcaellaLive_descent._proof_1_2
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Barnacle.BaseRule.Decided
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Hybrid.ThickLink
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Hybrid.Decided.indirectCommit
 EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.HybridFaults
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Barnacle.LiveRule.Descent.mk
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.creatorsOf
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Hybrid.lt_of_eligible
 EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.HybridFaults.fc
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Barnacle.BaseRule.Universe
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Barnacle.BaseRule.block
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Slots.slotRound
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Barnacle.orcaellaLive_descent._proof_1_1
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Barnacle.BaseRule.CoversUpto
+EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.HybridProperties.leaderCommits
 EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Barnacle.orcaellaLive
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Barnacle.orcaellaLive_descent._proof_1_4
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.HybridFaults.toFaults
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Hybrid.DirectCommit
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Barnacle.BaseRule.waveLength
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.HonestNoEquiv
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Hybrid.Decided
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Slots.leader
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.BlockUniverse.ids
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Block.refs
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Hybrid.instDecidableThickLink
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Correct
+EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Barnacle.orcaellaLive_goodGives
+EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Barnacle.descent_of_properties
 EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Barnacle.LiveRule.Descent
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.decidableIsLeaderBlock
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Hybrid.DirectCommitIn
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.BlockUniverse.block
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Hybrid.supportersIn
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Hybrid.Eligible
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.View.ids
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Block.round
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Barnacle.LiveRule.toBaseRule
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.PopulatedOn
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Barnacle.BaseRule.View
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.BlockUniverse
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Hybrid.directCommit_of_leader_mem
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.blocksAt
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Hybrid.q
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Barnacle.orcaellaLive_descent._proof_1_5
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Hybrid.Decided.indirectSkip
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.IsLeaderBlock
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Barnacle.orcaellaLive_descent._proof_1_3
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Hybrid.Decided.directCommit
+EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.HybridProperties.hybridLive
 EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.HybridFaults.fb
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.SynchronisedOn
 EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Slots
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Hybrid.supportersIn.eq_1
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Block.creator
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Hybrid.eligible_iff
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.mem_blocksAt
-EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Barnacle.LiveRule.Good
+EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Properties.DagRule.View
+EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.Properties.DagRule.Universe
+EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.HybridProperties.hybridRule
+EDGE	LeanDag.Barnacle.orcaellaLive_descent	LeanDag.HybridProperties.indirect
 NODE	LeanDag.Barnacle.Sched.congr_simp	LeanDag.Barnacle.Helpers.Progress	thm
 EDGE	LeanDag.Barnacle.Sched.congr_simp	LeanDag.Barnacle.Sched
 EDGE	LeanDag.Barnacle.Sched.congr_simp	LeanDag.Barnacle.Keyed
@@ -32651,13 +33098,6 @@ EDGE	LeanDag.FinWhale.conflicting_le_of_spQuorum._proof_1_2	LeanDag.FinWhale.Par
 EDGE	LeanDag.FinWhale.conflicting_le_of_spQuorum._proof_1_2	LeanDag.Faults.f
 EDGE	LeanDag.FinWhale.conflicting_le_of_spQuorum._proof_1_2	LeanDag.FinWhale.Params.p
 EDGE	LeanDag.FinWhale.conflicting_le_of_spQuorum._proof_1_2	LeanDag.FinWhale.Dag
-NODE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_2	LeanDag.Barnacle.Helpers.Orcaella	thm
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_2	LeanDag.HybridFaults
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_2	LeanDag.HybridFaults.fc
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_2	LeanDag.Slots.slotRound
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_2	LeanDag.Hybrid.q
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_2	LeanDag.HybridFaults.fb
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_2	LeanDag.Slots
 NODE	LeanDag.equivFree_history_iff	LeanDag.DoS.Counting	thm
 EDGE	LeanDag.equivFree_history_iff	LeanDag.Faults
 EDGE	LeanDag.equivFree_history_iff	LeanDag.EquivFree
@@ -33492,6 +33932,7 @@ EDGE	LeanDag.Minnow.Quorum	LeanDag.Faults.f
 EDGE	LeanDag.Minnow.Quorum	LeanDag.Minnow.Dag.block
 EDGE	LeanDag.Minnow.Quorum	LeanDag.Minnow.pointers
 NODE	LeanDagTest.ugrowLag._proof_2	LeanDagTest.Collapse	thm
+NODE	LeanDag.HybridProperties.directSkipSlotIn_band._simp_1_2	LeanDag.HybridProperties	thm
 NODE	LeanDag.lineOf_mem	LeanDag.SafeSkip.Jump	thm
 EDGE	LeanDag.lineOf_mem	LeanDag.lineOf_aux
 EDGE	LeanDag.lineOf_mem	LeanDag.lineOf_mem._proof_1_1
@@ -34570,6 +35011,13 @@ EDGE	LeanDagTest.dtwin_refsAccepted	LeanDag.Delivery.accepted
 EDGE	LeanDagTest.dtwin_refsAccepted	LeanDagTest.Dtwin
 EDGE	LeanDagTest.dtwin_refsAccepted	LeanDagTest.Dtwin._proof_1
 EDGE	LeanDagTest.dtwin_refsAccepted	LeanDag.Block.creator
+NODE	LeanDag.HybridProperties.not_thickLink_band_novel._proof_1_2	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.not_thickLink_band_novel._proof_1_2	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.not_thickLink_band_novel._proof_1_2	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.not_thickLink_band_novel._proof_1_2	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.not_thickLink_band_novel._proof_1_2	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.not_thickLink_band_novel._proof_1_2	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.not_thickLink_band_novel._proof_1_2	LeanDag.BlockUniverse
 NODE	LeanDag.ValidWrt.predecessor	LeanDag.Block	thm
 EDGE	LeanDag.ValidWrt.predecessor	LeanDag.Block
 EDGE	LeanDag.ValidWrt.predecessor	LeanDag.Faults
@@ -35061,6 +35509,13 @@ EDGE	LeanDagTest.Ucrash	LeanDagTest.Ucrash._proof_2
 EDGE	LeanDagTest.Ucrash	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.Ucrash	LeanDagTest.Ucrash._proof_1
 EDGE	LeanDagTest.Ucrash	LeanDagTest.rrBlock
+NODE	LeanDag.HybridProperties.coneSupports_band._proof_1_7	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_7	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_7	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_7	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_7	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_7	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_7	LeanDag.BlockUniverse
 NODE	LeanDag.FinWhale.spCommit_of_holds	LeanDag.FinWhale.View	thm
 EDGE	LeanDag.FinWhale.spCommit_of_holds	LeanDag.FinWhale.restrict
 EDGE	LeanDag.FinWhale.spCommit_of_holds	LeanDag.FinWhale.spCommit_of_holds._simp_1_1
@@ -35448,6 +35903,23 @@ NODE	LeanDag.Barnacle.Params.casesOn	LeanDag.Barnacle.Model.Window	def
 EDGE	LeanDag.Barnacle.Params.casesOn	LeanDag.Barnacle.Params.mk
 EDGE	LeanDag.Barnacle.Params.casesOn	LeanDag.Barnacle.Params
 EDGE	LeanDag.Barnacle.Params.casesOn	LeanDag.Barnacle.Params.rec
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_25	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_25	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_25	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_25	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_25	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_25	LeanDag.Hybrid.Decided
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_25	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_25	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_25	LeanDag.Hybrid.Eligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_25	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_25	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_25	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_25	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_25	LeanDag.Hybrid.decidableEligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_25	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_25	LeanDag.View
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_25	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.OptimalHydrozoan.OptUniverse.mk.inj	LeanDag.OptimalHydrozoan.Model.Universe	thm
 EDGE	LeanDag.OptimalHydrozoan.OptUniverse.mk.inj	LeanDag.Hydrozoan.Block.parents
 EDGE	LeanDag.OptimalHydrozoan.OptUniverse.mk.inj	LeanDag.Hydrozoan.Block.author
@@ -35535,20 +36007,17 @@ EDGE	LeanDag.Barnacle.orcaella_laws	LeanDag.Barnacle.BaseRule.Decided
 EDGE	LeanDag.Barnacle.orcaella_laws	LeanDag.HybridFaults
 EDGE	LeanDag.Barnacle.orcaella_laws	LeanDag.Barnacle.BaseRule.Universe
 EDGE	LeanDag.Barnacle.orcaella_laws	LeanDag.Slots.slotRound
-EDGE	LeanDag.Barnacle.orcaella_laws	LeanDag.Hybrid.isLeaderBlock_of_decided
-EDGE	LeanDag.Barnacle.orcaella_laws	LeanDag.HybridFaults.toFaults
 EDGE	LeanDag.Barnacle.orcaella_laws	LeanDag.Barnacle.BaseRule.Laws
 EDGE	LeanDag.Barnacle.orcaella_laws	LeanDag.Hybrid.Admissible
-EDGE	LeanDag.Barnacle.orcaella_laws	LeanDag.HonestNoEquiv
+EDGE	LeanDag.Barnacle.orcaella_laws	LeanDag.HybridProperties.agree
 EDGE	LeanDag.Barnacle.orcaella_laws	LeanDag.Barnacle.BaseRule.ids
 EDGE	LeanDag.Barnacle.orcaella_laws	LeanDag.Barnacle.BaseRule.Laws.mk
-EDGE	LeanDag.Barnacle.orcaella_laws	LeanDag.Hybrid.decided_agree
+EDGE	LeanDag.Barnacle.orcaella_laws	LeanDag.HybridProperties.commitsCandidate
 EDGE	LeanDag.Barnacle.orcaella_laws	LeanDag.Barnacle.BaseRule.View
-EDGE	LeanDag.Barnacle.orcaella_laws	LeanDag.BlockUniverse
 EDGE	LeanDag.Barnacle.orcaella_laws	LeanDag.Barnacle.BaseRule.historyView
+EDGE	LeanDag.Barnacle.orcaella_laws	LeanDag.HybridProperties.commitsDirect
 EDGE	LeanDag.Barnacle.orcaella_laws	LeanDag.Barnacle.BaseRule.IsLeaderBlock
 EDGE	LeanDag.Barnacle.orcaella_laws	LeanDag.Barnacle.BaseRule.DirectCommitIn
-EDGE	LeanDag.Barnacle.orcaella_laws	LeanDag.Hybrid.Decided.directCommit
 EDGE	LeanDag.Barnacle.orcaella_laws	LeanDag.Barnacle.BaseRule.full
 EDGE	LeanDag.Barnacle.orcaella_laws	LeanDag.Slots
 EDGE	LeanDag.Barnacle.orcaella_laws	LeanDag.Barnacle.BaseRule.viewIds
@@ -38251,6 +38720,26 @@ EDGE	LeanDag.Barnacle.everyHeight.match_1_1	LeanDag.Barnacle.Keyed
 EDGE	LeanDag.Barnacle.everyHeight.match_1_1	LeanDag.Barnacle.PartialRun.start
 EDGE	LeanDag.Barnacle.everyHeight.match_1_1	LeanDag.Barnacle.Params.interval
 EDGE	LeanDag.Barnacle.everyHeight.match_1_1	LeanDag.Barnacle.LiveRule
+NODE	LeanDag.HybridProperties.not_thickLink_band_novel	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.not_thickLink_band_novel	LeanDag.Hybrid.ThickLink
+EDGE	LeanDag.HybridProperties.not_thickLink_band_novel	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.not_thickLink_band_novel	LeanDag.creatorsOf
+EDGE	LeanDag.HybridProperties.not_thickLink_band_novel	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.not_thickLink_band_novel	LeanDag.BlockUniverse.complete
+EDGE	LeanDag.HybridProperties.not_thickLink_band_novel	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.not_thickLink_band_novel	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.HybridProperties.not_thickLink_band_novel	LeanDag.Block.refs
+EDGE	LeanDag.HybridProperties.not_thickLink_band_novel	LeanDag.HybridProperties.not_thickLink_band_novel._simp_1_1
+EDGE	LeanDag.HybridProperties.not_thickLink_band_novel	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.not_thickLink_band_novel	LeanDag.history
+EDGE	LeanDag.HybridProperties.not_thickLink_band_novel	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.not_thickLink_band_novel	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.not_thickLink_band_novel	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.not_thickLink_band_novel	LeanDag.blocksAt
+EDGE	LeanDag.HybridProperties.not_thickLink_band_novel	LeanDag.HybridProperties.thickLink_band
+EDGE	LeanDag.HybridProperties.not_thickLink_band_novel	LeanDag.HybridProperties.not_thickLink_band_novel._proof_1_2
+EDGE	LeanDag.HybridProperties.not_thickLink_band_novel	LeanDag.HybridProperties.hybridRule
+EDGE	LeanDag.HybridProperties.not_thickLink_band_novel	LeanDag.mem_blocksAt
 NODE	LeanDag.MysticetiProperties.banded_aux._proof_1_28	LeanDag.MysticetiProperties	thm
 EDGE	LeanDag.MysticetiProperties.banded_aux._proof_1_28	LeanDag.Faults
 EDGE	LeanDag.MysticetiProperties.banded_aux._proof_1_28	LeanDag.Slots.slotRound
@@ -38299,6 +38788,23 @@ EDGE	LeanDag.Hydrozoan.EventualDecision.runDecidesBelow	LeanDag.Hydrozoan.View.C
 EDGE	LeanDag.Hydrozoan.EventualDecision.runDecidesBelow	LeanDag.Hydrozoan.IndirectLiveness.SpansEligible
 EDGE	LeanDag.Hydrozoan.EventualDecision.runDecidesBelow	LeanDag.Hydrozoan.Faults
 EDGE	LeanDag.Hydrozoan.EventualDecision.runDecidesBelow	LeanDag.Hydrozoan.EventualDecision.runDecidesBelow._proof_1_6
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_20	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_20	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_20	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_20	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_20	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_20	LeanDag.Hybrid.Decided
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_20	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_20	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_20	LeanDag.Hybrid.Eligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_20	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_20	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_20	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_20	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_20	LeanDag.Hybrid.decidableEligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_20	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_20	LeanDag.View
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_20	LeanDag.HybridProperties.hybridRule
 NODE	LeanDagTest.Barnacle.runP1._proof_10	LeanDagTest.Barnacle.Agreement	thm
 EDGE	LeanDagTest.Barnacle.runP1._proof_10	LeanDag.Barnacle.BaseRule.Decided
 EDGE	LeanDagTest.Barnacle.runP1._proof_10	LeanDag.Barnacle.Params.maxLeaders
@@ -38967,6 +39473,9 @@ EDGE	LeanDag.SkipMsg.gap.eq_1	LeanDag.SkipMsg.r
 EDGE	LeanDag.SkipMsg.gap.eq_1	LeanDag.BlockUniverse
 EDGE	LeanDag.SkipMsg.gap.eq_1	LeanDag.SkipMsg
 EDGE	LeanDag.SkipMsg.gap.eq_1	LeanDag.SkipMsg.r0
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_2	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_2	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_2	LeanDag.Slots
 NODE	LeanDag.Integration.Hydrozoan.Deployment.covered	LeanDag.Integration.Hydrozoan.Deployment	thm
 EDGE	LeanDag.Integration.Hydrozoan.Deployment.covered	LeanDag.Integration.Hydrozoan.toHybrid
 EDGE	LeanDag.Integration.Hydrozoan.Deployment.covered	LeanDag.Hydrozoan.Slots
@@ -39370,6 +39879,15 @@ EDGE	LeanDag.Integration.Hydrozoan.Deployment.horizon	LeanDag.Hydrozoan.Slots
 EDGE	LeanDag.Integration.Hydrozoan.Deployment.horizon	LeanDag.Integration.Hydrozoan.Deployment
 EDGE	LeanDag.Integration.Hydrozoan.Deployment.horizon	LeanDag.Integration.Hydrozoan.HybridCommittee
 EDGE	LeanDag.Integration.Hydrozoan.Deployment.horizon	LeanDag.Hydrozoan.Faults
+NODE	LeanDag.HybridProperties.coneSupports_band._proof_1_5	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_5	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_5	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_5	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_5	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_5	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_5	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_5	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_5	LeanDag.BlockUniverse
 NODE	LeanDag.ViewPace.mk	LeanDag.ViewPace	ctor
 EDGE	LeanDag.ViewPace.mk	LeanDag.Faults
 EDGE	LeanDag.ViewPace.mk	LeanDag.PaceCore.holds
@@ -40286,6 +40804,20 @@ EDGE	LeanDagTest.ugrow_not_populated_succ	LeanDag.Block.round
 EDGE	LeanDagTest.ugrow_not_populated_succ	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ugrow_not_populated_succ	LeanDag.Block.creator
 NODE	LeanDagTest.BlackMarlin.ugrowBM._proof_15	LeanDagTest.BlackMarlin.Reactive	thm
+NODE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_6	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_6	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_6	LeanDag.creatorsOf
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_6	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_6	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_6	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_6	LeanDag.Hybrid.slotBlamers
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_6	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_6	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_6	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_6	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_6	LeanDag.Hybrid.q
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_6	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_6	LeanDag.View
 NODE	LeanDag.waveRobin_spansEligible._proof_1_2	LeanDag.WaveRobin	thm
 NODE	LeanDag.Integration.Hydrozoan.decisionRound_eq	LeanDag.Integration.Hydrozoan.Schedule	thm
 EDGE	LeanDag.Integration.Hydrozoan.decisionRound_eq	LeanDag.Hydrozoan.Slots
@@ -41231,6 +41763,23 @@ EDGE	LeanDag.ReactivePace.mk._flat_ctor	LeanDag.IsLeaderBlock
 EDGE	LeanDag.ReactivePace.mk._flat_ctor	LeanDag.Slots
 EDGE	LeanDag.ReactivePace.mk._flat_ctor	LeanDag.ReactivePace
 EDGE	LeanDag.ReactivePace.mk._flat_ctor	LeanDag.Block.creator
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_27	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_27	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_27	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_27	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_27	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_27	LeanDag.Hybrid.Decided
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_27	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_27	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_27	LeanDag.Hybrid.Eligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_27	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_27	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_27	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_27	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_27	LeanDag.Hybrid.decidableEligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_27	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_27	LeanDag.View
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_27	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.eq_of_certificates_nonempty	LeanDag.Mysticeti	thm
 EDGE	LeanDag.eq_of_certificates_nonempty	LeanDag.votesIn
 EDGE	LeanDag.eq_of_certificates_nonempty	LeanDag.Faults
@@ -44681,6 +45230,23 @@ EDGE	LeanDag.BlockUniverse.ctorIdx	LeanDag.BlockUniverse
 NODE	LeanDag.slotRound_le_of_boundedSpacing._proof_1_2	LeanDag.Quantitative	thm
 EDGE	LeanDag.slotRound_le_of_boundedSpacing._proof_1_2	LeanDag.Slots.slotRound
 EDGE	LeanDag.slotRound_le_of_boundedSpacing._proof_1_2	LeanDag.Slots
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_9	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_9	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_9	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_9	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_9	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_9	LeanDag.Hybrid.Decided
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_9	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_9	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_9	LeanDag.Hybrid.Eligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_9	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_9	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_9	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_9	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_9	LeanDag.Hybrid.decidableEligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_9	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_9	LeanDag.View
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_9	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.DecidedWithin.below.directSkip	LeanDag.MysticetiProperties	ctor
 EDGE	LeanDag.DecidedWithin.below.directSkip	LeanDag.DecidedWithin.below
 EDGE	LeanDag.DecidedWithin.below.directSkip	LeanDag.Faults
@@ -45794,6 +46360,23 @@ EDGE	LeanDag.MahiMahi.Decided.indirectSkip	LeanDag.Slots
 EDGE	LeanDag.MahiMahi.Decided.indirectSkip	LeanDag.MahiMahi.Decided
 EDGE	LeanDag.MahiMahi.Decided.indirectSkip	LeanDag.View
 NODE	LeanDag.Hydrozoan.mem_historyUpto_of_reaches._simp_1_5	LeanDag.Hydrozoan.Helpers.History	thm
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_11	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_11	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_11	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_11	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_11	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_11	LeanDag.Hybrid.Decided
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_11	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_11	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_11	LeanDag.Hybrid.Eligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_11	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_11	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_11	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_11	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_11	LeanDag.Hybrid.decidableEligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_11	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_11	LeanDag.View
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_11	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.PaceCore.mk.injEq	LeanDag.ViewPace	thm
 EDGE	LeanDag.PaceCore.mk.injEq	LeanDag.PaceCore.mk.inj
 EDGE	LeanDag.PaceCore.mk.injEq	LeanDag.Faults
@@ -46510,6 +47093,15 @@ EDGE	LeanDag.Hybrid.Checkpoint.Model.exists_recoveryCorrect_mem._proof_1_2	LeanD
 EDGE	LeanDag.Hybrid.Checkpoint.Model.exists_recoveryCorrect_mem._proof_1_2	LeanDag.HybridFaults.fb
 EDGE	LeanDag.Hybrid.Checkpoint.Model.exists_recoveryCorrect_mem._proof_1_2	LeanDag.Hybrid.Checkpoint.Model.fabc
 EDGE	LeanDag.Hybrid.Checkpoint.Model.exists_recoveryCorrect_mem._proof_1_2	LeanDag.HybridFaults.byzantine
+NODE	LeanDag.HybridProperties.hybridRule._proof_1	LeanDag.Hybrid.Carrier	thm
+EDGE	LeanDag.HybridProperties.hybridRule._proof_1	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.hybridRule._proof_1	LeanDag.View.subset_ids
+EDGE	LeanDag.HybridProperties.hybridRule._proof_1	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.hybridRule._proof_1	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.hybridRule._proof_1	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.HybridProperties.hybridRule._proof_1	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.hybridRule._proof_1	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.hybridRule._proof_1	LeanDag.View
 NODE	LeanDag.Properties.Causal.refs_above	LeanDag.Properties.Carrier	thm
 EDGE	LeanDag.Properties.Causal.refs_above	LeanDag.CausalStructure.refs_round
 EDGE	LeanDag.Properties.Causal.refs_above	LeanDag.Properties.DagRule.ids
@@ -47580,6 +48172,11 @@ EDGE	LeanDagTest.Barnacle.Vsun'	LeanDagTest.Barnacle.Vsun'._proof_1
 EDGE	LeanDagTest.Barnacle.Vsun'	LeanDagTest.Barnacle.Vsun'._proof_2
 EDGE	LeanDagTest.Barnacle.Vsun'	LeanDagTest.Barnacle.Usun
 EDGE	LeanDagTest.Barnacle.Vsun'	LeanDag.View
+NODE	LeanDag.Barnacle.orcaellaLive_goodGives._proof_1_1	LeanDag.Barnacle.Helpers.Orcaella	thm
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives._proof_1_1	LeanDag.HybridFaults
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives._proof_1_1	LeanDag.HybridFaults.fc
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives._proof_1_1	LeanDag.Hybrid.q
+EDGE	LeanDag.Barnacle.orcaellaLive_goodGives._proof_1_1	LeanDag.HybridFaults.fb
 NODE	LeanDag.DoSAccepting	LeanDag.DoS.Exclusion	def
 EDGE	LeanDag.DoSAccepting	LeanDag.Delivery
 EDGE	LeanDag.DoSAccepting	LeanDag.Faults
@@ -48075,6 +48672,28 @@ EDGE	LeanDag.Hydrozoan.EventualDecision.runDecidesBelow._proof_1_1	LeanDag.Hydro
 EDGE	LeanDag.Hydrozoan.EventualDecision.runDecidesBelow._proof_1_1	LeanDag.Hydrozoan.q
 EDGE	LeanDag.Hydrozoan.EventualDecision.runDecidesBelow._proof_1_1	LeanDag.Hydrozoan.Slots.slotRound
 EDGE	LeanDag.Hydrozoan.EventualDecision.runDecidesBelow._proof_1_1	LeanDag.Hydrozoan.Faults
+NODE	LeanDag.HybridProperties.banded	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded	LeanDag.Properties.DagRule.Decided
+EDGE	LeanDag.HybridProperties.banded	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded	LeanDag.Hybrid.Decided
+EDGE	LeanDag.HybridProperties.banded	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.banded	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.HybridProperties.banded	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.banded	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.banded	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded	LeanDag.Properties.Banded
+EDGE	LeanDag.HybridProperties.banded	LeanDag.Properties.DagRule.viewIds
+EDGE	LeanDag.HybridProperties.banded	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.banded	LeanDag.View
+EDGE	LeanDag.HybridProperties.banded	LeanDag.Properties.DagRule.View
+EDGE	LeanDag.HybridProperties.banded	LeanDag.Properties.DagRule.Universe
+EDGE	LeanDag.HybridProperties.banded	LeanDag.HybridProperties.hybridRule
+EDGE	LeanDag.HybridProperties.banded	LeanDag.HybridProperties.banded_aux
 NODE	LeanDag.Nemo.decided_of_leader_mem	LeanDag.Nemo.Liveness	thm
 EDGE	LeanDag.Nemo.decided_of_leader_mem	LeanDag.Nemo.directCommit_of_leader_mem
 EDGE	LeanDag.Nemo.decided_of_leader_mem	LeanDag.Nemo.majority
@@ -48178,6 +48797,23 @@ EDGE	LeanDagTest.Barnacle.OrcaellaLive.S1	LeanDagTest.Barnacle.OrcaellaLive.S1._
 NODE	LeanDag.Nemo.ledgerSet	LeanDag.Nemo.Decision	def
 EDGE	LeanDag.Nemo.ledgerSet	LeanDag.Nemo.Universe
 EDGE	LeanDag.Nemo.ledgerSet	LeanDag.Nemo.Reaches
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_8	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_8	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_8	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_8	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_8	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_8	LeanDag.Hybrid.Decided
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_8	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_8	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_8	LeanDag.Hybrid.Eligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_8	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_8	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_8	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_8	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_8	LeanDag.Hybrid.decidableEligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_8	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_8	LeanDag.View
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_8	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.BlackMarlin.descentSUpto.eq_2	LeanDag.BlackMarlin.Helpers.Repair	thm
 EDGE	LeanDag.BlackMarlin.descentSUpto.eq_2	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.descentSUpto.eq_2	LeanDag.BlockUniverse.block
@@ -48898,6 +49534,20 @@ EDGE	LeanDag.Properties.Descends	LeanDag.Properties.DagRule
 EDGE	LeanDag.Properties.Descends	LeanDag.Slots
 EDGE	LeanDag.Properties.Descends	LeanDag.Properties.DagRule.View
 EDGE	LeanDag.Properties.Descends	LeanDag.Properties.DagRule.Universe
+NODE	LeanDag.HybridProperties.commitsDirect	LeanDag.Hybrid.Carrier	thm
+EDGE	LeanDag.HybridProperties.commitsDirect	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.commitsDirect	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.commitsDirect	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.commitsDirect	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.commitsDirect	LeanDag.Hybrid.DirectCommitIn
+EDGE	LeanDag.HybridProperties.commitsDirect	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.commitsDirect	LeanDag.Properties.CommitsDirect
+EDGE	LeanDag.HybridProperties.commitsDirect	LeanDag.Properties.DagRule.IsCandidate
+EDGE	LeanDag.HybridProperties.commitsDirect	LeanDag.Hybrid.Decided.directCommit
+EDGE	LeanDag.HybridProperties.commitsDirect	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.commitsDirect	LeanDag.Properties.DagRule.View
+EDGE	LeanDag.HybridProperties.commitsDirect	LeanDag.Properties.DagRule.Universe
+EDGE	LeanDag.HybridProperties.commitsDirect	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.Hydrozoan.View	LeanDag.Hydrozoan.Model.View	ind
 EDGE	LeanDag.Hydrozoan.View	LeanDag.Hydrozoan.BlockUniverse
 EDGE	LeanDag.Hydrozoan.View	LeanDag.Hydrozoan.Faults
@@ -50094,6 +50744,21 @@ NODE	LeanDag.waveRobin_fairSchedule._proof_1_1	LeanDag.WaveRobin	thm
 NODE	LeanDag.Hydrozoan.banded_aux._proof_1_14	LeanDag.Hydrozoan.Helpers.Banded	thm
 EDGE	LeanDag.Hydrozoan.banded_aux._proof_1_14	LeanDag.Hydrozoan.Slots
 EDGE	LeanDag.Hydrozoan.banded_aux._proof_1_14	LeanDag.Hydrozoan.Slots.slotRound
+NODE	LeanDag.HybridProperties.hybridRule	LeanDag.Hybrid.Carrier	def
+EDGE	LeanDag.HybridProperties.hybridRule	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.hybridRule	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.hybridRule	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.hybridRule	LeanDag.Hybrid.Decided
+EDGE	LeanDag.HybridProperties.hybridRule	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.HybridProperties.hybridRule	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.hybridRule	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.hybridRule	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.hybridRule	LeanDag.Properties.DagRule.mk
+EDGE	LeanDag.HybridProperties.hybridRule	LeanDag.Properties.DagRule
+EDGE	LeanDag.HybridProperties.hybridRule	LeanDag.HybridProperties.hybridRule._proof_1
+EDGE	LeanDag.HybridProperties.hybridRule	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.hybridRule	LeanDag.View
+EDGE	LeanDag.HybridProperties.hybridRule	LeanDag.HybridProperties.hybridRule._proof_2
 NODE	LeanDag.MahiMahi.Liveness.CommitsWithin	LeanDag.MahiMahi.Liveness.Statement	def
 EDGE	LeanDag.MahiMahi.Liveness.CommitsWithin	LeanDag.MahiMahi.decisionRound
 EDGE	LeanDag.MahiMahi.Liveness.CommitsWithin	LeanDag.MahiMahi.UnpredictableWithin
@@ -51725,6 +52390,18 @@ EDGE	LeanDag.Integration.genesis_forced	LeanDag.Block.round
 EDGE	LeanDag.Integration.genesis_forced	LeanDag.BlockUniverse
 EDGE	LeanDag.Integration.genesis_forced	LeanDag.BlockUniverse.causal
 EDGE	LeanDag.Integration.genesis_forced	LeanDag.Block.creator
+NODE	LeanDag.HybridProperties.descends	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.descends	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.descends	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.descends	LeanDag.Properties.Descends.of_indirect
+EDGE	LeanDag.HybridProperties.descends	LeanDag.Properties.Descends
+EDGE	LeanDag.HybridProperties.descends	LeanDag.Hybrid.Eligible
+EDGE	LeanDag.HybridProperties.descends	LeanDag.Hybrid.SpansEligible
+EDGE	LeanDag.HybridProperties.descends	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.descends	LeanDag.Hybrid.eligible_iff
+EDGE	LeanDag.HybridProperties.descends	LeanDag.Properties.DagRule.Universe
+EDGE	LeanDag.HybridProperties.descends	LeanDag.HybridProperties.hybridRule
+EDGE	LeanDag.HybridProperties.descends	LeanDag.HybridProperties.indirect
 NODE	LeanDag.decidableIsLeaderBlock._aux_1	LeanDag.Mysticeti	def
 EDGE	LeanDag.decidableIsLeaderBlock._aux_1	LeanDag.Faults
 EDGE	LeanDag.decidableIsLeaderBlock._aux_1	LeanDag.Slots.slotRound
@@ -52771,6 +53448,15 @@ EDGE	LeanDag.OptimalHydrozoan.mem_votesFor_of_nonByzantine	LeanDag.Hydrozoan.sup
 EDGE	LeanDag.OptimalHydrozoan.mem_votesFor_of_nonByzantine	LeanDag.OptimalHydrozoan.mem_votesFor
 EDGE	LeanDag.OptimalHydrozoan.mem_votesFor_of_nonByzantine	LeanDag.Hydrozoan.authorsOf
 EDGE	LeanDag.OptimalHydrozoan.mem_votesFor_of_nonByzantine	LeanDag.Hydrozoan.BlockUniverse.ids
+NODE	LeanDag.HybridProperties.coneSupports_band._proof_1_4	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_4	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_4	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_4	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_4	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_4	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_4	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_4	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_4	LeanDag.BlockUniverse
 NODE	LeanDag.Odontoceti.epoch_closes._proof_1_10	LeanDag.Adaptive.Odontoceti	thm
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_10	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.epoch_closes._proof_1_10	LeanDag.Slots.slotRound
@@ -55560,6 +56246,23 @@ EDGE	LeanDag.Hydrozoan.blamesInView.eq_1	LeanDag.Hydrozoan.Slots.leader
 EDGE	LeanDag.Hydrozoan.blamesInView.eq_1	LeanDag.Hydrozoan.Faults
 EDGE	LeanDag.Hydrozoan.blamesInView.eq_1	LeanDag.Hydrozoan.authorsOf
 EDGE	LeanDag.Hydrozoan.blamesInView.eq_1	LeanDag.Hydrozoan.BlockUniverse.ids
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_21	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_21	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_21	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_21	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_21	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_21	LeanDag.Hybrid.Decided
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_21	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_21	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_21	LeanDag.Hybrid.Eligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_21	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_21	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_21	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_21	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_21	LeanDag.Hybrid.decidableEligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_21	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_21	LeanDag.View
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_21	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.BlackMarlin.descentSUpto_reaches._proof_1_9	LeanDag.BlackMarlin.Helpers.Repair	thm
 EDGE	LeanDag.BlackMarlin.descentSUpto_reaches._proof_1_9	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.descentSUpto_reaches._proof_1_9	LeanDag.BlockUniverse.block
@@ -55898,6 +56601,11 @@ EDGE	LeanDagTest.ugrowSkewPace._proof_27	LeanDagTest.ugrowSkewPace._simp_7
 EDGE	LeanDagTest.ugrowSkewPace._proof_27	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
 EDGE	LeanDagTest.ugrowSkewPace._proof_27	LeanDagTest.ugrowSkewPace._proof_17
 EDGE	LeanDagTest.ugrowSkewPace._proof_27	LeanDag.Block.creator
+NODE	LeanDag.HybridProperties.leaderCommits._proof_1_2	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.leaderCommits._proof_1_2	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.leaderCommits._proof_1_2	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.leaderCommits._proof_1_2	LeanDag.Hybrid.q
+EDGE	LeanDag.HybridProperties.leaderCommits._proof_1_2	LeanDag.Slots
 NODE	LeanDag.Integration.Hydrozoan.decision_block_guards._proof_1_2	LeanDag.Integration.Hydrozoan.OptimalChopDecided	thm
 EDGE	LeanDag.Integration.Hydrozoan.decision_block_guards._proof_1_2	LeanDag.Hydrozoan.BlockUniverse
 EDGE	LeanDag.Integration.Hydrozoan.decision_block_guards._proof_1_2	LeanDag.Hydrozoan.Slots
@@ -56491,6 +57199,23 @@ EDGE	LeanDagTest.Barnacle.bnOdo	LeanDag.Barnacle.odontoceti
 EDGE	LeanDagTest.Barnacle.bnOdo	LeanDagTest.instFaults5FinOfNatNat_leanDagTest
 EDGE	LeanDagTest.Barnacle.bnOdo	LeanDag.Barnacle.BaseRule
 NODE	LeanDagTest.Ucrash._proof_14	LeanDagTest.SafeSkip	thm
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_14	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_14	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_14	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_14	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_14	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_14	LeanDag.Hybrid.Decided
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_14	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_14	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_14	LeanDag.Hybrid.Eligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_14	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_14	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_14	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_14	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_14	LeanDag.Hybrid.decidableEligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_14	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_14	LeanDag.View
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_14	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.Slots.chop_slotRound	LeanDag.GC.ChopDecided	thm
 EDGE	LeanDag.Slots.chop_slotRound	LeanDag.Faults
 EDGE	LeanDag.Slots.chop_slotRound	LeanDag.Slots.slotRound
@@ -56696,6 +57421,20 @@ EDGE	LeanDag.CausalStructure.mem_refs_of_mem_history_of_round_succ	LeanDag.Reach
 EDGE	LeanDag.CausalStructure.mem_refs_of_mem_history_of_round_succ	LeanDag.Block.round
 EDGE	LeanDag.CausalStructure.mem_refs_of_mem_history_of_round_succ	LeanDag.historyFrom
 EDGE	LeanDag.CausalStructure.mem_refs_of_mem_history_of_round_succ	LeanDag.CausalStructure
+NODE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_3	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_3	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_3	LeanDag.creatorsOf
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_3	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_3	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_3	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_3	LeanDag.Hybrid.slotBlamers
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_3	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_3	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_3	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_3	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_3	LeanDag.Hybrid.q
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_3	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_3	LeanDag.View
 NODE	LeanDag.Odontoceti.Eligible	LeanDag.Odontoceti.Decision	def
 EDGE	LeanDag.Odontoceti.Eligible	LeanDag.Slots.slotRound
 EDGE	LeanDag.Odontoceti.Eligible	LeanDag.Odontoceti.decisionRound
@@ -59758,6 +60497,33 @@ EDGE	LeanDag.OptimalHydrozoan.DecidedOpt.rec	LeanDag.OptimalHydrozoan.OptUnivers
 EDGE	LeanDag.OptimalHydrozoan.DecidedOpt.rec	LeanDag.Hydrozoan.Slots.slotRound
 EDGE	LeanDag.OptimalHydrozoan.DecidedOpt.rec	LeanDag.Hydrozoan.EligibleAsAnchor
 EDGE	LeanDag.OptimalHydrozoan.DecidedOpt.rec	LeanDag.Hydrozoan.SlowCommitInView
+NODE	LeanDag.HybridProperties.indirect	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.indirect	LeanDag.Hybrid.ThickLink
+EDGE	LeanDag.HybridProperties.indirect	LeanDag.Hybrid.Decided.indirectCommit
+EDGE	LeanDag.HybridProperties.indirect	LeanDag.Properties.DagRule.Decided
+EDGE	LeanDag.HybridProperties.indirect	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.indirect	LeanDag.Hybrid.lt_of_eligible
+EDGE	LeanDag.HybridProperties.indirect	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.indirect	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.indirect	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.indirect	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.indirect	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.HybridProperties.indirect	LeanDag.Hybrid.instDecidableThickLink
+EDGE	LeanDag.HybridProperties.indirect	LeanDag.decidableIsLeaderBlock
+EDGE	LeanDag.HybridProperties.indirect	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.indirect	LeanDag.Hybrid.Eligible
+EDGE	LeanDag.HybridProperties.indirect	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.indirect	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.indirect	LeanDag.Hybrid.Decided.indirectSkip
+EDGE	LeanDag.HybridProperties.indirect	LeanDag.IsLeaderBlock
+EDGE	LeanDag.HybridProperties.indirect	LeanDag.Hybrid.decisionRound
+EDGE	LeanDag.HybridProperties.indirect	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.indirect	LeanDag.Properties.Indirect
+EDGE	LeanDag.HybridProperties.indirect	LeanDag.Properties.DagRule.View
+EDGE	LeanDag.HybridProperties.indirect	LeanDag.Block.creator
+EDGE	LeanDag.HybridProperties.indirect	LeanDag.Hybrid.eligible_iff
+EDGE	LeanDag.HybridProperties.indirect	LeanDag.Properties.DagRule.Universe
+EDGE	LeanDag.HybridProperties.indirect	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.FinWhale.three_correct_of_roundRobin._simp_1_4	LeanDag.FinWhale.Rotation	thm
 NODE	LeanDag.BlackMarlin.TopoSort.ofIdOrder._proof_2	LeanDag.BlackMarlin.Helpers.Order	thm
 NODE	LeanDag.FinWhale.Run.dag	LeanDag.FinWhale.Model.Protocol	def
@@ -60939,6 +61705,21 @@ EDGE	LeanDag.DecidedWithin.below.indirectSkip	LeanDag.IsLeaderBlock
 EDGE	LeanDag.DecidedWithin.below.indirectSkip	LeanDag.DecidedWithin.indirectSkip
 EDGE	LeanDag.DecidedWithin.below.indirectSkip	LeanDag.Slots
 EDGE	LeanDag.DecidedWithin.below.indirectSkip	LeanDag.View
+NODE	LeanDag.HybridProperties.directCommitIn_band	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.directCommitIn_band	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.directCommitIn_band	LeanDag.HybridProperties.supportersIn_band
+EDGE	LeanDag.HybridProperties.directCommitIn_band	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.directCommitIn_band	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.directCommitIn_band	LeanDag.Hybrid.DirectCommitIn
+EDGE	LeanDag.HybridProperties.directCommitIn_band	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.directCommitIn_band	LeanDag.Hybrid.supportersIn
+EDGE	LeanDag.HybridProperties.directCommitIn_band	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.directCommitIn_band	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.directCommitIn_band	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.directCommitIn_band	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.directCommitIn_band	LeanDag.Hybrid.q
+EDGE	LeanDag.HybridProperties.directCommitIn_band	LeanDag.View
+EDGE	LeanDag.HybridProperties.directCommitIn_band	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.BlackMarlin.segment_congr._proof_1_2	LeanDag.BlackMarlin.Helpers.Order	thm
 NODE	LeanDag.Hybrid.Checkpoint.Model.card_abc	LeanDag.Hybrid.Checkpoint.BaseSpec	thm
 EDGE	LeanDag.Hybrid.Checkpoint.Model.card_abc	LeanDag.HybridFaults
@@ -61335,6 +62116,13 @@ EDGE	LeanDag.Properties.RebasedAbove.refs	LeanDag.Properties.DagRule.Universe
 NODE	LeanDag.Integration.Hydrozoan.spansEligible_slotsChopHZ._proof_1_2	LeanDag.Integration.Hydrozoan.ChopDecided	thm
 EDGE	LeanDag.Integration.Hydrozoan.spansEligible_slotsChopHZ._proof_1_2	LeanDag.Hydrozoan.Slots
 EDGE	LeanDag.Integration.Hydrozoan.spansEligible_slotsChopHZ._proof_1_2	LeanDag.Hydrozoan.Slots.slotRound
+NODE	LeanDag.HybridProperties.supportersIn_band._proof_1_1	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_1	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_1	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_1	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_1	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_1	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_1	LeanDag.BlockUniverse
 NODE	LeanDag.NemoProperties.descends	LeanDag.NemoProperties	thm
 EDGE	LeanDag.NemoProperties.descends	LeanDag.Slots.slotRound
 EDGE	LeanDag.NemoProperties.descends	LeanDag.Nemo.eligible_iff
@@ -62061,6 +62849,13 @@ EDGE	LeanDag.Hydrozoan.banded_aux._proof_1_5	LeanDag.Hydrozoan.Block.round
 EDGE	LeanDag.Hydrozoan.banded_aux._proof_1_5	LeanDag.Hydrozoan.BlockUniverse.block
 EDGE	LeanDag.Hydrozoan.banded_aux._proof_1_5	LeanDag.Hydrozoan.Slots.slotRound
 EDGE	LeanDag.Hydrozoan.banded_aux._proof_1_5	LeanDag.Hydrozoan.Faults
+NODE	LeanDag.HybridProperties.coneSupports_band._proof_1_10	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_10	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_10	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_10	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_10	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_10	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_10	LeanDag.BlockUniverse
 NODE	LeanDag.OptimalHydrozoan.ThresholdArithmetic.FastUniqueness.eq_1	LeanDag.OptimalHydrozoan.ThresholdArithmetic.Proof	thm
 EDGE	LeanDag.OptimalHydrozoan.ThresholdArithmetic.FastUniqueness.eq_1	LeanDag.OptimalHydrozoan.OptimalFaults
 EDGE	LeanDag.OptimalHydrozoan.ThresholdArithmetic.FastUniqueness.eq_1	LeanDag.OptimalHydrozoan.ThresholdArithmetic.FastUniqueness
@@ -62088,6 +62883,16 @@ EDGE	LeanDag.BlockUniverse._sizeOf_1	LeanDag.BlockUniverse
 EDGE	LeanDag.BlockUniverse._sizeOf_1	LeanDag.Block.creator
 EDGE	LeanDag.BlockUniverse._sizeOf_1	LeanDag.ValidWrt
 NODE	LeanDag.card_filter_creator_le_card_topsOf._simp_1_1	LeanDag.DoS.Adoption	thm
+NODE	LeanDag.HybridProperties.hybridRule._proof_2	LeanDag.Hybrid.Carrier	thm
+EDGE	LeanDag.HybridProperties.hybridRule._proof_2	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.hybridRule._proof_2	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.hybridRule._proof_2	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.hybridRule._proof_2	LeanDag.Block.refs
+EDGE	LeanDag.HybridProperties.hybridRule._proof_2	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.hybridRule._proof_2	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.hybridRule._proof_2	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.hybridRule._proof_2	LeanDag.View.complete
+EDGE	LeanDag.HybridProperties.hybridRule._proof_2	LeanDag.View
 NODE	LeanDag.OptimalHydrozoan.isFastEvidence_exclusive	LeanDag.OptimalHydrozoan.Helpers.SlotAgreement	thm
 EDGE	LeanDag.OptimalHydrozoan.isFastEvidence_exclusive	LeanDag.Hydrozoan.Block.parents
 EDGE	LeanDag.OptimalHydrozoan.isFastEvidence_exclusive	LeanDag.Hydrozoan.Block.author
@@ -62440,6 +63245,23 @@ EDGE	LeanDag.BlackMarlin.linkersIn_full	LeanDag.BlackMarlin.Supported
 EDGE	LeanDag.BlackMarlin.linkersIn_full	LeanDag.Block.creator
 EDGE	LeanDag.BlackMarlin.linkersIn_full	LeanDag.BlackMarlin.SupportedIn
 EDGE	LeanDag.BlackMarlin.linkersIn_full	LeanDag.mem_blocksAt
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_30	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_30	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_30	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_30	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_30	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_30	LeanDag.Hybrid.Decided
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_30	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_30	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_30	LeanDag.Hybrid.Eligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_30	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_30	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_30	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_30	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_30	LeanDag.Hybrid.decidableEligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_30	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_30	LeanDag.View
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_30	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.OptimalHydrozoan.NoEvidenceQuorumInView	LeanDag.OptimalHydrozoan.Model.DirectRules	def
 EDGE	LeanDag.OptimalHydrozoan.NoEvidenceQuorumInView	LeanDag.Hydrozoan.BlockUniverse
 EDGE	LeanDag.OptimalHydrozoan.NoEvidenceQuorumInView	LeanDag.Hydrozoan.Slots
@@ -62861,6 +63683,23 @@ EDGE	LeanDag.Delivery.recOn	LeanDag.Block.creator
 NODE	LeanDagTest.Minnow.Dk._proof_1	LeanDagTest.Minnow.Skip	thm
 EDGE	LeanDagTest.Minnow.Dk._proof_1	LeanDag.Block.refs
 EDGE	LeanDagTest.Minnow.Dk._proof_1	LeanDagTest.Minnow.kBlk
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_13	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_13	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_13	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_13	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_13	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_13	LeanDag.Hybrid.Decided
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_13	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_13	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_13	LeanDag.Hybrid.Eligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_13	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_13	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_13	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_13	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_13	LeanDag.Hybrid.decidableEligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_13	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_13	LeanDag.View
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_13	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.BlackMarlin.eq_of_supported._proof_1_2	LeanDag.BlackMarlin.Helpers.Rules	thm
 EDGE	LeanDag.BlackMarlin.eq_of_supported._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.eq_of_supported._proof_1_2	LeanDag.Faults.byzantine
@@ -63150,6 +63989,32 @@ EDGE	LeanDag.MahiMahi.AgreeUpto.goodAt_subset	LeanDag.MahiMahi.AgreeUpto.goodAt_
 EDGE	LeanDag.MahiMahi.AgreeUpto.goodAt_subset	LeanDag.MahiMahi.decisionRoundAt
 EDGE	LeanDag.MahiMahi.AgreeUpto.goodAt_subset	LeanDag.Block.creator
 NODE	LeanDag.FinWhale.Creation.theorem21._simp_1_1	LeanDag.FinWhale.Creation	thm
+NODE	LeanDag.HybridProperties.supportersIn_band	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.supportersIn_band	LeanDag.HybridProperties.supportersIn_band._proof_1_3
+EDGE	LeanDag.HybridProperties.supportersIn_band	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.supportersIn_band	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.supportersIn_band	LeanDag.HybridProperties.supportersIn_band._proof_1_5
+EDGE	LeanDag.HybridProperties.supportersIn_band	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.supportersIn_band	LeanDag.HybridProperties.supportersIn_band._proof_1_2
+EDGE	LeanDag.HybridProperties.supportersIn_band	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.HybridProperties.supportersIn_band	LeanDag.HybridProperties.supportersIn_band._proof_1_1
+EDGE	LeanDag.HybridProperties.supportersIn_band	LeanDag.Block.refs
+EDGE	LeanDag.HybridProperties.supportersIn_band	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.supportersIn_band	LeanDag.Hybrid.supportersIn
+EDGE	LeanDag.HybridProperties.supportersIn_band	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.supportersIn_band	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.supportersIn_band	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.supportersIn_band	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.supportersIn_band	LeanDag.blocksAt
+EDGE	LeanDag.HybridProperties.supportersIn_band	LeanDag.HybridProperties.supportersIn_band._proof_1_4
+EDGE	LeanDag.HybridProperties.supportersIn_band	LeanDag.MysticetiProperties.blocksAt_band
+EDGE	LeanDag.HybridProperties.supportersIn_band	LeanDag.MysticetiProperties.band_refs
+EDGE	LeanDag.HybridProperties.supportersIn_band	LeanDag.MysticetiProperties.band_block
+EDGE	LeanDag.HybridProperties.supportersIn_band	LeanDag.HybridProperties.toCore
+EDGE	LeanDag.HybridProperties.supportersIn_band	LeanDag.View
+EDGE	LeanDag.HybridProperties.supportersIn_band	LeanDag.Block.creator
+EDGE	LeanDag.HybridProperties.supportersIn_band	LeanDag.HybridProperties.hybridRule
+EDGE	LeanDag.HybridProperties.supportersIn_band	LeanDag.mem_blocksAt
 NODE	LeanDagTest.Hydrozoan.lk2._proof_1	LeanDagTest.Hydrozoan.CausalHistory	thm
 NODE	LeanDagTest.Barnacle.slack_eq._proof_1_1	LeanDagTest.Barnacle.Instances	thm
 NODE	LeanDag.joinView._proof_2	LeanDag.GC.Bootstrap	thm
@@ -64787,6 +65652,13 @@ EDGE	LeanDagTest.twin4	LeanDagTest.mmTwinBlk
 EDGE	LeanDagTest.twin4	LeanDag.BlockUniverse.mk
 EDGE	LeanDagTest.twin4	LeanDag.BlockUniverse
 EDGE	LeanDagTest.twin4	LeanDagTest.twin4._proof_2
+NODE	LeanDag.HybridProperties.supportersIn_band._proof_1_2	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_2	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_2	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_2	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_2	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_2	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_2	LeanDag.BlockUniverse
 NODE	LeanDag.Hybrid.Checkpoint.Model.Execution.FinalityQC.sender_eq	LeanDag.Hybrid.Checkpoint.BaseSpec	thm
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.FinalityQC.sender_eq	LeanDag.HybridFaults
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.FinalityQC.sender_eq	LeanDag.Hybrid.Checkpoint.CheckpointData
@@ -68258,6 +69130,13 @@ EDGE	LeanDag.committed_of_correct_block_within._proof_1_2	LeanDag.slotAt
 EDGE	LeanDag.committed_of_correct_block_within._proof_1_2	LeanDag.Faults.f
 EDGE	LeanDag.committed_of_correct_block_within._proof_1_2	LeanDag.Slots
 NODE	LeanDagTest.ugrow_blocksAt_eq_empty._simp_1_1	LeanDagTest.Partial	thm
+NODE	LeanDag.HybridProperties.coneSupports_band._proof_1_3	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_3	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_3	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_3	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_3	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_3	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_3	LeanDag.BlockUniverse
 NODE	LeanDag.SkipMsg.certificatesIn_subset_ids	LeanDag.SafeSkip.Invariance	thm
 EDGE	LeanDag.SkipMsg.certificatesIn_subset_ids	LeanDag.Faults
 EDGE	LeanDag.SkipMsg.certificatesIn_subset_ids	LeanDag.certificatesIn
@@ -69341,6 +70220,47 @@ EDGE	LeanDag.ReactivePace.mk.inj	LeanDag.IsLeaderBlock
 EDGE	LeanDag.ReactivePace.mk.inj	LeanDag.Slots
 EDGE	LeanDag.ReactivePace.mk.inj	LeanDag.ReactivePace
 EDGE	LeanDag.ReactivePace.mk.inj	LeanDag.Block.creator
+NODE	LeanDag.HybridProperties.coneSupports_band	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.HybridProperties.coneSupports_band._simp_1_2
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.HybridProperties.coneSupports_band._proof_1_8
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.HybridProperties.coneSupports_band._simp_1_1
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.creatorsOf
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.Properties.DagRule.ids
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.HybridProperties.coneSupports_band._proof_1_3
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.Hybrid.coneSupports
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.mem_history_iff
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.HybridProperties.coneSupports_band._proof_1_6
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.HybridProperties.coneSupports_band._proof_1_11
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.MysticetiProperties.creatorsOf_band
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.Block.refs
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.Properties.AgreeBand.reaches_old
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.Properties.AgreeBand.reaches_of
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.HybridProperties.coneSupports_band._proof_1_5
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.MysticetiProperties.band_mem
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.HybridProperties.coneSupports_band._proof_1_7
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.ReachesFrom
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.HybridProperties.coneSupports_band._proof_1_9
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.history
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.blocksAt
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.MysticetiProperties.causal
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.HybridProperties.coneSupports_band._proof_1_10
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.HybridProperties.coneSupports_band._proof_1_4
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.MysticetiProperties.blocksAt_band
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.MysticetiProperties.band_refs
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.HybridProperties.toCore
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.HybridProperties.hybridRule
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.mem_blocksAt
+EDGE	LeanDag.HybridProperties.coneSupports_band	LeanDag.Reaches
 NODE	LeanDag.Hydrozoan.eligibleAsAnchor_sched	LeanDag.Hydrozoan.Helpers.Commit	thm
 EDGE	LeanDag.Hydrozoan.eligibleAsAnchor_sched	LeanDag.Slots.slotRound
 EDGE	LeanDag.Hydrozoan.eligibleAsAnchor_sched	LeanDag.Hydrozoan.decisionRound
@@ -69819,6 +70739,23 @@ EDGE	LeanDag.OptimalHydrozoan.DirectLiveness.holds	LeanDag.Hydrozoan.Slots.leade
 EDGE	LeanDag.OptimalHydrozoan.DirectLiveness.holds	LeanDag.OptimalHydrozoan.DirectLiveness.CommitLiveness
 EDGE	LeanDag.OptimalHydrozoan.DirectLiveness.holds	LeanDag.OptimalHydrozoan.DirectLiveness.Statement
 EDGE	LeanDag.OptimalHydrozoan.DirectLiveness.holds	LeanDag.Hydrozoan.BlockUniverse.ids
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_24	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_24	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_24	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_24	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_24	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_24	LeanDag.Hybrid.Decided
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_24	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_24	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_24	LeanDag.Hybrid.Eligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_24	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_24	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_24	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_24	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_24	LeanDag.Hybrid.decidableEligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_24	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_24	LeanDag.View
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_24	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.Integration.refs_mem_history_of_commonAt	LeanDag.Integration.CommonTarget	thm
 EDGE	LeanDag.Integration.refs_mem_history_of_commonAt	LeanDag.RefStepFrom
 EDGE	LeanDag.Integration.refs_mem_history_of_commonAt	LeanDag.Faults
@@ -71069,6 +72006,23 @@ EDGE	LeanDag.FinWhale.mem_view_of_voters	LeanDag.Block.creator
 NODE	LeanDagTest.pipe_leader_val	LeanDagTest.Pipelined	thm
 EDGE	LeanDagTest.pipe_leader_val	LeanDag.Slots.leader
 EDGE	LeanDagTest.pipe_leader_val	LeanDagTest.pipeSlots
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_10	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_10	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_10	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_10	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_10	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_10	LeanDag.Hybrid.Decided
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_10	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_10	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_10	LeanDag.Hybrid.Eligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_10	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_10	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_10	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_10	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_10	LeanDag.Hybrid.decidableEligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_10	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_10	LeanDag.View
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_10	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.Odontoceti.PartialRun.mk	LeanDag.Adaptive.Odontoceti	ctor
 EDGE	LeanDag.Odontoceti.PartialRun.mk	LeanDag.Faults5
 EDGE	LeanDag.Odontoceti.PartialRun.mk	LeanDag.Adaptive.Policy.pick
@@ -71370,6 +72324,23 @@ EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.CheckpointQC.mk._flat_ctor	LeanDa
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.CheckpointQC.mk._flat_ctor	LeanDag.Hybrid.Checkpoint.Model
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.CheckpointQC.mk._flat_ctor	LeanDag.Hybrid.Checkpoint.Model.Execution.CheckpointQC
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.CheckpointQC.mk._flat_ctor	LeanDag.Hybrid.Checkpoint.Model.Execution
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_29	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_29	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_29	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_29	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_29	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_29	LeanDag.Hybrid.Decided
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_29	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_29	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_29	LeanDag.Hybrid.Eligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_29	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_29	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_29	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_29	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_29	LeanDag.Hybrid.decidableEligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_29	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_29	LeanDag.View
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_29	LeanDag.HybridProperties.hybridRule
 NODE	LeanDagTest.FinWhaleEquiv.Uequiv.eq_1	LeanDagTest.FinWhale.Equivocation	thm
 EDGE	LeanDagTest.FinWhaleEquiv.Uequiv.eq_1	LeanDagTest.FinWhaleEquiv.Uequiv
 EDGE	LeanDagTest.FinWhaleEquiv.Uequiv.eq_1	LeanDagTest.FinWhaleEquiv.Uequiv._proof_1
@@ -73797,21 +74768,6 @@ EDGE	LeanDag.Integration.Hydrozoan.decidedOpt_of_decidedOpt_chopHZ._proof_1_3	Le
 EDGE	LeanDag.Integration.Hydrozoan.decidedOpt_of_decidedOpt_chopHZ._proof_1_3	LeanDag.Integration.Hydrozoan.HybridCommittee
 EDGE	LeanDag.Integration.Hydrozoan.decidedOpt_of_decidedOpt_chopHZ._proof_1_3	LeanDag.Integration.Hydrozoan.slotsChopHZ
 EDGE	LeanDag.Integration.Hydrozoan.decidedOpt_of_decidedOpt_chopHZ._proof_1_3	LeanDag.Integration.Hydrozoan.SelfParenting
-NODE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_5	LeanDag.Barnacle.Helpers.Orcaella	thm
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_5	LeanDag.HybridFaults
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_5	LeanDag.HybridFaults.fc
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_5	LeanDag.Barnacle.BaseRule.Universe
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_5	LeanDag.Slots.slotRound
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_5	LeanDag.Barnacle.orcaellaLive
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_5	LeanDag.HybridFaults.toFaults
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_5	LeanDag.HonestNoEquiv
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_5	LeanDag.BlockUniverse.block
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_5	LeanDag.Block.round
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_5	LeanDag.Barnacle.LiveRule.toBaseRule
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_5	LeanDag.BlockUniverse
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_5	LeanDag.Hybrid.q
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_5	LeanDag.HybridFaults.fb
-EDGE	LeanDag.Barnacle.orcaellaLive_descent._proof_1_5	LeanDag.Slots
 NODE	LeanDag.Odontoceti.decidableEligible._aux_1	LeanDag.Odontoceti.Decision	def
 EDGE	LeanDag.Odontoceti.decidableEligible._aux_1	LeanDag.Slots.slotRound
 EDGE	LeanDag.Odontoceti.decidableEligible._aux_1	LeanDag.Odontoceti.decisionRound
@@ -75101,6 +76057,20 @@ EDGE	LeanDag.OptimalHydrozoan.IsNoFastEvidence.eq_1	LeanDag.Hydrozoan.IsLeaderBl
 EDGE	LeanDag.OptimalHydrozoan.IsNoFastEvidence.eq_1	LeanDag.OptimalHydrozoan.IsFastEvidence
 EDGE	LeanDag.OptimalHydrozoan.IsNoFastEvidence.eq_1	LeanDag.OptimalHydrozoan.IsNoFastEvidence
 EDGE	LeanDag.OptimalHydrozoan.IsNoFastEvidence.eq_1	LeanDag.OptimalHydrozoan.OptimalFaults.toFaults
+NODE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_4	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_4	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_4	LeanDag.creatorsOf
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_4	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_4	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_4	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_4	LeanDag.Hybrid.slotBlamers
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_4	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_4	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_4	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_4	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_4	LeanDag.Hybrid.q
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_4	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_4	LeanDag.View
 NODE	LeanDagTest.BlackMarlin.cntView._proof_2	LeanDagTest.BlackMarlin.Counting	thm
 EDGE	LeanDagTest.BlackMarlin.cntView._proof_2	LeanDagTest.BlackMarlin.Ucnt
 EDGE	LeanDagTest.BlackMarlin.cntView._proof_2	LeanDag.Block.refs
@@ -75605,6 +76575,20 @@ EDGE	LeanDagTest.nemoBlk	LeanDagTest.nemoBlk._proof_7
 EDGE	LeanDagTest.nemoBlk	LeanDagTest.nemoBlk._proof_6
 EDGE	LeanDagTest.nemoBlk	LeanDagTest.nemoBlk._proof_11
 EDGE	LeanDagTest.nemoBlk	LeanDagTest.nemoBlk._proof_9
+NODE	LeanDag.HybridProperties.coneSupports_band._proof_1_8	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_8	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_8	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_8	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_8	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_8	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_8	LeanDag.BlockUniverse
+NODE	LeanDag.HybridProperties.coneSupports_band._proof_1_11	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_11	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_11	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_11	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_11	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_11	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_11	LeanDag.BlockUniverse
 NODE	LeanDagTest.demotePolicy._proof_3	LeanDagTest.Adaptive	thm
 EDGE	LeanDagTest.demotePolicy._proof_3	LeanDag.Slots.leader
 EDGE	LeanDagTest.demotePolicy._proof_3	LeanDag.MysticetiProperties.mysticetiRule
@@ -75738,6 +76722,23 @@ EDGE	LeanDag.slotBlamers_congr._simp_1_2	LeanDag.BlockUniverse
 EDGE	LeanDag.slotBlamers_congr._simp_1_2	LeanDag.blocksAt
 EDGE	LeanDag.slotBlamers_congr._simp_1_2	LeanDag.mem_blocksAt
 NODE	LeanDagTest.BlackMarlin.divRot.match_1	LeanDagTest.BlackMarlin.Divergence	def
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_18	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_18	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_18	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_18	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_18	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_18	LeanDag.Hybrid.Decided
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_18	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_18	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_18	LeanDag.Hybrid.Eligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_18	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_18	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_18	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_18	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_18	LeanDag.Hybrid.decidableEligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_18	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_18	LeanDag.View
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_18	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.Hybrid.Checkpoint.CheckpointData	LeanDag.Hybrid.Checkpoint.BaseSpec	ind
 NODE	LeanDagTest.mmMultiSlots._proof_2	LeanDagTest.MahiMahi.Counting	thm
 NODE	LeanDag.card_historyBlocksOf_le'._proof_1_1	LeanDag.DoS.Pedigree	thm
@@ -76022,6 +77023,13 @@ EDGE	LeanDagTest.demote_placesRuns	LeanDagTest.demotePolicy
 EDGE	LeanDagTest.demote_placesRuns	LeanDag.PlacesRuns
 EDGE	LeanDagTest.demote_placesRuns	LeanDag.Properties.DagRule.View
 EDGE	LeanDagTest.demote_placesRuns	LeanDag.Properties.DagRule.Universe
+NODE	LeanDag.HybridProperties.coneSupports_band._proof_1_9	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_9	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_9	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_9	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_9	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_9	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.coneSupports_band._proof_1_9	LeanDag.BlockUniverse
 NODE	LeanDag.BlackMarlin.Pace.concludesAt_of_holds._proof_1_5	LeanDag.BlackMarlin.Helpers.Reactive	thm
 EDGE	LeanDag.BlackMarlin.Pace.concludesAt_of_holds._proof_1_5	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.Pace.concludesAt_of_holds._proof_1_5	LeanDag.BlockUniverse.block
@@ -76070,6 +77078,13 @@ EDGE	LeanDag.creators_refs_subset_authorsAt	LeanDag.Block.round
 EDGE	LeanDag.creators_refs_subset_authorsAt	LeanDag.BlockUniverse
 EDGE	LeanDag.creators_refs_subset_authorsAt	LeanDag.BlockUniverse.round_of_mem_refs
 EDGE	LeanDag.creators_refs_subset_authorsAt	LeanDag.Block.creator
+NODE	LeanDag.HybridProperties.supportersIn_band._proof_1_3	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_3	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_3	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_3	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_3	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_3	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_3	LeanDag.BlockUniverse
 NODE	LeanDag.SkipMsg.line_eq_lineOf._proof_1_1	LeanDag.SafeSkip.Jump	thm
 EDGE	LeanDag.SkipMsg.line_eq_lineOf._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.SkipMsg.line_eq_lineOf._proof_1_1	LeanDag.BlockUniverse.block
@@ -76292,6 +77307,18 @@ EDGE	LeanDag.FinWhale.Creation.noConfusionType	LeanDag.FinWhale.Trigger
 EDGE	LeanDag.FinWhale.Creation.noConfusionType	LeanDag.FinWhale.Creation
 EDGE	LeanDag.FinWhale.Creation.noConfusionType	LeanDag.Block.creator
 EDGE	LeanDag.FinWhale.Creation.noConfusionType	LeanDag.FinWhale.Trigger.leaderAndQuorum
+NODE	LeanDag.HybridProperties.hybridLive	LeanDag.HybridProperties	def
+EDGE	LeanDag.HybridProperties.hybridLive	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.hybridLive	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.hybridLive	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.hybridLive	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.hybridLive	LeanDag.PopulatedOn
+EDGE	LeanDag.HybridProperties.hybridLive	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.hybridLive	LeanDag.Hybrid.q
+EDGE	LeanDag.HybridProperties.hybridLive	LeanDag.View.CoversUpto
+EDGE	LeanDag.HybridProperties.hybridLive	LeanDag.SynchronisedOn
+EDGE	LeanDag.HybridProperties.hybridLive	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.hybridLive	LeanDag.View
 NODE	LeanDagTest.ugrowHonest._proof_6	LeanDagTest.Partial	thm
 EDGE	LeanDagTest.ugrowHonest._proof_6	LeanDagTest.Ugrow
 EDGE	LeanDagTest.ugrowHonest._proof_6	LeanDagTest.ugrowHonest._simp_2
@@ -78585,6 +79612,13 @@ NODE	LeanDag.DirectCommit.congr_simp	LeanDag.Integration.ReGenesis	thm
 EDGE	LeanDag.DirectCommit.congr_simp	LeanDag.Faults
 EDGE	LeanDag.DirectCommit.congr_simp	LeanDag.DirectCommit
 EDGE	LeanDag.DirectCommit.congr_simp	LeanDag.BlockUniverse
+NODE	LeanDag.HybridProperties.supportersIn_band._proof_1_5	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_5	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_5	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_5	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_5	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_5	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.supportersIn_band._proof_1_5	LeanDag.BlockUniverse
 NODE	LeanDag.OptimalHydrozoan.decidableSkippedLeaderOptInView	LeanDag.OptimalHydrozoan.Helpers.DirectRules	def
 EDGE	LeanDag.OptimalHydrozoan.decidableSkippedLeaderOptInView	LeanDag.Hydrozoan.BlockUniverse
 EDGE	LeanDag.OptimalHydrozoan.decidableSkippedLeaderOptInView	LeanDag.Hydrozoan.Slots
@@ -78905,6 +79939,46 @@ EDGE	LeanDagTest.ugrowReactive_early	LeanDagTest.ugrowReactive
 EDGE	LeanDagTest.ugrowReactive_early	LeanDag.ReactivePace.toPaceCore
 EDGE	LeanDagTest.ugrowReactive_early	LeanDag.PaceCore.timeout
 EDGE	LeanDagTest.ugrowReactive_early	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+NODE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.creatorsOf
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.MysticetiProperties.isLeaderBlock_band_old
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_3
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_4
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.HybridProperties.directSkipSlotIn_band._simp_1_1
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.BlockUniverse.complete
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.Hybrid.slotBlamers
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.Block.refs
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.decidableIsLeaderBlock
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_8
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_7
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.HybridProperties.directSkipSlotIn_band._simp_1_2
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.Hybrid.DirectSkipSlotIn
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.blocksAt
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_5
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.Hybrid.q
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_9
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.IsLeaderBlock
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.MysticetiProperties.blocksAt_band
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.MysticetiProperties.band_refs
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.MysticetiProperties.band_block
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.HybridProperties.toCore
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.View
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.Block.creator
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.HybridProperties.directSkipSlotIn_band._proof_1_6
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.HybridProperties.hybridRule
+EDGE	LeanDag.HybridProperties.directSkipSlotIn_band	LeanDag.mem_blocksAt
 NODE	LeanDag.Barnacle.progress_exists._proof_1_15	LeanDag.Barnacle.Helpers.Progress	thm
 EDGE	LeanDag.Barnacle.progress_exists._proof_1_15	LeanDag.Barnacle.BaseRule.Decided
 EDGE	LeanDag.Barnacle.progress_exists._proof_1_15	LeanDag.Barnacle.Params.maxLeaders
@@ -79002,6 +80076,23 @@ EDGE	LeanDag.BlackMarlin.descentUpto.eq_def	LeanDag.BlackMarlin.Rotation
 EDGE	LeanDag.BlackMarlin.descentUpto.eq_def	LeanDag.BlackMarlin.descentUpto
 NODE	LeanDag.BlackMarlin.descentSuppUpto.match_1.eq_1	LeanDag.BlackMarlin.Helpers.Repair	thm
 EDGE	LeanDag.BlackMarlin.descentSuppUpto.match_1.eq_1	LeanDag.BlackMarlin.descentSuppUpto.match_1
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_26	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_26	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_26	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_26	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_26	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_26	LeanDag.Hybrid.Decided
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_26	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_26	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_26	LeanDag.Hybrid.Eligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_26	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_26	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_26	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_26	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_26	LeanDag.Hybrid.decidableEligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_26	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_26	LeanDag.View
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_26	LeanDag.HybridProperties.hybridRule
 NODE	LeanDagTest.Uomit._proof_7	LeanDagTest.Unbounded	thm
 NODE	LeanDag.directCommit_of_synchronisedOn	LeanDag.Liveness	thm
 EDGE	LeanDag.directCommit_of_synchronisedOn	LeanDag.Faults
@@ -80374,6 +81465,7 @@ EDGE	LeanDag.Accepted.mk._flat_ctor	LeanDag.BlockUniverse.block
 EDGE	LeanDag.Accepted.mk._flat_ctor	LeanDag.Block.round
 EDGE	LeanDag.Accepted.mk._flat_ctor	LeanDag.BlockUniverse
 EDGE	LeanDag.Accepted.mk._flat_ctor	LeanDag.Block.creator
+NODE	LeanDag.HybridProperties.coneSupports_band._simp_1_1	LeanDag.HybridProperties	thm
 NODE	LeanDag.mem_ids_of_decided	LeanDag.Quality.Coverage	thm
 EDGE	LeanDag.mem_ids_of_decided	LeanDag.Properties.DagRule.ids
 EDGE	LeanDag.mem_ids_of_decided	LeanDag.Faults
@@ -81612,6 +82704,18 @@ EDGE	LeanDag.Integration.chopMsg_B1	LeanDag.BlockUniverse
 EDGE	LeanDag.Integration.chopMsg_B1	LeanDag.Integration.chopMsg
 EDGE	LeanDag.Integration.chopMsg_B1	LeanDag.SkipMsg
 EDGE	LeanDag.Integration.chopMsg_B1	LeanDag.SkipMsg.B1
+NODE	LeanDag.HybridProperties.commitsCandidate	LeanDag.Hybrid.Carrier	thm
+EDGE	LeanDag.HybridProperties.commitsCandidate	LeanDag.Properties.CommitsCandidate
+EDGE	LeanDag.HybridProperties.commitsCandidate	LeanDag.Properties.DagRule.Decided
+EDGE	LeanDag.HybridProperties.commitsCandidate	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.commitsCandidate	LeanDag.Hybrid.isLeaderBlock_of_decided
+EDGE	LeanDag.HybridProperties.commitsCandidate	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.commitsCandidate	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.commitsCandidate	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.commitsCandidate	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.commitsCandidate	LeanDag.Properties.DagRule.View
+EDGE	LeanDag.HybridProperties.commitsCandidate	LeanDag.Properties.DagRule.Universe
+EDGE	LeanDag.HybridProperties.commitsCandidate	LeanDag.HybridProperties.hybridRule
 NODE	LeanDagTest.doubleFaults._proof_1	LeanDagTest.DoS.Doubling	thm
 NODE	LeanDag.BlackMarlin.TopoSort.ofFinOrder._proof_1	LeanDag.BlackMarlin.Helpers.Order	thm
 NODE	LeanDag.Hydrozoan.n_add_qWeak_add_f_le_qFast_add_q	LeanDag.Hydrozoan.Helpers.SlotAgreement	thm
@@ -83328,6 +84432,23 @@ EDGE	LeanDag.ExposedIn.of_mem_refs	LeanDag.ExposedIn
 EDGE	LeanDag.ExposedIn.of_mem_refs	LeanDag.BlockUniverse.block
 EDGE	LeanDag.ExposedIn.of_mem_refs	LeanDag.BlockUniverse
 EDGE	LeanDag.ExposedIn.of_mem_refs	LeanDag.Reaches.single
+NODE	LeanDag.HybridProperties.banded_aux._proof_1_17	LeanDag.HybridProperties	thm
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_17	LeanDag.HybridFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_17	LeanDag.Slots.slotRound
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_17	LeanDag.HybridFaults.toFaults
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_17	LeanDag.HonestNoEquiv
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_17	LeanDag.Hybrid.Decided
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_17	LeanDag.Slots.leader
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_17	LeanDag.BlockUniverse.block
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_17	LeanDag.Hybrid.Eligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_17	LeanDag.View.ids
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_17	LeanDag.Block.round
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_17	LeanDag.Properties.AgreeBand
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_17	LeanDag.BlockUniverse
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_17	LeanDag.Hybrid.decidableEligible
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_17	LeanDag.Slots
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_17	LeanDag.View
+EDGE	LeanDag.HybridProperties.banded_aux._proof_1_17	LeanDag.HybridProperties.hybridRule
 NODE	LeanDag.Delivery.mk.congr_simp	LeanDag.PaceDelivery	thm
 EDGE	LeanDag.Delivery.mk.congr_simp	LeanDag.Delivery
 EDGE	LeanDag.Delivery.mk.congr_simp	LeanDag.Faults

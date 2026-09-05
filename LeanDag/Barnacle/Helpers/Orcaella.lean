@@ -1,5 +1,7 @@
 import LeanDag.Barnacle.Orcaella.Statement
 import LeanDag.Barnacle.Helpers.Heads
+import LeanDag.Barnacle.Helpers.Descent
+import LeanDag.HybridProperties
 
 /-!
 # Orcaella instance helpers
@@ -27,62 +29,37 @@ theorem orcaella_laws [HybridFaults Validator] {k : ℕ} (hk : Hybrid.Admissible
       (orcaella (Validator := Validator) (BlockId := BlockId) (Payload := Payload) k) where
   full_ids := fun _ => rfl
   historyView_ids := fun _ _ _ => rfl
-  agree := fun S {U} _ _ _ _ _ h₁ h₂ => letI := S; Hybrid.decided_agree U.property hk h₁ h₂
-  decided_of_directCommitIn := fun S {_} _ _ _ hL hdc =>
-    letI := S; Hybrid.Decided.directCommit hL hdc
-  candidates := fun S {_} _ _ _ h => letI := S; Hybrid.isLeaderBlock_of_decided h
+  agree := fun S {U} V₁ V₂ s v₁ v₂ h₁ h₂ =>
+    HybridProperties.agree hk S V₁ V₂ s v₁ v₂ h₁ h₂
+  decided_of_directCommitIn := fun S {U} V s L hL hdc =>
+    HybridProperties.commitsDirect k S U V s L hL hdc
+  candidates := fun S {U} V s L h => HybridProperties.commitsCandidate k S U V s L h
 
-/-- The descent laws, for Orcaella at slack `fb + fc`. -/
+/-- **A good DAG meets Hybrid's precondition.** `Good` and `hybridLive`
+name the same three facts about the same quorum, at Hybrid's own
+wavelength — the horizon sits one round above the slot. -/
+theorem orcaellaLive_goodGives [H : HybridFaults Validator] {k : ℕ} :
+    (orcaellaLive (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) k).GoodGives (H.fb + H.fc)
+      (fun S {U} V T lo K => HybridProperties.hybridLive S (U := U) V T lo K) := by
+  intro U Rnd N hgood
+  obtain ⟨T, -, hcard, hsync, hpop⟩ := hgood
+  have hcard' : Fintype.card Validator - (H.fb + H.fc) ≤ T.card := hcard
+  refine ⟨T, by omega, ?_⟩
+  intro S V κ hcov hRnd hN hlead
+  change S.slotRound κ + 2 ≤ N at hN
+  refine ⟨hcard, Rnd, N, hsync, hRnd, hpop, hcov, ?_⟩
+  intro m hm
+  have := S.mono (Nat.lt_succ_iff.mp hm)
+  omega
+
+/-- **The descent laws, for Orcaella at slack `fb + fc`** — from the
+properties, with no argument about `Decided` here. -/
 theorem orcaellaLive_descent [H : HybridFaults Validator] {k : ℕ} :
     (orcaellaLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload) k).Descent
-      (H.fb + H.fc) where
-  goodLeaders := by
-    intro U Rnd N hgood
-    obtain ⟨T, -, hcard, hsync, hpop⟩ := hgood
-    have hcard' : Fintype.card Validator - (H.fb + H.fc) ≤ T.card := hcard
-    refine ⟨T, by omega, ?_⟩
-    intro S V κ hcov hRnd hN hlead
-    letI := S
-    change S.slotRound κ + 2 ≤ N at hN
-    obtain ⟨L, hLb, hdc⟩ := Hybrid.directCommit_of_leader_mem hcard hsync hRnd
-      (hpop _ hRnd (by omega)) (hpop _ (by omega) (by omega)) hlead
-    refine ⟨L, Hybrid.Decided.directCommit hLb ?_⟩
-    -- the supporters sit one round up, which the view covers
-    have hsub : (blocksAt U.val (S.slotRound κ + 1)).filter
-        (fun q => L ∈ (U.val.block q).refs) ⊆ V.ids := by
-      intro q hq
-      rw [Finset.mem_filter, mem_blocksAt] at hq
-      obtain ⟨⟨hqids, hqr⟩, -⟩ := hq
-      exact hcov q hqids (by change (U.val.block q).round ≤ N; omega)
-    change Hybrid.q Validator ≤ (Hybrid.supportersIn U.val V L (S.slotRound κ)).card
-    rw [Hybrid.supportersIn, Finset.inter_eq_left.2 hsub]
-    exact hdc
-  indirect := by
-    intro S U V i j A hij hj hmid
-    letI := S
-    change S.slotRound i + 2 ≤ S.slotRound j at hij
-    have helig : Hybrid.Eligible Validator i j := Hybrid.eligible_iff.mpr hij
-    have hmid' : ∀ i', i < i' → i' < j → Hybrid.Eligible Validator i i' →
-        Hybrid.Decided k U.val V i' none :=
-      fun i' h1 h2 h3 => hmid i' h1 h2 (Hybrid.eligible_iff.mp h3)
-    classical
-    -- The candidates of `i` with a `k`-thick link to the anchor.
-    by_cases hne : (U.val.ids.filter
-        (fun L => IsLeaderBlock U.val i L ∧
-          Hybrid.ThickLink k U.val A L (S.slotRound i))).Nonempty
-    · obtain ⟨_, hL, ht⟩ := Finset.mem_filter.mp (Finset.min'_mem _ hne)
-      refine ⟨some _, Hybrid.Decided.indirectCommit
-        (Hybrid.lt_of_eligible helig) helig hj hmid' hL ht ?_⟩
-      intro L' hL' ht' hlt
-      have hL's : L' ∈ U.val.ids.filter
-          (fun L => IsLeaderBlock U.val i L ∧
-            Hybrid.ThickLink k U.val A L (S.slotRound i)) :=
-        Finset.mem_filter.mpr ⟨hL'.1, hL', ht'⟩
-      exact absurd hlt (not_lt.mpr (Finset.min'_le _ L' hL's))
-    · refine ⟨none, Hybrid.Decided.indirectSkip
-        (Hybrid.lt_of_eligible helig) helig hj hmid' ?_⟩
-      intro L hL ht
-      exact hne ⟨L, Finset.mem_filter.mpr ⟨hL.1, hL, ht⟩⟩
+      (H.fb + H.fc) :=
+  descent_of_properties _ (HybridProperties.leaderCommits k) (HybridProperties.indirect k)
+    orcaellaLive_goodGives
 
 end Barnacle
 

@@ -4,6 +4,7 @@ import LeanDag.Hybrid.Decision
 import LeanDag.Properties.Compose
 import LeanDag.Properties.Arcs.SafeSkip
 import LeanDag.Properties.Arcs.GC
+import LeanDag.HybridProperties
 
 /-!
 # I16 — the composition capstone
@@ -34,8 +35,8 @@ namespace LeanDag
 
 namespace Integration
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
-variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
+variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 
 section Stack
 
@@ -93,7 +94,8 @@ theorem hybrid_agree_stack [LinearOrder BlockId] [S : Slots Validator]
     {v₁ v₂ : Option BlockId}
     (h₁ : Hybrid.Decided k (stack sk G) V₁ s v₁)
     (h₂ : Hybrid.Decided k (stack sk G) V₂ s v₂) : v₁ = v₂ :=
-  Hybrid.decided_agree (honestNoEquiv_stack sk hne) hk h₁ h₂
+  HybridProperties.agree hk S
+    (U := ⟨stack sk G, honestNoEquiv_stack sk hne⟩) V₁ V₂ s v₁ v₂ h₁ h₂
 
 end Stack
 

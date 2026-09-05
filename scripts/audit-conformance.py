@@ -43,8 +43,8 @@ RULES = [
     ("Nemo",               ["NemoProperties.nemoRule",
                             "Barnacle.nemoRule"],                "two carriers"),
     ("Mahi-Mahi",          [], "no carrier; band conditional on `2 <= w` (3.4c)"),
-    ("Hybrid / Orcaella",  ["Barnacle.orcaellaRule"],
-                           "carrier via Barnacle, one per threshold"),
+    ("Hybrid / Orcaella",  ["HybridProperties.hybridRule",
+                            "Barnacle.orcaellaRule"],           "two carriers, one per threshold"),
     ("FinWhale",           [], "no carrier; no `Slots` layer at all (3.4c)"),
     ("Black Marlin",       [], "no carrier; commits by round, no slot-indexed relation"),
 ]
