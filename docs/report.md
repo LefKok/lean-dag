@@ -17806,7 +17806,7 @@ A block whose parents voting for `L` are a slow-path quorum — `SPCertificate`,
 ```lean
 def CommitsCorrectLeaders (S : Sched Validator) (D : Dag Validator BlockId Payload)
     (R N : ℕ) : Prop :=
-  ∀ s, R ≤ s → s + 2 ≤ N → S.leader s ∈ (Correct : Finset Validator) →
+  ∀ s, R ≤ S.round s → S.round s + 2 ≤ N → S.leader s ∈ (Correct : Finset Validator) →
     ∃ l ∈ slotBlocks S D s, SPCommitBy D l (Correct : Finset Validator)
 ```
 
@@ -17819,7 +17819,7 @@ def CommitsCorrectLeaders (S : Sched Validator) (D : Dag Validator BlockId Paylo
 ```lean
 def SeesCommits (S : Sched Validator) (D : Dag Validator BlockId Payload)
     (dc : ℕ → BlockId → Prop) (R N : ℕ) : Prop :=
-  ∀ s, R ≤ s → s + 2 ≤ N → S.leader s ∈ (Correct : Finset Validator) →
+  ∀ s, R ≤ S.round s → S.round s + 2 ≤ N → S.leader s ∈ (Correct : Finset Validator) →
     ∃ l, l ∈ slotBlocks S D s ∧ dc s l
 ```
 
@@ -23535,6 +23535,33 @@ def View.ofViewUpto (D : Delivery U) (v : Validator) (n : ℕ) :
 
 **A retained store is a view.** It holds only real blocks (`viewUpto_subset_ids`) and is closed under references (`mem_viewUpto_of_mem_refs`), which are the two things a view is.
 
+#### `Band`
+
+*structure, `FinWhale.Band.lean`*
+
+```lean
+structure Band (D D' : Dag Validator BlockId Payload) (lo hi g g' : ℕ) : Prop where
+  /-- A block of the band is a block of `D'`. -/
+  mem : ∀ b ∈ D.ids, lo ≤ (D.block b).round + g → (D.block b).round + g ≤ hi → b ∈ D'.ids
+  /-- At the round the offset names, with the author it had. -/
+  block : ∀ b ∈ D.ids, lo ≤ (D.block b).round + g → (D.block b).round + g ≤ hi →
+    (D'.block b).round + g' = (D.block b).round + g ∧
+      (D'.block b).creator = (D.block b).creator
+  /-- Read from the other side: a block the offset already placed inside
+  the band. -/
+  block' : ∀ b ∈ D.ids, b ∈ D'.ids → lo ≤ (D'.block b).round + g' →
+    (D'.block b).round + g' ≤ hi →
+    (D'.block b).round + g' = (D.block b).round + g ∧
+      (D'.block b).creator = (D.block b).creator
+  /-- And, strictly above the floor, referencing what it referenced. -/
+  refs : ∀ b ∈ D.ids, lo < (D.block b).round + g → (D.block b).round + g ≤ hi →
+    (D'.block b).refs = (D.block b).refs
+```
+
+**A band of rounds, in FinWhale's vocabulary.** `Properties.AgreeBand` at this rule's carrier, restated over `Dag` so that no lemma below has to see through the carrier's projections — the same reason Nemo keeps `memB` and `blockB`.
+
+The two frames are put together by `g` and `g'`: a block sits at `round_D b + g` read from `D` and at `round_D' b + g'` read from `D'`.
+
 #### `VerdictIs`
 
 *def, `FinWhale.Carrier.lean`*
@@ -23595,16 +23622,83 @@ def finWhaleRule : DagRule Validator BlockId Payload where
 
 **FinWhale as a carrier**, with the schedule passed through and nothing pinned.
 
-#### `viewHorizon`
+#### `dagHorizon`
 
 *def, `FinWhale.Carrier.lean`*
 
 ```lean
-def viewHorizon (D : Dag Validator BlockId Payload) (V : Finset BlockId) : ℕ :=
-  (V.sup (fun b => (D.block b).round) + 1) * Fintype.card Validator
+def dagHorizon (D : Dag Validator BlockId Payload) : ℕ :=
+  (D.ids.sup (fun b => (D.block b).round) + 1) * Fintype.card Validator
 ```
 
-**The pass's horizon**: a slot index above every slot a view can decide. `Slots.slot_lt_of_slotRound_le` is what makes one exist — the view bounds the *rounds*, and a bound on rounds bounds the slots only because a schedule cannot fit unboundedly many slots into them.
+**The pass's horizon**: a slot index above every slot any view of the DAG can decide. `Slots.slot_lt_of_slotRound_le` is what makes one exist — the DAG bounds the *rounds*, and a bound on rounds bounds the slots only because a schedule cannot fit unboundedly many slots into them.
+
+Read from the universe rather than the view, because a commit names a block of the universe: the tie-break is a function of the anchor and the round and reads the whole DAG, so `Assignment.slot` bounds a committed slot by the DAG's rounds and not the view's.
+
+#### `passOf`
+
+*def, `FinWhale.Carrier.lean`*
+
+```lean
+noncomputable def passOf (S : Slots Validator) (D : Dag Validator BlockId Payload)
+    (V : Finset BlockId) (hV : IsView D V) : ℕ → Verdict BlockId :=
+  decOf (schedOf S) ((schedOf S).Elig) (LeanDag.FinWhale.restrict D V hV)
+    (chooseLeast (schedOf S) D) (dagHorizon D)
+```
+
+**The pass a view runs**, at the schedule the carrier is given and the horizon above. Every verdict of this rule is witnessed by some assignment; this is the one that always exists, and `decided_iff` says it is the only one that matters.
+
+#### `optOf`
+
+*def, `FinWhale.Carrier.lean`*
+
+```lean
+def optOf (w : Verdict BlockId) : Option BlockId :=
+  match w with
+  | Verdict.commit b => some b
+  | _ => none
+```
+
+A decided verdict, as the property layer's option.
+
+#### `dagTop`
+
+*def, `FinWhale.Carrier.lean`*
+
+```lean
+def dagTop (D : Dag Validator BlockId Payload) : ℕ :=
+  D.ids.sup (fun b => (D.block b).round) + 2
+```
+
+**The top of the band**: two rounds above the highest round the DAG holds. The two are slack — nothing sits there — and they give the transport lemmas the room they need above a candidate.
+
+#### `finWhaleLive`
+
+*def, `FinWhale.Carrier.lean`*
+
+```lean
+def finWhaleLive (S : Slots Validator) {D : Dag Validator BlockId Payload}
+    (V : (finWhaleRule (Payload := Payload)).View D) (T : Finset Validator) (lo K : ℕ) : Prop :=
+  T = (Correct : Finset Validator) ∧
+    ∃ R N, LeanDag.FinWhale.CommitsCorrectLeaders (schedOf S) D R N ∧
+      R ≤ S.slotRound lo ∧ (∀ k, k < K → S.slotRound k + 2 ≤ N) ∧
+      ∀ n, R ≤ n → n ≤ N → ∀ b ∈ LeanDag.FinWhale.blocksAt D n,
+        (D.block b).creator ∈ T → b ∈ V.val
+```
+
+**FinWhale's liveness precondition**, over a slot window: the liveness interface holds from a coverage round `R` to a horizon `N`, the window starts at or above `R`, every slot of it sits two rounds under `N`, and the view holds the reliable blocks in between.
+
+`T` is `Correct` rather than an arbitrary quorum, because FinWhale's certificates are named — a view is shown to hold what reliable validators produced, and nothing else.
+
+#### `finWhaleElig`
+
+*def, `FinWhale.Carrier.lean`*
+
+```lean
+def finWhaleElig (rd : ℕ → ℕ) (i j : ℕ) : Prop := rd i + 3 ≤ rd j
+```
+
+**FinWhale's eligibility, off the round structure alone**: an anchor's candidate sits three rounds above the slot's. It is `Sched.Elig` with the schedule replaced by its round function, which is what the property's second quantifier needs — a reassignment of leaders must not change who may anchor whom.
 
 #### `DirectCommitIn`
 
@@ -25308,7 +25402,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 994 theorems that either another module of the
+The 1002 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -32783,6 +32877,26 @@ theorem lemma12 {Elig : ℕ → ℕ → Prop}
 
 The induction is the paper's maximality argument, made downward-explicit: both DAGs are finite, so nothing above some `N` is decided, and the proof runs on the distance from `N`. At each slot either some direct rule fires — and the exclusions settle it — or both validators decided from an anchor, and then the anchors coincide. That last step is what the induction is for: if the anchors differed, the lower of the two is skipped by one validator and committed by the other, and it lies above `r`, so the induction hypothesis already forbids it.
 
+#### `eq_of_wellFormed`
+
+*theorem, `FinWhale.Consistency.lean`*
+
+```lean
+theorem eq_of_wellFormed {Elig : ℕ → ℕ → Prop} {dc : ℕ → BlockId → Prop}
+    {ds : ℕ → Prop}
+    {choose : BlockId → ℕ → Option BlockId} {dec dec' : ℕ → Verdict BlockId}
+    (hwf : WellFormed Elig dc ds choose dec) (hwf' : WellFormed Elig dc ds choose dec')
+    (hlt : ∀ r a, Elig r a → r < a) {N : ℕ}
+    (hcb : ∀ a A, dec a = Verdict.commit A → a ≤ N) :
+    ∀ r, dec r ≠ Verdict.undecided → dec' r = dec r
+```
+
+**One validator's rules fix its verdicts.** Two assignments over the *same* direct rules and the same tie-break agree wherever either has decided — not merely where both have, which is what Lemma 12 gives across two validators.
+
+The extra strength is what an existential decision relation needs. A verdict of this rule is "some well-formed assignment says so", and Lemma 12 relates two such only where both are decided, so nothing it proves says that *the* reverse pass reaches a verdict some other assignment reached. This does, and `hcb` is what pays for it: a commit names a block of its slot, so a committed slot sits below the horizon, and the anchor the decision came from is a committed slot.
+
+No `Exclusions` appears, because the rules are one validator's and cannot exclude each other.
+
 #### `chooseSound_least`
 
 *theorem, `FinWhale.Consistency.lean`*
@@ -32988,8 +33102,7 @@ theorem safety_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsView 
 theorem sees_of_commits_of_held {V : Finset BlockId} (hV : IsView D V) {R N : ℕ}
     (hcommits : CommitsCorrectLeaders S D R N)
     (hheld : ∀ n, R ≤ n → n ≤ N → ∀ b ∈ blocksAt D n,
-      (D.block b).creator ∈ (Correct : Finset Validator) → b ∈ V)
-    (hid : ∀ k, S.round k = k) :
+      (D.block b).creator ∈ (Correct : Finset Validator) → b ∈ V) :
     SeesCommits S D (viewCommit S D V hV) R N
 ```
 
@@ -36183,6 +36296,95 @@ theorem holds : Statement
 theorem holds : Statement
 ```
 
+#### `chooseLeast_congr`
+
+*theorem, `FinWhale.Band.lean`*
+
+```lean
+theorem chooseLeast_congr [LinearOrder BlockId] {S S' : Sched Validator}
+    {D : Dag Validator BlockId Payload} {A : BlockId} {r : ℕ}
+    (hr : S.round r = S'.round r) (hl : S.leader r = S'.leader r) :
+    chooseLeast S D A r = chooseLeast S' D A r
+```
+
+**And so does the tie-break.** It names the least candidate of the slot, and both the candidates and the rule that certifies them read the schedule at that slot alone.
+
+#### `viewCommit_congr`
+
+*theorem, `FinWhale.Band.lean`*
+
+```lean
+theorem viewCommit_congr {S S' : Sched Validator} {D : Dag Validator BlockId Payload}
+    {V : Finset BlockId} {hV : IsView D V} {r : ℕ} {l : BlockId}
+    (hr : S.round r = S'.round r) (hl : S.leader r = S'.leader r) :
+    viewCommit S D V hV r l ↔ viewCommit S' D V hV r l
+```
+
+**A view's direct rules read the schedule only at the slot they decide**, since the rules they restrict do.
+
+#### `viewSkip_congr`
+
+*theorem, `FinWhale.Band.lean`*
+
+```lean
+theorem viewSkip_congr {S S' : Sched Validator} {D : Dag Validator BlockId Payload}
+    {V : Finset BlockId} {hV : IsView D V} {r : ℕ}
+    (hr : S.round r = S'.round r) (hl : S.leader r = S'.leader r) :
+    viewSkip S D V hV r ↔ viewSkip S' D V hV r
+```
+
+The skip half.
+
+#### `directCommit`
+
+*theorem, `FinWhale.Band.lean`*
+
+```lean
+theorem directCommit {l : BlockId} (hlD : l ∈ D.ids)
+    (h1 : lo ≤ (D.block l).round + g) (h2 : (D.block l).round + g + 2 ≤ hi)
+    (h : DirectCommit D l) : DirectCommit D' l
+```
+
+Either path.
+
+#### `slotBlocks_subset`
+
+*theorem, `FinWhale.Band.lean`*
+
+```lean
+theorem slotBlocks_subset (hrk : S.round k + g = S'.round k' + g')
+    (hlk : S.leader k = S'.leader k') (h1 : lo ≤ S.round k + g) (h2 : S.round k + g ≤ hi) :
+    slotBlocks S D k ⊆ slotBlocks S' D' k'
+```
+
+An old candidate of the slot is a candidate of the corresponding slot.
+
+#### `directSkip`
+
+*theorem, `FinWhale.Band.lean`*
+
+```lean
+theorem directSkip (hrk : S.round k + g = S'.round k' + g')
+    (hlk : S.leader k = S'.leader k') (h1 : lo ≤ S.round k + g) (h2 : S.round k + g + 2 ≤ hi)
+    (h : DirectSkip S D k) : DirectSkip S' D' k'
+```
+
+**The direct skip survives the band**, new candidates and all.
+
+#### `chooseLeast_band`
+
+*theorem, `FinWhale.Band.lean`*
+
+```lean
+theorem chooseLeast_band [LinearOrder BlockId] (hrk : S.round k + g = S'.round k' + g')
+    (hlk : S.leader k = S'.leader k') (h1 : lo ≤ S.round k + g) (h2 : S.round k + g + 2 ≤ hi)
+    {A : BlockId} (hAD : A ∈ D.ids) (hAlo : lo ≤ (D.block A).round + g)
+    (hAhi : (D.block A).round + g ≤ hi) :
+    chooseLeast S' D' A k' = chooseLeast S D A k
+```
+
+**And so the tie-break is the same function.** It names the least block of the slot the anchor indirectly commits, and both the slot and the rule are settled by the band, so the two sides filter the same set and take the same minimum. This is what lets the reverse pass be compared across a band at all: `choose` is shared between validators by construction, and here it is shared between DAGs.
+
 #### `agree`
 
 *theorem, `Hybrid.Carrier.lean`*
@@ -38409,7 +38611,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 996 lemmas used only within the file that proves
+The 1035 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -39936,19 +40138,63 @@ subsection per module, in the layer order of Appendices B and C.
 | `deliversOn_viewUpto` | The witness. The novelty budget's stores cover the correct validators from the settling round on, so a … |
 | `directCommitIn_viewUpto` | A rate-limited validator commits. Given a reliable quorum whose decision-round blocks certify `L`, a store … |
 
-### `FinWhale/Carrier.lean` (10)
+### `FinWhale/Band.lean` (28)
+
+| Lemma | Role |
+|:---|:---|
+| `band_reaches_mem` | A block a block reaches is a block. |
+| `band_reaches_round` | And it does not sit above it. |
+| `blocksAt_subset` | An old layer lands on the layer the offset names. |
+| `conflicting_iff` | Conflict is read off rounds and authors, so the band settles it for the blocks it holds. |
+| `directSkip_congr` | And so does the direct skip rule. |
+| `exposes_iff` | And so is the equivocation a block exposes. Both directions: a witness on the `D'` side is voted for by an … |
+| `fastCommit` | And so does a fast commit. |
+| `fpEvidence_iff` | FP-evidence is the same evidence. The counts are equal, and the negative clause of the equivocating branch … |
+| `indirectCommit_congr` | The indirect rule reads the schedule only at the slot it decides. |
+| `indirectCommit_iff` | The indirect rule is the same rule on both sides. Every clause of it is read off the anchor's causal … |
+| `mem_blocksAt_of_old` | And an old block of that layer of `D'` was in it. |
+| `mem_slotBlocks_of_old` | And an old candidate of the corresponding slot came from this one. |
+| `nonFPEvidence` | A blame stays a blame. For the old candidates because FP-evidence is the same evidence; for a candidate … |
+| `nonVoters_subset` | Declining to vote survives, since references do. |
+| `nonempty_of_fpEvidence` | Evidence names a voter: `f + p` is at least two, so an empty count is no evidence. |
+| `nonempty_of_spCertificate` | A certificate names one too, the quorum being positive. |
+| `not_fpEvidence_of_empty` | A block nothing votes for is no evidence. `f + p` is at least two — `1 ≤ p ≤ f` — so neither branch of the … |
+| `old_of_parentsVoting` | A block an old block's parents voted for is old, and two rounds below it: an edge drops exactly one round, … |
+| `parentsVoting_eq` | A block two rounds above the floor votes the same way in both DAGs, for every block whatever. |
+| `parentsVoting_eq_empty` | A new block of the band collects no votes from an old block. |
+| `reaches_of` | A path of `D` above the floor is a path of `D'`. |
+| `reaches_old` | And a path of `D'` above the floor was a path of `D`. |
+| `slotBlocks_congr` | A slot's blocks read the schedule only at that slot. |
+| `spCertificate_iff` | A certificate is a vote count two rounds up, so the band settles it either way. |
+| `spCommit` | And a slow-path commit survives. |
+| `spSkip` | So an old candidate that was skipped stays skipped. |
+| `spSkip_new` | And a candidate the band adds is skipped too. An old block two rounds above the slot carries a quorum of … |
+| `voters_subset` | Votes survive: an old voter is a voter. |
+
+### `FinWhale/Carrier.lean` (21)
 
 | Lemma | Role |
 |:---|:---|
 | `agree` | Two views decide alike. Lemma 12 under the property's name: the exclusions come from the DAG, the … |
+| `assignment_passOf` | And it is an assignment. Well formed by `wellFormed_decOf`, committing only blocks of the slot by … |
+| `banded` | FinWhale is banded. The band runs from the slot's own round to two above the DAG's highest, and the … |
 | `causal` | FinWhale's DAGs are block DAGs. |
 | `commitsCandidate` | A commit names the slot's candidate. The `slot` field of an assignment, read at the property's … |
 | `commitsDirect` | And a direct commit is a verdict, at every schedule. `IsCandidate` places the block at the slot, … |
-| `decided_of_directCommit` | A direct commit in view is a verdict, at any schedule and with no side condition. The reverse pass on the … |
+| `decided_iff` | A verdict of this rule is the pass's verdict. One direction is the pass being an assignment; the other is … |
+| `decided_of_directCommit` | A direct commit in view is a verdict, at any schedule and with no side condition. |
+| `indirect` | The indirect rule, with its bound. The anchor is the committed slot `j`; the eligible slots between are … |
+| `le_dagHorizon` | An assignment commits only below the horizon: a commit names a block of the slot, so the slot's round is … |
+| `leaderCommits` | A reliably-led slot commits, at a bound one above the slot: the commit is direct, and a direct commit … |
 | `lt_of_elig` | Eligible slots are above: a schedule's rounds are monotone, so three rounds up is at least one slot up. |
 | `mem_blocksAt` | Membership of a round layer, unfolded once so the proofs below do not have to. |
 | `mem_slotBlocks` | And of a slot's blocks. |
+| `pass_indirect` | Two schedules sharing a slot's round and leader decide it alike, given a common anchor. Either a direct … |
+| `rle` | Every slot the pass reaches sits at the schedule's round for it, so the horizon really is above every slot … |
 | `slotBlocks_restrict_subset` | A view's slot blocks are the universe's. |
+| `slotRound_le_of_decided` | A decided slot's round is one the DAG reaches. Every route to a verdict names a block: a direct commit … |
+| `verdictIs_of_eq` | Two assignments agreeing at a slot carry the same verdict there. |
+| `verdictIs_optOf` | And reading it back is the verdict, wherever the slot is decided. |
 | `view_bounded` | A view is finite, so its blocks stop at a round. |
 
 ### `Hybrid/Carrier.lean` (1)

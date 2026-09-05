@@ -90,8 +90,8 @@ theorem theorem26_of_selfParent (hself : SelfParented D)
   -- the rotation names the author a leader within the cycle above `b`
   obtain ⟨s, hlo, hhi, hlead⟩ :=
     exists_round_led_by hrr ((D.block b).creator) (max ((D.block b).round) R)
-  obtain ⟨l, hslot, hdcl⟩ := hsees s (le_trans (le_max_right _ R) hlo) (by omega)
-    (by rw [hlead]; exact hbc)
+  obtain ⟨l, hslot, hdcl⟩ := hsees s (by rw [hid]; exact le_trans (le_max_right _ R) hlo)
+    (by rw [hid]; omega) (by rw [hlead]; exact hbc)
   have hlu : l ∈ D.ids ∧ (D.block l).round = s ∧
       (D.block l).creator = S.leader s := by
     simp only [slotBlocks, blocksAt, Finset.mem_filter, hid] at hslot

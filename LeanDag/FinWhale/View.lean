@@ -465,11 +465,9 @@ is as much as a schedule can give. -/
 theorem sees_of_commits_of_held {V : Finset BlockId} (hV : IsView D V) {R N : ℕ}
     (hcommits : CommitsCorrectLeaders S D R N)
     (hheld : ∀ n, R ≤ n → n ≤ N → ∀ b ∈ blocksAt D n,
-      (D.block b).creator ∈ (Correct : Finset Validator) → b ∈ V)
-    (hid : ∀ k, S.round k = k) :
+      (D.block b).creator ∈ (Correct : Finset Validator) → b ∈ V) :
     SeesCommits S D (viewCommit S D V hV) R N := by
   intro s hR hN hlead
-  have hids : S.round s = s := hid s
   obtain ⟨l, hslot, certs, hsub, hcard, hcertb⟩ := hcommits s hR hN hlead
   have hlu : l ∈ blocksAt D (S.round s) ∧ (D.block l).creator = S.leader s := by
     simp only [slotBlocks, Finset.mem_filter] at hslot
@@ -503,7 +501,7 @@ theorem all_decided_of_view {V : Finset BlockId} (hV : IsView D V)
     (hrr : RoundRobin S.leader) (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ s, S.round s = s)
     (hN : max r R + (3 * F.f + 5) ≤ N) :
     dec r ≠ Verdict.undecided :=
-  all_decided hwf (sees_of_commits_of_held hV hcommits hheld hid) hrr hEl hid hN
+  all_decided hwf (sees_of_commits_of_held hV hcommits hheld) hrr hEl hid hN
 
 /-- **Theorem 24, on two views.** Two validators that have caught up to
 the horizon deliver the same sequence. -/

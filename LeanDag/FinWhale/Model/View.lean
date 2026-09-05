@@ -56,7 +56,6 @@ def viewSkip (S : Sched Validator) (D : Dag Validator BlockId Payload) (V : Fins
     (hV : IsView D V) (r : ℕ) : Prop :=
   DirectSkip S (restrict D V hV) r
 
-
 end FinWhale
 
 end LeanDag

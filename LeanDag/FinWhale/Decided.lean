@@ -121,7 +121,8 @@ variable {Payload : Type} {D : Dag Validator BlockId Payload} {S : Sched Validat
 
 /-- The commit the interface carries. -/
 theorem directCommit_of_commits {R N : ℕ} (h : CommitsCorrectLeaders S D R N) {s : ℕ}
-    (hR : R ≤ s) (hN : s + 2 ≤ N) (hlead : S.leader s ∈ (Correct : Finset Validator)) :
+    (hR : R ≤ S.round s) (hN : S.round s + 2 ≤ N)
+    (hlead : S.leader s ∈ (Correct : Finset Validator)) :
     ∃ l ∈ slotBlocks S D s, DirectCommit D l := by
   obtain ⟨l, hslot, hby⟩ := h s hR hN hlead
   exact ⟨l, hslot, Or.inr (spCommit_of_spCommitBy hby)⟩
@@ -138,7 +139,8 @@ theorem committed_triple {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
     (hwf : WellFormed Elig dc ds choose dec) {R N t : ℕ}
     (hsees : SeesCommits S D dc R N)
-    (hrr : RoundRobin S.leader) (hR : R ≤ t) (hN : t + (3 * F.f + 5) ≤ N) :
+    (hrr : RoundRobin S.leader) (hid : ∀ s, S.round s = s)
+    (hR : R ≤ t) (hN : t + (3 * F.f + 5) ≤ N) :
     ∃ a, t < a ∧ a + 4 ≤ N ∧
       ∀ s, a ≤ s → s ≤ a + 2 →
         dec s ≠ Verdict.undecided ∧ dec s ≠ Verdict.skip := by
@@ -147,7 +149,7 @@ theorem committed_triple {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
   have hsc : S.leader s ∈ (Correct : Finset Validator) := by
     rcases (by omega : s = a ∨ s = a + 1 ∨ s = a + 2) with rfl | rfl | rfl
     exacts [h0, h1, h2]
-  obtain ⟨l, -, hdcl⟩ := hsees s (by omega) (by omega) hsc
+  obtain ⟨l, -, hdcl⟩ := hsees s (by rw [hid]; omega) (by rw [hid]; omega) hsc
   rw [hwf.direct_commit s l hdcl]
   exact ⟨by simp, by simp⟩
 
@@ -164,7 +166,7 @@ theorem all_decided {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
     (hN : max r R + (3 * F.f + 5) ≤ N) :
     dec r ≠ Verdict.undecided := by
   obtain ⟨a, hlo, -, htri⟩ :=
-    committed_triple hwf hsees hrr (le_max_right r R) hN
+    committed_triple hwf hsees hrr hid (le_max_right r R) hN
   exact lemma23 hEl hwf (lt_of_le_of_lt (le_max_left r R) hlo) htri
 
 end Triple

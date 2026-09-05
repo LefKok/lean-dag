@@ -374,7 +374,7 @@ making that rule's band unprovable.
 | Hybrid | `slotRound k`, `+1` | reachable |
 | Optimal-Hydrozoan | `slotRound k`, `+1`, `+2` | reachable |
 | Mahi-Mahi | `slotRound k + w - 1`, `r + w - 2` | reachable, under `2 ≤ w` |
-| FinWhale | ~~`leader (round b - 2)`~~ **fixed** | the read is gone; the band still needs a slot layer |
+| FinWhale | ~~`leader (round b - 2)`~~ **fixed** | the read is gone, and the band followed (§3.13) |
 
 **Mahi-Mahi's wave rounds truncate.** `votingRound w r = r + w - 2`,
 `decisionRoundAt w r = r + w - 1` and `decisionRound w k = slotRound k +
@@ -940,6 +940,82 @@ raises.
 **Four rules now show the six**, and the band has three instances.
 Odontoceti shows the optional two as well, so its row is full.
 
+## 3.13 The rule with no induction
+
+FinWhale was left until last because it is the only rule here whose
+verdicts are not derived. Every other `Decided` is an inductive
+definition and every other `Banded` is an induction over it, with the
+constructors' premises monotone in the DAG. FinWhale assigns verdicts by
+a *function* `dec : ℕ → Verdict BlockId` constrained by `WellFormed` —
+the paper's reverse pass read as a condition rather than a construction
+— so `Decided S V k v` is existential, and an existential has nothing to
+induct on.
+
+**What replaced the induction was a normal form.** `eq_of_wellFormed`
+says two assignments over the *same* direct rules and the same tie-break
+agree wherever *either* has decided — not merely where both have, which
+is all Lemma 12 gives across two validators. The extra strength is paid
+for by `Assignment.slot`: a commit names a block of its slot, so a
+committed slot sits below the DAG's horizon, and the anchor a decision
+came from is a committed slot. From it, `decided_iff`:
+
+```lean
+theorem decided_iff : finWhaleRule.Decided S V k v ↔ VerdictIs (passOf S D V.val V.property) k v
+```
+
+A verdict of this rule *is* the reverse pass's verdict. That is what the
+remaining properties are proved about, and none of them mentions the
+existential again.
+
+**`Banded` is then a downward induction on slots**, the same shape as
+Lemma 12's, with one transport lemma per rule at each step
+(`LeanDag/FinWhale/Band.lean`). The rules split three ways under a band,
+and the split is the content:
+
+* **Anchored rules transport both ways.** `IndirectCommit S D A k b`
+  says something about `A`'s causal history, and a band preserves a
+  history in both directions — nothing new can enter it, because the
+  blocks that would witness the entry are old and reference what they
+  always did. So the tie-break is the same function on both sides, which
+  is what comparing two passes needs.
+* **Positive rules transport forwards.** A vote, a certificate, a fast
+  quorum is evidence, and evidence survives a band.
+* **The skip quantifies over the slot's candidates**, and a band may add
+  one.
+
+**The third is where the core (§3.2) and Odontoceti (§3.12) had to be
+repaired, and FinWhale does not.** Its blames are counted against what a
+block's *parents* reference. An old block's parents are old and
+reference only old blocks, so a candidate the band adds collects no
+votes at all — hence no FP-evidence, `f + p` being at least two — and
+the old blamers' parents, a quorum of them by validity, are all
+non-voters for it. The skip survives the new candidate instead of being
+restated to ignore it. Three rules met this shape and the third one
+escaped it, which locates the defect: it is not in quantifying over
+candidates, it is in quantifying over candidates whose absence cannot be
+witnessed.
+
+**One case the band cannot settle**, and it is not a band question. The
+larger DAG may decide directly a slot the smaller one decided from an
+anchor. What settles it is FinWhale's own exclusion between a direct
+commit and the tie-break — `commit_pins_choose`, `commit_forces_choose`,
+`skip_bars_choose` — read inside the larger DAG alone, where
+`exclusions_of_views` already supplies it.
+
+**And a horizon had to be found.** A view bounds *rounds*; the pass
+recurses over *slots*; nothing in `Slots` related the two.
+`Slots.slot_lt_of_slotRound_le` does: `keyed` makes
+`k ↦ (slotRound k, leader k)` injective and `mono` makes the slots below
+a round an initial segment, so a finite validator set stops a schedule
+from fitting unboundedly many slots under a round. Without it the pass
+has nowhere to start, and `Decided` is not known to be inhabited at any
+schedule but the identity one — which would have left `Agree` true
+everywhere and non-vacuous in one place.
+
+**Seven rules now show the six**, and FinWhale shows `CommitsDirect` as
+well. Optimal-Hydrozoan is the only carrier left short, and its `Banded`
+is the last source of bespoke links in `docs/bespoke-links.md`.
+
 ## 4. Properties for the schedule mechanisms
 
 `Barnacle.BaseRule` and its `Laws` are one working interface: any two
@@ -1484,7 +1560,7 @@ conformance `Statement` lists it.
 | Nemo | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
 | Hybrid / Orcaella | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
 | Mahi-Mahi | — | — | — | — | — | — | — | — |
-| FinWhale | — | — | — | — | — | — | — | — |
+| FinWhale | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
 | Black Marlin | — | — | — | — | — | — | — | — |
 
 \* optional (`Properties/Optional/`): owed when a mechanism counts the
@@ -1532,12 +1608,13 @@ not carried twice — Barnacle instantiates it, so a second carrier could
 be built and would prove two properties Hydrozoan already proves, which
 is a way to make this table read better than the development is.
 
-**Three rules still have none**, for reasons that are not the same.
-Mahi-Mahi's decision relation is indexed by a wave width and its band is
-conditional on `2 ≤ w` (§3.4c), so it needs a carrier per width.
-FinWhale has no `Slots` layer at all and Black Marlin commits by round
-with no slot-indexed relation — for those two the carrier is not the
-first step, the schedule layer is.
+**Three rules had none** when this section was written, for reasons that
+were not the same. Mahi-Mahi's decision relation is indexed by a wave
+width and its band is conditional on `2 ≤ w` (§3.4c), so it needs a
+carrier per width. FinWhale had no `Slots` layer at all and Black Marlin
+commits by round with no slot-indexed relation — for those two the
+carrier was not the first step, the schedule layer was. FinWhale has
+since been given one and shows all six (§3.13); the other two stand.
 
 The consumer tests passed. Each is a former bespoke induction
 re-derived with none — and the six named first have since had the
@@ -1762,13 +1839,14 @@ properties, and nothing is proved by hand. What remains is of four
 kinds, and only the first is large. §11.4a records a fifth that was
 looked for and is not there.
 
-- **Instances.** Seven rules have none: Barnacle's six, Odontoceti,
-  Nemo, Mahi-Mahi, Optimal-Hydrozoan, Hybrid and FinWhale. Hybrid's
-  `Decided` is its own inductive with no carrier, which is why
-  `hybrid_agree_stack` cannot reach any of this; FinWhale needs a
-  `Slots` layer first (§3.4c); Mahi-Mahi's band is conditional on
-  `2 ≤ w`. This is the gap that would test whether the six obligations
-  are the right six.
+- **Instances.** Seven rules had none when this was written: Barnacle's
+  six, Odontoceti, Nemo, Mahi-Mahi, Optimal-Hydrozoan, Hybrid and
+  FinWhale. Odontoceti, Nemo, Hybrid and FinWhale have since been
+  instantiated; Mahi-Mahi's band is conditional on `2 ≤ w`, and
+  Optimal-Hydrozoan's is the one still open. That was the gap testing
+  whether the six obligations are the right six, and the answer so far
+  is that they are — two rules needed a repair to meet them (§3.2,
+  §3.12) and none needed a seventh property.
 - **A carrier law for chain quality.** `Quality/Coverage.card_coveredAt_ge`
   rests on a block referencing a quorum of the round below, and
   `DagRule` has no validity field. The last place that calls for a new
@@ -2138,13 +2216,15 @@ slots when it means a dependence bound — *the verdict is settled by slot
    given a theorem it did not have.
 2. **~~Audit the rules for absolute round reads~~** (**done**, §3.4c).
    Six of the eight rules can carry an offset band as they stand;
-   Mahi-Mahi can under `2 ≤ w`, and FinWhale cannot until it has a
-   `Slots` layer. `scripts/audit-rounds.py` keeps the result.
+   Mahi-Mahi can under `2 ≤ w`, and FinWhale could not until it had a
+   `Slots` layer — which it now has, band included (§3.13).
+   `scripts/audit-rounds.py` keeps the result.
 3. **~~`Banded` for a third rule~~** (**done**, §3.12). Odontoceti has
    all six, and the attempt found a defect in its skip rule first — the
-   core's own, repaired with the core's fix. Nemo is the natural fourth,
-   and now the cheapest: it has a carrier and two properties, and its
-   `Decided` mirrors Odontoceti's at the same wavelength.
+   core's own, repaired with the core's fix. Nemo, Hybrid and FinWhale
+   followed; FinWhale is the one with no induction to run, and §3.13
+   records what took its place. Optimal-Hydrozoan is the last carrier
+   without a band.
 4. **~~A commit names the slot's candidate~~** (**done**, §3.9).
    `CommitsCandidate`, which seven protocols had proved separately.
 5. **~~Re-genesis as an `Extends`~~** (**done**, §3.10). Two witnesses

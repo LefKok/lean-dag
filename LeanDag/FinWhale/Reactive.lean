@@ -177,6 +177,7 @@ theorem commits_of_reactive (rm : ReactiveM U T N)
     CommitsCorrectLeaders FS D R N := by
   subst hTeq
   intro s hR hN hsc
+  rw [hfr] at hR hN
   obtain ⟨L, hL, hLc, hLr⟩ :=
     rm.toPaceCore.populatedOn card_correct s (by omega) (FS.leader s) hsc
   have hsr : S.slotRound s = s := hround s

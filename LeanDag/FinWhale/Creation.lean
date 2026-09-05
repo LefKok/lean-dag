@@ -300,6 +300,7 @@ theorem commits_of_creation (cr : Creation U T N S.leader)
     CommitsCorrectLeaders S D R N := by
   subst hTeq
   intro s hR hN hsc
+  rw [hid] at hR hN
   obtain ⟨L, hL, hLc, hLr⟩ :=
     cr.toPaceCore.populatedOn card_correct s (by omega) (S.leader s) hsc
   refine ⟨L, ?_, cr.lemma20 hids hblk card_correct hgst hto hR hN

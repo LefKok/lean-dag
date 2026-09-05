@@ -165,6 +165,60 @@ theorem lemma12 {Elig : ℕ → ℕ → Prop}
             · exact absurd hva ha.2.1
             · exact absurd hva hda
 
+omit [DecidableEq BlockId] in
+/-- **One validator's rules fix its verdicts.** Two assignments over the
+*same* direct rules and the same tie-break agree wherever either has
+decided — not merely where both have, which is what Lemma 12 gives
+across two validators.
+
+The extra strength is what an existential decision relation needs. A
+verdict of this rule is "some well-formed assignment says so", and
+Lemma 12 relates two such only where both are decided, so nothing it
+proves says that *the* reverse pass reaches a verdict some other
+assignment reached. This does, and `hcb` is what pays for it: a commit
+names a block of its slot, so a committed slot sits below the horizon,
+and the anchor the decision came from is a committed slot.
+
+No `Exclusions` appears, because the rules are one validator's and
+cannot exclude each other. -/
+theorem eq_of_wellFormed {Elig : ℕ → ℕ → Prop} {dc : ℕ → BlockId → Prop}
+    {ds : ℕ → Prop}
+    {choose : BlockId → ℕ → Option BlockId} {dec dec' : ℕ → Verdict BlockId}
+    (hwf : WellFormed Elig dc ds choose dec) (hwf' : WellFormed Elig dc ds choose dec')
+    (hlt : ∀ r a, Elig r a → r < a) {N : ℕ}
+    (hcb : ∀ a A, dec a = Verdict.commit A → a ≤ N) :
+    ∀ r, dec r ≠ Verdict.undecided → dec' r = dec r := by
+  suffices h : ∀ d r, N ≤ r + d → dec r ≠ Verdict.undecided → dec' r = dec r by
+    intro r; exact h N r (by omega)
+  intro d
+  induction d using Nat.strong_induction_on with
+  | _ d ih =>
+    intro r hN h1
+    -- the induction hypothesis, at the committed slots above `r`
+    have IH : ∀ s, r < s → s ≤ N → dec s ≠ Verdict.undecided → dec' s = dec s := by
+      intro s hs hsN hd
+      have hd0 : d ≠ 0 := by rintro rfl; omega
+      exact ih (d - 1) (by omega) s (by omega) hd
+    by_cases hdc : ∃ l, dc r l
+    · obtain ⟨l, hl⟩ := hdc
+      rw [hwf.direct_commit r l hl, hwf'.direct_commit r l hl]
+    · by_cases hds : ds r
+      · rw [hwf.direct_skip r hds, hwf'.direct_skip r hds]
+      · obtain ⟨a, ha⟩ := hwf.has_anchor r hdc hds h1
+        rcases hva : dec a with A | - | -
+        · have haN : a ≤ N := hcb a A hva
+          have hra : r < a := hlt r a ha.1
+          have hsame : dec' a = Verdict.commit A := by
+            rw [IH a hra haN (by rw [hva]; simp), hva]
+          have ha' : Anchor Elig dec' r a := by
+            refine ⟨ha.1, by rw [hsame]; simp, fun a'' he'' hlt'' => ?_⟩
+            have hsk := ha.2.2 a'' he'' hlt''
+            rw [IH a'' (hlt r a'' he'') (by omega) (by rw [hsk]; simp), hsk]
+          rw [hwf.indirect_commit r a A hdc hds ha hva,
+            hwf'.indirect_commit r a A hdc hds ha' hsame]
+        · exact absurd hva ha.2.1
+        · exact absurd (hwf.indirect_undecided r a hdc hds ha hva) h1
+
 open scoped Classical in
 /-- And it satisfies the interface. -/
 theorem chooseSound_least [LinearOrder BlockId] : ChooseSound S D (chooseLeast S D) where

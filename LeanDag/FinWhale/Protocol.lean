@@ -174,7 +174,7 @@ theorem validity (hv : v ∈ (Correct : Finset Validator)) {b : BlockId} {k : �
     (hk : max ((run.dag.block b).round) run.stable + Fintype.card Validator < k) :
     b ∈ run.delivers hv k :=
   theorem26_of_selfParent run.selfParented (run.wellFormed hv)
-    (sees_of_commits_of_held (run.isView hv) run.commits (run.held hv) run.roundId)
+    (sees_of_commits_of_held (run.isView hv) run.commits (run.held hv))
     run.roundRobin run.roundId hb hbc hbound hk
 
 end Run

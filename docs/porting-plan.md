@@ -426,25 +426,60 @@ is `L ∈ V ∧ DirectCommit (restrict D V) L`, and `commitsDirect` is
 `decided_of_directCommit` reading the commit off the pass. Barnacle's
 leader count can therefore be run on FinWhale.
 
-### What is genuinely left
+### Gaps 4 and 5, closed
 
-**4. `Banded`.** Still the theorem no other rule needs: the band must
-say the *reverse pass* is band-invariant, because FinWhale's verdicts
-are a function constrained by `WellFormed` rather than a derivation.
-Block-level transport of eight predicates, a downward induction from the
-finiteness bound, and `lemma12` to bridge an arbitrary assignment to the
-pass.
+**5. `LeaderCommits` and `Indirect`.** Both fell out of one fact: every
+rule FinWhale applies at a slot reads the schedule at *that slot* and
+nowhere else. `slotBlocks_congr`, `directSkip_congr`,
+`indirectCommit_congr`, `chooseLeast_congr` and the two view versions
+say so, and they are what makes a verdict survive a reassignment of
+leaders away from the slot — which is the bound both properties carry.
 
-**5. `LeaderCommits` and `Indirect` are untouched.** Both are now
-unblocked — `Indirect` is close to `lemma23`'s content and
-`LeaderCommits` to `CommitsCorrectLeaders`.
+`finWhaleLive` is the liveness precondition, over a slot window:
+`CommitsCorrectLeaders` from a coverage round to a horizon, the window
+above the round and two rounds under the horizon, and the view holding
+the reliable blocks between. Both that interface and `SeesCommits` are
+now stated in **rounds** rather than slot indices — `R ≤ S.round s` and
+`S.round s + 2 ≤ N` — which is what lets them mean anything at a
+schedule that is not the identity, and which took the last `hid` out of
+`sees_of_commits_of_held`.
+
+**4. `Banded`.** The theorem no other rule needs, and it needed a lever
+first. `eq_of_wellFormed` says two assignments over one validator's
+rules agree wherever *either* has decided, and `decided_iff` turns that
+into a normal form: a verdict of this rule is the reverse pass's
+verdict. `Banded` is then a downward induction on slots with
+`LeanDag/FinWhale/Band.lean`'s transport at each step — `Band` restating
+`AgreeBand` in the model's vocabulary, then `parentsVoting_eq`,
+`fpEvidence_iff`, `exposes_iff`, the forward transports of the commit
+rules, `directSkip`, `reaches_of`/`reaches_old`, `indirectCommit_iff`
+and `chooseLeast_band`.
+
+Two things came out of it worth keeping. The skip rule quantifies over
+the slot's candidates and a band may add one — the defect §3.2 and
+§3.12 record — and FinWhale escapes it without repair, because its
+blames count against what a block's *parents* reference and an old
+block's parents reference only old blocks. And the one case the band
+cannot settle, the larger DAG deciding directly what the smaller decided
+from an anchor, is FinWhale's own exclusion read inside the larger DAG
+alone.
 
 ### What the identity assumption is now
 
 It used to be a conjunct of `Decided`, where nothing could discharge it.
 Then it was a hypothesis of every theorem that constructs a pass. It is
 now a hypothesis of the *protocol* alone — `Run.roundId`, and the
-liveness capstones that count rounds — and of nothing in the carrier.
-That is where it belongs: a FinWhale execution runs one slot per round,
-and saying so at the execution rather than in the decision relation is
-what let the carrier take an arbitrary schedule.
+liveness capstones that count rounds — and of nothing in the carrier or
+the properties. That is where it belongs: a FinWhale execution runs one
+slot per round, and saying so at the execution rather than in the
+decision relation is what let the carrier take an arbitrary schedule.
+
+### Where the plan stands
+
+Every rule this plan named is ported. FinWhale shows all six required
+properties and `CommitsDirect`; Nemo, Hybrid/Orcaella and Odontoceti
+did earlier. **Optimal-Hydrozoan is the one carrier still short**: it
+has `Agree` and `CommitsCandidate` through `Barnacle.Laws` and no
+`Banded`, which is the last source of the eight recorded bespoke links
+and of the three `OptimalChopDecided` inductions that a band would
+delete.
