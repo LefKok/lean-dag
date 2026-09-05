@@ -26,16 +26,19 @@ validator's assignment rather than restrictions invented here:
 * **it is finite** — nothing above some `N` is decided, which is what
   Lemma 12's downward induction consumes and what a finite DAG gives.
 
-**The schedule is pinned to the DAG.** FinWhale carries its leader
-function as a *field of the `Dag`*, where every other rule takes it as a
-`Slots` instance. `DagRule` supplies the schedule separately, so
-`Decided` requires the two to agree: slots are rounds, and the schedule's
-leaders are the DAG's. That is faithful — FinWhale's slots *are* rounds —
-and it is what lets a commit name a candidate at the property's
-`IsCandidate`.
+**The schedule comes from `Slots`, as it does for every other rule.**
+FinWhale used to carry its leader function as a field of the `Dag`,
+which put a schedule inside a universe and so put `Banded` out of reach:
+a band is a statement about blocks, and two DAGs in one band could name
+different leaders. The field is gone, the decision rules read the leader
+they are given, and `Decided` needs no pinning of the schedule to the
+DAG.
 
-It is also why this file stops short of `Banded`; see the note at the
-end.
+What is still pinned is the *indexing*: FinWhale's slots are its rounds,
+so `Decided` asks for `S.slotRound s = s`. That is not a restriction on
+FinWhale but a statement of what its slots are, and the band tolerates
+it — `Banded` only requires the round shift to match the slot shift,
+which for a rule whose slots are its rounds is exactly right.
 -/
 
 namespace LeanDag
@@ -56,9 +59,10 @@ theorem mem_blocksAt {D : Dag Validator BlockId Payload} {b : BlockId} {n : ℕ}
   unfold LeanDag.FinWhale.blocksAt; exact Finset.mem_filter
 
 /-- And of a slot's blocks. -/
-theorem mem_slotBlocks {D : Dag Validator BlockId Payload} {b : BlockId} {n : ℕ} :
-    b ∈ LeanDag.FinWhale.slotBlocks D n ↔
-      (b ∈ D.ids ∧ (D.block b).round = n) ∧ (D.block b).creator = D.leader n := by
+theorem mem_slotBlocks {ld : ℕ → Validator} {D : Dag Validator BlockId Payload}
+    {b : BlockId} {n : ℕ} :
+    b ∈ LeanDag.FinWhale.slotBlocks ld D n ↔
+      (b ∈ D.ids ∧ (D.block b).round = n) ∧ (D.block b).creator = ld n := by
   unfold LeanDag.FinWhale.slotBlocks
   rw [Finset.mem_filter, mem_blocksAt]
 
@@ -71,17 +75,17 @@ def VerdictIs (dec : ℕ → Verdict BlockId) (r : ℕ) (v : Option BlockId) : P
 
 /-- **What a validator's verdict assignment is**: well-formed on its own
 view, committing only blocks of the slot, and finite. -/
-structure Assignment (D : Dag Validator BlockId Payload) (V : Finset BlockId)
-    (hV : IsView D V) (dec : ℕ → Verdict BlockId) : Prop where
+structure Assignment (ld : ℕ → Validator) (D : Dag Validator BlockId Payload)
+    (V : Finset BlockId) (hV : IsView D V) (dec : ℕ → Verdict BlockId) : Prop where
   /-- The reverse pass, as a condition on the verdicts. -/
-  wf : WellFormed (viewCommit D V hV) (viewSkip D V hV) (chooseLeast D) dec
+  wf : WellFormed (viewCommit ld D V hV) (viewSkip ld D V hV) (chooseLeast ld D) dec
   /-- A commit names a block of the slot. -/
-  slot : ∀ s A, dec s = Verdict.commit A → A ∈ slotBlocks D s
+  slot : ∀ s A, dec s = Verdict.commit A → A ∈ slotBlocks ld D s
   /-- Nothing above some round is decided — the DAG is finite. -/
   finite : ∃ N, ∀ s, N ≤ s → dec s = Verdict.undecided
 
-/-- **FinWhale as a carrier.** The schedule is pinned to the DAG's own
-leader function, and slots are rounds. -/
+/-- **FinWhale as a carrier.** The leader comes from the schedule, as it
+does for every other rule; what is pinned is that slots are rounds. -/
 def finWhaleRule : DagRule Validator BlockId Payload where
   Universe := Dag Validator BlockId Payload
   View := fun D => {V : Finset BlockId // IsView D V}
@@ -91,8 +95,8 @@ def finWhaleRule : DagRule Validator BlockId Payload where
   viewSound := fun V => V.property.subset
   viewComplete := fun V => V.property.closed
   Decided := fun S D V r v =>
-    (∀ s, S.slotRound s = s) ∧ (∀ s, S.leader s = D.leader s) ∧
-      ∃ dec, Assignment D V.val V.property dec ∧ VerdictIs dec r v
+    (∀ s, S.slotRound s = s) ∧
+      ∃ dec, Assignment S.leader D V.val V.property dec ∧ VerdictIs dec r v
 
 /-- FinWhale's DAGs are block DAGs. -/
 theorem causal : Causal (finWhaleRule (Validator := Validator) (BlockId := BlockId)
@@ -107,11 +111,11 @@ candidate, and the downward induction runs on the two assignments'
 finiteness bounds together. -/
 theorem agree : Agree (finWhaleRule (Validator := Validator) (BlockId := BlockId)
     (Payload := Payload)) := by
-  rintro S D V₁ V₂ r v₁ v₂ ⟨-, -, dec₁, ha₁, hv₁⟩ ⟨-, -, dec₂, ha₂, hv₂⟩
+  rintro S D V₁ V₂ r v₁ v₂ ⟨-, dec₁, ha₁, hv₁⟩ ⟨-, dec₂, ha₂, hv₂⟩
   obtain ⟨N₁, hN₁⟩ := ha₁.finite
   obtain ⟨N₂, hN₂⟩ := ha₂.finite
   have habove : ∀ (dq : ℕ → Verdict BlockId),
-      (∀ s A, dq s = Verdict.commit A → A ∈ slotBlocks D s) →
+      (∀ s A, dq s = Verdict.commit A → A ∈ slotBlocks S.leader D s) →
       ∀ r a A, r + 2 < a → dq a = Verdict.commit A →
         A ∈ D.ids ∧ r + 3 ≤ (D.block A).round := by
     intro dq hq r a A hra hcom
@@ -145,10 +149,10 @@ assignment, read at the property's `IsCandidate` — which is where the
 schedule being pinned to the DAG earns its place. -/
 theorem commitsCandidate : CommitsCandidate
     (finWhaleRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) := by
-  rintro S D V r L ⟨hround, hlead, dec, ha, hv⟩
+  rintro S D V r L ⟨hround, dec, ha, hv⟩
   have hA := ha.slot r L hv
   rw [mem_slotBlocks] at hA
-  exact ⟨hA.1.1, by rw [hround]; exact hA.1.2, by rw [hlead]; exact hA.2⟩
+  exact ⟨hA.1.1, by rw [hround]; exact hA.1.2, hA.2⟩
 
 /-! ## That the relation is inhabited
 
@@ -177,10 +181,10 @@ theorem view_bounded (D : Dag Validator BlockId Payload) (V : Finset BlockId)
   fun b hb => Finset.le_sup (f := fun b => (D.block b).round) hb
 
 /-- A view's slot blocks are the universe's. -/
-theorem slotBlocks_restrict_subset (D : Dag Validator BlockId Payload) (V : Finset BlockId)
-    (hV : IsView D V) (r : ℕ) :
-    LeanDag.FinWhale.slotBlocks (LeanDag.FinWhale.restrict D V hV) r ⊆
-      LeanDag.FinWhale.slotBlocks D r := by
+theorem slotBlocks_restrict_subset (ld : ℕ → Validator) (D : Dag Validator BlockId Payload)
+    (V : Finset BlockId) (hV : IsView D V) (r : ℕ) :
+    LeanDag.FinWhale.slotBlocks ld (LeanDag.FinWhale.restrict D V hV) r ⊆
+      LeanDag.FinWhale.slotBlocks ld D r := by
   intro b hb
   rw [mem_slotBlocks] at hb ⊢
   exact ⟨⟨hV.subset hb.1.1, hb.1.2⟩, hb.2⟩
@@ -192,27 +196,29 @@ committing only blocks of the slot by `mem_slotBlocks_of_decOf`, and
 finite because a view is a finite set of blocks — and
 `WellFormed.direct_commit` reads the commit off it.
 
-The two schedule hypotheses are the pinning `Decided` carries: slots are
-rounds, and the schedule's leaders are the DAG's. -/
+The one schedule hypothesis is the indexing `Decided` carries: slots are
+rounds. The leader no longer has to be pinned to anything, the rules
+reading the one they are given. -/
 theorem decided_of_directCommit {D : Dag Validator BlockId Payload} {S : Slots Validator}
-    (hround : ∀ s, S.slotRound s = s) (hlead : ∀ s, S.leader s = D.leader s)
+    (hround : ∀ s, S.slotRound s = s)
     {V : Finset BlockId} (hV : IsView D V)
     {k : ℕ} {L : BlockId}
-    (hslot : L ∈ LeanDag.FinWhale.slotBlocks (LeanDag.FinWhale.restrict D V hV) k)
+    (hslot : L ∈ LeanDag.FinWhale.slotBlocks S.leader
+      (LeanDag.FinWhale.restrict D V hV) k)
     (hcom : LeanDag.FinWhale.DirectCommit (LeanDag.FinWhale.restrict D V hV) L) :
     (finWhaleRule (Payload := Payload)).Decided S (U := D) ⟨V, hV⟩ k (some L) := by
   classical
-  refine ⟨hround, hlead, decOf (LeanDag.FinWhale.restrict D V hV)
-    (chooseLeast D) (V.sup (fun b => (D.block b).round)), ?_, ?_⟩
+  refine ⟨hround, decOf S.leader (LeanDag.FinWhale.restrict D V hV)
+    (chooseLeast S.leader D) (V.sup (fun b => (D.block b).round)), ?_, ?_⟩
   · exact
       { wf := wellFormed_decOf (view_bounded D V hV)
-          (chooseLeast D)
+          (chooseLeast S.leader D)
         slot := fun s A h => mem_slotBlocks_of_decOf
-          (slotBlocks_restrict_subset D V hV) chooseSound_least h
+          (slotBlocks_restrict_subset S.leader D V hV) chooseSound_least h
         finite := ⟨V.sup (fun b => (D.block b).round) + 1,
           fun s hs => decOf_of_gt (by omega)⟩ }
   · exact (wellFormed_decOf (view_bounded D V hV)
-      (chooseLeast D)).direct_commit k L ⟨hslot, hcom⟩
+      (chooseLeast S.leader D)).direct_commit k L ⟨hslot, hcom⟩
 
 end FinWhaleProperties
 

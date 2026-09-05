@@ -53,12 +53,11 @@ variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 variable {D : Dag Validator BlockId Payload} {V : Finset BlockId}
 
 variable {hV : IsView D V}
+variable {ld : ℕ → Validator}
 
 @[simp] theorem restrict_ids : (restrict D V hV).ids = V := rfl
 
 @[simp] theorem restrict_block : (restrict D V hV).block = D.block := rfl
-
-@[simp] theorem restrict_leader : (restrict D V hV).leader = D.leader := rfl
 
 /-- The population shrinks, so a round's blocks do. -/
 theorem blocksAt_restrict {r : ℕ} : blocksAt (restrict D V hV) r ⊆ blocksAt D r := by
@@ -67,7 +66,7 @@ theorem blocksAt_restrict {r : ℕ} : blocksAt (restrict D V hV) r ⊆ blocksAt 
   exact ⟨hV.subset hb.1, hb.2⟩
 
 /-- And so does a slot's. -/
-theorem slotBlocks_restrict {r : ℕ} : slotBlocks (restrict D V hV) r ⊆ slotBlocks D r := by
+theorem slotBlocks_restrict {r : ℕ} : slotBlocks ld (restrict D V hV) r ⊆ slotBlocks ld D r := by
   intro b hb
   simp only [slotBlocks, Finset.mem_filter] at hb ⊢
   exact ⟨blocksAt_restrict hb.1, hb.2⟩
@@ -144,11 +143,6 @@ theorem exposesBy_restrict {b : BlockId} (hb : b ∈ V) (v : Validator) :
   · rintro ⟨l, -, l', -, hconf, hlead, h1, h2⟩
     exact ⟨l, mem_view_of_parentsVoting hV hb h1, l',
       mem_view_of_parentsVoting hV hb h2, hconf, hlead, h1, h2⟩
-
-/-- The same at the leader, which is the form the validity rule reads. -/
-theorem exposes_restrict {b : BlockId} (hb : b ∈ V) :
-    ExposesEquivocation (restrict D V hV) b ↔ ExposesEquivocation D b :=
-  exposesBy_restrict hb _
 
 /-- **FP-evidence is view-independent** for a block the view holds. The
 equivocating branch bounds the parents voting for anything conflicting;
@@ -261,10 +255,10 @@ already puts the committed block in the view; then either Lemma 4 or
 Lemma 2 makes one of those blocks FP-evidence for it, which is what
 Non-FP-evidence denies. -/
 theorem no_directSkip_of_commit_view {r : ℕ} {l : BlockId}
-    (hl : l ∈ slotBlocks D r) (hcom : DirectCommit D l) :
-    ¬ DirectSkip (restrict D V hV) r := by
+    (hl : l ∈ slotBlocks ld D r) (hcom : DirectCommit D l) :
+    ¬ DirectSkip ld (restrict D V hV) r := by
   rintro ⟨-, nonev, hnon, hnonb⟩
-  have hlu : l ∈ D.ids ∧ (D.block l).round = r ∧ (D.block l).creator = D.leader r := by
+  have hlu : l ∈ D.ids ∧ (D.block l).round = r ∧ (D.block l).creator = ld r := by
     simp only [slotBlocks, blocksAt, Finset.mem_filter] at hl
     exact ⟨hl.1.1, hl.1.2, hl.2⟩
   have hvote := voters_of_directCommit hcom
@@ -278,15 +272,13 @@ theorem no_directSkip_of_commit_view {r : ℕ} {l : BlockId}
     simp only [blocksAt, restrict_block, Finset.mem_filter] at hb₀; exact hb₀.2
   -- the committed block is in the view, whatever the view had seen of the slot
   have hlV : l ∈ V := mem_view_of_voters hV hb₀V (by rw [hb₀round, hlu.2.1]) hvote
-  have hlslot : l ∈ slotBlocks (restrict D V hV) r := by
-    simp only [slotBlocks, blocksAt, restrict_ids, restrict_block, restrict_leader,
-      Finset.mem_filter]
+  have hlslot : l ∈ slotBlocks ld (restrict D V hV) r := by
+    simp only [slotBlocks, blocksAt, restrict_ids, restrict_block, Finset.mem_filter]
     exact ⟨⟨hlV, hlu.2.1⟩, hlu.2.2⟩
   rcases hcom with hfast | ⟨certs, hcerts, hcertb⟩
   · -- under a fast commit every round-`(r+2)` block is evidence (Lemma 4)
     have hfp : FPEvidence D b₀ l :=
-      lemma4 (hV.subset hb₀V) hlu.1 (by rw [hb₀round, hlu.2.1])
-        (by rw [hlu.2.1]; exact hlu.2.2) hfast
+      lemma4 (hV.subset hb₀V) hlu.1 (by rw [hb₀round, hlu.2.1]) hfast
     exact hnonfp₀ l hlslot ((fpEvidence_restrict hb₀V).2 hfp)
   · -- under a slow commit the two quorums meet in a correct author
     have hmeet := card_add_card_le_card_inter_add_card certs nonev
@@ -312,11 +304,11 @@ Either route puts the candidate in the view — an SP-certificate through
 the voter count, a quorum of evidence through the author the two quorums
 share — and then the skip's own conditions deny it. -/
 theorem no_indirectCommit_of_directSkip_view {A : BlockId} {r : ℕ} {b : BlockId}
-    (hskip : DirectSkip (restrict D V hV) r) : ¬ IndirectCommit D A r b := by
+    (hskip : DirectSkip ld (restrict D V hV) r) : ¬ IndirectCommit ld D A r b := by
   obtain ⟨hsp, nonev, hnon, hnonb⟩ := hskip
   rintro ⟨hbslot, hroute⟩
   have harith := params_arith (Validator := Validator)
-  have hbu : b ∈ D.ids ∧ (D.block b).round = r ∧ (D.block b).creator = D.leader r := by
+  have hbu : b ∈ D.ids ∧ (D.block b).round = r ∧ (D.block b).creator = ld r := by
     simp only [slotBlocks, blocksAt, Finset.mem_filter] at hbslot
     exact ⟨hbslot.1.1, hbslot.1.2, hbslot.2⟩
   have hpos : 0 < nonev.card := by simp only [spQuorum] at hnon; omega
@@ -329,9 +321,8 @@ theorem no_indirectCommit_of_directSkip_view {A : BlockId} {r : ℕ} {b : BlockI
   -- the candidate is in the view, and so the slot's blocks include it
   have hin : b ∈ V → False := by
     intro hbV
-    have hbslotV : b ∈ slotBlocks (restrict D V hV) r := by
-      simp only [slotBlocks, blocksAt, restrict_ids, restrict_block, restrict_leader,
-        Finset.mem_filter]
+    have hbslotV : b ∈ slotBlocks ld (restrict D V hV) r := by
+      simp only [slotBlocks, blocksAt, restrict_ids, restrict_block,   Finset.mem_filter]
       exact ⟨⟨hbV, hbu.2.1⟩, hbu.2.2⟩
     rcases hroute with ⟨c, hc, -, hcert⟩ | ⟨ev, hev, hevb⟩
     · simp only [blocksAt, Finset.mem_filter] at hc
@@ -388,14 +379,14 @@ assumed about how the views relate to the universe beyond their being
 views: the direct rules are evaluated on them, and every field is a
 theorem about that. -/
 theorem exclusions_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsView D V')
-    {choose : BlockId → ℕ → Option BlockId} (hch : ChooseSound D choose) :
-    Exclusions (viewCommit D V hV) (viewCommit D V' hV') (viewSkip D V hV) (viewSkip D V' hV')
+    {choose : BlockId → ℕ → Option BlockId} (hch : ChooseSound ld D choose) :
+    Exclusions (viewCommit ld D V hV) (viewCommit ld D V' hV') (viewSkip ld D V hV) (viewSkip ld D V' hV')
       choose (fun r A => A ∈ D.ids ∧ r + 3 ≤ (D.block A).round) := by
-  have hconf : ∀ (r : ℕ) (l b : BlockId), l ∈ slotBlocks D r → b ∈ slotBlocks D r → l ≠ b →
-      Conflicting D l b ∧ l ∈ D.ids ∧ b ∈ D.ids ∧ (D.block l).creator = D.leader r := by
+  have hconf : ∀ (r : ℕ) (l b : BlockId), l ∈ slotBlocks ld D r → b ∈ slotBlocks ld D r → l ≠ b →
+      Conflicting D l b ∧ l ∈ D.ids ∧ b ∈ D.ids := by
     intro r l b hl hb hne
     simp only [slotBlocks, blocksAt, Finset.mem_filter] at hl hb
-    exact ⟨⟨hne, by rw [hl.1.2, hb.1.2], by rw [hl.2, hb.2]⟩, hl.1.1, hb.1.1, hl.2⟩
+    exact ⟨⟨hne, by rw [hl.1.2, hb.1.2], by rw [hl.2, hb.2]⟩, hl.1.1, hb.1.1⟩
   refine
     { commit_unique := fun r l l' ⟨hs, hc⟩ ⟨hs', hc'⟩ =>
         direct_commit_unique (slotBlocks_restrict hs) (slotBlocks_restrict hs')
@@ -422,8 +413,8 @@ theorem exclusions_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsV
     have hlslot := slotBlocks_restrict hs
     have hcom := directCommit_restrict hc
     have hind := hch.sound A r b hchb
-    obtain ⟨hcf, hlids, hbids, hlead⟩ := hconf r l b hlslot hind.1 (Ne.symm hne)
-    exact no_indirectCommit_of_directCommit hlids hbids hlslot hlead hcf hcom hind
+    obtain ⟨hcf, hlids, hbids⟩ := hconf r l b hlslot hind.1 (Ne.symm hne)
+    exact no_indirectCommit_of_directCommit hlids hbids hlslot hcf hcom hind
 
 /-! ## The capstones, with the views supplied
 
@@ -437,11 +428,11 @@ which is what catching up means. -/
 their own views of one DAG deliver prefix-comparable sequences. -/
 theorem safety_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsView D V')
     {choose : BlockId → ℕ → Option BlockId} {dec dec' : ℕ → Verdict BlockId}
-    (hwf : WellFormed (viewCommit D V hV) (viewSkip D V hV) choose dec)
-    (hwf' : WellFormed (viewCommit D V' hV') (viewSkip D V' hV') choose dec')
-    (hch : ChooseSound D choose)
-    (hslot : ∀ r A, dec r = Verdict.commit A → A ∈ slotBlocks D r)
-    (hslot' : ∀ r A, dec' r = Verdict.commit A → A ∈ slotBlocks D r)
+    (hwf : WellFormed (viewCommit ld D V hV) (viewSkip ld D V hV) choose dec)
+    (hwf' : WellFormed (viewCommit ld D V' hV') (viewSkip ld D V' hV') choose dec')
+    (hch : ChooseSound ld D choose)
+    (hslot : ∀ r A, dec r = Verdict.commit A → A ∈ slotBlocks ld D r)
+    (hslot' : ∀ r A, dec' r = Verdict.commit A → A ∈ slotBlocks ld D r)
     {N : ℕ} (hbound : ∀ s, N ≤ s → dec s = Verdict.undecided ∧ dec' s = Verdict.undecided)
     {k k' : ℕ} (hk : ∀ s, s < k → dec s ≠ Verdict.undecided)
     (hk' : ∀ s, s < k' → dec' s ≠ Verdict.undecided)
@@ -449,7 +440,7 @@ theorem safety_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsView 
     linearise hist (commitSeq dec k) <+: linearise hist (commitSeq dec' k') ∨
       linearise hist (commitSeq dec' k') <+: linearise hist (commitSeq dec k) := by
   have habove : ∀ (dq : ℕ → Verdict BlockId),
-      (∀ r A, dq r = Verdict.commit A → A ∈ slotBlocks D r) →
+      (∀ r A, dq r = Verdict.commit A → A ∈ slotBlocks ld D r) →
       ∀ r a A, r + 2 < a → dq a = Verdict.commit A → A ∈ D.ids ∧ r + 3 ≤ (D.block A).round := by
     intro dq hq r a A hra hcom
     have hA := hq a A hcom
@@ -466,13 +457,13 @@ view holds those; the leader's own block is reliable too, the slot being
 correct-led. Nothing is asked of the view about Byzantine authors, which
 is as much as a schedule can give. -/
 theorem sees_of_commits_of_held {V : Finset BlockId} (hV : IsView D V) {R N : ℕ}
-    (hcommits : CommitsCorrectLeaders D R N)
+    (hcommits : CommitsCorrectLeaders ld D R N)
     (hheld : ∀ n, R ≤ n → n ≤ N → ∀ b ∈ blocksAt D n,
       (D.block b).creator ∈ (Correct : Finset Validator) → b ∈ V) :
-    SeesCommits D (viewCommit D V hV) R N := by
+    SeesCommits ld D (viewCommit ld D V hV) R N := by
   intro s hR hN hlead
   obtain ⟨l, hslot, certs, hsub, hcard, hcertb⟩ := hcommits s hR hN hlead
-  have hlu : l ∈ blocksAt D s ∧ (D.block l).creator = D.leader s := by
+  have hlu : l ∈ blocksAt D s ∧ (D.block l).creator = ld s := by
     simp only [slotBlocks, Finset.mem_filter] at hslot
     exact hslot
   have hlround : (D.block l).round = s := by
@@ -480,8 +471,7 @@ theorem sees_of_commits_of_held {V : Finset BlockId} (hV : IsView D V) {R N : �
     exact hlu.1.2
   have hlV : l ∈ V := hheld s hR (by omega) l hlu.1 (by rw [hlu.2]; exact hlead)
   refine ⟨l, hslot, ?_, Or.inr ⟨certs, hcard, fun v hv => ?_⟩⟩
-  · simp only [slotBlocks, blocksAt, restrict_ids, restrict_block, restrict_leader,
-      Finset.mem_filter]
+  · simp only [slotBlocks, blocksAt, restrict_ids, restrict_block, Finset.mem_filter]
     exact ⟨⟨hlV, hlround⟩, hlu.2⟩
   · obtain ⟨b, hb, hbc, hcert⟩ := hcertb v hv
     have hbV : b ∈ V :=
@@ -497,11 +487,11 @@ to the horizon decides every slot below it. `hsees` is discharged by
 whatever direct commit is there. -/
 theorem all_decided_of_view {V : Finset BlockId} (hV : IsView D V)
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
-    (hwf : WellFormed (viewCommit D V hV) (viewSkip D V hV) choose dec) {R N r : ℕ}
+    (hwf : WellFormed (viewCommit ld D V hV) (viewSkip ld D V hV) choose dec) {R N r : ℕ}
     (hheld : ∀ n, R ≤ n → n ≤ N → ∀ b ∈ blocksAt D n,
       (D.block b).creator ∈ (Correct : Finset Validator) → b ∈ V)
-    (hcommits : CommitsCorrectLeaders D R N)
-    (hrr : RoundRobin D.leader) (hN : max r R + (3 * F.f + 5) ≤ N) :
+    (hcommits : CommitsCorrectLeaders ld D R N)
+    (hrr : RoundRobin ld) (hN : max r R + (3 * F.f + 5) ≤ N) :
     dec r ≠ Verdict.undecided :=
   all_decided hwf (sees_of_commits_of_held hV hcommits hheld) hrr hN
 
@@ -509,23 +499,23 @@ theorem all_decided_of_view {V : Finset BlockId} (hV : IsView D V)
 the horizon deliver the same sequence. -/
 theorem agreement_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsView D V')
     {choose : BlockId → ℕ → Option BlockId} {dec dec' : ℕ → Verdict BlockId}
-    (hwf : WellFormed (viewCommit D V hV) (viewSkip D V hV) choose dec)
-    (hwf' : WellFormed (viewCommit D V' hV') (viewSkip D V' hV') choose dec')
-    (hch : ChooseSound D choose)
-    (hslot : ∀ r A, dec r = Verdict.commit A → A ∈ slotBlocks D r)
-    (hslot' : ∀ r A, dec' r = Verdict.commit A → A ∈ slotBlocks D r)
+    (hwf : WellFormed (viewCommit ld D V hV) (viewSkip ld D V hV) choose dec)
+    (hwf' : WellFormed (viewCommit ld D V' hV') (viewSkip ld D V' hV') choose dec')
+    (hch : ChooseSound ld D choose)
+    (hslot : ∀ r A, dec r = Verdict.commit A → A ∈ slotBlocks ld D r)
+    (hslot' : ∀ r A, dec' r = Verdict.commit A → A ∈ slotBlocks ld D r)
     {M : ℕ} (hbound : ∀ s, M ≤ s → dec s = Verdict.undecided ∧ dec' s = Verdict.undecided)
     {R N k : ℕ}
     (hheld : ∀ n, R ≤ n → n ≤ N → ∀ b ∈ blocksAt D n,
       (D.block b).creator ∈ (Correct : Finset Validator) → b ∈ V)
     (hheld' : ∀ n, R ≤ n → n ≤ N → ∀ b ∈ blocksAt D n,
       (D.block b).creator ∈ (Correct : Finset Validator) → b ∈ V')
-    (hcommits : CommitsCorrectLeaders D R N)
-    (hrr : RoundRobin D.leader) (hkN : max k R + (3 * F.f + 5) ≤ N)
+    (hcommits : CommitsCorrectLeaders ld D R N)
+    (hrr : RoundRobin ld) (hkN : max k R + (3 * F.f + 5) ≤ N)
     (hist : BlockId → List BlockId) :
     linearise hist (commitSeq dec k) = linearise hist (commitSeq dec' k) := by
   have habove : ∀ (dq : ℕ → Verdict BlockId),
-      (∀ r A, dq r = Verdict.commit A → A ∈ slotBlocks D r) →
+      (∀ r A, dq r = Verdict.commit A → A ∈ slotBlocks ld D r) →
       ∀ r a A, r + 2 < a → dq a = Verdict.commit A → A ∈ D.ids ∧ r + 3 ≤ (D.block A).round := by
     intro dq hq r a A hra hcom
     have hA := hq a A hcom

@@ -41,7 +41,7 @@ def DfwTwin : Dag (Fin 4) (Fin 9) Unit :=
   Dag.ofDoSValid Utwin twinLeader utwin_dosValid
 
 /-- The slot of round `0` has both versions, and they conflict. -/
-example : slotBlocks DfwTwin 0 = {0, 4} ∧ Conflicting DfwTwin 0 4 := by decide
+example : slotBlocks twinLeader DfwTwin 0 = {0, 4} ∧ Conflicting DfwTwin 0 4 := by decide
 
 /-- Their author is Byzantine, which is what `correct_single` — inherited
 from the universe's non-equivocation — leaves room for. -/
@@ -49,12 +49,12 @@ example : (DfwTwin.block 0).creator ∉ (Correct : Finset (Fin 4)) := by decide
 
 /-- **Block `8` exposes the equivocation.** Its parents vote for both
 versions. -/
-example : ExposesEquivocation DfwTwin 8 := by decide
+example : ExposesEquivocationBy DfwTwin 8 (DfwTwin.block 0).creator := by decide
 
 /-- **So it does not cite the equivocator**, which is the leader clause's
 second branch — here forced by the DoS condition rather than assumed. -/
-example : DfwTwin.leader ((DfwTwin.block 8).round - 2) ∉ parentSet DfwTwin 8 :=
-  leader_not_parent_of_exposes (by decide) (by decide) (by decide)
+example : (DfwTwin.block 0).creator ∉ parentSet DfwTwin 8 :=
+  exposed_not_parent (by decide) (by decide)
 
 /-- And the self-parent edge comes with the universe, so Validity needs
 no hypothesis here. -/

@@ -7512,7 +7512,7 @@ meets the correct voters — at least `2f + p − 1` of them, by
 `honest_voters` — in `f + p − 1` validators (`nonequivocating_voters`),
 which is what that branch asks. A block that has seen it may not
 reference the equivocating leader, by the second half of the leader
-clause (`leader_not_parent_of_exposes`), so at most `f − 1` of its
+clause (`exposed_not_parent`), so at most `f − 1` of its
 parents are Byzantine (`parents_byzantine_lt`); its correct parents
 number `n − 2f + 1`, of which at most `p` fail to vote
 (`honest_nonvoters`), leaving `f + p` voting for the committed block
@@ -7788,18 +7788,19 @@ clause with three of its narrowings removed: it holds of every author,
 at unbounded depth, and permanently. **FW13** is the implication:
 
 ```lean
-theorem leaderClause_of_dosValid (hdos : DoSValid U) (leader : ℕ → Validator)
-    {b : BlockId} (hb : b ∈ U.ids) :
-    2 ≤ (U.block b).round →
+theorem leaderClause_of_dosValid (hdos : DoSValid U)
+    {b : BlockId} (hb : b ∈ U.ids) (v : Validator) :
     (∀ i ∈ (U.block b).refs, ∀ j ∈ (U.block b).refs, ∀ x ∈ (U.block i).refs,
-        ∀ y ∈ (U.block j).refs, (U.block x).creator = leader ((U.block b).round - 2) →
-        (U.block y).creator = leader ((U.block b).round - 2) → x = y)
-      ∨ (∀ i ∈ (U.block b).refs, (U.block i).creator ≠ leader ((U.block b).round - 2))
+        ∀ y ∈ (U.block j).refs, (U.block x).creator = v →
+        (U.block y).creator = v → x = y)
+      ∨ (∀ i ∈ (U.block b).refs, (U.block i).creator ≠ v)
 ```
 
 `Dag.ofDoSValid` builds the DAG from it: three validity clauses are the
-core's, the fourth is that theorem, and non-equivocation is the
-universe's. The leader schedule is a parameter, since the DoS condition
+core's, the fourth is that theorem — now at every validator rather than
+at the leader, which is what takes the schedule out of the DAG — and
+non-equivocation is the universe's. The leader schedule is a parameter of
+the *execution* rather than of the DAG, since the DoS condition
 does not know which validator leads. Two things follow. The self-parent
 edge comes with core validity, so `selfParented_ofDoSValid` is a theorem
 and Theorem 26 loses its one remaining hypothesis. And the DAG and the
@@ -8044,7 +8045,7 @@ equivocating branch asks, one has seen a single version and falls under
 the branch asking `f + p − 1 = 3`, and one has seen both and carries too
 few of either; and `Dskip`, where all nine validators decline and no
 anchor reverses the skip. Validity forces the first of those to drop the
-leader's own round-1 block, which is `leader_not_parent_of_exposes` on
+equivocator's own round-1 block, which is `exposed_not_parent` on
 data. The reverse pass runs on them through its own well-formedness
 rather than by evaluation, the pass recursing down from a horizon the
 kernel does not unfold, and has a second witness on verdicts rather than
@@ -17041,22 +17042,33 @@ The fast-path threshold: `n − p` distinct voters one round above.
 
 ```lean
 structure ValidHere (blk : BlockId → Block Validator BlockId Payload)
-    (leader : ℕ → Validator) (b : Block Validator BlockId Payload) : Prop where
+    (b : Block Validator BlockId Payload) : Prop where
   /-- Every edge points to the round immediately below. -/
   predecessor : ∀ i ∈ b.refs, (blk i).round + 1 = b.round
   /-- No two edges share a validator. -/
   distinct_creators : ∀ i ∈ b.refs, ∀ j ∈ b.refs, (blk i).creator = (blk j).creator → i = j
   /-- A non-genesis block carries `n − f` edges by distinct validators. -/
   quorum : 0 < b.round → quorumCard Validator ≤ (creators blk b).card
-  /-- **FinWhale's clause.** Either the parent set is leader-consistent
-  with respect to the leader two rounds down — the parents vote for at
-  most one of that leader's blocks — or that leader's block is not among
-  the parents. Leader-consistency is a condition on what the parents
-  *reference*, not on who authored them. -/
-  leader_clause : 2 ≤ b.round →
+  /-- **FinWhale's clause, at every validator.** Either the parent set is
+  consistent about `v` — the parents vote for at most one of `v`'s blocks
+  — or `v`'s block is not among the parents. Consistency is a condition
+  on what the parents *reference*, not on who authored them.
+
+  **Stated at every validator rather than at the leader**, which is what
+  makes it schedule-free, and what lets a `Dag` be a `Properties.DagRule`
+  universe: a rule whose validity mentions the schedule cannot be
+  related to another DAG by a band, since a band is a statement about
+  blocks (`docs/porting-plan.md`).
+
+  It is a genuine strengthening of the paper's rule, and a harmless one:
+  a validator can check it locally, and it drops at most the `f` visibly
+  equivocating validators' blocks, leaving the `n − f` its quorum needs.
+  The same shape as Optimal-Hydrozoan's `LeaderExcludedAll`, and adopted
+  for the same reason. -/
+  leader_clause : ∀ v : Validator,
     (∀ i ∈ b.refs, ∀ j ∈ b.refs, ∀ x ∈ (blk i).refs, ∀ y ∈ (blk j).refs,
-      (blk x).creator = leader (b.round - 2) → (blk y).creator = leader (b.round - 2) → x = y)
-    ∨ (∀ i ∈ b.refs, (blk i).creator ≠ leader (b.round - 2))
+      (blk x).creator = v → (blk y).creator = v → x = y)
+    ∨ (∀ i ∈ b.refs, (blk i).creator ≠ v)
 ```
 
 **Validity, as FinWhale extends Mysticeti's.** Every edge sits in the round below, at most one edge per validator, a non-genesis block carries `n − f` of them by distinct validators, and the parent set is either leader-consistent with respect to the leader two rounds down or excludes that leader's block. The last clause is FinWhale's addition and is what the fast path's counting rests on.
@@ -17072,12 +17084,10 @@ structure Dag (Validator BlockId Payload : Type*) [Fintype Validator]
   ids : Finset BlockId
   /-- What each identifier denotes. -/
   block : BlockId → Block Validator BlockId Payload
-  /-- The leader schedule. -/
-  leader : ℕ → Validator
   /-- The DAG is closed under edges. -/
   complete : ∀ i ∈ ids, ∀ j ∈ (block i).refs, j ∈ ids
   /-- Every block is valid. -/
-  valid : ∀ i ∈ ids, ValidHere block leader (block i)
+  valid : ∀ i ∈ ids, ValidHere block (block i)
   /-- Only a faulty validator issues two blocks in one round. -/
   correct_single : ∀ i ∈ ids, ∀ j ∈ ids,
     (block i).creator ∈ (Correct : Finset Validator) →
@@ -17158,18 +17168,7 @@ def ExposesEquivocationBy (D : Dag Validator BlockId Payload) (b : BlockId)
 
 **Exposing a validator's equivocation, the parent-set reading.** Two parents of `b` vote for two different blocks of `v`.
 
-**Stated at a validator rather than at a leader**, which is what makes it schedule-free: the old form read `D.leader ((D.block b).round - 2)`, and so both named the schedule and subtracted from a round. The subtraction was `scripts/audit-rounds.py`'s one FinWhale finding, and the leader read is what keeps FinWhale from a band (`docs/porting-plan.md`). `ExposesEquivocation` below is this at the leader, so nothing downstream changes meaning.
-
-#### `ExposesEquivocation`
-
-*def, `FinWhale.Model.Rule.lean`*
-
-```lean
-def ExposesEquivocation (D : Dag Validator BlockId Payload) (b : BlockId) : Prop :=
-  ExposesEquivocationBy D b (D.leader ((D.block b).round - 2))
-```
-
-The same, at the leader two rounds down — the form the validity rule is stated in and the one Lemma 4 needs.
+**Stated at a validator rather than at a leader**, which is what makes it schedule-free: the old form read `ld ((D.block b).round - 2)`, and so both named the schedule and subtracted from a round. The subtraction was `scripts/audit-rounds.py`'s one FinWhale finding, and the leader read is what keeps FinWhale from a band (`docs/porting-plan.md`). `ExposesEquivocation` below is this at the leader, so nothing downstream changes meaning.
 
 #### `FPEvidence`
 
@@ -17249,8 +17248,9 @@ def SPSkip (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
 *def, `FinWhale.Model.Decision.lean`*
 
 ```lean
-def slotBlocks (D : Dag Validator BlockId Payload) (r : ℕ) : Finset BlockId :=
-  (blocksAt D r).filter (fun b => (D.block b).creator = D.leader r)
+def slotBlocks (ld : ℕ → Validator) (D : Dag Validator BlockId Payload) (r : ℕ) :
+    Finset BlockId :=
+  (blocksAt D r).filter (fun b => (D.block b).creator = ld r)
 ```
 
 The blocks of the leader slot of round `r`. There may be several, if the leader equivocates.
@@ -17299,11 +17299,11 @@ def DirectCommit (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
 *def, `FinWhale.Model.Decision.lean`*
 
 ```lean
-def DirectSkip (D : Dag Validator BlockId Payload) (r : ℕ) : Prop :=
-  (∀ l ∈ slotBlocks D r, SPSkip D l) ∧
+def DirectSkip (ld : ℕ → Validator) (D : Dag Validator BlockId Payload) (r : ℕ) : Prop :=
+  (∀ l ∈ slotBlocks ld D r, SPSkip D l) ∧
     ∃ nonev : Finset Validator, spQuorum Validator ≤ nonev.card ∧
       ∀ v ∈ nonev, ∃ b ∈ blocksAt D (r + 2),
-        (D.block b).creator = v ∧ NonFPEvidence D b (slotBlocks D r)
+        (D.block b).creator = v ∧ NonFPEvidence D b (slotBlocks ld D r)
 
 set_option synthInstance.maxSize 1000 in
 ```
@@ -17315,9 +17315,9 @@ set_option synthInstance.maxSize 1000 in
 *def, `FinWhale.Model.Anchor.lean`*
 
 ```lean
-def IndirectCommit (D : Dag Validator BlockId Payload) (A : BlockId) (r : ℕ) (b : BlockId) :
+def IndirectCommit (ld : ℕ → Validator) (D : Dag Validator BlockId Payload) (A : BlockId) (r : ℕ) (b : BlockId) :
     Prop :=
-  b ∈ slotBlocks D r ∧
+  b ∈ slotBlocks ld D r ∧
     ((∃ c ∈ blocksAt D (r + 2), ReachesFrom D.block A c ∧ SPCertificate D c b) ∨
       (∃ ev : Finset Validator, spQuorum Validator ≤ ev.card ∧
         ∀ v ∈ ev, ∃ c ∈ blocksAt D (r + 2), ReachesFrom D.block A c ∧
@@ -17331,9 +17331,9 @@ def IndirectCommit (D : Dag Validator BlockId Payload) (A : BlockId) (r : ℕ) (
 *def, `FinWhale.Model.Anchor.lean`*
 
 ```lean
-def IndirectCommitOn (D : Dag Validator BlockId Payload) (A : BlockId) (r : ℕ) (b : BlockId) :
+def IndirectCommitOn (ld : ℕ → Validator) (D : Dag Validator BlockId Payload) (A : BlockId) (r : ℕ) (b : BlockId) :
     Prop :=
-  b ∈ slotBlocks D r ∧
+  b ∈ slotBlocks ld D r ∧
     ((∃ c ∈ blocksAt D (r + 2), c ∈ historyFrom D.block A ∧ SPCertificate D c b) ∨
       (∃ ev : Finset Validator, spQuorum Validator ≤ ev.card ∧
         ∀ v ∈ ev, ∃ c ∈ blocksAt D (r + 2), c ∈ historyFrom D.block A ∧
@@ -17433,12 +17433,12 @@ structure Exclusions (dc dc' : ℕ → BlockId → Prop) (ds ds' : ℕ → Prop)
 *structure, `FinWhale.Model.Verdict.lean`*
 
 ```lean
-structure ChooseSound (D : Dag Validator BlockId Payload)
+structure ChooseSound (ld : ℕ → Validator) (D : Dag Validator BlockId Payload)
     (choose : BlockId → ℕ → Option BlockId) : Prop where
   /-- Whatever it names is a candidate. -/
-  sound : ∀ A r b, choose A r = some b → IndirectCommit D A r b
+  sound : ∀ A r b, choose A r = some b → IndirectCommit ld D A r b
   /-- Where there is a candidate, it names one. -/
-  total : ∀ A r, (∃ b, IndirectCommit D A r b) → ∃ b, choose A r = some b
+  total : ∀ A r, (∃ b, IndirectCommit ld D A r b) → ∃ b, choose A r = some b
 ```
 
 **What the deterministic rule must satisfy.** It names only blocks the anchor could indirectly commit, and it names one whenever there is one to name. The paper's rule is a choice among the candidates, so both hold of it.
@@ -17448,10 +17448,10 @@ structure ChooseSound (D : Dag Validator BlockId Payload)
 *def, `FinWhale.Model.Verdict.lean`*
 
 ```lean
-noncomputable def chooseLeast [LinearOrder BlockId] (D : Dag Validator BlockId Payload)
-    (A : BlockId) (r : ℕ) : Option BlockId :=
-  if h : ((slotBlocks D r).filter (fun b => IndirectCommit D A r b)).Nonempty then
-    some (((slotBlocks D r).filter (fun b => IndirectCommit D A r b)).min' h)
+noncomputable def chooseLeast [LinearOrder BlockId] (ld : ℕ → Validator)
+    (D : Dag Validator BlockId Payload) (A : BlockId) (r : ℕ) : Option BlockId :=
+  if h : ((slotBlocks ld D r).filter (fun b => IndirectCommit ld D A r b)).Nonempty then
+    some (((slotBlocks ld D r).filter (fun b => IndirectCommit ld D A r b)).min' h)
   else none
 ```
 
@@ -17464,8 +17464,8 @@ Soundness and totality are all any result here reads, and both hold of it by con
 *def, `FinWhale.Model.Pass.lean`*
 
 ```lean
-def directCommits (D : Dag Validator BlockId Payload) (r : ℕ) : Finset BlockId :=
-  (slotBlocks D r).filter (fun l => DirectCommit D l)
+def directCommits (ld : ℕ → Validator) (D : Dag Validator BlockId Payload) (r : ℕ) : Finset BlockId :=
+  (slotBlocks ld D r).filter (fun l => DirectCommit D l)
 ```
 
 The blocks of a slot that are directly committed. At most one, by `direct_commit_unique`.
@@ -17505,11 +17505,11 @@ def anchorVerdict (choose : BlockId → ℕ → Option BlockId) (N : ℕ)
 *def, `FinWhale.Model.Pass.lean`*
 
 ```lean
-def slotVerdict (D : Dag Validator BlockId Payload)
+def slotVerdict (ld : ℕ → Validator) (D : Dag Validator BlockId Payload)
     (choose : BlockId → ℕ → Option BlockId) (N : ℕ)
     (above : ℕ → Verdict BlockId) (r : ℕ) : Verdict BlockId :=
-  if h : (directCommits D r).Nonempty then Verdict.commit ((directCommits D r).min' h)
-  else if DirectSkip D r then Verdict.skip
+  if h : (directCommits ld D r).Nonempty then Verdict.commit ((directCommits ld D r).min' h)
+  else if DirectSkip ld D r then Verdict.skip
   else anchorVerdict choose N above r
 ```
 
@@ -17520,12 +17520,12 @@ def slotVerdict (D : Dag Validator BlockId Payload)
 *def, `FinWhale.Model.Pass.lean`*
 
 ```lean
-def passFrom (D : Dag Validator BlockId Payload)
+def passFrom (ld : ℕ → Validator) (D : Dag Validator BlockId Payload)
     (choose : BlockId → ℕ → Option BlockId) (N : ℕ) (s : ℕ) : ℕ → Verdict BlockId :=
   if h : N < s then fun _ => Verdict.undecided
   else fun r =>
-    if r = s then slotVerdict D choose N (passFrom D choose N (s + 1)) s
-    else passFrom D choose N (s + 1) r
+    if r = s then slotVerdict ld D choose N (passFrom ld D choose N (s + 1)) s
+    else passFrom ld D choose N (s + 1) r
 termination_by N + 1 - s
 decreasing_by all_goals omega
 ```
@@ -17537,9 +17537,9 @@ decreasing_by all_goals omega
 *def, `FinWhale.Model.Pass.lean`*
 
 ```lean
-def decOf (D : Dag Validator BlockId Payload)
+def decOf (ld : ℕ → Validator) (D : Dag Validator BlockId Payload)
     (choose : BlockId → ℕ → Option BlockId) (N : ℕ) : ℕ → Verdict BlockId :=
-  passFrom D choose N 0
+  passFrom ld D choose N 0
 ```
 
 **The verdicts of a validator whose view is `D`.**
@@ -17607,7 +17607,6 @@ def restrict (D : Dag Validator BlockId Payload) (V : Finset BlockId) (hV : IsVi
     Dag Validator BlockId Payload where
   ids := V
   block := D.block
-  leader := D.leader
   complete := hV.closed
   valid := fun i hi => D.valid i (hV.subset hi)
   correct_single := fun i hi j hj => D.correct_single i (hV.subset hi) j (hV.subset hj)
@@ -17620,9 +17619,9 @@ def restrict (D : Dag Validator BlockId Payload) (V : Finset BlockId) (hV : IsVi
 *def, `FinWhale.Model.View.lean`*
 
 ```lean
-def viewCommit (D : Dag Validator BlockId Payload) (V : Finset BlockId) (hV : IsView D V)
-    (r : ℕ) (l : BlockId) : Prop :=
-  l ∈ slotBlocks (restrict D V hV) r ∧ DirectCommit (restrict D V hV) l
+def viewCommit (ld : ℕ → Validator) (D : Dag Validator BlockId Payload) (V : Finset BlockId)
+    (hV : IsView D V) (r : ℕ) (l : BlockId) : Prop :=
+  l ∈ slotBlocks ld (restrict D V hV) r ∧ DirectCommit (restrict D V hV) l
 ```
 
 The direct commit rule as a validator with view `V` evaluates it.
@@ -17632,9 +17631,9 @@ The direct commit rule as a validator with view `V` evaluates it.
 *def, `FinWhale.Model.View.lean`*
 
 ```lean
-def viewSkip (D : Dag Validator BlockId Payload) (V : Finset BlockId) (hV : IsView D V)
-    (r : ℕ) : Prop :=
-  DirectSkip (restrict D V hV) r
+def viewSkip (ld : ℕ → Validator) (D : Dag Validator BlockId Payload) (V : Finset BlockId)
+    (hV : IsView D V) (r : ℕ) : Prop :=
+  DirectSkip ld (restrict D V hV) r
 ```
 
 And the direct skip rule.
@@ -17766,9 +17765,10 @@ A block whose parents voting for `L` are a slow-path quorum — `SPCertificate`,
 *def, `FinWhale.Model.Liveness.lean`*
 
 ```lean
-def CommitsCorrectLeaders (D : Dag Validator BlockId Payload) (R N : ℕ) : Prop :=
-  ∀ s, R ≤ s → s + 2 ≤ N → D.leader s ∈ (Correct : Finset Validator) →
-    ∃ l ∈ slotBlocks D s, SPCommitBy D l (Correct : Finset Validator)
+def CommitsCorrectLeaders (ld : ℕ → Validator) (D : Dag Validator BlockId Payload)
+    (R N : ℕ) : Prop :=
+  ∀ s, R ≤ s → s + 2 ≤ N → ld s ∈ (Correct : Finset Validator) →
+    ∃ l ∈ slotBlocks ld D s, SPCommitBy D l (Correct : Finset Validator)
 ```
 
 **The liveness input, as an interface.** Every correct-led slot past the coverage round and below the horizon carries a direct commit. Two routes supply it — `commits_of_reactive`, from the reactive schedule's wait clauses, and `commits_of_creation`, from the block-creation conditions themselves — and nothing below cares which.
@@ -17778,10 +17778,10 @@ def CommitsCorrectLeaders (D : Dag Validator BlockId Payload) (R N : ℕ) : Prop
 *def, `FinWhale.Model.Liveness.lean`*
 
 ```lean
-def SeesCommits (D : Dag Validator BlockId Payload) (dc : ℕ → BlockId → Prop) (R N : ℕ) :
-    Prop :=
-  ∀ s, R ≤ s → s + 2 ≤ N → D.leader s ∈ (Correct : Finset Validator) →
-    ∃ l, l ∈ slotBlocks D s ∧ dc s l
+def SeesCommits (ld : ℕ → Validator) (D : Dag Validator BlockId Payload)
+    (dc : ℕ → BlockId → Prop) (R N : ℕ) : Prop :=
+  ∀ s, R ≤ s → s + 2 ≤ N → ld s ∈ (Correct : Finset Validator) →
+    ∃ l, l ∈ slotBlocks ld D s ∧ dc s l
 ```
 
 **What Lemma 23 consumes**: the deciding validator *sees* a direct commit at every correct-led slot below the horizon. One clause where there were two — a commit in the universe, and the view seeing it — because the second is where a view's holdings enter and the first is where the schedule does.
@@ -17822,6 +17822,10 @@ structure Run (Validator BlockId Payload : Type) [Fintype Validator] [DecidableE
   pace : PaceCore paced (Correct : Finset Validator) paceHorizon
   /-- Rounds advance real time. -/
   rounds_advance : ∀ u ∈ (Correct : Finset Validator), ∀ n ≤ pace.top u, n ≤ pace.built u n
+  /-- The leader schedule the execution runs. It belongs to the
+  execution rather than to the DAG: a DAG is blocks, and a schedule is
+  not (`docs/porting-plan.md`). -/
+  leader : ℕ → Validator
   /-- The network has stabilised by this round. -/
   stable : ℕ
   /-- Which is past GST. -/
@@ -17830,17 +17834,17 @@ structure Run (Validator BlockId Payload : Type) [Fintype Validator] [DecidableE
   liveHorizon : ℕ
   /-- Every correct-led slot below it carries a commit — the input §10
   supplies, by either route. -/
-  commits : CommitsCorrectLeaders dag stable liveHorizon
+  commits : CommitsCorrectLeaders leader dag stable liveHorizon
   /-- The schedule reaches that far. -/
   live_le : liveHorizon ≤ paceHorizon
   /-- Leaders rotate. -/
-  roundRobin : RoundRobin dag.leader
+  roundRobin : RoundRobin leader
   /-- Every block references its author's previous block. -/
   selfParented : SelfParented dag
   /-- The deterministic rule among an anchor's candidates. -/
   choose : BlockId → ℕ → Option BlockId
   /-- Which names only candidates, and names one where there is one. -/
-  chooseSound : ChooseSound dag choose
+  chooseSound : ChooseSound leader dag choose
 ```
 
 **A run of FinWhale.** The blocks every correct validator ever holds, the schedule and network that carried them, and the two rules a validator applies: the rotation that names leaders and the tie-break that resolves an anchor's candidates.
@@ -17861,7 +17865,7 @@ def view (v : Validator) : Finset BlockId := run.pace.holds v (settled run.pace)
 
 ```lean
 noncomputable def verdicts (hv : v ∈ (Correct : Finset Validator)) : ℕ → Verdict BlockId :=
-  decOf (restrict run.dag (run.view v) (run.isView hv)) run.choose run.horizon
+  decOf run.leader (restrict run.dag (run.view v) (run.isView hv)) run.choose run.horizon
 ```
 
 **The verdicts a validator reaches**, by running the reverse pass on its own view.
@@ -17886,13 +17890,12 @@ def Dag.ofDoSValid (U : BlockUniverse Validator BlockId Payload) (leader : ℕ �
     (hdos : DoSValid U) : Dag Validator BlockId Payload where
   ids := U.ids
   block := U.block
-  leader := leader
   complete := U.complete
   valid := fun i hi =>
     { predecessor := (U.valid i hi).predecessor
       distinct_creators := (U.valid i hi).distinct_creators
       quorum := (U.valid i hi).quorum
-      leader_clause := leaderClause_of_dosValid hdos leader hi }
+      leader_clause := leaderClause_of_dosValid hdos hi }
   correct_single := U.no_equivocation
 ```
 
@@ -17909,12 +17912,13 @@ def Run.ofDoSValid [LinearOrder BlockId] (U : BlockUniverse Validator BlockId Pa
     (paceHorizon : ℕ) (pace : PaceCore U (Correct : Finset Validator) paceHorizon)
     (rounds_advance : ∀ u ∈ (Correct : Finset Validator), ∀ n ≤ pace.top u, n ≤ pace.built u n)
     (stable : ℕ) (gst_le : pace.gst ≤ stable) (liveHorizon : ℕ)
-    (commits : CommitsCorrectLeaders (Dag.ofDoSValid U leader hdos) stable liveHorizon)
+    (commits : CommitsCorrectLeaders leader (Dag.ofDoSValid U leader hdos) stable liveHorizon)
     (live_le : liveHorizon ≤ paceHorizon) (roundRobin : RoundRobin leader)
     (choose : BlockId → ℕ → Option BlockId)
-    (chooseSound : ChooseSound (Dag.ofDoSValid U leader hdos) choose) :
+    (chooseSound : ChooseSound leader (Dag.ofDoSValid U leader hdos) choose) :
     Run Validator BlockId Payload where
   dag := Dag.ofDoSValid U leader hdos
+  leader := leader
   paced := U
   ids_eq := rfl
   block_eq := rfl
@@ -17954,7 +17958,7 @@ noncomputable def Run.ofDoSValidReactive [LinearOrder BlockId]
   Run.ofDoSValid U S.leader hdos horizon rounds_le N rm.toPaceCore rounds_advance
     stable hgst N
     (commits_of_reactive rm rfl rfl hround (fun _ => rfl) rfl hgst hto)
-    (le_refl N) hrr (chooseLeast _) chooseSound_least
+    (le_refl N) hrr (chooseLeast _ _) chooseSound_least
 ```
 
 **A DoS-valid universe on the reactive schedule is a run.** The DAG is the universe, the pace is the reactive one, and the liveness input is `commits_of_reactive`; the tie-break is `chooseLeast`. Four of `Run`'s fields that a caller would otherwise discharge are `rfl` or theorems here: the two readings of the blocks, the self-parent edge, and the schedule's leader being the DAG's.
@@ -23504,12 +23508,12 @@ A verdict, as the property layer reads it: `some b` is a commit, `none` a skip, 
 *structure, `FinWhale.Carrier.lean`*
 
 ```lean
-structure Assignment (D : Dag Validator BlockId Payload) (V : Finset BlockId)
-    (hV : IsView D V) (dec : ℕ → Verdict BlockId) : Prop where
+structure Assignment (ld : ℕ → Validator) (D : Dag Validator BlockId Payload)
+    (V : Finset BlockId) (hV : IsView D V) (dec : ℕ → Verdict BlockId) : Prop where
   /-- The reverse pass, as a condition on the verdicts. -/
-  wf : WellFormed (viewCommit D V hV) (viewSkip D V hV) (chooseLeast D) dec
+  wf : WellFormed (viewCommit ld D V hV) (viewSkip ld D V hV) (chooseLeast ld D) dec
   /-- A commit names a block of the slot. -/
-  slot : ∀ s A, dec s = Verdict.commit A → A ∈ slotBlocks D s
+  slot : ∀ s A, dec s = Verdict.commit A → A ∈ slotBlocks ld D s
   /-- Nothing above some round is decided — the DAG is finite. -/
   finite : ∃ N, ∀ s, N ≤ s → dec s = Verdict.undecided
 ```
@@ -23530,11 +23534,11 @@ def finWhaleRule : DagRule Validator BlockId Payload where
   viewSound := fun V => V.property.subset
   viewComplete := fun V => V.property.closed
   Decided := fun S D V r v =>
-    (∀ s, S.slotRound s = s) ∧ (∀ s, S.leader s = D.leader s) ∧
-      ∃ dec, Assignment D V.val V.property dec ∧ VerdictIs dec r v
+    (∀ s, S.slotRound s = s) ∧
+      ∃ dec, Assignment S.leader D V.val V.property dec ∧ VerdictIs dec r v
 ```
 
-**FinWhale as a carrier.** The schedule is pinned to the DAG's own leader function, and slots are rounds.
+**FinWhale as a carrier.** The leader comes from the schedule, as it does for every other rule; what is pinned is that slots are rounds.
 
 #### `hybridRule`
 
@@ -32397,12 +32401,13 @@ theorem not_voter_of_conflicting {l l' : BlockId} (hconf : Conflicting D l l') :
 theorem lemma4 {b l : BlockId}
     (hb : b ∈ D.ids) (_hl : l ∈ D.ids)
     (hround : (D.block b).round = (D.block l).round + 2)
-    (hlead : (D.block l).creator = D.leader ((D.block l).round))
     (hfast : FastCommit D l) :
     FPEvidence D b l
 ```
 
 **Lemma 4.** If `n − p` distinct validators vote for a leader block `l` of round `r`, then every round-`(r+2)` block is FP-evidence for `l`. Both branches of the definition are met: the count of parents voting for `l`, and — where the block has seen the equivocation — the bound on the parents voting for anything conflicting.
+
+**It no longer needs to know that `l` is a leader block.** The rule reads the equivocation at `l`'s own author, and the validity clause holds at every validator, so the schedule never enters.
 
 #### `lemma2`
 
@@ -32446,7 +32451,6 @@ A fast commit carries a quorum of votes, so it feeds the above.
 theorem not_fpEvidence_conflicting {b l l' : BlockId}
     (hb : b ∈ D.ids) (hl : l ∈ D.ids) (hl' : l' ∈ D.ids)
     (hround : (D.block b).round = (D.block l).round + 2)
-    (hlead : (D.block l).creator = D.leader ((D.block b).round - 2))
     (hconf : Conflicting D l l') (hfast : FastCommit D l) :
     ¬ FPEvidence D b l'
 ```
@@ -32462,7 +32466,6 @@ A block that has seen the equivocation is FP-evidence for `l` by Lemma 4, and th
 ```lean
 theorem not_fpEvidence_of_spCertificate {c l l' : BlockId}
     (hl : l ∈ D.ids) (hl' : l' ∈ D.ids)
-    (hlead : (D.block l).creator = D.leader ((D.block c).round - 2))
     (hconf : Conflicting D l l') (hcert : SPCertificate D c l) :
     ¬ FPEvidence D c l'
 ```
@@ -32509,7 +32512,6 @@ The counts are by author, so the two sets meet in `f + 1` authors — and the ar
 theorem no_nonFPEvidence_of_fastCommit {b l : BlockId} {slot : Finset BlockId}
     (hb : b ∈ D.ids) (hl : l ∈ D.ids) (hlslot : l ∈ slot)
     (hround : (D.block b).round = (D.block l).round + 2)
-    (hlead : (D.block l).creator = D.leader ((D.block l).round))
     (hfast : FastCommit D l) :
     ¬ NonFPEvidence D b slot
 ```
@@ -32557,7 +32559,7 @@ theorem voters_of_directCommit {l : BlockId} (hcom : DirectCommit D l) :
 
 ```lean
 theorem direct_commit_unique {r : ℕ} {l l' : BlockId}
-    (hl : l ∈ slotBlocks D r) (hl' : l' ∈ slotBlocks D r)
+    (hl : l ∈ slotBlocks ld D r) (hl' : l' ∈ slotBlocks ld D r)
     (hcom : DirectCommit D l) (hcom' : DirectCommit D l') : l = l'
 ```
 
@@ -32569,7 +32571,7 @@ theorem direct_commit_unique {r : ℕ} {l l' : BlockId}
 
 ```lean
 theorem no_directSkip_of_commit {r : ℕ} {l : BlockId}
-    (hl : l ∈ slotBlocks D r) (hcom : DirectCommit D l) : ¬ DirectSkip D r
+    (hl : l ∈ slotBlocks ld D r) (hcom : DirectCommit D l) : ¬ DirectSkip ld D r
 ```
 
 **Lemma 6 and Lemma 7, the direct half.** A slot with a directly committed block is not directly skipped. The SP-skip half of the rule is already unsatisfiable, so the FP-evidence half is not needed.
@@ -32580,10 +32582,9 @@ theorem no_directSkip_of_commit {r : ℕ} {l : BlockId}
 
 ```lean
 theorem no_indirectCommit_of_fastCommit {A : BlockId} {r : ℕ} {b b' : BlockId}
-    (hb : b ∈ D.ids) (hb' : b' ∈ D.ids) (hbslot : b ∈ slotBlocks D r)
-    (hlead : (D.block b).creator = D.leader r)
+    (hb : b ∈ D.ids) (hb' : b' ∈ D.ids) (hbslot : b ∈ slotBlocks ld D r)
     (hconf : Conflicting D b b') (hfast : FastCommit D b) :
-    ¬ IndirectCommit D A r b'
+    ¬ IndirectCommit ld D A r b'
 ```
 
 **A direct commit rules out an indirect commit of a conflicting block.** Either route to `b'` would need a quorum of validators behind it: an SP-certificate carries a quorum of voters, which Lemma 8 forbids beside `b`'s; and a quorum of FP-evidence blocks for `b'` is impossible under a fast commit for `b`, since no round-`(r+2)` block is FP-evidence for a conflicting block at all.
@@ -32594,7 +32595,7 @@ theorem no_indirectCommit_of_fastCommit {A : BlockId} {r : ℕ} {b b' : BlockId}
 
 ```lean
 theorem no_indirectCommit_of_directSkip {A : BlockId} {r : ℕ} {b : BlockId}
-    (hskip : DirectSkip D r) : ¬ IndirectCommit D A r b
+    (hskip : DirectSkip ld D r) : ¬ IndirectCommit ld D A r b
 ```
 
 **A direct skip rules out an indirect commit.** Either route needs a quorum the skip pattern denies: an SP-certificate carries a quorum of voters against the SP-skip half, and a quorum of FP-evidence blocks meets the quorum of Non-FP-evidence blocks in a correct author, whose single round-`(r+2)` block cannot be both.
@@ -32606,8 +32607,8 @@ theorem no_indirectCommit_of_directSkip {A : BlockId} {r : ℕ} {b : BlockId}
 ```lean
 theorem indirectCommit_of_directCommit {A : BlockId} {r : ℕ} {l : BlockId}
     (hA : A ∈ D.ids) (hAround : r + 3 ≤ (D.block A).round)
-    (hl : l ∈ slotBlocks D r) (hcom : DirectCommit D l) :
-    IndirectCommit D A r l
+    (hl : l ∈ slotBlocks ld D r) (hcom : DirectCommit D l) :
+    IndirectCommit ld D A r l
 ```
 
 **A direct commit is visible from every anchor above it.** This is Lemma 7's indirect half: whichever path committed `l` directly leaves a trail that any block at round `r + 3` or above reaches — a quorum of FP-evidence blocks under the fast path, an SP-certificate under the slow one. So the anchor's rule always has a candidate to name.
@@ -32618,10 +32619,9 @@ theorem indirectCommit_of_directCommit {A : BlockId} {r : ℕ} {l : BlockId}
 
 ```lean
 theorem no_indirectCommit_of_directCommit {A : BlockId} {r : ℕ} {b b' : BlockId}
-    (hb : b ∈ D.ids) (hb' : b' ∈ D.ids) (hbslot : b ∈ slotBlocks D r)
-    (hlead : (D.block b).creator = D.leader r)
+    (hb : b ∈ D.ids) (hb' : b' ∈ D.ids) (hbslot : b ∈ slotBlocks ld D r)
     (hconf : Conflicting D b b') (hcom : DirectCommit D b) :
-    ¬ IndirectCommit D A r b'
+    ¬ IndirectCommit ld D A r b'
 ```
 
 **A direct commit rules out an indirect commit of a conflicting block**, by either path.
@@ -32648,7 +32648,6 @@ theorem reaches_spCertificate {l : BlockId} {certs : Finset Validator}
 ```lean
 theorem reaches_fpEvidence_spQuorum {c l : BlockId} (hc : c ∈ D.ids) (hl : l ∈ D.ids)
     (hround : (D.block l).round + 3 ≤ (D.block c).round)
-    (hlead : (D.block l).creator = D.leader ((D.block l).round))
     (hfast : FastCommit D l) :
     ∃ ev : Finset Validator, spQuorum Validator ≤ ev.card ∧
       ∀ v ∈ ev, ∃ b ∈ blocksAt D ((D.block l).round + 2),
@@ -32694,7 +32693,7 @@ The induction is the paper's maximality argument, made downward-explicit: both D
 *theorem, `FinWhale.Consistency.lean`*
 
 ```lean
-theorem chooseSound_least [LinearOrder BlockId] : ChooseSound D (chooseLeast D) where
+theorem chooseSound_least [LinearOrder BlockId] : ChooseSound ld D (chooseLeast ld D) where
   sound
 ```
 
@@ -32706,11 +32705,11 @@ And it satisfies the interface.
 
 ```lean
 theorem exclusions_of_dag {choose : BlockId → ℕ → Option BlockId}
-    (hch : ChooseSound D choose)
+    (hch : ChooseSound ld D choose)
     {dc dc' : ℕ → BlockId → Prop} {ds ds' : ℕ → Prop}
-    (hdc : ∀ r l, dc r l → l ∈ slotBlocks D r ∧ DirectCommit D l)
-    (hdc' : ∀ r l, dc' r l → l ∈ slotBlocks D r ∧ DirectCommit D l)
-    (hds : ∀ r, ds r → DirectSkip D r) (hds' : ∀ r, ds' r → DirectSkip D r) :
+    (hdc : ∀ r l, dc r l → l ∈ slotBlocks ld D r ∧ DirectCommit D l)
+    (hdc' : ∀ r l, dc' r l → l ∈ slotBlocks ld D r ∧ DirectCommit D l)
+    (hds : ∀ r, ds r → DirectSkip ld D r) (hds' : ∀ r, ds' r → DirectSkip ld D r) :
     Exclusions dc dc' ds ds' choose (fun r A => A ∈ D.ids ∧ r + 3 ≤ (D.block A).round)
 ```
 
@@ -32780,7 +32779,7 @@ theorem theorem15 (hist : BlockId → List BlockId) (hnd : ∀ l, (hist l).Nodup
 *theorem, `FinWhale.Pass.lean`*
 
 ```lean
-theorem decOf_of_gt {r : ℕ} (hr : N < r) : decOf D choose N r = Verdict.undecided
+theorem decOf_of_gt {r : ℕ} (hr : N < r) : decOf ld D choose N r = Verdict.undecided
 ```
 
 Above the horizon the pass decides nothing.
@@ -32792,8 +32791,8 @@ Above the horizon the pass decides nothing.
 ```lean
 theorem wellFormed_decOf {N : ℕ} (hN : ∀ b ∈ D.ids, (D.block b).round ≤ N)
     (choose : BlockId → ℕ → Option BlockId) :
-    WellFormed (fun r l => l ∈ slotBlocks D r ∧ DirectCommit D l)
-      (fun r => DirectSkip D r) choose (decOf D choose N) where
+    WellFormed (fun r l => l ∈ slotBlocks ld D r ∧ DirectCommit D l)
+      (fun r => DirectSkip ld D r) choose (decOf ld D choose N) where
   direct_commit r l
 ```
 
@@ -32806,9 +32805,9 @@ theorem wellFormed_decOf {N : ℕ} (hN : ∀ b ∈ D.ids, (D.block b).round ≤ 
 ```lean
 theorem mem_slotBlocks_of_decOf {D' : Dag Validator BlockId Payload} {N : ℕ}
     {choose : BlockId → ℕ → Option BlockId}
-    (hsub : ∀ r, slotBlocks D' r ⊆ slotBlocks D r) (hch : ChooseSound D choose)
-    {r : ℕ} {A : BlockId} (h : decOf D' choose N r = Verdict.commit A) :
-    A ∈ slotBlocks D r
+    (hsub : ∀ r, slotBlocks ld D' r ⊆ slotBlocks ld D r) (hch : ChooseSound ld D choose)
+    {r : ℕ} {A : BlockId} (h : decOf ld D' choose N r = Verdict.commit A) :
+    A ∈ slotBlocks ld D r
 ```
 
 **A committed verdict names a block of its slot.** Either the pass took a direct commit, which is one, or the tie-break named it, and `ChooseSound` says what it names is a candidate.
@@ -32819,16 +32818,16 @@ theorem mem_slotBlocks_of_decOf {D' : Dag Validator BlockId Payload} {N : ℕ}
 
 ```lean
 theorem safety_of_pass {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsView D V')
-    {choose : BlockId → ℕ → Option BlockId} (hch : ChooseSound D choose) {N : ℕ}
+    {choose : BlockId → ℕ → Option BlockId} (hch : ChooseSound ld D choose) {N : ℕ}
     (hNV : ∀ b ∈ V, (D.block b).round ≤ N) (hNV' : ∀ b ∈ V', (D.block b).round ≤ N)
     {k k' : ℕ}
-    (hk : ∀ s, s < k → decOf (restrict D V hV) choose N s ≠ Verdict.undecided)
-    (hk' : ∀ s, s < k' → decOf (restrict D V' hV') choose N s ≠ Verdict.undecided)
+    (hk : ∀ s, s < k → decOf ld (restrict D V hV) choose N s ≠ Verdict.undecided)
+    (hk' : ∀ s, s < k' → decOf ld (restrict D V' hV') choose N s ≠ Verdict.undecided)
     (hist : BlockId → List BlockId) :
-    linearise hist (commitSeq (decOf (restrict D V hV) choose N) k) <+:
-        linearise hist (commitSeq (decOf (restrict D V' hV') choose N) k') ∨
-      linearise hist (commitSeq (decOf (restrict D V' hV') choose N) k') <+:
-        linearise hist (commitSeq (decOf (restrict D V hV) choose N) k)
+    linearise hist (commitSeq (decOf ld (restrict D V hV) choose N) k) <+:
+        linearise hist (commitSeq (decOf ld (restrict D V' hV') choose N) k') ∨
+      linearise hist (commitSeq (decOf ld (restrict D V' hV') choose N) k') <+:
+        linearise hist (commitSeq (decOf ld (restrict D V hV) choose N) k)
 ```
 
 **Safety, with the verdicts computed rather than assumed.** Two validators running the reverse pass on their own views of one DAG deliver prefix-comparable sequences.
@@ -32840,7 +32839,7 @@ Three of `safety_of_views`' hypotheses are gone: `WellFormed`, because the pass 
 *theorem, `FinWhale.View.lean`*
 
 ```lean
-theorem slotBlocks_restrict {r : ℕ} : slotBlocks (restrict D V hV) r ⊆ slotBlocks D r
+theorem slotBlocks_restrict {r : ℕ} : slotBlocks ld (restrict D V hV) r ⊆ slotBlocks ld D r
 ```
 
 And so does a slot's.
@@ -32851,8 +32850,8 @@ And so does a slot's.
 
 ```lean
 theorem exclusions_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsView D V')
-    {choose : BlockId → ℕ → Option BlockId} (hch : ChooseSound D choose) :
-    Exclusions (viewCommit D V hV) (viewCommit D V' hV') (viewSkip D V hV) (viewSkip D V' hV')
+    {choose : BlockId → ℕ → Option BlockId} (hch : ChooseSound ld D choose) :
+    Exclusions (viewCommit ld D V hV) (viewCommit ld D V' hV') (viewSkip ld D V hV) (viewSkip ld D V' hV')
       choose (fun r A => A ∈ D.ids ∧ r + 3 ≤ (D.block A).round)
 ```
 
@@ -32865,11 +32864,11 @@ theorem exclusions_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsV
 ```lean
 theorem safety_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsView D V')
     {choose : BlockId → ℕ → Option BlockId} {dec dec' : ℕ → Verdict BlockId}
-    (hwf : WellFormed (viewCommit D V hV) (viewSkip D V hV) choose dec)
-    (hwf' : WellFormed (viewCommit D V' hV') (viewSkip D V' hV') choose dec')
-    (hch : ChooseSound D choose)
-    (hslot : ∀ r A, dec r = Verdict.commit A → A ∈ slotBlocks D r)
-    (hslot' : ∀ r A, dec' r = Verdict.commit A → A ∈ slotBlocks D r)
+    (hwf : WellFormed (viewCommit ld D V hV) (viewSkip ld D V hV) choose dec)
+    (hwf' : WellFormed (viewCommit ld D V' hV') (viewSkip ld D V' hV') choose dec')
+    (hch : ChooseSound ld D choose)
+    (hslot : ∀ r A, dec r = Verdict.commit A → A ∈ slotBlocks ld D r)
+    (hslot' : ∀ r A, dec' r = Verdict.commit A → A ∈ slotBlocks ld D r)
     {N : ℕ} (hbound : ∀ s, N ≤ s → dec s = Verdict.undecided ∧ dec' s = Verdict.undecided)
     {k k' : ℕ} (hk : ∀ s, s < k → dec s ≠ Verdict.undecided)
     (hk' : ∀ s, s < k' → dec' s ≠ Verdict.undecided)
@@ -32886,10 +32885,10 @@ theorem safety_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsView 
 
 ```lean
 theorem sees_of_commits_of_held {V : Finset BlockId} (hV : IsView D V) {R N : ℕ}
-    (hcommits : CommitsCorrectLeaders D R N)
+    (hcommits : CommitsCorrectLeaders ld D R N)
     (hheld : ∀ n, R ≤ n → n ≤ N → ∀ b ∈ blocksAt D n,
       (D.block b).creator ∈ (Correct : Finset Validator) → b ∈ V) :
-    SeesCommits D (viewCommit D V hV) R N
+    SeesCommits ld D (viewCommit ld D V hV) R N
 ```
 
 **A view holding the reliable blocks sees the commits.** The liveness interface names its certificates as reliable validators' blocks, and a view holds those; the leader's own block is reliable too, the slot being correct-led. Nothing is asked of the view about Byzantine authors, which is as much as a schedule can give.
@@ -32901,11 +32900,11 @@ theorem sees_of_commits_of_held {V : Finset BlockId} (hV : IsView D V) {R N : �
 ```lean
 theorem all_decided_of_view {V : Finset BlockId} (hV : IsView D V)
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
-    (hwf : WellFormed (viewCommit D V hV) (viewSkip D V hV) choose dec) {R N r : ℕ}
+    (hwf : WellFormed (viewCommit ld D V hV) (viewSkip ld D V hV) choose dec) {R N r : ℕ}
     (hheld : ∀ n, R ≤ n → n ≤ N → ∀ b ∈ blocksAt D n,
       (D.block b).creator ∈ (Correct : Finset Validator) → b ∈ V)
-    (hcommits : CommitsCorrectLeaders D R N)
-    (hrr : RoundRobin D.leader) (hN : max r R + (3 * F.f + 5) ≤ N) :
+    (hcommits : CommitsCorrectLeaders ld D R N)
+    (hrr : RoundRobin ld) (hN : max r R + (3 * F.f + 5) ≤ N) :
     dec r ≠ Verdict.undecided
 ```
 
@@ -32918,19 +32917,19 @@ theorem all_decided_of_view {V : Finset BlockId} (hV : IsView D V)
 ```lean
 theorem agreement_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsView D V')
     {choose : BlockId → ℕ → Option BlockId} {dec dec' : ℕ → Verdict BlockId}
-    (hwf : WellFormed (viewCommit D V hV) (viewSkip D V hV) choose dec)
-    (hwf' : WellFormed (viewCommit D V' hV') (viewSkip D V' hV') choose dec')
-    (hch : ChooseSound D choose)
-    (hslot : ∀ r A, dec r = Verdict.commit A → A ∈ slotBlocks D r)
-    (hslot' : ∀ r A, dec' r = Verdict.commit A → A ∈ slotBlocks D r)
+    (hwf : WellFormed (viewCommit ld D V hV) (viewSkip ld D V hV) choose dec)
+    (hwf' : WellFormed (viewCommit ld D V' hV') (viewSkip ld D V' hV') choose dec')
+    (hch : ChooseSound ld D choose)
+    (hslot : ∀ r A, dec r = Verdict.commit A → A ∈ slotBlocks ld D r)
+    (hslot' : ∀ r A, dec' r = Verdict.commit A → A ∈ slotBlocks ld D r)
     {M : ℕ} (hbound : ∀ s, M ≤ s → dec s = Verdict.undecided ∧ dec' s = Verdict.undecided)
     {R N k : ℕ}
     (hheld : ∀ n, R ≤ n → n ≤ N → ∀ b ∈ blocksAt D n,
       (D.block b).creator ∈ (Correct : Finset Validator) → b ∈ V)
     (hheld' : ∀ n, R ≤ n → n ≤ N → ∀ b ∈ blocksAt D n,
       (D.block b).creator ∈ (Correct : Finset Validator) → b ∈ V')
-    (hcommits : CommitsCorrectLeaders D R N)
-    (hrr : RoundRobin D.leader) (hkN : max k R + (3 * F.f + 5) ≤ N)
+    (hcommits : CommitsCorrectLeaders ld D R N)
+    (hrr : RoundRobin ld) (hkN : max k R + (3 * F.f + 5) ≤ N)
     (hist : BlockId → List BlockId) :
     linearise hist (commitSeq dec k) = linearise hist (commitSeq dec' k)
 ```
@@ -32963,8 +32962,8 @@ The triple is what covers the three offsets: the anchor must sit above `r + 2`, 
 theorem all_decided {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
     (hwf : WellFormed dc ds choose dec) {R N r : ℕ}
-    (hsees : SeesCommits D dc R N)
-    (hrr : RoundRobin D.leader) (hN : max r R + (3 * F.f + 5) ≤ N) :
+    (hsees : SeesCommits ld D dc R N)
+    (hrr : RoundRobin ld) (hN : max r R + (3 * F.f + 5) ≤ N) :
     dec r ≠ Verdict.undecided
 ```
 
@@ -33028,8 +33027,8 @@ theorem theorem26_of_selfParent (hself : SelfParented D)
     {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
     (hwf : WellFormed dc ds choose dec) {R N : ℕ}
-    (hsees : SeesCommits D dc R N)
-    (hrr : RoundRobin D.leader) [LinearOrder BlockId]
+    (hsees : SeesCommits ld D dc R N)
+    (hrr : RoundRobin ld) [LinearOrder BlockId]
     {b : BlockId} {k : ℕ} (hb : b ∈ D.ids)
     (hbc : (D.block b).creator ∈ (Correct : Finset Validator))
     (hbound : max ((D.block b).round) R + Fintype.card Validator + 2 ≤ N)
@@ -33180,10 +33179,10 @@ theorem no_timeout_of_fast (rc : ReactivePace U T N)
 ```lean
 theorem commits_of_reactive (rm : ReactiveM U T N)
     (hids : D.ids = U.ids) (hblk : D.block = U.block)
-    (hround : ∀ k, S.slotRound k = k) (hleader : ∀ k, S.leader k = D.leader k)
+    (hround : ∀ k, S.slotRound k = k) (hleader : ∀ k, S.leader k = ld k)
     (hTeq : T = (Correct : Finset Validator))
     (hgst : rm.gst ≤ R) (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n) :
-    CommitsCorrectLeaders D R N
+    CommitsCorrectLeaders ld D R N
 ```
 
 **The reactive route supplies the liveness interface.** Every correct-led slot below the horizon carries a direct commit, with the schedule's two wait clauses in place of coverage.
@@ -33242,13 +33241,13 @@ C1 holds a quorum of voters by its own L2 — its other branch, a quorum declini
 *theorem, `FinWhale.Creation.lean`*
 
 ```lean
-theorem Creation.lemma20 (cr : Creation U T N D.leader)
+theorem Creation.lemma20 (cr : Creation U T N ld)
     (hids : D.ids = U.ids) (hblk : D.block = U.block)
     (hcard : quorumCard Validator ≤ T.card) {R n : ℕ}
     (hgst : cr.gst ≤ R) (hto : ∀ m, R ≤ m → 2 * cr.delay + cr.proc ≤ cr.timeout m)
     (hR : R ≤ n) (hN : n + 2 ≤ N)
     {L : BlockId} (hL : L ∈ D.ids) (hLr : (D.block L).round = n)
-    (hLc : (D.block L).creator = D.leader n) (hlead : D.leader n ∈ T) :
+    (hLc : (D.block L).creator = ld n) (hlead : ld n ∈ T) :
     SPCommitBy D L T
 ```
 
@@ -33259,11 +33258,11 @@ theorem Creation.lemma20 (cr : Creation U T N D.leader)
 *theorem, `FinWhale.Creation.lean`*
 
 ```lean
-theorem commits_of_creation (cr : Creation U T N D.leader)
+theorem commits_of_creation (cr : Creation U T N ld)
     (hids : D.ids = U.ids) (hblk : D.block = U.block)
     (hTeq : T = (Correct : Finset Validator)) {R : ℕ}
     (hgst : cr.gst ≤ R) (hto : ∀ m, R ≤ m → 2 * cr.delay + cr.proc ≤ cr.timeout m) :
-    CommitsCorrectLeaders D R N
+    CommitsCorrectLeaders ld D R N
 ```
 
 **The liveness interface, from the creation rule.** Every correct-led slot below the horizon carries a direct commit — with the vote and certificate clauses derived from C1, C2 and C3 rather than assumed.
@@ -33273,14 +33272,14 @@ theorem commits_of_creation (cr : Creation U T N D.leader)
 *theorem, `FinWhale.Creation.lean`*
 
 ```lean
-theorem Creation.theorem21 (cr : Creation U T N D.leader)
+theorem Creation.theorem21 (cr : Creation U T N ld)
     (hids : D.ids = U.ids) (hblk : D.block = U.block)
     (hTeq : T = (Correct : Finset Validator)) (hfew : F.byzantine.card ≤ P.p)
     {R n : ℕ} (hgst : cr.gst ≤ R)
     (hto : ∀ m, R ≤ m → 2 * cr.delay + cr.proc ≤ cr.timeout m)
     (hR : R ≤ n) (hN : n + 1 ≤ N)
     {L : BlockId} (hL : L ∈ D.ids) (hLr : (D.block L).round = n)
-    (hLc : (D.block L).creator = D.leader n) (hlead : D.leader n ∈ T) :
+    (hLc : (D.block L).creator = ld n) (hlead : ld n ∈ T) :
     FastCommit D L
 ```
 
@@ -33385,13 +33384,12 @@ theorem validity (hv : v ∈ (Correct : Finset Validator)) {b : BlockId} {k : �
 *theorem, `FinWhale.DoSBridge.lean`*
 
 ```lean
-theorem leaderClause_of_dosValid (hdos : DoSValid U) (leader : ℕ → Validator)
-    {b : BlockId} (hb : b ∈ U.ids) :
-    2 ≤ (U.block b).round →
+theorem leaderClause_of_dosValid (hdos : DoSValid U)
+    {b : BlockId} (hb : b ∈ U.ids) (v : Validator) :
     (∀ i ∈ (U.block b).refs, ∀ j ∈ (U.block b).refs, ∀ x ∈ (U.block i).refs,
-        ∀ y ∈ (U.block j).refs, (U.block x).creator = leader ((U.block b).round - 2) →
-        (U.block y).creator = leader ((U.block b).round - 2) → x = y)
-      ∨ (∀ i ∈ (U.block b).refs, (U.block i).creator ≠ leader ((U.block b).round - 2))
+        ∀ y ∈ (U.block j).refs, (U.block x).creator = v →
+        (U.block y).creator = v → x = y)
+      ∨ (∀ i ∈ (U.block b).refs, (U.block i).creator ≠ v)
 ```
 
 **The DoS condition implies the leader clause.** If a block's parents are not leader-consistent, the two conflicting versions they reference are both in its causal history, so the leader is exposed in it — and an exposed author may not be cited.
@@ -38303,7 +38301,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 994 lemmas used only within the file that proves
+The 991 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -39195,12 +39193,12 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `byzantine_of_conflicting` | A validator with two distinct blocks at one round is Byzantine. |
 | `conflicting_parents_lt` | The conflicting side. Under a fast commit for `l`, a block whose parents drop the Byzantine leader … |
+| `exposed_not_parent` | A block that exposes a validator's equivocation drops it. Its parents disagree about `w`, so validity's … |
 | `fpEvidence_equivocating` | Lemma 4, the equivocating branch, at the block level. A block whose parents disagree about the round-`r` … |
 | `fpEvidence_nonequivocating` | Lemma 4, the non-equivocating branch, at the block level. |
-| `leader_not_parent_of_exposes` | A block that exposes equivocation drops the leader. Its parents disagree about the round-`r` leader, so … |
 | `not_refs_conflicting` | No block references two blocks of one author. Validity's `distinct_creators` says so directly, and it is … |
 | `parentsVoting_of_correct_voter` | The bridge. A correct validator that both parents `b` and votes for `l` votes for `l` among `b`'s parents. … |
-| `parents_byzantine_lt` | The `f − 1` bound. The leader that equivocated is Byzantine and is not a parent, so at most `f − 1` of the … |
+| `parents_byzantine_lt` | The `f − 1` bound. The validator that equivocated is Byzantine and is not a parent, so at most `f − 1` of … |
 
 ### `FinWhale/Consequences.lean` (2)
 
@@ -39265,7 +39263,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `round_le_of_directSkip` | A slot with a direct skip lies two rounds below the horizon: the skip exhibits round-`(r+2)` blocks. |
 | `slotVerdict_congr` | The same, for the whole slot verdict: the direct rules read the DAG, not the verdicts. |
 
-### `FinWhale/View.lean` (24)
+### `FinWhale/View.lean` (22)
 
 | Lemma | Role |
 |:---|:---|
@@ -39273,7 +39271,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `directCommit_of_holds` | `hsees`, discharged. A view holding the two rounds above a slot sees whatever direct commit the universe … |
 | `directCommit_restrict` | So its direct commit is one of the universe: the condition safety took as a hypothesis. |
 | `exposesBy_restrict` | Exposing an equivocation is view-independent, for a block the view holds: the conflicting versions it … |
-| `exposes_restrict` | The same at the leader, which is the form the validity rule reads. |
 | `fastCommit_of_holds` | The liveness direction, fast path. A view holding round `r + 1` sees the fast commit the universe sees. |
 | `fastCommit_restrict` | A view's fast commit is one of the universe. |
 | `fpEvidence_restrict` | FP-evidence is view-independent for a block the view holds. The equivocating branch bounds the parents … |
@@ -39286,7 +39283,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `parentsVoting_restrict` | What a block's parents say is view-independent. |
 | `restrict_block` | — |
 | `restrict_ids` | — |
-| `restrict_leader` | — |
 | `spCertificate_restrict` | So an SP-certificate is a certificate in either reading. |
 | `spCommit_of_holds` | And the slow path, for a view holding round `r + 2`. |
 | `spCommit_restrict` | And its slow commit. |
@@ -39361,14 +39357,13 @@ subsection per module, in the layer order of Appendices B and C.
 | `populated_of_viewPace` | Production, from the pacing line. Every correct validator authors a block at every round below the … |
 | `synchronised_of_viewPace` | Coverage, from the pacing line. From any round past GST, once the timeout clears `2∆ + proc`, every … |
 
-### `FinWhale/DoSBridge.lean` (4)
+### `FinWhale/DoSBridge.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
 | `not_exposed_of_correct_parents` | A parent set of reliable authors is never obstructed. No correct validator is ever exposed, so the … |
 | `ofDoSValid_block` | — |
 | `ofDoSValid_ids` | — |
-| `ofDoSValid_leader` | — |
 
 ### `Minnow/Blocking.lean` (3)
 

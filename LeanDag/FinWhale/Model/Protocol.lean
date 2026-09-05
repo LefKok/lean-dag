@@ -54,6 +54,10 @@ structure Run (Validator BlockId Payload : Type) [Fintype Validator] [DecidableE
   pace : PaceCore paced (Correct : Finset Validator) paceHorizon
   /-- Rounds advance real time. -/
   rounds_advance : ∀ u ∈ (Correct : Finset Validator), ∀ n ≤ pace.top u, n ≤ pace.built u n
+  /-- The leader schedule the execution runs. It belongs to the
+  execution rather than to the DAG: a DAG is blocks, and a schedule is
+  not (`docs/porting-plan.md`). -/
+  leader : ℕ → Validator
   /-- The network has stabilised by this round. -/
   stable : ℕ
   /-- Which is past GST. -/
@@ -62,17 +66,17 @@ structure Run (Validator BlockId Payload : Type) [Fintype Validator] [DecidableE
   liveHorizon : ℕ
   /-- Every correct-led slot below it carries a commit — the input §10
   supplies, by either route. -/
-  commits : CommitsCorrectLeaders dag stable liveHorizon
+  commits : CommitsCorrectLeaders leader dag stable liveHorizon
   /-- The schedule reaches that far. -/
   live_le : liveHorizon ≤ paceHorizon
   /-- Leaders rotate. -/
-  roundRobin : RoundRobin dag.leader
+  roundRobin : RoundRobin leader
   /-- Every block references its author's previous block. -/
   selfParented : SelfParented dag
   /-- The deterministic rule among an anchor's candidates. -/
   choose : BlockId → ℕ → Option BlockId
   /-- Which names only candidates, and names one where there is one. -/
-  chooseSound : ChooseSound dag choose
+  chooseSound : ChooseSound leader dag choose
 
 namespace Run
 

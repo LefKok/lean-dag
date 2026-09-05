@@ -23,6 +23,7 @@ variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 variable {D : Dag Validator BlockId Payload} {V : Finset BlockId}
+variable {ld : ℕ → Validator}
 
 /-- **A view**: part of the universe, closed under references. -/
 structure IsView (D : Dag Validator BlockId Payload) (V : Finset BlockId) : Prop where
@@ -37,7 +38,6 @@ def restrict (D : Dag Validator BlockId Payload) (V : Finset BlockId) (hV : IsVi
     Dag Validator BlockId Payload where
   ids := V
   block := D.block
-  leader := D.leader
   complete := hV.closed
   valid := fun i hi => D.valid i (hV.subset hi)
   correct_single := fun i hi j hj => D.correct_single i (hV.subset hi) j (hV.subset hj)
@@ -47,14 +47,14 @@ variable {hV : IsView D V}
 /-! ## The exclusions, on two views -/
 
 /-- The direct commit rule as a validator with view `V` evaluates it. -/
-def viewCommit (D : Dag Validator BlockId Payload) (V : Finset BlockId) (hV : IsView D V)
-    (r : ℕ) (l : BlockId) : Prop :=
-  l ∈ slotBlocks (restrict D V hV) r ∧ DirectCommit (restrict D V hV) l
+def viewCommit (ld : ℕ → Validator) (D : Dag Validator BlockId Payload) (V : Finset BlockId)
+    (hV : IsView D V) (r : ℕ) (l : BlockId) : Prop :=
+  l ∈ slotBlocks ld (restrict D V hV) r ∧ DirectCommit (restrict D V hV) l
 
 /-- And the direct skip rule. -/
-def viewSkip (D : Dag Validator BlockId Payload) (V : Finset BlockId) (hV : IsView D V)
-    (r : ℕ) : Prop :=
-  DirectSkip (restrict D V hV) r
+def viewSkip (ld : ℕ → Validator) (D : Dag Validator BlockId Payload) (V : Finset BlockId)
+    (hV : IsView D V) (r : ℕ) : Prop :=
+  DirectSkip ld (restrict D V hV) r
 
 
 end FinWhale

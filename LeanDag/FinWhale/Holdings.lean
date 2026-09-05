@@ -33,7 +33,7 @@ namespace FinWhale
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
-variable {D : Dag Validator BlockId Payload}
+variable {D : Dag Validator BlockId Payload} {ld : ℕ → Validator}
 variable {U : BlockUniverse Validator BlockId Payload} {T : Finset Validator} {M : ℕ}
 
 /-- **A validator's holdings are a view.** `holds_sub` is the subset
@@ -80,9 +80,9 @@ theorem all_decided_of_pass (pc : PaceCore U (Correct : Finset Validator) M)
     {R : ℕ} (hgst : pc.gst ≤ R) {v : Validator} (hv : v ∈ (Correct : Finset Validator))
     {choose : BlockId → ℕ → Option BlockId} {Np N r : ℕ}
     (hhorizon : ∀ b ∈ pc.holds v (settled pc), (D.block b).round ≤ Np)
-    (hcommits : CommitsCorrectLeaders D R N) (hrr : RoundRobin D.leader)
+    (hcommits : CommitsCorrectLeaders ld D R N) (hrr : RoundRobin ld)
     (hNM : N ≤ M) (hN : max r R + (3 * F.f + 5) ≤ N) :
-    decOf (restrict D (pc.holds v (settled pc)) (isView_holds pc hids hblk hv (settled pc)))
+    decOf ld (restrict D (pc.holds v (settled pc)) (isView_holds pc hids hblk hv (settled pc)))
       choose Np r ≠ Verdict.undecided :=
   all_decided_of_view (isView_holds pc hids hblk hv (settled pc))
     (wellFormed_decOf hhorizon choose)

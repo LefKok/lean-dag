@@ -285,3 +285,47 @@ same fact §3.4c recorded from the other end when it said FinWhale has no
 **The absolute-round read is a second, smaller blocker** and is
 unchanged: `ExposesEquivocation` uses truncated subtraction on a round,
 so even after the slot-indexing it would need restating as a comparison.
+
+## FinWhale: the schedule is out of the DAG
+
+The blocker was never a property. FinWhale carried its leader function
+as a **field of the `Dag`**, which put a schedule inside a universe: a
+band is a statement about blocks, so two DAGs in one band could name
+different leaders and decide differently, and `Banded` was false for
+that reason alone.
+
+The field is gone. `slotBlocks`, `DirectSkip`, `IndirectCommit`,
+`viewCommit`, `viewSkip`, `decOf` and the rest take the leader function
+they are given; `Run` carries it, which is where a schedule belongs —
+an execution runs a schedule, a DAG is blocks. `FinWhaleProperties.Decided`
+reads `S.leader`, exactly as every other carrier does.
+
+**Two validity clauses had to be restated, and both came out better.**
+
+* `ExposesEquivocation` read `D.leader ((D.block b).round - 2)`, naming
+  the schedule *and* subtracting from a round. It is now
+  `ExposesEquivocationBy D b v`, at a validator, with `FPEvidence` reading
+  it at the candidate's own author — the same validator wherever the rule
+  is used. `lemma4` no longer needs to know that its candidate is a
+  leader block at all.
+* `ValidHere.leader_clause` privileged the leader two rounds down. It now
+  holds at **every** validator: a block whose parents expose `v`'s
+  equivocation does not cite `v`. That is a genuine strengthening of the
+  paper's rule, and a harmless one — a validator can check it locally,
+  and it drops at most the `f` visibly equivocating validators' blocks,
+  leaving the `n − f` its quorum needs. Every witness DAG in the arc
+  still satisfies it by `decide`, the equivocation witness included,
+  which is the empirical check that nothing real was lost.
+
+The same shape as Optimal-Hydrozoan's `LeaderExcludedAll`, and adopted
+for the same reason: an invariant that mentions the schedule cannot live
+in a universe that a band relates.
+
+**What is left for the band** is the indexing. `Decided` still asks for
+`S.slotRound s = s`, which is a statement of what FinWhale's slots are
+rather than a restriction, and the band tolerates it — `Banded` only
+requires the round shift to match the slot shift. The remaining work is
+`Banded` itself over the existential verdict relation: the transported
+assignment has to be well formed at *every* round, including below the
+band's floor, which is the one place this rule's shape differs from the
+other five.

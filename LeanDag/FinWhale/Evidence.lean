@@ -159,15 +159,16 @@ theorem conflicting_parents_lt {b l l' : BlockId}
     Finset.card_le_card hsub
   omega
 
-/-- **A block that exposes equivocation drops the leader.** Its parents
-disagree about the round-`r` leader, so validity's first clause fails and
-the second must hold: the leader's round-`(r+1)` block is not a parent. -/
-theorem leader_not_parent_of_exposes {b : BlockId}
-    (hb : b ∈ D.ids) (hround : 2 ≤ (D.block b).round)
-    (hexp : ExposesEquivocation D b) :
-    D.leader ((D.block b).round - 2) ∉ parentSet D b := by
+/-- **A block that exposes a validator's equivocation drops it.** Its
+parents disagree about `w`, so validity's first clause fails at `w` and
+the second must hold: `w`'s block is not a parent.
+
+The round hypothesis is gone with the schedule: the clause now holds at
+every validator, so nothing has to place `w` two rounds down. -/
+theorem exposed_not_parent {b : BlockId} (hb : b ∈ D.ids) {w : Validator}
+    (hexp : ExposesEquivocationBy D b w) : w ∉ parentSet D b := by
   obtain ⟨l, hl, l', hl', hconf, hlead, ⟨v, hv⟩, ⟨v', hv'⟩⟩ := hexp
-  rcases (D.valid b hb).leader_clause hround with hcons | hdrop
+  rcases (D.valid b hb).leader_clause w with hcons | hdrop
   · -- the parents vote for two of the leader's blocks, so they are not
     -- leader-consistent, contradicting the first clause
     exfalso
@@ -180,20 +181,18 @@ theorem leader_not_parent_of_exposes {b : BlockId}
     obtain ⟨i, hi, hiv⟩ := hmem
     exact hdrop i hi hiv
 
-/-- **The `f − 1` bound.** The leader that equivocated is Byzantine and is
-not a parent, so at most `f − 1` of the parents are Byzantine. -/
-theorem parents_byzantine_lt {b : BlockId}
-    (hb : b ∈ D.ids) (hround : 2 ≤ (D.block b).round)
-    (hexp : ExposesEquivocation D b) :
+/-- **The `f − 1` bound.** The validator that equivocated is Byzantine and
+is not a parent, so at most `f − 1` of the parents are Byzantine. -/
+theorem parents_byzantine_lt {b : BlockId} {w : Validator}
+    (hb : b ∈ D.ids) (hexp : ExposesEquivocationBy D b w) :
     (parentSet D b ∩ F.byzantine).card + 1 ≤ F.f := by
   obtain ⟨l, hl, l', hl', hconf, hlead, hv, hv'⟩ := hexp
-  have hbyz : D.leader ((D.block b).round - 2) ∈ F.byzantine := by
+  have hbyz : w ∈ F.byzantine := by
     have := byzantine_of_conflicting hl hl' hconf
     rw [hlead] at this
     simpa using this
-  have hnot := leader_not_parent_of_exposes hb hround ⟨l, hl, l', hl', hconf, hlead, hv, hv'⟩
-  have hsub : parentSet D b ∩ F.byzantine
-      ⊆ F.byzantine.erase (D.leader ((D.block b).round - 2)) := by
+  have hnot := exposed_not_parent hb ⟨l, hl, l', hl', hconf, hlead, hv, hv'⟩
+  have hsub : parentSet D b ∩ F.byzantine ⊆ F.byzantine.erase w := by
     intro x hx
     rw [Finset.mem_inter] at hx
     refine Finset.mem_erase.2 ⟨fun h => hnot (h ▸ hx.1), hx.2⟩
@@ -207,23 +206,20 @@ theorem parents_byzantine_lt {b : BlockId}
 `l` of round `r`, then every round-`(r+2)` block is FP-evidence for `l`.
 Both branches of the definition are met: the count of parents voting for
 `l`, and — where the block has seen the equivocation — the bound on the
-parents voting for anything conflicting. -/
+parents voting for anything conflicting.
+
+**It no longer needs to know that `l` is a leader block.** The rule reads
+the equivocation at `l`'s own author, and the validity clause holds at
+every validator, so the schedule never enters. -/
 theorem lemma4 {b l : BlockId}
     (hb : b ∈ D.ids) (_hl : l ∈ D.ids)
     (hround : (D.block b).round = (D.block l).round + 2)
-    (hlead : (D.block l).creator = D.leader ((D.block l).round))
     (hfast : FastCommit D l) :
     FPEvidence D b l := by
-  have hr2 : (D.block b).round - 2 = (D.block l).round := by omega
-  have hcr : (D.block l).creator = D.leader ((D.block b).round - 2) := by
-    rw [hr2]; exact hlead
   simp only [FPEvidence]
   by_cases hexp : ExposesEquivocationBy D b (D.block l).creator
   · rw [if_pos hexp]
-    have hexp' : ExposesEquivocation D b := by
-      show ExposesEquivocationBy D b (D.leader ((D.block b).round - 2))
-      rw [← hcr]; exact hexp
-    have hbyz := parents_byzantine_lt hb (by omega) hexp'
+    have hbyz := parents_byzantine_lt hb hexp
     exact ⟨fpEvidence_equivocating hb hround hfast hbyz,
       fun l' _ hconf => conflicting_parents_lt hb hround hconf hfast hbyz⟩
   · rw [if_neg hexp]

@@ -107,7 +107,6 @@ block that is not evidence. -/
 theorem parents_all_fpEvidence {c l : BlockId}
     (hc : c ∈ D.ids) (hl : l ∈ D.ids)
     (hround : (D.block c).round = (D.block l).round + 3)
-    (hlead : (D.block l).creator = D.leader ((D.block l).round))
     (hfast : FastCommit D l) :
     quorumCard Validator ≤ (parentSet D c).card ∧
       ∀ q ∈ (D.block c).refs, FPEvidence D q l := by
@@ -115,7 +114,7 @@ theorem parents_all_fpEvidence {c l : BlockId}
   have hqids : q ∈ D.ids := D.complete c hc q hq
   have hqround : (D.block q).round = (D.block l).round + 2 := by
     have := parent_round hc hq; omega
-  exact lemma4 hqids hl hqround hlead hfast
+  exact lemma4 hqids hl hqround hfast
 
 /-- **Descent.** A block reaches a block of its own view at every round
 below its own. The `k`-fold step is the same one `reaches_spCertificate`
@@ -144,7 +143,6 @@ The block descends to round `r + 3` first; there Lemma 5 applies to its
 parents, and reachability composes. -/
 theorem reaches_fpEvidence_quorum {c l : BlockId} (hc : c ∈ D.ids) (hl : l ∈ D.ids)
     (hround : (D.block l).round + 3 ≤ (D.block c).round)
-    (hlead : (D.block l).creator = D.leader ((D.block l).round))
     (hfast : FastCommit D l) :
     ∃ ev : Finset Validator, quorumCard Validator ≤ ev.card ∧
       ∀ v ∈ ev, ∃ b ∈ blocksAt D ((D.block l).round + 2),
@@ -152,7 +150,7 @@ theorem reaches_fpEvidence_quorum {c l : BlockId} (hc : c ∈ D.ids) (hl : l ∈
   obtain ⟨d, hd, hreach, hdr⟩ :=
     reaches_round ((D.block c).round - ((D.block l).round + 3)) c hc
       ((D.block l).round + 3) (by omega)
-  obtain ⟨hqcard, hall⟩ := parents_all_fpEvidence hd hl hdr hlead hfast
+  obtain ⟨hqcard, hall⟩ := parents_all_fpEvidence hd hl hdr hfast
   refine ⟨parentSet D d, hqcard, ?_⟩
   intro v hv
   obtain ⟨q, hq, hqv⟩ := mem_creatorsOf.1 hv
@@ -167,12 +165,11 @@ theorem reaches_fpEvidence_quorum {c l : BlockId} (hc : c ∈ D.ids) (hl : l ∈
 reads. -/
 theorem reaches_fpEvidence_spQuorum {c l : BlockId} (hc : c ∈ D.ids) (hl : l ∈ D.ids)
     (hround : (D.block l).round + 3 ≤ (D.block c).round)
-    (hlead : (D.block l).creator = D.leader ((D.block l).round))
     (hfast : FastCommit D l) :
     ∃ ev : Finset Validator, spQuorum Validator ≤ ev.card ∧
       ∀ v ∈ ev, ∃ b ∈ blocksAt D ((D.block l).round + 2),
         ReachesFrom D.block c b ∧ (D.block b).creator = v ∧ FPEvidence D b l := by
-  obtain ⟨ev, hev, hevb⟩ := reaches_fpEvidence_quorum hc hl hround hlead hfast
+  obtain ⟨ev, hev, hevb⟩ := reaches_fpEvidence_quorum hc hl hround hfast
   exact ⟨ev, le_trans (spQuorum_le_quorumCard (Validator := Validator)) hev, hevb⟩
 
 /-- **An SP-certificate sits two rounds above what it certifies.** Its

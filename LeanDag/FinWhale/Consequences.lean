@@ -117,11 +117,10 @@ to hold both. -/
 theorem not_fpEvidence_conflicting {b l l' : BlockId}
     (hb : b ∈ D.ids) (hl : l ∈ D.ids) (hl' : l' ∈ D.ids)
     (hround : (D.block b).round = (D.block l).round + 2)
-    (hlead : (D.block l).creator = D.leader ((D.block b).round - 2))
     (hconf : Conflicting D l l') (hfast : FastCommit D l) :
     ¬ FPEvidence D b l' := by
   intro hev'
-  have hev : FPEvidence D b l := lemma4 hb hl hround (by rw [hlead]; congr 1; omega) hfast
+  have hev : FPEvidence D b l := lemma4 hb hl hround hfast
   have := params_arith (Validator := Validator)
   have hcc : (D.block l').creator = (D.block l).creator := hconf.2.2.symm
   simp only [FPEvidence, hcc] at hev hev'
@@ -149,7 +148,6 @@ them. If it has not, both counts are positive — `f + p − 1` for `l'` and
 `2f + p` for `l` — which is the equivocation it would have to have seen. -/
 theorem not_fpEvidence_of_spCertificate {c l l' : BlockId}
     (hl : l ∈ D.ids) (hl' : l' ∈ D.ids)
-    (hlead : (D.block l).creator = D.leader ((D.block c).round - 2))
     (hconf : Conflicting D l l') (hcert : SPCertificate D c l) :
     ¬ FPEvidence D c l' := by
   intro hev'

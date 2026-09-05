@@ -45,22 +45,33 @@ leader-consistent with respect to the leader two rounds down or excludes
 that leader's block. The last clause is FinWhale's addition and is what
 the fast path's counting rests on. -/
 structure ValidHere (blk : BlockId → Block Validator BlockId Payload)
-    (leader : ℕ → Validator) (b : Block Validator BlockId Payload) : Prop where
+    (b : Block Validator BlockId Payload) : Prop where
   /-- Every edge points to the round immediately below. -/
   predecessor : ∀ i ∈ b.refs, (blk i).round + 1 = b.round
   /-- No two edges share a validator. -/
   distinct_creators : ∀ i ∈ b.refs, ∀ j ∈ b.refs, (blk i).creator = (blk j).creator → i = j
   /-- A non-genesis block carries `n − f` edges by distinct validators. -/
   quorum : 0 < b.round → quorumCard Validator ≤ (creators blk b).card
-  /-- **FinWhale's clause.** Either the parent set is leader-consistent
-  with respect to the leader two rounds down — the parents vote for at
-  most one of that leader's blocks — or that leader's block is not among
-  the parents. Leader-consistency is a condition on what the parents
-  *reference*, not on who authored them. -/
-  leader_clause : 2 ≤ b.round →
+  /-- **FinWhale's clause, at every validator.** Either the parent set is
+  consistent about `v` — the parents vote for at most one of `v`'s blocks
+  — or `v`'s block is not among the parents. Consistency is a condition
+  on what the parents *reference*, not on who authored them.
+
+  **Stated at every validator rather than at the leader**, which is what
+  makes it schedule-free, and what lets a `Dag` be a `Properties.DagRule`
+  universe: a rule whose validity mentions the schedule cannot be
+  related to another DAG by a band, since a band is a statement about
+  blocks (`docs/porting-plan.md`).
+
+  It is a genuine strengthening of the paper's rule, and a harmless one:
+  a validator can check it locally, and it drops at most the `f` visibly
+  equivocating validators' blocks, leaving the `n − f` its quorum needs.
+  The same shape as Optimal-Hydrozoan's `LeaderExcludedAll`, and adopted
+  for the same reason. -/
+  leader_clause : ∀ v : Validator,
     (∀ i ∈ b.refs, ∀ j ∈ b.refs, ∀ x ∈ (blk i).refs, ∀ y ∈ (blk j).refs,
-      (blk x).creator = leader (b.round - 2) → (blk y).creator = leader (b.round - 2) → x = y)
-    ∨ (∀ i ∈ b.refs, (blk i).creator ≠ leader (b.round - 2))
+      (blk x).creator = v → (blk y).creator = v → x = y)
+    ∨ (∀ i ∈ b.refs, (blk i).creator ≠ v)
 
 /-- A DAG the communication component can build. Equivocating blocks are
 admitted, of faulty validators only. -/
@@ -70,12 +81,10 @@ structure Dag (Validator BlockId Payload : Type*) [Fintype Validator]
   ids : Finset BlockId
   /-- What each identifier denotes. -/
   block : BlockId → Block Validator BlockId Payload
-  /-- The leader schedule. -/
-  leader : ℕ → Validator
   /-- The DAG is closed under edges. -/
   complete : ∀ i ∈ ids, ∀ j ∈ (block i).refs, j ∈ ids
   /-- Every block is valid. -/
-  valid : ∀ i ∈ ids, ValidHere block leader (block i)
+  valid : ∀ i ∈ ids, ValidHere block (block i)
   /-- Only a faulty validator issues two blocks in one round. -/
   correct_single : ∀ i ∈ ids, ∀ j ∈ ids,
     (block i).creator ∈ (Correct : Finset Validator) →
@@ -113,7 +122,7 @@ instance (D : Dag Validator BlockId Payload) (l l' : BlockId) :
 parents of `b` vote for two different blocks of `v`.
 
 **Stated at a validator rather than at a leader**, which is what makes it
-schedule-free: the old form read `D.leader ((D.block b).round - 2)`, and
+schedule-free: the old form read `ld ((D.block b).round - 2)`, and
 so both named the schedule and subtracted from a round. The subtraction
 was `scripts/audit-rounds.py`'s one FinWhale finding, and the leader read
 is what keeps FinWhale from a band
@@ -128,15 +137,6 @@ def ExposesEquivocationBy (D : Dag Validator BlockId Payload) (b : BlockId)
 instance (D : Dag Validator BlockId Payload) (b : BlockId) (v : Validator) :
     Decidable (ExposesEquivocationBy D b v) :=
   inferInstanceAs (Decidable (∃ _ ∈ _, ∃ _ ∈ _, _))
-
-/-- The same, at the leader two rounds down — the form the validity rule
-is stated in and the one Lemma 4 needs. -/
-def ExposesEquivocation (D : Dag Validator BlockId Payload) (b : BlockId) : Prop :=
-  ExposesEquivocationBy D b (D.leader ((D.block b).round - 2))
-
-instance (D : Dag Validator BlockId Payload) (b : BlockId) :
-    Decidable (ExposesEquivocation D b) :=
-  inferInstanceAs (Decidable (ExposesEquivocationBy _ _ _))
 
 /-- **FP-evidence**, the two branches of the paper's definition. A block
 that has seen the equivocation must carry `f + p` parents voting for `l`

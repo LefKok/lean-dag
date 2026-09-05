@@ -43,7 +43,7 @@ theorem isView (hv : v ∈ (Correct : Finset Validator)) : IsView run.dag (run.v
 /-- **The verdicts a validator reaches**, by running the reverse pass on
 its own view. -/
 noncomputable def verdicts (hv : v ∈ (Correct : Finset Validator)) : ℕ → Verdict BlockId :=
-  decOf (restrict run.dag (run.view v) (run.isView hv)) run.choose run.horizon
+  decOf run.leader (restrict run.dag (run.view v) (run.isView hv)) run.choose run.horizon
 
 /-- **And what it delivers**: the causal histories of its committed
 leader blocks, in order, each block once. -/
@@ -63,13 +63,13 @@ theorem view_rounds_le (hv : v ∈ (Correct : Finset Validator)) :
 
 /-- Its verdicts follow the reverse pass. -/
 theorem wellFormed (hv : v ∈ (Correct : Finset Validator)) :
-    WellFormed (viewCommit run.dag (run.view v) (run.isView hv))
-      (viewSkip run.dag (run.view v) (run.isView hv)) run.choose (run.verdicts hv) :=
+    WellFormed (viewCommit run.leader run.dag (run.view v) (run.isView hv))
+      (viewSkip run.leader run.dag (run.view v) (run.isView hv)) run.choose (run.verdicts hv) :=
   wellFormed_decOf (run.view_rounds_le hv) run.choose
 
 /-- A committed verdict names a block of its slot. -/
 theorem slot_of_verdicts (hv : v ∈ (Correct : Finset Validator)) {r : ℕ} {A : BlockId}
-    (h : run.verdicts hv r = Verdict.commit A) : A ∈ slotBlocks run.dag r :=
+    (h : run.verdicts hv r = Verdict.commit A) : A ∈ slotBlocks run.leader run.dag r :=
   mem_slotBlocks_of_decOf (fun _ => slotBlocks_restrict) run.chooseSound h
 
 /-- Nothing above the horizon is decided. -/

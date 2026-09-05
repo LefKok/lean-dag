@@ -28,6 +28,7 @@ variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 variable {D : Dag Validator BlockId Payload}
+variable {ld : ℕ → Validator}
 
 /-- Naming the witnesses is a restriction, not a weakening. -/
 theorem spCommit_of_spCommitBy {l : BlockId} {T : Finset Validator}
@@ -70,7 +71,7 @@ theorem voters_of_directCommit {l : BlockId} (hcom : DirectCommit D l) :
 /-- **Corollary 11, the direct half.** Two blocks of one slot cannot both
 be directly committed. -/
 theorem direct_commit_unique {r : ℕ} {l l' : BlockId}
-    (hl : l ∈ slotBlocks D r) (hl' : l' ∈ slotBlocks D r)
+    (hl : l ∈ slotBlocks ld D r) (hl' : l' ∈ slotBlocks ld D r)
     (hcom : DirectCommit D l) (hcom' : DirectCommit D l') : l = l' := by
   by_contra hne
   simp only [slotBlocks, blocksAt, Finset.mem_filter] at hl hl'
@@ -81,7 +82,7 @@ theorem direct_commit_unique {r : ℕ} {l l' : BlockId}
 committed block is not directly skipped. The SP-skip half of the rule is
 already unsatisfiable, so the FP-evidence half is not needed. -/
 theorem no_directSkip_of_commit {r : ℕ} {l : BlockId}
-    (hl : l ∈ slotBlocks D r) (hcom : DirectCommit D l) : ¬ DirectSkip D r := by
+    (hl : l ∈ slotBlocks ld D r) (hcom : DirectCommit D l) : ¬ DirectSkip ld D r := by
   rintro ⟨hskip, -⟩
   exact no_skip_of_quorum (voters_of_directCommit hcom) (hskip l hl)
 
@@ -105,9 +106,9 @@ to grow for Lemma 12 to close, and on the Black Marlin precedent — a
 sound commit rule and an unsound descent — that recursion is where the
 remaining risk sits. -/
 theorem lemma12_direct {r : ℕ} {l l' : BlockId}
-    (hl : l ∈ slotBlocks D r) (hl' : l' ∈ slotBlocks D r)
+    (hl : l ∈ slotBlocks ld D r) (hl' : l' ∈ slotBlocks ld D r)
     (hcom : DirectCommit D l) (hcom' : DirectCommit D l') :
-    l = l' ∧ ¬ DirectSkip D r :=
+    l = l' ∧ ¬ DirectSkip ld D r :=
   ⟨direct_commit_unique hl hl' hcom hcom', no_directSkip_of_commit hl hcom⟩
 
 end FinWhale

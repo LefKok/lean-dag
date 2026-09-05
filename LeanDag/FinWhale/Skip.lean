@@ -100,10 +100,9 @@ second condition is then unsatisfiable, whatever the first says. -/
 theorem no_nonFPEvidence_of_fastCommit {b l : BlockId} {slot : Finset BlockId}
     (hb : b ∈ D.ids) (hl : l ∈ D.ids) (hlslot : l ∈ slot)
     (hround : (D.block b).round = (D.block l).round + 2)
-    (hlead : (D.block l).creator = D.leader ((D.block l).round))
     (hfast : FastCommit D l) :
     ¬ NonFPEvidence D b slot :=
-  fun hnon => hnon l hlslot (lemma4 hb hl hround hlead hfast)
+  fun hnon => hnon l hlslot (lemma4 hb hl hround hfast)
 
 end FinWhale
 

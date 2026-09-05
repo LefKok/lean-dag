@@ -58,17 +58,15 @@ omit P in
 are not leader-consistent, the two conflicting versions they reference
 are both in its causal history, so the leader is exposed in it — and an
 exposed author may not be cited. -/
-theorem leaderClause_of_dosValid (hdos : DoSValid U) (leader : ℕ → Validator)
-    {b : BlockId} (hb : b ∈ U.ids) :
-    2 ≤ (U.block b).round →
+theorem leaderClause_of_dosValid (hdos : DoSValid U)
+    {b : BlockId} (hb : b ∈ U.ids) (v : Validator) :
     (∀ i ∈ (U.block b).refs, ∀ j ∈ (U.block b).refs, ∀ x ∈ (U.block i).refs,
-        ∀ y ∈ (U.block j).refs, (U.block x).creator = leader ((U.block b).round - 2) →
-        (U.block y).creator = leader ((U.block b).round - 2) → x = y)
-      ∨ (∀ i ∈ (U.block b).refs, (U.block i).creator ≠ leader ((U.block b).round - 2)) := by
-  intro _
+        ∀ y ∈ (U.block j).refs, (U.block x).creator = v →
+        (U.block y).creator = v → x = y)
+      ∨ (∀ i ∈ (U.block b).refs, (U.block i).creator ≠ v) := by
   by_cases hcons : ∀ i ∈ (U.block b).refs, ∀ j ∈ (U.block b).refs, ∀ x ∈ (U.block i).refs,
-      ∀ y ∈ (U.block j).refs, (U.block x).creator = leader ((U.block b).round - 2) →
-      (U.block y).creator = leader ((U.block b).round - 2) → x = y
+      ∀ y ∈ (U.block j).refs, (U.block x).creator = v →
+      (U.block y).creator = v → x = y
   · exact Or.inl hcons
   · refine Or.inr ?_
     push Not at hcons
@@ -93,13 +91,12 @@ def Dag.ofDoSValid (U : BlockUniverse Validator BlockId Payload) (leader : ℕ �
     (hdos : DoSValid U) : Dag Validator BlockId Payload where
   ids := U.ids
   block := U.block
-  leader := leader
   complete := U.complete
   valid := fun i hi =>
     { predecessor := (U.valid i hi).predecessor
       distinct_creators := (U.valid i hi).distinct_creators
       quorum := (U.valid i hi).quorum
-      leader_clause := leaderClause_of_dosValid hdos leader hi }
+      leader_clause := leaderClause_of_dosValid hdos hi }
   correct_single := U.no_equivocation
 
 @[simp] theorem ofDoSValid_ids {leader : ℕ → Validator} (hdos : DoSValid U) :
@@ -107,9 +104,6 @@ def Dag.ofDoSValid (U : BlockUniverse Validator BlockId Payload) (leader : ℕ �
 
 @[simp] theorem ofDoSValid_block {leader : ℕ → Validator} (hdos : DoSValid U) :
     (Dag.ofDoSValid U leader hdos).block = U.block := rfl
-
-@[simp] theorem ofDoSValid_leader {leader : ℕ → Validator} (hdos : DoSValid U) :
-    (Dag.ofDoSValid U leader hdos).leader = leader := rfl
 
 /-- **And the self-parent edge comes with it**, which the FinWhale model
 drops and Validity asks for. Theorem 26 needs no hypothesis here. -/
@@ -143,12 +137,13 @@ def Run.ofDoSValid [LinearOrder BlockId] (U : BlockUniverse Validator BlockId Pa
     (paceHorizon : ℕ) (pace : PaceCore U (Correct : Finset Validator) paceHorizon)
     (rounds_advance : ∀ u ∈ (Correct : Finset Validator), ∀ n ≤ pace.top u, n ≤ pace.built u n)
     (stable : ℕ) (gst_le : pace.gst ≤ stable) (liveHorizon : ℕ)
-    (commits : CommitsCorrectLeaders (Dag.ofDoSValid U leader hdos) stable liveHorizon)
+    (commits : CommitsCorrectLeaders leader (Dag.ofDoSValid U leader hdos) stable liveHorizon)
     (live_le : liveHorizon ≤ paceHorizon) (roundRobin : RoundRobin leader)
     (choose : BlockId → ℕ → Option BlockId)
-    (chooseSound : ChooseSound (Dag.ofDoSValid U leader hdos) choose) :
+    (chooseSound : ChooseSound leader (Dag.ofDoSValid U leader hdos) choose) :
     Run Validator BlockId Payload where
   dag := Dag.ofDoSValid U leader hdos
+  leader := leader
   paced := U
   ids_eq := rfl
   block_eq := rfl
@@ -242,7 +237,7 @@ noncomputable def Run.ofDoSValidReactive [LinearOrder BlockId]
   Run.ofDoSValid U S.leader hdos horizon rounds_le N rm.toPaceCore rounds_advance
     stable hgst N
     (commits_of_reactive rm rfl rfl hround (fun _ => rfl) rfl hgst hto)
-    (le_refl N) hrr (chooseLeast _) chooseSound_least
+    (le_refl N) hrr (chooseLeast _ _) chooseSound_least
 
 end FinWhale
 

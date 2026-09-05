@@ -35,6 +35,7 @@ variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 variable {D : Dag Validator BlockId Payload}
+variable {ld : ℕ → Validator}
 
 omit [DecidableEq BlockId] in
 /-- **The anchor is fixed by the verdicts above the slot.** Two
@@ -165,23 +166,23 @@ theorem lemma12
 
 open scoped Classical in
 /-- And it satisfies the interface. -/
-theorem chooseSound_least [LinearOrder BlockId] : ChooseSound D (chooseLeast D) where
+theorem chooseSound_least [LinearOrder BlockId] : ChooseSound ld D (chooseLeast ld D) where
   sound := by
     intro A r b h
     simp only [chooseLeast] at h
     split at h
     · rename_i hne
-      have hb : (((slotBlocks D r).filter (fun b => IndirectCommit D A r b)).min' hne) = b :=
+      have hb : (((slotBlocks ld D r).filter (fun b => IndirectCommit ld D A r b)).min' hne) = b :=
         Option.some.inj h
-      have hmem := Finset.min'_mem ((slotBlocks D r).filter (fun b => IndirectCommit D A r b)) hne
+      have hmem := Finset.min'_mem ((slotBlocks ld D r).filter (fun b => IndirectCommit ld D A r b)) hne
       rw [hb] at hmem
       exact (Finset.mem_filter.1 hmem).2
     · exact absurd h (by simp)
   total := by
     intro A r ⟨b, hb⟩
-    have hne : ((slotBlocks D r).filter (fun b => IndirectCommit D A r b)).Nonempty :=
+    have hne : ((slotBlocks ld D r).filter (fun b => IndirectCommit ld D A r b)).Nonempty :=
       ⟨b, Finset.mem_filter.2 ⟨hb.1, hb⟩⟩
-    refine ⟨((slotBlocks D r).filter (fun b => IndirectCommit D A r b)).min' hne, ?_⟩
+    refine ⟨((slotBlocks ld D r).filter (fun b => IndirectCommit ld D A r b)).min' hne, ?_⟩
     simp only [chooseLeast, dif_pos hne]
 
 /-- **Lemma 12's side conditions, discharged on the DAG.** Each
@@ -191,18 +192,18 @@ reading every field is one of the theorems above: Lemma 8 for the two
 commit fields, Lemmas 6 and 7 for the skip fields, and Lemmas 3 and 5 for
 the two that say the anchor can always see a direct commit. -/
 theorem exclusions_of_dag {choose : BlockId → ℕ → Option BlockId}
-    (hch : ChooseSound D choose)
+    (hch : ChooseSound ld D choose)
     {dc dc' : ℕ → BlockId → Prop} {ds ds' : ℕ → Prop}
-    (hdc : ∀ r l, dc r l → l ∈ slotBlocks D r ∧ DirectCommit D l)
-    (hdc' : ∀ r l, dc' r l → l ∈ slotBlocks D r ∧ DirectCommit D l)
-    (hds : ∀ r, ds r → DirectSkip D r) (hds' : ∀ r, ds' r → DirectSkip D r) :
+    (hdc : ∀ r l, dc r l → l ∈ slotBlocks ld D r ∧ DirectCommit D l)
+    (hdc' : ∀ r l, dc' r l → l ∈ slotBlocks ld D r ∧ DirectCommit D l)
+    (hds : ∀ r, ds r → DirectSkip ld D r) (hds' : ∀ r, ds' r → DirectSkip ld D r) :
     Exclusions dc dc' ds ds' choose (fun r A => A ∈ D.ids ∧ r + 3 ≤ (D.block A).round) := by
   -- a slot's blocks share the leader and the round, so two of them conflict
-  have hconf : ∀ (r : ℕ) (l b : BlockId), l ∈ slotBlocks D r → b ∈ slotBlocks D r → l ≠ b →
-      Conflicting D l b ∧ l ∈ D.ids ∧ b ∈ D.ids ∧ (D.block l).creator = D.leader r := by
+  have hconf : ∀ (r : ℕ) (l b : BlockId), l ∈ slotBlocks ld D r → b ∈ slotBlocks ld D r → l ≠ b →
+      Conflicting D l b ∧ l ∈ D.ids ∧ b ∈ D.ids := by
     intro r l b hl hb hne
     simp only [slotBlocks, blocksAt, Finset.mem_filter] at hl hb
-    exact ⟨⟨hne, by rw [hl.1.2, hb.1.2], by rw [hl.2, hb.2]⟩, hl.1.1, hb.1.1, hl.2⟩
+    exact ⟨⟨hne, by rw [hl.1.2, hb.1.2], by rw [hl.2, hb.2]⟩, hl.1.1, hb.1.1⟩
   refine
     { commit_unique := fun r l l' h h' =>
         direct_commit_unique (hdc r l h).1 (hdc' r l' h').1 (hdc r l h).2 (hdc' r l' h').2
@@ -224,8 +225,8 @@ theorem exclusions_of_dag {choose : BlockId → ℕ → Option BlockId}
     by_contra hne
     obtain ⟨hlslot, hcom⟩ := by first | exact hdc r l h | exact hdc' r l h
     have hind := hch.sound A r b hchb
-    obtain ⟨hcf, hlids, hbids, hlead⟩ := hconf r l b hlslot hind.1 (Ne.symm hne)
-    exact no_indirectCommit_of_directCommit hlids hbids hlslot hlead hcf hcom hind
+    obtain ⟨hcf, hlids, hbids⟩ := hconf r l b hlslot hind.1 (Ne.symm hne)
+    exact no_indirectCommit_of_directCommit hlids hbids hlslot hcf hcom hind
 
 end FinWhale
 

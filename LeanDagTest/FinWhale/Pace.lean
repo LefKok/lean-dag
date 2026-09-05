@@ -57,18 +57,16 @@ down is unique whatever the schedule names. -/
 def DgrowFor (lead : ℕ → Fin 4) (N : ℕ) : Dag (Fin 4) ℕ Unit where
   ids := (Ugrow N).ids
   block := (Ugrow N).block
-  leader := lead
   complete := (Ugrow N).complete
   valid := by
     intro i hi
     refine ⟨((Ugrow N).valid i hi).predecessor, ((Ugrow N).valid i hi).distinct_creators,
       ((Ugrow N).valid i hi).quorum, ?_⟩
-    intro hround
+    intro v
     refine Or.inl ?_
     intro p hp q hq x hx y hy hxl hyl
     -- the parents sit in one round, so their references sit in one round
     simp only [ugrow_block, growBlock_refs, Finset.mem_Ico] at hp hq hx hy
-    simp only [ugrow_block, rrBlock_round] at hround
     -- and inside a round an author has one block
     have hval : x % 4 = y % 4 := by
       have := congrArg (fun (v : Fin 4) => (v : ℕ)) (hxl.trans hyl.symm)
@@ -92,7 +90,7 @@ abbrev Dgrow (N : ℕ) : Dag (Fin 4) ℕ Unit := DgrowFor growLeader N
 /-- The blocks are the ones `Ugrow` lays out: id `1` is validator `1`'s
 genesis block, and validator `1` leads round `0`. -/
 example : ((Dgrow 5).block 1).round = 0 ∧ ((Dgrow 5).block 1).creator = 1 ∧
-    (Dgrow 5).leader 0 = 1 := by decide
+    growLeader 0 = 1 := by decide
 
 /-- And validator `1` is correct, so round `0` has an honest leader. -/
 example : ((Dgrow 5).block 1).creator ∈ (Correct : Finset (Fin 4)) := by decide
@@ -131,8 +129,11 @@ attribute [local instance 3000] fwSlots
 
 @[simp] theorem fwSlots_slotRound (k : ℕ) : fwSlots.slotRound k = k := by simp
 
+/-- The leader schedule the reactive execution runs. -/
+def reactLeader : ℕ → Fin 4 := fun k => ⟨k % 4, by omega⟩
+
 /-- The execution under that schedule. -/
-abbrev Dreact (N : ℕ) : Dag (Fin 4) ℕ Unit := DgrowFor (fun k => ⟨k % 4, by omega⟩) N
+abbrev Dreact (N : ℕ) : Dag (Fin 4) ℕ Unit := DgrowFor reactLeader N
 
 /-- **Every block votes.** A round-`(r+1)` block of this layout
 references the whole of round `r`. -/
@@ -231,7 +232,7 @@ def fwReactiveCorrect (N : ℕ) : ReactiveM (Ugrow N) (Correct : Finset (Fin 4))
 /-- **The liveness interface, off the reactive schedule.** Every
 correct-led slot below the horizon carries a direct commit — with no
 coverage assumption anywhere, since a reactive builder has none. -/
-example (N : ℕ) : CommitsCorrectLeaders (Dreact N) 0 N :=
+example (N : ℕ) : CommitsCorrectLeaders reactLeader (Dreact N) 0 N :=
   commits_of_reactive (D := Dreact N) (fwReactiveCorrect N) rfl rfl
     (fun k => by simp) (fun k => rfl) rfl (Nat.le_refl _) (fun n _ => Nat.le_refl _)
 
@@ -329,7 +330,7 @@ builds by C1, holding the leader's block and a quorum of votes. The
 induction then runs through validator `1`, which is correct, builds
 strictly earlier, and votes. -/
 
-@[simp] theorem dreact_leader (N n : ℕ) : (((Dreact N).leader n : Fin 4) : ℕ) = n % 4 := rfl
+@[simp] theorem dreact_leader (N n : ℕ) : ((reactLeader n : Fin 4) : ℕ) = n % 4 := rfl
 
 /-- Validator `3` catches up on the round's own blocks; the rest build on
 the leader and its votes. -/
@@ -337,7 +338,7 @@ def fwTrigger : Fin 4 → ℕ → Trigger := fun v _ =>
   if (v : ℕ) = 3 then Trigger.roundQuorum else Trigger.leaderAndQuorum
 
 /-- **The creation rule, on the grown execution.** -/
-def fwCreation (N : ℕ) : Creation (Ugrow N) {1, 2, 3} N (Dreact N).leader :=
+def fwCreation (N : ℕ) : Creation (Ugrow N) {1, 2, 3} N reactLeader :=
   { fwPaceCore N with
     built_lt := fun _ _ _ _ => by simp only [fwPaceCore_built]; omega
     trigger := fwTrigger
@@ -429,12 +430,12 @@ def fwCreation (N : ℕ) : Creation (Ugrow N) {1, 2, 3} N (Dreact N).leader :=
 
 /-- **The liveness interface, from the creation rule.** No wait clause is
 assumed: the votes and the certificates come out of C1 and C3. -/
-theorem fwCommits (N : ℕ) : CommitsCorrectLeaders (Dreact N) 0 N :=
+theorem fwCommits (N : ℕ) : CommitsCorrectLeaders reactLeader (Dreact N) 0 N :=
   commits_of_creation (D := Dreact N) (fwCreation N) rfl rfl (by decide)
     (Nat.le_refl _) (fun n _ => Nat.le_refl _)
 
 /-- The rotation of this execution is round robin. -/
-theorem fwDreactRoundRobin (N : ℕ) : RoundRobin (Dreact N).leader := by
+theorem fwDreactRoundRobin (N : ℕ) : RoundRobin reactLeader := by
   refine ⟨Equiv.refl (Fin 4), fun r => ?_⟩
   apply Fin.ext
   show r % 4 = ZMod.val ((r : ZMod 4))
@@ -452,6 +453,7 @@ and a structure nothing satisfies would make every property above it
 vacuous. -/
 noncomputable def fwRun (N : ℕ) : Run (Fin 4) ℕ Unit where
   dag := Dreact N
+  leader := reactLeader
   paced := Ugrow N
   ids_eq := rfl
   block_eq := rfl
@@ -474,7 +476,7 @@ noncomputable def fwRun (N : ℕ) : Run (Fin 4) ℕ Unit where
   live_le := Nat.le_refl _
   roundRobin := fwDreactRoundRobin N
   selfParented := selfParented_Dreact N
-  choose := chooseLeast (Dreact N)
+  choose := chooseLeast reactLeader (Dreact N)
   chooseSound := chooseSound_least
 
 /-- **Agreement on data.** Two correct validators of the run deliver the
