@@ -1,5 +1,6 @@
 import LeanDag.Integration.Hydrozoan.ChopDecided
 import LeanDag.Integration.Hydrozoan.FillDecided
+import LeanDag.Hydrozoan.Helpers.Commit
 
 /-!
 # The transformer interface
@@ -144,7 +145,7 @@ theorem decided (h : Simulates U V S U' V' S' R Novel) {n : ℕ} {v : Option Blo
   | @indirectCert n j A L hkj helig hanchor hmid hL hcert ihj ihmid =>
       intro k hR
       obtain ⟨j', hRj, hkj'⟩ := h.lift n k j hR hkj
-      have hA : A ∈ U.ids := (LeanDag.Hydrozoan.isLeaderBlock_of_decided (S := S) hanchor).1
+      have hA : A ∈ U.ids := LeanDag.Hydrozoan.commitsCandidate (LeanDag.Hydrozoan.toCoreSlots S) U V _ A hanchor |>.1
       refine LeanDag.Hydrozoan.Decided.indirectCert (S := S') hkj'
         ((h.elig n k j j' hR hRj).mp helig) (ihj j' hRj) ?_ (h.leader_fwd n k L hR hL)
         ((h.cert n k A L hR hA).mpr hcert)
@@ -155,7 +156,7 @@ theorem decided (h : Simulates U V S U' V' S' R Novel) {n : ℕ} {v : Option Blo
   | @indirectWeak n j A L hkj helig hanchor hmid hnocert hL hweak hmin ihj ihmid =>
       intro k hR
       obtain ⟨j', hRj, hkj'⟩ := h.lift n k j hR hkj
-      have hA : A ∈ U.ids := (LeanDag.Hydrozoan.isLeaderBlock_of_decided (S := S) hanchor).1
+      have hA : A ∈ U.ids := LeanDag.Hydrozoan.commitsCandidate (LeanDag.Hydrozoan.toCoreSlots S) U V _ A hanchor |>.1
       refine LeanDag.Hydrozoan.Decided.indirectWeak (S := S') hkj'
         ((h.elig n k j j' hR hRj).mp helig) (ihj j' hRj) ?_ ?_ (h.leader_fwd n k L hR hL)
         ((h.weak n k A L hR hA).mpr hweak) ?_
@@ -174,7 +175,7 @@ theorem decided (h : Simulates U V S U' V' S' R Novel) {n : ℕ} {v : Option Blo
   | @indirectSkip n j A hkj helig hanchor hmid hnocert hnoweak ihj ihmid =>
       intro k hR
       obtain ⟨j', hRj, hkj'⟩ := h.lift n k j hR hkj
-      have hA : A ∈ U.ids := (LeanDag.Hydrozoan.isLeaderBlock_of_decided (S := S) hanchor).1
+      have hA : A ∈ U.ids := LeanDag.Hydrozoan.commitsCandidate (LeanDag.Hydrozoan.toCoreSlots S) U V _ A hanchor |>.1
       refine LeanDag.Hydrozoan.Decided.indirectSkip (S := S') hkj'
         ((h.elig n k j j' hR hRj).mp helig) (ihj j' hRj) ?_ ?_ ?_
       · intro i' h1 h2 he

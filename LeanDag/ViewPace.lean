@@ -1,4 +1,5 @@
 import LeanDag.Quantitative
+import LeanDag.MysticetiProperties
 import LeanDag.History
 import Mathlib.Algebra.BigOperators.Group.Finset.Basic
 
@@ -54,9 +55,9 @@ converges + catch-up + P7 + P9   ──▶  SynchronisedOn, at 2Δ + proc
 
 namespace LeanDag
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator]
-variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
+variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 variable {U : BlockUniverse Validator BlockId Payload}
 variable {T : Finset Validator} {N : ℕ}
 
@@ -725,9 +726,9 @@ theorem commits_recur_local_of_pace (vp : ViewPace U T N)
 
 /-- **The global statement is a corollary**, so V18 strictly strengthens the
 main line: a reliable validator exists (the quorum bound is nonvacuous), it
-decides locally, and `decided_full` (L3) lifts its verdict to the full view.
-`decided_of_leader_mem` reaches the same conclusion without ever naming a
-validator's own view; this route names one. -/
+decides locally, and view monotonicity lifts its verdict to the full
+view — the band, not L3. `LeaderCommits` reaches the same conclusion
+without ever naming a validator's own view; this route names one. -/
 theorem decided_of_local (vp : ViewPace U T N)
     (hcard : quorumCard Validator ≤ T.card) (hgst : vp.gst ≤ R)
     (hbackoff : ∀ n, R ≤ n → 2 * vp.delay + vp.proc ≤ vp.timeout n)
@@ -735,7 +736,7 @@ theorem decided_of_local (vp : ViewPace U T N)
     (hlead : S.leader k ∈ T) :
     ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L) := by
   obtain ⟨L, hL, hloc⟩ := vp.decided_local hcard hgst hbackoff hR hN hlead
-  exact ⟨L, hL, decided_full (hloc _ hlead)⟩
+  exact ⟨L, hL, MysticetiProperties.decided_mono_of_band (View.subset_ids _) (hloc _ hlead)⟩
 
 end Liveness
 

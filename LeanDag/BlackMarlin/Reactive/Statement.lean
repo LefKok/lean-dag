@@ -47,9 +47,9 @@ namespace BlackMarlin
 
 namespace Reactive
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
   [F : Faults Validator] [Rot : Rotation Validator]
-  {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
+  {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
   {U : BlockUniverse Validator BlockId Payload} {T : Finset Validator} {N : ℕ}
 
 /-- **BMR1, the fallback route.** Past GST, every reliable block at the

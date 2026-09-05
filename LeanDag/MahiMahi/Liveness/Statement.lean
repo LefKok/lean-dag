@@ -39,8 +39,8 @@ namespace MahiMahi
 
 namespace Liveness
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
-  [F : Faults Validator] {BlockId : Type*} [LinearOrder BlockId] {Payload : Type*}
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
+  [F : Faults Validator] {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
   [S : Slots Validator]
 
 /-- **MM3a, a good leader commits.** -/

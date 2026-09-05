@@ -1025,6 +1025,34 @@ theorem indirect :
     rw [hround]
     exact hc L hL
 
+/-- **L4's capstone form, from the properties.** The shape every
+consumer of direct liveness uses — synchrony from `R`, production to a
+horizon `N`, a `T`-led slot two rounds under it — reached from
+`LeaderCommits` and `CommitsCandidate` rather than from
+`decided_of_leader_of_populated`.
+
+The work is entirely in packaging: `LeaderCommits` takes its
+precondition as `coreLive` over a slot window, and the window here is
+the single slot. This is the same bridge `LiveRule.GoodGives` is for
+Barnacle (`docs/target-properties.md` §11.2b), and it is the reason the
+capstones do not need their own route into the protocol. -/
+theorem decided_of_leader_of_populated_of_properties [S : Slots Validator]
+    {U : BlockUniverse Validator BlockId Payload} {T : Finset Validator} {R N k : ℕ}
+    (hcard : quorumCard Validator ≤ T.card) (hs : SynchronisedOn U T R)
+    (hR : R ≤ S.slotRound k) (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r)
+    (hN : S.slotRound k + 2 ≤ N) (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L) := by
+  have hwin : ∀ j, j < k + 1 → S.slotRound j + 2 ≤ N := by
+    intro j hj
+    have := S.mono (Nat.lt_succ_iff.mp hj)
+    omega
+  have hlive : coreLive S (U := U) (View.full U) T k (k + 1) :=
+    ⟨hcard, R, N, hs, hR, hpop, View.coversUpto_full U N, hwin⟩
+  obtain ⟨L, hL⟩ :=
+    leaderCommits S (U := U) (View.full U) T k (k + 1) hlive k le_rfl
+      (Nat.lt_succ_self k) hlead
+  exact ⟨L, commitsCandidate S U (View.full U) k L hL.2.1, hL.2.1⟩
+
 /-- **The core's own bounded relation lands in the derived one.**
 `DecidedWithin` still names the slots a derivation mentions, which is
 the tight information `LeaderCommits` and `Descends` need; this says

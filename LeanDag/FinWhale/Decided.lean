@@ -28,7 +28,7 @@ namespace LeanDag
 
 namespace FinWhale
 
-variable {BlockId : Type*} [DecidableEq BlockId]
+variable {BlockId : Type} [DecidableEq BlockId]
 
 omit [DecidableEq BlockId] in
 /-- **Lemma 23.** Every slot below a committed triple is decided.
@@ -112,9 +112,9 @@ the paper's Lemma 23 is stated with, and it is the converse of what
 
 section Triple
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
-variable {Payload : Type*} {D : Dag Validator BlockId Payload}
+variable {Payload : Type} {D : Dag Validator BlockId Payload}
 
 /-- The commit the interface carries. -/
 theorem directCommit_of_commits {R N : ℕ} (h : CommitsCorrectLeaders D R N) {s : ℕ}
@@ -238,9 +238,9 @@ theorem theorem26 {dec : ℕ → Verdict BlockId} {hist : BlockId → List Block
 
 section Order
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
-variable {Payload : Type*} {D : Dag Validator BlockId Payload}
+variable {Payload : Type} {D : Dag Validator BlockId Payload}
 
 /-- `histOf` is the causal history: the faithfulness condition Theorem 26
 asks for, discharged. -/
@@ -264,9 +264,9 @@ end Order
 
 section Capstone
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
-variable {Payload : Type*} {D : Dag Validator BlockId Payload}
+variable {Payload : Type} {D : Dag Validator BlockId Payload}
 
 /-- **Theorem 24 (Agreement), end to end.** Two validators of one DAG
 deliver the same sequence at every horizon the DAG supports.

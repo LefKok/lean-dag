@@ -1,4 +1,5 @@
 import LeanDag.Liveness
+import LeanDag.MysticetiProperties
 
 /-!
 # Quantitative liveness — bounds, from rated assumptions
@@ -51,9 +52,9 @@ is a strengthening of one assumption and a deletion of another.
 
 namespace LeanDag
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator]
-variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
+variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 variable {U : BlockUniverse Validator BlockId Payload}
 variable {T : Finset Validator} {D N : ℕ}
 
@@ -140,7 +141,8 @@ theorem commits_recur_within (hT : T ⊆ (Correct : Finset Validator))
       (S.mono (le_trans (le_max_right _ _) hk'))
   refine ⟨k', hk', hlt, hRk', ?_⟩
   intro U N hpop hs hN
-  exact decided_of_leader_of_populated hT hcard hs hRk' hpop (by omega) hlead
+  exact MysticetiProperties.decided_of_leader_of_populated_of_properties (S := S) hcard hs
+    hRk' hpop hN hlead
 
 /-! ### From a slot bound to a round bound
 

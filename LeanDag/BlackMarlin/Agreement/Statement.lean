@@ -44,9 +44,9 @@ namespace BlackMarlin
 
 namespace Agreement
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
   [F : Faults Validator] [Rot : Rotation Validator]
-  {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
+  {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
   {U : BlockUniverse Validator BlockId Payload} {T : Finset Validator} {N : ℕ}
 
 /-- **BMA1, no divergence.** A block delivered with a committed anchor is

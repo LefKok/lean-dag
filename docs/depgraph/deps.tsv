@@ -440,11 +440,12 @@ EDGE	LeanDag.ViewPace.decided_of_local	LeanDag.PaceCore.viewAt
 EDGE	LeanDag.ViewPace.decided_of_local	LeanDag.Faults
 EDGE	LeanDag.ViewPace.decided_of_local	LeanDag.View.full
 EDGE	LeanDag.ViewPace.decided_of_local	LeanDag.Slots.slotRound
-EDGE	LeanDag.ViewPace.decided_of_local	LeanDag.decided_full
+EDGE	LeanDag.ViewPace.decided_of_local	LeanDag.View.subset_ids
 EDGE	LeanDag.ViewPace.decided_of_local	LeanDag.Decided
 EDGE	LeanDag.ViewPace.decided_of_local	LeanDag.Slots.leader
 EDGE	LeanDag.ViewPace.decided_of_local	LeanDag.PaceCore.gst
 EDGE	LeanDag.ViewPace.decided_of_local	LeanDag.PaceCore.latest
+EDGE	LeanDag.ViewPace.decided_of_local	LeanDag.MysticetiProperties.decided_mono_of_band
 EDGE	LeanDag.ViewPace.decided_of_local	LeanDag.BlockUniverse
 EDGE	LeanDag.ViewPace.decided_of_local	LeanDag.Faults.f
 EDGE	LeanDag.ViewPace.decided_of_local	LeanDag.PaceCore.timeout
@@ -44364,6 +44365,28 @@ NODE	LeanDag.Barnacle.BaseRule.DirectCommitIn	LeanDag.Barnacle.Model.Rule	def
 EDGE	LeanDag.Barnacle.BaseRule.DirectCommitIn	LeanDag.Barnacle.BaseRule.Universe
 EDGE	LeanDag.Barnacle.BaseRule.DirectCommitIn	LeanDag.Barnacle.BaseRule.View
 EDGE	LeanDag.Barnacle.BaseRule.DirectCommitIn	LeanDag.Barnacle.BaseRule
+NODE	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties	LeanDag.MysticetiProperties	thm
+EDGE	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties	LeanDag.Properties.DagRule.Decided
+EDGE	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties	LeanDag.Properties.DecidedBelow
+EDGE	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties	LeanDag.View.coversUpto_full
+EDGE	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties	LeanDag.Faults
+EDGE	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties	LeanDag.View.full
+EDGE	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties	LeanDag.Slots.slotRound
+EDGE	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties	LeanDag.MysticetiProperties.commitsCandidate
+EDGE	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties	LeanDag.Decided
+EDGE	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties	LeanDag.Slots.leader
+EDGE	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties	LeanDag.PopulatedOn
+EDGE	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties	LeanDag.BlockUniverse
+EDGE	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties	LeanDag.Faults.f
+EDGE	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties	LeanDag.MysticetiProperties.leaderCommits
+EDGE	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties	LeanDag.IsLeaderBlock
+EDGE	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties	LeanDag.View.CoversUpto
+EDGE	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties	LeanDag.SynchronisedOn
+EDGE	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties	LeanDag.Slots
+EDGE	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties._proof_1_1
+EDGE	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties	LeanDag.Slots.mono
+EDGE	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties	LeanDag.MysticetiProperties.coreLive
 NODE	LeanDag.Barnacle.nemoRule_commitsDirect	LeanDag.Barnacle.Conformance	thm
 EDGE	LeanDag.Barnacle.nemoRule_commitsDirect	LeanDag.Barnacle.nemo
 EDGE	LeanDag.Barnacle.nemoRule_commitsDirect	LeanDag.Barnacle.Nemo.Laws
@@ -48362,12 +48385,12 @@ NODE	LeanDag.Hydrozoan.View	LeanDag.Hydrozoan.Model.View	ind
 EDGE	LeanDag.Hydrozoan.View	LeanDag.Hydrozoan.BlockUniverse
 EDGE	LeanDag.Hydrozoan.View	LeanDag.Hydrozoan.Faults
 NODE	LeanDag.committed_of_correct_block_within	LeanDag.Quality.Capstone	thm
-EDGE	LeanDag.committed_of_correct_block_within	LeanDag.decided_of_leader_of_populated
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.Faults
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.View.full
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.Slots.slotRound
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.SynchronisedOn.mono
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.Populated
+EDGE	LeanDag.committed_of_correct_block_within	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.le_slotRound_slotAt
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.IncludesAt
 EDGE	LeanDag.committed_of_correct_block_within	LeanDag.Decided
@@ -49420,9 +49443,9 @@ EDGE	LeanDag.pedigree_cons_inv	LeanDag.PedigreeTo.casesOn
 EDGE	LeanDag.pedigree_cons_inv	LeanDag.Block.creator
 NODE	LeanDagTest.mmSlots._proof_1	LeanDagTest.MahiMahi.Model	thm
 NODE	LeanDag.commits_recur_within	LeanDag.Quantitative	thm
-EDGE	LeanDag.commits_recur_within	LeanDag.decided_of_leader_of_populated
 EDGE	LeanDag.commits_recur_within	LeanDag.Faults
 EDGE	LeanDag.commits_recur_within	LeanDag.Slots.slotRound
+EDGE	LeanDag.commits_recur_within	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties
 EDGE	LeanDag.commits_recur_within	LeanDag.le_slotRound_slotAt
 EDGE	LeanDag.commits_recur_within	LeanDag.slotAt
 EDGE	LeanDag.commits_recur_within	LeanDag.Slots.leader
@@ -51360,13 +51383,13 @@ EDGE	LeanDag.FinWhale.not_fpEvidence_conflicting._proof_1_3	LeanDag.FinWhale.Dag
 NODE	LeanDagTest.OptimalHydrozoan.threeSlotsOpt._proof_1	LeanDagTest.OptimalHydrozoan.PrefixAgreement	thm
 NODE	LeanDag.committed_of_correct_block	LeanDag.Quality.Inclusion	thm
 EDGE	LeanDag.committed_of_correct_block	LeanDag.committed_of_correct_block._proof_1_2
-EDGE	LeanDag.committed_of_correct_block	LeanDag.decided_of_leader_of_populated
 EDGE	LeanDag.committed_of_correct_block	LeanDag.Faults
 EDGE	LeanDag.committed_of_correct_block	LeanDag.View.full
 EDGE	LeanDag.committed_of_correct_block	LeanDag.Slots.slotRound
 EDGE	LeanDag.committed_of_correct_block	LeanDag.Slots.unbounded
 EDGE	LeanDag.committed_of_correct_block	LeanDag.SynchronisedOn.mono
 EDGE	LeanDag.committed_of_correct_block	LeanDag.Populated
+EDGE	LeanDag.committed_of_correct_block	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties
 EDGE	LeanDag.committed_of_correct_block	LeanDag.le_slotRound_slotAt
 EDGE	LeanDag.committed_of_correct_block	LeanDag.IncludesAt
 EDGE	LeanDag.committed_of_correct_block	LeanDag.Decided
@@ -56621,37 +56644,41 @@ EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Hydrozoan.Decided
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Hydrozoan.CertifiedIn
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Hydrozoan.WeakLinked
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Integration.Hydrozoan.Simulates.fast
-EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Hydrozoan.Block.author
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Hydrozoan.BlockUniverse
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Integration.Hydrozoan.Simulates.leader_fwd
+EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Properties.DagRule.ids
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Hydrozoan.Slots
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Integration.Hydrozoan.Simulates.novel_cert
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Integration.Hydrozoan.Simulates.skip
+EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Slots.slotRound
+EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Hydrozoan.rule
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Integration.Hydrozoan.Simulates.novel_weak
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Hydrozoan.Decided.indirectCert
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Hydrozoan.IsLeaderBlock
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Hydrozoan.Decided.rec
+EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Hydrozoan.toCoreSlots
+EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Slots.leader
+EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Properties.DagRule.block
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Hydrozoan.FastCommitInView
-EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Hydrozoan.Block.round
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Integration.Hydrozoan.Simulates
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Integration.Hydrozoan.Simulates.ord
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Integration.Hydrozoan.Simulates.cert
+EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Block.round
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Integration.Hydrozoan.Simulates.elig
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Integration.Hydrozoan.Simulates.leader_bwd
+EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Hydrozoan.commitsCandidate
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Hydrozoan.View
-EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Hydrozoan.BlockUniverse.block
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Hydrozoan.SkippedLeaderInView
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Integration.Hydrozoan.Simulates.weak
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Hydrozoan.Decided.indirectWeak
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Hydrozoan.Slots.slotRound
-EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Hydrozoan.Slots.leader
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Integration.Hydrozoan.Simulates.drop
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Integration.Hydrozoan.Simulates.lift
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Hydrozoan.Decided.directSkip
-EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Hydrozoan.isLeaderBlock_of_decided
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Hydrozoan.Faults
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Hydrozoan.EligibleAsAnchor
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Hydrozoan.Decided.directSlow
+EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Block.creator
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Hydrozoan.Decided.directFast
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Hydrozoan.SlowCommitInView
 EDGE	LeanDag.Integration.Hydrozoan.Simulates.decided	LeanDag.Integration.Hydrozoan.Simulates.slow
@@ -81919,6 +81946,11 @@ EDGE	LeanDag.ReactivePace.built_succ_le_of_fast	LeanDag.Slots
 EDGE	LeanDag.ReactivePace.built_succ_le_of_fast	LeanDag.ReactivePace
 EDGE	LeanDag.ReactivePace.built_succ_le_of_fast	LeanDag.Block.creator
 EDGE	LeanDag.ReactivePace.built_succ_le_of_fast	LeanDag.ReactivePace.prompt_vote
+NODE	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties._proof_1_1	LeanDag.MysticetiProperties	thm
+EDGE	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties._proof_1_1	LeanDag.Slots.slotRound
+EDGE	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties._proof_1_1	LeanDag.Faults.f
+EDGE	LeanDag.MysticetiProperties.decided_of_leader_of_populated_of_properties._proof_1_1	LeanDag.Slots
 NODE	LeanDag.Hydrozoan.Block.mk.sizeOf_spec	LeanDag.Hydrozoan.Model.Block	thm
 EDGE	LeanDag.Hydrozoan.Block.mk.sizeOf_spec	LeanDag.Hydrozoan.Block.mk
 EDGE	LeanDag.Hydrozoan.Block.mk.sizeOf_spec	LeanDag.Hydrozoan.Block._sizeOf_inst

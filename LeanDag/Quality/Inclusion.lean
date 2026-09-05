@@ -1,5 +1,6 @@
 import LeanDag.Quality.Coverage
 import LeanDag.DoS.Exclusion
+import LeanDag.MysticetiProperties
 
 /-!
 # Chain quality: post-synchrony inclusion
@@ -55,7 +56,7 @@ every correct round-`m` block, and every such block is in the agreed
 ledger from any later position. Naming it keeps the quantifier order
 visible — `k` is fixed by the schedule before an execution is named — as
 `CommitsAt` does for the recurrence results. -/
-def IncludesAt (BlockId : Type*) [DecidableEq BlockId] (Payload : Type*)
+def IncludesAt (BlockId : Type) [DecidableEq BlockId] (Payload : Type)
     [S : Slots Validator] (R m k : ℕ) : Prop :=
   ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
     (∀ r ≤ N, Populated U r) → Synchronised U R →
@@ -93,7 +94,7 @@ theorem committed_of_correct_block (hT : T ⊆ (Correct : Finset Validator))
   refine ⟨k', hm, hRk', ?_⟩
   intro U N hpop hs hN
   obtain ⟨L, hLb, hdec⟩ :=
-    decided_of_leader_of_populated hT hcard (hs.mono hT) hRk'
+    MysticetiProperties.decided_of_leader_of_populated_of_properties hcard (hs.mono hT) hRk'
       (fun r _ hr => PopulatedOn.mono hT (hpop r hr)) (by omega) hlead
   refine ⟨L, hdec, ?_⟩
   intro b hb hbc hbr

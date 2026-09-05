@@ -62,7 +62,7 @@ theorem committed_of_correct_block_within
   refine ⟨k', hk₁, hk₂, hm, hRk', ?_⟩
   intro U N hpop hs hN
   obtain ⟨L, hLb, hdec⟩ :=
-    decided_of_leader_of_populated hT hcard (hs.mono hT) hRk'
+    MysticetiProperties.decided_of_leader_of_populated_of_properties hcard (hs.mono hT) hRk'
       (fun r _ hr => PopulatedOn.mono hT (hpop r hr)) (by omega) hlead
   refine ⟨L, hdec, ?_⟩
   intro b hb hbc hbr

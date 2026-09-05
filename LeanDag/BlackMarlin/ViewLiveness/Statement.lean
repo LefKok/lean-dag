@@ -54,16 +54,16 @@ namespace BlackMarlin
 
 namespace ViewLiveness
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
   [F : Faults Validator] [Rot : Rotation Validator]
-  {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
+  {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 
 /-- **What it means for a round to be committed by every reliable
 validator on its own view.** Universe, growth and pace are quantified
 inside, as `Liveness.CommitsAtRound` quantifies the universe and for the
 same reason: the rotation names the round before any DAG is fixed, and
 fixing one first would cap how far the rotation may reach. -/
-def CommitsInViews (BlockId : Type*) [DecidableEq BlockId] (Payload : Type*)
+def CommitsInViews (BlockId : Type) [DecidableEq BlockId] (Payload : Type)
     (T : Finset Validator) (R r : ℕ) : Prop :=
   ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ) (pc : Pace U T N),
     T ⊆ (Correct : Finset Validator) → quorumCard Validator ≤ T.card →
@@ -86,7 +86,7 @@ def NoValidatorStuck : Prop :=
 
 /-- **What it means for a round to deliver, at every reliable view, what
 some view committed below.** -/
-def DeliversInViews (BlockId : Type*) [DecidableEq BlockId] (Payload : Type*)
+def DeliversInViews (BlockId : Type) [DecidableEq BlockId] (Payload : Type)
     (T : Finset Validator) (R ρ r : ℕ) : Prop :=
   ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ) (pc : Pace U T N)
     (V : View Validator BlockId Payload U) (A B : BlockId),

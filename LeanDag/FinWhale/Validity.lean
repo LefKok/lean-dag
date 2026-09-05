@@ -32,9 +32,9 @@ namespace LeanDag
 
 namespace FinWhale
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
-variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
+variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 variable {D : Dag Validator BlockId Payload}
 
 /-- **A correct validator's blocks form a chain.** Each of its blocks

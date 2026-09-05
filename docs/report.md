@@ -12009,7 +12009,7 @@ The correct validators whose round-`δ` block a cone carries — the complement,
 *def, `Quality.Inclusion.lean`*
 
 ```lean
-def IncludesAt (BlockId : Type*) [DecidableEq BlockId] (Payload : Type*)
+def IncludesAt (BlockId : Type) [DecidableEq BlockId] (Payload : Type)
     [S : Slots Validator] (R m k : ℕ) : Prop :=
   ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
     (∀ r ≤ N, Populated U r) → Synchronised U R →
@@ -17753,7 +17753,7 @@ The instant by which every reliable block of every round up to `M` has arrived: 
 *structure, `FinWhale.Model.Protocol.lean`*
 
 ```lean
-structure Run (Validator BlockId Payload : Type*) [Fintype Validator] [DecidableEq Validator]
+structure Run (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
     [Faults Validator] [Params Validator] [DecidableEq BlockId] [LinearOrder BlockId] where
   /-- Every block any correct validator holds. -/
   dag : Dag Validator BlockId Payload
@@ -23271,7 +23271,7 @@ def commitSeq (U : BlockUniverse Validator BlockId Payload) (τ : TopoSort U) :
 *def, `BlackMarlin.ViewLiveness.Statement.lean`*
 
 ```lean
-def CommitsInViews (BlockId : Type*) [DecidableEq BlockId] (Payload : Type*)
+def CommitsInViews (BlockId : Type) [DecidableEq BlockId] (Payload : Type)
     (T : Finset Validator) (R r : ℕ) : Prop :=
   ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ) (pc : Pace U T N),
     T ⊆ (Correct : Finset Validator) → quorumCard Validator ≤ T.card →
@@ -23303,7 +23303,7 @@ def NoValidatorStuck : Prop :=
 *def, `BlackMarlin.ViewLiveness.Statement.lean`*
 
 ```lean
-def DeliversInViews (BlockId : Type*) [DecidableEq BlockId] (Payload : Type*)
+def DeliversInViews (BlockId : Type) [DecidableEq BlockId] (Payload : Type)
     (T : Finset Validator) (R ρ r : ℕ) : Prop :=
   ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ) (pc : Pace U T N)
     (V : View Validator BlockId Payload U) (A B : BlockId),
@@ -25038,7 +25038,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 971 theorems that either another module of the
+The 974 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -26581,27 +26581,6 @@ theorem decided_of_leader_mem (hcard : quorumCard Validator ≤ T.card)
 
 **L4, as a decision.** What L6 consumes and L3 propagates.
 
-#### `decided_of_leader_of_populated`
-
-*theorem, `Liveness.lean`*
-
-```lean
-theorem decided_of_leader_of_populated (_hT : T ⊆ (Correct : Finset Validator))
-    (hcard : quorumCard Validator ≤ T.card)
-    (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
-    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) (hN : S.slotRound k + 2 ≤ N)
-    (hlead : S.leader k ∈ T) :
-    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
-```
-
-**L4, against a horizon.** The form every capstone uses: production is available as a single hypothesis up to a horizon, and the three rounds L4 needs are read off it.
-
-Stated separately because the capstones of report §§6–10 all reach L4 the same way — read production off at `slotRound k`, `+1` and `+2` — and doing that inline obscures which hypothesis is actually being consumed.
-
-**Production is asked for over `T`, not over `Correct`.** The rule consumes only `T`-authored blocks, so requiring a block from every correct validator would be asking for more than is used; `PopulatedOn.mono` bridges the two for callers holding the stronger `Populated`. The weaker hypothesis is what lets the recurrence results run at a `T` that is a *proper* subset of `Correct` — correct validators outside `T` may be starved, partitioned or silent, and the ledger still commits, provided `T` itself is a quorum.
-
-The subset hypothesis is now unused: with production asked over `T`, L4 needs nothing but the cardinality of `T`, which is what `commits_recur_on`'s comment already observed. It is kept in the signature because every capstone has it to hand and threading it documents the setting.
-
 #### `decided_of_correct_leader`
 
 *theorem, `Liveness.lean`*
@@ -27142,7 +27121,7 @@ theorem decided_of_local (vp : ViewPace U T N)
     ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
 ```
 
-**The global statement is a corollary**, so V18 strictly strengthens the main line: a reliable validator exists (the quorum bound is nonvacuous), it decides locally, and `decided_full` (L3) lifts its verdict to the full view. `decided_of_leader_mem` reaches the same conclusion without ever naming a validator's own view; this route names one.
+**The global statement is a corollary**, so V18 strictly strengthens the main line: a reliable validator exists (the quorum bound is nonvacuous), it decides locally, and view monotonicity lifts its verdict to the full view — the band, not L3. `LeaderCommits` reaches the same conclusion without ever naming a validator's own view; this route names one.
 
 #### `exists_reliable_parent`
 
@@ -37110,6 +37089,19 @@ theorem persist : Persist
 
 **The core persists unconditionally**, as an evidence-backed rule must — now a corollary of the band rather than an induction of its own. The grade `Quorate` that stood here before was not a property of the protocol but the missing half of its skip rule.
 
+#### `decided_mono_of_band`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem decided_mono_of_band [S : Slots Validator]
+    {U : BlockUniverse Validator BlockId Payload}
+    {V V' : View Validator BlockId Payload U} (hsub : V.ids ⊆ V'.ids)
+    {k : ℕ} {v : Option BlockId} (hd : Decided U V k v) : Decided U V' k v
+```
+
+**L2 re-derived, with no induction of its own.** View monotonicity (`decided_mono`, four cases in `Liveness.lean`) is the band read at a fixed universe. The consumer test for `banded`: an existing induction recovered from the property.
+
 #### `subset_blamers`
 
 *theorem, `MysticetiProperties.lean`*
@@ -37215,6 +37207,23 @@ theorem indirect :
 ```
 
 **A3 as a property.** The two indirect constructors, by cases on a certified candidate at the slot — which is the whole proof, and is why the verdict survives a reassignment of leaders elsewhere: the case split reads slot `i`'s candidate and the anchor's history, and neither moves. This is `mysticetiLive_descent.indirect` and the case split inside `decided_below_of_committed_run`, stated once.
+
+#### `decided_of_leader_of_populated_of_properties`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem decided_of_leader_of_populated_of_properties [S : Slots Validator]
+    {U : BlockUniverse Validator BlockId Payload} {T : Finset Validator} {R N k : ℕ}
+    (hcard : quorumCard Validator ≤ T.card) (hs : SynchronisedOn U T R)
+    (hR : R ≤ S.slotRound k) (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r)
+    (hN : S.slotRound k + 2 ≤ N) (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L)
+```
+
+**L4's capstone form, from the properties.** The shape every consumer of direct liveness uses — synchrony from `R`, production to a horizon `N`, a `T`-led slot two rounds under it — reached from `LeaderCommits` and `CommitsCandidate` rather than from `decided_of_leader_of_populated`.
+
+The work is entirely in packaging: `LeaderCommits` takes its precondition as `coreLive` over a slot window, and the window here is the single slot. This is the same bridge `LiveRule.GoodGives` is for Barnacle (`docs/target-properties.md` §11.2b), and it is the reason the capstones do not need their own route into the protocol.
 
 #### `decidedBelow_of_decidedWithin`
 
@@ -37406,6 +37415,32 @@ theorem synchronisedOn_chop {T : Finset Validator} {Rs R' : ℕ}
 ```
 
 **Synchrony survives the cut, from the rebase.** `Integration/Preservation.synchronisedOn_chop` proves this directly; it is `Sustains` applied, as votes and production already were.
+
+#### `decided_fill_of_persist`
+
+*theorem, `Properties.Arcs.SafeSkip.lean`*
+
+```lean
+theorem decided_fill_of_persist [S : Slots Validator] (sk : SkipMsg U)
+    {V : View Validator BlockId Payload U} {k : ℕ} {v : Option BlockId}
+    (h : Decided U V k v) :
+    Decided sk.skipFill (sk.liftView V) k v
+```
+
+**Verdicts survive the core's fill, from `Persist`.** The bespoke theorem's statement, with no induction: persistence is proved once for the protocol, and the fill is one extension among others. That theorem carried `QuorateOverGap`; this does not, the hypothesis having gone with the grade it was there to meet. It has since been deleted, leaving this the only route.
+
+#### `decided_fill_agree_of_properties`
+
+*theorem, `Properties.Arcs.SafeSkip.lean`*
+
+```lean
+theorem decided_fill_agree_of_properties [S : Slots Validator] (sk : SkipMsg U)
+    {V : View Validator BlockId Payload U}
+    {W : View Validator BlockId Payload sk.skipFill} {k : ℕ} {v w : Option BlockId}
+    (hv : Decided U V k v) (hw : Decided sk.skipFill W k w) : v = w
+```
+
+**Agreement across the core's recovery, from `Persist` and `Agree`.** A verdict reached before the recovery agrees with any reached after it. The bespoke version composed its induction with `decided_agree` by hand; this is `decided_agree_extends`, which every rule with the two properties has.
 
 #### `sustains_skipFill`
 
@@ -37823,7 +37858,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 953 lemmas used only within the file that proves
+The 951 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -37930,7 +37965,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `PopulatedFrom.mono` | Population is antitone: a smaller set is easier to populate. |
 | `SynchronisedFrom.mono` | Coverage is antitone too: mutual coverage among a larger set implies it among any subset. |
 
-### `Liveness.lean` (21)
+### `Liveness.lean` (22)
 
 | Lemma | Role |
 |:---|:---|
@@ -37945,6 +37980,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `certificatesIn_full` | — |
 | `certifies_of_synchronisedOn` | A correct round-`(r+2)` block certifies any correct round-`r` block, once round `r+1` is populated and … |
 | `decided_none_of_no_candidate` | L5, in the form the `Decided` constructor wants. |
+| `decided_of_leader_of_populated` | L4, against a horizon. The form every capstone uses: production is available as a single hypothesis up to … |
 | `directCommitIn_mono` | A larger view can only see more certificates. |
 | `directCommit_of_synchronisedOn` | L4, at the round level. A correct block at round `r` is directly committed, given coverage from `r` and … |
 | `directSkipIn_mono` | A larger view can only see more blame. |
@@ -39599,7 +39635,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `soundOn_skipFill` | The fill preserves it, above the gap. The synchrony round must clear the filled round: inside the gap the … |
 | `soundOn_stack` | The stack preserves it, the offsets composing exactly as the two statements above suggest: the fill … |
 
-### `MysticetiProperties.lean` (32)
+### `MysticetiProperties.lean` (31)
 
 | Lemma | Role |
 |:---|:---|
@@ -39614,7 +39650,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `certifies_old` | — |
 | `coversUpto_eq` | The carrier's coverage predicate is the core's, on the nose. |
 | `creatorsOf_old` | — |
-| `decided_mono_of_band` | L2 re-derived, with no induction of its own. View monotonicity (`decided_mono`, four cases in … |
 | `directCommitIn_band` | — |
 | `directCommitIn_mono` | — |
 | `directSkipIn_mono` | An old candidate blamed before is blamed still. |
@@ -39672,14 +39707,12 @@ subsection per module, in the layer order of Appendices B and C.
 | `truncates_chop_odontoceti` | The cut is a truncation of Odontoceti's carrier too. |
 | `viewAgreeAbove_chop` | The chopped view agrees with the original above the cut, which is the view hypothesis the two theorems … |
 
-### `Properties/Arcs/SafeSkip.lean` (8)
+### `Properties/Arcs/SafeSkip.lean` (6)
 
 | Lemma | Role |
 |:---|:---|
 | `candidates_fresh` | Every candidate of a slot the recovering replica leads, at a gap round, is a filled block — the replica … |
 | `decided_agree_extends` | Agreement across the recovery. A validator that recovered agrees with one that did not, from any view of … |
-| `decided_fill_agree_of_properties` | Agreement across the core's recovery, from `Persist` and `Agree`. A verdict reached before the recovery … |
-| `decided_fill_of_persist` | Verdicts survive the core's fill, from `Persist`. The bespoke theorem's statement, with no induction: … |
 | `decided_none_fresh` | SS3, as a verdict, from the properties. The slot the recovering replica leads at a gap round is decided … |
 | `decided_skipFill` | Verdicts survive the recovery, for any protocol that has proved persistence. The replica that recovered … |
 | `extends_of_skipFill` | The fill is an extension. It holds every block the original held — `ids` is a union — and denotes each of … |

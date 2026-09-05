@@ -26,15 +26,15 @@ namespace LeanDag
 
 namespace FinWhale
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
-variable {BlockId : Type*} [DecidableEq BlockId] [LinearOrder BlockId] {Payload : Type*}
+variable {BlockId : Type} [DecidableEq BlockId] [LinearOrder BlockId] {Payload : Type}
 
 /-- **A run of FinWhale.** The blocks every correct validator ever holds,
 the schedule and network that carried them, and the two rules a
 validator applies: the rotation that names leaders and the tie-break that
 resolves an anchor's candidates. -/
-structure Run (Validator BlockId Payload : Type*) [Fintype Validator] [DecidableEq Validator]
+structure Run (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
     [Faults Validator] [Params Validator] [DecidableEq BlockId] [LinearOrder BlockId] where
   /-- Every block any correct validator holds. -/
   dag : Dag Validator BlockId Payload

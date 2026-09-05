@@ -41,9 +41,9 @@ namespace LeanDag
 
 namespace BlackMarlin
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [Rot : Rotation Validator]
-variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
+variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 variable {U : BlockUniverse Validator BlockId Payload}
 
 /-- **`quorum(r)`**, as the validator computes it: blocks from at least
