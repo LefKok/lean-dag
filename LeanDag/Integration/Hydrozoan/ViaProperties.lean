@@ -83,8 +83,8 @@ theorem decided_fill_agreeHZ_of_properties (sk : SkipMsg (toCore U hsp))
     {W : LeanDag.Hydrozoan.View (skipFillHZ U hsp sk)} {k : ℕ} {v w : Option BlockId}
     (hV : LeanDag.Hydrozoan.Decided U V k v)
     (hW : LeanDag.Hydrozoan.Decided (skipFillHZ U hsp sk) W k w) : v = w :=
-  LeanDag.Hydrozoan.SlotAgreement.holds Replica BlockId (skipFillHZ U hsp sk)
-    (liftViewHZ U hsp sk V) W k v w (decided_fillHZ_of_persist sk hV) hW
+  LeanDag.Hydrozoan.agree (LeanDag.Hydrozoan.toCoreSlots S) (liftViewHZ U hsp sk V) W k v w
+    (decided_fillHZ_of_persist sk hV) hW
 
 /-! ## What the two mechanisms sustain
 

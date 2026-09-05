@@ -1,5 +1,6 @@
 import LeanDag.Adaptive.Mysticeti
 import LeanDag.Odontoceti.Liveness
+import LeanDag.Odontoceti.Carrier
 
 /-!
 # Adaptive leaders under the two-round rule
@@ -12,9 +13,9 @@ the decision relation is mirrored. `Odontoceti.DecidedWithin` carries
 the canonicity clause of the two-round indirect commit through the
 bound; its congruence transports the clause in both directions, the
 candidate set being schedule-dependent only through `IsLeaderBlock`,
-which the two protocols share. Agreement per epoch is O5
-(`Odontoceti.decided_unique`) through the embedding, exactly as the
-three-round side used M6; existence consumes O7 and the two-round
+which the two protocols share. Agreement per epoch is
+`Properties.Agree` through the embedding, exactly as the three-round
+side used the same property; existence consumes O7 and the two-round
 descent, with two populated rounds where Mysticeti needs three.
 -/
 
@@ -91,11 +92,13 @@ theorem mono (h : DecidedWithin U V B k v) (hBB : B ≤ B') :
       exact indirectSkip hkj (by omega) helig ihj
         (fun i h1 h2 h3 => ihmid i h1 h2 h3) hnone
 
-/-- Two bounded verdicts agree — O5, through the embedding. -/
+/-- Two bounded verdicts agree — `Properties.Agree`, through the
+embedding. The mechanism reads the property, not O5, which is where the
+property comes from. -/
 theorem agree {V₁ V₂ : View Validator BlockId Payload U} {B₁ B₂ k : ℕ}
     {v₁ v₂ : Option BlockId} (h₁ : DecidedWithin U V₁ B₁ k v₁)
     (h₂ : DecidedWithin U V₂ B₂ k v₂) : v₁ = v₂ :=
-  decided_unique h₁.toDecided V₂ v₂ h₂.toDecided
+  OdontocetiProperties.agree S V₁ V₂ k v₁ v₂ h₁.toDecided h₂.toDecided
 
 end DecidedWithin
 

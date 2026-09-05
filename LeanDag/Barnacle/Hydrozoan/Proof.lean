@@ -1,4 +1,5 @@
 import LeanDag.Barnacle.Hydrozoan.Statement
+import LeanDag.Hydrozoan.Helpers.Commit
 import LeanDag.Hydrozoan.SlotAgreement.Proof
 
 /-!
@@ -29,19 +30,11 @@ theorem holds : Statement := by
       decided_of_directCommitIn := ?_
       candidates := ?_ }
   · intro S U V₁ V₂ k v₁ v₂ h₁ h₂
-    letI := slotsOf S
-    exact LeanDag.Hydrozoan.SlotAgreement.holds Replica BlockId U V₁ V₂ k v₁ v₂ h₁ h₂
+    exact LeanDag.Hydrozoan.agree S V₁ V₂ k v₁ v₂ h₁ h₂
   · intro S U V k L hL hc
-    letI := slotsOf S
-    exact hc.elim (LeanDag.Hydrozoan.Decided.directFast hL)
-      (LeanDag.Hydrozoan.Decided.directSlow hL)
+    exact LeanDag.Hydrozoan.commitsDirect S U V k L hL hc
   · intro S U V k L h
-    letI := slotsOf S
-    cases h with
-    | directFast hL _ => exact hL
-    | directSlow hL _ => exact hL
-    | indirectCert _ _ _ _ hL _ => exact hL
-    | indirectWeak _ _ _ _ _ hL _ _ => exact hL
+    exact LeanDag.Hydrozoan.commitsCandidate S U V k L h
 
 end Hydrozoan
 

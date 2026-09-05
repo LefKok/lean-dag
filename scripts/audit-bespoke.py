@@ -48,7 +48,8 @@ CONFORMANCE = (
     "LeanDag.MysticetiProperties", "LeanDag.OdontocetiProperties",
     "LeanDag.Reactive.MysticetiProperties", "LeanDag.Hydrozoan.Properties",
     "LeanDag.Hydrozoan.Helpers.Commit", "LeanDag.Hydrozoan.Helpers.Banded",
-    "LeanDag.Hydrozoan.Helpers.Carrier", "LeanDag.Barnacle.Conformance",
+    "LeanDag.Hydrozoan.Helpers.Carrier", "LeanDag.Odontoceti.Carrier",
+    "LeanDag.Barnacle.Conformance",
     "LeanDag.Barnacle.Helpers.DagRule", "LeanDag.Barnacle.Helpers.Descent",
 )
 

@@ -84,9 +84,10 @@ theorem decided_agree_extends {R : DagRule Validator BlockId Payload}
 
 /-! ## For the core: the grade the fill meets, and the bespoke theorem re-derived
 
-The consumer test for `MysticetiProperties.persist`. `SafeSkip.decided_fill`
-proves the fill transports the core's verdicts by a four-constructor
-induction under `QuorateOverGap`, and `decided_fill` follows from
+The consumer test for `MysticetiProperties.persist`. The bespoke
+transport in `SafeSkip/Invariance.lean` proved the fill carries the
+core's verdicts by a four-constructor induction under
+`QuorateOverGap`, and the theorem below followed from
 `persist` with no induction of its own.
 
 `QuorateOverGap` used to be needed here, to meet a grade the core's
@@ -97,17 +98,30 @@ section Core
 
 variable {U : BlockUniverse Validator BlockId Payload}
 
-/-- **`SafeSkip.decided_fill`, from `Persist`.** The same statement, with
-no induction: persistence is proved once for the protocol, and the fill
-is one extension among others. `SafeSkip.decided_fill` carries
-`QuorateOverGap`; this does not, the hypothesis having gone with the
-grade it was there to meet. -/
+/-- **Verdicts survive the core's fill, from `Persist`.** The bespoke
+theorem's statement, with no induction: persistence is proved once for
+the protocol, and the fill is one extension among others. That theorem
+carried `QuorateOverGap`; this does not, the hypothesis having gone with
+the grade it was there to meet. It has since been deleted, leaving this
+the only route. -/
 theorem decided_fill_of_persist [S : Slots Validator] (sk : SkipMsg U)
     {V : View Validator BlockId Payload U} {k : ℕ} {v : Option BlockId}
     (h : Decided U V k v) :
     Decided sk.skipFill (sk.liftView V) k v :=
   decided_skipFill (R := MysticetiProperties.mysticetiRule) MysticetiProperties.persist sk
     (U := U) (U' := sk.skipFill) rfl rfl rfl rfl (fun _ hb => hb) h
+
+/-- **Agreement across the core's recovery, from `Persist` and
+`Agree`.** A verdict reached before the recovery agrees with any reached
+after it.
+The bespoke version composed its induction with `decided_agree` by hand;
+this is `decided_agree_extends`, which every rule with the two
+properties has. -/
+theorem decided_fill_agree_of_properties [S : Slots Validator] (sk : SkipMsg U)
+    {V : View Validator BlockId Payload U}
+    {W : View Validator BlockId Payload sk.skipFill} {k : ℕ} {v w : Option BlockId}
+    (hv : Decided U V k v) (hw : Decided sk.skipFill W k w) : v = w :=
+  MysticetiProperties.agree S (sk.liftView V) W k v w (decided_fill_of_persist sk hv) hw
 
 /-! ### What the fill sustains
 

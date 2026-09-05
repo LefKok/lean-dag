@@ -24,9 +24,11 @@ theorem odontoceti_laws [Faults5 Validator] :
     BaseRule.Laws (odontoceti (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) where
   full_ids := fun _ => rfl
   historyView_ids := fun _ _ _ => rfl
-  agree := fun _ {_} _ _ _ _ _ h₁ h₂ => Odontoceti.decided_unique h₁ _ _ h₂
-  decided_of_directCommitIn := fun _ {_} _ _ _ hL hdc => Odontoceti.Decided.directCommit hL hdc
-  candidates := fun _ {_} _ _ _ h => Odontoceti.isLeaderBlock_of_decided h
+  agree := fun S {_} V₁ V₂ k v₁ v₂ h₁ h₂ =>
+    OdontocetiProperties.agree S V₁ V₂ k v₁ v₂ h₁ h₂
+  decided_of_directCommitIn := fun S {_} V k L hL hdc =>
+    OdontocetiProperties.commitsDirect S _ V k L hL hdc
+  candidates := fun S {_} V k L h => OdontocetiProperties.commitsCandidate S _ V k L h
 
 /-- **A good DAG meets Odontoceti's precondition.** `Good` and
 `OdontocetiProperties.odontocetiLive` name the same three facts about

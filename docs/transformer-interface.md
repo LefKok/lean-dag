@@ -247,7 +247,7 @@ nor the interface of section 1 currently states it.
   is the prerequisite, and doing section 3 alone would give a nicer
   statement over the same nine proofs.
 - **The fill is not purely additive in the core arc.** The core's
-  `decided_fill` carries a real hypothesis, `QuorateOverGap`, which
+  the core's fill transport carried a real hypothesis, `QuorateOverGap`, which
   Hydrozoan's `decided_fillHZ` does not need — because Hydrozoan
   counts blame at the *slot* rather than per candidate. So "additive
   inertness" as stated is too strong for one protocol and too weak for

@@ -246,7 +246,7 @@ proof effort with no corresponding proof content.
    proved a block universe; production is restored at every missed round,
    a filled leader candidate is directly skipped, and every verdict
    reached before the fill re-derives and agrees after it
-   (`SkipMsg.decided_fill_agree` (SS6)). The fill is moreover *derived,
+   (`decided_fill_agree_of_properties` (SS6)). The fill is moreover *derived,
    not transmitted*: the donor line is the self-parent chain below its
    tip, so the whole denotation is a function of two block names that
    every receiver elaborates locally
@@ -502,7 +502,7 @@ Odontoceti (`Odontoceti.decided_unique`,
 `Odontoceti.all_decided_below_of_fairRun`); the reactive schedule
 (`ReactiveM.decided` (RS2), `Odontoceti.reactive_decided` (RS3),
 `ReactivePace.no_timeout_of_fast` (RS4)); safe-skip recovery
-(`SkipMsg.decided_fill_agree` (SS6)); adaptive leader schedules
+(`decided_fill_agree_of_properties` (SS6)); adaptive leader schedules
 (`adaptiveRun_agree` (AL3), `adaptiveRun_exists` (AL5)); and hybrid
 fault tolerance (`Hybrid.decided_unique` (H6),
 `hybrid_bound_necessary` (H10)); and crash-fault consensus
@@ -3968,7 +3968,7 @@ references omit the absent author, and `3` owns exactly one block. The
 message `ucrashMsg` targets validator `1`'s line, and the development's
 house rule is exercised end to end: the fill's reference sets and
 cardinality are computed by `decide`, the gap is populated, the filled
-leader candidate is directly skipped, and `decided_fill` is applied to
+leader candidate is directly skipped, and `decided_fill_of_persist` is applied to
 the full view with `hq` discharged by counting the three live authors.
 
 ### 12.5 How the mechanism should be used
@@ -4911,7 +4911,7 @@ after which every property stated against named invariants transfers to
 | `SynchronisedOn` | I2 `synchronisedOn_chop` | **refuted** (I4) |
 | `DoSValid` | `dosValid_chop` | open (§16.7) |
 | `HonestNoEquiv` | I1 `honestNoEquiv_chop` | I1 `honestNoEquiv_skipFill` |
-| verdicts | G3 `decided_chop_iff` | SS5 `decided_fill` |
+| verdicts | G3 `decided_chop_iff` | SS5 `decided_fill_of_persist` |
 
 **I1** is what lets §14's hybrid model be used inside §9's truncation
 and across §12's fill: a hybrid universe stays one on both sides. The
@@ -9695,7 +9695,7 @@ every Odontoceti rule and all four `Decided` constructors at `n = 6, f = 1`
 motivates the canonicity premise (`utwin6_both_pass` (O11)). The reactive
 schedule is witnessed at §11.4's `ugrowReactive`, and Safe Skip on `Ucrash`
 (SS7): the fill's reference sets and cardinality computed by `decide`, the
-gap populated, the filled candidate skipped, and `decided_fill` applied to
+gap populated, the filled candidate skipped, and `decided_fill_of_persist` applied to
 the full view. The jump message is witnessed on the same family (SS11):
 `ucrashJump` carries `ucrashMsg`'s four names and no line, its
 elaboration reproduces the hand-written line (`ucrashJump_line_eq`),
@@ -9741,8 +9741,8 @@ no errors.
 `decided_chop_iff`, `decided_agree_chop`, `card_retained_le`, `bootstrap_agree`,
 `chop_chop`, `Odontoceti.decided_unique`, `Odontoceti.safety` and
 `Odontoceti.all_decided_below_of_fairRun`, `chain_quality`,
-`committed_of_correct_block`, `SkipMsg.decided_fill` (SS5) and
-`SkipMsg.decided_fill_agree` (SS6), `SkipMsg.skipFill_eq_of_core` (SS9)
+`committed_of_correct_block`, `decided_fill_of_persist` (SS5) and
+`decided_fill_agree_of_properties` (SS6), `SkipMsg.skipFill_eq_of_core` (SS9)
 and `JumpMsg.denote_eq_of_core` (SS10), `adaptiveRun_agree` (AL3) and
 `adaptiveRun_exists` (AL5), `Hybrid.decided_unique` (H6),
 `Hybrid.safety`, `hybrid_bound_necessary` (H10), `Nemo.decided_unique`
@@ -10505,8 +10505,8 @@ reused.
 | SS2 | the gap is populated: production restored | `SkipMsg.skipFill_populatedOn` *(SafeSkip/Basic)* |
 | SS3 | the fill cannot conjure a commit | `SkipMsg.directSkip_fresh` *(SafeSkip/Basic)* |
 | SS4 | the rule-level sets are unchanged, for every candidate | `SkipMsg.certificatesIn_fill`, `SkipMsg.blameSetIn_fill` *(SafeSkip/Invariance)* |
-| SS5 | verdict invariance across the fill | `SkipMsg.decided_fill` *(SafeSkip/Invariance)* |
-| SS6 | agreement across a recovery | `SkipMsg.decided_fill_agree` *(SafeSkip/Invariance)* |
+| SS5 | verdict invariance across the fill | `decided_fill_of_persist` *(Properties/Arcs/SafeSkip)* |
+| SS6 | agreement across a recovery | `decided_fill_agree_of_properties` *(Properties/Arcs/SafeSkip)* |
 | SS7 | the crash, the message and the fill, on data | `Ucrash` witnesses *(LeanDagTest/SafeSkip)* |
 | SS8 | the donor line is unique given its tip | `SkipMsg.line_eq_lineOf` *(SafeSkip/Jump)* |
 | SS9 | the denotation is a function of the compact core | `SkipMsg.skipFill_eq_of_core` *(SafeSkip/Jump)* |
@@ -13235,7 +13235,7 @@ def QuorateOverGap (V : View Validator BlockId Payload U) : Prop :=
 
 **The view is quorate over the gap**: at every gap round it holds blocks from a quorum of distinct authors at the round above.
 
-No longer consumed by `decided_fill`, which needs no condition once a skip is a count of blockers. Kept because it is the condition under which a *pre-crash* view could have skipped a gap slot at all, and so the honest precondition for a recovering validator having decided anything there.
+No longer consumed by the verdict transport, which needs no condition once a skip is a count of blockers. Kept because it is the condition under which a *pre-crash* view could have skipped a gap slot at all, and so the honest precondition for a recovering validator having decided anything there.
 
 #### `selfParent`
 
@@ -24451,7 +24451,7 @@ def coreLive (S : Slots Validator) {U : BlockUniverse Validator BlockId Payload}
 
 #### `odontocetiRule`
 
-*def, `OdontocetiProperties.lean`*
+*def, `Odontoceti.Carrier.lean`*
 
 ```lean
 def odontocetiRule : DagRule Validator BlockId Payload where
@@ -25038,7 +25038,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 969 theorems that either another module of the
+The 971 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -28955,34 +28955,6 @@ theorem reaches_fill_old {a b : BlockId} (ha : a ∈ U.ids) :
 ```
 
 Reachability from an old block never leaves the old ids, in either universe, and coincides between them.
-
-#### `decided_fill`
-
-*theorem, `SafeSkip.Invariance.lean`*
-
-```lean
-theorem decided_fill {V : View Validator BlockId Payload U} {k : ℕ}
-    {v : Option BlockId}
-    (h : Decided U V k v) :
-    Decided sk.skipFill (sk.liftView V) k v
-```
-
-**Verdict invariance.** Every verdict a view reached in `U` re-derives, for the lifted view, in the extension.
-
-**No hypothesis is needed.** An earlier form of this theorem carried a quorum condition over the gap, consumed at one point: a slot of the recovering validator inside the gap, skipped for want of any candidate, had to be re-skipped by counting against the filled candidate. The count now sits in `Decided.directSkip` itself, where a skip is a quorum of blockers rather than a quantifier over the candidates that happen to exist, and the blockers of a slot are the same on both sides of the fill.
-
-#### `decided_fill_agree`
-
-*theorem, `SafeSkip.Invariance.lean`*
-
-```lean
-theorem decided_fill_agree {V : View Validator BlockId Payload U}
-    {W : View Validator BlockId Payload sk.skipFill} {k : ℕ}
-    {v w : Option BlockId}
-    (hv : Decided U V k v) (hw : Decided sk.skipFill W k w) : v = w
-```
-
-**Agreement across a recovery.** A verdict reached before the fill agrees with any verdict reached after it, whatever view either side held — verdict invariance composed with agreement in the extension.
 
 #### `SkipMsg.line_eq_lineOf`
 
@@ -36141,6 +36113,21 @@ theorem commitsCandidate :
 
 **A commit names the slot's candidate.** Hydrozoan's `isLeaderBlock_of_decided` under the property's name. Four commit constructors, each carrying the premise; the discharge is the coercion.
 
+#### `commitsDirect`
+
+*theorem, `Hydrozoan.Helpers.Commit.lean`*
+
+```lean
+theorem commitsDirect :
+    Properties.CommitsDirect (rule (Replica := Replica) (BlockId := BlockId))
+      (fun {U} V L r => LeanDag.Hydrozoan.FastCommitInView U V L r ∨
+        LeanDag.Hydrozoan.SlowCommitInView U V L r)
+```
+
+**A direct commit is a verdict**, at Hydrozoan's own direct predicate — which is a *disjunction*, the fast path or the slow one. The two constructors under the property's name.
+
+Hydrozoan had no `CommitsDirect` until `scripts/audit-bespoke.py` found `Barnacle.Hydrozoan.holds` reaching past the properties for it: the law it discharges, `Laws.decided_of_directCommitIn`, is this property, and was being proved from the constructors a second time.
+
 #### `decided_none_of_unsupported`
 
 *theorem, `Hydrozoan.Helpers.Skippability.lean`*
@@ -36794,7 +36781,7 @@ theorem agree_stackHZ (hd : G ≤ S.slotRound d) {k : ℕ} {v w : Option BlockId
     v = w
 ```
 
-**The capstone: a recovered and pruned replica cannot disagree.** Its view `W` is an arbitrary view of the stack — not a transported full-history view — and its verdict at the re-indexed slot is the verdict anyone else reached at the original slot. The proof is HZ3 applied to a different universe, with `decided_stackHZ` moving the other verdict into it.
+**The capstone: a recovered and pruned replica cannot disagree.** Its view `W` is an arbitrary view of the stack — not a transported full-history view — and its verdict at the re-indexed slot is the verdict anyone else reached at the original slot. The proof is `Properties.Agree` applied to a different universe, with `decided_stackHZ` moving the other verdict into it. HZ3 is where that property comes from and is not read here.
 
 #### `decidedUnique_stackHZ`
 
@@ -36806,7 +36793,7 @@ theorem decidedUnique_stackHZ (hd : G ≤ S.slotRound d) :
       (slotsChopHZ hd) (stackHZ U hsp sk G)
 ```
 
-**Safety across the stack**, in HZ3's own words: no two views of the recovered-and-pruned universe decide a slot differently, whatever the routes. Nothing about the fill or the cut is re-proved.
+**Safety across the stack**, in HZ3's own words but by `Agree`: no two views of the recovered-and-pruned universe decide a slot differently, whatever the routes. Nothing about the fill or the cut is re-proved, and nothing about agreement either.
 
 #### `selfParenting_ofCore`
 
@@ -37098,6 +37085,20 @@ theorem commitsCandidate : CommitsCandidate
 
 **A commit names the slot's candidate.** `isLeaderBlock_of_decided` under the property's name — one of seven such lemmas across the protocols, and the reason `Properties/Candidate.lean` exists.
 
+#### `commitsDirect`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem commitsDirect : CommitsDirect
+    (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+    (fun {U} V L r => DirectCommitIn U V L r)
+```
+
+**A direct commit is a verdict**, at the core's own direct-commit predicate. `Decided.directCommit` under the property's name.
+
+This completes the core and the reactive discipline, which share the rule: `Barnacle.mysticetiRule_commitsDirect` proves the same thing at Barnacle's carrier for the same protocol, and a rule wants it at the carrier its own mechanisms use.
+
 #### `persist`
 
 *theorem, `MysticetiProperties.lean`*
@@ -37241,6 +37242,40 @@ theorem descends {S : Slots Validator} {c : ℕ} (hc : 0 < c)
 
 **The descent as a property**, under the spanning hypothesis on the round structure. What stood here was a downward induction carrying the bound by hand; it is now `Descends.of_indirect`, and the only Mysticeti-specific step is reading `Eligible` as the round inequality the property is stated with.
 
+#### `agree`
+
+*theorem, `Odontoceti.Carrier.lean`*
+
+```lean
+theorem agree : Agree (odontocetiRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload))
+```
+
+**Two views decide alike.** O5 under the property's name.
+
+#### `commitsCandidate`
+
+*theorem, `Odontoceti.Carrier.lean`*
+
+```lean
+theorem commitsCandidate : CommitsCandidate
+    (odontocetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+```
+
+**A commit names the slot's candidate.**
+
+#### `commitsDirect`
+
+*theorem, `Odontoceti.Carrier.lean`*
+
+```lean
+theorem commitsDirect : CommitsDirect
+    (odontocetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+    (fun {U} V L r => Odontoceti.DirectCommitIn U V L r)
+```
+
+**And a direct commit is a verdict**, at Odontoceti's own direct predicate.
+
 #### `banded`
 
 *theorem, `OdontocetiProperties.lean`*
@@ -37251,17 +37286,6 @@ theorem banded : Banded
 ```
 
 **Odontoceti reads a band.**
-
-#### `agree`
-
-*theorem, `OdontocetiProperties.lean`*
-
-```lean
-theorem agree : Agree (odontocetiRule (Validator := Validator) (BlockId := BlockId)
-    (Payload := Payload))
-```
-
-**Two views decide alike.** O5 under the property's name.
 
 #### `leaderCommits`
 
@@ -37799,7 +37823,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 955 lemmas used only within the file that proves
+The 953 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -38433,7 +38457,7 @@ subsection per module, in the layer order of Appendices B and C.
 
 | Lemma | Role |
 |:---|:---|
-| `agree` | Two bounded verdicts agree — O5, through the embedding. |
+| `agree` | Two bounded verdicts agree — `Properties.Agree`, through the embedding. The mechanism reads the property, … |
 | `decidedWithin_below_of_committed_run` | The committed-run descent, bounded — the base `Odontoceti` descent with the anchor's bound carried … |
 | `mono` | The bound relaxes upward. |
 
@@ -39575,7 +39599,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `soundOn_skipFill` | The fill preserves it, above the gap. The synchrony round must clear the filled round: inside the gap the … |
 | `soundOn_stack` | The stack preserves it, the offsets composing exactly as the two statements above suggest: the fill … |
 
-### `MysticetiProperties.lean` (33)
+### `MysticetiProperties.lean` (32)
 
 | Lemma | Role |
 |:---|:---|
@@ -39588,7 +39612,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `certifies_band` | — |
 | `certifies_of_sustains` | The core's certificate predicate transports. |
 | `certifies_old` | — |
-| `commitsDirect` | A direct commit is a verdict, at the core's own direct-commit predicate. `Decided.directCommit` under the … |
 | `coversUpto_eq` | The carrier's coverage predicate is the core's, on the nose. |
 | `creatorsOf_old` | — |
 | `decided_mono_of_band` | L2 re-derived, with no induction of its own. View monotonicity (`decided_mono`, four cases in … |
@@ -39613,14 +39636,17 @@ subsection per module, in the layer order of Appendices B and C.
 | `votesIn_of_sustains` | The votes an old decision-round block counts are the votes it counted: its references are unchanged, and … |
 | `votesIn_old` | The votes an old certificate counts are the votes it counted. |
 
-### `OdontocetiProperties.lean` (14)
+### `Odontoceti/Carrier.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `causal` | Odontoceti's universes are block DAGs — the same argument as the core's, the universe type being the same. |
+
+### `OdontocetiProperties.lean` (11)
 
 | Lemma | Role |
 |:---|:---|
 | `banded_aux` | Every verdict of Odontoceti reads a band of rounds. One induction, four cases. The direct cases read one … |
-| `causal` | Odontoceti's universes are block DAGs — the same argument as the core's, the universe type being the same. |
-| `commitsCandidate` | A commit names the slot's candidate. |
-| `commitsDirect` | And a direct commit is a verdict, at Odontoceti's own direct predicate. |
 | `coneSupports_band` | The anchor's cone of supporters is the cone it was. Both inclusions at once: a supporter inside an old … |
 | `decidedBelow_of_decidedWithin` | Odontoceti's bounded relation lands in the derived one. |
 | `descends` | And a committed run decides everything below it. Was a downward induction carrying the bound by hand; it … |
@@ -39646,13 +39672,14 @@ subsection per module, in the layer order of Appendices B and C.
 | `truncates_chop_odontoceti` | The cut is a truncation of Odontoceti's carrier too. |
 | `viewAgreeAbove_chop` | The chopped view agrees with the original above the cut, which is the view hypothesis the two theorems … |
 
-### `Properties/Arcs/SafeSkip.lean` (7)
+### `Properties/Arcs/SafeSkip.lean` (8)
 
 | Lemma | Role |
 |:---|:---|
 | `candidates_fresh` | Every candidate of a slot the recovering replica leads, at a gap round, is a filled block — the replica … |
 | `decided_agree_extends` | Agreement across the recovery. A validator that recovered agrees with one that did not, from any view of … |
-| `decided_fill_of_persist` | `SafeSkip.decided_fill`, from `Persist`. The same statement, with no induction: persistence is proved once … |
+| `decided_fill_agree_of_properties` | Agreement across the core's recovery, from `Persist` and `Agree`. A verdict reached before the recovery … |
+| `decided_fill_of_persist` | Verdicts survive the core's fill, from `Persist`. The bespoke theorem's statement, with no induction: … |
 | `decided_none_fresh` | SS3, as a verdict, from the properties. The slot the recovering replica leads at a gap round is decided … |
 | `decided_skipFill` | Verdicts survive the recovery, for any protocol that has proved persistence. The replica that recovered … |
 | `extends_of_skipFill` | The fill is an extension. It holds every block the original held — `ids` is a union — and denotes each of … |

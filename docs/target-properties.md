@@ -195,7 +195,7 @@ untouched; where none exists the count still asks for a quorum. The
 grade then disappears: the same blockers blame the same slot after any
 extension, because an old block's references are old.
 
-Three consequences, none of them planned. `SafeSkip.decided_fill` (SS5)
+Three consequences, none of them planned. The core's fill transport (SS5)
 loses its counting hypothesis. `decided_none_of_leader_absent` (L5)
 gains the quorum, and becomes checkable. And the witness universes must
 tell the truth: `LeanDagTest/Adaptive.lean`'s total adaptive runs become
@@ -1336,7 +1336,7 @@ directory, hence the one flat module.
   truncation.
 - **G4** Discharge them for the core (**`Persist` done**, and
   *unconditional* once the second instance turned up a defect in the
-  core's skip rule — §3.2 — with `SafeSkip.decided_fill` re-derived as
+  core's skip rule — §3.2 — with the core's fill transport re-derived as
   the consumer test and its counting hypothesis dropped). `Local` is
   done too, and both now fall out of `Banded` (§3.8), which also
   re-derives view monotonicity. The instance reshaped `Persist.Ok`
@@ -1535,7 +1535,7 @@ first step, the schedule layer is.
 The consumer tests passed. Each is a former bespoke induction
 re-derived with none — and the six named first have since had the
 induction deleted (§11.4e): `decided_fillHZ`, `decided_chopHZ`,
-`SafeSkip.decided_fill`, SS3 as a verdict (`decided_none_fresh`),
+`decided_fill_of_persist`, SS3 as a verdict (`decided_none_fresh`),
 `directCommit_chop` for liveness, and the adaptive arc entire, AL3 and
 AL5 standing verbatim as corollaries. One result the bespoke
 development did not have: Hammerhead over reactive Mysticeti

@@ -269,50 +269,33 @@ theorem slotBlamersIn_fill (V : View Validator BlockId Payload U) {k : ℕ} :
       · exact hn j hj hold
       · exact sk.hfresh_new k' (U.complete q hqo _ hj)
 
-/-- **Verdict invariance.** Every verdict a view reached in `U`
-re-derives, for the lifted view, in the extension.
+/-! ## Where the transport used to be
 
-**No hypothesis is needed.** An earlier form of this theorem carried a
-quorum condition over the gap, consumed at one point: a slot of the
-recovering validator inside the gap, skipped for want of any candidate,
-had to be re-skipped by counting against the filled candidate. The
-count now sits in `Decided.directSkip` itself, where a skip is a quorum
-of blockers rather than a quantifier over the candidates that happen to
-exist, and the blockers of a slot are the same on both sides of the
-fill. -/
-theorem decided_fill {V : View Validator BlockId Payload U} {k : ℕ}
-    {v : Option BlockId}
-    (h : Decided U V k v) :
-    Decided sk.skipFill (sk.liftView V) k v := by
-  induction h with
-  | @directCommit k L hL hdc =>
-      refine Decided.directCommit (sk.isLeaderBlock_fill hL) ?_
-      unfold DirectCommitIn at hdc ⊢
-      rw [sk.certificatesIn_fill V, sk.creatorsOf_fill (certificatesIn_subset_ids V)]
-      exact hdc
-  | @directSkip k hall =>
-      refine Decided.directSkip ?_
-      unfold DirectSkipSlotIn
-      rw [sk.slotBlamersIn_fill V, sk.creatorsOf_fill (inter_view_subset_ids V _)]
-      exact hall
-  | @indirectCommit k j A L hkj helig hj hmid hL hcert ihj ihmid =>
-      have hA : A ∈ U.ids := (isLeaderBlock_of_decided hj).1
-      exact Decided.indirectCommit hkj helig ihj ihmid
-        (sk.isLeaderBlock_fill hL) ((sk.certifiedIn_fill hA).mpr hcert)
-  | @indirectSkip k j A hkj helig hj hmid hnone ihj ihmid =>
-      have hA : A ∈ U.ids := (isLeaderBlock_of_decided hj).1
-      refine Decided.indirectSkip hkj helig ihj ihmid ?_
-      intro L hL
-      rcases sk.isLeaderBlock_fill_cases hL with hold | ⟨k', _, _, rfl, _, _⟩
-      · intro hc
-        exact hnone L hold ((sk.certifiedIn_fill hA).mp hc)
-      · exact sk.not_certifiedIn_fresh hA
+The two verdict transports stood here: a four-constructor
+induction over the core's decision relation carrying SS4 across this one
+transformer, and agreement composed onto it.
+
+They are gone. What survives above is the statement of what the fill
+preserves — the four rule transfers, each an equality across the fill,
+and the two negative clauses saying a fresh candidate is certified by
+nothing an old anchor can see. `Properties/Arcs/SafeSkip.lean` reads
+them: two fields make the fill a `Properties.Extends`, and
+`decided_fill_of_persist` and `decided_fill_agree_of_properties` follow
+from `Persist` — proved once for the protocol, for every extension — and
+`Agree`.
+
+The hypothesis that went missing along the way is worth keeping in
+view. The bespoke transport carried `QuorateOverGap` until the skip
+rule became a count of blockers; the properties version never had it.
+`QuorateOverGap` stays below, because it is still the condition under
+which a pre-crash view could have skipped a gap slot at all. -/
+
 
 /-- **The view is quorate over the gap**: at every gap round it holds blocks
 from a quorum of distinct authors at the round above.
 
-No longer consumed by `decided_fill`, which needs no condition once a
-skip is a count of blockers. Kept because it is the condition under
+No longer consumed by the verdict transport, which needs no condition
+once a skip is a count of blockers. Kept because it is the condition under
 which a *pre-crash* view could have skipped a gap slot at all, and so
 the honest precondition for a recovering validator having decided
 anything there. -/
@@ -320,15 +303,6 @@ def QuorateOverGap (V : View Validator BlockId Payload U) : Prop :=
   ∀ n, sk.r0 < n → n ≤ sk.r →
     quorumCard Validator ≤
       (creatorsOf U.block ((blocksAt U (n + 1)) ∩ V.ids)).card
-
-/-- **Agreement across a recovery.** A verdict reached before the fill
-agrees with any verdict reached after it, whatever view either side
-held — verdict invariance composed with agreement in the extension. -/
-theorem decided_fill_agree {V : View Validator BlockId Payload U}
-    {W : View Validator BlockId Payload sk.skipFill} {k : ℕ}
-    {v w : Option BlockId}
-    (hv : Decided U V k v) (hw : Decided sk.skipFill W k w) : v = w :=
-  decided_agree (sk.decided_fill hv) hw
 
 end Slots
 

@@ -1,5 +1,6 @@
 import LeanDag.SafeSkip.Basic
 import LeanDag.SafeSkip.Invariance
+import LeanDag.Properties.Arcs.SafeSkip
 import LeanDag.SafeSkip.Jump
 import LeanDagTest.Unbounded
 import LeanDagTest.Quantitative
@@ -253,7 +254,7 @@ example (N r : ℕ) (hrN : r < N) {k : ℕ} {v : Option ℕ}
     (h : Decided (Ucrash N) (View.full (Ucrash N)) k v) :
     Decided (ucrashMsg N r (le_of_lt hrN)).skipFill
       ((ucrashMsg N r (le_of_lt hrN)).liftView (View.full (Ucrash N))) k v :=
-  SkipMsg.decided_fill _ h
+  Properties.Arcs.decided_fill_of_persist _ h
 
 /-! ## The jump message, witnessed (SS11)
 
@@ -337,8 +338,8 @@ theorem ucrashJump_denote_eq (N r : ℕ) (hr : r ≤ N) :
 example : (ucrashJump 2 2 (by omega)).toSkipMsg.line 1 = 5 :=
   ucrashJump_line_eq 2 2 (by omega) (by omega)
 
-#print axioms LeanDag.SkipMsg.decided_fill
-#print axioms LeanDag.SkipMsg.decided_fill_agree
+#print axioms LeanDag.Properties.Arcs.decided_fill_of_persist
+#print axioms LeanDag.Properties.Arcs.decided_fill_agree_of_properties
 #print axioms ucrash_populated
 #print axioms ucrash_directSkip
 #print axioms LeanDag.SkipMsg.skipFill_populatedOn

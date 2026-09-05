@@ -4,6 +4,7 @@ import LeanDag.Hydrozoan.IndirectLiveness.Statement
 import LeanDag.Hydrozoan.DirectLiveness.Proof
 import LeanDag.Hydrozoan.SlotAgreement.Proof
 import LeanDag.Properties.Commit
+import LeanDag.Properties.Optional.Direct
 import LeanDag.Properties.Derived.Descent
 import LeanDag.Properties.Candidate
 import LeanDag.Properties.Deliver
@@ -207,6 +208,23 @@ theorem commitsCandidate :
     CommitsCandidate (rule (Replica := Replica) (BlockId := BlockId)) :=
   fun S _ _ _ _ hd =>
     LeanDag.Hydrozoan.isLeaderBlock_of_decided (S := ofCoreSlots S) hd
+
+/-- **A direct commit is a verdict**, at Hydrozoan's own direct
+predicate — which is a *disjunction*, the fast path or the slow one.
+The two constructors under the property's name.
+
+Hydrozoan had no `CommitsDirect` until `scripts/audit-bespoke.py` found
+`Barnacle.Hydrozoan.holds` reaching past the properties for it: the law
+it discharges, `Laws.decided_of_directCommitIn`, is this property, and
+was being proved from the constructors a second time. -/
+theorem commitsDirect :
+    Properties.CommitsDirect (rule (Replica := Replica) (BlockId := BlockId))
+      (fun {U} V L r => LeanDag.Hydrozoan.FastCommitInView U V L r ∨
+        LeanDag.Hydrozoan.SlowCommitInView U V L r) := by
+  intro S U V k L hL hc
+  letI : LeanDag.Hydrozoan.Slots Replica := ofCoreSlots S
+  exact hc.elim (LeanDag.Hydrozoan.Decided.directFast hL)
+    (LeanDag.Hydrozoan.Decided.directSlow hL)
 
 /-- The carrier's coverage predicate is Hydrozoan's. -/
 theorem coversUpto_eq {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}

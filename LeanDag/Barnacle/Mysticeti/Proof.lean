@@ -1,13 +1,15 @@
 import LeanDag.Barnacle.Mysticeti.Statement
 import LeanDag.Liveness
+import LeanDag.MysticetiProperties
 
 /-!
 # Barnacle over Mysticeti — proof
 
 Generated proof layer; not part of the audit surface. Every law is a
-core theorem applied: the view structure's own fields, `rfl` for the
-two id equations, `decided_agree` (M6), `Decided.directCommit` and
-`isLeaderBlock_of_decided`.
+**property** applied: the view structure's own fields, `rfl` for the two
+id equations, then `Agree`, `CommitsDirect` and `CommitsCandidate`.
+`MysticetiProperties` is where M6, `Decided.directCommit` and
+`isLeaderBlock_of_decided` are read; this file does not reach past it.
 -/
 
 namespace LeanDag
@@ -22,9 +24,12 @@ theorem holds : Statement := by
     {
       full_ids := fun _ => rfl
       historyView_ids := fun _ _ _ => rfl
-      agree := fun _ {_} _ _ _ _ _ h₁ h₂ => decided_agree h₁ h₂
-      decided_of_directCommitIn := fun _ {_} _ _ _ hL hdc => Decided.directCommit hL hdc
-      candidates := fun _ {_} _ _ _ h => isLeaderBlock_of_decided h }
+      agree := fun S {_} V₁ V₂ k v₁ v₂ h₁ h₂ =>
+        MysticetiProperties.agree S V₁ V₂ k v₁ v₂ h₁ h₂
+      decided_of_directCommitIn := fun S {_} V k L hL hdc =>
+        MysticetiProperties.commitsDirect S _ V k L hL hdc
+      candidates := fun S {_} V k L h =>
+        MysticetiProperties.commitsCandidate S _ V k L h }
 
 end Mysticeti
 

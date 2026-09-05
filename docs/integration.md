@@ -198,7 +198,7 @@ The claim that these are *all* the hypotheses is now checked rather
 than asserted, by querying the extracted statements of the principal
 capstones (`dos_resistance`, `chain_quality`, `decided_agree_chop`,
 `card_retained_le`, `bootstrap_agree`, `all_decided_below_of_fairRun`,
-`commits_recur_on`, `decided_fill`, `adaptiveRun_exists`,
+`commits_recur_on`, `decided_fill_of_persist`, `adaptiveRun_exists`,
 `adaptiveRun_agree`, `committed_of_correct_block`, `card_history_le'`,
 `card_viewUpto_le`) for hypothesis-position identifiers outside the
 list. Three findings, all of which changed this plan:
@@ -248,7 +248,7 @@ its column, and this is why §9 reads as cleanly as it does.
 | U3 `SynchronisedOn` | ✅ **I4** `synchronisedOn_chop` | ⛔ **I5 — refuted**; ✅ above the fill |
 | U4 `DoSValid` | ✅ `dosValid_chop` | **I1 — open** |
 | U5 `HonestNoEquiv` | ✅ **I2** `honestNoEquiv_chop` | ✅ **I3** `honestNoEquiv_skipFill` |
-| U6 verdicts | ✅ G3 `decided_chop` | ✅ SS5 `decided_fill` |
+| U6 verdicts | ✅ G3 `decided_chop_iff` | ✅ SS5 `decided_fill_of_persist` |
 
 **Layer D — delivery transformers.** `chopD` supplies the whole
 column; Safe Skip has no delivery transformer at all, so the entire

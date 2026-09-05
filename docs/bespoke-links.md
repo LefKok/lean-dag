@@ -32,25 +32,6 @@ recorded below and struck off when routed. The script fails on an
 unrecorded link *and* on a recorded one that is no longer bespoke, so
 this table cannot drift from the code in either direction.
 
-## A. Agreement — `Properties.Agree` (10)
-
-Each calls the protocol's own uniqueness theorem where the property says
-the same thing. `Agree` is proved *from* those theorems, so the
-substitution is exact.
-
-| theorem | file | borrows |
-|---|---|---|
-| `Integration.Hydrozoan.decided_fill_agreeHZ_of_properties` | `Integration/Hydrozoan/ViaProperties.lean` | `Hydrozoan.SlotAgreement.holds` |
-| `Integration.Hydrozoan.agree_stackHZ` | `Integration/Hydrozoan/Stack.lean` | `Hydrozoan.SlotAgreement.holds` |
-| `Integration.Hydrozoan.decidedUnique_stackHZ` | `Integration/Hydrozoan/Stack.lean` | `Hydrozoan.SlotAgreement.holds` |
-| `Integration.Hydrozoan.Deployment.agrees` | `Integration/Hydrozoan/Deployment.lean` | `Hydrozoan.SlotAgreement.holds` |
-| `Integration.Hydrozoan.Deployment.safe` | `Integration/Hydrozoan/Deployment.lean` | `Hydrozoan.SlotAgreement.holds` |
-| `SkipMsg.decided_fill_agree` | `SafeSkip/Invariance.lean` | `decided_agree` |
-| `Odontoceti.DecidedWithin.agree` | `Adaptive/Odontoceti.lean` | `Odontoceti.decided_unique` |
-| `Odontoceti.partialRun_agree` | `Adaptive/Odontoceti.lean` | via the above |
-| `Odontoceti.adaptiveRun_agree` | `Adaptive/Odontoceti.lean` | via the above |
-| `Odontoceti.adaptiveRun_exists` | `Adaptive/Odontoceti.lean` | via the above |
-
 ## B. A commit names a candidate — `Properties.CommitsCandidate` (5)
 
 | theorem | file | borrows |
@@ -59,26 +40,6 @@ substitution is exact.
 | `Integration.Hydrozoan.Simulates.decided_chop_of_simulates` | `Integration/Hydrozoan/Simulation.lean` | via the above |
 | `Integration.Hydrozoan.Simulates.decided_fill_of_simulates` | `Integration/Hydrozoan/Simulation.lean` | via the above |
 | `Integration.Hydrozoan.Simulates.decided_of_chop_of_simulates` | `Integration/Hydrozoan/Simulation.lean` | via the above |
-| `SkipMsg.decided_fill` | `SafeSkip/Invariance.lean` | `isLeaderBlock_of_decided` |
-
-## C. Barnacle's `Laws` — three properties (5)
-
-`Laws.agree` **is** `Agree` and `Laws.candidates` **is**
-`CommitsCandidate` (§11.2), so those two fields should cite the
-properties. `Laws.decided_of_directCommitIn` is the one that cannot yet:
-`CommitsDirect` is currently *derived from* `Laws` for these rules, so
-using it here would be circular. Routing this group needs
-`CommitsDirect` proved natively first — for the core at
-`MysticetiProperties.mysticetiRule`, and for Hydrozoan and Odontoceti at
-their own carriers.
-
-| theorem | file | borrows |
-|---|---|---|
-| `Barnacle.Mysticeti.holds` | `Barnacle/Mysticeti/Proof.lean` | `decided_unique`, `isLeaderBlock_of_decided`, `certifiedIn_of_directCommitIn_at_anchor` |
-| `Barnacle.odontoceti_laws` | `Barnacle/Helpers/Odontoceti.lean` | `Odontoceti.decided_unique`, `Odontoceti.isLeaderBlock_of_decided`, `Odontoceti.thickLink_of_directCommitIn_at_anchor` |
-| `Barnacle.Odontoceti.holds` | `Barnacle/Odontoceti/Proof.lean` | via the above |
-| `Barnacle.Hydrozoan.holds` | `Barnacle/Hydrozoan/Proof.lean` | `Hydrozoan.SlotAgreement.holds`, `Hydrozoan.isLeaderBlock_of_decided`, the two anchor lemmas |
-| `Barnacle.Live.holds` | `Barnacle/Live/Proof.lean` | via the above |
 
 ## D. A reliable leader's slot commits — `Properties.LeaderCommits` (11)
 
@@ -121,3 +82,31 @@ Both became routable only with §11.2b's `Indirect`.
 | theorem | file | borrows |
 |---|---|---|
 | `Integration.lifecycle` | `Integration/Lifecycle.lean` | `decided_none_of_leader_absent`, `decided_none_of_no_candidate` |
+
+## Routed so far
+
+**A, agreement (10).** `Hydrozoan.agree` replaces `SlotAgreement.holds`
+in `Stack.lean` and `ViaProperties.lean`, and `Deployment` follows.
+`OdontocetiProperties.agree` replaces `Odontoceti.decided_unique` in the
+adaptive arc. `SkipMsg.decided_fill_agree` was **deleted** rather than
+rerouted: like the garbage-collection and Hydrozoan cases, the bespoke
+transport it composed had a properties replacement already
+(`Arcs.decided_fill_of_persist`), so the pair went and
+`Arcs.decided_fill_agree_of_properties` took over. That took
+`SkipMsg.decided_fill` from group B with it.
+
+**C, Barnacle's `Laws` (5).** The circularity dissolved once
+`CommitsDirect` was proved natively: the core already had one, Odontoceti's
+moved into the new `Odontoceti/Carrier.lean`, and Hydrozoan's was
+written for this — at a *disjunction*, the fast path or the slow one,
+which is what Barnacle's `DirectCommitIn` is for that rule. All three
+`Laws` proofs now read `Agree`, `CommitsDirect` and `CommitsCandidate`.
+
+**One structural change was needed.** `OdontocetiProperties.lean` imports
+the adaptive arc, for the bounded relation — so Odontoceti's carrier sat
+*downstream of a mechanism*, and no mechanism could reach it. The
+carrier, `Causal`, `Agree`, `CommitsCandidate` and `CommitsDirect` moved
+to `LeanDag/Odontoceti/Carrier.lean`, upstream of everything, which is
+the shape Hydrozoan has had since it was written. The audit script's
+module classification was corrected to match: that file is conformance,
+not protocol.

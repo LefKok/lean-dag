@@ -44,7 +44,7 @@ blocks, every old block untouched. What this file proves:
 
 Full verdict invariance across the fill — every `Decided U V k v`
 re-derives in `skipFill U`, and hence agrees with every verdict reached
-after recovery — is `decided_fill` and `decided_fill_agree` in
+after recovery — is the pair of verdict transports in
 `Invariance.lean`, the `decided_chop` analogue for extension rather than
 truncation.
 -/

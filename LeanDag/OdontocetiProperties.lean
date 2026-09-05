@@ -1,4 +1,4 @@
-import LeanDag.Odontoceti.Decision
+import LeanDag.Odontoceti.Carrier
 import LeanDag.MysticetiProperties
 import LeanDag.Properties.Band
 import LeanDag.Properties.Derived.Descent
@@ -55,20 +55,14 @@ variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults5 Validator]
 variable {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
 
-/-- **Odontoceti as a carrier**, at its own namespace rather than
-through `Barnacle.odontocetiRule`: a protocol's conformance should not
-route through a mechanism (`docs/target-properties.md` §8). -/
-def odontocetiRule : DagRule Validator BlockId Payload where
-  Universe := BlockUniverse Validator BlockId Payload
-  View := fun U => View Validator BlockId Payload U
-  block := fun U i => U.block i
-  ids := fun U => U.ids
-  viewIds := fun V => V.ids
-  viewSound := fun V => V.subset_ids
-  viewComplete := fun V => V.complete
-  Decided := fun S _ V k v => Odontoceti.Decided (S := S) _ V k v
+/-! ## What this file adds to `Odontoceti/Carrier.lean`
 
-/-! ## The band, across a shifted universe
+The carrier, `Causal`, `Agree`, `CommitsCandidate` and `CommitsDirect`
+are there, upstream of every mechanism. Here is the band and everything
+the band gives, plus the two liveness properties, which need the bounded
+relation and so the adaptive arc.
+
+## The band, across a shifted universe
 
 Odontoceti shares the core's block vocabulary — `IsLeaderBlock`,
 `blocksAt`, `slotBlamers` — so the core's band lemmas apply once the
@@ -372,32 +366,6 @@ theorem banded : Banded
   obtain ⟨top, -, ht⟩ := banded_aux (S := S) hd
   exact ⟨top, fun g g' d d' S' U' V' k' hkd hsch hlead hab hV =>
     ht g g' d d' S' U' V' k' hkd hsch hlead hab hV⟩
-
-/-- Odontoceti's universes are block DAGs — the same argument as the
-core's, the universe type being the same. -/
-theorem causal : Causal (odontocetiRule (Validator := Validator) (BlockId := BlockId)
-    (Payload := Payload)) :=
-  fun U =>
-    { complete := fun i hi j hj => U.complete i hi j hj
-      refs_round := fun i hi j hj => U.round_of_mem_refs hi hj }
-
-/-- **Two views decide alike.** O5 under the property's name. -/
-theorem agree : Agree (odontocetiRule (Validator := Validator) (BlockId := BlockId)
-    (Payload := Payload)) :=
-  fun S _ V₁ V₂ _ _ _ h₁ h₂ =>
-    Odontoceti.decided_unique (S := S) h₁ V₂ _ h₂
-
-/-- **A commit names the slot's candidate.** -/
-theorem commitsCandidate : CommitsCandidate
-    (odontocetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
-  fun S _ _ _ _ hd => Odontoceti.isLeaderBlock_of_decided (S := S) hd
-
-/-- **And a direct commit is a verdict**, at Odontoceti's own direct
-predicate. -/
-theorem commitsDirect : CommitsDirect
-    (odontocetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
-    (fun {U} V L r => Odontoceti.DirectCommitIn U V L r) :=
-  fun S _ _ _ _ hc hd => Odontoceti.Decided.directCommit (S := S) hc hd
 
 /-- **Odontoceti skips an unsupported slot from a correct quorum.**
 

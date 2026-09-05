@@ -105,6 +105,7 @@ import LeanDag.Properties.Derived.Descent
 import LeanDag.Properties.Compose
 import LeanDag.Properties.Deliver
 import LeanDag.MysticetiProperties
+import LeanDag.Odontoceti.Carrier
 import LeanDag.OdontocetiProperties
 import LeanDag.Properties.Arcs.SafeSkip
 import LeanDag.Properties.Arcs.GC

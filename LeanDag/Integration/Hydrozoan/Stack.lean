@@ -79,25 +79,27 @@ theorem decided_stackHZ (hd : G ≤ S.slotRound d) {k : ℕ} {v : Option BlockId
 /-- **The capstone: a recovered and pruned replica cannot disagree.**
 Its view `W` is an arbitrary view of the stack — not a transported
 full-history view — and its verdict at the re-indexed slot is the
-verdict anyone else reached at the original slot. The proof is HZ3
-applied to a different universe, with `decided_stackHZ` moving the
-other verdict into it. -/
+verdict anyone else reached at the original slot. The proof is
+`Properties.Agree` applied to a different universe, with
+`decided_stackHZ` moving the other verdict into it. HZ3 is where that
+property comes from and is not read here. -/
 theorem agree_stackHZ (hd : G ≤ S.slotRound d) {k : ℕ} {v w : Option BlockId}
     {W : LeanDag.Hydrozoan.View (stackHZ U hsp sk G)}
     (hV : LeanDag.Hydrozoan.Decided U V (d + k) v)
     (hW : LeanDag.Hydrozoan.Decided (S := slotsChopHZ hd) (stackHZ U hsp sk G) W k w) :
     v = w :=
-  @LeanDag.Hydrozoan.SlotAgreement.holds Replica BlockId _ _ _ _ _ (slotsChopHZ hd)
-    (stackHZ U hsp sk G) (stackView U hsp sk G V) W k v w (decided_stackHZ hd hV) hW
+  LeanDag.Hydrozoan.agree (LeanDag.Hydrozoan.toCoreSlots (slotsChopHZ hd))
+    (stackView U hsp sk G V) W k v w (decided_stackHZ hd hV) hW
 
-/-- **Safety across the stack**, in HZ3's own words: no two views of the
-recovered-and-pruned universe decide a slot differently, whatever the
-routes. Nothing about the fill or the cut is re-proved. -/
+/-- **Safety across the stack**, in HZ3's own words but by `Agree`: no
+two views of the recovered-and-pruned universe decide a slot
+differently, whatever the routes. Nothing about the fill or the cut is
+re-proved, and nothing about agreement either. -/
 theorem decidedUnique_stackHZ (hd : G ≤ S.slotRound d) :
     @LeanDag.Hydrozoan.SlotAgreement.DecidedUnique Replica BlockId _ _ _ _ _
       (slotsChopHZ hd) (stackHZ U hsp sk G) :=
-  @LeanDag.Hydrozoan.SlotAgreement.holds Replica BlockId _ _ _ _ _ (slotsChopHZ hd)
-    (stackHZ U hsp sk G)
+  fun V₁ V₂ k v₁ v₂ h₁ h₂ =>
+    LeanDag.Hydrozoan.agree (LeanDag.Hydrozoan.toCoreSlots (slotsChopHZ hd)) V₁ V₂ k v₁ v₂ h₁ h₂
 
 end Verdicts
 
