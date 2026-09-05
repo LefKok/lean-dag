@@ -4,6 +4,7 @@ import LeanDag.FinWhale.Pass
 import LeanDag.Properties.Agree
 import LeanDag.Properties.Candidate
 import LeanDag.Properties.Optional.Direct
+import LeanDag.Properties.Optional.Quorate
 
 /-!
 # FinWhale as a carrier
@@ -110,6 +111,12 @@ def finWhaleRule : DagRule Validator BlockId Payload where
   viewComplete := fun V => V.property.closed
   Decided := fun S D V k v =>
     ∃ dec, Assignment (schedOf S) D V.val V.property dec ∧ VerdictIs dec k v
+
+/-- **FinWhale's DAGs are quorate**: `ValidHere.quorum`, which asks for
+`n − f` distinct authors, read at the carrier. -/
+theorem quorate : Quorate (finWhaleRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)) (coreReliability Validator) :=
+  fun D b hb hr => (D.valid b hb).quorum hr
 
 /-- FinWhale's DAGs are block DAGs. -/
 theorem causal : Causal (finWhaleRule (Validator := Validator) (BlockId := BlockId)

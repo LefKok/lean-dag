@@ -1070,6 +1070,60 @@ which the band proof reads. The other six properties are free of it, so
 Barnacle's laws and the liveness route, which quantify over `BlockId`
 with decidable equality alone, are unaffected.
 
+## 3.15 The last mechanism, and the law it needed
+
+Chain quality was the one mechanism whose capstone was still written at
+a single protocol. §11.4 recorded why and predicted the fix would be a
+new *carrier field*: `card_coveredAt_ge` rests on density, density rests
+on a block referencing a quorum of the round below, and `DagRule` has no
+validity clause.
+
+**It is a property, not a field.** `Causal` is the closer precedent —
+a structural claim about the universe, stated once and discharged per
+rule — and a field would oblige `Barnacle.BaseRule` too, which has no
+validity clause either, and through it six more instances. The content
+is the same; only the blast radius differs. `Properties.Quorate` sits in
+`Properties/Optional/`, alongside `CommitsDirect` and
+`SkipsUnsupported`, because a rule that shows the six composes with
+every other mechanism without it.
+
+**The fault model had to become a parameter.** Six fault classes are in
+play — the core's `Faults`, Hydrozoan's with its crash set, Odontoceti's
+`Faults5`, Nemo's crash-only, Hybrid's two thresholds, FinWhale's
+`Params` — and density counts against whichever one a rule carries.
+`LeanDag.Reliability` is what the count actually needs: a reliable set,
+a slack bounding everything outside it, and that slack being a minority.
+Every class in the development supplies one in a line, and the
+alternative — density per fault model — is the duplication this arc
+exists to remove.
+
+**One induction where there were going to be several.** Density and the
+correct backbone read `blk`, `ids`, `CausalStructure` and `QuorateOn`
+and nothing else, so they are stated over the raw block data in
+`LeanDag/Density.lean`; the DoS arc, which proved density first, now
+names its instance of them, and `Properties/Arcs/Quality.lean` names
+another. `DoS/Density.lean` and `DoS/Exclusion.lean` each lost an
+induction to it.
+
+**What a rule gets by showing `Quorate`.** CQ1 (a commit's flush covers
+all but the slack, at every round below it), CQ2 (the half, where the
+committee gives it), CQ3 (ledger coverage), CQ5 (post-synchrony, every
+reliable block is in every later reliable commit's cone), CQ6 (a slot
+the schedule fixes in advance whose commit carries a whole round), and
+CQ7, all with no argument of its own. `LeanDagTest/Quality/Generic.lean`
+checks it on two rules that never had the arc: FinWhale takes all of it,
+and Hydrozoan takes everything but the half — which is a fact about its
+committee, `2(f + c) ≤ |Correct|` holding only when `c ≤ k + 1`, and is
+why CQ2 takes that condition as a hypothesis rather than assuming it.
+
+**Every mechanism in the development is now generic.** Garbage
+collection, crash recovery, adaptive leaders, Barnacle's liveness and
+chain quality are all stated over `DagRule` and a subset of the
+properties. What a protocol still supplies per mechanism is the witness
+that its own construction is a `Truncates` or a `Sustains` — and that is
+not a gap in the properties but a limit of the carrier, which has no way
+to *build* a universe (§11.4).
+
 ## 4. Properties for the schedule mechanisms
 
 `Barnacle.BaseRule` and its `Laws` are one working interface: any two
@@ -1902,11 +1956,13 @@ looked for and is not there.
   they are: eight rules meet them, two needed a repair to do so (§3.2,
   §3.12), two met the same shape and did not (§3.13, §3.14), and none
   needed a seventh property.
-- **A carrier law for chain quality.** `Quality/Coverage.card_coveredAt_ge`
-  rests on a block referencing a quorum of the round below, and
-  `DagRule` has no validity field. The last place that calls for a new
-  carrier field rather than a new property; §3.9 records what the
-  property side already gives.
+- ~~**A carrier law for chain quality**~~ (**done**, §3.15).
+  `Properties.Quorate` is the clause, as a property rather than a field,
+  and the whole arc moved to `Properties/Arcs/Quality.lean`. Every
+  mechanism in the development is now stated over `DagRule`; what a
+  protocol supplies per mechanism is a `Truncates` or `Sustains`
+  witness, which is the carrier's inability to construct a universe
+  rather than a missing property.
 - ~~**Two dead statements**~~ (**deleted**). `Local` had no consumer and
   no need; `Delivers`, the full-coverage view obligation, had no witness
   beyond `View.full`. Both are gone, with `AgreeAbove.symm` and

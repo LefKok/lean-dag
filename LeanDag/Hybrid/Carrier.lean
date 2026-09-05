@@ -2,6 +2,7 @@ import LeanDag.Hybrid.Decision
 import LeanDag.Properties.Agree
 import LeanDag.Properties.Candidate
 import LeanDag.Properties.Optional.Direct
+import LeanDag.Properties.Optional.Quorate
 
 /-!
 # Hybrid as a carrier, and the three properties its own rules give
@@ -45,6 +46,13 @@ def hybridRule (k : ℕ) : DagRule Validator BlockId Payload where
   viewSound := fun V => V.subset_ids
   viewComplete := fun V => V.complete
   Decided := fun S U V s v => Hybrid.Decided (S := S) k U.val V s v
+
+/-- **Hybrid's universes are quorate**, at the derived fault model:
+`f = fb + fc`, so a quorum of `n − fb − fc` distinct authors is what
+validity already asks for. -/
+theorem quorate (k : ℕ) : Quorate (hybridRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload) k) (coreReliability Validator) :=
+  fun U => U.val.quorateOn
 
 /-- Hybrid's universes are block DAGs — the core's argument, the
 underlying universe type being the core's. -/

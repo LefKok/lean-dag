@@ -175,3 +175,33 @@ use the standard axioms only.
 | `LeanDag/Quality/Inclusion.lean` | CQ5 (`mem_history_of_decided_commit`), CQ6 (`committed_of_correct_block`) |
 | `LeanDag/Quality/Capstone.lean` | CQ7: `committed_of_correct_block_within`, `…_by_round`, `chain_quality`; the CQ4 verdict |
 | `LeanDagTest/Quality/Model.lean` | `Ucens`; every result applied on data; the censorship exhibit |
+| `LeanDag/Density.lean` | `Reliability`, `QuorateOn`, density and the correct backbone over the raw block data |
+| `LeanDag/Properties/Optional/Quorate.lean` | `Properties.Quorate` — the validity clause at the carrier |
+| `LeanDag/Properties/Arcs/Quality.lean` | the whole arc for any rule showing `Causal`, `Quorate`, `CommitsCandidate` and `LeaderCommits` |
+| `LeanDagTest/Quality/Generic.lean` | the arc applied to FinWhale and Hydrozoan |
+
+## 8. The arc, for any rule
+
+`docs/target-properties.md` §3.15. Everything above was written at the
+core and is now an instance. Two things had to move for that.
+
+**Density is not a chain-quality result.** It reads a block assignment,
+a set of ids, the causal structure relating them, and one counting law
+about references — no verdicts, no views, no schedule. `LeanDag/Density.lean`
+states it there, and the DoS arc, which proved it first, names its
+instance; both arcs lost an induction.
+
+**The fault model is a parameter.** Six fault classes are in play across
+the development and density counts against whichever one a rule
+carries, so `Reliability` bundles what the count needs — a reliable set,
+a slack, and the slack being a minority — and each class supplies one in
+a line.
+
+What is left rule-specific is `Properties.Quorate`, one line per rule,
+and — for the inclusion half — the bridge from a rule's own liveness
+precondition to `LeaderCommits`, which is the shape `LiveRule.GoodGives`
+already has for Barnacle. `LeanDagTest/Quality/Generic.lean` checks the
+result on FinWhale, which takes the whole arc, and on Hydrozoan, which
+takes everything but CQ2's "half" — `2(f + c) ≤ |Correct|` needs
+`c ≤ k + 1`, so the packaging carries that as a hypothesis and the
+unconditional bound `card_coveredAt_ge` carries none.

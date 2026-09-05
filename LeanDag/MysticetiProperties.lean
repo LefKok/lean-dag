@@ -3,6 +3,7 @@ import LeanDag.Properties.Extends
 import LeanDag.Properties.Derived.Persist
 import LeanDag.Properties.Optional.Skip
 import LeanDag.Properties.Optional.Direct
+import LeanDag.Properties.Optional.Quorate
 import LeanDag.Properties.Commit
 import LeanDag.Properties.Derived.Bounded
 import LeanDag.Properties.Derived.Descent
@@ -211,6 +212,14 @@ theorem causal : Causal (mysticetiRule (Validator := Validator) (BlockId := Bloc
   fun U =>
     { complete := fun i hi j hj => U.complete i hi j hj
       refs_round := fun i hi j hj => U.round_of_mem_refs hi hj }
+
+/-- **The core's universes are quorate**, at the core's fault model:
+validity's counting clause read at the carrier. This is what chain
+quality reads (`Properties/Arcs/Quality.lean`), and it is one line
+because `ValidWrt` already says it. -/
+theorem quorate : Quorate (mysticetiRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)) (coreReliability Validator) :=
+  fun U => U.quorateOn
 
 /-- Two quorums share a correct validator, so a quorum is not empty. -/
 theorem quorumCard_pos : 0 < quorumCard Validator := by

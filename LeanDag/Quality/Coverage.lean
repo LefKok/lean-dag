@@ -1,5 +1,6 @@
 import LeanDag.DoS.Density
 import LeanDag.MysticetiProperties
+import LeanDag.Properties.Arcs.Quality
 
 /-!
 # Chain quality: asynchronous coverage
@@ -18,9 +19,20 @@ fraction: an equivocator can inflate a cone with any number of blocks
 per round, so the raw fraction is adversary-deflatable, while the
 author count is what density bounds (`chain-quality.md` §2, a recorded
 decision).
+
+**Every result here is now an instance.** The arc was written at the
+core and read the core's `Decided` at one step, which
+`Properties.CommitsCandidate` replaced. What was left tying it to one
+protocol was density's dependence on block validity, and
+`Properties.Quorate` is that clause at the carrier — so the whole arc
+moved to `Properties/Arcs/Quality.lean` and this file names the core's
+instance of it. The statements are unchanged; the proofs are one
+application each.
 -/
 
 namespace LeanDag
+
+open LeanDag.Properties LeanDag.Properties.Arcs
 
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator]
@@ -32,63 +44,50 @@ variable {b L : BlockId} {δ : ℕ}
 complement, within `Correct`, of `missingAt`. -/
 def coveredAt (U : BlockUniverse Validator BlockId Payload)
     (b : BlockId) (δ : ℕ) : Finset Validator :=
-  (Correct : Finset Validator).filter fun v =>
-    ∃ i ∈ history U b, (U.block i).creator = v ∧ (U.block i).round = δ
+  Arcs.coveredAt (MysticetiProperties.mysticetiRule (Payload := Payload))
+    (coreReliability Validator) U b δ
 
 theorem mem_coveredAt {v : Validator} :
     v ∈ coveredAt U b δ ↔
       v ∈ (Correct : Finset Validator) ∧
         ∃ i ∈ history U b, (U.block i).creator = v ∧ (U.block i).round = δ :=
-  Finset.mem_filter
+  Arcs.mem_coveredAt (R := MysticetiProperties.mysticetiRule)
 
 theorem coveredAt_subset_correct :
     coveredAt U b δ ⊆ (Correct : Finset Validator) :=
-  Finset.filter_subset _ _
+  Arcs.coveredAt_subset_correct
 
 /-- Covered and missing partition the correct validators. -/
 theorem coveredAt_eq_sdiff :
-    coveredAt U b δ = (Correct : Finset Validator) \ missingAt U b δ := by
-  ext v
-  rw [mem_coveredAt, Finset.mem_sdiff, mem_missingAt]
-  constructor
-  · rintro ⟨hv, i, hi, hic, hir⟩
-    exact ⟨hv, fun ⟨_, hall⟩ => hall i hi ⟨hic, hir⟩⟩
-  · rintro ⟨hv, hmiss⟩
-    refine ⟨hv, ?_⟩
-    by_contra hnone
-    push_neg at hnone
-    exact hmiss ⟨hv, fun i hi ⟨hic, hir⟩ => hnone i hi hic hir⟩
+    coveredAt U b δ = (Correct : Finset Validator) \ missingAt U b δ :=
+  Arcs.coveredAt_eq_sdiff (R := MysticetiProperties.mysticetiRule)
 
 /-- **CQ1, the count.** A valid block's cone covers all but at most `f`
 of the correct validators, at every round below it. Purely structural:
 density (D25) plus the partition. -/
 theorem card_coveredAt_ge (hb : b ∈ U.ids) (hδ : δ < (U.block b).round) :
-    (Correct : Finset Validator).card - F.f ≤ (coveredAt U b δ).card := by
-  have hsub : missingAt U b δ ⊆ (Correct : Finset Validator) :=
-    Finset.filter_subset _ _
-  have hcard := Finset.card_sdiff_of_subset hsub
-  have hmiss := card_missingAt_le hb hδ
-  rw [coveredAt_eq_sdiff, hcard]
-  omega
+    (Correct : Finset Validator).card - F.f ≤ (coveredAt U b δ).card :=
+  Arcs.card_coveredAt_ge (R := MysticetiProperties.mysticetiRule)
+    MysticetiProperties.causal MysticetiProperties.quorate hb hδ
 
 /-! ## Where the arc depends on the rule
 
-Exactly one step, and it is now a property. `card_coveredAt_ge` above is
+Exactly one step, and it is a property. `card_coveredAt_ge` above is
 about valid DAGs and knows nothing of a decision rule; what the theorems
 below add is that a *committed* block is one of those blocks, at the
 slot's round. That is `Properties.CommitsCandidate`, which seven
 protocols proved separately as `isLeaderBlock_of_decided` before it had
 a name (`Properties/Candidate.lean`). Reading it from the property
-rather than from the core's lemma is what will let a second protocol
-have this arc without a second copy of it. -/
+rather than from the core's lemma is what lets a second protocol have
+this arc without a second copy of it — and `Properties/Arcs/Quality.lean`
+is that arc. -/
 
 section Decided
 
 variable [S : Slots Validator]
 
 /-- **The arc's one rule-dependent step**: a committed block is a block.
-`Properties.CommitsCandidate` at the core, which is where the rest of
-this arc and `Quality/{Inclusion,Capstone}.lean` read it from. -/
+`Properties.CommitsCandidate` at the core. -/
 theorem mem_ids_of_decided {V : View Validator BlockId Payload U}
     {k : ℕ} (h : Decided U V k (some L)) : L ∈ U.ids :=
   (MysticetiProperties.commitsCandidate (Payload := Payload) S U V k L h).1
@@ -99,7 +98,9 @@ no synchrony. -/
 theorem card_coveredAt_ge_of_decided {V : View Validator BlockId Payload U}
     {k : ℕ} (h : Decided U V k (some L)) (hδ : δ < (U.block L).round) :
     (Correct : Finset Validator).card - F.f ≤ (coveredAt U L δ).card :=
-  card_coveredAt_ge (mem_ids_of_decided h) hδ
+  Arcs.card_coveredAt_ge_of_decided (R := MysticetiProperties.mysticetiRule)
+    MysticetiProperties.causal MysticetiProperties.quorate
+    MysticetiProperties.commitsCandidate h hδ
 
 /-- **CQ2 (the half, exactly).** Every commit carries, at every round
 below it, blocks from at least half of the correct validators:
@@ -107,17 +108,21 @@ below it, blocks from at least half of the correct validators:
 theorem card_correct_le_two_mul_coveredAt_of_decided
     {V : View Validator BlockId Payload U} {k : ℕ}
     (h : Decided U V k (some L)) (hδ : δ < (U.block L).round) :
-    (Correct : Finset Validator).card ≤ 2 * (coveredAt U L δ).card := by
-  have h1 := card_coveredAt_ge_of_decided h hδ
-  have h2 := two_f_add_one_le_card_correct (Validator := Validator)
-  omega
+    (Correct : Finset Validator).card ≤ 2 * (coveredAt U L δ).card :=
+  Arcs.card_correct_le_two_mul_coveredAt_of_decided
+    (R := MysticetiProperties.mysticetiRule) MysticetiProperties.causal
+    MysticetiProperties.quorate MysticetiProperties.commitsCandidate
+    (by
+      simp only [coreReliability_correct, coreReliability_slack]
+      have := two_f_add_one_le_card_correct (Validator := Validator)
+      omega) h hδ
 
 /-- A cone block of a committed slot is in the ledger — the one
 unfolding both CQ3 and CQ6 rest on. -/
 theorem mem_ledgerSet_of_mem_history {g : ℕ → Option BlockId} {n k : ℕ}
     (hg : g k = some L) (hk : k < n) (hL : L ∈ U.ids)
     (hb : b ∈ history U L) : b ∈ ledgerSet U g n :=
-  ⟨k, hk, L, hg, (mem_history_iff hL).mp hb⟩
+  Arcs.mem_ledgerSetOf_of_mem_history MysticetiProperties.causal hg hk hL hb
 
 /-- **CQ3 (ledger coverage, cumulative).** For a verdict assignment `g`
 of a view with a committed slot `k < n` whose leader sits at round `r`:
@@ -132,12 +137,9 @@ theorem ledger_coverage {V : View Validator BlockId Payload U}
     ∃ S : Finset Validator, S ⊆ (Correct : Finset Validator) ∧
       (Correct : Finset Validator).card - F.f ≤ S.card ∧
       ∀ v ∈ S, ∃ i ∈ ledgerSet U g n,
-        (U.block i).creator = v ∧ (U.block i).round = δ := by
-  refine ⟨coveredAt U L δ, coveredAt_subset_correct,
-    card_coveredAt_ge_of_decided hdec hδ, ?_⟩
-  intro v hv
-  obtain ⟨-, i, hi, hic, hir⟩ := mem_coveredAt.mp hv
-  exact ⟨i, mem_ledgerSet_of_mem_history hg hk (mem_ids_of_decided hdec) hi, hic, hir⟩
+        (U.block i).creator = v ∧ (U.block i).round = δ :=
+  Arcs.ledger_coverage MysticetiProperties.causal MysticetiProperties.quorate
+    MysticetiProperties.commitsCandidate hdec hg hk hδ
 
 end Decided
 

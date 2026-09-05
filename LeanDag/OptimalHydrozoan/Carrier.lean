@@ -8,6 +8,7 @@ import LeanDag.Properties.Commit
 import LeanDag.Properties.Agree
 import LeanDag.Properties.Candidate
 import LeanDag.Properties.Optional.Direct
+import LeanDag.Properties.Optional.Quorate
 
 /-!
 # Optimal-Hydrozoan as a carrier, and the three properties its rules give
@@ -65,6 +66,20 @@ theorem causal : Causal (optimalRule (Replica := Replica) (BlockId := BlockId)) 
   fun U =>
     { complete := fun i hi j hj => U.val.complete i hi j hj
       refs_round := fun i hi j hj => (U.val.valid i hi).predecessor j hj }
+
+/-- **Optimal-Hydrozoan's universes are quorate.** The underlying
+universe is Hydrozoan's, so the clause and the fault model are
+Hydrozoan's. -/
+theorem quorate : Quorate (optimalRule (Replica := Replica) (BlockId := BlockId))
+    (LeanDag.Hydrozoan.hzReliability Replica) := by
+  intro U b hb hr
+  have h := (U.val.valid b hb).quorum hr
+  have hq : LeanDag.Hydrozoan.q Replica
+      = Fintype.card Replica - (LeanDag.Hydrozoan.hzReliability Replica).slack := by
+    show LeanDag.Hydrozoan.q Replica = Fintype.card Replica - (_ + _)
+    unfold LeanDag.Hydrozoan.q; omega
+  rw [hq] at h
+  exact h
 
 /-- **Two views decide alike.** OH5 under the property's name, and
 unconditional because the exclusion invariant is a field of the

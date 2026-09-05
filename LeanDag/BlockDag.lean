@@ -1,4 +1,5 @@
 import LeanDag.Block
+import LeanDag.Density
 
 /-!
 # The block universe
@@ -19,6 +20,27 @@ structure being defined.
 -/
 
 namespace LeanDag
+
+/-- **The core's fault model, as a counting parameter.** `Correct` is
+`byzantineᶜ`, so the slack is exactly `|byzantine| ≤ f`, and `n = 3f + 1`
+makes it a minority. -/
+def coreReliability (Validator : Type*) [Fintype Validator] [DecidableEq Validator]
+    [F : Faults Validator] : Reliability Validator where
+  correct := (Correct : Finset Validator)
+  slack := F.f
+  covers := by
+    have : (Correct : Finset Validator)ᶜ = F.byzantine := by
+      simp [Correct]
+    rw [this]; exact F.card_byzantine
+  minority := by have := F.card_validators; omega
+
+@[simp] theorem coreReliability_correct (Validator : Type*) [Fintype Validator]
+    [DecidableEq Validator] [Faults Validator] :
+    (coreReliability Validator).correct = (Correct : Finset Validator) := rfl
+
+@[simp] theorem coreReliability_slack (Validator : Type*) [Fintype Validator]
+    [DecidableEq Validator] [F : Faults Validator] :
+    (coreReliability Validator).slack = F.f := rfl
 
 /-- Every block that exists, together with the well-formedness conditions
 the protocol guarantees. -/
@@ -95,6 +117,12 @@ This is the hypothesis T0' consumes. -/
 theorem creators_quorum {i : BlockId} (hi : i ∈ U.ids) (hround : 0 < (U.block i).round) :
     quorumCard Validator ≤ (creatorsOf U.block (U.block i).refs).card :=
   (U.valid i hi).quorum hround
+
+/-- **The core's universes are quorate**: validity's counting clause,
+read off. -/
+theorem quorateOn (U : BlockUniverse Validator BlockId Payload) :
+    QuorateOn U.block U.ids (coreReliability Validator) :=
+  fun b hb hr => U.creators_quorum hb hr
 
 /-- A non-genesis block references at least one block. -/
 theorem refs_nonempty {i : BlockId} (hi : i ∈ U.ids) (hround : 0 < (U.block i).round) :

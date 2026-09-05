@@ -2,6 +2,7 @@ import LeanDag.Odontoceti.Decision
 import LeanDag.Properties.Agree
 import LeanDag.Properties.Candidate
 import LeanDag.Properties.Optional.Direct
+import LeanDag.Properties.Optional.Quorate
 
 /-!
 # Odontoceti as a carrier, and the three properties its own rules give
@@ -52,6 +53,12 @@ theorem causal : Causal (odontocetiRule (Validator := Validator) (BlockId := Blo
   fun U =>
     { complete := fun i hi j hj => U.complete i hi j hj
       refs_round := fun i hi j hj => U.round_of_mem_refs hi hj }
+
+/-- **Odontoceti's universes are quorate**: the core's `BlockUniverse`,
+so the core's clause, at the five-fault committee. -/
+theorem quorate : Quorate (odontocetiRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)) (coreReliability Validator) :=
+  fun U => U.quorateOn
 
 /-- **Two views decide alike.** O5 under the property's name. -/
 theorem agree : Agree (odontocetiRule (Validator := Validator) (BlockId := BlockId)

@@ -2,6 +2,7 @@ import LeanDag.Nemo.Decision
 import LeanDag.Properties.Agree
 import LeanDag.Properties.Candidate
 import LeanDag.Properties.Optional.Direct
+import LeanDag.Properties.Optional.Quorate
 
 /-!
 # Nemo as a carrier, and the three properties its own rules give
@@ -58,6 +59,31 @@ def nemoRule : DagRule Validator BlockId Payload where
 @[simp] theorem nemoRule_viewIds {U : Nemo.Universe Validator BlockId Payload}
     (V : Nemo.View Validator BlockId Payload U) :
     (nemoRule (Payload := Payload)).viewIds V = V.ids := rfl
+
+/-- **Nemo's fault model, as a counting parameter.** Nemo is crash-only
+and nobody equivocates, so the reliable set is everyone and the slack is
+what a majority may miss. A committee of at least one makes it a
+minority, which is all the count needs. -/
+def nemoReliability (Validator : Type) [Fintype Validator] [DecidableEq Validator]
+    (hn : 0 < Fintype.card Validator) : LeanDag.Reliability Validator where
+  correct := Finset.univ
+  slack := Fintype.card Validator - Nemo.majority Validator
+  covers := by simp
+  minority := by unfold Nemo.majority; omega
+
+/-- **Nemo's universes are quorate**: `ValidWrt.quorum`, which asks for a
+majority of distinct authors, read at the carrier. -/
+theorem quorate (hn : 0 < Fintype.card Validator) :
+    Quorate (nemoRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+      (nemoReliability Validator hn) := by
+  intro U b hb hr
+  have h := (U.valid b hb).quorum hr
+  have hq : Nemo.majority Validator
+      = Fintype.card Validator - (nemoReliability Validator hn).slack := by
+    show Nemo.majority Validator = Fintype.card Validator - (Fintype.card Validator - _)
+    unfold Nemo.majority; omega
+  rw [hq] at h
+  exact h
 
 /-- Nemo's universes are block DAGs. Completeness is a field; the round
 condition comes from validity, where the core reads it off directly. -/

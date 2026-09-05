@@ -23,6 +23,13 @@ A scoping note, recorded in the design document: the schedule side is
 coverage, so the theorems here take full `Synchronised U R`. A
 `T`-relative variant would need a `T`-relative backbone lemma — possible
 but not attempted in this arc.
+
+**Both results are instances.** `Properties/Arcs/Quality.lean` states
+them for any rule with `Causal`, `Quorate`, `CommitsCandidate` and
+`LeaderCommits`; what is left here is the bridge from the core's
+populated-and-synchronous hypotheses to its own `coreLive`, which is the
+same shape `LiveRule.GoodGives` has for Barnacle and mentions no
+verdict.
 -/
 
 namespace LeanDag
@@ -45,8 +52,9 @@ theorem mem_history_of_decided_commit (hs : Synchronised U R)
     (hR : R ≤ (U.block b).round)
     (hlt : (U.block b).round < (U.block L).round) :
     b ∈ history U L :=
-  mem_history_of_correct hs ((U.block L).round - (U.block b).round - 1)
-    L (mem_ids_of_decided hdec) b hb hLc hbc hR (by omega)
+  Properties.Arcs.mem_history_of_decided_commit
+    (R := MysticetiProperties.mysticetiRule) MysticetiProperties.causal
+    MysticetiProperties.quorate MysticetiProperties.commitsCandidate hs hdec hLc hb hbc hR hlt
 
 /-- **A slot whose commit carries a whole round into the ledger.**
 
@@ -83,29 +91,21 @@ theorem committed_of_correct_block (hT : T ⊆ (Correct : Finset Validator))
     (fair : FairScheduleOn T) (R m : ℕ) (hRm : R ≤ m) :
     ∃ k', m < S.slotRound k' ∧ R ≤ S.slotRound k' ∧
       IncludesAt (Validator := Validator) BlockId Payload R m k' := by
-  obtain ⟨k₀, hk₀⟩ := S.unbounded R
-  obtain ⟨k', hk', hlead⟩ := fair (max (slotAt Validator (m + 1)) k₀)
-  have hRk' : R ≤ S.slotRound k' :=
-    le_trans hk₀ (S.mono (le_trans (le_max_right _ _) hk'))
-  have hm : m < S.slotRound k' := by
-    have h1 := le_slotRound_slotAt (Validator := Validator) (m + 1)
-    have h2 := S.mono (le_trans (le_max_left (slotAt Validator (m + 1)) k₀) hk')
-    omega
+  obtain ⟨k', hm, hRk', hbody⟩ :=
+    Properties.Arcs.committed_of_correct_block
+      (R := MysticetiProperties.mysticetiRule (Validator := Validator) (BlockId := BlockId)
+        (Payload := Payload))
+      MysticetiProperties.causal MysticetiProperties.quorate
+      MysticetiProperties.commitsCandidate MysticetiProperties.leaderCommits S hT fair R m hRm
   refine ⟨k', hm, hRk', ?_⟩
   intro U N hpop hs hN
-  obtain ⟨L, hLb, hdec⟩ :=
-    MysticetiProperties.decided_of_leader_of_populated_of_properties hcard (hs.mono hT) hRk'
-      (fun r _ hr => PopulatedOn.mono hT (hpop r hr)) (by omega) hlead
-  refine ⟨L, hdec, ?_⟩
-  intro b hb hbc hbr
-  have hLc : (U.block L).creator ∈ (Correct : Finset Validator) := by
-    rw [hLb.2.2]
-    exact hT hlead
-  have hmem : b ∈ history U L :=
-    mem_history_of_decided_commit hs hdec hLc hb hbc (by omega)
-      (by rw [hLb.2.1]; omega)
-  exact ⟨hmem, fun g n hg hn =>
-    mem_ledgerSet_of_mem_history hg hn (mem_ids_of_decided hdec) hmem⟩
+  have hwin : ∀ j, j < k' + 1 → S.slotRound j + 2 ≤ N := by
+    intro j hj
+    have := S.mono (Nat.lt_succ_iff.mp hj)
+    omega
+  exact hbody U (View.full U)
+    ⟨hcard, R, N, hs.mono hT, hRk',
+      (fun r _ hr => PopulatedOn.mono hT (hpop r hr)), View.coversUpto_full U N, hwin⟩ hs
 
 /-- **CQ6 at `T := Correct`.** -/
 theorem committed_of_correct_block_correct

@@ -1,3 +1,4 @@
+import LeanDag.DoS.Density
 import LeanDag.DoS.Exposure
 import LeanDag.Liveness
 import LeanDag.CommonCore
@@ -172,12 +173,8 @@ theorem exists_correct_mem_refs {b : BlockId} (hb : b ∈ U.ids)
     (hround : 0 < (U.block b).round) :
     ∃ i ∈ (U.block b).refs, i ∈ U.ids ∧
       (U.block i).creator ∈ (Correct : Finset Validator) ∧
-      (U.block i).round + 1 = (U.block b).round := by
-  obtain ⟨v, hv, hvc⟩ := exists_correct_of_card
-    (S := creatorsOf U.block (U.block b).refs)
-    (le_trans (by have := F.card_validators; omega) (U.creators_quorum hb hround))
-  obtain ⟨i, hi, rfl⟩ := mem_creatorsOf.mp hv
-  exact ⟨i, hi, U.complete b hb i hi, hvc, U.round_of_mem_refs hb hi⟩
+      (U.block i).round + 1 = (U.block b).round :=
+  exists_correct_memRefs U.causal U.quorateOn hb hround
 
 /-- **D17 — exclusion is total, and permanent.** If every correct block of
 round `n+1` is exposed to `X`, then so is every block from round `n+2` on,
@@ -423,20 +420,8 @@ theorem mem_history_of_correct {R : ℕ} (hs : SynchronisedOn U (Correct : Finse
       (U.block c).creator ∈ (Correct : Finset Validator) →
       (U.block a).creator ∈ (Correct : Finset Validator) →
       R ≤ (U.block a).round → (U.block a).round + 1 + d = (U.block c).round →
-      a ∈ history U c := by
-  intro d
-  induction d with
-  | zero =>
-      intro c hc a ha hcc hac hR hround
-      exact mem_history_of_mem_refs hc
-        (hs (U.block a).round hR c hc (by omega) hcc a ha rfl hac)
-  | succ d ih =>
-      intro c hc a ha hcc hac hR hround
-      -- step down one round through a correct reference, which always exists
-      obtain ⟨w, hw, hw_ids, hw_correct, hw_round⟩ :=
-        exists_correct_mem_refs hc (by omega)
-      exact history_subset_of_reaches hc (Reaches.single hw)
-        (ih w hw_ids a ha hw_correct hac hR (by omega))
+      a ∈ history U c :=
+  mem_historyFrom_of_correct U.causal U.quorateOn hs
 
 /-! ## Two delivery policies, and what they do and do not yield
 

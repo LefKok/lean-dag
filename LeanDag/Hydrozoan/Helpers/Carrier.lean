@@ -1,6 +1,7 @@
 import LeanDag.Hydrozoan.Model.Decided
 import LeanDag.Properties.Extends
 import LeanDag.Properties.Derived.Persist
+import LeanDag.Properties.Optional.Quorate
 
 /-!
 # Hydrozoan as a `Properties.DagRule`
@@ -28,7 +29,7 @@ namespace Hydrozoan
 
 variable {Replica : Type} [Fintype Replica] [DecidableEq Replica]
 variable {BlockId : Type} [DecidableEq BlockId] [LinearOrder BlockId]
-variable [LeanDag.Hydrozoan.Faults Replica]
+variable [F : LeanDag.Hydrozoan.Faults Replica]
 
 /-- A Hydrozoan block in the shared vocabulary: its author is the
 creator, its parents the references, and it carries no payload. -/
@@ -65,6 +66,33 @@ def rule : Properties.DagRule Replica BlockId Unit where
   viewComplete := fun V => V.complete
   Decided := fun S _ V k v =>
     @LeanDag.Hydrozoan.Decided _ _ _ _ _ _ _ (ofCoreSlots S) _ V k v
+
+/-- **Hydrozoan's fault model, as a counting parameter.** The slack is
+`f + c` — Byzantine and crashed together are what `Correct` excludes —
+and `n ≥ 3f + 2c + k + 1` makes it a minority. -/
+def hzReliability (Replica : Type) [Fintype Replica] [DecidableEq Replica]
+    [F : LeanDag.Hydrozoan.Faults Replica] : LeanDag.Reliability Replica where
+  correct := (LeanDag.Hydrozoan.Correct : Finset Replica)
+  slack := F.f + F.c
+  covers := by
+    have hc : (LeanDag.Hydrozoan.Correct : Finset Replica)ᶜ = F.byzantine ∪ F.crashed := by
+      simp [LeanDag.Hydrozoan.Correct]
+    rw [hc]
+    exact le_trans (Finset.card_union_le _ _)
+      (Nat.add_le_add F.card_byzantine F.card_crashed)
+  minority := by have := F.card_replicas; omega
+
+/-- **Hydrozoan's universes are quorate**: `ValidWrt.quorum`, which asks
+for `q = n − f − c` distinct authors, read at the carrier. -/
+theorem quorate : Properties.Quorate (rule (Replica := Replica) (BlockId := BlockId))
+    (hzReliability Replica) := by
+  intro U b hb hr
+  have hq : LeanDag.Hydrozoan.q Replica = Fintype.card Replica - (F.f + F.c) := by
+    unfold LeanDag.Hydrozoan.q; omega
+  show Fintype.card Replica - (F.f + F.c) ≤
+    (LeanDag.Hydrozoan.authors U.block (U.block b)).card
+  rw [← hq]
+  exact (U.valid b hb).quorum hr
 
 @[simp] theorem rule_ids (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) :
     (rule (BlockId := BlockId)).ids U = U.ids := rfl

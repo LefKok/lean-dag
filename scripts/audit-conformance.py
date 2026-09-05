@@ -51,12 +51,13 @@ RULES = [
 ]
 
 # The obligations, in the order 11.1 lists them.
-# The six every rule owes, then the two in `Properties/Optional/`, owed
+# The six every rule owes, then the three in `Properties/Optional/`, owed
 # only when a mechanism asks: `CommitsDirect` by a rule whose direct
 # predicate a window count reads, `SkipsUnsupported` by one that skips
-# without waiting for an anchor.
+# without waiting for an anchor, and `Quorate` by chain quality.
 OBLIGATIONS = ["Causal", "Banded", "Agree", "CommitsCandidate",
-               "LeaderCommits", "Indirect", "CommitsDirect", "SkipsUnsupported"]
+               "LeaderCommits", "Indirect", "CommitsDirect", "SkipsUnsupported",
+               "Quorate"]
 REQUIRED = 6
 DERIVED = ["Persist", "LocalTruncate", "Descends"]
 # What each derived property follows from. `Descends` used to be an
@@ -126,7 +127,7 @@ def main():
              "CommitsCandidate": "cand", "LeaderCommits": "lead",
              "Indirect": "indr", "CommitsDirect": "drct*",
              "Descends": "desc",
-             "SkipsUnsupported": "skip*",
+             "SkipsUnsupported": "skip*", "Quorate": "quor*",
              "Persist": "pers", "LocalTruncate": "trnc",
              "|": "|"}
     width = max(len(name) for name, _, _ in RULES) + 1
@@ -165,7 +166,7 @@ def main():
         print("  and `Banded` is the induction each rule owes. Those four are per-rule.")
     if without:
         print(f"{len(without)} with no carrier: " + ", ".join(without) + ".")
-    print("* CommitsDirect and SkipsUnsupported are optional "
+    print("* CommitsDirect, SkipsUnsupported and Quorate are optional "
           "(`Properties/Optional/`): owed\n  only when a mechanism reads the "
           "rule's direct predicate, or the rule skips\n  without waiting for an "
           "anchor.")

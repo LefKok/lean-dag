@@ -2614,7 +2614,8 @@ mention time.
 
 ## 7. Chain quality: coverage and inclusion
 
-*(companion document: `chain-quality.md`; modules `LeanDag/Quality/`)*
+*(companion document: `chain-quality.md`; modules
+`LeanDag/Properties/Arcs/Quality.lean` and `LeanDag/Quality/`)*
 
 Every protocol of this family claims that leader rotation prevents
 censorship; this section proves what the ledger actually contains. A
@@ -2632,10 +2633,21 @@ per round, so the conventional fraction is adversary-deflatable, while
 the author count is what the quorum structure bounds.
 
 ```lean
-def coveredAt (U) (b : BlockId) (δ : ℕ) : Finset Validator :=
-  (Correct : Finset Validator).filter fun v =>
-    ∃ i ∈ history U b, (U.block i).creator = v ∧ (U.block i).round = δ
+def coveredAt (R : DagRule Validator BlockId Payload) (rel : Reliability Validator)
+    (U : R.Universe) (b : BlockId) (δ : ℕ) : Finset Validator :=
+  rel.correct.filter fun v =>
+    ∃ i ∈ historyFrom (R.block U) b,
+      (R.block U i).creator = v ∧ (R.block U i).round = δ
 ```
+
+**The arc is stated for any rule, and the core's is an instance.** It
+was written at the core and its one rule-dependent step became
+`Properties.CommitsCandidate`; what still tied it to one protocol was
+density's dependence on block validity, and `Properties.Quorate` is that
+clause at the carrier. `rel` is the fault model as a counting parameter
+— a reliable set, a slack bounding everything outside it, and that slack
+being a minority — because six fault classes are in play across the
+development and density counts against whichever one a rule carries.
 
 **Coverage (CQ1–CQ3), asynchronous.** Density (D25, §8) forces every
 layer of every valid cone to carry all but at most `f` correct
@@ -10882,6 +10894,24 @@ The predecessor condition is stated additively rather than as `(blk i).round = b
 
 The quorum is stated on the *creator set*, not on `refs.card`. That is the form every downstream proof wants, and it is the faithful reading of "2f+1 blocks from the previous round" — the protocol means 2f+1 *validators*.
 
+#### `coreReliability`
+
+*def, `BlockDag.lean`*
+
+```lean
+def coreReliability (Validator : Type*) [Fintype Validator] [DecidableEq Validator]
+    [F : Faults Validator] : Reliability Validator where
+  correct := (Correct : Finset Validator)
+  slack := F.f
+  covers := by
+    have : (Correct : Finset Validator)ᶜ = F.byzantine := by
+      simp [Correct]
+    rw [this]; exact F.card_byzantine
+  minority := by have := F.card_validators; omega
+```
+
+**The core's fault model, as a counting parameter.** `Correct` is `byzantineᶜ`, so the slack is exactly `|byzantine| ≤ f`, and `n = 3f + 1` makes it a minority.
+
 #### `BlockUniverse`
 
 *structure, `BlockDag.lean`*
@@ -12009,8 +12039,8 @@ def toDelivery : Delivery U where
 ```lean
 def coveredAt (U : BlockUniverse Validator BlockId Payload)
     (b : BlockId) (δ : ℕ) : Finset Validator :=
-  (Correct : Finset Validator).filter fun v =>
-    ∃ i ∈ history U b, (U.block i).creator = v ∧ (U.block i).round = δ
+  Arcs.coveredAt (MysticetiProperties.mysticetiRule (Payload := Payload))
+    (coreReliability Validator) U b δ
 ```
 
 The correct validators whose round-`δ` block a cone carries — the complement, within `Correct`, of `missingAt`.
@@ -12112,8 +12142,7 @@ The authors a block's history has caught.
 ```lean
 def missingAt (U : BlockUniverse Validator BlockId Payload) (b : BlockId) (δ : ℕ) :
     Finset Validator :=
-  (Correct : Finset Validator).filter fun v =>
-    ∀ i ∈ history U b, ¬ ((U.block i).creator = v ∧ (U.block i).round = δ)
+  missingAtFrom U.block (coreReliability Validator) b δ
 ```
 
 The correct validators with no block at round `δ` in `b`'s history.
@@ -23521,6 +23550,54 @@ def Statement : Prop :=
 
 The delivered order of the Black Marlin commit rule where the rotation names reliable validators, over every fault configuration, rotation and block universe the model admits.
 
+#### `Reliability`
+
+*structure, `Density.lean`*
+
+```lean
+structure Reliability (Validator : Type*) [Fintype Validator] [DecidableEq Validator] where
+  /-- The validators the count is about. -/
+  correct : Finset Validator
+  /-- A bound on everything outside them. -/
+  slack : ℕ
+  /-- And it is a bound. -/
+  covers : correctᶜ.card ≤ slack
+  /-- The slack is a minority of the committee. -/
+  minority : 2 * slack < Fintype.card Validator
+```
+
+**A reliable set, and the slack around it.** What a counting argument needs of a fault model, with no commitment to which model: the validators worth counting, a bound on how many are not, and that bound being a minority.
+
+`minority` is the standing committee condition read at the right strength — `n = 3f + 1` gives it, and so does every other committee bound here. It is what lets a quorum of references always contain a reliable one, which is the step density's induction takes.
+
+#### `QuorateOn`
+
+*def, `Density.lean`*
+
+```lean
+def QuorateOn (blk : BlockId → Block Validator BlockId Payload)
+    (ids : Finset BlockId) (rel : Reliability Validator) : Prop :=
+  ∀ b ∈ ids, 0 < (blk b).round →
+    Fintype.card Validator - rel.slack ≤ (creatorsOf blk (blk b).refs).card
+```
+
+**A quorum of authors below every block.** The counting half of block validity, and the only half density reads: a non-genesis block references blocks by at least `n − f` distinct authors.
+
+Stated over the references rather than over a `ValidWrt`-style record so that a rule whose validity is packaged differently — FinWhale's `ValidHere`, Hydrozoan's `ValidWrt` — supplies it by projection.
+
+#### `missingAtFrom`
+
+*def, `Density.lean`*
+
+```lean
+def missingAtFrom (blk : BlockId → Block Validator BlockId Payload)
+    (rel : Reliability Validator) (b : BlockId) (δ : ℕ) : Finset Validator :=
+  rel.correct.filter fun v =>
+    ∀ i ∈ historyFrom blk b, ¬ ((blk i).creator = v ∧ (blk i).round = δ)
+```
+
+The correct authors with no block at round `δ` in `b`'s history.
+
 #### `View.ofViewUpto`
 
 *def, `DoS.Delivers.lean`*
@@ -24211,6 +24288,26 @@ def rule : Properties.DagRule Replica BlockId Unit where
 
 **Hydrozoan as a carrier.**
 
+#### `hzReliability`
+
+*def, `Hydrozoan.Helpers.Carrier.lean`*
+
+```lean
+def hzReliability (Replica : Type) [Fintype Replica] [DecidableEq Replica]
+    [F : LeanDag.Hydrozoan.Faults Replica] : LeanDag.Reliability Replica where
+  correct := (LeanDag.Hydrozoan.Correct : Finset Replica)
+  slack := F.f + F.c
+  covers := by
+    have hc : (LeanDag.Hydrozoan.Correct : Finset Replica)ᶜ = F.byzantine ∪ F.crashed := by
+      simp [LeanDag.Hydrozoan.Correct]
+    rw [hc]
+    exact le_trans (Finset.card_union_le _ _)
+      (Nat.add_le_add F.card_byzantine F.card_crashed)
+  minority := by have := F.card_replicas; omega
+```
+
+**Hydrozoan's fault model, as a counting parameter.** The slack is `f + c` — Byzantine and crashed together are what `Correct` excludes — and `n ≥ 3f + 2c + k + 1` makes it a minority.
+
 #### `hzLive`
 
 *def, `Hydrozoan.Helpers.Commit.lean`*
@@ -24776,6 +24873,21 @@ def nemoRule : DagRule Validator BlockId Payload where
 
 **Nemo as a carrier**, at its own namespace rather than through `Barnacle.nemoRule`: a protocol's conformance should not route through a mechanism.
 
+#### `nemoReliability`
+
+*def, `Nemo.Carrier.lean`*
+
+```lean
+def nemoReliability (Validator : Type) [Fintype Validator] [DecidableEq Validator]
+    (hn : 0 < Fintype.card Validator) : LeanDag.Reliability Validator where
+  correct := Finset.univ
+  slack := Fintype.card Validator - Nemo.majority Validator
+  covers := by simp
+  minority := by unfold Nemo.majority; omega
+```
+
+**Nemo's fault model, as a counting parameter.** Nemo is crash-only and nobody equivocates, so the reliable set is everyone and the slack is what a majority may miss. A committee of at least one makes it a minority, which is all the count needs.
+
 #### `nemoLive`
 
 *def, `NemoProperties.lean`*
@@ -24890,6 +25002,31 @@ def ViewAgreeAbove (R : DagRule Validator BlockId Payload) {U U' : R.Universe}
 **Two views agree above a round.** Read at the source universe's rounds, which `RebasedAbove` makes the target's shifted rounds wherever the question arises.
 
 A truncation asks exactly this of its views, so there is one definition where there were two: `ViewTruncates` was the same proposition under another name.
+
+#### `coveredAt`
+
+*def, `Properties.Arcs.Quality.lean`*
+
+```lean
+def coveredAt (R : DagRule Validator BlockId Payload) (rel : Reliability Validator)
+    (U : R.Universe) (b : BlockId) (δ : ℕ) : Finset Validator :=
+  rel.correct.filter fun v =>
+    ∃ i ∈ historyFrom (R.block U) b, (R.block U i).creator = v ∧ (R.block U i).round = δ
+```
+
+The reliable validators whose round-`δ` block a cone carries — the complement, within the reliable set, of `missingAtFrom`.
+
+#### `ledgerSetOf`
+
+*def, `Properties.Arcs.Quality.lean`*
+
+```lean
+def ledgerSetOf (R : DagRule Validator BlockId Payload) (U : R.Universe)
+    (g : ℕ → Option BlockId) (n : ℕ) : Set BlockId :=
+  {b | ∃ k, k < n ∧ ∃ L, g k = some L ∧ ReachesFrom (R.block U) L b}
+```
+
+**The ledger a verdict assignment names**: everything in the causal history of a committed leader of a slot below `n`. The core's `ledgerSet` at the carrier.
 
 #### `AgreeBand`
 
@@ -25235,6 +25372,19 @@ def CommitsDirect (R : DagRule Validator BlockId Payload)
 
 **A direct commit is a verdict.** The converse of `CommitsCandidate`, parameterised by the rule's own direct-commit predicate — what counts as *direct* is the rule's business and not the carrier's, which is why `Direct` is an argument rather than a field.
 
+#### `Quorate`
+
+*def, `Properties.Optional.Quorate.lean`*
+
+```lean
+def Quorate (R : DagRule Validator BlockId Payload) (rel : Reliability Validator) : Prop :=
+  ∀ U : R.Universe, QuorateOn (R.block U) (R.ids U) rel
+```
+
+**A rule's universes are quorate.** Every non-genesis block references blocks by at least `n − slack` distinct authors — the counting clause of validity, which is what density counts against.
+
+The fault model comes in as a `Reliability`: which validators the count is about, how many may be outside them, and that those are a minority. Six fault classes are in play across the development and each supplies one in a line, which is why neither this property nor `LeanDag.Density` names any of them.
+
 #### `Unsupported`
 
 *def, `Properties.Optional.Skip.lean`*
@@ -25420,7 +25570,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 1028 theorems that either another module of the
+The 1050 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -25649,6 +25799,17 @@ theorem creators_quorum {i : BlockId} (hi : i ∈ U.ids) (hround : 0 < (U.block 
 ```
 
 References of a non-genesis block carry a quorum of distinct authors. This is the hypothesis T0' consumes.
+
+#### `quorateOn`
+
+*theorem, `BlockDag.lean`*
+
+```lean
+theorem quorateOn (U : BlockUniverse Validator BlockId Payload) :
+    QuorateOn U.block U.ids (coreReliability Validator)
+```
+
+**The core's universes are quorate**: validity's counting clause, read off.
 
 #### `refs_nonempty`
 
@@ -27679,7 +27840,7 @@ theorem mem_ids_of_decided {V : View Validator BlockId Payload U}
     {k : ℕ} (h : Decided U V k (some L)) : L ∈ U.ids
 ```
 
-**The arc's one rule-dependent step**: a committed block is a block. `Properties.CommitsCandidate` at the core, which is where the rest of this arc and `Quality/{Inclusion,Capstone}.lean` read it from.
+**The arc's one rule-dependent step**: a committed block is a block. `Properties.CommitsCandidate` at the core.
 
 #### `card_coveredAt_ge_of_decided`
 
@@ -27919,18 +28080,6 @@ theorem not_exposedIn_self_creator (hdos : DoSValid U) {b : BlockId} (hb : b ∈
 **D21 (no self-laundering).** Under the DoS condition no valid block is exposed to its own author. A block cites its self-parent, and `DoSValid` forbids citing an exposed author — so once an author's equivocation is visible in some history, that author can never build on that history again.
 
 This is the indispensable half of D20: the fresh "carrier" block that adopts an equivocation branch while carrying none of its author's past — the mechanism of every super-linear history family — cannot exist.
-
-#### `mem_missingAt`
-
-*theorem, `DoS.Density.lean`*
-
-```lean
-theorem mem_missingAt {b : BlockId} {δ : ℕ} {v : Validator} :
-    v ∈ missingAt U b δ ↔ v ∈ (Correct : Finset Validator) ∧
-      ∀ i ∈ history U b, ¬ ((U.block i).creator = v ∧ (U.block i).round = δ)
-```
-
-Membership in `missingAt`, unfolded: a correct validator is missing at depth `δ` when the history contains none of its blocks there.
 
 #### `card_missingAt_le`
 
@@ -36348,6 +36497,72 @@ theorem holds : Statement
 theorem holds : Statement
 ```
 
+#### `exists_correct_memRefs`
+
+*theorem, `Density.lean`*
+
+```lean
+theorem exists_correct_memRefs (C : CausalStructure blk ids) (hq : QuorateOn blk ids rel)
+    {b : BlockId} (hb : b ∈ ids) (hround : 0 < (blk b).round) :
+    ∃ i ∈ (blk b).refs, i ∈ ids ∧
+      (blk i).creator ∈ rel.correct ∧
+      (blk i).round + 1 = (blk b).round
+```
+
+**A correct author one round down.** A non-genesis block references `n − f` distinct authors and at most `f` of them are Byzantine, so one of its references is a correct block of the round below.
+
+#### `mem_missingAtFrom`
+
+*theorem, `Density.lean`*
+
+```lean
+theorem mem_missingAtFrom {b : BlockId} {δ : ℕ} {v : Validator} :
+    v ∈ missingAtFrom blk rel b δ ↔ v ∈ rel.correct ∧
+      ∀ i ∈ historyFrom blk b, ¬ ((blk i).creator = v ∧ (blk i).round = δ)
+```
+
+#### `missingAtFrom_subset_of_mem_refs`
+
+*theorem, `Density.lean`*
+
+```lean
+theorem missingAtFrom_subset_of_mem_refs (C : CausalStructure blk ids)
+    {b p : BlockId} (hb : b ∈ ids) (hp : p ∈ (blk b).refs) {δ : ℕ} :
+    missingAtFrom blk rel b δ ⊆ missingAtFrom blk rel p δ
+```
+
+Missing is monotone through references: what `b` lacks, its references lack.
+
+#### `card_missingAtFrom_le`
+
+*theorem, `Density.lean`*
+
+```lean
+theorem card_missingAtFrom_le (C : CausalStructure blk ids) (hq : QuorateOn blk ids rel)
+    {b : BlockId} (hb : b ∈ ids) {δ : ℕ} (hδ : δ < (blk b).round) :
+    (missingAtFrom blk rel b δ).card ≤ rel.slack
+```
+
+**D25 (density).** A block's history contains a block by all but at most `f` of the correct authors at every round strictly below it.
+
+#### `mem_historyFrom_of_correct`
+
+*theorem, `Density.lean`*
+
+```lean
+theorem mem_historyFrom_of_correct (C : CausalStructure blk ids) (hq : QuorateOn blk ids rel)
+    {R : ℕ} (hs : SynchronisedFrom blk ids rel.correct R) :
+    ∀ d : ℕ, ∀ c ∈ ids, ∀ a ∈ ids,
+      (blk c).creator ∈ rel.correct →
+      (blk a).creator ∈ rel.correct →
+      R ≤ (blk a).round → (blk a).round + 1 + d = (blk c).round →
+      a ∈ historyFrom blk c
+```
+
+**The backbone.** After `R`, correct histories contain the whole correct past: a correct block's history holds every correct block of every round from `R` up to its own.
+
+No population hypothesis: a block always has a correct reference one round down (`exists_correct_memRefs`), so the induction has a step whatever the DAG looks like.
+
 #### `chooseLeast_congr`
 
 *theorem, `FinWhale.Band.lean`*
@@ -36436,6 +36651,39 @@ theorem chooseLeast_band [LinearOrder BlockId] (hrk : S.round k + g = S'.round k
 ```
 
 **And so the tie-break is the same function.** It names the least block of the slot the anchor indirectly commits, and both the slot and the rule are settled by the band, so the two sides filter the same set and take the same minimum. This is what lets the reverse pass be compared across a band at all: `choose` is shared between validators by construction, and here it is shared between DAGs.
+
+#### `quorate`
+
+*theorem, `FinWhale.Carrier.lean`*
+
+```lean
+theorem quorate : Quorate (finWhaleRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)) (coreReliability Validator)
+```
+
+**FinWhale's DAGs are quorate**: `ValidHere.quorum`, which asks for `n − f` distinct authors, read at the carrier.
+
+#### `causal`
+
+*theorem, `FinWhale.Carrier.lean`*
+
+```lean
+theorem causal : Causal (finWhaleRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload))
+```
+
+FinWhale's DAGs are block DAGs.
+
+#### `commitsCandidate`
+
+*theorem, `FinWhale.Carrier.lean`*
+
+```lean
+theorem commitsCandidate : CommitsCandidate
+    (finWhaleRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+```
+
+**A commit names the slot's candidate.** The `slot` field of an assignment, read at the property's `IsCandidate` — which is where the schedule being pinned to the DAG earns its place.
 
 #### `agree`
 
@@ -36821,6 +37069,17 @@ theorem banded : Banded (rule (Replica := Replica) (BlockId := BlockId))
 ```
 
 **Hydrozoan reads a band.** The property stated at the core's schedule vocabulary, which `ofCoreSlots` carries into Hydrozoan's.
+
+#### `quorate`
+
+*theorem, `Hydrozoan.Helpers.Carrier.lean`*
+
+```lean
+theorem quorate : Properties.Quorate (rule (Replica := Replica) (BlockId := BlockId))
+    (hzReliability Replica)
+```
+
+**Hydrozoan's universes are quorate**: `ValidWrt.quorum`, which asks for `q = n − f − c` distinct authors, read at the carrier.
 
 #### `causal`
 
@@ -37809,6 +38068,17 @@ theorem causal : Causal (mysticetiRule (Validator := Validator) (BlockId := Bloc
 
 The core's universes are block DAGs.
 
+#### `quorate`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem quorate : Quorate (mysticetiRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)) (coreReliability Validator)
+```
+
+**The core's universes are quorate**, at the core's fault model: validity's counting clause read at the carrier. This is what chain quality reads (`Properties/Arcs/Quality.lean`), and it is one line because `ValidWrt` already says it.
+
 #### `band_mem`
 
 *theorem, `MysticetiProperties.lean`*
@@ -38491,6 +38761,175 @@ theorem synchronisedOn_chop {T : Finset Validator} {Rs R' : ℕ}
 
 **Synchrony survives the cut, from the rebase.** `Integration/Preservation.synchronisedOn_chop` proves this directly; it is `Sustains` applied, as votes and production already were.
 
+#### `mem_coveredAt`
+
+*theorem, `Properties.Arcs.Quality.lean`*
+
+```lean
+theorem mem_coveredAt {v : Validator} :
+    v ∈ coveredAt R rel U b δ ↔ v ∈ rel.correct ∧
+      ∃ i ∈ historyFrom (R.block U) b,
+        (R.block U i).creator = v ∧ (R.block U i).round = δ
+```
+
+#### `coveredAt_subset_correct`
+
+*theorem, `Properties.Arcs.Quality.lean`*
+
+```lean
+theorem coveredAt_subset_correct : coveredAt R rel U b δ ⊆ rel.correct
+```
+
+#### `coveredAt_eq_sdiff`
+
+*theorem, `Properties.Arcs.Quality.lean`*
+
+```lean
+theorem coveredAt_eq_sdiff :
+    coveredAt R rel U b δ = rel.correct \ missingAtFrom (R.block U) rel b δ
+```
+
+Covered and missing partition the reliable validators.
+
+#### `card_coveredAt_ge`
+
+*theorem, `Properties.Arcs.Quality.lean`*
+
+```lean
+theorem card_coveredAt_ge (hc : Causal R) (hq : Quorate R rel)
+    (hb : b ∈ R.ids U) (hδ : δ < (R.block U b).round) :
+    rel.correct.card - rel.slack ≤ (coveredAt R rel U b δ).card
+```
+
+**CQ1, the count.** A block's cone covers all but at most the slack of the reliable validators, at every round below it. Purely structural: density plus the partition.
+
+#### `card_coveredAt_ge_of_decided`
+
+*theorem, `Properties.Arcs.Quality.lean`*
+
+```lean
+theorem card_coveredAt_ge_of_decided (hc : Causal R) (hq : Quorate R rel)
+    (hcc : CommitsCandidate R) (h : R.Decided S V k (some L))
+    (hδ : δ < (R.block U L).round) :
+    rel.correct.card - rel.slack ≤ (coveredAt R rel U L δ).card
+```
+
+**CQ1.** A committed leader's flush covers all but the slack of the reliable validators at every round below it — any route, any view, no synchrony.
+
+#### `card_correct_le_two_mul_coveredAt_of_decided`
+
+*theorem, `Properties.Arcs.Quality.lean`*
+
+```lean
+theorem card_correct_le_two_mul_coveredAt_of_decided (hc : Causal R) (hq : Quorate R rel)
+    (hcc : CommitsCandidate R) (hhalf : 2 * rel.slack ≤ rel.correct.card)
+    (h : R.Decided S V k (some L)) (hδ : δ < (R.block U L).round) :
+    rel.correct.card ≤ 2 * (coveredAt R rel U L δ).card
+```
+
+**CQ2.**
+
+#### `mem_ledgerSetOf_of_mem_history`
+
+*theorem, `Properties.Arcs.Quality.lean`*
+
+```lean
+theorem mem_ledgerSetOf_of_mem_history (hc : Causal R) {g : ℕ → Option BlockId} {n : ℕ}
+    (hg : g k = some L) (hk : k < n) (hL : L ∈ R.ids U)
+    (hb : b ∈ historyFrom (R.block U) L) : b ∈ ledgerSetOf R U g n
+```
+
+A cone block of a committed slot is in the ledger.
+
+#### `ledger_coverage`
+
+*theorem, `Properties.Arcs.Quality.lean`*
+
+```lean
+theorem ledger_coverage (hc : Causal R) (hq : Quorate R rel) (hcc : CommitsCandidate R)
+    {g : ℕ → Option BlockId} {n : ℕ}
+    (hdec : R.Decided S V k (some L)) (hg : g k = some L) (hk : k < n)
+    (hδ : δ < (R.block U L).round) :
+    ∃ W : Finset Validator, W ⊆ rel.correct ∧
+      rel.correct.card - rel.slack ≤ W.card ∧
+      ∀ v ∈ W, ∃ i ∈ ledgerSetOf R U g n,
+        (R.block U i).creator = v ∧ (R.block U i).round = δ
+```
+
+**CQ3 (ledger coverage, cumulative).** For a verdict assignment `g` with a committed slot `k < n` whose leader sits at round `r`: for every `δ < r`, at least `|correct| − slack` reliable validators each have a round-`δ` block in the ledger. The set is exhibited, so no choice and no decidability of the ledger is needed.
+
+#### `mem_history_of_decided_commit`
+
+*theorem, `Properties.Arcs.Quality.lean`*
+
+```lean
+theorem mem_history_of_decided_commit (hc : Causal R) (hq : Quorate R rel)
+    (hcc : CommitsCandidate R) {R₀ : ℕ} (hs : SynchronisedOn R U rel.correct R₀)
+    (hdec : R.Decided S V k (some L))
+    (hLc : (R.block U L).creator ∈ rel.correct)
+    (hb : b ∈ R.ids U) (hbc : (R.block U b).creator ∈ rel.correct)
+    (hR : R₀ ≤ (R.block U b).round)
+    (hlt : (R.block U b).round < (R.block U L).round) :
+    b ∈ historyFrom (R.block U) L
+```
+
+**CQ5.** Post-`R₀`, every reliable block is in the cone of **every** committed leader block with a reliable author at a later round — any commit route, any view.
+
+#### `committed_of_correct_block`
+
+*theorem, `Properties.Arcs.Quality.lean`*
+
+```lean
+theorem committed_of_correct_block
+    {Live : Slots Validator → ∀ {U : R.Universe}, R.View U → Finset Validator →
+      ℕ → ℕ → Prop}
+    (hc : Causal R) (hq : Quorate R rel) (hcc : CommitsCandidate R)
+    (hlc : LeaderCommits R Live) (S : Slots Validator) {T : Finset Validator}
+    (hT : T ⊆ rel.correct) (fair : ∀ n, ∃ k, n ≤ k ∧ S.leader k ∈ T) (R₀ m : ℕ)
+    (hR₀m : R₀ ≤ m) :
+    ∃ k', m < S.slotRound k' ∧ R₀ ≤ S.slotRound k' ∧
+      ∀ (U : R.Universe) (V : R.View U), Live S V T k' (k' + 1) →
+        SynchronisedOn R U rel.correct R₀ →
+        ∃ L, R.Decided S V k' (some L) ∧
+          ∀ b ∈ R.ids U, (R.block U b).creator ∈ rel.correct →
+            (R.block U b).round = m →
+            b ∈ historyFrom (R.block U) L ∧
+              ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
+                b ∈ ledgerSetOf R U g n
+```
+
+**CQ6 (inclusion liveness).** Under a schedule that keeps returning to reliable leaders and post-`R₀` synchrony, for every round `m ≥ R₀` there is a slot — above `m`, reliably led — that any execution meeting the rule's liveness precondition commits, and whose flush contains **every** reliable round-`m` block; hence every such block is in the ledger of any verdict assignment covering that slot.
+
+Fairness is taken as a hypothesis rather than through `LeanDag.FairScheduleOn`, which lives in the core's liveness file: the property layer names no protocol, and the statement is one line.
+
+#### `chain_quality`
+
+*theorem, `Properties.Arcs.Quality.lean`*
+
+```lean
+theorem chain_quality
+    {Live : Slots Validator → ∀ {U : R.Universe}, R.View U → Finset Validator →
+      ℕ → ℕ → Prop}
+    (hc : Causal R) (hq : Quorate R rel) (hcc : CommitsCandidate R)
+    (hlc : LeaderCommits R Live) (hhalf : 2 * rel.slack ≤ rel.correct.card)
+    (S : Slots Validator) {T : Finset Validator} (hT : T ⊆ rel.correct)
+    (fair : ∀ n, ∃ k, n ≤ k ∧ S.leader k ∈ T) (R₀ m : ℕ) (hR₀m : R₀ ≤ m) :
+    (∀ (U : R.Universe) (V : R.View U) (k : ℕ) (L : BlockId) (δ : ℕ),
+        R.Decided S V k (some L) → δ < (R.block U L).round →
+        rel.correct.card ≤ 2 * (coveredAt R rel U L δ).card) ∧
+    ∃ k', m < S.slotRound k' ∧ R₀ ≤ S.slotRound k' ∧
+      ∀ (U : R.Universe) (V : R.View U), Live S V T k' (k' + 1) →
+        SynchronisedOn R U rel.correct R₀ →
+        ∃ L, R.Decided S V k' (some L) ∧
+          ∀ b ∈ R.ids U, (R.block U b).creator ∈ rel.correct →
+            (R.block U b).round = m →
+            b ∈ historyFrom (R.block U) L ∧
+              ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
+                b ∈ ledgerSetOf R U g n
+```
+
+**CQ7 (the capstone).** Chain quality in one statement, for any rule with a quorum law. Unconditionally: every commit's flush covers at least half the reliable validators at every round below it. Post-`R₀`, under a schedule that keeps returning to reliable leaders: every reliable block is in the flush of a slot the schedule fixes in advance.
+
 #### `decided_fill_of_persist`
 
 *theorem, `Properties.Arcs.SafeSkip.lean`*
@@ -38646,6 +39085,17 @@ theorem refs_band (h : AgreeBand R U U' lo hi g g') {b : BlockId}
 ```
 
 And, strictly above the floor, referencing what it referenced.
+
+#### `mem`
+
+*theorem, `Properties.Candidate.lean`*
+
+```lean
+theorem mem (h : CommitsCandidate R) (hd : R.Decided S V k (some L)) :
+    L ∈ R.ids U
+```
+
+The committed block is a block.
 
 #### `of_mem'`
 
@@ -38986,7 +39436,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 1030 lemmas used only within the file that proves
+The 1037 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -39005,6 +39455,13 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `card_creators` | Distinct creators means the creator map does not collapse the refs, so the creator set has exactly as many … |
 | `card_refs` | A non-genesis block references at least `2f+1` blocks. |
+
+### `BlockDag.lean` (2)
+
+| Lemma | Role |
+|:---|:---|
+| `coreReliability_correct` | — |
+| `coreReliability_slack` | — |
 
 ### `Causality.lean` (3)
 
@@ -39199,12 +39656,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `card_history_ge` | D24 (the floor). With self-parents, histories have a *minimum* size: a valid block at round `r` carries at … |
 | `exists_self_ancestor_aux` | — |
 
-### `DoS/Density.lean` (3)
+### `DoS/Density.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
-| `card_missingAt_le_aux` | — |
-| `card_missingAt_le_base` | The one-round case: the references themselves witness all but at most `f` of the correct validators of the … |
+| `mem_missingAt` | Membership in `missingAt`, unfolded: a correct validator is missing at depth `δ` when the history contains … |
 | `missingAt_subset_of_mem_refs` | Missing is monotone through references: what `b` lacks, its references lack. |
 
 ### `DoS/Counting.lean` (14)
@@ -40503,6 +40959,15 @@ subsection per module, in the layer order of Appendices B and C.
 | `goodGives` | A good DAG meets Optimal-Hydrozoan's precondition. `Good` and `optLive` name the same facts about the same … |
 | `roundRobinLive` | — |
 
+### `Density.lean` (4)
+
+| Lemma | Role |
+|:---|:---|
+| `card_correct` | The reliable set is what the slack leaves. |
+| `card_missingAtFrom_le_aux` | — |
+| `card_missingAtFrom_le_base` | The one-round case: the references themselves witness all but at most `f` of the correct authors of the … |
+| `exists_correct_of_card` | A set clearing the quorum threshold meets the reliable set. |
+
 ### `DoS/Delivers.lean` (4)
 
 | Lemma | Role |
@@ -40545,15 +41010,13 @@ subsection per module, in the layer order of Appendices B and C.
 | `spSkip_new` | And a candidate the band adds is skipped too. An old block two rounds above the slot carries a quorum of … |
 | `voters_subset` | Votes survive: an old voter is a voter. |
 
-### `FinWhale/Carrier.lean` (21)
+### `FinWhale/Carrier.lean` (19)
 
 | Lemma | Role |
 |:---|:---|
 | `agree` | Two views decide alike. Lemma 12 under the property's name: the exclusions come from the DAG, the … |
 | `assignment_passOf` | And it is an assignment. Well formed by `wellFormed_decOf`, committing only blocks of the slot by … |
 | `banded` | FinWhale is banded. The band runs from the slot's own round to two above the DAG's highest, and the … |
-| `causal` | FinWhale's DAGs are block DAGs. |
-| `commitsCandidate` | A commit names the slot's candidate. The `slot` field of an assignment, read at the property's … |
 | `commitsDirect` | And a direct commit is a verdict, at every schedule. `IsCandidate` places the block at the slot, … |
 | `decided_iff` | A verdict of this rule is the pass's verdict. One direction is the pass being an assignment; the other is … |
 | `decided_of_directCommit` | A direct commit in view is a verdict, at any schedule and with no side condition. |
@@ -40571,11 +41034,12 @@ subsection per module, in the layer order of Appendices B and C.
 | `verdictIs_optOf` | And reading it back is the verdict, wherever the slot is decided. |
 | `view_bounded` | A view is finite, so its blocks stop at a round. |
 
-### `Hybrid/Carrier.lean` (1)
+### `Hybrid/Carrier.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
 | `causal` | Hybrid's universes are block DAGs — the core's argument, the underlying universe type being the core's. |
+| `quorate` | Hybrid's universes are quorate, at the derived fault model: `f = fb + fc`, so a quorum of `n − fb − fc` … |
 
 ### `Hybrid/Checkpoint/RecoveryProofs.lean` (14)
 
@@ -40875,13 +41339,14 @@ subsection per module, in the layer order of Appendices B and C.
 | `votesIn_of_sustains` | The votes an old decision-round block counts are the votes it counted: its references are unchanged, and … |
 | `votesIn_old` | The votes an old certificate counts are the votes it counted. |
 
-### `Nemo/Carrier.lean` (3)
+### `Nemo/Carrier.lean` (4)
 
 | Lemma | Role |
 |:---|:---|
 | `nemoRule_block` | — |
 | `nemoRule_ids` | — |
 | `nemoRule_viewIds` | — |
+| `quorate` | Nemo's universes are quorate: `ValidWrt.quorum`, which asks for a majority of distinct authors, read at … |
 
 ### `NemoProperties.lean` (12)
 
@@ -40900,11 +41365,12 @@ subsection per module, in the layer order of Appendices B and C.
 | `refsB` | — |
 | `supportersIn_band` | The supporters a view holds transport. A voting-round block the view held is a block of the shifted … |
 
-### `Odontoceti/Carrier.lean` (1)
+### `Odontoceti/Carrier.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
 | `causal` | Odontoceti's universes are block DAGs — the same argument as the core's, the universe type being the same. |
+| `quorate` | Odontoceti's universes are quorate: the core's `BlockUniverse`, so the core's clause, at the five-fault … |
 
 ### `OdontocetiProperties.lean` (11)
 
@@ -40922,12 +41388,13 @@ subsection per module, in the layer order of Appendices B and C.
 | `thickLink_threshold_pos` | The thick-link threshold is positive: `Faults5` asks for `5f + 1` validators, so `card − 3f ≥ 2f + 1`. |
 | `toCore` | The two carriers project identically, so a band for one is a band for the other. |
 
-### `OptimalHydrozoan/Carrier.lean` (2)
+### `OptimalHydrozoan/Carrier.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
 | `band_of` | A band at this carrier is a band at Hydrozoan's. The subtype's projections are the underlying universe's, … |
 | `causal` | Optimal's universes are block DAGs — Hydrozoan's argument, the underlying universe being Hydrozoan's. |
+| `quorate` | Optimal-Hydrozoan's universes are quorate. The underlying universe is Hydrozoan's, so the clause and the … |
 
 ### `OptimalHydrozoan/Helpers/Banded.lean` (13)
 
@@ -40961,6 +41428,12 @@ subsection per module, in the layer order of Appendices B and C.
 | `truncates_chop_odontoceti` | The cut is a truncation of Odontoceti's carrier too. |
 | `viewAgreeAbove_chop` | The chopped view agrees with the original above the cut, which is the view hypothesis the two theorems … |
 
+### `Properties/Arcs/Quality.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `card_correct_le_two_mul_coveredAt` | CQ2 (the half, where the committee gives it). Every cone carries, at every round below it, blocks from at … |
+
 ### `Properties/Arcs/SafeSkip.lean` (6)
 
 | Lemma | Role |
@@ -40980,12 +41453,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `layer_band` | A round layer lands on the layer the shift names. Stated over the filter rather than over any protocol's … |
 | `of_agreeAbove` | Agreement above a round carries every band whose floor is at or above it. |
 
-### `Properties/Candidate.lean` (4)
+### `Properties/Candidate.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
 | `creator` | Authored by the slot's leader. |
-| `mem` | The committed block is a block. |
 | `reaches_mem` | A commit's causal cone is real and below it. Everything the committed block reaches is a block of the … |
 | `round` | At the slot's round. |
 

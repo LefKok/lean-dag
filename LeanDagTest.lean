@@ -20,6 +20,7 @@ import LeanDagTest.GC.Chop
 import LeanDagTest.GC.Bootstrap
 import LeanDagTest.GC.Horizon
 import LeanDagTest.Odontoceti.Model
+import LeanDagTest.Quality.Generic
 import LeanDagTest.Quality.Model
 import LeanDagTest.ViewPace
 import LeanDagTest.Unbounded
