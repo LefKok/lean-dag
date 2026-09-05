@@ -2,6 +2,7 @@ import LeanDag.Integration.Hydrozoan.Stack
 import LeanDag.Integration.Coverage
 import LeanDag.Hydrozoan.DirectLiveness.Proof
 import LeanDag.Hydrozoan.IndirectLiveness.Proof
+import LeanDag.Hydrozoan.Helpers.Commit
 
 /-!
 # The liveness package across the transformers
@@ -155,19 +156,53 @@ this file supplies, is that its *hypotheses* survive the transformers:
 was available before, so nothing about progress could be said of a
 recovered and pruned replica — only that it could not disagree. -/
 
-/-- **HZ5 applies to the stack.** Its content here is the hypotheses,
-which the theorems above transport. -/
-theorem commitLiveness_stackHZ [LinearOrder BlockId]
-    [LeanDag.Hydrozoan.Slots Replica] {G : ℕ} :
-    LeanDag.Hydrozoan.DirectLiveness.CommitLiveness (stackHZ U hsp sk G) :=
-  LeanDag.Hydrozoan.DirectLiveness.holds Replica BlockId _
+/-- **A reliably-led slot commits on the stack**, in the properties'
+vocabulary. `LeaderCommits` is quantified over every universe, so the
+stack needs nothing beyond the hypotheses the theorems above transport;
+what this file supplies is that those hypotheses survive the two
+transformers.
 
-/-- **HZ6's descent applies too**, so a run of committed slots on the
-stack decides everything below it. -/
-theorem anchoredTotality_stackHZ [LinearOrder BlockId]
-    [LeanDag.Hydrozoan.Slots Replica] {G : ℕ} :
-    LeanDag.Hydrozoan.IndirectLiveness.AnchoredTotality (stackHZ U hsp sk G) :=
-  (LeanDag.Hydrozoan.IndirectLiveness.holds Replica BlockId _).1
+What is deliberately *not* claimed is `CommitLiveness`'s middle
+conjunct, the slow threshold. That is direct evidence in the DAG, it has
+no property, and a mechanism asserting it would be reaching into the
+protocol for something no mechanism needs — the verdict is what a
+recovered replica's liveness is about. -/
+theorem decided_of_leader_stackHZ [LinearOrder BlockId]
+    [S : LeanDag.Hydrozoan.Slots Replica] {G : ℕ}
+    {W : LeanDag.Hydrozoan.View (stackHZ U hsp sk G)} {T : Finset Replica} {lo K k : ℕ}
+    (hlive : LeanDag.Hydrozoan.hzLive (LeanDag.Hydrozoan.toCoreSlots S)
+      (U := stackHZ U hsp sk G) W T lo K)
+    (hlo : lo ≤ k) (hK : k < K) (hlead : S.leader k ∈ T) :
+    ∃ L, LeanDag.Hydrozoan.Decided (stackHZ U hsp sk G) W k (some L) := by
+  obtain ⟨L, hL⟩ := LeanDag.Hydrozoan.leaderCommits (LeanDag.Hydrozoan.toCoreSlots S)
+    W T lo K hlive k hlo hK hlead
+  exact ⟨L, hL.2.1⟩
+
+/-- **And the indirect rule holds of the stack**, so a committed anchor
+with the eligible slots below it skipped decides the slot. HZ6's descent
+through `Properties.Indirect` rather than through
+`IndirectLiveness.holds`. -/
+theorem decided_of_anchor_stackHZ [LinearOrder BlockId]
+    [S : LeanDag.Hydrozoan.Slots Replica] {G : ℕ}
+    {W : LeanDag.Hydrozoan.View (stackHZ U hsp sk G)} {k j : ℕ} {A : BlockId}
+    (helig : LeanDag.Hydrozoan.EligibleAsAnchor Replica k j)
+    (hj : LeanDag.Hydrozoan.Decided (stackHZ U hsp sk G) W j (some A))
+    (hmid : ∀ i, k < i → i < j → LeanDag.Hydrozoan.EligibleAsAnchor Replica k i →
+      LeanDag.Hydrozoan.Decided (stackHZ U hsp sk G) W i none) :
+    ∃ v, LeanDag.Hydrozoan.Decided (stackHZ U hsp sk G) W k v := by
+  have he : LeanDag.Hydrozoan.Slots.slotRound Replica k + 2 <
+      LeanDag.Hydrozoan.Slots.slotRound Replica j := helig
+  refine LeanDag.Hydrozoan.indirect.decided (LeanDag.Hydrozoan.toCoreSlots S) W
+    (j := j) (A := A) (by
+      have hb : ∀ m, (LeanDag.Hydrozoan.toCoreSlots S).slotRound m =
+        LeanDag.Hydrozoan.Slots.slotRound Replica m := fun _ => rfl
+      simp only [hb]; omega) hj
+    (fun i h1 h2 h3 => hmid i h1 h2 ?_)
+  show LeanDag.Hydrozoan.Slots.slotRound Replica k + 2 <
+    LeanDag.Hydrozoan.Slots.slotRound Replica i
+  have : LeanDag.Hydrozoan.Slots.slotRound Replica k + 3 ≤
+    LeanDag.Hydrozoan.Slots.slotRound Replica i := h3
+  omega
 
 end Hydrozoan
 

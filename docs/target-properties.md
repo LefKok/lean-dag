@@ -1612,6 +1612,42 @@ and no `Indirect`, which is the instances gap of §11.4 seen from the
 liveness side rather than the safety side. Nothing about tier 3 blocks
 them; the band does.
 
+### 11.2c The audit that closed the claim
+
+§11.2 said four rules show the six properties. It did not say whether
+the *mechanisms* took them, and they did not. `scripts/audit-bespoke.py`
+measures it: with the properties and each conformance file as barriers,
+which protocol theorems *about verdicts* can a mechanism theorem's proof
+still reach? Thirty-five could, for the four conforming rules, and
+`docs/bespoke-links.md` is the record of removing every one.
+
+**The measurement needed two exclusions to mean anything.** Shared
+structure is not borrowing — counting `mem_blocksAt` and
+`card_validators` gives 382 links and measures nothing — so the targets
+are the 115 protocol theorems that name a decision relation. And a rule
+with no `Banded` has nothing to route through, so the fifteen links for
+Optimal-Hydrozoan, Nemo and Hybrid/Orcaella are reported apart and do
+not fail a run. They are §11.4's gap from a third side.
+
+**Three of the thirty-five were not substitutions.** Group C was
+*circular*: `Laws.decided_of_directCommitIn` is `CommitsDirect`, and
+`CommitsDirect` was derived from `Laws`, so it took proving the property
+natively for three rules first. Group D needed a bridge, the same shape
+as `LiveRule.GoodGives`: the consumers carry synchrony loose and
+`LeaderCommits` takes it packaged. And Hydrozoan's `CommitLiveness` had
+a conjunct with no property at all — the slow threshold, direct evidence
+in the DAG — so the deployment now claims the verdict and not the
+evidence, which is what a recovered replica's liveness is about.
+
+**Two costs, both worth naming.** Four files were `Type*` where
+`Properties/` is `Type`, so they could not name a property; dropping
+them took 27 files with them, through the pacing layer into FinWhale,
+Black Marlin and Mahi-Mahi. And `OdontocetiProperties.lean` imports the
+adaptive arc, so Odontoceti's carrier sat downstream of a mechanism and
+no mechanism could reach it; it moved to `Odontoceti/Carrier.lean`. A
+conformance layer has to be upstream of every mechanism or it cannot
+serve one, and nothing before this audit had forced the point.
+
 ### 11.3 Against part 3: the mechanisms compose
 
 **What a mechanism owes is a rebase, and rebases compose.**

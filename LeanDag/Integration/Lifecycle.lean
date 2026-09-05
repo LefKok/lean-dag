@@ -1,5 +1,6 @@
 import LeanDag.Integration.Stack
 import LeanDag.Adaptive.Policy
+import LeanDag.MysticetiProperties
 
 /-!
 # I10, I11 — the crash-prone lifecycle
@@ -31,8 +32,8 @@ namespace LeanDag
 
 namespace Integration
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
-variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
+variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 
 section Lifecycle
 
@@ -111,7 +112,10 @@ resulting universe still carries honest non-equivocation (I3), so report §14's
 safety applies throughout.
 
 Three arcs — the base liveness rules, Safe Skip, and the hybrid fault
-model — meet here without any of them mentioning another. What connects
+model — meet here without any of them mentioning another. The first is
+reached through `SkipsUnsupported` rather than through L5 directly: the
+reliable set is read off the view, and the skip is unsupported because
+the halted leader left nothing to support. What connects
 them is that all three speak about the same universe and the same
 verdicts, which is what report §2's invariant vocabulary was collected to make
 possible. -/
@@ -125,7 +129,7 @@ theorem lifecycle {V : View Validator BlockId Payload U} {k : ℕ}
     Decided U V k none
       ∧ PopulatedOn sk.skipFill (insert sk.v1 T) m
       ∧ HonestNoEquiv sk.skipFill :=
-  ⟨decided_none_of_leader_absent hhalt hq,
+  ⟨MysticetiProperties.decided_none_of_leader_absent_of_properties hhalt hq,
    sk.skipFill_populatedOn hpop hm1 hm2,
    honestNoEquiv_skipFill sk hne⟩
 

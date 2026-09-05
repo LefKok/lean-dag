@@ -802,6 +802,37 @@ theorem skipsUnsupported :
   fun S U V T k hq hpres huns =>
     Decided.directSkip (le_trans hq (Finset.card_le_card (subset_blamers (S := S) hpres huns)))
 
+/-- **L5 from the properties.** A slot whose leader produced nothing at
+all is skipped, on any view holding a quorum of the round above.
+
+The reliable set is read off the view: it is exactly the creators of the
+blocks the view holds one round up, so `Ok` is the quorum bound the
+caller already has and `PresentAt` is what membership of that set means.
+`Unsupported` is vacuous — with no candidate at the slot there is
+nothing to support — which is the whole content of "the leader
+halted". -/
+theorem decided_none_of_leader_absent_of_properties [S : Slots Validator]
+    {U : BlockUniverse Validator BlockId Payload}
+    {V : View Validator BlockId Payload U} {k : ℕ}
+    (hhalt : ∀ b ∈ U.ids, (U.block b).round = S.slotRound k →
+      (U.block b).creator ≠ S.leader k)
+    (hq : quorumCard Validator ≤
+      (creatorsOf U.block (blocksAt U (S.slotRound k + 1) ∩ V.ids)).card) :
+    Decided U V k none := by
+  classical
+  set T := creatorsOf U.block (blocksAt U (S.slotRound k + 1) ∩ V.ids) with hT
+  have hpres : Properties.PresentAt (mysticetiRule (Payload := Payload)) V T
+      (S.slotRound k + 1) := by
+    intro v hv
+    rw [hT, creatorsOf, Finset.mem_image] at hv
+    obtain ⟨c, hc, hcv⟩ := hv
+    rw [Finset.mem_inter, mem_blocksAt] at hc
+    exact ⟨c, hc.2, hcv, hc.1.2⟩
+  have huns : Properties.Unsupported (mysticetiRule (Payload := Payload)) S U V T k := by
+    intro c _ _ _ L hL _
+    exact hhalt L hL.1 hL.2.1 hL.2.2
+  exact skipsUnsupported S U V T k hq hpres huns
+
 end Skip
 
 end MysticetiProperties
@@ -1052,6 +1083,27 @@ theorem decided_of_leader_of_populated_of_properties [S : Slots Validator]
     leaderCommits S (U := U) (View.full U) T k (k + 1) hlive k le_rfl
       (Nat.lt_succ_self k) hlead
   exact ⟨L, commitsCandidate S U (View.full U) k L hL.2.1, hL.2.1⟩
+
+/-- **L6, from the properties.** Commits recur under a fair schedule:
+some slot past `k` and past round `R` is led by a member of `T`, and
+every DAG grown past it commits it.
+
+The schedule half is `Slots.unbounded` and `Slots.mono` and belongs to
+nobody in particular; the verdict half is the bridge above. Stated here
+rather than read from `Liveness.commits_recur_on` so that a pacing or
+quality mechanism consuming it does not thereby reach into the
+protocol. -/
+theorem commits_recur_on_of_properties [S : Slots Validator] {T : Finset Validator}
+    (hT : T ⊆ (Correct : Finset Validator)) (hcard : quorumCard Validator ≤ T.card)
+    (fair : FairScheduleOn T) (R k : ℕ) :
+    ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧ CommitsAt BlockId Payload T R k' := by
+  obtain ⟨k₀, hk₀⟩ := S.unbounded R
+  obtain ⟨k', hk', hlead⟩ := fair (max k k₀)
+  have hRk' : R ≤ S.slotRound k' :=
+    le_trans hk₀ (S.mono (le_trans (le_max_right k k₀) hk'))
+  refine ⟨k', le_trans (le_max_left _ _) hk', hRk', ?_⟩
+  intro U N hpop hs hN
+  exact decided_of_leader_of_populated_of_properties (S := S) hcard hs hRk' hpop hN hlead
 
 /-- **The core's own bounded relation lands in the derived one.**
 `DecidedWithin` still names the slots a derivation mentions, which is

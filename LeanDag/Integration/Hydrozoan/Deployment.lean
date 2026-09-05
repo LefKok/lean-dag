@@ -130,18 +130,33 @@ theorem populated {T : Finset Replica} {k : ℕ}
     LeanDag.Hydrozoan.PopulatedOn D.held (insert D.recovery.v1 T) (k - D.horizon) :=
   populatedOn_stackHZ hp hk1 hk2 hG
 
-/-- **Liveness.** Hydrozoan's direct-commit theorem holds of what the
-replica retains: a quorum of correct replicas, synchronised and
-producing through a wave whose leader is among them, commits — on the
-replica's own view, once it is caught up to the decision round. -/
-theorem commits : LeanDag.Hydrozoan.DirectLiveness.CommitLiveness D.held :=
-  commitLiveness_stackHZ
+/-- **Liveness.** A reliably-led slot commits on what the replica
+retains: under Hydrozoan's own liveness precondition, on the replica's
+own view, the slot has a verdict and it is a commit.
 
-/-- **And the descent applies**, so a committed run on what the replica
-holds decides every slot below it. -/
-theorem decidesBelow :
-    LeanDag.Hydrozoan.IndirectLiveness.AnchoredTotality D.held :=
-  anchoredTotality_stackHZ
+This is `Properties.LeaderCommits`, not `DirectLiveness.CommitLiveness`.
+The difference is the slow threshold, which the protocol's statement
+asserts and this does not: it is evidence in the DAG, it has no
+property, and what a recovered replica's liveness is about is the
+verdict. -/
+theorem commits {W : LeanDag.Hydrozoan.View D.held} {T : Finset Replica} {lo K k : ℕ}
+    (hlive : LeanDag.Hydrozoan.hzLive (LeanDag.Hydrozoan.toCoreSlots D.numbering)
+      (U := D.held) W T lo K)
+    (hlo : lo ≤ k) (hK : k < K) (hlead : D.numbering.leader k ∈ T) :
+    ∃ L, LeanDag.Hydrozoan.Decided (S := D.numbering) D.held W k (some L) :=
+  decided_of_leader_stackHZ (S := D.numbering) hlive hlo hK hlead
+
+/-- **And the indirect rule applies**, so a committed anchor with the
+eligible slots below it skipped decides the slot on what the replica
+holds — `Properties.Indirect`, where this was HZ6. -/
+theorem decidesBelow {W : LeanDag.Hydrozoan.View D.held} {k j : ℕ} {A : BlockId}
+    (helig : LeanDag.Hydrozoan.EligibleAsAnchor (S := D.numbering) Replica k j)
+    (hj : LeanDag.Hydrozoan.Decided (S := D.numbering) D.held W j (some A))
+    (hmid : ∀ i, k < i → i < j →
+      LeanDag.Hydrozoan.EligibleAsAnchor (S := D.numbering) Replica k i →
+      LeanDag.Hydrozoan.Decided (S := D.numbering) D.held W i none) :
+    ∃ v, LeanDag.Hydrozoan.Decided (S := D.numbering) D.held W k v :=
+  decided_of_anchor_stackHZ (S := D.numbering) helig hj hmid
 
 /-! ## The schedule it runs
 

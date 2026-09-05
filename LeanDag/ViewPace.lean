@@ -624,7 +624,8 @@ theorem commits_recur_via_pace (hT : T ⊆ (Correct : Finset Validator))
         S.slotRound k' + 2 ≤ N →
         ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) := by
   obtain ⟨k', hk, hR, hcommit⟩ :=
-    commits_recur_on (BlockId := BlockId) (Payload := Payload) hT hcard fair R k
+    MysticetiProperties.commits_recur_on_of_properties (BlockId := BlockId)
+      (Payload := Payload) hT hcard fair R k
   refine ⟨k', hk, hR, fun U N vp hgst hbackoff hN => ?_⟩
   exact hcommit U N
     (fun r _ hr => vp.populatedOn hcard r hr)

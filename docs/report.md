@@ -9564,8 +9564,18 @@ what it holds rather than a carried one — a joiner's view is never of
 the latter form.
 
 ```lean
-theorem commits : LeanDag.Hydrozoan.DirectLiveness.CommitLiveness D.held
+theorem commits {W : LeanDag.Hydrozoan.View D.held} {T : Finset Replica} {lo K k : ℕ}
+    (hlive : LeanDag.Hydrozoan.hzLive (LeanDag.Hydrozoan.toCoreSlots D.numbering)
+      (U := D.held) W T lo K)
+    (hlo : lo ≤ k) (hK : k < K) (hlead : D.numbering.leader k ∈ T) :
+    ∃ L, LeanDag.Hydrozoan.Decided (S := D.numbering) D.held W k (some L)
 ```
+
+This is `Properties.LeaderCommits`, where it was `CommitLiveness`. The
+difference is the slow threshold, which the protocol's statement asserts
+and this does not: that is evidence in the DAG, it has no property, and
+what a recovered replica's liveness is about is the verdict
+(`docs/bespoke-links.md` D).
 
 A replica running Optimal-Hydrozoan gets the same object with one
 field missing. `PrunedOpt` carries a horizon and no recovery, and
@@ -25038,7 +25048,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 974 theorems that either another module of the
+The 976 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -29365,7 +29375,7 @@ theorem lifecycle {V : View Validator BlockId Payload U} {k : ℕ}
 
 **The lifecycle, in one statement.** A validator that halts has its slot skipped (L5, on a view that saw the round above); after it rejoins by Safe Skip its gap rounds are populated with it back in the reliable set (SS2); and the resulting universe still carries honest non-equivocation (I3), so report §14's safety applies throughout.
 
-Three arcs — the base liveness rules, Safe Skip, and the hybrid fault model — meet here without any of them mentioning another. What connects them is that all three speak about the same universe and the same verdicts, which is what report §2's invariant vocabulary was collected to make possible.
+Three arcs — the base liveness rules, Safe Skip, and the hybrid fault model — meet here without any of them mentioning another. The first is reached through `SkipsUnsupported` rather than through L5 directly: the reliable set is read off the view, and the skip is unsupported because the halted leader left nothing to support. What connects them is that all three speak about the same universe and the same verdicts, which is what report §2's invariant vocabulary was collected to make possible.
 
 #### `history_B1_subset_fill`
 
@@ -36477,10 +36487,16 @@ theorem agrees {V : LeanDag.Hydrozoan.View D.network}
 *theorem, `Integration.Hydrozoan.Deployment.lean`*
 
 ```lean
-theorem commits : LeanDag.Hydrozoan.DirectLiveness.CommitLiveness D.held
+theorem commits {W : LeanDag.Hydrozoan.View D.held} {T : Finset Replica} {lo K k : ℕ}
+    (hlive : LeanDag.Hydrozoan.hzLive (LeanDag.Hydrozoan.toCoreSlots D.numbering)
+      (U := D.held) W T lo K)
+    (hlo : lo ≤ k) (hK : k < K) (hlead : D.numbering.leader k ∈ T) :
+    ∃ L, LeanDag.Hydrozoan.Decided (S := D.numbering) D.held W k (some L)
 ```
 
-**Liveness.** Hydrozoan's direct-commit theorem holds of what the replica retains: a quorum of correct replicas, synchronised and producing through a wave whose leader is among them, commits — on the replica's own view, once it is caught up to the decision round.
+**Liveness.** A reliably-led slot commits on what the replica retains: under Hydrozoan's own liveness precondition, on the replica's own view, the slot has a verdict and it is a commit.
+
+This is `Properties.LeaderCommits`, not `DirectLiveness.CommitLiveness`. The difference is the slow threshold, which the protocol's statement asserts and this does not: it is evidence in the DAG, it has no property, and what a recovered replica's liveness is about is the verdict.
 
 #### `hybridCommittee_of_slack`
 
@@ -36637,29 +36653,40 @@ theorem populatedOn_stackHZ {k G : ℕ}
 
 **The stack is populated across the gap**, with the recovered replica counted, at the rebased round.
 
-#### `commitLiveness_stackHZ`
+#### `decided_of_leader_stackHZ`
 
 *theorem, `Integration.Hydrozoan.Liveness.lean`*
 
 ```lean
-theorem commitLiveness_stackHZ [LinearOrder BlockId]
-    [LeanDag.Hydrozoan.Slots Replica] {G : ℕ} :
-    LeanDag.Hydrozoan.DirectLiveness.CommitLiveness (stackHZ U hsp sk G)
+theorem decided_of_leader_stackHZ [LinearOrder BlockId]
+    [S : LeanDag.Hydrozoan.Slots Replica] {G : ℕ}
+    {W : LeanDag.Hydrozoan.View (stackHZ U hsp sk G)} {T : Finset Replica} {lo K k : ℕ}
+    (hlive : LeanDag.Hydrozoan.hzLive (LeanDag.Hydrozoan.toCoreSlots S)
+      (U := stackHZ U hsp sk G) W T lo K)
+    (hlo : lo ≤ k) (hK : k < K) (hlead : S.leader k ∈ T) :
+    ∃ L, LeanDag.Hydrozoan.Decided (stackHZ U hsp sk G) W k (some L)
 ```
 
-**HZ5 applies to the stack.** Its content here is the hypotheses, which the theorems above transport.
+**A reliably-led slot commits on the stack**, in the properties' vocabulary. `LeaderCommits` is quantified over every universe, so the stack needs nothing beyond the hypotheses the theorems above transport; what this file supplies is that those hypotheses survive the two transformers.
 
-#### `anchoredTotality_stackHZ`
+What is deliberately *not* claimed is `CommitLiveness`'s middle conjunct, the slow threshold. That is direct evidence in the DAG, it has no property, and a mechanism asserting it would be reaching into the protocol for something no mechanism needs — the verdict is what a recovered replica's liveness is about.
+
+#### `decided_of_anchor_stackHZ`
 
 *theorem, `Integration.Hydrozoan.Liveness.lean`*
 
 ```lean
-theorem anchoredTotality_stackHZ [LinearOrder BlockId]
-    [LeanDag.Hydrozoan.Slots Replica] {G : ℕ} :
-    LeanDag.Hydrozoan.IndirectLiveness.AnchoredTotality (stackHZ U hsp sk G)
+theorem decided_of_anchor_stackHZ [LinearOrder BlockId]
+    [S : LeanDag.Hydrozoan.Slots Replica] {G : ℕ}
+    {W : LeanDag.Hydrozoan.View (stackHZ U hsp sk G)} {k j : ℕ} {A : BlockId}
+    (helig : LeanDag.Hydrozoan.EligibleAsAnchor Replica k j)
+    (hj : LeanDag.Hydrozoan.Decided (stackHZ U hsp sk G) W j (some A))
+    (hmid : ∀ i, k < i → i < j → LeanDag.Hydrozoan.EligibleAsAnchor Replica k i →
+      LeanDag.Hydrozoan.Decided (stackHZ U hsp sk G) W i none) :
+    ∃ v, LeanDag.Hydrozoan.Decided (stackHZ U hsp sk G) W k v
 ```
 
-**HZ6's descent applies too**, so a run of committed slots on the stack decides everything below it.
+**And the indirect rule holds of the stack**, so a committed anchor with the eligible slots below it skipped decides the slot. HZ6's descent through `Properties.Indirect` rather than through `IndirectLiveness.holds`.
 
 #### `decidedOpt_chopHZ`
 
@@ -37127,6 +37154,25 @@ theorem skipsUnsupported :
 
 **The core skips an unsupported slot from a correct quorum.**
 
+#### `decided_none_of_leader_absent_of_properties`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem decided_none_of_leader_absent_of_properties [S : Slots Validator]
+    {U : BlockUniverse Validator BlockId Payload}
+    {V : View Validator BlockId Payload U} {k : ℕ}
+    (hhalt : ∀ b ∈ U.ids, (U.block b).round = S.slotRound k →
+      (U.block b).creator ≠ S.leader k)
+    (hq : quorumCard Validator ≤
+      (creatorsOf U.block (blocksAt U (S.slotRound k + 1) ∩ V.ids)).card) :
+    Decided U V k none
+```
+
+**L5 from the properties.** A slot whose leader produced nothing at all is skipped, on any view holding a quorum of the round above.
+
+The reliable set is read off the view: it is exactly the creators of the blocks the view holds one round up, so `Ok` is the quorum bound the caller already has and `PresentAt` is what membership of that set means. `Unsupported` is vacuous — with no candidate at the slot there is nothing to support — which is the whole content of "the leader halted".
+
 #### `toDecided`
 
 *theorem, `MysticetiProperties.lean`*
@@ -37224,6 +37270,21 @@ theorem decided_of_leader_of_populated_of_properties [S : Slots Validator]
 **L4's capstone form, from the properties.** The shape every consumer of direct liveness uses — synchrony from `R`, production to a horizon `N`, a `T`-led slot two rounds under it — reached from `LeaderCommits` and `CommitsCandidate` rather than from `decided_of_leader_of_populated`.
 
 The work is entirely in packaging: `LeaderCommits` takes its precondition as `coreLive` over a slot window, and the window here is the single slot. This is the same bridge `LiveRule.GoodGives` is for Barnacle (`docs/target-properties.md` §11.2b), and it is the reason the capstones do not need their own route into the protocol.
+
+#### `commits_recur_on_of_properties`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem commits_recur_on_of_properties [S : Slots Validator] {T : Finset Validator}
+    (hT : T ⊆ (Correct : Finset Validator)) (hcard : quorumCard Validator ≤ T.card)
+    (fair : FairScheduleOn T) (R k : ℕ) :
+    ∃ k', k ≤ k' ∧ R ≤ S.slotRound k' ∧ CommitsAt BlockId Payload T R k'
+```
+
+**L6, from the properties.** Commits recur under a fair schedule: some slot past `k` and past round `R` is led by a member of `T`, and every DAG grown past it commits it.
+
+The schedule half is `Slots.unbounded` and `Slots.mono` and belongs to nobody in particular; the verdict half is the bridge above. Stated here rather than read from `Liveness.commits_recur_on` so that a pacing or quality mechanism consuming it does not thereby reach into the protocol.
 
 #### `decidedBelow_of_decidedWithin`
 
@@ -39501,7 +39562,7 @@ subsection per module, in the layer order of Appendices B and C.
 | Lemma | Role |
 |:---|:---|
 | `covered` | Coverage carries, from a round above the recovery, rebased by the horizon. |
-| `decidesBelow` | And the descent applies, so a committed run on what the replica holds decides every slot below it. |
+| `decidesBelow` | And the indirect rule applies, so a committed anchor with the eligible slots below it skipped decides the … |
 | `fair` | A fair schedule stays fair under the replica's numbering. |
 | `populated` | Production carries across the gap, with the recovered replica counted, at the rebased round. This is what … |
 | `spans` | And a spanning runway stays spanning. |
