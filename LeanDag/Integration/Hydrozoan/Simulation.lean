@@ -38,13 +38,16 @@ is "fresh", and they are `not_certifiedInHZ_fresh` and its `WeakLinked`
 counterpart.
 
 All three transport directions are instances, and none carries an
-induction of its own: `decided_chopHZ_of_decided`,
-`decided_of_decided_chopHZ` and `decided_fillHZ` are recovered as
-corollaries below. The bespoke proofs in `ChopDecided.lean` and
-`FillDecided.lean` are retained because `Stack.lean` and `Liveness.lean`
-consume them, and `docs/integration.md` §4.2's rule is to generalise
-with the old statements kept as corollaries rather than to rewrite
-working code.
+induction of its own beyond `Simulates.decided`.
+
+**This file is now a study, not a dependency.** The bespoke proofs it
+was written to subsume — `decided_chopHZ_of_decided`,
+`decided_of_decided_chopHZ`, `decided_fillHZ` — have since been
+deleted outright, and `ViaProperties.lean` reaches the same three
+statements from HZ9 with no induction at all. What `Simulates` still
+records is a different question from the properties arc's: not *which
+mechanisms a rule survives*, but *what a rule reads a universe
+through*. Nothing consumes it.
 
 `docs/transformer-interface.md` records what generalising this beyond
 Hydrozoan would take.
@@ -141,7 +144,7 @@ theorem decided (h : Simulates U V S U' V' S' R Novel) {n : ℕ} {v : Option Blo
   | @indirectCert n j A L hkj helig hanchor hmid hL hcert ihj ihmid =>
       intro k hR
       obtain ⟨j', hRj, hkj'⟩ := h.lift n k j hR hkj
-      have hA : A ∈ U.ids := (isLeaderBlock_of_decidedHZ hanchor).1
+      have hA : A ∈ U.ids := (LeanDag.Hydrozoan.isLeaderBlock_of_decided (S := S) hanchor).1
       refine LeanDag.Hydrozoan.Decided.indirectCert (S := S') hkj'
         ((h.elig n k j j' hR hRj).mp helig) (ihj j' hRj) ?_ (h.leader_fwd n k L hR hL)
         ((h.cert n k A L hR hA).mpr hcert)
@@ -152,7 +155,7 @@ theorem decided (h : Simulates U V S U' V' S' R Novel) {n : ℕ} {v : Option Blo
   | @indirectWeak n j A L hkj helig hanchor hmid hnocert hL hweak hmin ihj ihmid =>
       intro k hR
       obtain ⟨j', hRj, hkj'⟩ := h.lift n k j hR hkj
-      have hA : A ∈ U.ids := (isLeaderBlock_of_decidedHZ hanchor).1
+      have hA : A ∈ U.ids := (LeanDag.Hydrozoan.isLeaderBlock_of_decided (S := S) hanchor).1
       refine LeanDag.Hydrozoan.Decided.indirectWeak (S := S') hkj'
         ((h.elig n k j j' hR hRj).mp helig) (ihj j' hRj) ?_ ?_ (h.leader_fwd n k L hR hL)
         ((h.weak n k A L hR hA).mpr hweak) ?_
@@ -171,7 +174,7 @@ theorem decided (h : Simulates U V S U' V' S' R Novel) {n : ℕ} {v : Option Blo
   | @indirectSkip n j A hkj helig hanchor hmid hnocert hnoweak ihj ihmid =>
       intro k hR
       obtain ⟨j', hRj, hkj'⟩ := h.lift n k j hR hkj
-      have hA : A ∈ U.ids := (isLeaderBlock_of_decidedHZ hanchor).1
+      have hA : A ∈ U.ids := (LeanDag.Hydrozoan.isLeaderBlock_of_decided (S := S) hanchor).1
       refine LeanDag.Hydrozoan.Decided.indirectSkip (S := S') hkj'
         ((h.elig n k j j' hR hRj).mp helig) (ihj j' hRj) ?_ ?_ ?_
       · intro i' h1 h2 he

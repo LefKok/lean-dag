@@ -3,11 +3,13 @@ import LeanDag.Hydrozoan.SlotAgreement.Proof
 import LeanDag.Integration.Hydrozoan.ChopDecided
 
 /-!
-# P8 — the decision relation across the fill
+# P8 — what the fill preserves
 
 `docs/hydrozoan-integration.md` §5.1. The fill adds one block per gap
 round for the recovering replica; this file carries Hydrozoan's rules
-across it and then the derivation.
+across it. The derivation used to follow here by induction and no
+longer does — §"where the transport used to be" says what replaced
+it.
 
 **Why the in-view rules are exact rather than merely monotone.**
 `SafeSkip`'s `liftView` keeps the *same* identifier set — a view of `U`
@@ -340,76 +342,23 @@ theorem not_weakLinkedHZ_fresh {A L : BlockId} {r : ℕ} (hA : A ∈ U.ids)
     Finset.card_empty, Nat.le_zero] at hcard
   exact absurd hcard (by unfold LeanDag.Hydrozoan.qWeak; omega)
 
-/-! ## P8 — the verdicts survive the fill
+/-! ## Where the transport used to be
 
-One direction only, which is all the fill admits: it adds blocks, so it
-can create verdicts the original did not have. What it cannot do is
-disturb one already reached. -/
+`decided_fillHZ` and `decided_fill_agreeHZ` stood here: a
+six-constructor induction over Hydrozoan's decision relation carrying
+HI9 across this one transformer, and slot agreement composed onto it.
 
-section Induction
+They are gone. What survives above is the statement of what the fill
+preserves, and `ViaProperties` reads it: two fields make the fill a
+`Properties.Extends`, and `decided_fillHZ_of_persist` and
+`decided_fill_agreeHZ_of_properties` follow from HZ9's persistence —
+proved once, for every extension — and HZ3's agreement.
 
-variable [LinearOrder BlockId] [S : LeanDag.Hydrozoan.Slots Replica]
+The negative clauses are the ones that make this a claim rather than a
+formality: `not_certifiedInHZ_fresh` and `not_weakLinkedHZ_fresh` say
+the candidates the fill *adds* cannot be reached from an old anchor.
+Those are why the extension is an extension. -/
 
-/-- **Verdict invariance across the fill.** Every verdict a view
-reached in `U` re-derives, for the lifted view, in the extension — and
-unlike the core's `decided_fill` this needs **no quorum hypothesis**,
-because Hydrozoan's skip is a count at the slot rather than a condition
-per candidate. -/
-theorem decided_fillHZ {k : ℕ} {v : Option BlockId}
-    (h : LeanDag.Hydrozoan.Decided U V k v) :
-    LeanDag.Hydrozoan.Decided (skipFillHZ U hsp sk) (liftViewHZ U hsp sk V) k v := by
-  induction h with
-  | @directFast k L hL hc =>
-      exact LeanDag.Hydrozoan.Decided.directFast (isLeaderBlockHZ_fill hL)
-        ((fastCommitInView_fill (V := V) L _).mpr hc)
-  | @directSlow k L hL hc =>
-      exact LeanDag.Hydrozoan.Decided.directSlow (isLeaderBlockHZ_fill hL)
-        ((slowCommitInView_fill (V := V) L _).mpr hc)
-  | @directSkip k hskip =>
-      exact LeanDag.Hydrozoan.Decided.directSkip
-        ((skippedLeaderInView_fill (V := V) k).mpr hskip)
-  | @indirectCert k j A L hkj helig hanchor hmid hL hcert ihj ihmid =>
-      have hA : A ∈ U.ids := (isLeaderBlock_of_decidedHZ hanchor).1
-      exact LeanDag.Hydrozoan.Decided.indirectCert hkj helig ihj ihmid
-        (isLeaderBlockHZ_fill hL) ((certifiedInHZ_fill hA).mpr hcert)
-  | @indirectWeak k j A L hkj helig hanchor hmid hnocert hL hweak hmin ihj ihmid =>
-      have hA : A ∈ U.ids := (isLeaderBlock_of_decidedHZ hanchor).1
-      refine LeanDag.Hydrozoan.Decided.indirectWeak hkj helig ihj ihmid ?_
-        (isLeaderBlockHZ_fill hL) ((weakLinkedHZ_fill hA).mpr hweak) ?_
-      · intro L' hL' hc
-        by_cases hL'o : L' ∈ U.ids
-        · exact hnocert L' (isLeaderBlockHZ_fill_old hL'o hL')
-            ((certifiedInHZ_fill hA).mp hc)
-        · exact not_certifiedInHZ_fresh hA hL'o hc
-      · intro L' hL' hw
-        by_cases hL'o : L' ∈ U.ids
-        · exact hmin L' (isLeaderBlockHZ_fill_old hL'o hL') ((weakLinkedHZ_fill hA).mp hw)
-        · exact absurd hw (not_weakLinkedHZ_fresh hA hL'o)
-  | @indirectSkip k j A hkj helig hanchor hmid hnocert hnoweak ihj ihmid =>
-      have hA : A ∈ U.ids := (isLeaderBlock_of_decidedHZ hanchor).1
-      refine LeanDag.Hydrozoan.Decided.indirectSkip hkj helig ihj ihmid ?_ ?_
-      · intro L' hL' hc
-        by_cases hL'o : L' ∈ U.ids
-        · exact hnocert L' (isLeaderBlockHZ_fill_old hL'o hL')
-            ((certifiedInHZ_fill hA).mp hc)
-        · exact not_certifiedInHZ_fresh hA hL'o hc
-      · intro L' hL' hw
-        by_cases hL'o : L' ∈ U.ids
-        · exact hnoweak L' (isLeaderBlockHZ_fill_old hL'o hL') ((weakLinkedHZ_fill hA).mp hw)
-        · exact absurd hw (not_weakLinkedHZ_fresh hA hL'o)
-
-/-- **Cross-fill agreement.** A verdict reached before the recovery and
-one reached after it agree, which is `integration.md` SS5 for
-Hydrozoan's rule. -/
-theorem decided_fill_agreeHZ {k : ℕ} {v w : Option BlockId}
-    {W : LeanDag.Hydrozoan.View (skipFillHZ U hsp sk)}
-    (hV : LeanDag.Hydrozoan.Decided U V k v)
-    (hW : LeanDag.Hydrozoan.Decided (skipFillHZ U hsp sk) W k w) :
-    v = w :=
-  LeanDag.Hydrozoan.SlotAgreement.holds Replica BlockId (skipFillHZ U hsp sk)
-    (liftViewHZ U hsp sk V) W k v w (decided_fillHZ hV) hW
-
-end Induction
 
 end Hydrozoan
 

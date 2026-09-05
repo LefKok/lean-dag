@@ -1,4 +1,5 @@
 import LeanDag.Integration.Hydrozoan.FillDecided
+import LeanDag.Integration.Hydrozoan.ViaProperties
 
 /-!
 # P9 — the composition capstones
@@ -73,7 +74,7 @@ theorem decided_stackHZ (hd : G ≤ S.slotRound d) {k : ℕ} {v : Option BlockId
     (h : LeanDag.Hydrozoan.Decided U V (d + k) v) :
     LeanDag.Hydrozoan.Decided (S := slotsChopHZ hd) (stackHZ U hsp sk G)
       (stackView U hsp sk G V) k v :=
-  (decided_chopHZ (V := liftViewHZ U hsp sk V) hd).mpr (decided_fillHZ h)
+  (decided_chopHZ_of_localTruncate hd).mpr (decided_fillHZ_of_persist sk h)
 
 /-- **The capstone: a recovered and pruned replica cannot disagree.**
 Its view `W` is an arbitrary view of the stack — not a transported

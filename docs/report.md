@@ -3084,7 +3084,7 @@ full-history view. The asymmetry matters because a joiner's view is never of
 the form `V.chop`: lifted to `U` it would not be downward closed, its base
 layer having lost its references. The proof plays the agreement theorem of
 §5.5 *inside* the truncation against a truncated view, and carries the
-verdict across the cut through `decided_chop`. So a validator that joined
+verdict across the cut through `decided_chop_iff`. So a validator that joined
 from the truncation and never saw the pruned prefix agrees with every
 full-history validator, slot for slot.
 
@@ -3220,7 +3220,7 @@ The constraints on the lag are best set out theorem by theorem, since
 
 | bound | source | what breaks below it |
 |:---|:---|:---|
-| — (any `G` is safe) | `decided_chop`, `decided_agree_chop`, `bootstrap_agree` | nothing — commit safety carries no lag hypothesis; its only premise is `G ≤ slotRound d` |
+| — (any `G` is safe) | `decided_chop_iff`, `decided_agree_chop`, `bootstrap_agree` | nothing — commit safety carries no lag hypothesis; its only premise is `G ≤ slotRound d` |
 | `Λ ≥ 0` vs the *decided* frontier | ledger totality | a slot reads rounds `slotRound k … +2`; cutting above an undecided slot discards its certificates and the slot is undecidable forever — output stalls, safety unharmed |
 | `Λ ≥ 1` | `viewUpto_subset_viewUpto_succ` | peer no-desync: possession universalises in exactly one round |
 | `Λ ≥ 2` | `accepted_mem_base` (tight) | base completeness for joiners |
@@ -3902,7 +3902,7 @@ The two theorems above concern rounds inside the gap. What remains is
 every slot the network decided *before* the fill: a verdict is a
 statement about a view of `U`, and after recovery the network's views
 extend `skipFill` instead. The garbage-collection arc met the same
-question for truncation and answered it with `decided_chop` (G3);
+question for truncation and answered it with `decided_chop_iff` (G3);
 Safe Skip is the extension-side analogue.
 
 The route is conservativity sharpened to the rule layer. Every set the
@@ -4911,7 +4911,7 @@ after which every property stated against named invariants transfers to
 | `SynchronisedOn` | I2 `synchronisedOn_chop` | **refuted** (I4) |
 | `DoSValid` | `dosValid_chop` | open (§16.7) |
 | `HonestNoEquiv` | I1 `honestNoEquiv_chop` | I1 `honestNoEquiv_skipFill` |
-| verdicts | G3 `decided_chop` | SS5 `decided_fill` |
+| verdicts | G3 `decided_chop_iff` | SS5 `decided_fill` |
 
 **I1** is what lets §14's hybrid model be used inside §9's truncation
 and across §12's fill: a hybrid universe stays one on both sides. The
@@ -9738,7 +9738,7 @@ no errors.
 `decided_agree`, `commitSeq_agree` (M7), `outputAt_agree` (M9), `ViewPace.populatedOn` (V17),
 `commits_recur_on`, `ViewPace.commits_recur_via_pace`,
 `all_decided_below_of_fairRun` (L10), `card_history_le'`, `dos_resistance`,
-`decided_chop`, `decided_agree_chop`, `card_retained_le`, `bootstrap_agree`,
+`decided_chop_iff`, `decided_agree_chop`, `card_retained_le`, `bootstrap_agree`,
 `chop_chop`, `Odontoceti.decided_unique`, `Odontoceti.safety` and
 `Odontoceti.all_decided_below_of_fairRun`, `chain_quality`,
 `committed_of_correct_block`, `SkipMsg.decided_fill` (SS5) and
@@ -9784,7 +9784,7 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `DoS/Composition.lean` | the two conditions composed; the pool freezes |
 | `DoS/Exclusion.lean` | liveness survives exclusion; the correct backbone |
 | `GC/Chop.lean` | the horizon operator; per-slot verdict invariance |
-| `GC/ChopDecided.lean` | the induced schedule; `decided_chop`, `decided_agree_chop` |
+| `GC/ChopDecided.lean` | the cut, the induced schedule and their fields; the verdict transport is `decided_chop_iff` in `Properties/Arcs/GC.lean` |
 | `GC/Window.lean` | windowed novelty and stores; `card_retained_le` |
 | `GC/AttestedBase.lean` | the inexact certificate, sandwiched |
 | `GC/Bootstrap.lean` | window completeness; the joiner's view; `bootstrap_agree` |
@@ -10448,7 +10448,7 @@ reused.
 |:---|:---|:---|
 | G1 | truncation is a universe; the DoS condition crosses one way | `chop`, `dosValid_chop` *(GC/Chop)* |
 | G2 | per-slot verdict invariance | `certificates_chop`, `directCommit_chop`, `certifiedIn_chop`, … *(GC/Chop)* |
-| G3 | the decision relation survives the cut | `decided_chop` *(GC/ChopDecided)* |
+| G3 | the decision relation survives the cut | `decided_chop_iff` *(Properties/Arcs/GC)* |
 | G4 | cross-cut agreement, arbitrary joiner views | `decided_agree_chop` *(GC/ChopDecided)* |
 | G5 | liveness transfers | `populated_chop` *(GC/Window)* |
 | G13, G14 | windowed novelty; store correspondence | `novelty_chop_anti`, `viewUpto_chopD` *(GC/Window)* |
@@ -10740,9 +10740,9 @@ reused.
 | HI4 | Hydrozoan as a Barnacle base rule, with its laws | `Barnacle.Hydrozoan.holds` *(Barnacle/Hydrozoan/Proof)* |
 | HI5 | as a live rule: the descent laws at slack `f + c`, and round-robin liveness at `3(f + c) + 1 ≤ n` | `Barnacle.HydrozoanLive.holds` *(Barnacle/HydrozoanLive/Proof)* |
 | HI6 | the same two for Optimal-Hydrozoan, its validity clause restated without a schedule | `Barnacle.OptimalHydrozoan.holds`, `LeaderExcludedAll` *(Barnacle/OptimalHydrozoan/Proof, Barnacle/Helpers/OptimalHydrozoan)* |
-| HI7 | verdicts survive the cut, for `Decided` and for `DecidedOpt`, on the base-slot premise alone | `decided_chopHZ`, `decidedOpt_chopHZ` *(Integration/Hydrozoan/ChopDecided, OptimalChopDecided)* |
+| HI7 | verdicts survive the cut, for `Decided` and for `DecidedOpt`, on the base-slot premise alone | `decided_chopHZ_of_localTruncate`, `decidedOpt_chopHZ` *(Integration/Hydrozoan/ViaProperties, OptimalChopDecided)* |
 | HI8 | the self-parent clause, and its preservation by every transformer in one lemma | `SelfParenting`, `selfParenting_ofCore` *(Integration/Hydrozoan/Universe, Transport)* |
-| HI9 | verdicts survive the fill for `Decided` with no quorum hypothesis; for `DecidedOpt` the validity clause is refuted | `decided_fill_agreeHZ`, `not_leaderExcludedAll_Ufill` *(Integration/Hydrozoan/FillDecided, Test/Integration/HydrozoanOptimal)* |
+| HI9 | verdicts survive the fill for `Decided` with no quorum hypothesis; for `DecidedOpt` the validity clause is refuted | `decided_fill_agreeHZ_of_properties`, `not_leaderExcludedAll_Ufill` *(Integration/Hydrozoan/ViaProperties, Test/Integration/HydrozoanOptimal)* |
 | HI10 | what a deployment gets: safety, agreement with the network, verdict preservation and liveness through a recovery and a horizon; and, for Optimal-Hydrozoan, through a horizon alone | `safe`, `agrees`, `preserves`, `commits`, `decides` *(Integration/Hydrozoan/Deployment, OptimalChopDecided)* |
 
 ---
@@ -27965,17 +27965,6 @@ theorem chopBlock_refs_of_lt (h : G < (U.block i).round) :
 
 Above the cut references are untouched.
 
-#### `creatorsOf_chopBlock`
-
-*theorem, `GC.Chop.lean`*
-
-```lean
-theorem creatorsOf_chopBlock (s : Finset BlockId) :
-    creatorsOf (chopBlock U G) s = creatorsOf U.block s
-```
-
-Creators are untouched, so creator sets are, pointwise.
-
 #### `mem_chop_ids`
 
 *theorem, `GC.Chop.lean`*
@@ -27996,17 +27985,6 @@ theorem chop_block_eq : (chop U G).block = chopBlock U G
 ```
 
 The truncated universe looks blocks up through `chopBlock`.
-
-#### `blocksAt_chop`
-
-*theorem, `GC.Chop.lean`*
-
-```lean
-theorem blocksAt_chop (m : ℕ) :
-    blocksAt (chop U G) m = blocksAt U (G + m)
-```
-
-Round `m` of the truncation is round `G + m` of the original.
 
 #### `history_chop`
 
@@ -36398,21 +36376,6 @@ theorem weakLinked_chopHZ (hd : G ≤ S.slotRound d) {A L : BlockId}
 
 Rung 2's test: the witness set is the same set of blocks, each a voting-round block above the cut.
 
-#### `isLeaderBlock_of_decidedHZ`
-
-*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
-
-```lean
-theorem isLeaderBlock_of_decidedHZ
-    {W : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
-    {SS : LeanDag.Hydrozoan.Slots Replica}
-    {V : LeanDag.Hydrozoan.View W} {k : ℕ} {L : BlockId}
-    (h : LeanDag.Hydrozoan.Decided (S := SS) W V k (some L)) :
-    LeanDag.Hydrozoan.IsLeaderBlock (S := SS) W k L
-```
-
-A commit verdict is about a candidate of its slot, so the anchor of an indirect derivation is a block of the universe. Stated over an arbitrary universe and schedule, since the induction below needs it at the truncation's.
-
 #### `chopRound_add`
 
 *theorem, `Integration.Hydrozoan.ChopDecided.lean`*
@@ -36423,20 +36386,6 @@ theorem chopRound_add (hd : G ≤ S.slotRound d) (k : ℕ) :
 ```
 
 The cut and the re-indexing cancel above the base slot.
-
-#### `decided_chopHZ`
-
-*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
-
-```lean
-theorem decided_chopHZ (hd : G ≤ S.slotRound d)
-    {V : LeanDag.Hydrozoan.View U} {k : ℕ} {v : Option BlockId} :
-    LeanDag.Hydrozoan.Decided (S := slotsChopHZ hd) (chopHZ U hsp G)
-        (View.chopHZ V hsp G) k v
-      ↔ LeanDag.Hydrozoan.Decided U V (d + k) v
-```
-
-**P7 — the decision relation survives the cut.** A replica that has pruned below the horizon reaches exactly the verdicts it would have reached with its whole history, at the re-indexed slot. The base-slot premise `G ≤ S.slotRound d` is the only condition: no synchrony, no fairness, no liveness.
 
 #### `safe`
 
@@ -36614,32 +36563,6 @@ theorem not_weakLinkedHZ_fresh {A L : BlockId} {r : ℕ} (hA : A ∈ U.ids)
     (hL : L ∉ U.ids) :
     ¬ LeanDag.Hydrozoan.WeakLinked (skipFillHZ U hsp sk) A L r
 ```
-
-#### `decided_fillHZ`
-
-*theorem, `Integration.Hydrozoan.FillDecided.lean`*
-
-```lean
-theorem decided_fillHZ {k : ℕ} {v : Option BlockId}
-    (h : LeanDag.Hydrozoan.Decided U V k v) :
-    LeanDag.Hydrozoan.Decided (skipFillHZ U hsp sk) (liftViewHZ U hsp sk V) k v
-```
-
-**Verdict invariance across the fill.** Every verdict a view reached in `U` re-derives, for the lifted view, in the extension — and unlike the core's `decided_fill` this needs **no quorum hypothesis**, because Hydrozoan's skip is a count at the slot rather than a condition per candidate.
-
-#### `decided_fill_agreeHZ`
-
-*theorem, `Integration.Hydrozoan.FillDecided.lean`*
-
-```lean
-theorem decided_fill_agreeHZ {k : ℕ} {v w : Option BlockId}
-    {W : LeanDag.Hydrozoan.View (skipFillHZ U hsp sk)}
-    (hV : LeanDag.Hydrozoan.Decided U V k v)
-    (hW : LeanDag.Hydrozoan.Decided (skipFillHZ U hsp sk) W k w) :
-    v = w
-```
-
-**Cross-fill agreement.** A verdict reached before the recovery and one reached after it agree, which is `integration.md` SS5 for Hydrozoan's rule.
 
 #### `synchronisedOn_stackHZ`
 
@@ -36855,6 +36778,47 @@ theorem honestNoEquiv_toCore (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockI
 ```
 
 **The transported universe carries the wider non-equivocation**, which is Hydrozoan's own field: the hybrid arc's `creator ∉ byzantine` and Hydrozoan's `author ∈ NonByzantine` are one condition.
+
+#### `decided_fillHZ_of_persist`
+
+*theorem, `Integration.Hydrozoan.ViaProperties.lean`*
+
+```lean
+theorem decided_fillHZ_of_persist (sk : SkipMsg (toCore U hsp))
+    [S : LeanDag.Hydrozoan.Slots Replica] {V : LeanDag.Hydrozoan.View U}
+    {k : ℕ} {v : Option BlockId} (h : LeanDag.Hydrozoan.Decided U V k v) :
+    LeanDag.Hydrozoan.Decided (skipFillHZ U hsp sk) (liftViewHZ U hsp sk V) k v
+```
+
+**HI9's transport, from HZ9.** Verdicts survive the fill, reached without an induction: persistence is proved once for the protocol, and the fill is one extension among others. `FillDecided.lean` proved this by a six-constructor induction until the induction was deleted.
+
+#### `decided_fill_agreeHZ_of_properties`
+
+*theorem, `Integration.Hydrozoan.ViaProperties.lean`*
+
+```lean
+theorem decided_fill_agreeHZ_of_properties (sk : SkipMsg (toCore U hsp))
+    [S : LeanDag.Hydrozoan.Slots Replica] {V : LeanDag.Hydrozoan.View U}
+    {W : LeanDag.Hydrozoan.View (skipFillHZ U hsp sk)} {k : ℕ} {v w : Option BlockId}
+    (hV : LeanDag.Hydrozoan.Decided U V k v)
+    (hW : LeanDag.Hydrozoan.Decided (skipFillHZ U hsp sk) W k w) : v = w
+```
+
+**HI9's cross-fill agreement, from HZ9 and HZ3.** A verdict reached before the recovery and one reached after it agree. The deleted bespoke version composed its induction with slot agreement by hand; this is `Arcs.decided_agree_extends`, which every rule with `Agree` and `Persist` has.
+
+#### `decided_chopHZ_of_localTruncate`
+
+*theorem, `Integration.Hydrozoan.ViaProperties.lean`*
+
+```lean
+theorem decided_chopHZ_of_localTruncate [S : LeanDag.Hydrozoan.Slots Replica] {G d : ℕ}
+    (hd : G ≤ S.slotRound d) {V : LeanDag.Hydrozoan.View U} {k : ℕ} {v : Option BlockId} :
+    LeanDag.Hydrozoan.Decided (S := slotsChopHZ hd) (chopHZ U hsp G)
+        (View.chopHZ V hsp G) k v
+      ↔ LeanDag.Hydrozoan.Decided U V (d + k) v
+```
+
+**HI7's transport, from HZ9.** A replica that has pruned below the horizon reaches exactly the verdicts it would have reached with its whole history, at the re-indexed slot — without an induction, and without a Hydrozoan-specific truncation relation. `ChopDecided.lean` proved this by two inductions until they were deleted.
 
 #### `isLeaderBlock_congr`
 
@@ -37184,6 +37148,28 @@ theorem descends {S : Slots Validator} {c : ℕ} (hc : 0 < c)
 
 **The descent as a property**, under the spanning hypothesis on the round structure.
 
+#### `banded`
+
+*theorem, `OdontocetiProperties.lean`*
+
+```lean
+theorem banded : Banded
+    (odontocetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+```
+
+**Odontoceti reads a band.**
+
+#### `agree`
+
+*theorem, `OdontocetiProperties.lean`*
+
+```lean
+theorem agree : Agree (odontocetiRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload))
+```
+
+**Two views decide alike.** O5 under the property's name.
+
 #### `decided_agree_truncate`
 
 *theorem, `Properties.Arcs.GC.lean`*
@@ -37239,6 +37225,18 @@ theorem directCommit_chop {T : Finset Validator} {r : ℕ} {L : BlockId}
 ```
 
 **The reactive commit survives the cut** — the consumer test, from the obligation rather than from `chop` directly.
+
+#### `decided_chop_iff`
+
+*theorem, `Properties.Arcs.GC.lean`*
+
+```lean
+theorem decided_chop_iff (hd : G ≤ S.slotRound d)
+    {V : View Validator BlockId Payload U} {k : ℕ} {v : Option BlockId} :
+    Decided U V (d + k) v ↔ Decided (S := S.chop G d hd) (chop U G) (V.chop G) k v
+```
+
+**G3 re-derived, with no induction of its own.** Both directions of the cut's verdict transport, from the band.
 
 #### `decided_agree_chop`
 
@@ -37667,7 +37665,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 958 lemmas used only within the file that proves
+The 955 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -38004,14 +38002,16 @@ subsection per module, in the layer order of Appendices B and C.
 | `byzPool_succ_subset` | The freeze step: a round in which every correct acceptance is correct-authored adds nothing to the pool — … |
 | `card_viewUpto_le_of_allExposed` | B5 — the slope decays to the correct-production rate. After exposure-complete at `m`, a correct view is … |
 
-### `GC/Chop.lean` (11)
+### `GC/Chop.lean` (13)
 
 | Lemma | Role |
 |:---|:---|
 | `authorsAt_chop` | And so are its authors. |
 | `blames_chop` | — |
+| `blocksAt_chop` | Round `m` of the truncation is round `G + m` of the original. |
 | `certifies_chop` | — |
 | `chopBlock_refs_subset` | The truncation's references never exceed the original's. |
+| `creatorsOf_chopBlock` | Creators are untouched, so creator sets are, pointwise. |
 | `directSkip_chop` | — |
 | `exposedIn_of_exposedIn_chop` | Exposure in the truncation is exposure in the original: the witnessing pair survives un-rebasing. |
 | `reaches_chop_iff` | — |
@@ -39279,7 +39279,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `adaptiveRun_exists_reactive` | The adaptive fixpoint exists over reactive Mysticeti. Under a policy that places runs, with the reactive … |
 | `exists_partialRun_reactive` | Partial runs exist at every height, reactively. |
 
-### `Integration/Hydrozoan/ChopDecided.lean` (10)
+### `Integration/Hydrozoan/ChopDecided.lean` (7)
 
 | Lemma | Role |
 |:---|:---|
@@ -39287,9 +39287,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `certificates_chopHZ` | — |
 | `certifiersInView_chopHZ` | — |
 | `chopHZ_parents_subset` | The truncation only ever drops parents, never adds them. |
-| `decided_agree_chopHZ` | Cross-cut agreement. A replica that has pruned below the horizon and one that has not cannot disagree … |
-| `decided_chopHZ_of_decided` | Backward: the original verdict is reached on the truncation. Generalised over the slot, with the … |
-| `decided_of_decided_chopHZ` | Forward: a verdict reached on the truncation is the original verdict, at the re-indexed slot. |
 | `isCertificate_chopHZ` | Certification is a count over a block's votes, so it transports where the votes do. |
 | `reaches_chopHZ_of_reaches` | — |
 | `slotsChopHZ_slotRound` | — |
@@ -39414,13 +39411,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `toCore_block` | — |
 | `toCore_ids` | — |
 
-### `Integration/Hydrozoan/ViaProperties.lean` (7)
+### `Integration/Hydrozoan/ViaProperties.lean` (5)
 
 | Lemma | Role |
 |:---|:---|
-| `decided_agree_chopHZ_of_properties` | HI8's cross-cut agreement, from HZ9. `ChopDecided.decided_agree_chopHZ` plays Hydrozoan's slot agreement … |
-| `decided_chopHZ_of_localTruncate` | HI7's transport, from HZ9. The same statement as `decided_chopHZ`, reached without an induction — and now … |
-| `decided_fillHZ_of_persist` | HI9's transport, from HZ9. The same statement as `decided_fillHZ`, reached without an induction: … |
+| `decided_agree_chopHZ_of_properties` | HI8's cross-cut agreement, from HZ9. A replica that has pruned below the horizon and one that has not … |
 | `extends_skipFillHZ` | The fill is an extension. It holds every block the original held and denotes each of them unchanged. |
 | `sustains_chopHZ` | A truncation sustains from its horizon. At and above the cut a block keeps its author and, strictly above, … |
 | `sustains_skipFillHZ` | A fill sustains from the top of its gap. Above it the fill added nothing, so every block is old and … |
@@ -39474,12 +39469,10 @@ subsection per module, in the layer order of Appendices B and C.
 | `votesIn_of_sustains` | The votes an old decision-round block counts are the votes it counted: its references are unchanged, and … |
 | `votesIn_old` | The votes an old certificate counts are the votes it counted. |
 
-### `OdontocetiProperties.lean` (18)
+### `OdontocetiProperties.lean` (16)
 
 | Lemma | Role |
 |:---|:---|
-| `agree` | Two views decide alike. O5 under the property's name. |
-| `banded` | Odontoceti reads a band. |
 | `banded_aux` | Every verdict of Odontoceti reads a band of rounds. One induction, four cases. The direct cases read one … |
 | `causal` | Odontoceti's universes are block DAGs — the same argument as the core's, the universe type being the same. |
 | `commitsCandidate` | A commit names the slot's candidate. |
@@ -39497,16 +39490,18 @@ subsection per module, in the layer order of Appendices B and C.
 | `thickLink_threshold_pos` | The thick-link threshold is positive: `Faults5` asks for `5f + 1` validators, so `card − 3f ≥ 2f + 1`. |
 | `toCore` | The two carriers project identically, so a band for one is a band for the other. |
 
-### `Properties/Arcs/GC.lean` (7)
+### `Properties/Arcs/GC.lean` (9)
 
 | Lemma | Role |
 |:---|:---|
+| `decided_agree_chop_odontoceti` | And cross-cut agreement, from an arbitrary view of the truncation. |
 | `decided_agree_horizons_chop` | G8 re-derived. Validators at different horizons agree. |
-| `decided_chop_iff` | G3 re-derived, with no induction of its own. Both directions of the cut's verdict transport, from the band. |
+| `decided_chop_iff_odontoceti` | Verdict transport across the cut, for Odontoceti. |
 | `decided_of_truncate` | A verdict survives the cut, at the replica's own numbering. |
 | `decided_of_truncated` | And a verdict of the truncation is a verdict of the whole DAG, which is what lets a pruned replica be … |
 | `noEquivOn_chop` | And so does non-equivocation, from the truncation. |
 | `truncates_chop` | The cut is a truncation. The witness `Truncates` was written to have, exhibited before anything is proved … |
+| `truncates_chop_odontoceti` | The cut is a truncation of Odontoceti's carrier too. |
 | `viewAgreeAbove_chop` | The chopped view agrees with the original above the cut, which is the view hypothesis the two theorems … |
 
 ### `Properties/Arcs/SafeSkip.lean` (7)

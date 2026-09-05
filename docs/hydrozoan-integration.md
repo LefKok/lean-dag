@@ -1282,7 +1282,7 @@ schemes are distinct.
 | P4 | `Integration/Hydrozoan/{Faults,Schedule}.lean` | B1, B2 | HI1, HI2 | — |
 | P5 | `Universe.lean`: `SelfParenting`, `toCore`, `ofCore` | B3 | HI8 | P4 |
 | P6 | `Transport.lean`: `transport`, the preservation lemmas | B4 | — | P5 |
-| P7 | `decided_chopHZ` for Hydrozoan and for Optimal (**done**) | — | HI7 | P6 |
+| P7 | verdicts across the cut, for Hydrozoan and for Optimal (**done**) | — | HI7 | P6 |
 | P8 | the fill: verdict agreement (**done**); for Optimal, refuted (**done**) | — | HI9 | P7 |
 | P9 | the stack capstones (**done**) | — | — | P8 |
 | P10 | this record; report §24; the reference pipeline (**done**) | — | — | P9 |

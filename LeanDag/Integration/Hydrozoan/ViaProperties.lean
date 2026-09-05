@@ -8,8 +8,8 @@ import LeanDag.Properties.Arcs.GC
 # The fill, re-derived through the target properties
 
 `docs/target-properties.md` G3's test, and the reason to believe the
-arc pays. `FillDecided.lean` proves `decided_fillHZ` by a
-six-constructor induction over Hydrozoan's decision relation, with
+arc pays. `FillDecided.lean` proved verdict transport across the fill
+by a six-constructor induction over Hydrozoan's decision relation, with
 transfer lemmas threaded through it for that one transformer. HZ9
 proves the same protocol persists under **every** extension, once.
 
@@ -20,13 +20,17 @@ Hydrozoan nothing beyond what HZ9 already established.
 
 The same is done for the cut. `TruncatesHZ` is exhibited by `chopHZ` —
 which is the satisfiability check `Shifted` never got, and would have
-failed — and `decided_chopHZ`, a further two inductions in
+failed — and the transport, a further two inductions in
 `ChopDecided.lean`, follows from HZ9's `LocalTruncate` with none of its
 own.
 
-The bespoke proofs stay where they are: `Stack.lean` and `Liveness.lean`
-consume them, and `integration.md` §4.2 prescribes generalising with the
-old statements kept as corollaries.
+**The bespoke proofs are gone.** They stayed for a while as
+corollaries, per `integration.md` §4.2 — generalise first, delete
+later. Later is here: `Stack.lean` and the two witness files now
+consume the theorems below, and `ChopDecided.lean` and
+`FillDecided.lean` state what the two transformers preserve without
+proving anything about verdicts. Hydrozoan's decision relation is
+inducted over in its own development and nowhere else.
 -/
 
 namespace LeanDag
@@ -56,9 +60,10 @@ theorem extends_skipFillHZ (sk : SkipMsg (toCore U hsp)) :
     congr 1
     exact skipFillHZ_block_old hb
 
-/-- **HI9's transport, from HZ9.** The same statement as
-`decided_fillHZ`, reached without an induction: persistence is proved
-once for the protocol, and the fill is one extension among others. -/
+/-- **HI9's transport, from HZ9.** Verdicts survive the fill, reached
+without an induction: persistence is proved once for the protocol, and
+the fill is one extension among others. `FillDecided.lean` proved this
+by a six-constructor induction until the induction was deleted. -/
 theorem decided_fillHZ_of_persist (sk : SkipMsg (toCore U hsp))
     [S : LeanDag.Hydrozoan.Slots Replica] {V : LeanDag.Hydrozoan.View U}
     {k : ℕ} {v : Option BlockId} (h : LeanDag.Hydrozoan.Decided U V k v) :
@@ -67,6 +72,19 @@ theorem decided_fillHZ_of_persist (sk : SkipMsg (toCore U hsp))
     (by
       intro b hb
       simpa using hb) h
+
+/-- **HI9's cross-fill agreement, from HZ9 and HZ3.** A verdict reached
+before the recovery and one reached after it agree. The deleted bespoke
+version composed its induction with slot agreement by hand; this is
+`Arcs.decided_agree_extends`, which every rule with `Agree` and
+`Persist` has. -/
+theorem decided_fill_agreeHZ_of_properties (sk : SkipMsg (toCore U hsp))
+    [S : LeanDag.Hydrozoan.Slots Replica] {V : LeanDag.Hydrozoan.View U}
+    {W : LeanDag.Hydrozoan.View (skipFillHZ U hsp sk)} {k : ℕ} {v w : Option BlockId}
+    (hV : LeanDag.Hydrozoan.Decided U V k v)
+    (hW : LeanDag.Hydrozoan.Decided (skipFillHZ U hsp sk) W k w) : v = w :=
+  LeanDag.Hydrozoan.SlotAgreement.holds Replica BlockId (skipFillHZ U hsp sk)
+    (liftViewHZ U hsp sk V) W k v w (decided_fillHZ_of_persist sk hV) hW
 
 /-! ## What the two mechanisms sustain
 
@@ -160,9 +178,11 @@ theorem truncates_chopHZ [S : LeanDag.Hydrozoan.Slots Replica] {G d : ℕ}
     leader := fun k => slotsChopHZ_leader hd k
     base := hd }
 
-/-- **HI7's transport, from HZ9.** The same statement as
-`decided_chopHZ`, reached without an induction — and now without a
-Hydrozoan-specific truncation relation either. -/
+/-- **HI7's transport, from HZ9.** A replica that has pruned below the
+horizon reaches exactly the verdicts it would have reached with its
+whole history, at the re-indexed slot — without an induction, and
+without a Hydrozoan-specific truncation relation. `ChopDecided.lean`
+proved this by two inductions until they were deleted. -/
 theorem decided_chopHZ_of_localTruncate [S : LeanDag.Hydrozoan.Slots Replica] {G d : ℕ}
     (hd : G ≤ S.slotRound d) {V : LeanDag.Hydrozoan.View U} {k : ℕ} {v : Option BlockId} :
     LeanDag.Hydrozoan.Decided (S := slotsChopHZ hd) (chopHZ U hsp G)
@@ -175,10 +195,13 @@ theorem decided_chopHZ_of_localTruncate [S : LeanDag.Hydrozoan.Slots Replica] {G
       change b ∈ V.ids ↔ b ∈ (View.chopHZ V hsp G).ids
       exact (mem_viewChopHZ (V := V) hbr).symm) k v).symm
 
-/-- **HI8's cross-cut agreement, from HZ9.** `ChopDecided.decided_agree_chopHZ`
-plays Hydrozoan's slot agreement inside the truncation and moves across
-the cut by a six-constructor induction. Here it is `Agree` and
-`LocalTruncate` composed, which every rule with a band has. -/
+/-- **HI8's cross-cut agreement, from HZ9.** A replica that has pruned
+below the horizon and one that has not cannot disagree about a slot,
+and the pruned replica's view is an arbitrary view of the truncation
+rather than a truncated full-history view. The deleted bespoke version
+played slot agreement inside the truncation and moved across the cut by
+induction; this is `Agree` and `LocalTruncate` composed, which every
+rule with a band has. -/
 theorem decided_agree_chopHZ_of_properties [S : LeanDag.Hydrozoan.Slots Replica]
     {G d : ℕ} (hd : G ≤ S.slotRound d)
     {V : LeanDag.Hydrozoan.View U} {W : LeanDag.Hydrozoan.View (chopHZ U hsp G)}

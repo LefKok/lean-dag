@@ -1,5 +1,6 @@
 import LeanDagTest.Integration.HydrozoanUniverse
 import LeanDag.Integration.Hydrozoan.Stack
+import LeanDag.Integration.Hydrozoan.ViaProperties
 
 /-!
 # The fill and the stack — witnesses
@@ -142,12 +143,12 @@ example : LeanDag.Hydrozoan.IsLeaderBlock (skipFillHZ Ucr selfParenting_Ucr skcr
 — and with no quorum hypothesis, which is §5.1's finding. -/
 example : LeanDag.Hydrozoan.Decided (skipFillHZ Ucr selfParenting_Ucr skcr)
     (liftViewHZ Ucr selfParenting_Ucr skcr Vcr) 1 none :=
-  decided_fillHZ skipped_slot_one_cr
+  decided_fillHZ_of_persist skcr skipped_slot_one_cr
 
 /-- And the commit survives it. -/
 example : LeanDag.Hydrozoan.Decided (skipFillHZ Ucr selfParenting_Ucr skcr)
     (liftViewHZ Ucr selfParenting_Ucr skcr Vcr) 0 (some 0) :=
-  decided_fillHZ committed_slot_zero
+  decided_fillHZ_of_persist skcr committed_slot_zero
 
 /-! ## The stack: recovered, then pruned
 

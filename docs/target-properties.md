@@ -1312,7 +1312,7 @@ directory, hence the one flat module.
   the arc holds the `Truncates` witness for the canonical cut and
   nothing else. Its consumer test is `decided_chop_iff`, which
   `GC/ChopDecided.lean` proved by induction and the arc re-derives in
-  one application; the induction has since been deleted (§11.4c).
+  one application; the induction has since been deleted (§11.4e).
 - **G3** Discharge them for Hydrozoan (**done**) — HZ9 states
   `Causal`, `Banded`, `Agree`, `Persist` and `SkipsUnsupported` at grade
   `qFast ≤ |T|` (§3.7). Persistence is unconditional, as §3.2 predicts
@@ -1320,7 +1320,8 @@ directory, hence the one flat module.
   `LocalTruncate` are not stated: both are the band applied (§11.4d). Two consumer tests passed with no induction
   of their own, both in `Integration/Hydrozoan/ViaProperties.lean`:
   `decided_fillHZ`, a six-constructor induction in `FillDecided.lean`,
-  and `decided_chopHZ`, an induction in `Truncation.lean`. **The
+  and `decided_chopHZ`, an induction in `ChopDecided.lean` — both since
+  deleted, with the properties route their only route (§11.4e). **The
   protocol owes one induction**, the band in
   `Hydrozoan/Helpers/Banded.lean`, and no more, whatever mechanisms
   follow. It began as three, one each for persistence, locality and
@@ -1518,7 +1519,8 @@ with no slot-indexed relation — for those two the carrier is not the
 first step, the schedule layer is.
 
 The consumer tests passed. Each is a former bespoke induction
-re-derived with none: `decided_fillHZ`, `decided_chopHZ`,
+re-derived with none — and the six named first have since had the
+induction deleted (§11.4e): `decided_fillHZ`, `decided_chopHZ`,
 `SafeSkip.decided_fill`, SS3 as a verdict (`decided_none_fresh`),
 `directCommit_chop` for liveness, and the adaptive arc entire, AL3 and
 AL5 standing verbatim as corollaries. One result the bespoke
@@ -1740,7 +1742,7 @@ pattern has appeared. The second was billing what survived as *the
 additive counterpart to `Sustains`*; it is not a counterpart to
 anything, being vacuous wherever the fault model and the carrier agree.
 
-### 11.4c The mechanism stops carrying its own proof
+### 11.4e The mechanism stops carrying its own proof
 
 The garbage-collection arc proved verdict transport and cross-cut
 agreement twice: once by structural induction over the decision relation
@@ -1776,6 +1778,47 @@ no theorem of the garbage-collection mechanism mentions `Decided`.
 proved *from* them, so a protocol consuming its own conformance would be
 an import cycle. The shape is protocol → properties → mechanisms, and
 only the last arrow lost a duplicate.
+
+**The same cut, for Hydrozoan.** `Integration/Hydrozoan/ChopDecided.lean`
+and `FillDecided.lean` carried three inductions between them — the cut
+both ways and the fill forwards — and two agreement theorems composed
+onto them. All five are gone. `Stack.decided_stackHZ`, the one live
+consumer, now composes `decided_fillHZ_of_persist` with
+`decided_chopHZ_of_localTruncate`; the two witness files follow it.
+`isLeaderBlock_of_decidedHZ` went as well, being a copy of the core's
+`Hydrozoan.isLeaderBlock_of_decided`.
+
+What did **not** go is larger than in the core's case, and the
+difference is worth stating. Both files keep every rule transfer:
+candidacy, anchor eligibility, the three direct rules in view, the two
+rung tests, each moved across the transformer block by block and
+biconditionally. Those are not proof scaffolding — they *are* the claim
+that the transformer is a truncation or an extension, and
+`ViaProperties.truncates_chopHZ` and `extends_skipFillHZ` assemble them
+into exactly that. The negative clauses are the sharp ones:
+`not_certifiedInHZ_fresh` and `not_weakLinkedHZ_fresh` say a fresh
+candidate is invisible from an old anchor, which is why the fill is an
+extension at all. Deleting the induction removes the second proof of
+the verdict claim and leaves the first proof of the structural one.
+
+**Odontoceti gets the cut with no bespoke route in existence.**
+`Arcs.truncates_chop_odontoceti` transports the core's `Truncates`
+witness across the two carriers — seven fields, each already proved —
+and `decided_chop_iff_odontoceti` and `decided_agree_chop_odontoceti`
+follow from `LocalTruncate.of_banded` at Odontoceti's band and its
+`Agree`. Odontoceti has no `ChopDecided` file and never had one. This
+is the arc's second claim tested in the only way that is not
+retrospective: a protocol acquired a mechanism it was never written
+for, and the cost was a transport of field projections.
+
+**Two bespoke inductions over Hydrozoan's `Decided` remain, and
+nothing consumes either.** `Integration/Hydrozoan/Simulation.lean`
+generalises the three transports into one induction over what a rule
+reads a universe *through*; that is a different question from the
+properties arc's and it is kept as a study. `OptimalChopDecided.lean`
+carries the cut for Optimal-Hydrozoan, which has no band yet — item 3
+of §11.5 is where its band would come from, and until it has one the
+induction is the only route it has.
 
 ### 11.4b Obligation or consequence
 

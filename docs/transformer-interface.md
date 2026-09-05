@@ -46,16 +46,27 @@ empty and both are vacuous; for a fill it is "fresh".
 All three of the arc's transport directions are instances, and none
 carries an induction of its own:
 
-| Instance | `R n k` | `Novel` | Recovers |
+| Instance | `R n k` | `Novel` | Subsumed |
 |---|---|---|---|
 | `simulates_fill` | `n = k` | `L ∉ U.ids` | `decided_fillHZ` |
 | `simulates_chop` | `n = d + k` | `False` | `decided_chopHZ_of_decided` |
 | `simulates_chop_bwd` | `k = d + n` | `False` | `decided_of_decided_chopHZ` |
 
-The bespoke proofs in `ChopDecided.lean` and `FillDecided.lean` are
-retained: `Stack.lean` and `Liveness.lean` consume them, and
-`integration.md` §4.2 prescribes generalising with the old statements
-kept as corollaries rather than rewriting working code.
+**The three names in the last column no longer exist.** The bespoke
+proofs in `ChopDecided.lean` and `FillDecided.lean` were deleted:
+`Integration/Hydrozoan/ViaProperties.lean` reaches the same three
+statements from HZ9's band and persistence with no induction at all,
+and `Stack.lean` and the witness files consume those
+(`docs/target-properties.md` §11.4e). The corollaries here remain
+provable and are kept, but nothing consumes them either.
+
+That leaves this file a study rather than a dependency, and the
+question it answers is still not the properties arc's. `Simulates` asks
+*what does a rule read a universe through*; the properties ask *which
+transformations does a rule survive*. The second is what mechanisms
+need, and the band answers it in one induction for every transformer at
+once. The first is the sharper description of Hydrozoan's relation, and
+nothing in the properties layer supplies it.
 
 **The limit of this interface is that its field types name Hydrozoan's
 predicates.** It abstracts over transformers, not over protocols. That

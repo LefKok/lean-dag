@@ -1,5 +1,6 @@
 import LeanDagTest.Integration.HydrozoanTransport
 import LeanDag.Integration.Hydrozoan.ChopDecided
+import LeanDag.Integration.Hydrozoan.ViaProperties
 
 /-!
 # Verdicts across the cut — witnesses
@@ -58,7 +59,7 @@ example : (chopHZ LeanDagTest.Hydrozoan.U7 selfParenting_U7 1).ids
 example : LeanDag.Hydrozoan.Decided (S := slotsChopHZ hd1)
     (chopHZ LeanDagTest.Hydrozoan.U7 selfParenting_U7 1)
     (View.chopHZ V7 selfParenting_U7 1) 0 none :=
-  (decided_chopHZ (V := V7) hd1).mpr decided_slot_one
+  (decided_chopHZ_of_localTruncate (V := V7) hd1).mpr decided_slot_one
 
 /-- And back the other way: a verdict reached on the truncation is the
 original verdict. -/
@@ -67,7 +68,7 @@ example (v : Option (Fin 9))
       (chopHZ LeanDagTest.Hydrozoan.U7 selfParenting_U7 1)
       (View.chopHZ V7 selfParenting_U7 1) 0 v) :
     LeanDag.Hydrozoan.Decided LeanDagTest.Hydrozoan.U7 V7 1 v :=
-  (decided_chopHZ (V := V7) hd1).mp h
+  (decided_chopHZ_of_localTruncate (V := V7) hd1).mp h
 
 /-! ## Cross-cut agreement
 
@@ -81,7 +82,7 @@ example (W : LeanDag.Hydrozoan.View
     (hW : LeanDag.Hydrozoan.Decided (S := slotsChopHZ hd1)
       (chopHZ LeanDagTest.Hydrozoan.U7 selfParenting_U7 1) W 0 w) :
     none = w :=
-  decided_agree_chopHZ hd1 decided_slot_one hW
+  decided_agree_chopHZ_of_properties hd1 decided_slot_one hW
 
 end Integration
 

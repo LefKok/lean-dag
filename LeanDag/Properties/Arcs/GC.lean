@@ -3,6 +3,7 @@ import LeanDag.Properties.Sustain
 import LeanDag.GC.Chop
 import LeanDag.GC.ChopDecided
 import LeanDag.MysticetiProperties
+import LeanDag.OdontocetiProperties
 import LeanDag.Properties.Band
 import LeanDag.Properties.Derived.Truncate
 
@@ -254,6 +255,56 @@ theorem noEquivOn_chop (hd : G ≤ S.slotRound d) {T : Finset Validator}
 
 end CoreTruncate
 
+
+/-! ## The same cut, for a second protocol
+
+Odontoceti gets garbage collection here with **no bespoke route in
+existence**: it has no `ChopDecided` of its own and never had one. The
+core's had to be deleted to make the point; this one makes it by
+construction.
+
+Nothing below is about Odontoceti's rule. The witness is the core's,
+transported by the three-plus-three fields, because the two carriers
+project identically; the transport and the agreement are the generic
+theorems at Odontoceti's band. A third protocol with a band would take
+the same lines. -/
+
+section OdontocetiTruncate
+
+variable [Faults5 Validator] {B : Type} [LinearOrder B]
+variable {U : BlockUniverse Validator B Payload}
+variable {S : Slots Validator} {G d : ℕ}
+
+/-- **The cut is a truncation of Odontoceti's carrier too.** -/
+theorem truncates_chop_odontoceti (hd : G ≤ S.slotRound d) :
+    Truncates (OdontocetiProperties.odontocetiRule (BlockId := B) (Payload := Payload))
+      U (chop U G) S (S.chop G d hd) G d :=
+  let h := truncates_chop (Validator := Validator) (BlockId := B) (Payload := Payload)
+    (U := U) (S := S) (G := G) (d := d) hd
+  { mem := h.mem, round := h.round, creator := h.creator, refs := h.refs
+    slotRound := h.slotRound, leader := h.leader, base := h.base }
+
+/-- **Verdict transport across the cut, for Odontoceti.** -/
+theorem decided_chop_iff_odontoceti (hd : G ≤ S.slotRound d)
+    {V : View Validator B Payload U} {k : ℕ} {v : Option B} :
+    Odontoceti.Decided U V (d + k) v ↔
+      Odontoceti.Decided (S := S.chop G d hd) (chop U G) (V.chop G) k v :=
+  LocalTruncate.of_banded OdontocetiProperties.banded
+    S (S.chop G d hd) U (chop U G) G d (truncates_chop_odontoceti hd) V (V.chop G)
+    viewAgreeAbove_chop k v
+
+/-- **And cross-cut agreement**, from an arbitrary view of the
+truncation. -/
+theorem decided_agree_chop_odontoceti (hd : G ≤ S.slotRound d)
+    {W : View Validator B Payload (chop U G)}
+    {V : View Validator B Payload U} {k : ℕ} {w v : Option B}
+    (hW : Odontoceti.Decided (S := S.chop G d hd) (chop U G) W k w)
+    (hV : Odontoceti.Decided U V (d + k) v) : w = v :=
+  decided_agree_truncate OdontocetiProperties.agree
+    (LocalTruncate.of_banded OdontocetiProperties.banded)
+    (truncates_chop_odontoceti hd) viewAgreeAbove_chop hW hV
+
+end OdontocetiTruncate
 
 end Arcs
 
