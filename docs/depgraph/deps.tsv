@@ -2823,6 +2823,14 @@ NODE	LeanDag.Odontoceti.decisionRound.eq_1	LeanDag.Odontoceti.Decision	thm
 EDGE	LeanDag.Odontoceti.decisionRound.eq_1	LeanDag.Slots.slotRound
 EDGE	LeanDag.Odontoceti.decisionRound.eq_1	LeanDag.Odontoceti.decisionRound
 EDGE	LeanDag.Odontoceti.decisionRound.eq_1	LeanDag.Slots
+NODE	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_4	LeanDag.MysticetiProperties	thm
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_4	LeanDag.Faults
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_4	LeanDag.Slots.slotRound
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_4	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_4	LeanDag.Block.round
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_4	LeanDag.BlockUniverse
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_4	LeanDag.Faults.f
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_4	LeanDag.Slots
 NODE	LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.select_isSelected	LeanDag.Hybrid.Checkpoint.RecoveryProofs	thm
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.select_isSelected	LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.select_spec
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.select_isSelected	LeanDag.HybridFaults
@@ -4090,8 +4098,10 @@ EDGE	LeanDag.Integration.directCommit_skipFill_reactive	LeanDag.ReactivePace.toP
 EDGE	LeanDag.Integration.directCommit_skipFill_reactive	LeanDag.PaceCore.timeout
 EDGE	LeanDag.Integration.directCommit_skipFill_reactive	LeanDag.PaceCore.proc
 EDGE	LeanDag.Integration.directCommit_skipFill_reactive	LeanDag.IsLeaderBlock
+EDGE	LeanDag.Integration.directCommit_skipFill_reactive	LeanDag.View.CoversUpto
 EDGE	LeanDag.Integration.directCommit_skipFill_reactive	LeanDag.Slots
 EDGE	LeanDag.Integration.directCommit_skipFill_reactive	LeanDag.SkipMsg
+EDGE	LeanDag.Integration.directCommit_skipFill_reactive	LeanDag.View
 EDGE	LeanDag.Integration.directCommit_skipFill_reactive	LeanDag.PaceCore.delay
 NODE	LeanDag.Nemo.ValidWrt.mk	LeanDag.Nemo.Basic	ctor
 EDGE	LeanDag.Nemo.ValidWrt.mk	LeanDag.Block
@@ -4847,11 +4857,6 @@ EDGE	LeanDag.MahiMahi.mem_goodAt	LeanDag.BlockUniverse.block
 EDGE	LeanDag.MahiMahi.mem_goodAt	LeanDag.Block.round
 EDGE	LeanDag.MahiMahi.mem_goodAt	LeanDag.BlockUniverse
 EDGE	LeanDag.MahiMahi.mem_goodAt	LeanDag.Block.creator
-NODE	LeanDag.MysticetiProperties.leaderCommits._proof_1_2	LeanDag.MysticetiProperties	thm
-EDGE	LeanDag.MysticetiProperties.leaderCommits._proof_1_2	LeanDag.Faults
-EDGE	LeanDag.MysticetiProperties.leaderCommits._proof_1_2	LeanDag.Slots.slotRound
-EDGE	LeanDag.MysticetiProperties.leaderCommits._proof_1_2	LeanDag.Faults.f
-EDGE	LeanDag.MysticetiProperties.leaderCommits._proof_1_2	LeanDag.Slots
 NODE	LeanDag.FinWhale.three_correct_of_roundRobin._proof_1_1	LeanDag.FinWhale.Rotation	thm
 NODE	LeanDag.BlackMarlin.suppCandidates	LeanDag.BlackMarlin.Model.Repair	def
 EDGE	LeanDag.BlackMarlin.suppCandidates	LeanDag.Faults
@@ -5660,6 +5665,34 @@ EDGE	LeanDag.Hydrozoan.DirectLiveness.CommitLiveness	LeanDag.Hydrozoan.Populated
 EDGE	LeanDag.Hydrozoan.DirectLiveness.CommitLiveness	LeanDag.Hydrozoan.Slots.slotRound
 EDGE	LeanDag.Hydrozoan.DirectLiveness.CommitLiveness	LeanDag.Hydrozoan.Slots.leader
 EDGE	LeanDag.Hydrozoan.DirectLiveness.CommitLiveness	LeanDag.Hydrozoan.Faults
+NODE	LeanDag.MysticetiProperties.leaderCommits_cert	LeanDag.MysticetiProperties	thm
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert	LeanDag.Properties.DagRule.Decided
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert	LeanDag.Properties.DecidedBelow
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert	LeanDag.Faults
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert	LeanDag.Slots.slotRound
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert	LeanDag.DirectCommit
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert	LeanDag.Properties.LeaderCommits
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert	LeanDag.View.CoversUpto.mono
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert	LeanDag.Slots.leader
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert	LeanDag.directCommitIn_of_coversUpto
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert	LeanDag.Decided.directCommit
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert	LeanDag.Block.round
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert	LeanDag.PopulatedOn
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert	LeanDag.CertifiesAt
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert	LeanDag.DirectCommitIn
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert	LeanDag.MysticetiProperties.certLive
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert	LeanDag.Faults.f
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert	LeanDag.directCommit_of_certifiesAt
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert	LeanDag.IsLeaderBlock
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert	LeanDag.View.CoversUpto
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert	LeanDag.Slots
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert	LeanDag.Properties.DagRule.View
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert	LeanDag.Block.creator
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert	LeanDag.Properties.DagRule.Universe
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert	LeanDag.MysticetiProperties.leaderCommits_cert._proof_1_1
 NODE	LeanDag.OptimalHydrozoan.PrefixAgreement.SeqAgreement	LeanDag.OptimalHydrozoan.PrefixAgreement.Statement	def
 EDGE	LeanDag.OptimalHydrozoan.PrefixAgreement.SeqAgreement	LeanDag.OptimalHydrozoan.OptUniverse.toBlockUniverse
 EDGE	LeanDag.OptimalHydrozoan.PrefixAgreement.SeqAgreement	LeanDag.Hydrozoan.Slots
@@ -12341,7 +12374,9 @@ EDGE	LeanDag.Integration.directCommit_addGenesis_reactive	LeanDag.ReactivePace.t
 EDGE	LeanDag.Integration.directCommit_addGenesis_reactive	LeanDag.PaceCore.timeout
 EDGE	LeanDag.Integration.directCommit_addGenesis_reactive	LeanDag.PaceCore.proc
 EDGE	LeanDag.Integration.directCommit_addGenesis_reactive	LeanDag.IsLeaderBlock
+EDGE	LeanDag.Integration.directCommit_addGenesis_reactive	LeanDag.View.CoversUpto
 EDGE	LeanDag.Integration.directCommit_addGenesis_reactive	LeanDag.Slots
+EDGE	LeanDag.Integration.directCommit_addGenesis_reactive	LeanDag.View
 EDGE	LeanDag.Integration.directCommit_addGenesis_reactive	LeanDag.Block.creator
 EDGE	LeanDag.Integration.directCommit_addGenesis_reactive	LeanDag.PaceCore.delay
 NODE	LeanDagTest.ugrowSkewPace_commits_local	LeanDagTest.ViewPace	thm
@@ -13977,6 +14012,14 @@ EDGE	LeanDag.Properties.LocalTruncate	LeanDag.Properties.DagRule.View
 EDGE	LeanDag.Properties.LocalTruncate	LeanDag.Properties.DagRule.Universe
 EDGE	LeanDag.Properties.LocalTruncate	LeanDag.Properties.Truncates
 NODE	LeanDagTest.Hydrozoan.lk12._proof_4	LeanDagTest.Hydrozoan.LivenessHardening	thm
+NODE	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_3	LeanDag.MysticetiProperties	thm
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_3	LeanDag.Faults
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_3	LeanDag.Slots.slotRound
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_3	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_3	LeanDag.Block.round
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_3	LeanDag.BlockUniverse
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_3	LeanDag.Faults.f
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_3	LeanDag.Slots
 NODE	LeanDagTest.nemoSlots._proof_1	LeanDagTest.Nemo	thm
 NODE	LeanDagTest.BlackMarlin.bmRotation	LeanDagTest.BlackMarlin.Model	def
 EDGE	LeanDagTest.BlackMarlin.bmRotation	LeanDag.BlackMarlin.Rotation.mk
@@ -19814,11 +19857,6 @@ NODE	LeanDag.Integration.SoundOn	LeanDag.Integration.Sound	ind
 EDGE	LeanDag.Integration.SoundOn	LeanDag.HybridFaults
 EDGE	LeanDag.Integration.SoundOn	LeanDag.HybridFaults.toFaults
 EDGE	LeanDag.Integration.SoundOn	LeanDag.BlockUniverse
-NODE	LeanDag.MysticetiProperties.leaderCommits._proof_1_3	LeanDag.MysticetiProperties	thm
-EDGE	LeanDag.MysticetiProperties.leaderCommits._proof_1_3	LeanDag.Faults
-EDGE	LeanDag.MysticetiProperties.leaderCommits._proof_1_3	LeanDag.Slots.slotRound
-EDGE	LeanDag.MysticetiProperties.leaderCommits._proof_1_3	LeanDag.Faults.f
-EDGE	LeanDag.MysticetiProperties.leaderCommits._proof_1_3	LeanDag.Slots
 NODE	LeanDag.Hydrozoan.not_certifiedIn_bnd_novel._proof_1_4	LeanDag.Hydrozoan.Helpers.Banded	thm
 EDGE	LeanDag.Hydrozoan.not_certifiedIn_bnd_novel._proof_1_4	LeanDag.Hydrozoan.BlockUniverse
 EDGE	LeanDag.Hydrozoan.not_certifiedIn_bnd_novel._proof_1_4	LeanDag.Hydrozoan.rule
@@ -23050,6 +23088,16 @@ EDGE	LeanDag.Nemo.CertifiedIn	LeanDag.Nemo.Universe.block
 EDGE	LeanDag.Nemo.CertifiedIn	LeanDag.Nemo.history
 EDGE	LeanDag.Nemo.CertifiedIn	LeanDag.Block.refs
 EDGE	LeanDag.Nemo.CertifiedIn	LeanDag.Block.round
+NODE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains._proof_1_1	LeanDag.Reactive.MysticetiProperties	thm
+EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains._proof_1_1	LeanDag.ReactiveM.toReactivePace
+EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains._proof_1_1	LeanDag.Slots.slotRound
+EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains._proof_1_1	LeanDag.ReactiveM
+EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains._proof_1_1	LeanDag.PaceCore.gst
+EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains._proof_1_1	LeanDag.BlockUniverse
+EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains._proof_1_1	LeanDag.Faults.f
+EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains._proof_1_1	LeanDag.ReactivePace.toPaceCore
+EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains._proof_1_1	LeanDag.Slots
 NODE	LeanDag.HybridFaults.toFaults	LeanDag.Hybrid.Faults	def
 EDGE	LeanDag.HybridFaults.toFaults	LeanDag.HybridFaults
 EDGE	LeanDag.HybridFaults.toFaults	LeanDag.HybridFaults.fc
@@ -26778,26 +26826,30 @@ EDGE	LeanDag.OptimalHydrozoan.bandedOpt_aux._proof_1_22	LeanDag.Hydrozoan.BlockU
 NODE	LeanDagTest.Barnacle.uskip_indirect._proof_1_1	LeanDagTest.Barnacle.Instances	thm
 NODE	LeanDagTest.exclAcc_eq_empty._proof_1_6	LeanDagTest.GC.Bootstrap	thm
 NODE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.Reactive.MysticetiProperties	thm
-EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.MysticetiProperties.directCommit_of_sustains
 EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.Properties.Sustains
 EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.ReactiveM.toReactivePace
 EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.Faults
 EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.Slots.slotRound
 EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.ReactiveM
+EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains._proof_1_1
 EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.DirectCommit
 EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.Slots.leader
 EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.PaceCore.gst
 EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.Correct
-EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.PaceCore.populatedOn
 EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.MysticetiProperties.mysticetiRule
 EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.BlockUniverse
 EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.Faults.f
+EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.MysticetiProperties.directCommit_of_certLive_sustains
 EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.ReactivePace.toPaceCore
 EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.PaceCore.timeout
-EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.ReactiveM.certifies
+EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.MysticetiProperties.certLive_of_reactiveLive
 EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.PaceCore.proc
 EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.IsLeaderBlock
+EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.View.CoversUpto
 EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.Slots
+EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.Slots.mono
+EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.View
+EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.MysticetiProperties.reactiveLive
 EDGE	LeanDag.MysticetiProperties.directCommit_of_reactive_sustains	LeanDag.PaceCore.delay
 NODE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_3	LeanDag.MahiMahiProperties	thm
 EDGE	LeanDag.MahiMahiProperties.not_certifiedIn_band_novel._proof_1_3	LeanDag.Faults
@@ -29679,6 +29731,31 @@ EDGE	LeanDag.BlackMarlin.Safety.holds	LeanDag.BlackMarlin.SupportedIn
 EDGE	LeanDag.BlackMarlin.Safety.holds	LeanDag.BlackMarlin.eq_of_isAnchor_of_supported
 EDGE	LeanDag.BlackMarlin.Safety.holds	LeanDag.Reaches
 NODE	LeanDagTest.exclAcc_eq_empty._proof_1_4	LeanDagTest.GC.Bootstrap	thm
+NODE	LeanDag.MysticetiProperties.certLive_of_coreLive	LeanDag.MysticetiProperties	thm
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive	LeanDag.Faults
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive	LeanDag.Slots.slotRound
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive	LeanDag.Slots.leader
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_3
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_2
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_1
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_4
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive	LeanDag.Block.round
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive	LeanDag.PopulatedOn
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive	LeanDag.CertifiesAt
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive	LeanDag.BlockUniverse
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive	LeanDag.MysticetiProperties.certLive
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive	LeanDag.Faults.f
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive	LeanDag.IsLeaderBlock
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive	LeanDag.certifiesAt_of_synchronisedOn
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive	LeanDag.View.CoversUpto
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive	LeanDag.SynchronisedOn
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive	LeanDag.Slots
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive	LeanDag.Slots.mono
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive	LeanDag.View
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive	LeanDag.MysticetiProperties.coreLive
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive	LeanDag.Block.creator
 NODE	LeanDagTest.Minnow.kBlk.match_3	LeanDagTest.Minnow.Skip	def
 NODE	LeanDag.PaceCore.viewAt._proof_1	LeanDag.ViewPace	thm
 EDGE	LeanDag.PaceCore.viewAt._proof_1	LeanDag.Faults
@@ -31339,11 +31416,6 @@ EDGE	LeanDag.joinView._proof_4	LeanDag.Faults
 EDGE	LeanDag.joinView._proof_4	LeanDag.BlockUniverse.block
 EDGE	LeanDag.joinView._proof_4	LeanDag.Block.round
 EDGE	LeanDag.joinView._proof_4	LeanDag.BlockUniverse
-NODE	LeanDag.MysticetiProperties.leaderCommits._proof_1_5	LeanDag.MysticetiProperties	thm
-EDGE	LeanDag.MysticetiProperties.leaderCommits._proof_1_5	LeanDag.Faults
-EDGE	LeanDag.MysticetiProperties.leaderCommits._proof_1_5	LeanDag.Slots.slotRound
-EDGE	LeanDag.MysticetiProperties.leaderCommits._proof_1_5	LeanDag.Faults.f
-EDGE	LeanDag.MysticetiProperties.leaderCommits._proof_1_5	LeanDag.Slots
 NODE	LeanDag.FinWhale.conflicting_parents_lt._simp_1_3	LeanDag.FinWhale.Evidence	thm
 NODE	LeanDag.convergesWithin_of_bounded	LeanDag.ViewPace	thm
 EDGE	LeanDag.convergesWithin_of_bounded	LeanDag.Faults
@@ -31613,6 +31685,15 @@ EDGE	LeanDag.Barnacle.decided_of_head_committed._proof_1_1	LeanDag.Barnacle.Base
 EDGE	LeanDag.Barnacle.decided_of_head_committed._proof_1_1	LeanDag.Barnacle.LiveRule.toBaseRule
 EDGE	LeanDag.Barnacle.decided_of_head_committed._proof_1_1	LeanDag.Barnacle.LiveRule
 NODE	LeanDagTest.growRefs	LeanDagTest.Growth	def
+NODE	LeanDag.MysticetiProperties.leaderCommits_cert._proof_1_1	LeanDag.MysticetiProperties	thm
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert._proof_1_1	LeanDag.Slots.slotRound
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert._proof_1_1	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert._proof_1_1	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert._proof_1_1	LeanDag.Block.round
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert._proof_1_1	LeanDag.Faults.f
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert._proof_1_1	LeanDag.Slots
+EDGE	LeanDag.MysticetiProperties.leaderCommits_cert._proof_1_1	LeanDag.Properties.DagRule.Universe
 NODE	LeanDag.directCommit_chop	LeanDag.GC.Chop	thm
 EDGE	LeanDag.directCommit_chop	LeanDag.Block
 EDGE	LeanDag.directCommit_chop	LeanDag.creatorsOf
@@ -39717,6 +39798,27 @@ EDGE	LeanDag.card_ids_bounds	LeanDag.card_ids_ge_of_round
 EDGE	LeanDag.card_ids_bounds	LeanDag.Faults.f
 NODE	LeanDagTest.mmFullBlk._proof_8	LeanDagTest.MahiMahi.Model	thm
 EDGE	LeanDagTest.mmFullBlk._proof_8	LeanDagTest.mmFullBlk._proof_3
+NODE	LeanDag.MysticetiProperties.directCommit_of_certLive_sustains	LeanDag.MysticetiProperties	thm
+EDGE	LeanDag.MysticetiProperties.directCommit_of_certLive_sustains	LeanDag.MysticetiProperties.directCommit_of_sustains
+EDGE	LeanDag.MysticetiProperties.directCommit_of_certLive_sustains	LeanDag.Properties.Sustains
+EDGE	LeanDag.MysticetiProperties.directCommit_of_certLive_sustains	LeanDag.Faults
+EDGE	LeanDag.MysticetiProperties.directCommit_of_certLive_sustains	LeanDag.Slots.slotRound
+EDGE	LeanDag.MysticetiProperties.directCommit_of_certLive_sustains	LeanDag.DirectCommit
+EDGE	LeanDag.MysticetiProperties.directCommit_of_certLive_sustains	LeanDag.Slots.leader
+EDGE	LeanDag.MysticetiProperties.directCommit_of_certLive_sustains	LeanDag.BlockUniverse.ids
+EDGE	LeanDag.MysticetiProperties.directCommit_of_certLive_sustains	LeanDag.MysticetiProperties.mysticetiRule
+EDGE	LeanDag.MysticetiProperties.directCommit_of_certLive_sustains	LeanDag.BlockUniverse.block
+EDGE	LeanDag.MysticetiProperties.directCommit_of_certLive_sustains	LeanDag.Block.round
+EDGE	LeanDag.MysticetiProperties.directCommit_of_certLive_sustains	LeanDag.PopulatedOn
+EDGE	LeanDag.MysticetiProperties.directCommit_of_certLive_sustains	LeanDag.CertifiesAt
+EDGE	LeanDag.MysticetiProperties.directCommit_of_certLive_sustains	LeanDag.BlockUniverse
+EDGE	LeanDag.MysticetiProperties.directCommit_of_certLive_sustains	LeanDag.MysticetiProperties.certLive
+EDGE	LeanDag.MysticetiProperties.directCommit_of_certLive_sustains	LeanDag.Faults.f
+EDGE	LeanDag.MysticetiProperties.directCommit_of_certLive_sustains	LeanDag.IsLeaderBlock
+EDGE	LeanDag.MysticetiProperties.directCommit_of_certLive_sustains	LeanDag.View.CoversUpto
+EDGE	LeanDag.MysticetiProperties.directCommit_of_certLive_sustains	LeanDag.Slots
+EDGE	LeanDag.MysticetiProperties.directCommit_of_certLive_sustains	LeanDag.View
+EDGE	LeanDag.MysticetiProperties.directCommit_of_certLive_sustains	LeanDag.Block.creator
 NODE	LeanDagTest.ugapPace._proof_31	LeanDagTest.Unbounded	thm
 EDGE	LeanDagTest.ugapPace._proof_31	LeanDagTest.Uomit
 EDGE	LeanDagTest.ugapPace._proof_31	LeanDag.BlockUniverse.block
@@ -45422,11 +45524,6 @@ EDGE	LeanDag.FinWhale.Run.decidedBelow._proof_1_1	LeanDag.FinWhale.Run.stable
 EDGE	LeanDag.FinWhale.Run.decidedBelow._proof_1_1	LeanDag.FinWhale.Params
 EDGE	LeanDag.FinWhale.Run.decidedBelow._proof_1_1	LeanDag.Faults.f
 EDGE	LeanDag.FinWhale.Run.decidedBelow._proof_1_1	LeanDag.FinWhale.Run
-NODE	LeanDag.MysticetiProperties.leaderCommits._proof_1_1	LeanDag.MysticetiProperties	thm
-EDGE	LeanDag.MysticetiProperties.leaderCommits._proof_1_1	LeanDag.Faults
-EDGE	LeanDag.MysticetiProperties.leaderCommits._proof_1_1	LeanDag.Slots.slotRound
-EDGE	LeanDag.MysticetiProperties.leaderCommits._proof_1_1	LeanDag.Faults.f
-EDGE	LeanDag.MysticetiProperties.leaderCommits._proof_1_1	LeanDag.Slots
 NODE	LeanDag.mem_historyFrom_self	LeanDag.Causality	thm
 EDGE	LeanDag.mem_historyFrom_self	LeanDag.Block
 EDGE	LeanDag.mem_historyFrom_self	LeanDag.Block.round
@@ -51279,6 +51376,32 @@ EDGE	LeanDagTest.OptimalHydrozoan.threeReplicasCrashOnly	LeanDagTest.OptimalHydr
 EDGE	LeanDagTest.OptimalHydrozoan.threeReplicasCrashOnly	LeanDag.Hydrozoan.Faults.mk
 EDGE	LeanDagTest.OptimalHydrozoan.threeReplicasCrashOnly	LeanDagTest.OptimalHydrozoan.threeReplicasCrashOnly._proof_6
 NODE	LeanDagTest.Hydrozoan.lk._proof_3	LeanDagTest.Hydrozoan.BlockUniverse	thm
+NODE	LeanDag.MysticetiProperties.certLive_of_reactiveLive	LeanDag.Reactive.MysticetiProperties	thm
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive	LeanDag.ReactiveM.toReactivePace
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive	LeanDag.Faults
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive	LeanDag.Slots.slotRound
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive	LeanDag.ReactiveM
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive	LeanDag.Slots.leader
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive	LeanDag.PaceCore.gst
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive	LeanDag.Correct
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive	LeanDag.PaceCore.populatedOn
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive	LeanDag.PopulatedOn
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive	LeanDag.CertifiesAt
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive	LeanDag.BlockUniverse
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive	LeanDag.MysticetiProperties.certLive_of_reactiveLive._proof_1_1
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive	LeanDag.MysticetiProperties.certLive
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive	LeanDag.Faults.f
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive	LeanDag.ReactivePace.toPaceCore
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive	LeanDag.PaceCore.timeout
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive	LeanDag.ReactiveM.certifies
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive	LeanDag.PaceCore.proc
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive	LeanDag.IsLeaderBlock
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive	LeanDag.View.CoversUpto
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive	LeanDag.Slots
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive	LeanDag.Slots.mono
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive	LeanDag.View
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive	LeanDag.MysticetiProperties.reactiveLive
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive	LeanDag.PaceCore.delay
 NODE	LeanDag.FinWhale.restrict_block	LeanDag.FinWhale.View	thm
 EDGE	LeanDag.FinWhale.restrict_block	LeanDag.FinWhale.restrict
 EDGE	LeanDag.FinWhale.restrict_block	LeanDag.Block
@@ -57058,38 +57181,14 @@ EDGE	LeanDag.all_decided_below_of_spacing	LeanDag.SynchronisedOn
 EDGE	LeanDag.all_decided_below_of_spacing	LeanDag.Slots
 EDGE	LeanDag.all_decided_below_of_spacing	LeanDag.CommitsAt
 NODE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.MysticetiProperties	thm
-EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.MysticetiProperties.leaderCommits._proof_1_1
-EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.Properties.DagRule.Decided
-EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.Properties.DecidedBelow
-EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.MysticetiProperties.leaderCommits._proof_1_6
-EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.directCommit_of_leader_mem
 EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.Faults
-EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.Slots.slotRound
-EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.MysticetiProperties.leaderCommits._proof_1_2
-EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.DirectCommit
 EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.Properties.LeaderCommits
-EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.View.CoversUpto.mono
-EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.Slots.leader
-EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.BlockUniverse.ids
-EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.directCommitIn_of_coversUpto
+EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.MysticetiProperties.leaderCommits_cert
+EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.MysticetiProperties.certLive_of_coreLive
 EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.MysticetiProperties.mysticetiRule
-EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.Decided.directCommit
-EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.BlockUniverse.block
-EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.Block.round
-EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.PopulatedOn
-EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.DirectCommitIn
-EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.Faults.f
-EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.MysticetiProperties.leaderCommits._proof_1_3
-EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.IsLeaderBlock
-EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.View.CoversUpto
-EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.MysticetiProperties.leaderCommits._proof_1_4
-EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.SynchronisedOn
 EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.Slots
-EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.MysticetiProperties.leaderCommits._proof_1_5
-EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.Slots.mono
 EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.MysticetiProperties.coreLive
 EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.Properties.DagRule.View
-EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.Block.creator
 EDGE	LeanDag.MysticetiProperties.leaderCommits	LeanDag.Properties.DagRule.Universe
 NODE	LeanDag.MysticetiProperties.isLeaderBlock_band_old._proof_1_2	LeanDag.MysticetiProperties	thm
 EDGE	LeanDag.MysticetiProperties.isLeaderBlock_band_old._proof_1_2	LeanDag.Faults
@@ -69539,11 +69638,6 @@ EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.CertificatePayload.toCheckpointQC
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.CertificatePayload.toCheckpointQC._proof_1	LeanDag.Hybrid.Checkpoint.Model.Execution.CertificatePayload.checkpoint
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.CertificatePayload.toCheckpointQC._proof_1	LeanDag.Hybrid.Checkpoint.Model.Execution.CertificatePayload.signers
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.CertificatePayload.toCheckpointQC._proof_1	LeanDag.Hybrid.Checkpoint.Model.Execution
-NODE	LeanDag.MysticetiProperties.leaderCommits._proof_1_4	LeanDag.MysticetiProperties	thm
-EDGE	LeanDag.MysticetiProperties.leaderCommits._proof_1_4	LeanDag.Faults
-EDGE	LeanDag.MysticetiProperties.leaderCommits._proof_1_4	LeanDag.Slots.slotRound
-EDGE	LeanDag.MysticetiProperties.leaderCommits._proof_1_4	LeanDag.Faults.f
-EDGE	LeanDag.MysticetiProperties.leaderCommits._proof_1_4	LeanDag.Slots
 NODE	LeanDagTest.UtightA._proof_1	LeanDagTest.HybridTight	thm
 EDGE	LeanDagTest.UtightA._proof_1	LeanDagTest.tightABlk
 EDGE	LeanDagTest.UtightA._proof_1	LeanDag.Block.refs
@@ -76381,6 +76475,18 @@ EDGE	LeanDag.Odontoceti.reactive_decided._proof_1_1	LeanDag.ReactivePace.toPaceC
 EDGE	LeanDag.Odontoceti.reactive_decided._proof_1_1	LeanDag.Slots
 EDGE	LeanDag.Odontoceti.reactive_decided._proof_1_1	LeanDag.Faults5.toFaults
 EDGE	LeanDag.Odontoceti.reactive_decided._proof_1_1	LeanDag.ReactivePace
+NODE	LeanDag.MysticetiProperties.certLive	LeanDag.MysticetiProperties	def
+EDGE	LeanDag.MysticetiProperties.certLive	LeanDag.Faults
+EDGE	LeanDag.MysticetiProperties.certLive	LeanDag.Slots.slotRound
+EDGE	LeanDag.MysticetiProperties.certLive	LeanDag.Slots.leader
+EDGE	LeanDag.MysticetiProperties.certLive	LeanDag.PopulatedOn
+EDGE	LeanDag.MysticetiProperties.certLive	LeanDag.CertifiesAt
+EDGE	LeanDag.MysticetiProperties.certLive	LeanDag.BlockUniverse
+EDGE	LeanDag.MysticetiProperties.certLive	LeanDag.Faults.f
+EDGE	LeanDag.MysticetiProperties.certLive	LeanDag.IsLeaderBlock
+EDGE	LeanDag.MysticetiProperties.certLive	LeanDag.View.CoversUpto
+EDGE	LeanDag.MysticetiProperties.certLive	LeanDag.Slots
+EDGE	LeanDag.MysticetiProperties.certLive	LeanDag.View
 NODE	LeanDag.FinWhale.all_decided_of_pass._proof_1_2	LeanDag.FinWhale.Holdings	thm
 EDGE	LeanDag.FinWhale.all_decided_of_pass._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.FinWhale.all_decided_of_pass._proof_1_2	LeanDag.PaceCore.gst
@@ -77569,6 +77675,11 @@ EDGE	LeanDag.exists_self_ancestor_aux	LeanDag.BlockUniverse.valid
 EDGE	LeanDag.exists_self_ancestor_aux	LeanDag.BlockUniverse.round_of_mem_refs
 EDGE	LeanDag.exists_self_ancestor_aux	LeanDag.Reaches.single
 EDGE	LeanDag.exists_self_ancestor_aux	LeanDag.Block.creator
+NODE	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_1	LeanDag.MysticetiProperties	thm
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_1	LeanDag.Slots.slotRound
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_1	LeanDag.Faults.f
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_1	LeanDag.Slots
 NODE	LeanDag.Minnow.CommittedAt.match_1.eq_2	LeanDag.Minnow.Blocking	thm
 EDGE	LeanDag.Minnow.CommittedAt.match_1.eq_2	LeanDag.Minnow.CommittedAt.match_1
 NODE	LeanDag.Adaptive.Policy.noConfusion	LeanDag.Adaptive.Policy	def
@@ -79488,41 +79599,15 @@ EDGE	LeanDag.Properties.AgreeBand.reaches_old._proof_1_4	LeanDag.Block.round
 EDGE	LeanDag.Properties.AgreeBand.reaches_old._proof_1_4	LeanDag.Properties.DagRule
 EDGE	LeanDag.Properties.AgreeBand.reaches_old._proof_1_4	LeanDag.Properties.DagRule.Universe
 NODE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.Reactive.MysticetiProperties	thm
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.Properties.DagRule.Decided
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.Properties.DecidedBelow
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.ReactiveM.toReactivePace
 EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.Faults
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.Slots.slotRound
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.MysticetiProperties.leaderCommits_reactive._proof_1_2
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.ReactiveM
 EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.Properties.LeaderCommits
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.View.CoversUpto.mono
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.Slots.leader
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.BlockUniverse.ids
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.PaceCore.gst
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.directCommitIn_of_coversUpto
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.Correct
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.PaceCore.populatedOn
+EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.MysticetiProperties.leaderCommits_cert
 EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.MysticetiProperties.mysticetiRule
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.Decided.directCommit
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.BlockUniverse.block
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.Block.round
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.DirectCommitIn
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.Faults.f
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.ReactivePace.toPaceCore
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.ReactiveM.directCommit
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.PaceCore.timeout
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.PaceCore.proc
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.IsLeaderBlock
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.MysticetiProperties.leaderCommits_reactive._proof_1_1
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.View.CoversUpto
+EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.MysticetiProperties.certLive_of_reactiveLive
 EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.Slots
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.Slots.mono
 EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.MysticetiProperties.reactiveLive
 EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.Properties.DagRule.View
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.Block.creator
 EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.Properties.DagRule.Universe
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive	LeanDag.PaceCore.delay
 NODE	LeanDag.FinWhale.Band.nonFPEvidence	LeanDag.FinWhale.Band	thm
 EDGE	LeanDag.FinWhale.Band.nonFPEvidence	LeanDag.FinWhale.NonFPEvidence
 EDGE	LeanDag.FinWhale.Band.nonFPEvidence	LeanDag.FinWhale.Sched.round
@@ -82729,6 +82814,16 @@ EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_5	LeanDag.Block.round
 EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_5	LeanDag.BlockUniverse
 EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_5	LeanDag.Slots
 EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_5	LeanDag.Faults5.toFaults
+NODE	LeanDag.MysticetiProperties.certLive_of_reactiveLive._proof_1_1	LeanDag.Reactive.MysticetiProperties	thm
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive._proof_1_1	LeanDag.ReactiveM.toReactivePace
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive._proof_1_1	LeanDag.Slots.slotRound
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive._proof_1_1	LeanDag.ReactiveM
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive._proof_1_1	LeanDag.PaceCore.gst
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive._proof_1_1	LeanDag.BlockUniverse
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive._proof_1_1	LeanDag.Faults.f
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive._proof_1_1	LeanDag.ReactivePace.toPaceCore
+EDGE	LeanDag.MysticetiProperties.certLive_of_reactiveLive._proof_1_1	LeanDag.Slots
 NODE	LeanDag.Integration.directCommit_chop_reactive	LeanDag.Integration.ReactiveMechanisms	thm
 EDGE	LeanDag.Integration.directCommit_chop_reactive	LeanDag.Properties.Arcs.sustains_chop
 EDGE	LeanDag.Integration.directCommit_chop_reactive	LeanDag.ReactiveM.toReactivePace
@@ -82747,7 +82842,9 @@ EDGE	LeanDag.Integration.directCommit_chop_reactive	LeanDag.ReactivePace.toPaceC
 EDGE	LeanDag.Integration.directCommit_chop_reactive	LeanDag.PaceCore.timeout
 EDGE	LeanDag.Integration.directCommit_chop_reactive	LeanDag.PaceCore.proc
 EDGE	LeanDag.Integration.directCommit_chop_reactive	LeanDag.IsLeaderBlock
+EDGE	LeanDag.Integration.directCommit_chop_reactive	LeanDag.View.CoversUpto
 EDGE	LeanDag.Integration.directCommit_chop_reactive	LeanDag.Slots
+EDGE	LeanDag.Integration.directCommit_chop_reactive	LeanDag.View
 EDGE	LeanDag.Integration.directCommit_chop_reactive	LeanDag.PaceCore.delay
 NODE	LeanDag.Properties.decidedBelow_of_run	LeanDag.Properties.Derived.Progress	thm
 EDGE	LeanDag.Properties.decidedBelow_of_run	LeanDag.Properties.DecidedBelow
@@ -82977,15 +83074,6 @@ EDGE	LeanDagTest.Barnacle.twin'_slot0	LeanDag.Faults5.toFaults
 EDGE	LeanDagTest.Barnacle.twin'_slot0	LeanDagTest.Barnacle.Utwin6'
 NODE	LeanDagTest.FinWhalePace.growLeader._proof_1	LeanDagTest.FinWhale.Pace	thm
 NODE	LeanDag.BlackMarlin.Order.holds._proof_1_2	LeanDag.BlackMarlin.Order.Proof	thm
-NODE	LeanDag.MysticetiProperties.leaderCommits._proof_1_6	LeanDag.MysticetiProperties	thm
-EDGE	LeanDag.MysticetiProperties.leaderCommits._proof_1_6	LeanDag.Faults
-EDGE	LeanDag.MysticetiProperties.leaderCommits._proof_1_6	LeanDag.Slots.slotRound
-EDGE	LeanDag.MysticetiProperties.leaderCommits._proof_1_6	LeanDag.MysticetiProperties.mysticetiRule
-EDGE	LeanDag.MysticetiProperties.leaderCommits._proof_1_6	LeanDag.BlockUniverse.block
-EDGE	LeanDag.MysticetiProperties.leaderCommits._proof_1_6	LeanDag.Block.round
-EDGE	LeanDag.MysticetiProperties.leaderCommits._proof_1_6	LeanDag.Faults.f
-EDGE	LeanDag.MysticetiProperties.leaderCommits._proof_1_6	LeanDag.Slots
-EDGE	LeanDag.MysticetiProperties.leaderCommits._proof_1_6	LeanDag.Properties.DagRule.Universe
 NODE	LeanDag.Properties.DagRule.rec	LeanDag.Properties.Carrier	rec
 EDGE	LeanDag.Properties.DagRule.rec	LeanDag.Block
 EDGE	LeanDag.Properties.DagRule.rec	LeanDag.Block.refs
@@ -86879,17 +86967,6 @@ EDGE	LeanDag.BlackMarlin.Pace.concludesAt_of_holds	LeanDag.Block.creator
 EDGE	LeanDag.BlackMarlin.Pace.concludesAt_of_holds	LeanDag.BlackMarlin.SupportedIn
 EDGE	LeanDag.BlackMarlin.Pace.concludesAt_of_holds	LeanDag.BlackMarlin.Pace.concludesAt_of_holds._proof_1_1
 EDGE	LeanDag.BlackMarlin.Pace.concludesAt_of_holds	LeanDag.mem_blocksAt
-NODE	LeanDag.MysticetiProperties.leaderCommits_reactive._proof_1_1	LeanDag.Reactive.MysticetiProperties	thm
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive._proof_1_1	LeanDag.ReactiveM.toReactivePace
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive._proof_1_1	LeanDag.Faults
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive._proof_1_1	LeanDag.Slots.slotRound
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive._proof_1_1	LeanDag.ReactiveM
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive._proof_1_1	LeanDag.PaceCore.gst
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive._proof_1_1	LeanDag.MysticetiProperties.mysticetiRule
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive._proof_1_1	LeanDag.Faults.f
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive._proof_1_1	LeanDag.ReactivePace.toPaceCore
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive._proof_1_1	LeanDag.Slots
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive._proof_1_1	LeanDag.Properties.DagRule.Universe
 NODE	LeanDagTest.Hydrozoan.lk14._proof_7	LeanDagTest.Hydrozoan.LivenessHardening	thm
 NODE	LeanDag.Hydrozoan.BlockUniverse.recOn	LeanDag.Hydrozoan.Model.BlockUniverse	def
 EDGE	LeanDag.Hydrozoan.BlockUniverse.recOn	LeanDag.Hydrozoan.Block.parents
@@ -87342,19 +87419,6 @@ EDGE	LeanDag.Adaptive.Run.live_of_staged	LeanDag.Slots
 EDGE	LeanDag.Adaptive.Run.live_of_staged	LeanDag.Adaptive.Run.assign
 EDGE	LeanDag.Adaptive.Run.live_of_staged	LeanDag.Properties.DagRule.View
 EDGE	LeanDag.Adaptive.Run.live_of_staged	LeanDag.Properties.DagRule.Universe
-NODE	LeanDag.MysticetiProperties.leaderCommits_reactive._proof_1_2	LeanDag.Reactive.MysticetiProperties	thm
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive._proof_1_2	LeanDag.ReactiveM.toReactivePace
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive._proof_1_2	LeanDag.Faults
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive._proof_1_2	LeanDag.Slots.slotRound
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive._proof_1_2	LeanDag.ReactiveM
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive._proof_1_2	LeanDag.PaceCore.gst
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive._proof_1_2	LeanDag.MysticetiProperties.mysticetiRule
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive._proof_1_2	LeanDag.BlockUniverse.block
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive._proof_1_2	LeanDag.Block.round
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive._proof_1_2	LeanDag.Faults.f
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive._proof_1_2	LeanDag.ReactivePace.toPaceCore
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive._proof_1_2	LeanDag.Slots
-EDGE	LeanDag.MysticetiProperties.leaderCommits_reactive._proof_1_2	LeanDag.Properties.DagRule.Universe
 NODE	LeanDagTest.FinWhalePace.fwSlots._proof_3	LeanDagTest.FinWhale.Pace	thm
 EDGE	LeanDagTest.FinWhalePace.fwSlots._proof_3	LeanDagTest.FinWhalePace.fwSlots._proof_1
 NODE	LeanDag.Hybrid.Checkpoint.Model.Execution.CheckpointQC	LeanDag.Hybrid.Checkpoint.BaseSpec	ind
@@ -89697,6 +89761,11 @@ EDGE	LeanDag.Hydrozoan.ThresholdArithmetic.holds._proof_1_15	LeanDag.Hydrozoan.F
 EDGE	LeanDag.Hydrozoan.ThresholdArithmetic.holds._proof_1_15	LeanDag.Hydrozoan.Faults.k
 EDGE	LeanDag.Hydrozoan.ThresholdArithmetic.holds._proof_1_15	LeanDag.Hydrozoan.Faults.f
 EDGE	LeanDag.Hydrozoan.ThresholdArithmetic.holds._proof_1_15	LeanDag.Hydrozoan.Faults
+NODE	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_2	LeanDag.MysticetiProperties	thm
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_2	LeanDag.Faults
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_2	LeanDag.Slots.slotRound
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_2	LeanDag.Faults.f
+EDGE	LeanDag.MysticetiProperties.certLive_of_coreLive._proof_1_2	LeanDag.Slots
 NODE	LeanDagTest.Uomit._proof_5	LeanDagTest.Unbounded	thm
 NODE	LeanDagTest.FinWhale.fwSched	LeanDagTest.FinWhale.Model	def
 EDGE	LeanDagTest.FinWhale.fwSched	LeanDagTest.FinWhale.fwLeader

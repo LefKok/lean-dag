@@ -25428,6 +25428,22 @@ def coreLive (S : Slots Validator) {U : BlockUniverse Validator BlockId Payload}
 
 **The timed core's liveness precondition**, over a slot window: a quorum `T` synchronised from some round `R₀` at or below the window's first slot, the DAG populated by `T` from `R₀` to a horizon `N`, the view caught up to `N`, and every slot of the window two rounds under `N`. It reads no leader, so it holds under every schedule with the same rounds.
 
+#### `certLive`
+
+*def, `MysticetiProperties.lean`*
+
+```lean
+def certLive (S : Slots Validator) {U : BlockUniverse Validator BlockId Payload}
+    (V : View Validator BlockId Payload U) (T : Finset Validator) (lo K : ℕ) : Prop :=
+  quorumCard Validator ≤ T.card ∧
+    ∃ N, V.CoversUpto N ∧ (∀ k, k < K → S.slotRound k + 2 ≤ N) ∧
+      ∀ k, lo ≤ k → k < K → S.leader k ∈ T →
+        PopulatedOn U T (S.slotRound k) ∧ PopulatedOn U T (S.slotRound k + 2) ∧
+          ∀ L, IsLeaderBlock (S := S) U k L → CertifiesAt U T (S.slotRound k) L
+```
+
+**The core's precondition, in what its commit rule counts.** A quorum `T`, a horizon `N` the view is caught up to with every slot of the window two rounds under it, production at the slot's round and its certificate round, and `T` certifying every candidate of every `T`-led slot in the window.
+
 #### `nemoRule`
 
 *def, `Nemo.Carrier.lean`*
@@ -26161,7 +26177,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 1080 theorems that either another module of the
+The 1082 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -39126,6 +39142,18 @@ theorem agree :
 
 **M6 as a property.**
 
+#### `leaderCommits_cert`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem leaderCommits_cert :
+    LeaderCommits (mysticetiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) (fun S {U} V T lo K => certLive S (U := U) V T lo K)
+```
+
+**A reliably-led slot commits, from the certificates alone.** The one `LeaderCommits` proof the core needs; every execution model reaches it through its own bridge.
+
 #### `leaderCommits`
 
 *theorem, `MysticetiProperties.lean`*
@@ -39136,7 +39164,23 @@ theorem leaderCommits :
       (Payload := Payload)) (fun S {U} V T lo K => coreLive S (U := U) V T lo K)
 ```
 
-**L4 as a property**: a `T`-led slot in the window commits, and the commit reads one leader, so its bound is one above the slot.
+**The timed theorem, as a corollary.** Its statement is unchanged; its proof is now the bridge composed with the one `LeaderCommits`.
+
+#### `directCommit_of_certLive_sustains`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem directCommit_of_certLive_sustains [S : Slots Validator]
+    {U U' : BlockUniverse Validator BlockId Payload} {G R₀ : ℕ}
+    (hsus : Sustains (mysticetiRule (Payload := Payload)) U U' G R₀)
+    {V : View Validator BlockId Payload U} {T : Finset Validator} {lo K k : ℕ}
+    (hlive : certLive S (U := U) V T lo K) (hlo : lo ≤ k) (hK : k < K)
+    (hlead : S.leader k ∈ T) (hR₀ : R₀ ≤ S.slotRound k) (hG : G ≤ S.slotRound k) :
+    ∃ L, IsLeaderBlock (S := S) U k L ∧ DirectCommit U' L (S.slotRound k - G)
+```
+
+**The commit survives any sustaining mechanism, from either execution model.** `certLive` is stated in references and counts, and `Sustains` preserves both, so the mechanism consumes it directly. This is what coverage could not give: a coverage-shaped precondition transports only for a model that has coverage, and a reactive execution does not.
 
 #### `indirect`
 
@@ -40309,7 +40353,7 @@ theorem leaderCommits_reactive :
       (Payload := Payload)) (fun S {U} V T lo K => reactiveLive S (U := U) V T lo K)
 ```
 
-**Reactive Mysticeti commits its reliable leaders** — `ReactiveM.decided` as the property, on any view caught up to the horizon.
+**Reactive Mysticeti commits its reliable leaders.** The statement is unchanged; the proof is now the bridge composed with the core's single `LeaderCommits`, where it was a second proof of the same shape.
 
 #### `directCommit_of_reactive_sustains`
 
@@ -40319,17 +40363,18 @@ theorem leaderCommits_reactive :
 theorem directCommit_of_reactive_sustains [S : Slots Validator]
     {U U' : BlockUniverse Validator BlockId Payload} {T : Finset Validator} {N : ℕ}
     {G R₀ : ℕ} (hsus : Sustains (mysticetiRule (Payload := Payload)) U U' G R₀)
-    (rm : ReactiveM (S := S) U T N) {R k : ℕ} {L : BlockId}
+    {V : View Validator BlockId Payload U}
+    (rm : ReactiveM (S := S) U T N) {R k : ℕ}
     (hT : T ⊆ (Correct : Finset Validator)) (hcard : quorumCard Validator ≤ T.card)
     (hgst : rm.gst ≤ R)
     (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n)
-    (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
+    (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N) (hcov : V.CoversUpto N)
     (hR₀ : R₀ ≤ S.slotRound k) (hG : G ≤ S.slotRound k)
-    (hlead : S.leader k ∈ T) (hL : IsLeaderBlock U k L) :
-    DirectCommit U' L (S.slotRound k - G)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock (S := S) U k L ∧ DirectCommit U' L (S.slotRound k - G)
 ```
 
-**The reactive commit survives any sustaining mechanism.** The reactive execution supplies the certificates and the production; the mechanism supplies `Sustains`; neither knows about the other.
+**The reactive commit survives any sustaining mechanism.** Now a corollary of `directCommit_of_certLive_sustains`, which is stated for either execution model: the reactive discipline contributes only its bridge to `certLive`, and the mechanism never learns which model produced the certificates.
 
 #### `waveRobin_fairRun`
 
@@ -40370,7 +40415,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 1084 lemmas used only within the file that proves
+The 1086 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -42313,13 +42358,14 @@ subsection per module, in the layer order of Appendices B and C.
 | `toCore` | The two carriers project identically, so a band for one is a band for the other. |
 | `votes_band` | A vote is the vote it was. Both clauses read the same cone, and `candidatesAt_band` settles it as an … |
 
-### `MysticetiProperties.lean` (31)
+### `MysticetiProperties.lean` (32)
 
 | Lemma | Role |
 |:---|:---|
 | `band_block'` | — |
 | `banded_aux` | Every verdict of the core reads a band of rounds, from the slot's own round up to a top the derivation … |
 | `blocksAt_subset` | — |
+| `certLive_of_coreLive` | Coverage is one bridge. Full reference coverage certifies every candidate of every reliably-led slot, … |
 | `certifiedIn_band` | — |
 | `certifiedIn_old` | — |
 | `certifiesAt_of_sustains` | Certification at a slot survives a sustaining mechanism, above its settling round. |
@@ -42556,6 +42602,12 @@ subsection per module, in the layer order of Appendices B and C.
 | `coversOn_viewAt` | A paced validator's view covers the reliable set over a window. Every `T`-block from `lo` to `hi` is held … |
 | `deliversOn_viewAt` | The witness. A paced validator delivers the reliable set from any round it has settled past — the … |
 | `le_settleBy` | — |
+
+### `Reactive/MysticetiProperties.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `certLive_of_reactiveLive` | The reactive discipline is the other bridge. `cert_or_wait` certifies every candidate of a reliably-led … |
 
 ### `WaveRobin.lean` (3)
 

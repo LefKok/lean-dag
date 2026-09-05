@@ -43,26 +43,36 @@ def reactiveLive (S : Slots Validator) {U : BlockUniverse Validator BlockId Payl
       rm.gst ≤ R₀ ∧ (∀ n, R₀ ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n) ∧
       R₀ ≤ S.slotRound lo ∧ V.CoversUpto N ∧ ∀ k, k < K → S.slotRound k + 2 ≤ N
 
-/-- **Reactive Mysticeti commits its reliable leaders** — `ReactiveM.decided`
-as the property, on any view caught up to the horizon. -/
+/-- **The reactive discipline is the other bridge.** `cert_or_wait`
+certifies every candidate of a reliably-led slot past GST, and the
+trunk's derived production supplies the blocks — which is `certLive`,
+the same precondition coverage reaches by a different road. The two
+execution models now meet at one predicate.
+
+The clause coverage has and this does not is the point of the
+discipline: a reactive builder omits whatever had not arrived, so
+`SynchronisedOn` is false here, and only what the commit rule counts
+survives. -/
+theorem certLive_of_reactiveLive {S : Slots Validator}
+    {U : BlockUniverse Validator BlockId Payload} {V : View Validator BlockId Payload U}
+    {T : Finset Validator} {lo K : ℕ} (h : reactiveLive S (U := U) V T lo K) :
+    certLive S (U := U) V T lo K := by
+  obtain ⟨hT, hcard, N, R₀, rm, hgst, hto, hR, hcov, hN⟩ := h
+  refine ⟨hcard, N, hcov, hN, ?_⟩
+  intro k hlo hK hlead
+  have hRk : R₀ ≤ S.slotRound k := le_trans hR (S.mono hlo)
+  have hNk : S.slotRound k + 2 ≤ N := hN k hK
+  exact ⟨rm.toPaceCore.populatedOn hcard _ (by omega),
+    rm.toPaceCore.populatedOn hcard _ (by omega),
+    fun L hL => rm.certifies hT hcard hgst hto hRk hNk hlead hL⟩
+
+/-- **Reactive Mysticeti commits its reliable leaders.** The statement is
+unchanged; the proof is now the bridge composed with the core's single
+`LeaderCommits`, where it was a second proof of the same shape. -/
 theorem leaderCommits_reactive :
     LeaderCommits (mysticetiRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload)) (fun S {U} V T lo K => reactiveLive S (U := U) V T lo K) := by
-  intro S U V T lo K hlive k hlo hK hlead
-  obtain ⟨hT, hcard, N, R₀, rm, hgst, hto, hR, hcov, hN⟩ := hlive
-  have hRk : R₀ ≤ S.slotRound k := le_trans hR (S.mono hlo)
-  have hNk := hN k hK
-  obtain ⟨L, hLmem, hLc, hLr⟩ :=
-    rm.toPaceCore.populatedOn hcard (S.slotRound k) (by omega) (S.leader k) hlead
-  have hL : IsLeaderBlock (S := S) U k L := ⟨hLmem, hLr, hLc⟩
-  have hin : DirectCommitIn U V L (S.slotRound k) :=
-    directCommitIn_of_coversUpto (rm.directCommit hT hcard hgst hto hRk hNk hlead hL)
-      (hcov.mono hNk)
-  refine ⟨L, by omega, Decided.directCommit hL hin, ?_⟩
-  intro S' hround hlead'
-  refine Decided.directCommit (S := S') ⟨hLmem, by rw [hround]; exact hLr,
-    by rw [hlead' k (by omega)]; exact hLc⟩ ?_
-  rw [hround]; exact hin
+      (Payload := Payload)) (fun S {U} V T lo K => reactiveLive S (U := U) V T lo K) :=
+  fun S _ V T lo K hlive => leaderCommits_cert S V T lo K (certLive_of_reactiveLive hlive)
 
 /-! ## What a mechanism needs from a reactive execution
 
@@ -81,23 +91,29 @@ Certificates are made of references, and `Sustains` preserves
 references.
 -/
 
-/-- **The reactive commit survives any sustaining mechanism.** The
-reactive execution supplies the certificates and the production; the
-mechanism supplies `Sustains`; neither knows about the other. -/
+/-- **The reactive commit survives any sustaining mechanism.** Now a
+corollary of `directCommit_of_certLive_sustains`, which is stated for
+either execution model: the reactive discipline contributes only its
+bridge to `certLive`, and the mechanism never learns which model
+produced the certificates. -/
 theorem directCommit_of_reactive_sustains [S : Slots Validator]
     {U U' : BlockUniverse Validator BlockId Payload} {T : Finset Validator} {N : ℕ}
     {G R₀ : ℕ} (hsus : Sustains (mysticetiRule (Payload := Payload)) U U' G R₀)
-    (rm : ReactiveM (S := S) U T N) {R k : ℕ} {L : BlockId}
+    {V : View Validator BlockId Payload U}
+    (rm : ReactiveM (S := S) U T N) {R k : ℕ}
     (hT : T ⊆ (Correct : Finset Validator)) (hcard : quorumCard Validator ≤ T.card)
     (hgst : rm.gst ≤ R)
     (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n)
-    (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N)
+    (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N) (hcov : V.CoversUpto N)
     (hR₀ : R₀ ≤ S.slotRound k) (hG : G ≤ S.slotRound k)
-    (hlead : S.leader k ∈ T) (hL : IsLeaderBlock U k L) :
-    DirectCommit U' L (S.slotRound k - G) :=
-  MysticetiProperties.directCommit_of_sustains hsus hR₀ hG hcard
-    (rm.toPaceCore.populatedOn hcard (S.slotRound k + 2) hN)
-    (rm.certifies hT hcard hgst hto hR hN hlead hL)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, IsLeaderBlock (S := S) U k L ∧ DirectCommit U' L (S.slotRound k - G) :=
+  MysticetiProperties.directCommit_of_certLive_sustains hsus
+    (certLive_of_reactiveLive
+      (show reactiveLive S (U := U) V T k (k + 1) from
+        ⟨hT, hcard, N, R, rm, hgst, hto, hR, hcov, fun j hj => by
+          have := S.mono (Nat.lt_succ_iff.mp hj); omega⟩))
+    (Nat.le_refl k) (Nat.lt_succ_self k) hlead hR₀ hG
 
 end MysticetiProperties
 

@@ -1008,6 +1008,105 @@ def coreLive (S : Slots Validator) {U : BlockUniverse Validator BlockId Payload}
       (∀ r, R₀ ≤ r → r ≤ N → PopulatedOn U T r) ∧ V.CoversUpto N ∧
       ∀ k, k < K → S.slotRound k + 2 ≤ N
 
+/-! ## One precondition for two execution models
+
+`coreLive` asks for coverage and `reactiveLive` asks for a reactive
+execution past GST, and the two are incomparable: a reactive builder
+omits whatever had not arrived when its exit fired, so `SynchronisedOn`
+is false in a reactive execution by design. They were therefore two
+preconditions and two `LeaderCommits` proofs for one decision relation.
+
+`certLive` is what both deliver, and it is stated in the vocabulary the
+commit rule actually counts in: the reliable set certifies the slot's
+leader block. `LeaderCommits` is proved once against it, and each
+execution model contributes a bridge — coverage through
+`certifiesAt_of_synchronisedOn`, the reactive discipline through
+`ReactiveM.certifies`. The old preconditions survive as the antecedents
+of those bridges, and the two old theorems as corollaries.
+
+**Where the work goes.** `LeaderCommits` becomes shape alone; the
+substance moves into the bridges, which is where the two models
+genuinely differ. The vacuity guard is unaffected, because
+`LiveReachable`'s antecedent stays coverage and the chain from network
+facts to verdict is the same length. -/
+
+/-- **The core's precondition, in what its commit rule counts.** A
+quorum `T`, a horizon `N` the view is caught up to with every slot of
+the window two rounds under it, production at the slot's round and its
+certificate round, and `T` certifying every candidate of every `T`-led
+slot in the window. -/
+def certLive (S : Slots Validator) {U : BlockUniverse Validator BlockId Payload}
+    (V : View Validator BlockId Payload U) (T : Finset Validator) (lo K : ℕ) : Prop :=
+  quorumCard Validator ≤ T.card ∧
+    ∃ N, V.CoversUpto N ∧ (∀ k, k < K → S.slotRound k + 2 ≤ N) ∧
+      ∀ k, lo ≤ k → k < K → S.leader k ∈ T →
+        PopulatedOn U T (S.slotRound k) ∧ PopulatedOn U T (S.slotRound k + 2) ∧
+          ∀ L, IsLeaderBlock (S := S) U k L → CertifiesAt U T (S.slotRound k) L
+
+/-- **A reliably-led slot commits, from the certificates alone.** The
+one `LeaderCommits` proof the core needs; every execution model reaches
+it through its own bridge. -/
+theorem leaderCommits_cert :
+    LeaderCommits (mysticetiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) (fun S {U} V T lo K => certLive S (U := U) V T lo K) := by
+  intro S U V T lo K hlive k hlo hK hlead
+  obtain ⟨hcard, N, hcov, hN, hslot⟩ := hlive
+  obtain ⟨hpop0, hpop2, hcert⟩ := hslot k hlo hK hlead
+  obtain ⟨L, hLmem, hLc, hLr⟩ := hpop0 (S.leader k) hlead
+  have hL : IsLeaderBlock (S := S) U k L := ⟨hLmem, hLr, hLc⟩
+  have hdc : DirectCommit U L (S.slotRound k) :=
+    directCommit_of_certifiesAt hcard hpop2 (hcert L hL)
+  have hin : DirectCommitIn U V L (S.slotRound k) :=
+    directCommitIn_of_coversUpto hdc (hcov.mono (hN k hK))
+  refine ⟨L, by omega, Decided.directCommit hL hin, ?_⟩
+  intro S' hround hlead'
+  refine Decided.directCommit (S := S') ⟨hLmem, by rw [hround]; exact hLr,
+    by rw [hlead' k (by omega)]; exact hLc⟩ ?_
+  rw [hround]; exact hin
+
+/-- **Coverage is one bridge.** Full reference coverage certifies every
+candidate of every reliably-led slot, which is
+`certifiesAt_of_synchronisedOn` at each slot of the window. -/
+theorem certLive_of_coreLive {S : Slots Validator}
+    {U : BlockUniverse Validator BlockId Payload} {V : View Validator BlockId Payload U}
+    {T : Finset Validator} {lo K : ℕ} (h : coreLive S (U := U) V T lo K) :
+    certLive S (U := U) V T lo K := by
+  obtain ⟨hcard, R₀, N, hs, hR, hpop, hcov, hN⟩ := h
+  refine ⟨hcard, N, hcov, hN, ?_⟩
+  intro k hlo hK _
+  have hRk : R₀ ≤ S.slotRound k := le_trans hR (S.mono hlo)
+  have hNk := hN k hK
+  refine ⟨hpop _ hRk (by omega), hpop _ (by omega) (by omega), ?_⟩
+  rintro L ⟨hLmem, hLr, hLc⟩
+  exact certifiesAt_of_synchronisedOn hcard hs hRk (hpop _ (by omega) (by omega))
+    hLmem hLr (by rw [hLc]; assumption)
+
+/-- **The timed theorem, as a corollary.** Its statement is unchanged;
+its proof is now the bridge composed with the one `LeaderCommits`. -/
+theorem leaderCommits :
+    LeaderCommits (mysticetiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) (fun S {U} V T lo K => coreLive S (U := U) V T lo K) :=
+  fun S _ V T lo K hlive => leaderCommits_cert S V T lo K (certLive_of_coreLive hlive)
+
+/-- **The commit survives any sustaining mechanism, from either
+execution model.** `certLive` is stated in references and counts, and
+`Sustains` preserves both, so the mechanism consumes it directly. This
+is what coverage could not give: a coverage-shaped precondition
+transports only for a model that has coverage, and a reactive execution
+does not. -/
+theorem directCommit_of_certLive_sustains [S : Slots Validator]
+    {U U' : BlockUniverse Validator BlockId Payload} {G R₀ : ℕ}
+    (hsus : Sustains (mysticetiRule (Payload := Payload)) U U' G R₀)
+    {V : View Validator BlockId Payload U} {T : Finset Validator} {lo K k : ℕ}
+    (hlive : certLive S (U := U) V T lo K) (hlo : lo ≤ k) (hK : k < K)
+    (hlead : S.leader k ∈ T) (hR₀ : R₀ ≤ S.slotRound k) (hG : G ≤ S.slotRound k) :
+    ∃ L, IsLeaderBlock (S := S) U k L ∧ DirectCommit U' L (S.slotRound k - G) := by
+  obtain ⟨hcard, N, -, -, hslot⟩ := hlive
+  obtain ⟨hpop0, hpop2, hcert⟩ := hslot k hlo hK hlead
+  obtain ⟨L, hLmem, hLc, hLr⟩ := hpop0 (S.leader k) hlead
+  exact ⟨L, ⟨hLmem, hLr, hLc⟩,
+    directCommit_of_sustains hsus hR₀ hG hcard hpop2 (hcert L ⟨hLmem, hLr, hLc⟩)⟩
+
 /-- **The core's precondition is reachable** (`Properties/Live.lean`):
 `coreLive` is the conjunction of the three carrier-level facts and the
 window bound, so the discharge is the record built. The core reads two
@@ -1021,26 +1120,6 @@ theorem liveReachable :
   intro j hj
   have := S.mono (Nat.lt_succ_iff.mp hj)
   omega
-
-/-- **L4 as a property**: a `T`-led slot in the window commits, and the
-commit reads one leader, so its bound is one above the slot. -/
-theorem leaderCommits :
-    LeaderCommits (mysticetiRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload)) (fun S {U} V T lo K => coreLive S (U := U) V T lo K) := by
-  intro S U V T lo K hlive k hlo hK hlead
-  obtain ⟨hcard, R₀, N, hs, hR, hpop, hcov, hN⟩ := hlive
-  have hRk : R₀ ≤ S.slotRound k := le_trans hR (S.mono hlo)
-  have hNk := hN k hK
-  obtain ⟨L, hL, hdc⟩ := directCommit_of_leader_mem (S := S) (U := U) hcard hs hRk
-    (hpop _ hRk (by omega)) (hpop _ (by omega) (by omega)) (hpop _ (by omega) (by omega)) hlead
-  have hin : DirectCommitIn U V L (S.slotRound k) :=
-    directCommitIn_of_coversUpto hdc (hcov.mono hNk)
-  refine ⟨L, by omega, Decided.directCommit hL hin, ?_⟩
-  intro S' hround hlead'
-  obtain ⟨hm, hr, hcr⟩ := hL
-  refine Decided.directCommit (S := S') ⟨hm, by rw [hround]; exact hr,
-    by rw [hlead' k (by omega)]; exact hcr⟩ ?_
-  rw [hround]; exact hin
 
 /-- **A3 as a property.** The two indirect constructors, by cases on a
 certified candidate at the slot — which is the whole proof, and is why

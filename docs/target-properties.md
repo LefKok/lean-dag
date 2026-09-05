@@ -2557,6 +2557,58 @@ admissible way, by a witness — `ugrowReactiveLive` and
 `ugrowReactive_leaderCommits` in `LeanDagTest/Reactive.lean` exhibit a
 reactive execution that satisfies it and the verdict it yields.
 
+### 11.6b One precondition for two execution models
+
+§11.6a leaves coverage and the reactive discipline as two incomparable
+antecedents, and asks whether the rule's precondition can be stated so
+that both reach it. It can, and Mysticeti is the case that settles it,
+because there the *same rule* runs under both.
+
+`coreLive` asks for coverage; `reactiveLive` asks for a reactive
+execution past GST. They were two preconditions and two `LeaderCommits`
+proofs for one decision relation. `MysticetiProperties.certLive` is what
+both deliver, stated in the vocabulary the commit rule counts in: a
+quorum, a horizon the view is caught up to, production at the slot's
+round and its certificate round, and the reliable set certifying every
+candidate of every reliably-led slot in the window.
+
+| | |
+|---|---|
+| `leaderCommits_cert` | the one `LeaderCommits` proof, against `certLive` |
+| `certLive_of_coreLive` | coverage's bridge, `certifiesAt_of_synchronisedOn` at each slot |
+| `certLive_of_reactiveLive` | the reactive bridge, `ReactiveM.certifies` from `cert_or_wait` |
+
+`leaderCommits` and `leaderCommits_reactive` keep their statements and
+become the two corollaries. Nothing downstream moved.
+
+**What the substitution actually does is relocate the work.**
+`LeaderCommits` becomes shape alone — read the leader block off
+production, count the certificates, wrap the verdict — and the substance
+goes into the bridges, which is where the two models genuinely differ.
+The vacuity guard is unaffected: `LiveReachable`'s antecedent stays
+coverage, so the chain from network facts to verdict is the same length,
+and the reactive route is a second bridge rather than a weaker
+obligation.
+
+**The payoff is on the mechanism side.**
+`directCommit_of_certLive_sustains` carries the commit across any
+`Sustains` from *either* model, because `certLive` is stated in
+references and counts and `Sustains` preserves both. A coverage-shaped
+precondition transports only for a model that has coverage;
+`Integration/ReactiveMechanisms.lean`'s three cells are now corollaries
+of the one theorem rather than a reactive-only route.
+
+**It does not unify every rule, and the reason is structural.**
+The substitution works wherever a rule's commit is a count over two
+reference layers — the core, and by the same argument Odontoceti,
+Hydrozoan, Optimal-Hydrozoan and Hybrid at their own wavelengths.
+Mahi-Mahi is different: its commit reads a *cone* a whole wave deep, so
+what its precondition needs is reachability across `w` rounds, not
+certificates two layers up, and `good_of_synchronisedOn` runs on
+coverage for that reason. So the general statement is per rule — "what
+this rule's commit counts" — and the unification is across *execution
+models of one rule*, which is the case that was costing two proofs.
+
 ### 11.6a Coverage is the wrong antecedent for a mechanism
 
 `LiveReachable` reads coverage because coverage is the strongest fact
