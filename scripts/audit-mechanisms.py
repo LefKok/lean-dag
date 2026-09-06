@@ -130,8 +130,9 @@ def main():
             for rule, lives in LIVE_RULES.items():
                 for lv in lives:
                     if "LeanDag." + lv in used:
-                        applied[name].update(
-                            cs for r, cs, _ in conformance.RULES if r == rule)
+                        for r, cs, _ in conformance.RULES:
+                            if r == rule:
+                                applied[name].update(cs)
 
     width = max(len(name) for name, _, _ in conformance.RULES) + 1
     cols = [name for name, _, _, _ in MECHANISMS]
