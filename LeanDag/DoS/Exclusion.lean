@@ -138,7 +138,7 @@ omit [DecidableEq BlockId] in
 /-- **Where the quorum comes from after `R`** — and the settled answer to the
 plan's Q1.
 
-`Live.builds` needs a quorum of *accepted* creators. After `R` that is not an
+The liveness argument needs a quorum of *accepted* creators. After `R` that is not an
 extra assumption: `EventuallyDelivers` puts every correct block in every
 correct validator's hands, `Delivery.accepts_correct` accepts them, and a
 populated round supplies `2f+1` of them. `DeliversQuorum` is therefore a

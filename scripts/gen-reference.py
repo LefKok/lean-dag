@@ -1,11 +1,17 @@
 #!/usr/bin/env python3
 """Generate the report's reference appendices from the compiled source.
 
-Appendix B holds every definition and structure, Appendix C every theorem
-another module depends on, and Appendix D indexes the remaining lemmas.
-All are verbatim, with the docstrings the source already carries. Regenerating tracks the code, so the
+Appendix B holds every definition and structure the body or Appendix A
+names, and Appendix C every theorem they name: the declarations the
+report relies on, and no others. Both are verbatim, with the docstrings
+the source already carries. Regenerating tracks the code, so the
 reference cannot drift; `audit-report.py` check 4 then compares what is
 written against the same extraction on every run.
+
+A citation is a backticked name in the hand-written text. A qualified
+citation (`MysticetiProperties.safety`) selects the declarations whose
+full name ends in it; a bare one (`safety`) selects every declaration
+of that short name, since that is what the prose means by it.
 
     scripts/extract-decls.py && scripts/gen-reference.py
 
@@ -173,38 +179,25 @@ def tidy(doc):
     return doc.replace("\x00", "\n\n")
 
 
-def labelled(root):
-    """Short names of the results Appendix A indexes.
-
-    Cross-module use is blind to the capstones: nothing consumes them
-    precisely because they are endpoints, so by usage alone they file as
-    internal steps. The statement index carries the judgement the graph
-    cannot.
-    """
+def cited(root):
+    """The names the hand-written report cites: every backticked
+    identifier in the body and in Appendix A, split into qualified
+    citations and bare ones."""
     text = (root / "docs/report.md").read_text()
-    app = text[text.index("## Appendix A"):text.index(BEGIN)]
-    names = set()
-    for lean in re.findall(r"^\|[^|]+\|[^|]+\| (.+?) \|$", app, re.M):
-        names.update(re.findall(r"`([A-Za-z][A-Za-z0-9_.'\u2032]*)`", lean))
-    return {n.rsplit(".", 1)[-1] for n in names}
+    hand = text[:text.index(BEGIN)] if BEGIN in text else text
+    names = set(re.findall(r"`([A-Za-z][A-Za-z0-9_.'\u2032]*)`", hand))
+    qualified = {n for n in names if "." in n}
+    bare = {n for n in names if "." not in n}
+    return qualified, bare
 
 
-def cross_module(root):
-    """Names of theorems some other module depends on."""
-    import collections
-    rdeps = collections.defaultdict(set)
-    mod = {}
-    for line in (root / "docs/depgraph/deps.tsv").read_text().splitlines():
-        p = line.split("\t")
-        if p[0] == "NODE":
-            mod[p[1]] = p[2]
-        elif p[0] == "EDGE":
-            rdeps[p[2]].add(p[1])
-    out = set()
-    for full, m in mod.items():
-        if any(mod.get(u) and mod[u] != m for u in rdeps.get(full, ())):
-            out.add((full.rsplit(".", 1)[-1], m))
-    return out
+def is_cited(d, qualified, bare):
+    """Whether a declaration is one the report names."""
+    full = d["name"]
+    short = full.rsplit(".", 1)[-1]
+    if short in bare:
+        return True
+    return any(full == q or full.endswith("." + q) for q in qualified)
 
 
 def entry(d, out):
@@ -225,8 +218,9 @@ def entry(d, out):
 
 def main():
     decls = json.loads((ROOT / "docs/decls.json").read_text())
+    qualified, bare = cited(ROOT)
     lib = [d for d in decls if d["module"].startswith("LeanDag.")
-           and d["kind"] in KINDS]
+           and d["kind"] in KINDS and is_cited(d, qualified, bare)]
     by_module = {}
     for d in lib:
         by_module.setdefault(d["module"].removeprefix("LeanDag."), []).append(d)
@@ -235,23 +229,22 @@ def main():
     out = [BEGIN, ""]
     out.append("## Appendix B. The definition reference")
     out.append("")
-    out.append("Every definition and structure of the development, in the order")
-    out.append("a reader meets them. Each entry is the source text, unabridged,")
-    out.append("with the explanation the source carries. This appendix is")
-    out.append("generated from the compiled development by")
-    out.append("`scripts/gen-reference.py`; the statements are therefore the")
-    out.append("declarations themselves rather than transcriptions of them.")
+    out.append(f"The {len(lib)} definitions and structures the report names, in")
+    out.append("the order a reader meets them. Each entry is the source text,")
+    out.append("unabridged, with the explanation the source carries. This")
+    out.append("appendix is generated from the compiled development by")
+    out.append("`scripts/gen-reference.py`, which selects what the body and")
+    out.append("Appendix A cite; the statements are therefore the declarations")
+    out.append("themselves rather than transcriptions of them.")
     out.append("")
-    out.append("Nine entries carry proofs, which can look like a")
+    out.append("Some entries carry proofs, which can look like a")
     out.append("misclassification. They are not. A structure in Lean may have")
-    out.append("fields that are propositions — `BlockUniverse` requires causal")
+    out.append("fields that are propositions — a block record requires causal")
     out.append("closure, validity and non-equivocation — so *constructing* one")
     out.append("means discharging those obligations, and the proof is part of")
-    out.append("the definition rather than a theorem about it. `chop`, `chopD`")
-    out.append("and `toDelivery` are of this kind: each builds an object whose")
-    out.append("type demands the proofs shown. A theorem, by contrast, asserts")
-    out.append("a proposition about objects already built, and those are")
-    out.append("Appendix C.")
+    out.append("the definition rather than a theorem about it. A theorem, by")
+    out.append("contrast, asserts a proposition about objects already built,")
+    out.append("and those are Appendix C.")
     out.append("")
 
     n = 0
@@ -301,24 +294,18 @@ def main():
     # ---- Appendix C: the theorems other modules depend on ----
     thms = [d for d in decls if d["module"].startswith("LeanDag.")
             and d["kind"] in ("theorem", "lemma")]
-    cross = cross_module(ROOT)
-    idx = labelled(ROOT)
-    def is_public(d):
-        return (d["name"], d["module"]) in cross \
-            or d["name"].rsplit(".", 1)[-1] in idx
-    public = [d for d in thms if is_public(d)]
-    internal = [d for d in thms if not is_public(d)]
+    public = [d for d in thms if is_cited(d, qualified, bare)]
 
     out.append("")
     out.append("---")
     out.append("")
     out.append("## Appendix C. The theorem reference")
     out.append("")
-    out.append(f"The {len(public)} theorems that either another module of the")
-    out.append("development depends on, or that Appendix A indexes as principal")
-    out.append("results — the second clause because the capstones are consumed")
-    out.append("by nothing, being endpoints. Each is the source statement,")
-    out.append("unabridged. Generated with Appendix B.")
+    out.append(f"The {len(public)} theorems the body or Appendix A names, each")
+    out.append("the source statement, unabridged. Generated with Appendix B;")
+    out.append("a theorem the report does not name is a step of an argument")
+    out.append("rather than a result it presents, and the source is its")
+    out.append("reference.")
     out.append("")
     seen_c = set()
     for title, modules in LAYERS:
@@ -338,39 +325,6 @@ def main():
         for d in rest:
             entry(d, out)
 
-    # ---- Appendix D: the remaining lemmas, indexed ----
-    out.append("---")
-    out.append("")
-    out.append("## Appendix D. Index of internal lemmas")
-    out.append("")
-    out.append(f"The {len(internal)} lemmas used only within the file that proves")
-    out.append("them. They are steps of the arguments above rather than results")
-    out.append("in their own right, so they are listed rather than displayed;")
-    out.append("the source is the reference for their statements. One")
-    out.append("subsection per module, in the layer order of Appendices B and C.")
-    out.append("")
-
-    # group by module, in LAYERS order (leftovers last)
-    by_mod = {}
-    for d in internal:
-        by_mod.setdefault(d["module"].removeprefix("LeanDag."), []).append(d)
-    ordered = [m for _, mods in LAYERS for m in mods if m in by_mod]
-    ordered += [m for m in sorted(by_mod) if m not in ordered]
-
-    for mod in ordered:
-        group = sorted(by_mod[mod], key=lambda x: x["name"])
-        out.append(f"### `{mod.replace(chr(46), chr(47))}.lean` ({len(group)})")
-        out.append("")
-        out.append("| Lemma | Role |")
-        out.append("|:---|:---|")
-        for d in group:
-            doc = tidy(d["doc"]).split("\n")[0]
-            doc = re.sub(r"\*\*", "", doc)
-            if len(doc) > 110:
-                doc = doc[:107].rsplit(" ", 1)[0] + " …"
-            out.append(f"| `{d['name']}` | {doc or '—'} |")
-        out.append("")
-
     out.append(END)
     body = "\n".join(out)
 
@@ -383,8 +337,7 @@ def main():
     else:
         text = text.rstrip("\n") + "\n\n" + body + "\n"
     report.write_text(text)
-    print(f"{n} definitions, {len(public)} public theorems, "
-          f"{len(internal)} indexed lemmas")
+    print(f"{n} definitions, {len(public)} theorems")
 
 
 if __name__ == "__main__":

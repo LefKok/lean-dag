@@ -104,7 +104,7 @@ whole budget. `|byzantine| = f` makes `Correct` exactly `n - f` large, and a
 subset of a set of the same cardinality is that set.
 
 So the generality has bite only below full fault load, and `T := Correct`
-(`commits_recur_via_interface_correct`) is not a restriction but the only
+(`commits_recur`, at `Correct`) is not a restriction but the only
 instantiation always available. -/
 theorem reliable_eq_correct {T : Finset Validator} (hfull : F.byzantine.card = F.f)
     (hT : T ⊆ (Correct : Finset Validator))
