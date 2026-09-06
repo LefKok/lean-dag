@@ -223,6 +223,74 @@ theorem optSupport_commits [LinearOrder BlockId] :
   · change LeanDag.Hydrozoan.SlowCommitInView U.val V L (S'.slotRound k)
     rw [hround]; exact hin
 
+/-! ## Optimal-Hydrozoan's fast path
+
+`voteSupport` again — one round up, certifying is referencing — at the
+optimised threshold `q_fast = n − pOpt`, under a fault model with at
+most `pOpt` faults of either kind. -/
+
+/-- **The fast path's fault model.** `pOpt` faults is a minority at every
+committee but the degenerate corner `f = 0`, `c = 1`, `k` odd, where
+`2·pOpt = n` exactly; the committee equation does not exclude it, so
+strict minority is a hypothesis rather than a consequence. -/
+def optFastReliability (Replica : Type) [Fintype Replica] [DecidableEq Replica]
+    [O : LeanDag.OptimalHydrozoan.OptimalFaults Replica]
+    (h : (O.byzantine ∪ O.crashed).card ≤ LeanDag.OptimalHydrozoan.pOpt Replica)
+    (hmin : 2 * LeanDag.OptimalHydrozoan.pOpt Replica < Fintype.card Replica) :
+    LeanDag.Reliability Replica where
+  correct := (LeanDag.Hydrozoan.Correct : Finset Replica)
+  slack := LeanDag.OptimalHydrozoan.pOpt Replica
+  covers := by
+    have hc : (LeanDag.Hydrozoan.Correct : Finset Replica)ᶜ = O.byzantine ∪ O.crashed := by
+      simp [LeanDag.Hydrozoan.Correct]
+    rw [hc]; exact h
+  minority := hmin
+
+/-- **Law 3 of `voteSupport`, for Optimal-Hydrozoan's fast path.** -/
+theorem voteSupport_fast_commits [LinearOrder BlockId]
+    (h : (O.byzantine ∪ O.crashed).card ≤ LeanDag.OptimalHydrozoan.pOpt Replica)
+    (hmin : 2 * LeanDag.OptimalHydrozoan.pOpt Replica < Fintype.card Replica) :
+    Support.Commits (R := optimalRule (Replica := Replica) (BlockId := BlockId))
+      (voteSupport (optimalRule (Replica := Replica) (BlockId := BlockId)))
+      (optFastReliability Replica h hmin) := by
+  intro S U V T k hq hpop hcert hcov hlead
+  letI : LeanDag.Hydrozoan.Slots Replica := LeanDag.Hydrozoan.ofCoreSlots S
+  have hcard : LeanDag.OptimalHydrozoan.qFastOpt Replica ≤ T.card := by
+    have h2 := hq.2
+    change Fintype.card Replica - LeanDag.OptimalHydrozoan.pOpt Replica ≤ T.card at h2
+    exact h2
+  obtain ⟨L, hLmem, hLc, hLr⟩ := hpop (S.slotRound k) le_rfl
+    (by change S.slotRound k ≤ S.slotRound k + 1; omega) (S.leader k) hlead
+  have hL : LeanDag.Hydrozoan.IsLeaderBlock U.val k L := ⟨hLmem, hLr, hLc⟩
+  have hfast : LeanDag.OptimalHydrozoan.FastCommitOpt U.val L (S.slotRound k) := by
+    have hsub : T ⊆ LeanDag.Hydrozoan.supporters U.val L (S.slotRound k + 1) := by
+      intro v hv
+      obtain ⟨b, hb, hba, hbr⟩ := hpop (S.slotRound k + 1) (by omega)
+        (by change S.slotRound k + 1 ≤ S.slotRound k + 1; omega) v hv
+      exact LeanDag.Hydrozoan.mem_supporters.mpr
+        ⟨b, hb, hbr, hcert L ⟨hLmem, hLr, hLc⟩ v hv b hb hba hbr, hba⟩
+    exact le_trans hcard (Finset.card_le_card hsub)
+  have hin : LeanDag.OptimalHydrozoan.FastCommitOptInView U.val V L (S.slotRound k) := by
+    have hsub : (LeanDag.Hydrozoan.blocksAt U.val (S.slotRound k + 1)).filter
+        (fun b => LeanDag.Hydrozoan.IsVote U.val b L) ⊆ V.ids := by
+      intro b hb
+      obtain ⟨hbA, -⟩ := Finset.mem_filter.mp hb
+      obtain ⟨hbU, hbr⟩ := LeanDag.Hydrozoan.mem_blocksAt.mp hbA
+      exact hcov b hbU (le_of_eq hbr)
+    unfold LeanDag.OptimalHydrozoan.FastCommitOptInView LeanDag.Hydrozoan.supportersInView
+    rw [Finset.inter_eq_left.2 hsub]
+    exact hfast
+  refine ⟨L, by omega, LeanDag.OptimalHydrozoan.DecidedOpt.directFast hL hin, ?_⟩
+  intro S' hround hlead'
+  refine LeanDag.OptimalHydrozoan.DecidedOpt.directFast
+    (S := LeanDag.Hydrozoan.ofCoreSlots S') ⟨hL.1, ?_, ?_⟩ ?_
+  · change (U.val.block L).round = S'.slotRound k
+    rw [hround]; exact hL.2.1
+  · change (U.val.block L).author = S'.leader k
+    rw [hlead' k (by omega)]; exact hL.2.2
+  · change LeanDag.OptimalHydrozoan.FastCommitOptInView U.val V L (S'.slotRound k)
+    rw [hround]; exact hin
+
 /-- **Optimal-Hydrozoan's precondition is reachable**
 (`Properties/Live.lean`). Optimal leaves the slow path alone, so the
 reachability is Hydrozoan's, at the same reliable set and wavelength. -/

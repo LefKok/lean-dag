@@ -4035,6 +4035,21 @@ EDGE	LeanDag.Hydrozoan.not_weakLinked_bnd_novel	LeanDag.Hydrozoan.not_weakLinked
 EDGE	LeanDag.Hydrozoan.not_weakLinked_bnd_novel	LeanDag.Hydrozoan.authorsOf
 EDGE	LeanDag.Hydrozoan.not_weakLinked_bnd_novel	LeanDag.Hydrozoan.not_weakLinked_bnd_novel._proof_1_6
 EDGE	LeanDag.Hydrozoan.not_weakLinked_bnd_novel	LeanDag.Hydrozoan.BlockUniverse.ids
+NODE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_7	LeanDag.FinWhale.Carrier	thm
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_7	LeanDag.FinWhaleProperties.finWhaleRule
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_7	LeanDag.FinWhale.Sched.round
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_7	LeanDag.Faults
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_7	LeanDag.Slots.slotRound
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_7	LeanDag.Faults.byzantine
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_7	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_7	LeanDag.FinWhale.fastCard
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_7	LeanDag.FinWhale.Dag.block
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_7	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_7	LeanDag.Block.round
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_7	LeanDag.FinWhale.Params.p
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_7	LeanDag.Slots
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_7	LeanDag.Properties.DagRule.Universe
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_7	LeanDag.FinWhaleProperties.schedOf
 NODE	LeanDag.decisionRound.eq_1	LeanDag.Mysticeti	thm
 EDGE	LeanDag.decisionRound.eq_1	LeanDag.Slots.slotRound
 EDGE	LeanDag.decisionRound.eq_1	LeanDag.decisionRound
@@ -12345,6 +12360,54 @@ EDGE	LeanDag.OptimalHydrozoan.bandedOpt_aux._proof_1_55	LeanDag.Hydrozoan.Slots.
 EDGE	LeanDag.OptimalHydrozoan.bandedOpt_aux._proof_1_55	LeanDag.Hydrozoan.Slots.leader
 EDGE	LeanDag.OptimalHydrozoan.bandedOpt_aux._proof_1_55	LeanDag.Hydrozoan.EligibleAsAnchor
 EDGE	LeanDag.OptimalHydrozoan.bandedOpt_aux._proof_1_55	LeanDag.Hydrozoan.BlockUniverse.ids
+NODE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Hydrozoan.Helpers.Commit	thm
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Reliability.slack
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Properties.DagRule.Decided
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Properties.DecidedBelow
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Hydrozoan.Block.author
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_1
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Properties.DagRule.ids
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_2
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Properties.Support.Commits
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Slots.slotRound
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Hydrozoan.rule
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Hydrozoan.Faults.byzantine
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Properties.voteSupport
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Hydrozoan.IsLeaderBlock
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_3
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Reliability.correct
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_4
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Slots.leader
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Hydrozoan.hzFastReliability
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Properties.PopulatedOn
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Hydrozoan.FastCommitInView
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Hydrozoan.mem_supporters
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Hydrozoan.Block.round
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Hydrozoan.IsVote
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Properties.CoversUpto
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Hydrozoan.FastCommit
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Block.round
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Reliability.IsQuorum
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Hydrozoan.qFast
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Properties.Support.certifiesAt
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Hydrozoan.BlockUniverse.block
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Properties.DagRule.IsCandidate
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Properties.Support.wave
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Hydrozoan.p
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Hydrozoan.Slots.slotRound
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Hydrozoan.Slots.leader
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Hydrozoan.Faults.crashed
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Slots
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Hydrozoan.Faults
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Properties.DagRule.View
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Hydrozoan.supporters
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Block.creator
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Hydrozoan.Decided.directFast
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Properties.DagRule.Universe
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Hydrozoan.ofCoreSlots
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Hydrozoan.fastCommitInView_of_coversUpto
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits	LeanDag.Hydrozoan.BlockUniverse.ids
 NODE	LeanDag.OptimalHydrozoan.bandedOpt_aux._proof_1_10	LeanDag.OptimalHydrozoan.Helpers.Banded	thm
 EDGE	LeanDag.OptimalHydrozoan.bandedOpt_aux._proof_1_10	LeanDag.Hydrozoan.BlockUniverse
 EDGE	LeanDag.OptimalHydrozoan.bandedOpt_aux._proof_1_10	LeanDag.Hydrozoan.Slots
@@ -13867,6 +13930,16 @@ EDGE	LeanDag.Odontoceti.mem_coneSupports._simp_1_4	LeanDag.Block.round
 EDGE	LeanDag.Odontoceti.mem_coneSupports._simp_1_4	LeanDag.BlockUniverse
 EDGE	LeanDag.Odontoceti.mem_coneSupports._simp_1_4	LeanDag.blocksAt
 EDGE	LeanDag.Odontoceti.mem_coneSupports._simp_1_4	LeanDag.mem_blocksAt
+NODE	LeanDag.Hydrozoan.hzFastReliability	LeanDag.Hydrozoan.Helpers.Commit	def
+EDGE	LeanDag.Hydrozoan.hzFastReliability	LeanDag.Hydrozoan.Correct
+EDGE	LeanDag.Hydrozoan.hzFastReliability	LeanDag.Hydrozoan.hzFastReliability._proof_3
+EDGE	LeanDag.Hydrozoan.hzFastReliability	LeanDag.Reliability
+EDGE	LeanDag.Hydrozoan.hzFastReliability	LeanDag.Hydrozoan.Faults.byzantine
+EDGE	LeanDag.Hydrozoan.hzFastReliability	LeanDag.Reliability.mk
+EDGE	LeanDag.Hydrozoan.hzFastReliability	LeanDag.Hydrozoan.p
+EDGE	LeanDag.Hydrozoan.hzFastReliability	LeanDag.Hydrozoan.Faults.crashed
+EDGE	LeanDag.Hydrozoan.hzFastReliability	LeanDag.Hydrozoan.Faults
+EDGE	LeanDag.Hydrozoan.hzFastReliability	LeanDag.Hydrozoan.hzFastReliability._proof_2
 NODE	LeanDag.Properties.Truncates	LeanDag.Properties.Truncate	ind
 EDGE	LeanDag.Properties.Truncates	LeanDag.Properties.DagRule
 EDGE	LeanDag.Properties.Truncates	LeanDag.Slots
@@ -14779,6 +14852,22 @@ EDGE	LeanDag.Properties.AgreeBand.rec	LeanDag.Properties.AgreeBand
 EDGE	LeanDag.Properties.AgreeBand.rec	LeanDag.Properties.DagRule
 EDGE	LeanDag.Properties.AgreeBand.rec	LeanDag.Block.creator
 EDGE	LeanDag.Properties.AgreeBand.rec	LeanDag.Properties.DagRule.Universe
+NODE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_2	LeanDag.Hydrozoan.Helpers.Commit	thm
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_2	LeanDag.Slots.slotRound
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_2	LeanDag.Hydrozoan.rule
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_2	LeanDag.Hydrozoan.Faults.byzantine
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_2	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_2	LeanDag.Hydrozoan.Block.round
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_2	LeanDag.Block.round
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_2	LeanDag.Hydrozoan.qFast
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_2	LeanDag.Hydrozoan.BlockUniverse.block
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_2	LeanDag.Hydrozoan.p
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_2	LeanDag.Hydrozoan.Slots.slotRound
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_2	LeanDag.Hydrozoan.Faults.crashed
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_2	LeanDag.Slots
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_2	LeanDag.Hydrozoan.Faults
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_2	LeanDag.Properties.DagRule.Universe
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_2	LeanDag.Hydrozoan.ofCoreSlots
 NODE	LeanDag.BlackMarlin.descentUpto_mem_ids	LeanDag.BlackMarlin.Helpers.Descent	thm
 EDGE	LeanDag.BlackMarlin.descentUpto_mem_ids	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.descentUpto_mem_ids	LeanDag.BlackMarlin.descend_mem_ids
@@ -19398,6 +19487,16 @@ EDGE	LeanDag.hybrid_byzantine	LeanDag.Faults.byzantine
 EDGE	LeanDag.hybrid_byzantine	LeanDag.HybridFaults.toFaults
 EDGE	LeanDag.hybrid_byzantine	LeanDag.HybridFaults.crash
 EDGE	LeanDag.hybrid_byzantine	LeanDag.HybridFaults.byzantine
+NODE	LeanDag.OptimalHydrozoanProperties.optFastReliability	LeanDag.OptimalHydrozoan.Carrier	def
+EDGE	LeanDag.OptimalHydrozoanProperties.optFastReliability	LeanDag.Hydrozoan.Correct
+EDGE	LeanDag.OptimalHydrozoanProperties.optFastReliability	LeanDag.OptimalHydrozoan.OptimalFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.optFastReliability	LeanDag.Reliability
+EDGE	LeanDag.OptimalHydrozoanProperties.optFastReliability	LeanDag.Hydrozoan.Faults.byzantine
+EDGE	LeanDag.OptimalHydrozoanProperties.optFastReliability	LeanDag.OptimalHydrozoanProperties.optFastReliability._proof_1
+EDGE	LeanDag.OptimalHydrozoanProperties.optFastReliability	LeanDag.Reliability.mk
+EDGE	LeanDag.OptimalHydrozoanProperties.optFastReliability	LeanDag.OptimalHydrozoan.OptimalFaults.toFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.optFastReliability	LeanDag.Hydrozoan.Faults.crashed
+EDGE	LeanDag.OptimalHydrozoanProperties.optFastReliability	LeanDag.OptimalHydrozoan.pOpt
 NODE	LeanDag.Hybrid.kRel_eq_of_fc_zero._proof_1_1	LeanDag.Hybrid.Conservativity	thm
 EDGE	LeanDag.Hybrid.kRel_eq_of_fc_zero._proof_1_1	LeanDag.HybridFaults
 EDGE	LeanDag.Hybrid.kRel_eq_of_fc_zero._proof_1_1	LeanDag.HybridFaults.fc
@@ -19432,6 +19531,70 @@ EDGE	LeanDag.ExposedIn.congr_simp	LeanDag.BlockUniverse
 NODE	LeanDagTest.ugrowReactive_decided._proof_1_1	LeanDagTest.Reactive	thm
 EDGE	LeanDagTest.ugrowReactive_decided._proof_1_1	LeanDag.Slots.slotRound
 EDGE	LeanDagTest.ugrowReactive_decided._proof_1_1	LeanDagTest.rrSlots
+NODE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhale.Carrier	thm
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_6
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhale.restrict
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.Reliability.slack
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.Properties.DagRule.Decided
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.Properties.DecidedBelow
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.creatorsOf
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhaleProperties.finWhaleRule
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.Properties.DagRule.ids
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.Properties.Support.Commits
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhale.Sched.round
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.Faults
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.Slots.slotRound
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.Faults.byzantine
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhale.Dag.ids
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_5
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhale.DirectCommit
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.Properties.voteSupport
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhale.WellFormed.direct_commit
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.Reliability.correct
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhale.viewSkip
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhale.voters
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhaleProperties.VerdictIs
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_1
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhale.chooseLeast
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.Slots.leader
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.Properties.PopulatedOn
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhale.SPCommit
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.Block.refs
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhaleProperties.assignment_passOf
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhaleProperties.Assignment.wf
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhale.fastCard
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.Properties.CoversUpto
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhale.Dag.block
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.Block.round
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhaleProperties.mem_blocksAt
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhale.viewCommit
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhaleProperties.passOf
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhale.slotBlocks
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.Reliability.IsQuorum
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhale.viewCommit_congr
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.Properties.Support.certifiesAt
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhale.IsView
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhaleProperties.mem_slotBlocks
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhale.Sched.Elig
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhale.blocksAt
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.Properties.DagRule.IsCandidate
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhale.FastCommit
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhale.Params.p
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.Properties.Support.wave
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_2
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhaleProperties.fwFastReliability
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.Slots
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhale.Sched.leader
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_3
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.Properties.DagRule.View
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhaleProperties.decided_iff
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_4
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.Block.creator
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.Properties.DagRule.Universe
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_7
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits	LeanDag.FinWhaleProperties.schedOf
 NODE	LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.select_mem	LeanDag.Hybrid.Checkpoint.RecoveryProofs	thm
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.select_mem	LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.select_spec
 EDGE	LeanDag.Hybrid.Checkpoint.Model.Execution.RecoveryRound.select_mem	LeanDag.HybridFaults
@@ -25840,6 +26003,12 @@ EDGE	LeanDag.FinWhaleProperties.liveReachable._proof_1_1	LeanDag.FinWhale.Sched.
 EDGE	LeanDag.FinWhaleProperties.liveReachable._proof_1_1	LeanDag.Slots.slotRound
 EDGE	LeanDag.FinWhaleProperties.liveReachable._proof_1_1	LeanDag.Slots
 EDGE	LeanDag.FinWhaleProperties.liveReachable._proof_1_1	LeanDag.FinWhaleProperties.schedOf
+NODE	LeanDag.FinWhaleProperties.fwFastReliability._proof_2	LeanDag.FinWhale.Carrier	thm
+EDGE	LeanDag.FinWhaleProperties.fwFastReliability._proof_2	LeanDag.Faults
+EDGE	LeanDag.FinWhaleProperties.fwFastReliability._proof_2	LeanDag.Faults.byzantine
+EDGE	LeanDag.FinWhaleProperties.fwFastReliability._proof_2	LeanDag.Correct
+EDGE	LeanDag.FinWhaleProperties.fwFastReliability._proof_2	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhaleProperties.fwFastReliability._proof_2	LeanDag.FinWhale.Params.p
 NODE	LeanDagTest.OptimalHydrozoan.fourSlotsOpt._proof_1	LeanDagTest.OptimalHydrozoan.Universe	thm
 NODE	LeanDag.FinWhale.ValidHere.leader_clause	LeanDag.FinWhale.Model.Rule	thm
 EDGE	LeanDag.FinWhale.ValidHere.leader_clause	LeanDag.Block
@@ -28836,6 +29005,14 @@ EDGE	LeanDag.Barnacle.configAgree	LeanDag.Barnacle.Keyed
 EDGE	LeanDag.Barnacle.configAgree	LeanDag.Barnacle.Anchored
 EDGE	LeanDag.Barnacle.configAgree	LeanDag.Barnacle.BaseRule
 NODE	LeanDagTest.ugrowReactive._proof_20	LeanDagTest.Reactive	thm
+NODE	LeanDag.Hydrozoan.hzFastReliability._proof_1	LeanDag.Hydrozoan.Helpers.Commit	thm
+EDGE	LeanDag.Hydrozoan.hzFastReliability._proof_1	LeanDag.Hydrozoan.Faults.c
+EDGE	LeanDag.Hydrozoan.hzFastReliability._proof_1	LeanDag.Hydrozoan.Faults.byzantine
+EDGE	LeanDag.Hydrozoan.hzFastReliability._proof_1	LeanDag.Hydrozoan.Faults.k
+EDGE	LeanDag.Hydrozoan.hzFastReliability._proof_1	LeanDag.Hydrozoan.p
+EDGE	LeanDag.Hydrozoan.hzFastReliability._proof_1	LeanDag.Hydrozoan.Faults.crashed
+EDGE	LeanDag.Hydrozoan.hzFastReliability._proof_1	LeanDag.Hydrozoan.Faults.f
+EDGE	LeanDag.Hydrozoan.hzFastReliability._proof_1	LeanDag.Hydrozoan.Faults
 NODE	LeanDagTest.OptimalHydrozoan.fiveReplicasOpt	LeanDagTest.OptimalHydrozoan.Thresholds	def
 EDGE	LeanDagTest.OptimalHydrozoan.fiveReplicasOpt	LeanDagTest.OptimalHydrozoan.fourReplicasOpt._proof_6
 EDGE	LeanDagTest.OptimalHydrozoan.fiveReplicasOpt	LeanDag.OptimalHydrozoan.OptimalFaults
@@ -36739,6 +36916,65 @@ EDGE	LeanDag.SkipMsg.line_eq_lineOf._proof_1_4	LeanDag.SkipData.line
 EDGE	LeanDag.SkipMsg.line_eq_lineOf._proof_1_4	LeanDag.SkipMsg
 NODE	LeanDag.BlackMarlin.filterFirstFrom.match_1.eq_1	LeanDag.BlackMarlin.Helpers.Order	thm
 EDGE	LeanDag.BlackMarlin.filterFirstFrom.match_1.eq_1	LeanDag.BlackMarlin.filterFirstFrom.match_1
+NODE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.OptimalHydrozoan.Carrier	thm
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.OptimalHydrozoan.OptUniverse.toBlockUniverse
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.OptimalHydrozoanProperties.optFastReliability
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Reliability.slack
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Properties.DagRule.Decided
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Properties.DecidedBelow
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Hydrozoan.Block.parents
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Hydrozoan.Block.author
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Hydrozoan.BlockUniverse
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Properties.DagRule.ids
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_4
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Properties.Support.Commits
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.OptimalHydrozoan.OptimalFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Slots.slotRound
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Hydrozoan.Faults.byzantine
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Properties.voteSupport
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Hydrozoan.IsLeaderBlock
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Reliability.correct
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.OptimalHydrozoan.FastCommitOpt
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_2
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Slots.leader
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Properties.PopulatedOn
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.OptimalHydrozoan.FastCommitOptInView
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Hydrozoan.mem_supporters
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Hydrozoan.Block.round
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.OptimalHydrozoanProperties.optimalRule._proof_3
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Hydrozoan.blocksAt
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Hydrozoan.IsVote
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.OptimalHydrozoanProperties.optimalRule
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_1
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_3
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Properties.CoversUpto
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Block.round
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Hydrozoan.mem_blocksAt
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.OptimalHydrozoan.DecidedOpt.directFast
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Barnacle.OptimalHydrozoan.LeaderExcludedAll
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Barnacle.OptimalHydrozoan.optUniverseOf
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.OptimalHydrozoan.OptimalFaults.toFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Reliability.IsQuorum
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Hydrozoan.View.ids
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Properties.Support.certifiesAt
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Hydrozoan.BlockUniverse.block
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Properties.DagRule.IsCandidate
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Properties.Support.wave
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Hydrozoan.Slots.slotRound
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Hydrozoan.Slots.leader
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Hydrozoan.Faults.crashed
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Slots
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.OptimalHydrozoan.pOpt
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.OptimalHydrozoan.qFastOpt
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Properties.DagRule.View
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Hydrozoan.supporters
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Block.creator
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Properties.DagRule.Universe
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Hydrozoan.authorsOf
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Hydrozoan.ofCoreSlots
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Hydrozoan.supportersInView
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits	LeanDag.Hydrozoan.BlockUniverse.ids
 NODE	LeanDagTest.checkpointRecovery	LeanDagTest.HybridCheckpoint	def
 EDGE	LeanDagTest.checkpointRecovery	LeanDag.Hybrid.Checkpoint.instDecidableEqCheckpointData
 EDGE	LeanDagTest.checkpointRecovery	LeanDagTest.checkpointFaults
@@ -38079,6 +38315,22 @@ EDGE	LeanDag.Integration.truncates_chop_hybrid	LeanDag.Properties.Truncates.toRe
 EDGE	LeanDag.Integration.truncates_chop_hybrid	LeanDag.Properties.DagRule.Universe
 EDGE	LeanDag.Integration.truncates_chop_hybrid	LeanDag.HybridProperties.hybridRule
 EDGE	LeanDag.Integration.truncates_chop_hybrid	LeanDag.Properties.Truncates
+NODE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_3	LeanDag.Hydrozoan.Helpers.Commit	thm
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_3	LeanDag.Slots.slotRound
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_3	LeanDag.Hydrozoan.rule
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_3	LeanDag.Hydrozoan.Faults.byzantine
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_3	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_3	LeanDag.Hydrozoan.Block.round
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_3	LeanDag.Block.round
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_3	LeanDag.Hydrozoan.qFast
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_3	LeanDag.Hydrozoan.BlockUniverse.block
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_3	LeanDag.Hydrozoan.p
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_3	LeanDag.Hydrozoan.Slots.slotRound
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_3	LeanDag.Hydrozoan.Faults.crashed
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_3	LeanDag.Slots
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_3	LeanDag.Hydrozoan.Faults
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_3	LeanDag.Properties.DagRule.Universe
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_3	LeanDag.Hydrozoan.ofCoreSlots
 NODE	LeanDag.exists_mem_refs_of_correct_support_of_card._proof_1_1	LeanDag.Support	thm
 EDGE	LeanDag.exists_mem_refs_of_correct_support_of_card._proof_1_1	LeanDag.Faults
 EDGE	LeanDag.exists_mem_refs_of_correct_support_of_card._proof_1_1	LeanDag.authorsAt
@@ -42266,6 +42518,19 @@ EDGE	LeanDag.FinWhale.Band.fpEvidence_iff._proof_1_2	LeanDag.Block.round
 EDGE	LeanDag.FinWhale.Band.fpEvidence_iff._proof_1_2	LeanDag.Faults.f
 EDGE	LeanDag.FinWhale.Band.fpEvidence_iff._proof_1_2	LeanDag.FinWhale.Params.p
 EDGE	LeanDag.FinWhale.Band.fpEvidence_iff._proof_1_2	LeanDag.FinWhale.Dag
+NODE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_4	LeanDag.FinWhale.Carrier	thm
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_4	LeanDag.FinWhaleProperties.finWhaleRule
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_4	LeanDag.Faults
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_4	LeanDag.Slots.slotRound
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_4	LeanDag.Faults.byzantine
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_4	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_4	LeanDag.FinWhale.fastCard
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_4	LeanDag.FinWhale.Dag.block
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_4	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_4	LeanDag.Block.round
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_4	LeanDag.FinWhale.Params.p
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_4	LeanDag.Slots
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_4	LeanDag.Properties.DagRule.Universe
 NODE	LeanDag.BlackMarlin.TopoSort.mk.inj	LeanDag.BlackMarlin.Model.Order	thm
 EDGE	LeanDag.BlackMarlin.TopoSort.mk.inj	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.TopoSort.mk.inj	LeanDag.BlackMarlin.TopoSort.mk.noConfusion
@@ -46762,6 +47027,12 @@ EDGE	LeanDag.BlackMarlin.Pace.committedIn_local._proof_1_10	LeanDag.PaceCore.del
 NODE	LeanDag.FinWhale.three_correct_window._proof_1_10	LeanDag.FinWhale.Rotation	thm
 EDGE	LeanDag.FinWhale.three_correct_window._proof_1_10	LeanDag.Faults
 EDGE	LeanDag.FinWhale.three_correct_window._proof_1_10	LeanDag.Faults.f
+NODE	LeanDag.Hydrozoan.hzFastReliability._proof_2	LeanDag.Hydrozoan.Helpers.Commit	thm
+EDGE	LeanDag.Hydrozoan.hzFastReliability._proof_2	LeanDag.Hydrozoan.Correct
+EDGE	LeanDag.Hydrozoan.hzFastReliability._proof_2	LeanDag.Hydrozoan.Faults.byzantine
+EDGE	LeanDag.Hydrozoan.hzFastReliability._proof_2	LeanDag.Hydrozoan.p
+EDGE	LeanDag.Hydrozoan.hzFastReliability._proof_2	LeanDag.Hydrozoan.Faults.crashed
+EDGE	LeanDag.Hydrozoan.hzFastReliability._proof_2	LeanDag.Hydrozoan.Faults
 NODE	LeanDag.FinWhale.three_correct_window._proof_1_2	LeanDag.FinWhale.Rotation	thm
 EDGE	LeanDag.FinWhale.three_correct_window._proof_1_2	LeanDag.Faults
 EDGE	LeanDag.FinWhale.three_correct_window._proof_1_2	LeanDag.Faults.f
@@ -47320,6 +47591,14 @@ EDGE	LeanDag.BlackMarlin.descentUpto_suffix._proof_1_7	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.descentUpto_suffix._proof_1_7	LeanDag.BlockUniverse.block
 EDGE	LeanDag.BlackMarlin.descentUpto_suffix._proof_1_7	LeanDag.Block.round
 EDGE	LeanDag.BlackMarlin.descentUpto_suffix._proof_1_7	LeanDag.BlockUniverse
+NODE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_1	LeanDag.FinWhale.Carrier	thm
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_1	LeanDag.Faults
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_1	LeanDag.Slots.slotRound
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_1	LeanDag.Faults.byzantine
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_1	LeanDag.FinWhale.fastCard
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_1	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_1	LeanDag.FinWhale.Params.p
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_1	LeanDag.Slots
 NODE	LeanDagTest.FinWhaleEquiv.eqRun._proof_5	LeanDagTest.FinWhale.Equivocation	thm
 EDGE	LeanDagTest.FinWhaleEquiv.eqRun._proof_5	LeanDagTest.FinWhaleEquiv.eqReactive
 EDGE	LeanDagTest.FinWhaleEquiv.eqRun._proof_5	LeanDag.ReactiveM.toReactivePace
@@ -51767,6 +52046,19 @@ EDGE	LeanDag.coveredAt	LeanDag.Properties.Arcs.coveredAt
 EDGE	LeanDag.coveredAt	LeanDag.MysticetiProperties.mysticetiRule
 EDGE	LeanDag.coveredAt	LeanDag.BlockUniverse
 EDGE	LeanDag.coveredAt	LeanDag.coreReliability
+NODE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_3	LeanDag.FinWhale.Carrier	thm
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_3	LeanDag.FinWhaleProperties.finWhaleRule
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_3	LeanDag.Faults
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_3	LeanDag.Slots.slotRound
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_3	LeanDag.Faults.byzantine
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_3	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_3	LeanDag.FinWhale.fastCard
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_3	LeanDag.FinWhale.Dag.block
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_3	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_3	LeanDag.Block.round
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_3	LeanDag.FinWhale.Params.p
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_3	LeanDag.Slots
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_3	LeanDag.Properties.DagRule.Universe
 NODE	LeanDagTest.checkpointRecovery._proof_2	LeanDagTest.HybridCheckpoint	thm
 EDGE	LeanDagTest.checkpointRecovery._proof_2	LeanDag.Hybrid.Checkpoint.ChkProp.mk
 EDGE	LeanDagTest.checkpointRecovery._proof_2	LeanDagTest.checkpointTwoPayload
@@ -56189,6 +56481,14 @@ EDGE	LeanDag.uniform_of_byzBudget._proof_1_1	LeanDag.Faults.f
 EDGE	LeanDag.uniform_of_byzBudget._proof_1_1	LeanDag.novelty
 EDGE	LeanDag.uniform_of_byzBudget._proof_1_1	LeanDag.viewUpto
 NODE	LeanDagTest.uexcl_commits._proof_1_2	LeanDagTest.DoS.Exclusion	thm
+NODE	LeanDag.Hydrozoan.hzFastReliability._proof_3	LeanDag.Hydrozoan.Helpers.Commit	thm
+EDGE	LeanDag.Hydrozoan.hzFastReliability._proof_3	LeanDag.Hydrozoan.Faults.c
+EDGE	LeanDag.Hydrozoan.hzFastReliability._proof_3	LeanDag.Hydrozoan.hzFastReliability._proof_1
+EDGE	LeanDag.Hydrozoan.hzFastReliability._proof_3	LeanDag.Hydrozoan.Faults.k
+EDGE	LeanDag.Hydrozoan.hzFastReliability._proof_3	LeanDag.Hydrozoan.Faults.card_replicas
+EDGE	LeanDag.Hydrozoan.hzFastReliability._proof_3	LeanDag.Hydrozoan.p
+EDGE	LeanDag.Hydrozoan.hzFastReliability._proof_3	LeanDag.Hydrozoan.Faults.f
+EDGE	LeanDag.Hydrozoan.hzFastReliability._proof_3	LeanDag.Hydrozoan.Faults
 NODE	LeanDagTest.OptimalHydrozoan.fiveReplicasOpt._proof_3	LeanDagTest.OptimalHydrozoan.Thresholds	thm
 NODE	LeanDag.BlackMarlin.commitSeq._f	LeanDag.BlackMarlin.Model.Recursion	def
 EDGE	LeanDag.BlackMarlin.commitSeq._f	LeanDag.BlackMarlin.descendD
@@ -58904,6 +59204,13 @@ EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_27	LeanDag.Slots
 EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_27	LeanDag.Odontoceti.Decided
 EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_27	LeanDag.View
 EDGE	LeanDag.OdontocetiProperties.banded_aux._proof_1_27	LeanDag.Faults5.toFaults
+NODE	LeanDag.OptimalHydrozoanProperties.optFastReliability._proof_1	LeanDag.OptimalHydrozoan.Carrier	thm
+EDGE	LeanDag.OptimalHydrozoanProperties.optFastReliability._proof_1	LeanDag.Hydrozoan.Correct
+EDGE	LeanDag.OptimalHydrozoanProperties.optFastReliability._proof_1	LeanDag.OptimalHydrozoan.OptimalFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.optFastReliability._proof_1	LeanDag.Hydrozoan.Faults.byzantine
+EDGE	LeanDag.OptimalHydrozoanProperties.optFastReliability._proof_1	LeanDag.OptimalHydrozoan.OptimalFaults.toFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.optFastReliability._proof_1	LeanDag.Hydrozoan.Faults.crashed
+EDGE	LeanDag.OptimalHydrozoanProperties.optFastReliability._proof_1	LeanDag.OptimalHydrozoan.pOpt
 NODE	LeanDag.BlackMarlin.exists_adjacent_correct	LeanDag.BlackMarlin.Helpers.Liveness	thm
 EDGE	LeanDag.BlackMarlin.exists_adjacent_correct	LeanDag.Faults
 EDGE	LeanDag.BlackMarlin.exists_adjacent_correct	LeanDag.BlackMarlin.nxt_inj
@@ -61500,6 +61807,16 @@ EDGE	LeanDagTest.FinWhaleEquiv.eqRun._proof_3	LeanDag.Correct
 EDGE	LeanDagTest.FinWhaleEquiv.eqRun._proof_3	LeanDag.PaceCore.top
 EDGE	LeanDagTest.FinWhaleEquiv.eqRun._proof_3	LeanDag.ReactivePace.toPaceCore
 EDGE	LeanDagTest.FinWhaleEquiv.eqRun._proof_3	LeanDagTest.instFaultsFinOfNatNat_leanDagTest
+NODE	LeanDag.FinWhaleProperties.fwFastReliability	LeanDag.FinWhale.Carrier	def
+EDGE	LeanDag.FinWhaleProperties.fwFastReliability	LeanDag.FinWhaleProperties.fwFastReliability._proof_2
+EDGE	LeanDag.FinWhaleProperties.fwFastReliability	LeanDag.Faults
+EDGE	LeanDag.FinWhaleProperties.fwFastReliability	LeanDag.Reliability
+EDGE	LeanDag.FinWhaleProperties.fwFastReliability	LeanDag.Faults.byzantine
+EDGE	LeanDag.FinWhaleProperties.fwFastReliability	LeanDag.FinWhaleProperties.fwFastReliability._proof_3
+EDGE	LeanDag.FinWhaleProperties.fwFastReliability	LeanDag.Correct
+EDGE	LeanDag.FinWhaleProperties.fwFastReliability	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhaleProperties.fwFastReliability	LeanDag.Reliability.mk
+EDGE	LeanDag.FinWhaleProperties.fwFastReliability	LeanDag.FinWhale.Params.p
 NODE	LeanDagTest.mmFullBlk._proof_7	LeanDagTest.MahiMahi.Model	thm
 EDGE	LeanDagTest.mmFullBlk._proof_7	LeanDagTest.mmFullBlk._proof_2
 NODE	LeanDagTest.exclAcc_eq_empty._proof_1_1	LeanDagTest.GC.Bootstrap	thm
@@ -62827,6 +63144,15 @@ EDGE	LeanDag.Hydrozoan.weakLinked_of_fastCommit_aux._proof_1_1	LeanDag.Hydrozoan
 EDGE	LeanDag.Hydrozoan.weakLinked_of_fastCommit_aux._proof_1_1	LeanDag.Hydrozoan.Block.round
 EDGE	LeanDag.Hydrozoan.weakLinked_of_fastCommit_aux._proof_1_1	LeanDag.Hydrozoan.BlockUniverse.block
 EDGE	LeanDag.Hydrozoan.weakLinked_of_fastCommit_aux._proof_1_1	LeanDag.Hydrozoan.Faults
+NODE	LeanDag.FinWhaleProperties.fwFastReliability._proof_3	LeanDag.FinWhale.Carrier	thm
+EDGE	LeanDag.FinWhaleProperties.fwFastReliability._proof_3	LeanDag.FinWhale.Params.p_pos
+EDGE	LeanDag.FinWhaleProperties.fwFastReliability._proof_3	LeanDag.Faults
+EDGE	LeanDag.FinWhaleProperties.fwFastReliability._proof_3	LeanDag.FinWhale.Params.card_add_one
+EDGE	LeanDag.FinWhaleProperties.fwFastReliability._proof_3	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhaleProperties.fwFastReliability._proof_3	LeanDag.Faults.f
+EDGE	LeanDag.FinWhaleProperties.fwFastReliability._proof_3	LeanDag.FinWhale.Params.p_le_f
+EDGE	LeanDag.FinWhaleProperties.fwFastReliability._proof_3	LeanDag.FinWhaleProperties.fwFastReliability._proof_1
+EDGE	LeanDag.FinWhaleProperties.fwFastReliability._proof_3	LeanDag.FinWhale.Params.p
 NODE	LeanDagTest.emptyRecoveryBroadcast._proof_2	LeanDagTest.HybridCheckpoint	thm
 EDGE	LeanDagTest.emptyRecoveryBroadcast._proof_2	LeanDagTest.checkpointFaults
 EDGE	LeanDagTest.emptyRecoveryBroadcast._proof_2	LeanDagTest.checkpointModel
@@ -66088,6 +66414,19 @@ EDGE	LeanDag.card_filter_creator_le_card_topsOf	LeanDag.DoSValid
 EDGE	LeanDag.card_filter_creator_le_card_topsOf	LeanDag.BlockUniverse
 EDGE	LeanDag.card_filter_creator_le_card_topsOf	LeanDag.history_subset_ids
 EDGE	LeanDag.card_filter_creator_le_card_topsOf	LeanDag.Block.creator
+NODE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_6	LeanDag.FinWhale.Carrier	thm
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_6	LeanDag.FinWhaleProperties.finWhaleRule
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_6	LeanDag.Faults
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_6	LeanDag.Slots.slotRound
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_6	LeanDag.Faults.byzantine
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_6	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_6	LeanDag.FinWhale.fastCard
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_6	LeanDag.FinWhale.Dag.block
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_6	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_6	LeanDag.Block.round
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_6	LeanDag.FinWhale.Params.p
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_6	LeanDag.Slots
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_6	LeanDag.Properties.DagRule.Universe
 NODE	LeanDag.FinWhale.Dag.ofDoSValid	LeanDag.FinWhale.DoSBridge	def
 EDGE	LeanDag.FinWhale.Dag.ofDoSValid	LeanDag.Faults
 EDGE	LeanDag.FinWhale.Dag.ofDoSValid	LeanDag.FinWhale.Dag.mk
@@ -67029,6 +67368,25 @@ EDGE	LeanDag.FinWhale.fastCard.eq_1	LeanDag.Faults
 EDGE	LeanDag.FinWhale.fastCard.eq_1	LeanDag.FinWhale.fastCard
 EDGE	LeanDag.FinWhale.fastCard.eq_1	LeanDag.FinWhale.Params
 EDGE	LeanDag.FinWhale.fastCard.eq_1	LeanDag.FinWhale.Params.p
+NODE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_4	LeanDag.OptimalHydrozoan.Carrier	thm
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_4	LeanDag.Hydrozoan.BlockUniverse
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_4	LeanDag.OptimalHydrozoan.OptimalFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_4	LeanDag.Slots.slotRound
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_4	LeanDag.Hydrozoan.Faults.byzantine
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_4	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_4	LeanDag.Hydrozoan.Block.round
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_4	LeanDag.OptimalHydrozoanProperties.optimalRule
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_4	LeanDag.Block.round
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_4	LeanDag.Barnacle.OptimalHydrozoan.LeaderExcludedAll
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_4	LeanDag.OptimalHydrozoan.OptimalFaults.toFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_4	LeanDag.Hydrozoan.BlockUniverse.block
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_4	LeanDag.Hydrozoan.Slots.slotRound
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_4	LeanDag.Hydrozoan.Faults.crashed
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_4	LeanDag.Slots
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_4	LeanDag.OptimalHydrozoan.pOpt
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_4	LeanDag.OptimalHydrozoan.qFastOpt
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_4	LeanDag.Properties.DagRule.Universe
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_4	LeanDag.Hydrozoan.ofCoreSlots
 NODE	LeanDagTest.Uhyb9._proof_3	LeanDagTest.Hybrid	thm
 EDGE	LeanDagTest.Uhyb9._proof_3	LeanDag.HybridFaults.toFaults
 EDGE	LeanDagTest.Uhyb9._proof_3	LeanDag.Correct
@@ -67592,6 +67950,19 @@ EDGE	LeanDag.Hydrozoan.weakLinked_bnd_old._proof_1_1	LeanDag.Hydrozoan.BlockUniv
 EDGE	LeanDag.Hydrozoan.weakLinked_bnd_old._proof_1_1	LeanDag.Hydrozoan.Faults
 EDGE	LeanDag.Hydrozoan.weakLinked_bnd_old._proof_1_1	LeanDag.Hydrozoan.authorsOf
 NODE	LeanDag.Integration.Hydrozoan.blamesInView_fill._simp_1_1	LeanDag.Integration.Hydrozoan.FillDecided	thm
+NODE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_5	LeanDag.FinWhale.Carrier	thm
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_5	LeanDag.FinWhaleProperties.finWhaleRule
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_5	LeanDag.Faults
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_5	LeanDag.Slots.slotRound
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_5	LeanDag.Faults.byzantine
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_5	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_5	LeanDag.FinWhale.fastCard
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_5	LeanDag.FinWhale.Dag.block
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_5	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_5	LeanDag.Block.round
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_5	LeanDag.FinWhale.Params.p
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_5	LeanDag.Slots
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_5	LeanDag.Properties.DagRule.Universe
 NODE	LeanDag.Barnacle.PartialRun.mk.sizeOf_spec	LeanDag.Barnacle.Model.Run	thm
 EDGE	LeanDag.Barnacle.PartialRun.mk.sizeOf_spec	LeanDag.Barnacle.BaseRule.Decided
 EDGE	LeanDag.Barnacle.PartialRun.mk.sizeOf_spec	LeanDag.Barnacle.Params.maxLeaders
@@ -71070,6 +71441,25 @@ EDGE	LeanDag.Barnacle.PartialRun.ledgerUpto	LeanDag.Barnacle.Params
 EDGE	LeanDag.Barnacle.PartialRun.ledgerUpto	LeanDag.Barnacle.BaseRule.View
 EDGE	LeanDag.Barnacle.PartialRun.ledgerUpto	LeanDag.Barnacle.Keyed
 EDGE	LeanDag.Barnacle.PartialRun.ledgerUpto	LeanDag.Barnacle.BaseRule
+NODE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_3	LeanDag.OptimalHydrozoan.Carrier	thm
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_3	LeanDag.Hydrozoan.BlockUniverse
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_3	LeanDag.OptimalHydrozoan.OptimalFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_3	LeanDag.Slots.slotRound
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_3	LeanDag.Hydrozoan.Faults.byzantine
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_3	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_3	LeanDag.Hydrozoan.Block.round
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_3	LeanDag.OptimalHydrozoanProperties.optimalRule
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_3	LeanDag.Block.round
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_3	LeanDag.Barnacle.OptimalHydrozoan.LeaderExcludedAll
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_3	LeanDag.OptimalHydrozoan.OptimalFaults.toFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_3	LeanDag.Hydrozoan.BlockUniverse.block
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_3	LeanDag.Hydrozoan.Slots.slotRound
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_3	LeanDag.Hydrozoan.Faults.crashed
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_3	LeanDag.Slots
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_3	LeanDag.OptimalHydrozoan.pOpt
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_3	LeanDag.OptimalHydrozoan.qFastOpt
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_3	LeanDag.Properties.DagRule.Universe
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_3	LeanDag.Hydrozoan.ofCoreSlots
 NODE	LeanDagTest.Barnacle.bnUpd	LeanDagTest.Barnacle.Progress	def
 EDGE	LeanDagTest.Barnacle.bnUpd	LeanDagTest.Barnacle.bnWin
 EDGE	LeanDagTest.Barnacle.bnUpd	LeanDagTest.Barnacle.bnLive
@@ -71602,6 +71992,24 @@ EDGE	LeanDagTest.FinWhaleEquiv.Uequiv	LeanDagTest.FinWhaleEquiv.Uequiv._proof_3
 EDGE	LeanDagTest.FinWhaleEquiv.Uequiv	LeanDagTest.FinWhaleEquiv.eqBlk
 NODE	LeanDag.BlackMarlin.Rotation.anchor	LeanDag.BlackMarlin.Model.Rules	def
 EDGE	LeanDag.BlackMarlin.Rotation.anchor	LeanDag.BlackMarlin.Rotation
+NODE	LeanDag.Hydrozoan.fastCommitInView_of_coversUpto	LeanDag.Hydrozoan.Helpers.Commit	thm
+EDGE	LeanDag.Hydrozoan.fastCommitInView_of_coversUpto	LeanDag.Hydrozoan.Block.parents
+EDGE	LeanDag.Hydrozoan.fastCommitInView_of_coversUpto	LeanDag.Hydrozoan.BlockUniverse
+EDGE	LeanDag.Hydrozoan.fastCommitInView_of_coversUpto	LeanDag.Hydrozoan.FastCommitInView
+EDGE	LeanDag.Hydrozoan.fastCommitInView_of_coversUpto	LeanDag.Hydrozoan.Block.round
+EDGE	LeanDag.Hydrozoan.fastCommitInView_of_coversUpto	LeanDag.Hydrozoan.blocksAt
+EDGE	LeanDag.Hydrozoan.fastCommitInView_of_coversUpto	LeanDag.Hydrozoan.IsVote
+EDGE	LeanDag.Hydrozoan.fastCommitInView_of_coversUpto	LeanDag.Hydrozoan.FastCommit
+EDGE	LeanDag.Hydrozoan.fastCommitInView_of_coversUpto	LeanDag.Hydrozoan.mem_blocksAt
+EDGE	LeanDag.Hydrozoan.fastCommitInView_of_coversUpto	LeanDag.Hydrozoan.View.CoversUpto
+EDGE	LeanDag.Hydrozoan.fastCommitInView_of_coversUpto	LeanDag.Hydrozoan.View
+EDGE	LeanDag.Hydrozoan.fastCommitInView_of_coversUpto	LeanDag.Hydrozoan.qFast
+EDGE	LeanDag.Hydrozoan.fastCommitInView_of_coversUpto	LeanDag.Hydrozoan.View.ids
+EDGE	LeanDag.Hydrozoan.fastCommitInView_of_coversUpto	LeanDag.Hydrozoan.BlockUniverse.block
+EDGE	LeanDag.Hydrozoan.fastCommitInView_of_coversUpto	LeanDag.Hydrozoan.Faults
+EDGE	LeanDag.Hydrozoan.fastCommitInView_of_coversUpto	LeanDag.Hydrozoan.authorsOf
+EDGE	LeanDag.Hydrozoan.fastCommitInView_of_coversUpto	LeanDag.Hydrozoan.supportersInView
+EDGE	LeanDag.Hydrozoan.fastCommitInView_of_coversUpto	LeanDag.Hydrozoan.BlockUniverse.ids
 NODE	LeanDag.committed_of_correct_block_within._proof_1_4	LeanDag.Quality.Capstone	thm
 EDGE	LeanDag.committed_of_correct_block_within._proof_1_4	LeanDag.Faults
 EDGE	LeanDag.committed_of_correct_block_within._proof_1_4	LeanDag.Slots.slotRound
@@ -77035,6 +77443,25 @@ EDGE	LeanDag.Hydrozoan.no_base_of_naive_shift	LeanDag.Hydrozoan.BlockUniverse.va
 EDGE	LeanDag.Hydrozoan.no_base_of_naive_shift	LeanDag.Hydrozoan.Faults
 EDGE	LeanDag.Hydrozoan.no_base_of_naive_shift	LeanDag.Hydrozoan.NaiveShift.parents
 EDGE	LeanDag.Hydrozoan.no_base_of_naive_shift	LeanDag.Hydrozoan.BlockUniverse.ids
+NODE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_2	LeanDag.OptimalHydrozoan.Carrier	thm
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_2	LeanDag.Hydrozoan.BlockUniverse
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_2	LeanDag.OptimalHydrozoan.OptimalFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_2	LeanDag.Slots.slotRound
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_2	LeanDag.Hydrozoan.Faults.byzantine
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_2	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_2	LeanDag.Hydrozoan.Block.round
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_2	LeanDag.OptimalHydrozoanProperties.optimalRule
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_2	LeanDag.Block.round
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_2	LeanDag.Barnacle.OptimalHydrozoan.LeaderExcludedAll
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_2	LeanDag.OptimalHydrozoan.OptimalFaults.toFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_2	LeanDag.Hydrozoan.BlockUniverse.block
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_2	LeanDag.Hydrozoan.Slots.slotRound
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_2	LeanDag.Hydrozoan.Faults.crashed
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_2	LeanDag.Slots
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_2	LeanDag.OptimalHydrozoan.pOpt
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_2	LeanDag.OptimalHydrozoan.qFastOpt
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_2	LeanDag.Properties.DagRule.Universe
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_2	LeanDag.Hydrozoan.ofCoreSlots
 NODE	LeanDag.Properties.exists_decidedBelow	LeanDag.Properties.Derived.FromBand	thm
 EDGE	LeanDag.Properties.exists_decidedBelow	LeanDag.Properties.DagRule.Decided
 EDGE	LeanDag.Properties.exists_decidedBelow	LeanDag.Properties.DecidedBelow
@@ -80478,6 +80905,22 @@ EDGE	LeanDag.Properties.Arcs.decided_chop_iff	LeanDag.Properties.DagRule.viewIds
 EDGE	LeanDag.Properties.Arcs.decided_chop_iff	LeanDag.Slots
 EDGE	LeanDag.Properties.Arcs.decided_chop_iff	LeanDag.Properties.LocalTruncate.of_banded
 EDGE	LeanDag.Properties.Arcs.decided_chop_iff	LeanDag.View
+NODE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_4	LeanDag.Hydrozoan.Helpers.Commit	thm
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_4	LeanDag.Slots.slotRound
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_4	LeanDag.Hydrozoan.rule
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_4	LeanDag.Hydrozoan.Faults.byzantine
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_4	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_4	LeanDag.Hydrozoan.Block.round
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_4	LeanDag.Block.round
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_4	LeanDag.Hydrozoan.qFast
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_4	LeanDag.Hydrozoan.BlockUniverse.block
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_4	LeanDag.Hydrozoan.p
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_4	LeanDag.Hydrozoan.Slots.slotRound
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_4	LeanDag.Hydrozoan.Faults.crashed
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_4	LeanDag.Slots
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_4	LeanDag.Hydrozoan.Faults
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_4	LeanDag.Properties.DagRule.Universe
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_4	LeanDag.Hydrozoan.ofCoreSlots
 NODE	LeanDag.Barnacle.Params.num	LeanDag.Barnacle.Model.Window	def
 EDGE	LeanDag.Barnacle.Params.num	LeanDag.Barnacle.Params
 NODE	LeanDag.MahiMahiProperties.banded_aux._proof_1_12	LeanDag.MahiMahiProperties	thm
@@ -83978,6 +84421,14 @@ EDGE	LeanDag.OptimalHydrozoan.OptimalFaults.casesOn	LeanDag.OptimalHydrozoan.Opt
 EDGE	LeanDag.OptimalHydrozoan.OptimalFaults.casesOn	LeanDag.OptimalHydrozoan.OptimalFaults.rec
 EDGE	LeanDag.OptimalHydrozoan.OptimalFaults.casesOn	LeanDag.Hydrozoan.Faults.f
 EDGE	LeanDag.OptimalHydrozoan.OptimalFaults.casesOn	LeanDag.Hydrozoan.Faults
+NODE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_1	LeanDag.Hydrozoan.Helpers.Commit	thm
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_1	LeanDag.Slots.slotRound
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_1	LeanDag.Hydrozoan.Faults.byzantine
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_1	LeanDag.Hydrozoan.qFast
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_1	LeanDag.Hydrozoan.p
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_1	LeanDag.Hydrozoan.Faults.crashed
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_1	LeanDag.Slots
+EDGE	LeanDag.Hydrozoan.voteSupport_fast_commits._proof_1_1	LeanDag.Hydrozoan.Faults
 NODE	LeanDag.Hydrozoan.mem_correct	LeanDag.Hydrozoan.Helpers.Faults	thm
 EDGE	LeanDag.Hydrozoan.mem_correct	LeanDag.Hydrozoan.Correct
 EDGE	LeanDag.Hydrozoan.mem_correct	LeanDag.Hydrozoan.Faults.byzantine
@@ -86157,6 +86608,12 @@ EDGE	LeanDag.MysticetiProperties.certifiedIn_band._proof_1_2	LeanDag.BlockUniver
 EDGE	LeanDag.MysticetiProperties.certifiedIn_band._proof_1_2	LeanDag.Block.round
 EDGE	LeanDag.MysticetiProperties.certifiedIn_band._proof_1_2	LeanDag.BlockUniverse
 NODE	LeanDagTest.hyb11._proof_1	LeanDagTest.Hybrid	thm
+NODE	LeanDag.FinWhaleProperties.fwFastReliability._proof_1	LeanDag.FinWhale.Carrier	thm
+EDGE	LeanDag.FinWhaleProperties.fwFastReliability._proof_1	LeanDag.Faults
+EDGE	LeanDag.FinWhaleProperties.fwFastReliability._proof_1	LeanDag.Faults.byzantine
+EDGE	LeanDag.FinWhaleProperties.fwFastReliability._proof_1	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhaleProperties.fwFastReliability._proof_1	LeanDag.Faults.f
+EDGE	LeanDag.FinWhaleProperties.fwFastReliability._proof_1	LeanDag.FinWhale.Params.p
 NODE	LeanDagTest.ugrowSkewPace._proof_18	LeanDagTest.ViewPace	thm
 NODE	LeanDagTest.Barnacle.bnLiveSk_not_liveOn0._proof_1_1	LeanDagTest.Barnacle.Progress	thm
 NODE	LeanDag.Properties.CommitsCandidate	LeanDag.Properties.Candidate	def
@@ -88923,6 +89380,19 @@ EDGE	LeanDag.Integration.skipFillNemo._proof_4	LeanDag.SkipData
 NODE	LeanDagTest.Utwin6._proof_1	LeanDagTest.Odontoceti.Model	thm
 EDGE	LeanDagTest.Utwin6._proof_1	LeanDag.Block.refs
 EDGE	LeanDagTest.Utwin6._proof_1	LeanDagTest.twinBlk
+NODE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_2	LeanDag.FinWhale.Carrier	thm
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_2	LeanDag.FinWhaleProperties.finWhaleRule
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_2	LeanDag.Faults
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_2	LeanDag.Slots.slotRound
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_2	LeanDag.Faults.byzantine
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_2	LeanDag.Properties.DagRule.block
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_2	LeanDag.FinWhale.fastCard
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_2	LeanDag.FinWhale.Dag.block
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_2	LeanDag.FinWhale.Params
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_2	LeanDag.Block.round
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_2	LeanDag.FinWhale.Params.p
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_2	LeanDag.Slots
+EDGE	LeanDag.FinWhaleProperties.voteSupport_fast_commits._proof_1_2	LeanDag.Properties.DagRule.Universe
 NODE	LeanDag.FinWhale.conflicting_parents_lt._proof_1_6	LeanDag.FinWhale.Evidence	thm
 EDGE	LeanDag.FinWhale.conflicting_parents_lt._proof_1_6	LeanDag.Faults
 EDGE	LeanDag.FinWhale.conflicting_parents_lt._proof_1_6	LeanDag.Faults.byzantine
@@ -96210,6 +96680,15 @@ EDGE	LeanDag.FinWhale.Creation.rec	LeanDag.FinWhale.Trigger
 EDGE	LeanDag.FinWhale.Creation.rec	LeanDag.FinWhale.Creation
 EDGE	LeanDag.FinWhale.Creation.rec	LeanDag.Block.creator
 EDGE	LeanDag.FinWhale.Creation.rec	LeanDag.FinWhale.Trigger.leaderAndQuorum
+NODE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_1	LeanDag.OptimalHydrozoan.Carrier	thm
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_1	LeanDag.OptimalHydrozoan.OptimalFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_1	LeanDag.Slots.slotRound
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_1	LeanDag.Hydrozoan.Faults.byzantine
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_1	LeanDag.OptimalHydrozoan.OptimalFaults.toFaults
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_1	LeanDag.Hydrozoan.Faults.crashed
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_1	LeanDag.Slots
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_1	LeanDag.OptimalHydrozoan.pOpt
+EDGE	LeanDag.OptimalHydrozoanProperties.voteSupport_fast_commits._proof_1_1	LeanDag.OptimalHydrozoan.qFastOpt
 NODE	LeanDagTest.uskip_decidedWithin_slot1._proof_1_2	LeanDagTest.Adaptive	thm
 NODE	LeanDagTest.OptimalHydrozoan.lkS	LeanDagTest.OptimalHydrozoan.EventualDecision	def
 EDGE	LeanDagTest.OptimalHydrozoan.lkS	LeanDagTest.OptimalHydrozoan.lkS._proof_10

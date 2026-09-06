@@ -23848,6 +23848,28 @@ def fwSupport : Support (finWhaleRule (Validator := Validator) (BlockId := Block
 
 **FinWhale's support**: wavelength two, certification the slow path's.
 
+#### `fwFastReliability`
+
+*def, `FinWhale.Carrier.lean`*
+
+```lean
+def fwFastReliability (Validator : Type) [Fintype Validator] [DecidableEq Validator]
+    [F : Faults Validator] [P : LeanDag.FinWhale.Params Validator]
+    (h : F.byzantine.card ≤ P.p) : LeanDag.Reliability Validator where
+  correct := (Correct : Finset Validator)
+  slack := P.p
+  covers := by
+    have hc : (Correct : Finset Validator)ᶜ = F.byzantine := by simp [Correct]
+    rw [hc]; exact h
+  minority := by
+    have := P.card_add_one
+    have := P.p_pos
+    have := P.p_le_f
+    omega
+```
+
+**The fast path's fault model**: at most `p` Byzantine validators.
+
 #### `finWhaleElig`
 
 *def, `FinWhale.Carrier.lean`*
@@ -24416,6 +24438,28 @@ def hzSupport : Support (rule (Replica := Replica) (BlockId := BlockId)) where
 ```
 
 **Hydrozoan's support**: wavelength two, certification the rule's own.
+
+#### `hzFastReliability`
+
+*def, `Hydrozoan.Helpers.Commit.lean`*
+
+```lean
+def hzFastReliability (Replica : Type) [Fintype Replica] [DecidableEq Replica]
+    [F : LeanDag.Hydrozoan.Faults Replica]
+    (h : (F.byzantine ∪ F.crashed).card ≤ LeanDag.Hydrozoan.p Replica) :
+    LeanDag.Reliability Replica where
+  correct := (LeanDag.Hydrozoan.Correct : Finset Replica)
+  slack := LeanDag.Hydrozoan.p Replica
+  covers := by
+    have hc : (LeanDag.Hydrozoan.Correct : Finset Replica)ᶜ = F.byzantine ∪ F.crashed := by
+      simp [LeanDag.Hydrozoan.Correct]
+    rw [hc]; exact h
+  minority := by
+    have := F.card_replicas
+    unfold LeanDag.Hydrozoan.p; omega
+```
+
+**The fast path's fault model**: at most `p` replicas Byzantine or crashed, so the correct set carries `q_fast`.
 
 #### `NaiveShift`
 
@@ -25638,6 +25682,27 @@ def optSupport : Support (optimalRule (Replica := Replica) (BlockId := BlockId))
 ```
 
 **Optimal-Hydrozoan's support.**
+
+#### `optFastReliability`
+
+*def, `OptimalHydrozoan.Carrier.lean`*
+
+```lean
+def optFastReliability (Replica : Type) [Fintype Replica] [DecidableEq Replica]
+    [O : LeanDag.OptimalHydrozoan.OptimalFaults Replica]
+    (h : (O.byzantine ∪ O.crashed).card ≤ LeanDag.OptimalHydrozoan.pOpt Replica)
+    (hmin : 2 * LeanDag.OptimalHydrozoan.pOpt Replica < Fintype.card Replica) :
+    LeanDag.Reliability Replica where
+  correct := (LeanDag.Hydrozoan.Correct : Finset Replica)
+  slack := LeanDag.OptimalHydrozoan.pOpt Replica
+  covers := by
+    have hc : (LeanDag.Hydrozoan.Correct : Finset Replica)ᶜ = O.byzantine ∪ O.crashed := by
+      simp [LeanDag.Hydrozoan.Correct]
+    rw [hc]; exact h
+  minority := hmin
+```
+
+**The fast path's fault model.** `pOpt` faults is a minority at every committee but the degenerate corner `f = 0`, `c = 1`, `k` odd, where `2·pOpt = n` exactly; the committee equation does not exclude it, so strict minority is a hypothesis rather than a consequence.
 
 #### `Agree`
 
@@ -40744,7 +40809,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 1107 lemmas used only within the file that proves
+The 1111 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -42310,7 +42375,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `spSkip_new` | And a candidate the band adds is skipped too. An old block two rounds above the slot carries a quorum of … |
 | `voters_subset` | Votes survive: an old voter is a voter. |
 
-### `FinWhale/Carrier.lean` (24)
+### `FinWhale/Carrier.lean` (25)
 
 | Lemma | Role |
 |:---|:---|
@@ -42338,6 +42403,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `verdictIs_of_eq` | Two assignments agreeing at a slot carry the same verdict there. |
 | `verdictIs_optOf` | And reading it back is the verdict, wherever the slot is decided. |
 | `view_bounded` | A view is finite, so its blocks stop at a round. |
+| `voteSupport_fast_commits` | Law 3 of `voteSupport`, for FinWhale's fast path: `n − p` votes held by a caught-up view are a fast commit … |
 
 ### `Hybrid/Checkpoint/RecoveryProofs.lean` (14)
 
@@ -42416,14 +42482,16 @@ subsection per module, in the layer order of Appendices B and C.
 | `rule_ids` | — |
 | `rule_viewIds` | — |
 
-### `Hydrozoan/Helpers/Commit.lean` (4)
+### `Hydrozoan/Helpers/Commit.lean` (6)
 
 | Lemma | Role |
 |:---|:---|
 | `coversUpto_eq` | The carrier's coverage predicate is Hydrozoan's. |
 | `exists_coversUpto_decides` | A caught-up replica reaches every verdict, at the band's own ceiling rather than a rule-specific round. … |
+| `fastCommitInView_of_coversUpto` | A view caught up to the voting round holds every vote, so a fast commit in the universe is a fast commit … |
 | `hzSupport_commits` | Law 3. A quorum's certificates at the slot's candidate are a slow commit, which a view caught up to the … |
 | `liveReachable` | Hydrozoan's precondition is reachable (`Properties/Live.lean`). The reliable set is `Correct`, which … |
+| `voteSupport_fast_commits` | Law 3 of `voteSupport`, for Hydrozoan's fast path, under the fast fault model: `q_fast` votes one round up … |
 
 ### `Hydrozoan/Helpers/Skippability.lean` (1)
 
@@ -42776,7 +42844,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `toCore` | The two carriers project identically, so a band for one is a band for the other. |
 | `voteSupport_commits` | Law 3 of `voteSupport`, for Odontoceti (`Properties/Support.lean`): a quorum referencing the candidate one … |
 
-### `OptimalHydrozoan/Carrier.lean` (5)
+### `OptimalHydrozoan/Carrier.lean` (6)
 
 | Lemma | Role |
 |:---|:---|
@@ -42785,6 +42853,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `optSupport_commits` | Law 3: the slow commit, in `DecidedOpt`. |
 | `optSupport_local` | Law 1, Hydrozoan's at the underlying universe. |
 | `optSupport_ofCoverage` | Law 2, Hydrozoan's at the underlying universe. |
+| `voteSupport_fast_commits` | Law 3 of `voteSupport`, for Optimal-Hydrozoan's fast path. |
 
 ### `OptimalHydrozoan/Helpers/Banded.lean` (13)
 

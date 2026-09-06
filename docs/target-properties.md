@@ -2752,10 +2752,19 @@ is `reaches_of_synchronisedOn` with its coverage cut to the one layer it
 reads). So the antecedent did not have to be strengthened; the rule had
 the lemma that makes one layer of coverage enough.
 
-**The two-path rules took the slow path.** Hydrozoan's, Optimal's and
-FinWhale's supports are their slow-path certificates. A fast-path
-`Support` for each is admissible — that is what the parameter form is
-for — and would carry the tighter bound; none is written.
+**The two-path rules have both paths.** Hydrozoan's, Optimal's and
+FinWhale's named supports are their slow-path certificates, and each
+also discharges `Commits` for `voteSupport` — one round up, certifying
+is referencing, Laws 1 and 2 generic — which is its fast path. What the
+fast path costs is the fault model: `n − p` votes exist only when at
+most `p` replicas are faulty, so each fast `Commits` is stated under a
+tighter `Reliability` (`hzFastReliability`, `optFastReliability`,
+`fwFastReliability`) that takes that bound as a hypothesis. This is the
+case the parameter form was chosen for: two supports of one rule, each
+with its own laws and its own bound, and the generic theorems apply to
+both. Optimal's fast model takes strict minority as a further
+hypothesis, since `2·pOpt = n` at the corner `f = 0`, `c = 1`, `k` odd
+and the committee equation does not exclude it.
 
 **What a rule owes, on the evidence of nine.** A one-round rule owes one
 proof. A two-layer rule owes three, each an existing lemma with its

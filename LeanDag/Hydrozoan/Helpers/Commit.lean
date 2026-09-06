@@ -168,6 +168,85 @@ theorem hzSupport_commits :
   · change LeanDag.Hydrozoan.SlowCommitInView U V L (S'.slotRound k)
     rw [hround]; exact hin
 
+/-! ## Hydrozoan's fast path
+
+A second `Support` for the same rule, which is what the parameter form
+is for. The fast path is `voteSupport`: one round up, certifying is
+referencing, so Laws 1 and 2 are the generic ones. What it costs is the
+fault model: `q_fast = n − p` votes, and a reliable set that large exists
+only when at most `p` replicas are faulty. `hzFastReliability` is that
+model, and Law 3 holds under it. -/
+
+/-- **The fast path's fault model**: at most `p` replicas Byzantine or
+crashed, so the correct set carries `q_fast`. -/
+def hzFastReliability (Replica : Type) [Fintype Replica] [DecidableEq Replica]
+    [F : LeanDag.Hydrozoan.Faults Replica]
+    (h : (F.byzantine ∪ F.crashed).card ≤ LeanDag.Hydrozoan.p Replica) :
+    LeanDag.Reliability Replica where
+  correct := (LeanDag.Hydrozoan.Correct : Finset Replica)
+  slack := LeanDag.Hydrozoan.p Replica
+  covers := by
+    have hc : (LeanDag.Hydrozoan.Correct : Finset Replica)ᶜ = F.byzantine ∪ F.crashed := by
+      simp [LeanDag.Hydrozoan.Correct]
+    rw [hc]; exact h
+  minority := by
+    have := F.card_replicas
+    unfold LeanDag.Hydrozoan.p; omega
+
+/-- A view caught up to the voting round holds every vote, so a fast
+commit in the universe is a fast commit in that view. -/
+theorem fastCommitInView_of_coversUpto {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
+    {V : LeanDag.Hydrozoan.View U} {L : BlockId} {r : ℕ}
+    (h : LeanDag.Hydrozoan.FastCommit U L r) (hcov : V.CoversUpto (r + 1)) :
+    LeanDag.Hydrozoan.FastCommitInView U V L r := by
+  have hsub : (LeanDag.Hydrozoan.blocksAt U (r + 1)).filter
+      (fun b => LeanDag.Hydrozoan.IsVote U b L) ⊆ V.ids := by
+    intro b hb
+    obtain ⟨hbA, -⟩ := Finset.mem_filter.mp hb
+    obtain ⟨hbU, hbr⟩ := LeanDag.Hydrozoan.mem_blocksAt.mp hbA
+    exact hcov b hbU (le_of_eq hbr)
+  unfold LeanDag.Hydrozoan.FastCommitInView LeanDag.Hydrozoan.supportersInView
+  rw [Finset.inter_eq_left.2 hsub]
+  exact h
+
+/-- **Law 3 of `voteSupport`, for Hydrozoan's fast path**, under the fast
+fault model: `q_fast` votes one round up are a fast commit, and a view
+caught up to the voting round sees it. -/
+theorem voteSupport_fast_commits
+    (h : (LeanDag.Hydrozoan.Faults.byzantine ∪ LeanDag.Hydrozoan.Faults.crashed :
+      Finset Replica).card ≤ LeanDag.Hydrozoan.p Replica) :
+    Support.Commits (R := rule (Replica := Replica) (BlockId := BlockId))
+      (voteSupport (rule (Replica := Replica) (BlockId := BlockId)))
+      (hzFastReliability Replica h) := by
+  intro S U V T k hq hpop hcert hcov hlead
+  letI : LeanDag.Hydrozoan.Slots Replica := ofCoreSlots S
+  have hcard : LeanDag.Hydrozoan.qFast Replica ≤ T.card := by
+    have h2 := hq.2
+    change Fintype.card Replica - LeanDag.Hydrozoan.p Replica ≤ T.card at h2
+    exact h2
+  obtain ⟨L, hLmem, hLc, hLr⟩ := hpop (S.slotRound k) le_rfl
+    (by change S.slotRound k ≤ S.slotRound k + 1; omega) (S.leader k) hlead
+  have hL : LeanDag.Hydrozoan.IsLeaderBlock U k L := ⟨hLmem, hLr, hLc⟩
+  have hfast : LeanDag.Hydrozoan.FastCommit U L (S.slotRound k) := by
+    have hsub : T ⊆ LeanDag.Hydrozoan.supporters U L (S.slotRound k + 1) := by
+      intro v hv
+      obtain ⟨b, hb, hba, hbr⟩ := hpop (S.slotRound k + 1) (by omega)
+        (by change S.slotRound k + 1 ≤ S.slotRound k + 1; omega) v hv
+      exact LeanDag.Hydrozoan.mem_supporters.mpr
+        ⟨b, hb, hbr, hcert L ⟨hLmem, hLr, hLc⟩ v hv b hb hba hbr, hba⟩
+    exact le_trans hcard (Finset.card_le_card hsub)
+  have hin : LeanDag.Hydrozoan.FastCommitInView U V L (S.slotRound k) :=
+    fastCommitInView_of_coversUpto hfast hcov
+  refine ⟨L, by omega, LeanDag.Hydrozoan.Decided.directFast hL hin, ?_⟩
+  intro S' hround hlead'
+  refine LeanDag.Hydrozoan.Decided.directFast (S := ofCoreSlots S') ⟨hL.1, ?_, ?_⟩ ?_
+  · change (U.block L).round = S'.slotRound k
+    rw [hround]; exact hL.2.1
+  · change (U.block L).author = S'.leader k
+    rw [hlead' k (by omega)]; exact hL.2.2
+  · change LeanDag.Hydrozoan.FastCommitInView U V L (S'.slotRound k)
+    rw [hround]; exact hin
+
 /-- **Hydrozoan's precondition is reachable** (`Properties/Live.lean`).
 The reliable set is `Correct`, which carries the quorum, and the
 wavelength is two. -/

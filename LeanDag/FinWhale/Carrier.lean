@@ -720,6 +720,73 @@ theorem fwSupport_commits :
   have hvc' := (LeanDag.FinWhale.viewCommit_congr hr (hlead' k (by omega))).2 hvc
   exact decided_iff.2 ((assignment_passOf V.property).wf.direct_commit k L hvc')
 
+/-! ## FinWhale's fast path
+
+`voteSupport`: `n − p` votes one round up. Its fault model is at most
+`p` Byzantine validators, which `Params` bounds by `f` but does not
+demand; `fwFastReliability` takes the bound as a hypothesis. -/
+
+/-- **The fast path's fault model**: at most `p` Byzantine validators. -/
+def fwFastReliability (Validator : Type) [Fintype Validator] [DecidableEq Validator]
+    [F : Faults Validator] [P : LeanDag.FinWhale.Params Validator]
+    (h : F.byzantine.card ≤ P.p) : LeanDag.Reliability Validator where
+  correct := (Correct : Finset Validator)
+  slack := P.p
+  covers := by
+    have hc : (Correct : Finset Validator)ᶜ = F.byzantine := by simp [Correct]
+    rw [hc]; exact h
+  minority := by
+    have := P.card_add_one
+    have := P.p_pos
+    have := P.p_le_f
+    omega
+
+/-- **Law 3 of `voteSupport`, for FinWhale's fast path**: `n − p` votes
+held by a caught-up view are a fast commit on it, and the pass commits. -/
+theorem voteSupport_fast_commits (h : F.byzantine.card ≤ P.p) :
+    Support.Commits (R := finWhaleRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload))
+      (voteSupport (finWhaleRule (Validator := Validator) (BlockId := BlockId)
+        (Payload := Payload)))
+      (fwFastReliability Validator h) := by
+  intro S D V T k hq hpop hcert hcov hlead
+  have hcard : LeanDag.FinWhale.fastCard Validator ≤ T.card := by
+    have h2 := hq.2
+    change Fintype.card Validator - P.p ≤ T.card at h2
+    exact h2
+  obtain ⟨L, hLmem, hLc, hLr⟩ := hpop (S.slotRound k) le_rfl
+    (by change S.slotRound k ≤ S.slotRound k + 1; omega) (S.leader k) hlead
+  have hLc' : (LeanDag.FinWhale.Dag.block D L).creator = S.leader k := hLc
+  have hLr' : (LeanDag.FinWhale.Dag.block D L).round = S.slotRound k := hLr
+  have hlV : L ∈ V.val := hcov L hLmem
+    (by change (LeanDag.FinWhale.Dag.block D L).round ≤ S.slotRound k + 1; omega)
+  have hvc : LeanDag.FinWhale.viewCommit (schedOf S) D V.val V.property k L := by
+    refine ⟨?_, Or.inl ?_⟩
+    · rw [mem_slotBlocks]
+      simp only [LeanDag.FinWhale.restrict_ids, LeanDag.FinWhale.restrict_block]
+      exact ⟨⟨hlV, hLr'⟩, hLc'⟩
+    · change LeanDag.FinWhale.fastCard Validator ≤
+        (LeanDag.FinWhale.voters (LeanDag.FinWhale.restrict D V.val V.property) L).card
+      refine le_trans hcard (Finset.card_le_card ?_)
+      intro v hv
+      obtain ⟨b, hb, hbc, hbr⟩ := hpop (S.slotRound k + 1) (by omega)
+        (by change S.slotRound k + 1 ≤ S.slotRound k + 1; omega) v hv
+      have hbr' : (LeanDag.FinWhale.Dag.block D b).round = S.slotRound k + 1 := hbr
+      have hbV : b ∈ V.val := hcov b hb
+        (by change (LeanDag.FinWhale.Dag.block D b).round ≤ S.slotRound k + 1; omega)
+      unfold LeanDag.FinWhale.voters creatorsOf
+      refine Finset.mem_image.mpr ⟨b, ?_, hbc⟩
+      rw [Finset.mem_filter, mem_blocksAt]
+      simp only [LeanDag.FinWhale.restrict_ids, LeanDag.FinWhale.restrict_block]
+      exact ⟨⟨hbV, by rw [hbr', hLr']⟩, hcert L ⟨hLmem, hLr, hLc⟩ v hv b hb hbc hbr⟩
+  refine ⟨L, by omega,
+    decided_iff.2 ((assignment_passOf V.property).wf.direct_commit k L hvc),
+    fun S' hround hlead' => ?_⟩
+  have hr : (schedOf S').round k = (schedOf S).round k := by
+    change S'.slotRound k = S.slotRound k; rw [hround]
+  have hvc' := (LeanDag.FinWhale.viewCommit_congr hr (hlead' k (by omega))).2 hvc
+  exact decided_iff.2 ((assignment_passOf V.property).wf.direct_commit k L hvc')
+
 /-- **FinWhale's precondition is reachable** (`Properties/Live.lean`).
 `finWhaleLive` asks for `CommitsCorrectLeaders`, which the arc supplies
 from a timing model — `commits_of_reactive` from the reactive wait
