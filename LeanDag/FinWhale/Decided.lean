@@ -117,7 +117,7 @@ section Triple
 
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
-variable {Payload : Type} {D : Dag Validator BlockId Payload} {S : Sched Validator}
+variable {Payload : Type} {D : Dag Validator BlockId Payload} {S : Slots Validator}
 
 /-- The commit the interface carries. -/
 theorem directCommit_of_commits {R N : ℕ} (h : CommitsCorrectLeaders S D R N) {s : ℕ}
@@ -246,7 +246,7 @@ section Order
 
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
-variable {Payload : Type} {D : Dag Validator BlockId Payload} {S : Sched Validator}
+variable {Payload : Type} {D : Dag Validator BlockId Payload} {S : Slots Validator}
 
 /-- `histOf` is the causal history: the faithfulness condition Theorem 26
 asks for, discharged. -/
@@ -272,7 +272,7 @@ section Capstone
 
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
-variable {Payload : Type} {D : Dag Validator BlockId Payload} {S : Sched Validator}
+variable {Payload : Type} {D : Dag Validator BlockId Payload} {S : Slots Validator}
 
 /-- **Theorem 24 (Agreement), end to end.** Two validators of one DAG
 deliver the same sequence at every horizon the DAG supports.

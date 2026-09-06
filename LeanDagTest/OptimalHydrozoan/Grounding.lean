@@ -56,7 +56,6 @@ open LeanDagTest.Hydrozoan
 
 open LeanDag LeanDag.Hydrozoan
 open LeanDag.OptimalHydrozoan
-open LeanDag.Hydrozoan.Grounding (waveRobin)
 
 -- The configurations, pinned: the correct pools the applications below
 -- name are the ones the instances define.

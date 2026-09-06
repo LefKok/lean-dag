@@ -232,8 +232,8 @@ def fwReactiveCorrect (N : ℕ) : ReactiveM (Ugrow N) (Correct : Finset (Fin 4))
 /-- **The liveness interface, off the reactive schedule.** Every
 correct-led slot below the horizon carries a direct commit — with no
 coverage assumption anywhere, since a reactive builder has none. -/
-example (N : ℕ) : CommitsCorrectLeaders (Sched.identity reactLeader) (Dreact N) 0 N :=
-  commits_of_reactive (FS := Sched.identity reactLeader) (D := Dreact N) (fwReactiveCorrect N)
+example (N : ℕ) : CommitsCorrectLeaders (Slots.identity reactLeader) (Dreact N) 0 N :=
+  commits_of_reactive (FS := Slots.identity reactLeader) (D := Dreact N) (fwReactiveCorrect N)
     rfl rfl
     (fun k => by simp) (fun _ => rfl) (fun k => rfl) rfl (Nat.le_refl _)
     (fun n _ => Nat.le_refl _)
@@ -432,8 +432,8 @@ def fwCreation (N : ℕ) : Creation (Ugrow N) {1, 2, 3} N reactLeader :=
 
 /-- **The liveness interface, from the creation rule.** No wait clause is
 assumed: the votes and the certificates come out of C1 and C3. -/
-theorem fwCommits (N : ℕ) : CommitsCorrectLeaders (Sched.identity reactLeader) (Dreact N) 0 N :=
-  commits_of_creation (S := Sched.identity reactLeader) (D := Dreact N) (fwCreation N) rfl rfl
+theorem fwCommits (N : ℕ) : CommitsCorrectLeaders (Slots.identity reactLeader) (Dreact N) 0 N :=
+  commits_of_creation (S := Slots.identity reactLeader) (D := Dreact N) (fwCreation N) rfl rfl
     (by decide)
     (fun _ => rfl) (Nat.le_refl _) (fun n _ => Nat.le_refl _)
 
@@ -456,7 +456,7 @@ and a structure nothing satisfies would make every property above it
 vacuous. -/
 noncomputable def fwRun (N : ℕ) : Run (Fin 4) ℕ Unit where
   dag := Dreact N
-  sched := (Sched.identity reactLeader)
+  sched := (Slots.identity reactLeader)
   roundId := fun _ => rfl
   paced := Ugrow N
   ids_eq := rfl
@@ -480,7 +480,7 @@ noncomputable def fwRun (N : ℕ) : Run (Fin 4) ℕ Unit where
   live_le := Nat.le_refl _
   roundRobin := fwDreactRoundRobin N
   selfParented := selfParented_Dreact N
-  choose := chooseLeast (Sched.identity reactLeader) (Dreact N)
+  choose := chooseLeast (Slots.identity reactLeader) (Dreact N)
   chooseSound := chooseSound_least
 
 /-- **Agreement on data.** Two correct validators of the run deliver the

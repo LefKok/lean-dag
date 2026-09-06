@@ -76,7 +76,7 @@ def fastBlk : Fin 36 → Block (Fin 9) (Fin 36) Unit := fun i =>
     payload := () }
 
 /-- The schedule the witnesses run: one slot a round. -/
-def fwSched : Sched (Fin 9) := Sched.identity fwLeader
+def fwSched : Slots (Fin 9) := Slots.identity fwLeader
 
 set_option maxHeartbeats 4000000 in
 theorem fastValid : ∀ i : Fin 36, ValidHere fastBlk (fastBlk i) := by
@@ -376,7 +376,7 @@ def syncBlk : Fin 27 → Block (Fin 9) (Fin 27) Unit := fun i =>
     payload := () }
 
 /-- And the synchronous witness's. -/
-def syncSched : Sched (Fin 9) := Sched.identity syncLeader
+def syncSched : Slots (Fin 9) := Slots.identity syncLeader
 
 set_option maxHeartbeats 4000000 in
 theorem syncValid : ∀ i : Fin 27, ValidHere syncBlk (syncBlk i) := by

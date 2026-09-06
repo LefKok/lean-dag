@@ -258,7 +258,7 @@ end Creation
 
 section Bridge
 
-variable {D : Dag Validator BlockId Payload} {S : Sched Validator}
+variable {D : Dag Validator BlockId Payload} {S : Slots Validator}
 
 /-- The universe's reading of a certificate is the DAG's. -/
 theorem spCertificate_of_certifiesSP (hblk : D.block = U.block) {c L : BlockId}

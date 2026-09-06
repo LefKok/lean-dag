@@ -35,7 +35,7 @@ variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 variable {D : Dag Validator BlockId Payload}
-variable {S : Sched Validator}
+variable {S : Slots Validator}
 
 omit [DecidableEq BlockId] in
 /-- **The anchor is fixed by the verdicts above the slot.** Two

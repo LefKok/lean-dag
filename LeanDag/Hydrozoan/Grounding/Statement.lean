@@ -39,21 +39,8 @@ namespace LeanDag
 namespace Hydrozoan
 namespace Grounding
 
-/-- The wave-aligned round-robin schedule on `n` replicas: one slot
-per round (pipelined), with the leader holding for a whole wave —
-`waveLength = 3` consecutive slots — before the rotation advances.
-One concrete fair schedule, which is all grounding needs; leader
-election in a deployment is a separate, pluggable concern outside
-this model, and the liveness theorems quantify over every `Slots`
-instance. Self-contained rather than built from the schedule
-constructors, which live outside the audit surface. -/
-@[instance_reducible]
-def waveRobin (n : ℕ) (hn : 0 < n) : Slots (Fin n) where
-  slotRound k := k                            -- slot k proposes at round k,
-  leader k := ⟨k / 3 % n, Nat.mod_lt _ hn⟩    -- leader holds for a wave;
-  mono := fun _ _ h => h                      -- rounds are slot order,
-  unbounded := fun m => ⟨m, le_refl m⟩        -- reach every round,
-  keyed := fun _ _ h => congrArg Prod.fst h   -- and identify the slot.
+/- The wave-aligned round-robin schedule is the shared `waveRobin`
+(`LeanDag/Slots.lean`). -/
 
 /-- **A fair schedule exists — wave-aligned rotation, unconditionally.**
 One correct leader's wave is a full correct 3-run all by itself, it

@@ -36,7 +36,7 @@ variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 variable {Elig : ℕ → ℕ → Prop}
-variable {D : Dag Validator BlockId Payload} {S : Sched Validator}
+variable {D : Dag Validator BlockId Payload} {S : Slots Validator}
 
 /-- **A correct validator's blocks form a chain.** Each of its blocks
 reaches all its earlier ones: the self-parent edge steps down one round,

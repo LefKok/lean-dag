@@ -28,7 +28,7 @@ variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 variable {D : Dag Validator BlockId Payload}
-variable {S : Sched Validator}
+variable {S : Slots Validator}
 
 /-- Naming the witnesses is a restriction, not a weakening. -/
 theorem spCommit_of_spCommitBy {l : BlockId} {T : Finset Validator}

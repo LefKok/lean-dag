@@ -42,7 +42,7 @@ open LeanDag.Hydrozoan
 
 namespace Grounding
 
-open LeanDag.Hydrozoan.Grounding (waveRobin WaveRobinFair)
+open LeanDag.Hydrozoan.Grounding (WaveRobinFair)
 
 /-- **The liveness hypothesis package is realizable at every horizon,
 under every schedule, by an Optimal universe.** For any set `T` of at

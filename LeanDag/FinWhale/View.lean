@@ -54,7 +54,7 @@ variable {Elig : ℕ → ℕ → Prop}
 variable {D : Dag Validator BlockId Payload} {V : Finset BlockId}
 
 variable {hV : IsView D V}
-variable {S : Sched Validator}
+variable {S : Slots Validator}
 
 @[simp] theorem restrict_ids : (restrict D V hV).ids = V := rfl
 

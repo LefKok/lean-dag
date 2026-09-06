@@ -53,7 +53,7 @@ variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 variable {U : BlockUniverse Validator BlockId Payload}
-variable {D : Dag Validator BlockId Payload} {FS : Sched Validator}
+variable {D : Dag Validator BlockId Payload} {FS : Slots Validator}
 variable [S : Slots Validator]
 variable {T : Finset Validator} {N R k : ℕ} {L : BlockId}
 

@@ -35,7 +35,7 @@ references; it may hold *more*. So the rules split three ways.
   quorum of them, by validity — are all non-voters for it. The skip
   survives the new candidate rather than being repaired to ignore it.
 
-Nothing here mentions a schedule beyond `Sched.slotRound` and `Sched.leader`
+Nothing here mentions a schedule beyond `Slots.slotRound` and `Slots.leader`
 at the slot in hand, and nothing mentions a view. `Banded` itself is
 assembled in `Carrier.lean`.
 -/
@@ -58,19 +58,19 @@ bound on a decision means — `Properties.DecidedBelow` and the second
 quantifier of `Properties.Indirect` both ask for exactly this. -/
 
 /-- **A slot's blocks read the schedule only at that slot.** -/
-theorem slotBlocks_congr {S S' : Sched Validator} {D : Dag Validator BlockId Payload} {k : ℕ}
+theorem slotBlocks_congr {S S' : Slots Validator} {D : Dag Validator BlockId Payload} {k : ℕ}
     (hr : S.slotRound k = S'.slotRound k) (hl : S.leader k = S'.leader k) :
     slotBlocks S D k = slotBlocks S' D k := by
   unfold slotBlocks; rw [hr, hl]
 
 /-- **And so does the direct skip rule.** -/
-theorem directSkip_congr {S S' : Sched Validator} {D : Dag Validator BlockId Payload} {k : ℕ}
+theorem directSkip_congr {S S' : Slots Validator} {D : Dag Validator BlockId Payload} {k : ℕ}
     (hr : S.slotRound k = S'.slotRound k) (hl : S.leader k = S'.leader k) :
     DirectSkip S D k ↔ DirectSkip S' D k := by
   unfold DirectSkip; rw [slotBlocks_congr hr hl, hr]
 
 /-- **The indirect rule reads the schedule only at the slot it decides.** -/
-theorem indirectCommit_congr {S S' : Sched Validator} {D : Dag Validator BlockId Payload}
+theorem indirectCommit_congr {S S' : Slots Validator} {D : Dag Validator BlockId Payload}
     {A : BlockId} {k : ℕ} {b : BlockId}
     (hr : S.slotRound k = S'.slotRound k) (hl : S.leader k = S'.leader k) :
     IndirectCommit S D A k b ↔ IndirectCommit S' D A k b := by
@@ -80,7 +80,7 @@ open scoped Classical in
 /-- **And so does the tie-break.** It names the least candidate of the
 slot, and both the candidates and the rule that certifies them read the
 schedule at that slot alone. -/
-theorem chooseLeast_congr [LinearOrder BlockId] {S S' : Sched Validator}
+theorem chooseLeast_congr [LinearOrder BlockId] {S S' : Slots Validator}
     {D : Dag Validator BlockId Payload} {A : BlockId} {r : ℕ}
     (hr : S.slotRound r = S'.slotRound r) (hl : S.leader r = S'.leader r) :
     chooseLeast S D A r = chooseLeast S' D A r := by
@@ -94,14 +94,14 @@ theorem chooseLeast_congr [LinearOrder BlockId] {S S' : Sched Validator}
 
 /-- **A view's direct rules read the schedule only at the slot they
 decide**, since the rules they restrict do. -/
-theorem viewCommit_congr {S S' : Sched Validator} {D : Dag Validator BlockId Payload}
+theorem viewCommit_congr {S S' : Slots Validator} {D : Dag Validator BlockId Payload}
     {V : Finset BlockId} {hV : IsView D V} {r : ℕ} {l : BlockId}
     (hr : S.slotRound r = S'.slotRound r) (hl : S.leader r = S'.leader r) :
     viewCommit S D V hV r l ↔ viewCommit S' D V hV r l := by
   unfold viewCommit; rw [slotBlocks_congr hr hl]
 
 /-- The skip half. -/
-theorem viewSkip_congr {S S' : Sched Validator} {D : Dag Validator BlockId Payload}
+theorem viewSkip_congr {S S' : Slots Validator} {D : Dag Validator BlockId Payload}
     {V : Finset BlockId} {hV : IsView D V} {r : ℕ}
     (hr : S.slotRound r = S'.slotRound r) (hl : S.leader r = S'.leader r) :
     viewSkip S D V hV r ↔ viewSkip S' D V hV r := by
@@ -442,7 +442,7 @@ theorem spSkip_new {c l : BlockId} {n n' : ℕ} (hcD : c ∈ D.ids)
 
 /-! ## Slots, and the skip rule assembled -/
 
-variable {S S' : Sched Validator} {k k' : ℕ}
+variable {S S' : Slots Validator} {k k' : ℕ}
 
 /-- An old candidate of the slot is a candidate of the corresponding
 slot. -/

@@ -32,30 +32,6 @@ instantiates.
 
 namespace LeanDag
 
-/-- **The wave-aligned round-robin schedule** on `n` validators: pipelined
-(one slot per round), with the leader holding for a whole wave — three
-consecutive slots — before the rotation advances.
-
-Built from `Slots.uniformSingle` rather than by hand, so the class fields
-need no new proofs; only the electorate function is new. A `def` rather than an
-`instance`, like `rrSlots` in the witness files: a second `Slots` instance
-on the same type would make synthesis ambiguous, so every use passes
-`(S := waveRobin n hn)` explicitly. -/
-@[reducible]
-def waveRobin (n : ℕ) (hn : 0 < n) : Slots (Fin n) :=
-  Slots.uniformSingle 1 Nat.one_pos (fun k => ⟨k / 3 % n, Nat.mod_lt _ hn⟩)
-
-/-- The schedule is pipelined: slot `k` is proposed at round `k`. -/
-@[simp]
-theorem waveRobin_slotRound {n : ℕ} {hn : 0 < n} (k : ℕ) :
-    (waveRobin n hn).slotRound k = k := by
-  simp
-
-/-- The leader holds for a wave: slots `3v, 3v+1, 3v+2` of each rotation
-cycle are led by validator `v`. -/
-theorem waveRobin_leader_val {n : ℕ} {hn : 0 < n} (k : ℕ) :
-    ((waveRobin n hn).leader k).val = k / 3 % n := rfl
-
 variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator]
 

@@ -9067,11 +9067,11 @@ and the bounds guarantee a correct replica:
 
 ```lean
 def waveRobin (n : ℕ) (hn : 0 < n) : Slots (Fin n) where
-  slotRound k := k                            -- slot k proposes at round k,
-  leader k := ⟨k / 3 % n, Nat.mod_lt _ hn⟩    -- leader holds for a wave;
-  mono := fun _ _ h => h                      -- rounds are slot order,
-  unbounded := fun m => ⟨m, le_refl m⟩        -- reach every round,
-  keyed := fun _ _ h => congrArg Prod.fst h   -- and identify the slot.
+  slotRound k := k
+  leader k := ⟨k / 3 % n, Nat.mod_lt _ hn⟩
+  mono := fun _ _ h => h
+  unbounded := fun m => ⟨m, le_refl m⟩
+  keyed := fun _ _ h => congrArg Prod.fst h
 def WaveRobinFair : Prop :=
   ∀ (n : ℕ) (hn : 0 < n) [Faults (Fin n)],
     EventualDecision.FairRunOn (Fin n) (S := waveRobin n hn)
@@ -9725,6 +9725,7 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | Module | Contents |
 |:---|:---|
 | `Validators.lean` | the fault model (`n ≥ 3f+1`); T0 |
+| `Slots.lean` | the slot schedule every rule runs on; its constructors (`uniform`, `uniformSingle`, `identity`, `waveRobin`) |
 | `Block.lean` | `Block`, `ValidWrt`; T0′ |
 | `BlockRecord.lean` | the block record and its view; `chopBlk`; what a validity predicate owes the mechanisms (`Mechanised`, `CopyStable`) |
 | `Record/Chop.lean`, `Record/Fill.lean`, `Record/Genesis.lean` | the cut, the fill and re-genesis, built once at the record |
@@ -9735,7 +9736,7 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `Persistence.lean` | T3 |
 | `CommonCore.lean` | T3a, T3c |
 | `Mysticeti.lean` | the commit rule; eligibility; M1–M6; the ledger |
-| `Schedule.lean` | concrete schedules (`uniform`, `uniformSingle`); conservativity |
+| `Schedule.lean` | conservativity of the pipelined schedule |
 | `Liveness.lean` | L0, L2–L6; the committed-run results |
 | `Network/Quorum.lean` | the DoS capstones, production bundled with the storage bound |
 | `ViewPace.lean` | the route (§6.9): the structure, V1, V4, coverage, production, the spine, and the quantitative results L8a, L9, L11 |
@@ -10754,7 +10755,7 @@ reused.
 
 ## Appendix B. The definition reference
 
-The 339 definitions and structures the report names, in
+The 336 definitions and structures the report names, in
 the order a reader meets them. Each entry is the source text,
 unabridged, with the explanation the source carries. This
 appendix is generated from the compiled development by
@@ -10961,43 +10962,6 @@ def blames (U : BlockRecord Validator BlockId Payload P honest) (L : BlockId) (n
 The validators whose round-`n` block declines to reference `L`.
 
 The complement of `supporters U L n` *within the round-`n` author pool* — but only for correct validators. A Byzantine author can appear in both, by publishing one round-`n` block that votes and another that does not; ruling that out for correct validators is exactly what `blames_inter_supporters_subset_byzantine` does, and is the whole content of M3.
-
-### Slots and the schedule
-
-#### `uniform`
-
-*def, `Schedule.lean`*
-
-```lean
-def uniform (p m : ℕ) (hp : 0 < p) (hm : 0 < m) (elect : ℕ → Validator)
-    (hblock : ∀ k₁ k₂, k₁ / m = k₂ / m → elect k₁ = elect k₂ → k₁ = k₂) :
-    Slots Validator where
-  slotRound k := p * (k / m)
-  leader k := elect k
-  mono := fun _ _ hab => Nat.mul_le_mul_left p (Nat.div_le_div_right hab)
-  unbounded := fun n => ⟨m * n, by
-    rw [Nat.mul_div_cancel_left n hm]
-    exact Nat.le_mul_of_pos_left n hp⟩
-  keyed := by
-    intro k₁ k₂ h
-    simp only [Prod.mk.injEq] at h
-    exact hblock k₁ k₂ (Nat.eq_of_mul_eq_mul_left hp h.1) h.2
-```
-
-**The uniform schedule**: `m` leaders in every `p`-th round, slot `k` proposed by `elect k`.
-
-`hblock` is the one real condition — the `m` proposers sharing a round are distinct validators. Round-robin `elect k = k % n` satisfies it whenever `m ≤ n`. Without it a single block would be the candidate for two slots and the ledger would deliver it twice.
-
-#### `uniformSingle`
-
-*def, `Schedule.lean`*
-
-```lean
-def uniformSingle (p : ℕ) (hp : 0 < p) (elect : ℕ → Validator) : Slots Validator :=
-  uniform p 1 hp Nat.one_pos elect (one_hblock elect)
-```
-
-**One leader every `p` rounds.** `p = 3` is the schedule the development had before pipelining; `p = 1` is pipelined single-leader.
 
 ### The commit rule, and the ledger
 
@@ -13765,7 +13729,7 @@ def SPSkip (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
 *def, `FinWhale.Model.Decision.lean`*
 
 ```lean
-def slotBlocks (S : Sched Validator) (D : Dag Validator BlockId Payload) (k : ℕ) :
+def slotBlocks (S : Slots Validator) (D : Dag Validator BlockId Payload) (k : ℕ) :
     Finset BlockId :=
   (blocksAt D (S.slotRound k)).filter (fun b => (D.block b).creator = S.leader k)
 ```
@@ -13788,7 +13752,7 @@ def DirectCommit (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
 *def, `FinWhale.Model.Anchor.lean`*
 
 ```lean
-def IndirectCommit (S : Sched Validator) (D : Dag Validator BlockId Payload) (A : BlockId)
+def IndirectCommit (S : Slots Validator) (D : Dag Validator BlockId Payload) (A : BlockId)
     (k : ℕ) (b : BlockId) : Prop :=
   b ∈ slotBlocks S D k ∧
     ((∃ c ∈ blocksAt D (S.slotRound k + 2), ReachesFrom D.block A c ∧ SPCertificate D c b) ∨
@@ -13831,7 +13795,7 @@ structure WellFormed (Elig : ℕ → ℕ → Prop) (dcommit : ℕ → BlockId �
 *structure, `FinWhale.Model.Verdict.lean`*
 
 ```lean
-structure ChooseSound (S : Sched Validator) (D : Dag Validator BlockId Payload)
+structure ChooseSound (S : Slots Validator) (D : Dag Validator BlockId Payload)
     (choose : BlockId → ℕ → Option BlockId) : Prop where
   /-- Whatever it names is a candidate. -/
   sound : ∀ A r b, choose A r = some b → IndirectCommit S D A r b
@@ -13846,7 +13810,7 @@ structure ChooseSound (S : Sched Validator) (D : Dag Validator BlockId Payload)
 *def, `FinWhale.Model.Verdict.lean`*
 
 ```lean
-noncomputable def chooseLeast [LinearOrder BlockId] (S : Sched Validator)
+noncomputable def chooseLeast [LinearOrder BlockId] (S : Slots Validator)
     (D : Dag Validator BlockId Payload) (A : BlockId) (r : ℕ) : Option BlockId :=
   if h : ((slotBlocks S D r).filter (fun b => IndirectCommit S D A r b)).Nonempty then
     some (((slotBlocks S D r).filter (fun b => IndirectCommit S D A r b)).min' h)
@@ -13862,7 +13826,7 @@ Soundness and totality are all any result here reads, and both hold of it by con
 *def, `FinWhale.Model.Pass.lean`*
 
 ```lean
-def slotVerdict (S : Sched Validator) (Elig : ℕ → ℕ → Prop) [DecidableRel Elig]
+def slotVerdict (S : Slots Validator) (Elig : ℕ → ℕ → Prop) [DecidableRel Elig]
     (D : Dag Validator BlockId Payload)
     (choose : BlockId → ℕ → Option BlockId) (N : ℕ)
     (above : ℕ → Verdict BlockId) (r : ℕ) : Verdict BlockId :=
@@ -13878,7 +13842,7 @@ def slotVerdict (S : Sched Validator) (Elig : ℕ → ℕ → Prop) [DecidableRe
 *def, `FinWhale.Model.Pass.lean`*
 
 ```lean
-def passFrom (S : Sched Validator) (Elig : ℕ → ℕ → Prop) [DecidableRel Elig]
+def passFrom (S : Slots Validator) (Elig : ℕ → ℕ → Prop) [DecidableRel Elig]
     (D : Dag Validator BlockId Payload)
     (choose : BlockId → ℕ → Option BlockId) (N : ℕ) (s : ℕ) : ℕ → Verdict BlockId :=
   if h : N < s then fun _ => Verdict.undecided
@@ -13896,7 +13860,7 @@ decreasing_by all_goals omega
 *def, `FinWhale.Model.Pass.lean`*
 
 ```lean
-def decOf (S : Sched Validator) (Elig : ℕ → ℕ → Prop) [DecidableRel Elig]
+def decOf (S : Slots Validator) (Elig : ℕ → ℕ → Prop) [DecidableRel Elig]
     (D : Dag Validator BlockId Payload)
     (choose : BlockId → ℕ → Option BlockId) (N : ℕ) : ℕ → Verdict BlockId :=
   passFrom S Elig D choose N 0
@@ -14048,7 +14012,7 @@ structure Creation (U : BlockUniverse Validator BlockId Payload)
 *def, `FinWhale.Model.Liveness.lean`*
 
 ```lean
-def CommitsCorrectLeaders (S : Sched Validator) (D : Dag Validator BlockId Payload)
+def CommitsCorrectLeaders (S : Slots Validator) (D : Dag Validator BlockId Payload)
     (R N : ℕ) : Prop :=
   ∀ s, R ≤ S.slotRound s → S.slotRound s + 2 ≤ N → S.leader s ∈ (Correct : Finset Validator) →
     ∃ l ∈ slotBlocks S D s, SPCommitBy D l (Correct : Finset Validator)
@@ -14095,7 +14059,7 @@ structure Run (Validator BlockId Payload : Type) [Fintype Validator] [DecidableE
   /-- The leader schedule the execution runs. It belongs to the
   execution rather than to the DAG: a DAG is blocks, and a schedule is
   not (`docs/porting-plan.md`). -/
-  sched : Sched Validator
+  sched : Slots Validator
   /-- FinWhale runs one slot per round, which is what the reverse pass
   enumerates. -/
   roundId : ∀ k, sched.slotRound k = k
@@ -14153,14 +14117,14 @@ def Run.ofDoSValid [LinearOrder BlockId] (U : BlockUniverse Validator BlockId Pa
     (paceHorizon : ℕ) (pace : PaceCore U (Correct : Finset Validator) paceHorizon)
     (rounds_advance : ∀ u ∈ (Correct : Finset Validator), ∀ n ≤ pace.top u, n ≤ pace.built u n)
     (stable : ℕ) (gst_le : pace.gst ≤ stable) (liveHorizon : ℕ)
-    (commits : CommitsCorrectLeaders (Sched.identity leader) (Dag.ofDoSValid U leader hdos)
+    (commits : CommitsCorrectLeaders (Slots.identity leader) (Dag.ofDoSValid U leader hdos)
       stable liveHorizon)
     (live_le : liveHorizon ≤ paceHorizon) (roundRobin : RoundRobin leader)
     (choose : BlockId → ℕ → Option BlockId)
-    (chooseSound : ChooseSound (Sched.identity leader) (Dag.ofDoSValid U leader hdos) choose) :
+    (chooseSound : ChooseSound (Slots.identity leader) (Dag.ofDoSValid U leader hdos) choose) :
     Run Validator BlockId Payload where
   dag := Dag.ofDoSValid U leader hdos
-  sched := (Sched.identity leader)
+  sched := (Slots.identity leader)
   roundId := fun _ => rfl
   paced := U
   ids_eq := rfl
@@ -14913,40 +14877,6 @@ def history (U : BlockUniverse Replica BlockId) (b : BlockId) :
 
 The causal history of `b`, as a `Finset`: fuel `round + 1` always suffices (references descend one round per step).
 
-#### `uniform`
-
-*def, `Hydrozoan.Helpers.Schedule.lean`*
-
-```lean
-def uniform (p m : ℕ) (hp : 0 < p) (hm : 0 < m) (elect : ℕ → Replica)
-    (hblock : ∀ k₁ k₂, k₁ / m = k₂ / m → elect k₁ = elect k₂ → k₁ = k₂) :
-    Slots Replica where
-  slotRound k := p * (k / m)
-  leader k := elect k
-  mono := fun _ _ hab => Nat.mul_le_mul_left p (Nat.div_le_div_right hab)
-  unbounded := fun n => ⟨m * n, by
-    rw [Nat.mul_div_cancel_left n hm]
-    exact Nat.le_mul_of_pos_left n hp⟩
-  keyed := by
-    intro k₁ k₂ h
-    simp only [Prod.mk.injEq] at h
-    exact hblock k₁ k₂ (Nat.eq_of_mul_eq_mul_left hp h.1) h.2
-```
-
-The uniform schedule: `m` leaders in every `p`-th round, slot `k` led by `elect k`.
-
-#### `uniformSingle`
-
-*def, `Hydrozoan.Helpers.Schedule.lean`*
-
-```lean
-def uniformSingle (p : ℕ) (hp : 0 < p) (elect : ℕ → Replica) :
-    Slots Replica :=
-  uniform p 1 hp Nat.one_pos elect (one_hblock elect)
-```
-
-One leader every `p` rounds; `p = 1` is the pipelined single-leader schedule.
-
 #### `FastUniqueness`
 
 *def, `Hydrozoan.ThresholdArithmetic.Statement.lean`*
@@ -15098,21 +15028,6 @@ def RunDecidesBelow (U : BlockUniverse Replica BlockId) : Prop :=
 ```
 
 **A committed-to-be run decides everything below it.** The workhorse with the run location `b` explicit: direct liveness commits each of the `c` run slots, and the indirect descent settles every slot below.
-
-#### `waveRobin`
-
-*def, `Hydrozoan.Grounding.Statement.lean`*
-
-```lean
-def waveRobin (n : ℕ) (hn : 0 < n) : Slots (Fin n) where
-  slotRound k := k                            -- slot k proposes at round k,
-  leader k := ⟨k / 3 % n, Nat.mod_lt _ hn⟩    -- leader holds for a wave;
-  mono := fun _ _ h => h                      -- rounds are slot order,
-  unbounded := fun m => ⟨m, le_refl m⟩        -- reach every round,
-  keyed := fun _ _ h => congrArg Prod.fst h   -- and identify the slot.
-```
-
-The wave-aligned round-robin schedule on `n` replicas: one slot per round (pipelined), with the leader holding for a whole wave — `waveLength = 3` consecutive slots — before the rotation advances. One concrete fair schedule, which is all grounding needs; leader election in a deployment is a separate, pluggable concern outside this model, and the liveness theorems quantify over every `Slots` instance. Self-contained rather than built from the schedule constructors, which live outside the audit surface.
 
 #### `WaveRobinFair`
 
@@ -15858,17 +15773,6 @@ def LeaderExcludedAll (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) : Pr
 ```
 
 **Leader exclusion, without a schedule.** A block that has watched a replica equivocate two rounds below it references nothing by that replica. The round is read off the block rather than quantified, which keeps the statement decidable on a finite model.
-
-#### `slotsOf`
-
-*abbrev, `Barnacle.Hydrozoan.Statement.lean`*
-
-```lean
-abbrev slotsOf (S : Slots Replica) : LeanDag.Slots Replica :=
-  S
-```
-
-**The schedules are one class.** `LeanDag.Slots` and `LeanDag.Slots` carry the same five fields, so the identification is field-for-field and every component is `rfl`. Stated here rather than in the helpers because a reader of the instantiation must see that the rule runs under the schedule the interface hands it, unchanged.
 
 #### `commitSeq`
 
@@ -16927,6 +16831,69 @@ Slots need **not** be three rounds apart. Under pipelining consecutive slots are
 
 `keyed` says distinct slots differ in round or in leader. It too held under three-round spacing, which makes `slotRound` injective outright. Under multiple leaders it is a real condition on the schedule: the proposers of a round must be distinct validators. Without it one block would be the candidate for two slots, and the ledger would deliver it twice.
 
+#### `uniform`
+
+*def, `Slots.lean`*
+
+```lean
+def uniform (p m : ℕ) (hp : 0 < p) (hm : 0 < m) (elect : ℕ → Validator)
+    (hblock : ∀ k₁ k₂, k₁ / m = k₂ / m → elect k₁ = elect k₂ → k₁ = k₂) :
+    Slots Validator where
+  slotRound k := p * (k / m)
+  leader k := elect k
+  mono := fun _ _ hab => Nat.mul_le_mul_left p (Nat.div_le_div_right hab)
+  unbounded := fun n => ⟨m * n, by
+    rw [Nat.mul_div_cancel_left n hm]
+    exact Nat.le_mul_of_pos_left n hp⟩
+  keyed := by
+    intro k₁ k₂ h
+    simp only [Prod.mk.injEq] at h
+    exact hblock k₁ k₂ (Nat.eq_of_mul_eq_mul_left hp h.1) h.2
+```
+
+**The uniform schedule**: `m` leaders in every `p`-th round, slot `k` proposed by `elect k`.
+
+`hblock` is the one real condition — the `m` proposers sharing a round are distinct validators. Round-robin `elect k = k % n` satisfies it whenever `m ≤ n`. Without it a single block would be the candidate for two slots and the ledger would deliver it twice.
+
+#### `uniformSingle`
+
+*def, `Slots.lean`*
+
+```lean
+def uniformSingle (p : ℕ) (hp : 0 < p) (elect : ℕ → Validator) : Slots Validator :=
+  uniform p 1 hp Nat.one_pos elect (one_hblock elect)
+```
+
+**One leader every `p` rounds.** `p = 3` is the schedule the development had before pipelining; `p = 1` is pipelined single-leader.
+
+#### `Slots.identity`
+
+*def, `Slots.lean`*
+
+```lean
+def Slots.identity {Validator : Type*} (leader : ℕ → Validator) : Slots Validator :=
+  ⟨id, leader, fun _ _ h => h, fun n => ⟨n, le_rfl⟩, fun _ _ h => congrArg Prod.fst h⟩
+```
+
+**The identity schedule** with a given leader map: one slot per round. The three laws are immediate.
+
+#### `waveRobin`
+
+*def, `Slots.lean`*
+
+```lean
+def waveRobin (n : ℕ) (hn : 0 < n) : Slots (Fin n) where
+  slotRound k := k
+  leader k := ⟨k / 3 % n, Nat.mod_lt _ hn⟩
+  mono := fun _ _ h => h
+  unbounded := fun m => ⟨m, le_refl m⟩
+  keyed := fun _ _ h => congrArg Prod.fst h
+```
+
+**The wave-aligned round-robin schedule** on `n` validators: pipelined (one slot per round), with the leader holding for a whole wave — three consecutive slots — before the rotation advances.
+
+Written out field by field so that `slotRound k = k` holds by `rfl`, which Hydrozoan's grounding reads definitionally. A `def` rather than an `instance`, like `rrSlots` in the witness files: a second `Slots` instance on the same type would make synthesis ambiguous, so every use passes `(S := waveRobin n hn)` explicitly.
+
 #### `SynchronisedOn`
 
 *def, `Timed.Coverage.lean`*
@@ -16970,19 +16937,6 @@ def OfCoverage (sp : Support R) (rel : Reliability Validator) : Prop :=
 ```
 
 **Coverage certifies**, for a support.
-
-#### `waveRobin`
-
-*def, `WaveRobin.lean`*
-
-```lean
-def waveRobin (n : ℕ) (hn : 0 < n) : Slots (Fin n) :=
-  Slots.uniformSingle 1 Nat.one_pos (fun k => ⟨k / 3 % n, Nat.mod_lt _ hn⟩)
-```
-
-**The wave-aligned round-robin schedule** on `n` validators: pipelined (one slot per round), with the leader holding for a whole wave — three consecutive slots — before the rotation advances.
-
-Built from `Slots.uniformSingle` rather than by hand, so the class fields need no new proofs; only the electorate function is new. A `def` rather than an `instance`, like `rrSlots` in the witness files: a second `Slots` instance on the same type would make synthesis ambiguous, so every use passes `(S := waveRobin n hn)` explicitly.
 
 
 ---

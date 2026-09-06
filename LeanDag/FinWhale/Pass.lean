@@ -36,7 +36,7 @@ variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type} [DecidableEq BlockId] [LinearOrder BlockId] {Payload : Type}
 
 variable {D : Dag Validator BlockId Payload} {choose : BlockId → ℕ → Option BlockId} {N : ℕ}
-variable {S : Sched Validator}
+variable {S : Slots Validator}
 variable {Elig : ℕ → ℕ → Prop} [DecidableRel Elig]
 
 /-- Above the horizon nothing is decided. -/

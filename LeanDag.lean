@@ -305,7 +305,6 @@ import LeanDag.Hydrozoan.Helpers.Faults
 import LeanDag.Hydrozoan.Helpers.Block
 import LeanDag.Hydrozoan.Helpers.CausalHistory
 import LeanDag.Hydrozoan.Helpers.History
-import LeanDag.Hydrozoan.Helpers.Schedule
 import LeanDag.Hydrozoan.Helpers.DirectRules
 import LeanDag.Hydrozoan.Helpers.IndirectRules
 import LeanDag.Hydrozoan.Helpers.Counting

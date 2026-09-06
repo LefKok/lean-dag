@@ -34,7 +34,7 @@ variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 variable {D : Dag Validator BlockId Payload}
-variable {S : Sched Validator}
+variable {S : Slots Validator}
 
 /-- A validator's verdict for a leader slot. -/
 inductive Verdict (BlockId : Type*) where
@@ -116,7 +116,7 @@ structure Exclusions (dc dc' : ℕ → BlockId → Prop) (ds ds' : ℕ → Prop)
 the anchor could indirectly commit, and it names one whenever there is
 one to name. The paper's rule is a choice among the candidates, so both
 hold of it. -/
-structure ChooseSound (S : Sched Validator) (D : Dag Validator BlockId Payload)
+structure ChooseSound (S : Slots Validator) (D : Dag Validator BlockId Payload)
     (choose : BlockId → ℕ → Option BlockId) : Prop where
   /-- Whatever it names is a candidate. -/
   sound : ∀ A r b, choose A r = some b → IndirectCommit S D A r b
@@ -132,7 +132,7 @@ Soundness and totality are all any result here reads, and both hold of it
 by construction. It is a function of the anchor and the round, so two
 validators holding the same anchor make the same choice, which is what
 `finwhale.md` §6 turns on. -/
-noncomputable def chooseLeast [LinearOrder BlockId] (S : Sched Validator)
+noncomputable def chooseLeast [LinearOrder BlockId] (S : Slots Validator)
     (D : Dag Validator BlockId Payload) (A : BlockId) (r : ℕ) : Option BlockId :=
   if h : ((slotBlocks S D r).filter (fun b => IndirectCommit S D A r b)).Nonempty then
     some (((slotBlocks S D r).filter (fun b => IndirectCommit S D A r b)).min' h)

@@ -153,19 +153,6 @@ abbrev Dag (Validator BlockId Payload : Type*) [Fintype Validator]
 
 variable {D : Dag Validator BlockId Payload}
 
-/-- **A schedule** is the shared `Slots`: which round a slot proposes at
-and who leads it. FinWhale runs one slot per round, so `slotRound` is
-the identity in every execution here; it is a parameter rather than an
-identity because the properties index by slot and supply the map, and a
-rule that reads absolute rounds cannot carry an offset band
-(`docs/target-properties.md` §3.4c). -/
-abbrev Sched (Validator : Type*) := Slots Validator
-
-/-- The identity schedule with a given leader map: one slot per round.
-The three laws are immediate. -/
-def Sched.identity (leader : ℕ → Validator) : Sched Validator :=
-  ⟨id, leader, fun _ _ h => h, fun n => ⟨n, le_rfl⟩, fun _ _ h => congrArg Prod.fst h⟩
-
 /-- **Which slots may anchor which.** The reverse pass reads an earlier
 slot's verdict off a later one, and the rules that let it do so live two
 rounds above the candidate, so the anchor's own candidate must sit at

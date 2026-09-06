@@ -3882,7 +3882,14 @@ resolution: files in the Optimal namespace that once saw a single
 shared class. FinWhale's `Sched` is the shared class too: `Sched` is an
 abbreviation of `Slots`, its `round` is `slotRound`, `schedOf` is
 deleted, its eligibility is `Slots.Elig` at the shared class, and the
-identity schedule its witnesses run on is `Sched.identity`.
+identity schedule its witnesses run on is `Slots.identity`. The
+schedule constructors — `uniform`, `uniformSingle`, `identity` and the
+wave-aligned `waveRobin` — live in `Slots.lean` below every protocol,
+so Hydrozoan's grounding takes the shared `waveRobin` and its own copy
+of it, with its copy of the uniform constructors
+(`Helpers/Schedule.lean`), is deleted; the last schedule alias,
+Barnacle's `slotsOf`, is gone, and FinWhale's `Sched` is spelled
+`Slots`.
 
 ### 11.5 Next steps, in order
 

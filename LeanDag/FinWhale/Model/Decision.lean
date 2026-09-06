@@ -30,7 +30,7 @@ variable {D : Dag Validator BlockId Payload}
 
 /-- The blocks of the leader slot of round `r`. There may be several, if
 the leader equivocates. -/
-def slotBlocks (S : Sched Validator) (D : Dag Validator BlockId Payload) (k : ℕ) :
+def slotBlocks (S : Slots Validator) (D : Dag Validator BlockId Payload) (k : ℕ) :
     Finset BlockId :=
   (blocksAt D (S.slotRound k)).filter (fun b => (D.block b).creator = S.leader k)
 
@@ -63,14 +63,14 @@ instance (D : Dag Validator BlockId Payload) (l : BlockId) :
 
 /-- **The direct skip rule**: an SP-skip pattern at every block of the
 slot, and a quorum of Non-FP-evidence blocks at round `r + 2`. -/
-def DirectSkip (S : Sched Validator) (D : Dag Validator BlockId Payload) (k : ℕ) : Prop :=
+def DirectSkip (S : Slots Validator) (D : Dag Validator BlockId Payload) (k : ℕ) : Prop :=
   (∀ l ∈ slotBlocks S D k, SPSkip D l) ∧
     ∃ nonev : Finset Validator, spQuorum Validator ≤ nonev.card ∧
       ∀ v ∈ nonev, ∃ b ∈ blocksAt D (S.slotRound k + 2),
         (D.block b).creator = v ∧ NonFPEvidence D b (slotBlocks S D k)
 
 set_option synthInstance.maxSize 1000 in
-instance (S : Sched Validator) (D : Dag Validator BlockId Payload) (k : ℕ) :
+instance (S : Slots Validator) (D : Dag Validator BlockId Payload) (k : ℕ) :
     Decidable (DirectSkip S D k) := by unfold DirectSkip; infer_instance
 
 end FinWhale

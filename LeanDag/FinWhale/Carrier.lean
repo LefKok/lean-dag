@@ -40,7 +40,7 @@ used to carry its leader function as a field of the `Dag` and index its
 verdicts by round; both are gone. `slotBlocks` reads the round the
 schedule gives a slot and the leader it names, `Anchor` is stated at an
 eligibility rather than at `r + 2 < a`, and `Decided` passes `S` straight
-through as `FinWhale.Sched`.
+through as `FinWhale.Slots`.
 
 **Unpinning the schedule was two changes, not one.** Dropping the
 leader from the `Dag` is what let `Decided` take the schedule it is
@@ -72,7 +72,7 @@ variable [F : Faults Validator] [P : LeanDag.FinWhale.Params Validator]
 variable {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
 
 /-- And of a slot's blocks. -/
-theorem mem_slotBlocks {S : Sched Validator} {D : Dag Validator BlockId Payload}
+theorem mem_slotBlocks {S : Slots Validator} {D : Dag Validator BlockId Payload}
     {b : BlockId} {n : ℕ} :
     b ∈ LeanDag.FinWhale.slotBlocks S D n ↔
       (b ∈ D.ids ∧ (D.block b).round = S.slotRound n) ∧ (D.block b).creator = S.leader n := by
@@ -88,7 +88,7 @@ def VerdictIs (dec : ℕ → Verdict BlockId) (r : ℕ) (v : Option BlockId) : P
 
 /-- **What a validator's verdict assignment is**: well-formed on its own
 view, committing only blocks of the slot, and finite. -/
-structure Assignment (S : Sched Validator) (D : Dag Validator BlockId Payload)
+structure Assignment (S : Slots Validator) (D : Dag Validator BlockId Payload)
     (V : Finset BlockId) (hV : IsView D V) (dec : ℕ → Verdict BlockId) : Prop where
   /-- The reverse pass, as a condition on the verdicts. -/
   wf : WellFormed (S.Elig) (viewCommit S D V hV) (viewSkip S D V hV) (chooseLeast S D) dec
@@ -210,7 +210,7 @@ theorem view_bounded (D : Dag Validator BlockId Payload) (V : Finset BlockId)
   fun b hb => Finset.le_sup (f := fun c => (D.block c).round) (hV.subset hb)
 
 /-- A view's slot blocks are the universe's. -/
-theorem slotBlocks_restrict_subset (S : Sched Validator)
+theorem slotBlocks_restrict_subset (S : Slots Validator)
     (D : Dag Validator BlockId Payload) (V : Finset BlockId) (hV : IsView D V) (r : ℕ) :
     LeanDag.FinWhale.slotBlocks S (LeanDag.FinWhale.restrict D V hV) r ⊆
       LeanDag.FinWhale.slotBlocks S D r := by

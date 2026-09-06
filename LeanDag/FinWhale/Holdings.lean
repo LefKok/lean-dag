@@ -33,7 +33,7 @@ namespace FinWhale
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
-variable {D : Dag Validator BlockId Payload} {S : Sched Validator}
+variable {D : Dag Validator BlockId Payload} {S : Slots Validator}
 variable {Elig : ℕ → ℕ → Prop} [DecidableRel Elig]
 variable {U : BlockUniverse Validator BlockId Payload} {T : Finset Validator} {M : ℕ}
 
