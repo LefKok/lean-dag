@@ -196,10 +196,10 @@ example : run2.count 1 = 2 ∧ run2.start 1 = 5 ∧ run2.backoff 1 = 0 := ⟨rfl
 abbrev laws32 : bnRule32.Laws := Mysticeti.holds (Fin 4) (Fin 32) Unit
 
 /-- And the two properties the safety results now ask for instead. -/
-abbrev agree32 : Properties.Agree bnRule32.toDagRule := agree_toDagRule _ laws32
+abbrev agree32 : Properties.Agree bnRule32.toDagRule := MysticetiProperties.agree
 
 abbrev candidates32 : Properties.CommitsCandidate bnRule32.toDagRule :=
-  commitsCandidate_toDagRule _ laws32
+  MysticetiProperties.commitsCandidate
 
 /-- BN3 on `run2` and `run2'`: the two views hold one configuration `1`
 and one anchor. -/

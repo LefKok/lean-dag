@@ -3695,7 +3695,7 @@ per-round backbone with it.
 
 Inclusion survives anyway, by a different backbone. A correct author's
 blocks form a single descending chain under the self-parent clause P3′
-(`reaches_self_ancestor`): each block references its author's previous
+(`SelfParent.reaches_of_creator`): each block references its author's previous
 one, existence at every step coming from completeness rather than from
 any production hypothesis, and uniqueness from T1. A straggler's block
 therefore lies below every later block of its *own author* — and when
@@ -10507,7 +10507,7 @@ reused.
 | RS2 | reactive liveness, three rounds | `ReactiveM.certifies`, `ReactiveM.directCommit`, `ReactiveM.decided` *(Reactive/Mysticeti)* |
 | RS3 | reactive liveness, two rounds | `Odontoceti.reactive_directCommit`, `Odontoceti.reactive_decided` *(Reactive/Odontoceti)* |
 | RS4 | latency tracks delivery; the timeout never fires | `ReactivePace.built_succ_le_of_fast`, `ReactivePace.no_timeout_of_fast` *(Reactive/Basic)* |
-| RS5 | inclusion without coverage: the rotation backbone | `reaches_self_ancestor` *(CausalHistory)*, `FairToEach` *(Liveness)*, `ReactiveM.committed_of_correct_block` *(Reactive/Mysticeti)* |
+| RS5 | inclusion without coverage: the rotation backbone | `SelfParent.reaches_of_creator` *(Properties/Optional/SelfParent)*, `FairToEach` *(Liveness)*, `ReactiveM.committed_of_correct_block` *(Reactive/Mysticeti)* |
 
 **Catch-up** (§6.11):
 
@@ -26476,7 +26476,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 1077 theorems that either another module of the
+The 1074 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -27054,25 +27054,6 @@ theorem mem_ids_of_reaches {c b : BlockId} (hc : c ∈ U.ids) (h : Reaches U c b
 ```
 
 Causal history stays inside the universe: completeness propagates along every step.
-
-#### `reaches_self_ancestor`
-
-*theorem, `CausalHistory.lean`*
-
-```lean
-theorem reaches_self_ancestor {u : Validator}
-    (hu : u ∈ (Correct : Finset Validator)) {c b : BlockId}
-    (hc : c ∈ U.ids) (hb : b ∈ U.ids)
-    (hcc : (U.block c).creator = u) (hbc : (U.block b).creator = u)
-    (hle : (U.block b).round ≤ (U.block c).round) :
-    Reaches U c b
-```
-
-**The self-parent chain.** A correct author's blocks form a single descending chain under P3′: any of its blocks reaches any earlier one.
-
-The walk needs no production hypothesis — each step's target *exists* because the reference exists (P3′ supplies a same-creator reference, P1 puts it one round down, completeness keeps it in the universe) — and it lands on the right block because a correct author has only one block per round (T1). This is the backbone of the rotation-inclusion argument (report §11.5): a straggler's block is woven into the common cone not by per-round coverage but by its author's own chain, the moment the author leads a slot.
-
-This is the one result here the structural layer cannot state: it consumes the self-parent clause and non-equivocation, both of which are properties of the *Byzantine* validity notion.
 
 #### `round_le_of_reaches`
 
@@ -37028,28 +37009,6 @@ theorem coversUpto_full (hR : R.Laws) (U : R.Universe) (N : ℕ) :
 
 **The full view is caught up to every horizon.**
 
-#### `agree_toDagRule`
-
-*theorem, `Barnacle.Helpers.DagRule.lean`*
-
-```lean
-theorem agree_toDagRule (R : BaseRule Validator BlockId Payload) (L : BaseRule.Laws R) :
-    Properties.Agree R.toDagRule
-```
-
-**A4 is `Agree`.** The law and the property are the same statement.
-
-#### `commitsCandidate_toDagRule`
-
-*theorem, `Barnacle.Helpers.DagRule.lean`*
-
-```lean
-theorem commitsCandidate_toDagRule (R : BaseRule Validator BlockId Payload)
-    (L : BaseRule.Laws R) : Properties.CommitsCandidate R.toDagRule
-```
-
-**And `candidates` is `CommitsCandidate`.** `BaseRule.IsLeaderBlock` and `DagRule.IsCandidate` are the same three conjuncts — present, at the slot's round, by the slot's leader — so this is the law verbatim.
-
 #### `mysticetiLive_delivers`
 
 *theorem, `Barnacle.Helpers.Delivery.lean`*
@@ -38714,7 +38673,7 @@ theorem commitsDirect : CommitsDirect
 
 **A direct commit is a verdict**, at the core's own direct-commit predicate. `Decided.directCommit` under the property's name.
 
-This completes the core and the reactive discipline, which share the rule: Barnacle's `commitsDirect_toDagRule` proves the same thing at Barnacle's carrier for the same protocol, and a rule wants it at the carrier its own mechanisms use.
+This completes the core and the reactive discipline, which share the rule: Barnacle's `Laws.decided_of_directCommitIn` says the same thing at Barnacle's carrier for the same protocol, and a rule wants it at the carrier its own mechanisms use.
 
 #### `persist`
 
@@ -40624,7 +40583,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 1041 lemmas used only within the file that proves
+The 1039 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -42026,11 +41985,10 @@ subsection per module, in the layer order of Appendices B and C.
 | `finWhaleLive_goodOf` | A good DAG is good in the properties' terms. |
 | `finWhale_laws` | The laws, for FinWhale. |
 
-### `Barnacle/Helpers/DagRule.lean` (3)
+### `Barnacle/Helpers/DagRule.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
-| `commitsDirect_toDagRule` | And `decided_of_directCommitIn` is `CommitsDirect`, at the rule's own direct predicate. The clause had no … |
 | `toDagRule_block` | — |
 | `toDagRule_ids` | — |
 
@@ -42676,12 +42634,6 @@ subsection per module, in the layer order of Appendices B and C.
 | Lemma | Role |
 |:---|:---|
 | `SelfParent.reaches_of_creator` | A reliable author's block reaches every earlier block of that author: walk the self-parent chain down to … |
-
-### `Properties/Optional/Skip.lean` (1)
-
-| Lemma | Role |
-|:---|:---|
-| `mono` | A protocol skipping under a weaker condition skips under a stronger one, so the grades compare. |
 
 ### `Properties/Support.lean` (1)
 

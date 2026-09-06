@@ -13,7 +13,7 @@ relation the persistence theorem (T3) concludes.
 The walk itself is `Causality.lean`'s, stated over the raw block data: a
 universe supplies a `CausalStructure` — references stay inside `ids`, and a
 reference sits one round below — and everything here is that layer read at
-`U.block`/`U.ids`. What remains genuinely Byzantine is `reaches_self_ancestor`,
+`U.block`/`U.ids`. What remained genuinely Byzantine was the self-parent descent, now `SelfParent.reaches_of_creator`,
 which needs the self-parent clause and non-equivocation, neither of which the
 structural layer knows about.
 
@@ -72,43 +72,6 @@ theorem mem_ids_of_reaches {c b : BlockId} (hc : c ∈ U.ids) (h : Reaches U c b
 blocks are causal-history leaves. That is `Causality.lean`'s
 `eq_of_reaches_of_refs_empty`, which applies here unchanged: it is stated
 over the block assignment, and `Reaches U` *is* `ReachesFrom U.block`. -/
-
-/-- **The self-parent chain.** A correct author's blocks form a single
-descending chain under P3′: any of its blocks reaches any earlier one.
-
-The walk needs no production hypothesis — each step's target *exists*
-because the reference exists (P3′ supplies a same-creator reference, P1
-puts it one round down, completeness keeps it in the universe) — and it
-lands on the right block because a correct author has only one block per
-round (T1). This is the backbone of the rotation-inclusion argument
-(report §11.5): a straggler's block is woven into the common cone not by
-per-round coverage but by its author's own chain, the moment the author
-leads a slot.
-
-This is the one result here the structural layer cannot state: it consumes
-the self-parent clause and non-equivocation, both of which are properties of
-the *Byzantine* validity notion. -/
-theorem reaches_self_ancestor {u : Validator}
-    (hu : u ∈ (Correct : Finset Validator)) {c b : BlockId}
-    (hc : c ∈ U.ids) (hb : b ∈ U.ids)
-    (hcc : (U.block c).creator = u) (hbc : (U.block b).creator = u)
-    (hle : (U.block b).round ≤ (U.block c).round) :
-    Reaches U c b := by
-  obtain ⟨d, hd⟩ : ∃ d, (U.block c).round = (U.block b).round + d :=
-    ⟨(U.block c).round - (U.block b).round, by omega⟩
-  clear hle
-  induction d generalizing c with
-  | zero =>
-      -- same round, same correct creator: the same block (T1)
-      have : c = b := U.no_equivocation c hc b hb (hcc ▸ hu) (by rw [hcc, hbc]) (by omega)
-      exact this ▸ Reaches.refl
-  | succ d ih =>
-      -- P3′: a same-creator reference one round down; recurse on it
-      obtain ⟨i, hi, hic⟩ := (U.valid c hc).self_parent (by omega)
-      have hmem : i ∈ U.ids := U.complete c hc i hi
-      have hir : (U.block i).round + 1 = (U.block c).round :=
-        (U.valid c hc).predecessor i hi
-      exact Reaches.of_mem_refs hi (ih hmem (hic.trans hcc) (by omega))
 
 /-- **T2.** Causal history runs downward in rounds: anything `c` reaches
 sits at a round no greater than `c`'s.

@@ -328,7 +328,6 @@ theorem ugrowReactive_leaderCommits (N k : â„•) (hN : rrSlots.slotRound k + 2 â‰
 #print axioms LeanDag.Odontoceti.reactive_decided
 #print axioms LeanDag.ReactivePace.no_timeout_of_fast
 #print axioms rrSlots_fairToEach
-#print axioms LeanDag.reaches_self_ancestor
 #print axioms LeanDag.ReactiveM.committed_of_correct_block
 
 end LeanDagTest

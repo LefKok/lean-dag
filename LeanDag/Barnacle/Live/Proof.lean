@@ -23,15 +23,15 @@ theorem holds : Statement := by
   refine ⟨?_, ?_, ?_⟩
   · intro n hn F BlockId Payload _ P hk upd hbnd
     exact (Progress.holds (Fin n) BlockId Payload mysticetiLive
-      (agree_toDagRule _ (Mysticeti.holds (Fin n) BlockId Payload)) P (roundRobin n hn) hk upd hbnd (n + 2)).2
+      MysticetiProperties.agree P (roundRobin n hn) hk upd hbnd (n + 2)).2
       (fun m hm hmax => MysticetiLive.holds.2 n hn BlockId Payload _ hk m hm hmax)
   · intro n hn F BlockId Payload _ P hk upd hbnd
     exact (Progress.holds (Fin n) BlockId Payload odontocetiLive
-      (agree_toDagRule _ (Odontoceti.holds.1 (Fin n) BlockId Payload)) P (roundRobin n hn) hk upd hbnd (n + 1)).2
+      OdontocetiProperties.agree P (roundRobin n hn) hk upd hbnd (n + 1)).2
       (fun m hm hmax => Odontoceti.holds.2.2 n hn BlockId Payload _ hk m hm hmax)
   · intro n hn F BlockId Payload _ P hk upd hbnd
     exact (Progress.holds (Fin n) BlockId Payload nemoLive
-      (agree_toDagRule _ (Nemo.holds.1 (Fin n) BlockId Payload)) P (roundRobin n hn) hk upd hbnd (n + 1)).2
+      NemoProperties.agree P (roundRobin n hn) hk upd hbnd (n + 1)).2
       (fun m hm hmax => Nemo.holds.2.2 n hn BlockId Payload _ hk m hm hmax)
 
 end Live

@@ -12,8 +12,8 @@ Hydrozoan's has none, Nemo's is a different structure again.
 **The shape was already discovered once**, by `Barnacle.BaseRule`: a
 universe type, a view type dependent on it, projections into the shared
 `Block` vocabulary, and the decision relation as a field. Six protocols
-instantiate it, and `Barnacle/Helpers/DagRule.lean` coerces any of them
-into the `DagRule` below.
+instantiate it, and `Barnacle.BaseRule` now extends the `DagRule` below,
+each instance naming the protocol's carrier.
 
 `DagRule` is nonetheless stated here rather than imported, and the
 reason is the arc's layering rule. **Mechanisms depend on properties;

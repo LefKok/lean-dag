@@ -99,12 +99,6 @@ namespace SkipsUnsupported
 
 variable {Ok Ok' : Finset Validator → Prop}
 
-/-- A protocol skipping under a weaker condition skips under a stronger
-one, so the grades compare. -/
-theorem mono (h : SkipsUnsupported R Ok) (himp : ∀ T, Ok' T → Ok T) :
-    SkipsUnsupported R Ok' :=
-  fun S U V T k hok hp hu => h S U V T k (himp T hok) hp hu
-
 end SkipsUnsupported
 
 /-- **The bridge from the mechanism.** After an extension, a slot all of

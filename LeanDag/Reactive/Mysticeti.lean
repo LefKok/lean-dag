@@ -168,7 +168,7 @@ with it.
 
 Inclusion survives anyway, by a different route. A correct author's
 blocks form a single chain under the self-parent clause
-(`SelfParent.reaches_of_creator`; the core's `reaches_self_ancestor`), so a straggler's block lies below every later
+(`SelfParent.reaches_of_creator`), so a straggler's block lies below every later
 block of its *own author* — and when that author leads a slot, which
 per-validator fairness guarantees (`FairToEach`), the reactive vote
 discipline commits the leader block, and the whole chain enters the
