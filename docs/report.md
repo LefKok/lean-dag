@@ -26278,6 +26278,33 @@ def ledgerSetOf (R : DagRule Validator BlockId Payload) (U : R.Universe)
 
 **The ledger a verdict assignment names**: everything in the causal history of a committed leader of a slot below `n`. The core's `ledgerSet` at the carrier.
 
+#### `Rebased`
+
+*structure, `Properties.Arcs.Stack.lean`*
+
+```lean
+structure Rebased (R : DagRule Validator BlockId Payload) (U U' : R.Universe)
+    (S S' : Slots Validator) (G R₀ d : ℕ) : Prop
+    extends RebasedAbove R U U' G R₀, Rebases S S' G d
+```
+
+**What one mechanism delivers, universe and schedule together.**
+
+#### `Stack`
+
+*inductive, `Properties.Arcs.Stack.lean`*
+
+```lean
+inductive Stack (R : DagRule Validator BlockId Payload) :
+    R.Universe → Slots Validator → R.Universe → Slots Validator → ℕ → ℕ → ℕ → Prop
+  | nil {U : R.Universe} {S : Slots Validator} : Stack R U S U S 0 0 0
+  | step {U U' U'' : R.Universe} {S S' S'' : Slots Validator} {G R₀ d G' R₀' d' : ℕ} :
+      Rebased R U U' S S' G R₀ d → Stack R U' S' U'' S'' G' R₀' d' →
+      Stack R U S U'' S'' (G + G') (max R₀ (R₀' + G)) (d + d')
+```
+
+**A stack of mechanisms**: a finite sequence, each step a `Rebased`. The indices carry the composite's offset, settling round and base slot, accumulated as `Rebased.trans` accumulates them.
+
 #### `AgreeBand`
 
 *structure, `Properties.Band.lean`*
@@ -26934,7 +26961,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 1115 theorems that either another module of the
+The 1125 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -38262,6 +38289,18 @@ theorem banded : Banded (finWhaleRule (Validator := Validator) (BlockId := Block
 
 Three cases, and the third is the one with content. A slot the smaller view decided directly stays decided the same way, because a commit and a skip both survive a band. A slot it decided from an anchor keeps its anchor — the anchor's commit and the skips below it transport by the induction hypothesis — and then the tie-break is the same function of the same anchor. What is left is the larger view deciding *directly* a slot the smaller one decided from an anchor, and that is settled inside `D'` alone: a direct commit pins what the tie-break may name, and a direct skip bars it naming anything.
 
+#### `fwSupport_local`
+
+*theorem, `FinWhale.Carrier.lean`*
+
+```lean
+theorem fwSupport_local :
+    Support.Local (R := finWhaleRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) fwSupport
+```
+
+**Law 1.** A certifier two rounds above the settling round keeps its parents, and each parent keeps its parents and its author, so its voting parents are the same validators.
+
 #### `fwSupport_ofCoverage`
 
 *theorem, `FinWhale.Carrier.lean`*
@@ -38910,6 +38949,33 @@ theorem decided_none_of_unsupported {V : LeanDag.Hydrozoan.View U} {T : Finset R
 ```lean
 theorem holds : Statement
 ```
+
+#### `truncates_chop_finwhale`
+
+*theorem, `Integration.FinWhaleMechanisms.lean`*
+
+```lean
+theorem truncates_chop_finwhale (hd : G ≤ S.slotRound d) :
+    Truncates (FinWhaleProperties.finWhaleRule (Validator := Validator)
+      (BlockId := BlockId) (Payload := Payload)) D (chopFinWhale D G) S
+      (S.chop G d hd) G d where
+  mem
+```
+
+**The cut is a truncation of FinWhale's carrier.**
+
+#### `sustains_skipFill_finwhale`
+
+*theorem, `Integration.FinWhaleMechanisms.lean`*
+
+```lean
+theorem sustains_skipFill_finwhale :
+    Sustains (FinWhaleProperties.finWhaleRule (Validator := Validator)
+      (BlockId := BlockId) (Payload := Payload)) D (skipFillFinWhale D sk) 0 (sk.r + 1) where
+  mem
+```
+
+**What the fill sustains.** Above `sk.r` the fill added nothing, so every block there is old and unchanged.
 
 #### `chopHZ_round`
 
@@ -39683,6 +39749,32 @@ theorem decided_chopHZ_of_localTruncate [S : LeanDag.Hydrozoan.Slots Replica] {G
 ```
 
 **HI7's transport, from HZ9.** A replica that has pruned below the horizon reaches exactly the verdicts it would have reached with its whole history, at the re-indexed slot — without an induction, and without a Hydrozoan-specific truncation relation. `ChopDecided.lean` proved this by two inductions until they were deleted.
+
+#### `truncates_chop_nemo`
+
+*theorem, `Integration.NemoMechanisms.lean`*
+
+```lean
+theorem truncates_chop_nemo (hd : G ≤ S.slotRound d) :
+    Truncates (NemoProperties.nemoRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) U (chopNemo U G) S (S.chop G d hd) G d where
+  mem
+```
+
+**The cut is a truncation of Nemo's carrier.**
+
+#### `sustains_skipFill_nemo`
+
+*theorem, `Integration.NemoMechanisms.lean`*
+
+```lean
+theorem sustains_skipFill_nemo :
+    Sustains (NemoProperties.nemoRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) U (skipFillNemo U sk) 0 (sk.r + 1) where
+  mem
+```
+
+**What the fill sustains.** Above `sk.r` the fill added nothing, so every block there is old and unchanged. Below it the claim would be false, and deliberately: the blocks a fill adds stand in for blocks that voted, and need not vote as they did.
 
 #### `causal`
 
@@ -40760,6 +40852,20 @@ theorem exists_decided_of_coverage {rel : Reliability Validator}
 
 **A reliably-led slot commits on a covered, populated DAG** — for any rule with Laws 2 and 3, at any quorum of the fault model.
 
+#### `certifiesAt_of_rebased`
+
+*theorem, `Properties.Arcs.Liveness.lean`*
+
+```lean
+theorem certifiesAt_of_rebased (hloc : sp.Local) {U U' : R.Universe} {G R₀ : ℕ}
+    (h : RebasedAbove R U U' G R₀) {T : Finset Validator} {r : ℕ} {L : BlockId}
+    (hr : R₀ ≤ r) (hG : G ≤ r) (hL : L ∈ R.ids U) (hLr : (R.block U L).round = r)
+    (hc : sp.certifiesAt U T r L) :
+    sp.certifiesAt U' T (r - G) L
+```
+
+**Certification survives every mechanism, from Law 1.**
+
 #### `live_of_sustains`
 
 *theorem, `Properties.Arcs.Liveness.lean`*
@@ -41047,6 +41153,26 @@ theorem sustains_skipFill (sk : SkipMsg U) :
 
 **A fill sustains from the top of its gap.** Above `sk.r` the fill added nothing, so every block there is old and unchanged. Below it the claim would be false, and deliberately: the blocks a fill adds stand in for blocks that voted, and need not vote as they did.
 
+#### `of_truncates`
+
+*theorem, `Properties.Arcs.Stack.lean`*
+
+```lean
+theorem of_truncates {G d : ℕ} (h : Truncates R U U' S S' G d) : Rebased R U U' S S' G G d
+```
+
+A cut is a rebase at its horizon.
+
+#### `of_sustains`
+
+*theorem, `Properties.Arcs.Stack.lean`*
+
+```lean
+theorem of_sustains {R₀ : ℕ} (h : Sustains R U U' 0 R₀) : Rebased R U U' S S 0 R₀ 0
+```
+
+A fill or a re-genesis is a rebase at no offset, on the same schedule.
+
 #### `refl`
 
 *theorem, `Properties.Band.lean`*
@@ -41216,6 +41342,17 @@ theorem trans {U U' U'' : R.Universe} {G₁ R₁ G₂ R₂ : ℕ}
 ```
 
 **Two rebases are one.** The offsets add. The settling round is the later of the two in `U`'s frame: `R₂` is a round of `U'`, so it is compared against `R₁` only after `G₁` is added back.
+
+#### `refl`
+
+*theorem, `Properties.Compose.lean`*
+
+```lean
+theorem refl {U : R.Universe} : RebasedAbove R U U 0 0 where
+  mem
+```
+
+Doing nothing rebases by nothing, from round zero.
 
 #### `trans`
 
@@ -41403,6 +41540,16 @@ theorem agreeBand_of_rebasedAbove {U U' : R.Universe} {G R₀ : ℕ}
 ```
 
 **A `RebasedAbove` is a band from its settling round up to any ceiling**, at offsets `0` and `G`. What lets a rule discharge `Local` with the band lemmas it already has for `Banded`.
+
+#### `voteSupport_local`
+
+*theorem, `Properties.Support.lean`*
+
+```lean
+theorem voteSupport_local : (voteSupport R).Local
+```
+
+**Law 1 for vote support.** A block strictly above the settling round keeps its references.
 
 #### `voteSupport_ofCoverage`
 
@@ -41598,7 +41745,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 1145 lemmas used only within the file that proves
+The 1151 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -43182,14 +43329,13 @@ subsection per module, in the layer order of Appendices B and C.
 | `spSkip_new` | And a candidate the band adds is skipped too. An old block two rounds above the slot carries a quorum of … |
 | `voters_subset` | Votes survive: an old voter is a voter. |
 
-### `FinWhale/Carrier.lean` (20)
+### `FinWhale/Carrier.lean` (19)
 
 | Lemma | Role |
 |:---|:---|
 | `assignment_passOf` | And it is an assignment. Well formed by `wellFormed_decOf`, committing only blocks of the slot by … |
 | `decided_iff` | A verdict of this rule is the pass's verdict. One direction is the pass being an assignment; the other is … |
 | `decided_of_directCommit` | A direct commit in view is a verdict, at any schedule and with no side condition. |
-| `fwSupport_local` | Law 1. A certifier two rounds above the settling round keeps its parents, and each parent keeps its … |
 | `le_dagHorizon` | An assignment commits only below the horizon: a commit names a block of the slot, so the slot's round is … |
 | `leaderCommits` | A reliably-led slot commits, at a bound one above the slot: the commit is direct, and a direct commit … |
 | `lt_of_elig` | Eligible slots are above: a schedule's rounds are monotone, so three rounds up is at least one slot up. |
@@ -43329,7 +43475,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `adaptiveRun_exists_reactive` | The adaptive fixpoint exists over reactive Mysticeti. Under a policy that places runs, with the reactive … |
 | `exists_partialRun_reactive` | Partial runs exist at every height, reactively. |
 
-### `Integration/FinWhaleMechanisms.lean` (12)
+### `Integration/FinWhaleMechanisms.lean` (10)
 
 | Lemma | Role |
 |:---|:---|
@@ -43342,8 +43488,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `mem_chopFinWhale_ids` | — |
 | `skipFillFinWhale_block_fresh` | — |
 | `skipFillFinWhale_block_old` | — |
-| `sustains_skipFill_finwhale` | What the fill sustains. Above `sk.r` the fill added nothing, so every block there is old and unchanged. |
-| `truncates_chop_finwhale` | The cut is a truncation of FinWhale's carrier. |
 | `viewAgreeAbove_chop_finwhale` | The chopped view agrees with the original above the cut. |
 
 ### `Integration/HybridMechanisms.lean` (7)
@@ -43498,7 +43642,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `extends_skipFillHZ` | The fill is an extension. It holds every block the original held and denotes each of them unchanged. |
 | `sustains_skipFillHZ` | A fill sustains from the top of its gap. Above it the fill added nothing, so every block is old and … |
 
-### `Integration/NemoMechanisms.lean` (12)
+### `Integration/NemoMechanisms.lean` (10)
 
 | Lemma | Role |
 |:---|:---|
@@ -43511,8 +43655,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `mem_chopNemo_ids` | — |
 | `skipFillNemo_block_fresh` | — |
 | `skipFillNemo_block_old` | — |
-| `sustains_skipFill_nemo` | What the fill sustains. Above `sk.r` the fill added nothing, so every block there is old and unchanged. … |
-| `truncates_chop_nemo` | The cut is a truncation of Nemo's carrier. |
 | `viewAgreeAbove_chop_nemo` | The chopped view agrees with the original above the cut. |
 
 ### `Integration/OptimalFill.lean` (10)
@@ -43590,6 +43732,17 @@ subsection per module, in the layer order of Appendices B and C.
 | `soundOn_chop` | Truncation preserves it, shifting the synchrony round by the cut. |
 | `soundOn_skipFill` | The fill preserves it, above the gap. The synchrony round must clear the filled round: inside the gap the … |
 | `soundOn_stack` | The stack preserves it, the offsets composing exactly as the two statements above suggest: the fill … |
+
+### `Integration/StackRules.lean` (6)
+
+| Lemma | Role |
+|:---|:---|
+| `stack_core` | The core's fill-then-cut is a stack, settling at the later of the gap's top and the horizon, shifted by … |
+| `stack_core_safe_and_live` | Safety and liveness across the core's stack, from the properties. |
+| `stack_finwhale` | — |
+| `stack_finwhale_safe_and_live` | Safety and liveness across FinWhale's stack. |
+| `stack_nemo` | — |
+| `stack_nemo_safe_and_live` | Safety and liveness across Nemo's stack. |
 
 ### `MahiMahiProperties.lean` (14)
 
@@ -43731,11 +43884,10 @@ subsection per module, in the layer order of Appendices B and C.
 | `truncates_chop_mahimahi` | The cut is a truncation of Mahi-Mahi's carrier too. |
 | `truncates_chop_odontoceti` | The cut is a truncation of Odontoceti's carrier too. |
 
-### `Properties/Arcs/Liveness.lean` (3)
+### `Properties/Arcs/Liveness.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
-| `certifiesAt_of_rebased` | Certification survives every mechanism, from Law 1. |
 | `decidedBelow_of_run_sustains` | Anchored liveness after a sustaining mechanism. A run of `c` reliably-led slots above `b` in the … |
 | `exists_decided_of_sustains` | A commit survives a sustaining mechanism, at the same schedule. |
 
@@ -43757,6 +43909,19 @@ subsection per module, in the layer order of Appendices B and C.
 | `decided_none_fresh` | SS3, as a verdict, from the properties. The slot the recovering replica leads at a gap round is decided … |
 | `decided_skipFill` | Verdicts survive the recovery, for any protocol that has proved persistence. The replica that recovered … |
 | `presentAt_liftView` | Presence in the pre-crash view is presence in the lifted one: the ids are the same and old blocks are … |
+
+### `Properties/Arcs/Stack.lean` (8)
+
+| Lemma | Role |
+|:---|:---|
+| `Rebases.refl` | The schedule is a rebase of itself. |
+| `Stack.rebased` | A stack is one mechanism. |
+| `Stack.safe_and_live` | Every stack of mechanisms keeps safety and liveness, for any rule with `Banded`, `Agree` and a support. … |
+| `decided_agree_rebased` | Cross-rebase agreement, from any view of the rebased universe. |
+| `decided_of_rebased` | A verdict above the settling round transports across any rebase, to the rebased numbering, on views that … |
+| `live_of_rebased` | `live` survives any rebase, at the rebased numbering, for a window above the settling round. … |
+| `refl` | Doing nothing is a rebase. |
+| `trans` | Two rebases are one. |
 
 ### `Properties/Band.lean` (3)
 
@@ -43780,13 +43945,12 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `Causal.refs_above` | What a block above the cut references is itself above the cut — a fact about causal structure alone, and … |
 
-### `Properties/Compose.lean` (4)
+### `Properties/Compose.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
 | `Truncates.trans` | A stack of truncations is a truncation. Both halves compose, and the settling round of the composite is … |
 | `mono` | A mechanism that rebases from a round rebases from any later one, which is what lets two settling rounds … |
-| `refl` | Doing nothing rebases by nothing, from round zero. |
 | `unique` | A rebase determines the schedule it produces. Both fields are pinned — rounds by the offset, leaders by … |
 
 ### `Properties/Deliver.lean` (2)
@@ -43843,12 +44007,6 @@ subsection per module, in the layer order of Appendices B and C.
 | Lemma | Role |
 |:---|:---|
 | `mono` | A protocol skipping under a weaker condition skips under a stronger one, so the grades compare. |
-
-### `Properties/Support.lean` (1)
-
-| Lemma | Role |
-|:---|:---|
-| `voteSupport_local` | Law 1 for vote support. A block strictly above the settling round keeps its references. |
 
 ### `Properties/Sustain.lean` (2)
 

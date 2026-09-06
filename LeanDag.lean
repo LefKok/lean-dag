@@ -68,6 +68,8 @@ import LeanDag.Integration.FinWhaleMechanisms
 import LeanDag.Integration.ReactiveMechanisms
 import LeanDag.Integration.ReGenesisRules
 import LeanDag.Integration.OptimalFill
+import LeanDag.Properties.Arcs.Stack
+import LeanDag.Integration.StackRules
 import LeanDag.Barnacle.MahiMahi.Proof
 import LeanDag.Barnacle.FinWhale.Proof
 import LeanDag.Integration.Coverage

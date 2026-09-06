@@ -2937,6 +2937,59 @@ its wave `w` throughout and takes the round-robin committee bound
 
 With these, the only `--` left in the matrix is Black Marlin's row.
 
+### 11.11 The composition theorem
+
+Part 3 of the goal — the mechanisms compose with one another through
+the properties — was, until this section, proved once and instantiated
+once: `Compose.lean` said two rebases are one, and only the core's
+`Integration/Stack.lean` used it, by hand, one invariant at a time.
+`Properties/Arcs/Stack.lean` states the claim.
+
+**One relation per mechanism.** `Rebased R U U' S S' G R₀ d` is what any
+DAG-transforming mechanism delivers, universe and schedule together: a
+`RebasedAbove` at offset `G` from settling round `R₀`, and a `Rebases`
+of the schedule by `G` from base slot `d`. A cut is one with
+`R₀ = G` (`Rebased.of_truncates`); a fill or a re-genesis is one at
+`G = 0`, `d = 0`, on the same schedule (`Rebased.of_sustains`).
+
+**A stack is a sequence, and a sequence is one mechanism.** `Stack R U
+S U' S' G R₀ d` is a finite sequence of `Rebased` steps; `Stack.rebased`
+folds it into one, offsets adding, base slots adding, the settling
+round the latest of them read in the first universe's frame — which is
+`Rebased.trans`, which is `Compose.lean`.
+
+**The theorem.** `Stack.safe_and_live`: for any rule with `Banded`,
+`Agree` and a support, and any stack of mechanisms on it, above the
+composite settling round —
+
+1. every verdict transports to the composite's own numbering, both
+   ways (`decided_of_rebased`, which is `LocalTruncate.of_banded`
+   with the settling round carried separately);
+2. any view of the composite agrees with the original
+   (`decided_agree_rebased`);
+3. the liveness precondition carries (`Support.live_of_rebased`, which
+   is `live_of_truncates` and `live_of_sustains` as one statement).
+
+Nothing is said about which mechanisms are in the stack or in what
+order. A validator that filled a crash gap, pruned, rejoined with a
+fresh chain and pruned again is one `Stack`, and the theorem reads it
+as one rebase.
+
+**Two view hypotheses, because they are two facts.** Safety asks the
+two views to agree above the settling round, which a validator that
+keeps its own blocks has. Liveness asks the composite's view to cover
+the horizon, which includes blocks the mechanisms *added*; a fill's
+blocks were never in the old view, so no agreement with it can supply
+them, and the hypothesis is the mechanism's to discharge.
+
+**What a rule contributes: nothing.** `Integration/StackRules.lean`
+assembles fill-then-cut for the core, Nemo and FinWhale from the
+witnesses those mechanisms already have — `sustains_skipFill*`,
+`truncates_chop*` — and applies the theorem. The rule's own
+contribution is the three properties it already showed. The audit's
+`stack` column reads `der` where a rule has a support and witnesses for
+two mechanisms, and `yes` where a stack is assembled.
+
 ### 11.5 Next steps, in order
 
 1. **~~`Compose.lean`~~** (**done**, §11.3). The three composition

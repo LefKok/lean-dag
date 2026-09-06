@@ -154,11 +154,27 @@ def main():
                 live_applied.add(carrier)
     print("mechanisms applied, by rule (`open` = the properties are there "
           "and nobody collected)\n")
-    print(" " * width + "  ".join(head[c].ljust(8) for c in cols) + "  live    ")
+    # Composition is one generic theorem, `Stack.safe_and_live`, assembled
+    # from the witnesses the mechanisms already have. A rule with a support
+    # and witnesses for two mechanisms therefore composes them with nothing
+    # written; `yes` records an assembled stack.
+    STACK_ENTRIES = ["LeanDag.Properties.Stack.safe_and_live",
+                     "LeanDag.Properties.Stack.rebased",
+                     "LeanDag.Properties.decided_of_rebased",
+                     "LeanDag.Properties.Support.live_of_rebased"]
+    stack_applied = set()
+    for d, used in uses.items():
+        if not any(e in used for e in STACK_ENTRIES):
+            continue
+        for carrier in {c for _, cs, _ in conformance.RULES for c in cs}:
+            if "LeanDag." + carrier in used:
+                stack_applied.add(carrier)
+    print(" " * width + "  ".join(head[c].ljust(8) for c in cols) + "  live      stack   ")
     gaps = []
     for rule, carriers, _ in conformance.RULES:
         cells = []
         transformed = False
+        transformers = 0
         for name, skip, _, needs in MECHANISMS:
             if not carriers or rule in skip:
                 cells.append("--      ")
@@ -169,6 +185,7 @@ def main():
                 cells.append("yes     ")
                 if name in ("garbage collection", "extension", "re-genesis"):
                     transformed = True
+                    transformers += 1
             elif has:
                 cells.append("open    ")
                 gaps.append((rule, name, needs))
@@ -178,6 +195,12 @@ def main():
         if any(c in live_applied for c in carriers):
             cells.append("yes     ")
         elif has_supp and transformed:
+            cells.append("der     ")
+        else:
+            cells.append("--      ")
+        if any(c in stack_applied for c in carriers):
+            cells.append("yes     ")
+        elif has_supp and transformers >= 2:
             cells.append("der     ")
         else:
             cells.append("--      ")
@@ -195,6 +218,9 @@ def main():
     print("`live`: liveness across every DAG-transforming mechanism the rule has a witness\n"
           "  for — `der` from the rule's support and the witness alone (`Arcs/Liveness.lean`),\n"
           "  `yes` where an instance is written.")
+    print("`stack`: the mechanisms compose with one another — `der` from the rule's support\n"
+          "  and witnesses for two of them (`Stack.safe_and_live`, `Arcs/Stack.lean`),\n"
+          "  `yes` where a stack is assembled.")
     print("\n`--`: the rule has no carrier, does not show what the mechanism asks "
           "(which is\n`audit-conformance.py`'s business), or is out of scope for it:")
     for name, skip, _, _ in MECHANISMS:
