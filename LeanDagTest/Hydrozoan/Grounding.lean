@@ -87,16 +87,16 @@ example : ¬ EventualDecision.FairRunOn (Fin 7)
 -- `T ⊆ Correct` strengthening of the claim would break this
 -- application.
 example : ∃ U : BlockUniverse (Fin 7) ℕ,
-    (∀ b ∈ U.ids, (U.block b).author ∈ (Finset.univ : Finset (Fin 7))) ∧
+    (∀ b ∈ U.ids, (U.block b).creator ∈ (Finset.univ : Finset (Fin 7))) ∧
     (∀ r, r ≤ 10 → PopulatedOn U (Finset.univ : Finset (Fin 7)) r) ∧
     SynchronisedOn U (Finset.univ : Finset (Fin 7)) 0 :=
   Grounding.holds.2.1 (Fin 7) Finset.univ 10 (by decide)
 
 -- ... and at the exact-quorum boundary: T = Correct with |T| = 5 = q,
--- the T-only clause biting hardest (five authors must sustain every
+-- the T-only clause biting hardest (five creators must sustain every
 -- round's quorum by themselves).
 example : ∃ U : BlockUniverse (Fin 7) ℕ,
-    (∀ b ∈ U.ids, (U.block b).author ∈ (Correct : Finset (Fin 7))) ∧
+    (∀ b ∈ U.ids, (U.block b).creator ∈ (Correct : Finset (Fin 7))) ∧
     (∀ r, r ≤ 6 → PopulatedOn U (Correct : Finset (Fin 7)) r) ∧
     SynchronisedOn U (Correct : Finset (Fin 7)) 0 :=
   Grounding.holds.2.1 (Fin 7) (Correct : Finset (Fin 7)) 6 (by decide)
@@ -133,7 +133,7 @@ Every window of three consecutive residues mod 5 hits 0 or 3, so no
 correct 3-run ever forms — per-slot rotation is UNFAIR at the hybrid
 bound, which is exactly why `waveRobin` rotates at wave grain. -/
 
-instance fiveCrashy : Faults (Fin 5) where
+instance fiveCrashy : LeanDag.Hydrozoan.Faults (Fin 5) where
   f := 0
   c := 2
   k := 0

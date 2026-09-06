@@ -58,10 +58,10 @@ populate a round below quorum size). The Optimal reading fixes the
 witness's TYPE: the universe is an `OptUniverse`, so leader exclusion
 holds in it, under whatever schedule the rule is read against. This is
 not an extra obligation — it is implied by the package itself. In a
-`T`-only universe synchronised from round 0, two blocks of one author in
-one round would both be parents of every `T`-block above, against
-`distinct_authors`; and a block witnessing an equivocation has
-`T`-authored parents above the two candidates. So no block of any
+`T`-only universe synchronised from round 0, two blocks of one creator in
+one round would both be refs of every `T`-block above, against
+`distinct_creators`; and a block witnessing an equivocation has
+`T`-authored refs above the two candidates. So no block of any
 universe meeting the package witnesses anything, and the rule is inert
 in every such universe: the good case never triggers it. Where the rule
 bites is a separate matter (`LeanDagTest/OptimalHydrozoan/Universe.lean`
@@ -71,9 +71,9 @@ def HypothesesRealizable : Prop :=
     [OptimalFaults Replica] [Slots Replica] (T : Finset Replica) (N : ℕ),
     q Replica ≤ T.card →                   -- a quorum-sized T:
     ∃ U : OptUniverse Replica ℕ,           -- some Optimal universe is
-      (∀ b ∈ U.ids, (U.block b).author ∈ T) ∧  -- authored by T alone,
-      (∀ r, r ≤ N → PopulatedOn U.toBlockUniverse T r) ∧  -- populated to N
-      SynchronisedOn U.toBlockUniverse T 0  -- and synchronised throughout.
+      (∀ b ∈ U.ids, (U.block b).creator ∈ T) ∧  -- authored by T alone,
+      (∀ r, r ≤ N → PopulatedOn U.toBlockRecord T r) ∧  -- populated to N
+      SynchronisedOn U.toBlockRecord T 0  -- and synchronised throughout.
 
 /-- **Grounded progress.** Under wave-aligned round-robin, the composed
 Optimal liveness conclusion is achievable with no premise at all: past
@@ -88,7 +88,7 @@ itself must COMMIT — an all-skip universe does not qualify.
 
 The universe is authored by CORRECT replicas alone. Without that clause
 the claim would never consult the fault sets: a universe in which every
-replica, faulty or not, authors every round satisfies the conclusion at
+replica, faulty or not, creators every round satisfies the conclusion at
 any configuration. With it, the faulty replicas contribute nothing, and
 the claim is that the correct ones suffice — which is what "no premise
 beyond the fault model" is meant to say. -/
@@ -97,8 +97,8 @@ def GroundedProgress : Prop :=
     letI : Slots (Fin n) := waveRobin n hn    -- under wave-aligned rotation,
     ∀ k : ℕ, ∃ b, k ≤ b ∧                     -- past any slot k,
       ∃ U : OptUniverse (Fin n) ℕ,            -- some Optimal universe
-        (∀ i ∈ U.ids, (U.block i).author ∈ Correct) ∧  -- of correct authors only:
-        ∀ V : View U.toBlockUniverse,         -- on any view caught up to
+        (∀ i ∈ U.ids, (U.block i).creator ∈ LeanDag.Hydrozoan.Correct) ∧  -- of correct creators only:
+        ∀ V : LeanDag.Hydrozoan.View U.toBlockRecord,         -- on any view caught up to
           V.CoversUpto (b + 4) →              -- ... the decision round, it
         (∃ L, DecidedOpt U V b (some L)) ∧    -- commits b
         ∀ i, i < b → ∃ v,                     -- with every slot below

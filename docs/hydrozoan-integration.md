@@ -20,15 +20,15 @@ generic theorems applied. The arcs themselves are untouched.
 ## 1. The carriers
 
 `LeanDag.Hydrozoan.rule` (`Hydrozoan/Helpers/Carrier.lean`) is
-Hydrozoan's `BlockUniverse` read as a `Properties.DagRule`: `block` is
-`adaptBlock`, which renames `author` to `creator` and `parents` to
-`refs` and has a `Unit` payload; `ids` and views are the arc's own; the
-decision relation is `Hydrozoan.Decided` at `ofCoreSlots S`, a Hydrozoan
-schedule built field-for-field from a core one, every projection `rfl`.
-The carrier's three laws come from the universe record: views hold
-universe blocks, views are closed under parents, and the universe is a
-block DAG by its `complete` field and the `predecessor` clause of its
-validity.
+Hydrozoan's `BlockUniverse` read as a `Properties.DagRule`. That
+universe is the block record at Hydrozoan's validity with
+non-equivocation asked of the non-Byzantine replicas, its block the
+shared `Block` with a `Unit` payload and its schedule the shared
+`Slots`, so `block`, `ids`, the views and the decision relation are the
+arc's own with nothing renamed. The carrier's three laws come from the
+record: views hold universe blocks, views are closed under references,
+and the universe is a block DAG by its `complete` field and the
+`predecessor` clause of its validity.
 
 `OptimalHydrozoanProperties.optimalRule` (`OptimalHydrozoan/Carrier.lean`)
 is the subtype of Hydrozoan universes satisfying `LeaderExcludedAll`
@@ -80,8 +80,8 @@ and a proof file. The decisions they embody:
   `LeanDag.Hydrozoan.rule`; the wave length is three; the interface's
   direct-commit field is the disjunction of the two commit paths, each
   judged from the view (`FastCommitInView ∨ SlowCommitInView`), and it
-  is decidable. The block adapters of `Barnacle/Helpers/Hydrozoan.lean`
-  (`adapt`, `adaptBlk`, `slotsOf`) are abbreviations for the carrier's.
+  is decidable. `Barnacle/Helpers/Hydrozoan.lean` reads the universe's
+  own block map; there is no adapter.
 - **The laws are read off the decision relation.** `agree` is HZ3;
   `candidates` is `commitsCandidate`. The history view is defined with
   `historyFrom`, so the interface's `historyView_ids` law is by
@@ -122,12 +122,10 @@ and a proof file. The decisions they embody:
 ## 4. The mechanisms
 
 `Integration/HydrozoanMechanisms.lean` takes Hydrozoan's cut and fill
-from the block record. `Hydrozoan/Helpers/Record.lean` reads a
-Hydrozoan universe as a record through the adapter between its block
-type and the shared one (`adaptBlock`, `unadapt`), at Hydrozoan's
-validity read through the adapter and with non-equivocation asked of
-the non-Byzantine replicas; that validity is `Mechanised` and
-`CopyStable`, and the carrier's `onRecord` is the pair of maps with
+from the block record, Hydrozoan's universe being that record.
+`Model/BlockUniverse.lean` shows its validity `Mechanised` and
+`CopyStable`, and `Hydrozoan/Helpers/Record.lean` gives the carrier's
+`onRecord`, every map the identity with
 every equation `rfl`. The cut `chopHZ`, the copy fill `copyFillHZ` and
 re-genesis `addGenesisHZ` are then the record's constructions at
 `onRecord`, whose witnesses and verdict cells are the generic ones. The
@@ -151,7 +149,7 @@ blocks at a rebased round), `leaderExcludedAll_copyFillHZ` (a filled
 block's parents are the donor's, so it adds no edge) and
 `leaderExcludedAll_addGenesisHZ` (the new block is bound by no exclusion
 and is its author's only block). `optOnRecord` reads the carrier as
-records under `Excluded` through the adapter, and `chopOpt`,
+records under `Excluded`, and `chopOpt`,
 `copyFillOpt` and `addGenesisOpt` are the record's constructions at it.
 Every verdict cell of both rules is `Properties/Arcs/Record.lean` at
 `Hydrozoan.onRecord` or `optOnRecord`, with nothing written per cell.

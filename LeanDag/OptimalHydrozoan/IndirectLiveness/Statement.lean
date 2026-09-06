@@ -51,7 +51,7 @@ anchor prefix of the three indirect `DecidedOpt` constructors (minus
 whose eligible in-betweens all skipped. The conclusion: some rung fires
 — slot `k` gets a verdict, commit or skip. -/
 def AnchoredTotality (U : OptUniverse Replica BlockId) : Prop :=
-  ∀ (V : View U.toBlockUniverse) (k j : ℕ) (A : BlockId),
+  ∀ (V : LeanDag.Hydrozoan.View U.toBlockRecord) (k j : ℕ) (A : BlockId),
     EligibleAsAnchor Replica k j →       -- j sits ≥ 3 rounds past k,
     DecidedOpt U V j (some A) →          -- slot j committed A,
     (∀ i, k < i → i < j →                -- and j is the NEAREST such slot:
@@ -65,7 +65,7 @@ every earlier slot: each such slot anchors on its nearest eligible
 committed successor — the run's end if nothing nearer — and the ladder's
 totality does the rest. -/
 def DecidedBelowRun (U : OptUniverse Replica BlockId) : Prop :=
-  ∀ (V : View U.toBlockUniverse) (b c : ℕ),
+  ∀ (V : LeanDag.Hydrozoan.View U.toBlockRecord) (b c : ℕ),
     0 < c →                              -- a nonempty run (implied by the next
     SpansEligible Replica c →            -- premise; kept for uniformity), long
                                         -- enough to anchor below it,

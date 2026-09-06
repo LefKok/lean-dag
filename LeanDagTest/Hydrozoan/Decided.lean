@@ -11,9 +11,9 @@ exercising three `Decided` constructors end to end:
 
 * slot 3 (leader 5, candidate id 24) is **fast-committed** — the anchor;
 * slot 2 (leader 4, candidate id 17) is **skipped** — every round-3
-  block omits id 17 from its parents;
+  block omits id 17 from its refs;
 * slot 0 (leader 2, candidate id 2) commits **indirectly via rung 1**,
-  anchored on slot 3: the anchor's parents include the certificate
+  anchored on slot 3: the anchor's refs include the certificate
   id 15.
 
 The `indirectWeak`/`indirectSkip` constructors are deliberately not
@@ -32,39 +32,39 @@ open LeanDag LeanDag.Hydrozoan
 
 set_option maxRecDepth 8192
 
-/-- Thirty-two blocks over five rounds. Ids 0–6: genesis (author = id).
+/-- Thirty-two blocks over five rounds. Ids 0–6: genesis (creator = id).
 Ids 7–13: round 1 — the equivocating pair 7/8 by Byzantine 0, then 9–13
 by replicas 2–6; every round-1 block votes for genesis 2. Ids 14–19:
 round 2 by replicas 0, 2, 3, 4, 5, 6, all referencing the same five
-distinct-author round-1 blocks — so each is a certificate for the slot-0
+distinct-creator round-1 blocks — so each is a certificate for the slot-0
 leader. Ids 20–25: round 3 by replicas 0, 2, 3, 4, 5, 6, each
 referencing five round-2 blocks that **exclude id 17** (replica 4's, the
 slot-2 candidate — hence the slot-2 skip) and **include id 15** (the
-certificate the anchor reaches). Id 24 (author 5 = slot 3's leader) is
+certificate the anchor reaches). Id 24 (creator 5 = slot 3's leader) is
 the anchor. Ids 26–31: round 4 by replicas 0, 2, 3, 4, 5, 6, each
 referencing id 24 — six votes, fast-committing slot 3 exactly at
-quorum. Crashed replica 1 authors only its genesis block. -/
+quorum. Crashed replica 1 creators only its genesis block. -/
 def lk3 : Fin 32 → Block (Fin 7) (Fin 32) := fun i =>
   if h : (i : ℕ) < 7 then
-    { round := 0, author := ⟨i, by omega⟩, parents := ∅ }
+    { round := 0, creator := ⟨i, by omega⟩, refs := ∅, payload := () }
   else if (i : ℕ) = 7 then
-    { round := 1, author := 0, parents := {0, 1, 2, 3, 4} }
+    { round := 1, creator := 0, refs := {0, 1, 2, 3, 4}, payload := () }
   else if (i : ℕ) = 8 then
-    { round := 1, author := 0, parents := {0, 1, 2, 3, 5} }
+    { round := 1, creator := 0, refs := {0, 1, 2, 3, 5}, payload := () }
   else if h : (i : ℕ) < 14 then
-    { round := 1, author := ⟨(i : ℕ) - 7, by omega⟩, parents := {0, 1, 2, 3, 4} }
+    { round := 1, creator := ⟨(i : ℕ) - 7, by omega⟩, refs := {0, 1, 2, 3, 4}, payload := () }
   else if (i : ℕ) = 14 then
-    { round := 2, author := 0, parents := {7, 9, 10, 11, 12} }
+    { round := 2, creator := 0, refs := {7, 9, 10, 11, 12}, payload := () }
   else if h : (i : ℕ) < 20 then
-    { round := 2, author := ⟨(i : ℕ) - 13, by omega⟩, parents := {7, 9, 10, 11, 12} }
+    { round := 2, creator := ⟨(i : ℕ) - 13, by omega⟩, refs := {7, 9, 10, 11, 12}, payload := () }
   else if (i : ℕ) = 20 then
-    { round := 3, author := 0, parents := {14, 15, 16, 18, 19} }
+    { round := 3, creator := 0, refs := {14, 15, 16, 18, 19}, payload := () }
   else if h : (i : ℕ) < 26 then
-    { round := 3, author := ⟨(i : ℕ) - 19, by omega⟩, parents := {14, 15, 16, 18, 19} }
+    { round := 3, creator := ⟨(i : ℕ) - 19, by omega⟩, refs := {14, 15, 16, 18, 19}, payload := () }
   else if (i : ℕ) = 26 then
-    { round := 4, author := 0, parents := {20, 21, 22, 24, 25} }
+    { round := 4, creator := 0, refs := {20, 21, 22, 24, 25}, payload := () }
   else
-    { round := 4, author := ⟨(i : ℕ) - 25, by omega⟩, parents := {20, 21, 22, 24, 25} }
+    { round := 4, creator := ⟨(i : ℕ) - 25, by omega⟩, refs := {20, 21, 22, 24, 25}, payload := () }
 
 /-- The five-round witness universe. -/
 def U3 : BlockUniverse (Fin 7) (Fin 32) where
@@ -99,7 +99,7 @@ example : Decided U3 Vfull3 2 none :=
   Decided.directSkip (by decide)
 
 -- Rung 1's test holds structurally: certificate 15 sits among the
--- anchor's parents.
+-- anchor's refs.
 example : CertifiedIn U3 24 2 0 :=
   ⟨15, by decide, Reaches.single (by decide)⟩
 

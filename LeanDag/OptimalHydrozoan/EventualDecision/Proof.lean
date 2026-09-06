@@ -60,15 +60,15 @@ theorem ledgerProgress :
     ∀ (Replica BlockId : Type) [Fintype Replica] [DecidableEq Replica]
       [DecidableEq BlockId] [OptimalFaults Replica] [S : Slots Replica],
     ∀ (T : Finset Replica) (R k c : ℕ),
-      T ⊆ (Correct : Finset Replica) → q Replica ≤ T.card →
+      T ⊆ (LeanDag.Hydrozoan.Correct : Finset Replica) → q Replica ≤ T.card →
       0 < c → SpansEligible Replica c →
       FairRunOn Replica T c →
       ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
         ∀ (U : OptUniverse Replica BlockId),
-          SynchronisedOn U.toBlockUniverse T R →
+          SynchronisedOn U.toBlockRecord T R →
           (∀ r, S.slotRound b ≤ r → r ≤ S.slotRound (b + c - 1) + 2 →
-            PopulatedOn U.toBlockUniverse T r) →
-          ∀ V : View U.toBlockUniverse,
+            PopulatedOn U.toBlockRecord T r) →
+          ∀ V : LeanDag.Hydrozoan.View U.toBlockRecord,
             V.CoversUpto (S.slotRound (b + c - 1) + 2) →
           ∀ i, i < b → ∃ v, DecidedOpt U V i v := by
   intro Replica BlockId _ _ _ _ S T R k c hT hcard hc hspan hfair

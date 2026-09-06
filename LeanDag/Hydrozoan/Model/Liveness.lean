@@ -19,16 +19,16 @@ namespace LeanDag
 namespace Hydrozoan
 
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
-  [F : Faults Replica]
+  [F : LeanDag.Hydrozoan.Faults Replica]
 
-/-- Every replica in `T` authors a block at round `r`.
+/-- Every replica in `T` creators a block at round `r`.
 
 `T`-relative rather than all-of-`Correct`, deliberately: liveness
 counts to quorums, never to every correct replica, and demanding all of
 `Correct` would void the theorems whenever a single correct replica
 misses a single round — a GC pause, a restart. Nothing is said about
 uniqueness (universe non-equivocation already gives it for
-non-Byzantine authors) or about references.
+non-Byzantine creators) or about references.
 
 Nothing here constrains `T`: the requirements `T ⊆ Correct` and
 `q ≤ T.card` are explicit hypotheses of the consuming theorems (the
@@ -39,7 +39,7 @@ can settle it by `decide`. -/
 @[reducible]
 def PopulatedOn (U : BlockUniverse Replica BlockId)
     (T : Finset Replica) (r : ℕ) : Prop :=
-  ∀ v ∈ T, ∃ b ∈ U.ids, (U.block b).round = r ∧ (U.block b).author = v
+  ∀ v ∈ T, ∃ b ∈ U.ids, (U.block b).round = r ∧ (U.block b).creator = v
 
 /-- The all-of-`Correct` case. -/
 abbrev Populated (U : BlockUniverse Replica BlockId) (r : ℕ) : Prop :=
@@ -75,7 +75,7 @@ behave; and no crashed replica is mentioned — the hybrid model's
 
 Compatibility with validity: when round `n` is `T`-populated, a block
 referencing all of a quorum-sized `T`'s round-`n` blocks carries ≥ `q`
-distinct authors, so `ValidWrt.quorum` is satisfiable alongside — the
+distinct creators, so `ValidWrt.quorum` is satisfiable alongside — the
 witness models prove it.
 
 **Known limitation — round-jumping recovery is not modeled.** `T` is
@@ -90,11 +90,11 @@ def SynchronisedOn (U : BlockUniverse Replica BlockId)
   ∀ n, R ≤ n →                       -- at every round n from R on:
   ∀ b ∈ U.ids,                       -- every existing block b ...
     (U.block b).round = n + 1 →      -- ... sitting one round above n ...
-    (U.block b).author ∈ T →         -- ... authored by a member of T,
+    (U.block b).creator ∈ T →         -- ... authored by a member of T,
   ∀ a ∈ U.ids,                       -- and every existing block a ...
     (U.block a).round = n →          -- ... sitting at round n ...
-    (U.block a).author ∈ T →         -- ... also authored by a member of T:
-    a ∈ (U.block b).parents          -- a is among b's parents
+    (U.block a).creator ∈ T →         -- ... also authored by a member of T:
+    a ∈ (U.block b).refs          -- a is among b's refs
 
 /-- The all-of-`Correct` case. -/
 abbrev Synchronised (U : BlockUniverse Replica BlockId) (R : ℕ) : Prop :=

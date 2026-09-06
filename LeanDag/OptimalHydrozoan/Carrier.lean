@@ -57,7 +57,7 @@ def optimalRule : DagRule Replica BlockId Unit where
   Universe := {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId //
     Barnacle.OptimalHydrozoan.LeaderExcludedAll U}
   View := fun U => LeanDag.Hydrozoan.View U.val
-  block := fun U i => LeanDag.Hydrozoan.adaptBlock (U.val.block i)
+  block := fun U i => U.val.block i
   ids := fun U => U.val.ids
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
@@ -66,7 +66,6 @@ def optimalRule : DagRule Replica BlockId Unit where
     { complete := fun i hi j hj => U.val.complete i hi j hj
       refs_round := fun i hi j hj => (U.val.valid i hi).predecessor j hj }
   Decided := fun S U V k v =>
-    letI := LeanDag.Hydrozoan.ofCoreSlots S
     LeanDag.OptimalHydrozoan.DecidedOpt
       (Barnacle.OptimalHydrozoan.optUniverseOf U.val U.property) V k v
 
@@ -89,14 +88,12 @@ unconditional because the exclusion invariant is a field of the
 universe. -/
 theorem agree : Agree (optimalRule (Replica := Replica) (BlockId := BlockId)) :=
   fun S U V₁ V₂ _ _ _ h₁ h₂ =>
-    letI := LeanDag.Hydrozoan.ofCoreSlots S
     LeanDag.OptimalHydrozoan.SlotAgreement.decided_unique h₁ V₂ _ h₂
 
 /-- **A commit names the slot's candidate.** -/
 theorem commitsCandidate :
     CommitsCandidate (optimalRule (Replica := Replica) (BlockId := BlockId)) :=
   fun S _ _ _ _ hd =>
-    letI := LeanDag.Hydrozoan.ofCoreSlots S
     LeanDag.OptimalHydrozoan.isLeaderBlock_of_decidedOpt hd
 
 set_option maxHeartbeats 1000000 in
@@ -107,7 +104,6 @@ theorem commitsDirect :
       (fun {U} V L r => LeanDag.OptimalHydrozoan.FastCommitOptInView U.val V L r ∨
         LeanDag.Hydrozoan.SlowCommitInView U.val V L r) := by
   intro S U V k L hL hc
-  letI := LeanDag.Hydrozoan.ofCoreSlots S
   rcases hc with h | h
   · exact LeanDag.OptimalHydrozoan.DecidedOpt.directFast hL h
   · exact LeanDag.OptimalHydrozoan.DecidedOpt.directSlow hL h
@@ -139,13 +135,13 @@ theorem banded [LinearOrder BlockId] :
     Banded (optimalRule (Replica := Replica) (BlockId := BlockId)) := by
   intro S U V k v hd
   obtain ⟨top, -, ht⟩ :=
-    LeanDag.OptimalHydrozoan.bandedOpt_aux (S := LeanDag.Hydrozoan.ofCoreSlots S)
+    LeanDag.OptimalHydrozoan.bandedOpt_aux (S := S)
       (Barnacle.OptimalHydrozoan.optUniverseOf_leader_excluded
-        (S := LeanDag.Hydrozoan.ofCoreSlots S) U.val U.property) hd
+        (S := S) U.val U.property) hd
   refine ⟨top, fun g g' d d' S' U' V' k' hkd hsch hlead hab hV => ?_⟩
-  exact ht g g' d d' (LeanDag.Hydrozoan.ofCoreSlots S') U'.val
+  exact ht g g' d d' S' U'.val
     (Barnacle.OptimalHydrozoan.optUniverseOf_leader_excluded
-      (S := LeanDag.Hydrozoan.ofCoreSlots S') U'.val U'.property) V' k'
+      (S := S') U'.val U'.property) V' k'
     hkd hsch hlead (band_of hab) hV
 
 /-! ## The two liveness properties
@@ -204,7 +200,6 @@ theorem optSupport_commits :
     Support.Commits (R := optimalRule (Replica := Replica) (BlockId := BlockId)) optSupport
       (LeanDag.Hydrozoan.hzReliability Replica) := by
   intro S U V T k hq hpop hcert hcov hlead
-  letI : LeanDag.Hydrozoan.Slots Replica := LeanDag.Hydrozoan.ofCoreSlots S
   have hcard : LeanDag.Hydrozoan.q Replica ≤ T.card := by
     have h2 := hq.2
     change Fintype.card Replica - (LeanDag.Hydrozoan.Faults.f Replica + LeanDag.Hydrozoan.Faults.c Replica) ≤ T.card at h2
@@ -221,10 +216,10 @@ theorem optSupport_commits :
   refine ⟨L, by omega, LeanDag.OptimalHydrozoan.DecidedOpt.directSlow hL hin, ?_⟩
   intro S' hround hlead'
   refine LeanDag.OptimalHydrozoan.DecidedOpt.directSlow
-    (S := LeanDag.Hydrozoan.ofCoreSlots S') ⟨hL.1, ?_, ?_⟩ ?_
+    (S := S') ⟨hL.1, ?_, ?_⟩ ?_
   · change (U.val.block L).round = S'.slotRound k
     rw [hround]; exact hL.2.1
-  · change (U.val.block L).author = S'.leader k
+  · change (U.val.block L).creator = S'.leader k
     rw [hlead' k (by omega)]; exact hL.2.2
   · change LeanDag.Hydrozoan.SlowCommitInView U.val V L (S'.slotRound k)
     rw [hround]; exact hin
@@ -295,7 +290,6 @@ theorem voteSupport_fast_commits
       (voteSupport (optimalRule (Replica := Replica) (BlockId := BlockId)))
       (optFastReliability Replica h hmin) := by
   intro S U V T k hq hpop hcert hcov hlead
-  letI : LeanDag.Hydrozoan.Slots Replica := LeanDag.Hydrozoan.ofCoreSlots S
   have hcard : LeanDag.OptimalHydrozoan.qFastOpt Replica ≤ T.card := by
     have h2 := hq.2
     change Fintype.card Replica - LeanDag.OptimalHydrozoan.pOpt Replica ≤ T.card at h2
@@ -324,10 +318,10 @@ theorem voteSupport_fast_commits
   refine ⟨L, by omega, LeanDag.OptimalHydrozoan.DecidedOpt.directFast hL hin, ?_⟩
   intro S' hround hlead'
   refine LeanDag.OptimalHydrozoan.DecidedOpt.directFast
-    (S := LeanDag.Hydrozoan.ofCoreSlots S') ⟨hL.1, ?_, ?_⟩ ?_
+    (S := S') ⟨hL.1, ?_, ?_⟩ ?_
   · change (U.val.block L).round = S'.slotRound k
     rw [hround]; exact hL.2.1
-  · change (U.val.block L).author = S'.leader k
+  · change (U.val.block L).creator = S'.leader k
     rw [hlead' k (by omega)]; exact hL.2.2
   · change LeanDag.OptimalHydrozoan.FastCommitOptInView U.val V L (S'.slotRound k)
     rw [hround]; exact hin
@@ -348,55 +342,55 @@ theorem indirect :
   classical
   intro S U V k j A helig hj hmid
   have hea : LeanDag.Hydrozoan.EligibleAsAnchor
-      (S := LeanDag.Hydrozoan.ofCoreSlots S) Replica k j := by
+      (S := S) Replica k j := by
     change S.slotRound k + 2 < S.slotRound j; omega
   have hmidE : ∀ i, k < i → i < j →
-      LeanDag.Hydrozoan.EligibleAsAnchor (S := LeanDag.Hydrozoan.ofCoreSlots S) Replica k i →
+      LeanDag.Hydrozoan.EligibleAsAnchor (S := S) Replica k i →
       S.slotRound k + 3 ≤ S.slotRound i := by
     intro i _ _ h3
     change S.slotRound k + 2 < S.slotRound i at h3; omega
   have hkj : k < j :=
-    LeanDag.Hydrozoan.lt_of_eligibleAsAnchor (S := LeanDag.Hydrozoan.ofCoreSlots S) hea
+    LeanDag.Hydrozoan.lt_of_eligibleAsAnchor (S := S) hea
   by_cases hc : ∃ L, LeanDag.Hydrozoan.IsLeaderBlock
-      (S := LeanDag.Hydrozoan.ofCoreSlots S) U.val k L ∧
+      (S := S) U.val k L ∧
       LeanDag.Hydrozoan.CertifiedIn U.val A L (S.slotRound k)
   · obtain ⟨L, hL, hcert⟩ := hc
     refine ⟨some L, fun S' hround hlead hj' hmid' => ?_⟩
     exact LeanDag.OptimalHydrozoan.DecidedOpt.indirectCert
-      (S := LeanDag.Hydrozoan.ofCoreSlots S') hkj
+      (S := S') hkj
       ((LeanDag.Hydrozoan.eligibleAsAnchor_sched hround).mpr hea) hj'
       (fun i h1 h2 h3 => hmid' i h1 h2
         (hmidE i h1 h2 ((LeanDag.Hydrozoan.eligibleAsAnchor_sched hround).mp h3)))
       (LeanDag.Hydrozoan.isLeaderBlock_sched
-        (S₁ := LeanDag.Hydrozoan.ofCoreSlots S) (S₂ := LeanDag.Hydrozoan.ofCoreSlots S')
+        (S₁ := S) (S₂ := S')
         (by change S.slotRound k = S'.slotRound k; rw [hround])
         (by change S.leader k = S'.leader k; rw [hlead]) hL)
       (by change LeanDag.Hydrozoan.CertifiedIn U.val A L (S'.slotRound k)
           rw [hround]; exact hcert)
   · push Not at hc
     by_cases hw : ∃ L, LeanDag.Hydrozoan.IsLeaderBlock
-        (S := LeanDag.Hydrozoan.ofCoreSlots S) U.val k L ∧
+        (S := S) U.val k L ∧
         LeanDag.OptimalHydrozoan.EvidenceLinked
-          (S := LeanDag.Hydrozoan.ofCoreSlots S) U.val A L k
+          (S := S) U.val A L k
     · obtain ⟨L₀, hL₀, hw₀⟩ := hw
       refine ⟨some L₀, fun S' hround hlead hj' hmid' => ?_⟩
       have hsk : S.slotRound k = S'.slotRound k := by rw [hround]
       have hlk : S.leader k = S'.leader k := by rw [hlead]
       have hls : ∀ L', LeanDag.Hydrozoan.IsLeaderBlock
-          (S := LeanDag.Hydrozoan.ofCoreSlots S') U.val k L' →
+          (S := S') U.val k L' →
           LeanDag.Hydrozoan.IsLeaderBlock
-            (S := LeanDag.Hydrozoan.ofCoreSlots S) U.val k L' := fun L' hL' =>
+            (S := S) U.val k L' := fun L' hL' =>
         LeanDag.Hydrozoan.isLeaderBlock_sched
-          (S₁ := LeanDag.Hydrozoan.ofCoreSlots S') (S₂ := LeanDag.Hydrozoan.ofCoreSlots S)
+          (S₁ := S') (S₂ := S)
           (by change S'.slotRound k = S.slotRound k; rw [hround])
           (by change S'.leader k = S.leader k; rw [hlead]) hL'
       refine LeanDag.OptimalHydrozoan.DecidedOpt.indirectEvidence
-        (S := LeanDag.Hydrozoan.ofCoreSlots S') hkj
+        (S := S') hkj
         ((LeanDag.Hydrozoan.eligibleAsAnchor_sched hround).mpr hea) hj'
         (fun i h1 h2 h3 => hmid' i h1 h2
           (hmidE i h1 h2 ((LeanDag.Hydrozoan.eligibleAsAnchor_sched hround).mp h3))) ?_
         (LeanDag.Hydrozoan.isLeaderBlock_sched
-          (S₁ := LeanDag.Hydrozoan.ofCoreSlots S) (S₂ := LeanDag.Hydrozoan.ofCoreSlots S')
+          (S₁ := S) (S₂ := S')
           (by exact hsk) (by exact hlk) hL₀) ?_
       · intro L' hL' hc'
         refine hc L' (hls L' hL') ?_
@@ -409,15 +403,15 @@ theorem indirect :
       have hsk : S.slotRound k = S'.slotRound k := by rw [hround]
       have hlk : S.leader k = S'.leader k := by rw [hlead]
       have hls : ∀ L', LeanDag.Hydrozoan.IsLeaderBlock
-          (S := LeanDag.Hydrozoan.ofCoreSlots S') U.val k L' →
+          (S := S') U.val k L' →
           LeanDag.Hydrozoan.IsLeaderBlock
-            (S := LeanDag.Hydrozoan.ofCoreSlots S) U.val k L' := fun L' hL' =>
+            (S := S) U.val k L' := fun L' hL' =>
         LeanDag.Hydrozoan.isLeaderBlock_sched
-          (S₁ := LeanDag.Hydrozoan.ofCoreSlots S') (S₂ := LeanDag.Hydrozoan.ofCoreSlots S)
+          (S₁ := S') (S₂ := S)
           (by change S'.slotRound k = S.slotRound k; rw [hround])
           (by change S'.leader k = S.leader k; rw [hlead]) hL'
       refine LeanDag.OptimalHydrozoan.DecidedOpt.indirectSkip
-        (S := LeanDag.Hydrozoan.ofCoreSlots S') hkj
+        (S := S') hkj
         ((LeanDag.Hydrozoan.eligibleAsAnchor_sched hround).mpr hea) hj'
         (fun i h1 h2 h3 => hmid' i h1 h2
           (hmidE i h1 h2 ((LeanDag.Hydrozoan.eligibleAsAnchor_sched hround).mp h3))) ?_ ?_

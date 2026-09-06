@@ -69,26 +69,26 @@ variable [LeanDag.Hydrozoan.Faults Replica]
 slot's `(round, leader)` pair given directly. -/
 def IsCandidateAt (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) (r : ℕ)
     (v : Replica) (L : BlockId) : Prop :=
-  L ∈ U.ids ∧ (U.block L).round = r ∧ (U.block L).author = v
+  L ∈ U.ids ∧ (U.block L).round = r ∧ (U.block L).creator = v
 
 /-- `b` has watched `v` equivocate at round `r`: two distinct blocks of
-round `r` by `v`, each voted for by one of `b`'s parents. -/
+round `r` by `v`, each voted for by one of `b`'s refs. -/
 def WitnessesAt (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) (r : ℕ)
     (v : Replica) (b : BlockId) : Prop :=
   ∃ L₁ L₂, IsCandidateAt U r v L₁ ∧ IsCandidateAt U r v L₂ ∧ L₁ ≠ L₂ ∧
-    (∃ j ∈ (U.block b).parents, LeanDag.Hydrozoan.IsVote U j L₁) ∧
-    (∃ j ∈ (U.block b).parents, LeanDag.Hydrozoan.IsVote U j L₂)
+    (∃ j ∈ (U.block b).refs, LeanDag.Hydrozoan.IsVote U j L₁) ∧
+    (∃ j ∈ (U.block b).refs, LeanDag.Hydrozoan.IsVote U j L₂)
 
 instance decIsCandidateAt (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
     (r : ℕ) (v : Replica) (L : BlockId) : Decidable (IsCandidateAt U r v L) :=
-  inferInstanceAs (Decidable (L ∈ U.ids ∧ (U.block L).round = r ∧ (U.block L).author = v))
+  inferInstanceAs (Decidable (L ∈ U.ids ∧ (U.block L).round = r ∧ (U.block L).creator = v))
 
 instance decWitnessesAt [Fintype BlockId]
     (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
     (r : ℕ) (v : Replica) (b : BlockId) : Decidable (WitnessesAt U r v b) :=
   inferInstanceAs (Decidable (∃ L₁ L₂, IsCandidateAt U r v L₁ ∧ IsCandidateAt U r v L₂ ∧
-    L₁ ≠ L₂ ∧ (∃ j ∈ (U.block b).parents, LeanDag.Hydrozoan.IsVote U j L₁) ∧
-    (∃ j ∈ (U.block b).parents, LeanDag.Hydrozoan.IsVote U j L₂)))
+    L₁ ≠ L₂ ∧ (∃ j ∈ (U.block b).refs, LeanDag.Hydrozoan.IsVote U j L₁) ∧
+    (∃ j ∈ (U.block b).refs, LeanDag.Hydrozoan.IsVote U j L₂)))
 
 /-- **Leader exclusion, without a schedule.** A block that has watched a
 replica equivocate two rounds below it references nothing by that
@@ -97,19 +97,19 @@ keeps the statement decidable on a finite model. -/
 def LeaderExcludedAll (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) : Prop :=
   ∀ b ∈ U.ids, ∀ v : Replica, 2 ≤ (U.block b).round →
     WitnessesAt U ((U.block b).round - 2) v b →
-    ∀ j ∈ (U.block b).parents, (U.block j).author ≠ v
+    ∀ j ∈ (U.block b).refs, (U.block j).creator ≠ v
 
 instance [Fintype BlockId] (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) :
     Decidable (LeaderExcludedAll U) :=
   inferInstanceAs (Decidable (∀ b ∈ U.ids, ∀ v : Replica, 2 ≤ (U.block b).round →
     WitnessesAt U ((U.block b).round - 2) v b →
-    ∀ j ∈ (U.block b).parents, (U.block j).author ≠ v))
+    ∀ j ∈ (U.block b).refs, (U.block j).creator ≠ v))
 
 end Rule
 
 section OfSchedule
 
-variable [LeanDag.Hydrozoan.Faults Replica] [S : LeanDag.Hydrozoan.Slots Replica]
+variable [LeanDag.Hydrozoan.Faults Replica] [S : LeanDag.Slots Replica]
 
 /-- **The schedule-free rule yields an `OptUniverse` at every
 schedule**, which is what lets the carrier be fixed before the
@@ -134,12 +134,12 @@ theorem optUniverseOf_leader_excluded
     (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) (h : LeaderExcludedAll U) :
     ∀ b ∈ U.ids, ∀ k, (U.block b).round = LeanDag.Hydrozoan.decisionRound Replica k →
       LeanDag.OptimalHydrozoan.WitnessesEquivocation U k b →
-      ∀ j ∈ (U.block b).parents, (U.block j).author ≠ S.leader k :=
+      ∀ j ∈ (U.block b).refs, (U.block j).creator ≠ S.leader k :=
   (optUniverseOf U h).leader_excluded
 
-@[simp] theorem optUniverseOf_toBlockUniverse
+@[simp] theorem optUniverseOf_toBlockRecord
     (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) (h : LeaderExcludedAll U) :
-    (optUniverseOf U h).toBlockUniverse = U := rfl
+    (optUniverseOf U h).toBlockRecord = U := rfl
 
 end OfSchedule
 

@@ -1,5 +1,6 @@
 import LeanDag.Validators
 import LeanDag.Block
+import LeanDag.Slots
 import LeanDag.BlockRecord
 import LeanDag.Record.Chop
 import LeanDag.Record.Fill
@@ -295,7 +296,6 @@ import LeanDag.Hydrozoan.Model.Faults
 import LeanDag.Hydrozoan.Model.Block
 import LeanDag.Hydrozoan.Model.BlockUniverse
 import LeanDag.Hydrozoan.Model.View
-import LeanDag.Hydrozoan.Model.CausalHistory
 import LeanDag.Hydrozoan.Model.Slots
 import LeanDag.Hydrozoan.Model.DirectRules
 import LeanDag.Hydrozoan.Model.Liveness

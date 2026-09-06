@@ -19,15 +19,15 @@ namespace LeanDag
 namespace Hydrozoan
 
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
-  [DecidableEq BlockId] [F : Faults Replica]
+  [DecidableEq BlockId] [F : LeanDag.Hydrozoan.Faults Replica]
   {U : BlockUniverse Replica BlockId}
 
 /-! ## Arithmetic feeders -/
 
-/-- `n + f < q + q_slow` — an anchor's parents meet any slow commit
+/-- `n + f < q + q_slow` — an anchor's refs meet any slow commit
 (Phase 2's row 5). Standalone this is an identity of truncated ℕ
 arithmetic (both sides of `q + q_slow` sum to `n + f + 1`); its content
-materializes in consumers where `q` also bounds a real author-set
+materializes in consumers where `q` also bounds a real creator-set
 cardinality. Same for the starvation row below. -/
 theorem nf_lt_q_add_qSlow :
     Fintype.card Replica + F.f < q Replica + qSlow Replica := by
@@ -44,8 +44,8 @@ theorem nf_lt_qFast_add_qWeak :
   omega
 
 /-- The **strengthened** footprint row: `n + q_weak + f ≤ q_fast + q`.
-Only the non-Byzantine overlap of an anchor's parent authors with the
-fast quorum contributes anchor-linked votes — a Byzantine author's
+Only the non-Byzantine overlap of an anchor's parent creators with the
+fast quorum contributes anchor-linked votes — a Byzantine creator's
 reachable block may be its non-voting equivocation — so the design
 note's `q_fast + q − n ≥ q_weak` must absorb an extra `f`. Still holds
 at every `k ≥ 0`; tight at the tight replica count when `c + k` is even
@@ -66,14 +66,14 @@ theorem q_pos : 1 ≤ q Replica := by
 
 omit [DecidableEq BlockId] in
 /-- Non-genesis universe blocks have a parent (`q ≥ 1`). -/
-theorem parents_nonempty {i : BlockId} (hi : i ∈ U.ids)
-    (hr : 0 < (U.block i).round) : (U.block i).parents.Nonempty := by
+theorem refs_nonempty {i : BlockId} (hi : i ∈ U.ids)
+    (hr : 0 < (U.block i).round) : (U.block i).refs.Nonempty := by
   by_contra h
   rw [Finset.not_nonempty_iff_eq_empty] at h
-  have hq : q Replica ≤ (authorsOf U.block (U.block i).parents).card :=
+  have hq : q Replica ≤ (creatorsOf U.block (U.block i).refs).card :=
     (U.valid i hi).quorum hr
   rw [h] at hq
-  simp only [authorsOf, Finset.image_empty, Finset.card_empty] at hq
+  simp only [creatorsOf, Finset.image_empty, Finset.card_empty] at hq
   have := q_pos (Replica := Replica)
   omega
 
@@ -114,13 +114,13 @@ private theorem certifiedIn_of_slowCommit_base {L : BlockId} {r : ℕ}
     (h : SlowCommit U L r) {A : BlockId} (hA : A ∈ U.ids)
     (hAr : (U.block A).round = r + 3) : CertifiedIn U A L r := by
   obtain ⟨C, hC₁, hC₂⟩ :=
-    exists_common_mem_of_author_quorums (s := (U.block A).parents)
+    exists_common_mem_of_creator_quorums (s := (U.block A).refs)
       (t := certificates U L r) (r := r + 2)
       (fun b hb => ⟨U.complete A hA b hb, by
-        have := round_of_mem_parents hA hb; omega⟩)
+        have := round_of_mem_refs hA hb; omega⟩)
       (fun b hb => ⟨(mem_certificates.mp hb).1, (mem_certificates.mp hb).2.1⟩)
       (by
-        have hq : q Replica ≤ (authorsOf U.block (U.block A).parents).card :=
+        have hq : q Replica ≤ (creatorsOf U.block (U.block A).refs).card :=
           (U.valid A hA).quorum (by omega)
         have h5 := nf_lt_q_add_qSlow (Replica := Replica)
         simp only [SlowCommit, certifiers] at h
@@ -136,9 +136,9 @@ private theorem certifiedIn_of_slowCommit_aux {L : BlockId} {r : ℕ}
   | zero => exact fun A hA hAr => certifiedIn_of_slowCommit_base h hA hAr
   | succ d ih =>
       intro A hA hAr
-      obtain ⟨b, hb⟩ := parents_nonempty hA (by omega)
+      obtain ⟨b, hb⟩ := refs_nonempty hA (by omega)
       have hbi : b ∈ U.ids := U.complete A hA b hb
-      have hbr := round_of_mem_parents hA hb
+      have hbr := round_of_mem_refs hA hb
       exact certifiedIn_of_reaches (Reaches.single hb) (ih b hbi (by omega))
 
 /-- **Rung 1 fires.** A slow commit's certificate lies in the causal
@@ -154,38 +154,38 @@ footprint -/
 private theorem weakLinked_of_fastCommit_base {L : BlockId} {r : ℕ}
     (h : FastCommit U L r) {A : BlockId} (hA : A ∈ U.ids)
     (hAr : (U.block A).round = r + 2) : WeakLinked U A L r := by
-  refine ⟨(U.block A).parents.filter (fun b => IsVote U b L), ?_, ?_⟩
+  refine ⟨(U.block A).refs.filter (fun b => IsVote U b L), ?_, ?_⟩
   · intro b hb
     obtain ⟨hbp, hbv⟩ := Finset.mem_filter.mp hb
     have hbi : b ∈ U.ids := U.complete A hA b hbp
-    have hbr := round_of_mem_parents hA hbp
+    have hbr := round_of_mem_refs hA hbp
     exact ⟨mem_blocksAt.mpr ⟨hbi, by omega⟩, hbv, Reaches.single hbp⟩
   · have hsub :
-        (authorsOf U.block (U.block A).parents ∩ supporters U L (r + 1)) \
+        (creatorsOf U.block (U.block A).refs ∩ supporters U L (r + 1)) \
             F.byzantine ⊆
-          authorsOf U.block
-            ((U.block A).parents.filter (fun b => IsVote U b L)) := by
+          creatorsOf U.block
+            ((U.block A).refs.filter (fun b => IsVote U b L)) := by
       intro v hv
       obtain ⟨hvin, hvnb⟩ := Finset.mem_sdiff.mp hv
       obtain ⟨hvP, hvS⟩ := Finset.mem_inter.mp hvin
-      obtain ⟨p', hp', hpc⟩ := mem_authorsOf.mp hvP
+      obtain ⟨p', hp', hpc⟩ := mem_creatorsOf.mp hvP
       obtain ⟨b, hbi, hbr, hbv, hbc⟩ := mem_supporters.mp hvS
       have hpi : p' ∈ U.ids := U.complete A hA p' hp'
-      have hpr := round_of_mem_parents hA hp'
-      have hnb : (U.block p').author ∈ (NonByzantine : Finset Replica) := by
+      have hpr := round_of_mem_refs hA hp'
+      have hnb : (U.block p').creator ∈ (NonByzantine : Finset Replica) := by
         rw [mem_nonByzantine, hpc]; exact hvnb
       have hpb : p' = b :=
         U.no_equivocation p' hpi b hbi hnb (by rw [hpc, hbc]) (by omega)
       subst hpb
-      exact mem_authorsOf.mpr ⟨p', Finset.mem_filter.mpr ⟨hp', hbv⟩, hpc⟩
+      exact mem_creatorsOf.mpr ⟨p', Finset.mem_filter.mpr ⟨hp', hbv⟩, hpc⟩
     have hcard := Finset.card_le_card hsub
     have hsd := Finset.le_card_sdiff F.byzantine
-      (authorsOf U.block (U.block A).parents ∩ supporters U L (r + 1))
-    have hq : q Replica ≤ (authorsOf U.block (U.block A).parents).card :=
+      (creatorsOf U.block (U.block A).refs ∩ supporters U L (r + 1))
+    have hq : q Replica ≤ (creatorsOf U.block (U.block A).refs).card :=
       (U.valid A hA).quorum (by omega)
     have hinter := Finset.card_union_add_card_inter
-      (authorsOf U.block (U.block A).parents) (supporters U L (r + 1))
-    have huniv : (authorsOf U.block (U.block A).parents ∪
+      (creatorsOf U.block (U.block A).refs) (supporters U L (r + 1))
+    have huniv : (creatorsOf U.block (U.block A).refs ∪
         supporters U L (r + 1)).card ≤ Fintype.card Replica := by
       rw [← Finset.card_univ]; exact Finset.card_le_univ _
     have hf := F.card_byzantine
@@ -202,9 +202,9 @@ private theorem weakLinked_of_fastCommit_aux {L : BlockId} {r : ℕ}
   | zero => exact fun A hA hAr => weakLinked_of_fastCommit_base h hA hAr
   | succ d ih =>
       intro A hA hAr
-      obtain ⟨b, hb⟩ := parents_nonempty hA (by omega)
+      obtain ⟨b, hb⟩ := refs_nonempty hA (by omega)
       have hbi : b ∈ U.ids := U.complete A hA b hb
-      have hbr := round_of_mem_parents hA hb
+      have hbr := round_of_mem_refs hA hb
       exact weakLinked_of_reaches (Reaches.single hb) (ih b hbi (by omega))
 
 /-- **Rung 2 fires.** A fast commit's weak footprint is visible from
@@ -217,7 +217,7 @@ theorem weakLinked_of_fastCommit {L : BlockId} {r : ℕ} (h : FastCommit U L r)
 /-! ## Starvation: a fast commit clears both rungs of every rival -/
 
 private theorem supporters_capped_of_fastCommit {L L' : BlockId} {r : ℕ}
-    (hne : L' ≠ L) (hauthor : (U.block L').author = (U.block L).author)
+    (hne : L' ≠ L) (hcreator : (U.block L').creator = (U.block L).creator)
     (h : FastCommit U L r) :
     (supporters U L' (r + 1)).card + qFast Replica ≤
       Fintype.card Replica + F.f := by
@@ -225,7 +225,7 @@ private theorem supporters_capped_of_fastCommit {L L' : BlockId} {r : ℕ}
       F.byzantine := by
     intro v hv
     obtain ⟨h₁, h₂⟩ := Finset.mem_inter.mp hv
-    exact byzantine_of_votes_two hne hauthor h₁ h₂
+    exact byzantine_of_votes_two hne hcreator h₁ h₂
   have h1 := Finset.card_union_add_card_inter
     (supporters U L' (r + 1)) (supporters U L (r + 1))
   have h2 : (supporters U L' (r + 1) ∪ supporters U L (r + 1)).card ≤
@@ -236,46 +236,46 @@ private theorem supporters_capped_of_fastCommit {L L' : BlockId} {r : ℕ}
   simp only [FastCommit] at h
   omega
 
-/-- A fast commit starves every same-author rival (an equivocating
+/-- A fast commit starves every same-creator rival (an equivocating
 copy — the only kind a slot's candidates can be) off the weak rung, at
 every anchor. -/
 theorem not_weakLinked_of_fastCommit {L L' : BlockId} {r : ℕ} {A : BlockId}
-    (hne : L' ≠ L) (hauthor : (U.block L').author = (U.block L).author)
+    (hne : L' ≠ L) (hcreator : (U.block L').creator = (U.block L).creator)
     (h : FastCommit U L r) : ¬ WeakLinked U A L' r := by
   rintro ⟨s, hs, hcard⟩
-  have hsub : authorsOf U.block s ⊆ supporters U L' (r + 1) := by
+  have hsub : creatorsOf U.block s ⊆ supporters U L' (r + 1) := by
     intro v hv
-    obtain ⟨b, hb, hbc⟩ := mem_authorsOf.mp hv
+    obtain ⟨b, hb, hbc⟩ := mem_creatorsOf.mp hv
     obtain ⟨hb1, hb2, -⟩ := hs b hb
     obtain ⟨hbi, hbr⟩ := mem_blocksAt.mp hb1
     exact mem_supporters.mpr ⟨b, hbi, hbr, hb2, hbc⟩
   have h1 := Finset.card_le_card hsub
-  have h2 := supporters_capped_of_fastCommit hne hauthor h
+  have h2 := supporters_capped_of_fastCommit hne hcreator h
   have h5 := nf_lt_qFast_add_qWeak (Replica := Replica)
   omega
 
-/-- A fast commit starves every same-author rival off the certificate
+/-- A fast commit starves every same-creator rival off the certificate
 rung too. -/
 theorem certificates_eq_empty_of_fastCommit {L L' : BlockId} {r : ℕ}
-    (hne : L' ≠ L) (hauthor : (U.block L').author = (U.block L).author)
+    (hne : L' ≠ L) (hcreator : (U.block L').creator = (U.block L).creator)
     (h : FastCommit U L r) : certificates U L' r = ∅ := by
   rw [Finset.eq_empty_iff_forall_notMem]
   intro C hC
   obtain ⟨hCi, hCr, hcert⟩ := mem_certificates.mp hC
   have hle := Finset.card_le_card
-    (authors_voteBlocks_subset_supporters (L := L') hCi hCr)
-  have h2 := supporters_capped_of_fastCommit hne hauthor h
+    (creators_voteBlocks_subset_supporters (L := L') hCi hCr)
+  have h2 := supporters_capped_of_fastCommit hne hcreator h
   have hqc := qWeak_le_qCert (Replica := Replica)
   have h5 := nf_lt_qFast_add_qWeak (Replica := Replica)
   simp only [IsCertificate] at hcert
   omega
 
-/-- Starvation of same-author rivals, rung-1 phrasing. -/
+/-- Starvation of same-creator rivals, rung-1 phrasing. -/
 theorem not_certifiedIn_of_fastCommit {L L' : BlockId} {r : ℕ} {A : BlockId}
-    (hne : L' ≠ L) (hauthor : (U.block L').author = (U.block L).author)
+    (hne : L' ≠ L) (hcreator : (U.block L').creator = (U.block L).creator)
     (h : FastCommit U L r) : ¬ CertifiedIn U A L' r := by
   rintro ⟨C, hC, -⟩
-  rw [certificates_eq_empty_of_fastCommit hne hauthor h] at hC
+  rw [certificates_eq_empty_of_fastCommit hne hcreator h] at hC
   exact Finset.notMem_empty C hC
 
 /-! ## Skip-side negatives: a skipped slot has nothing on either rung -/
@@ -311,9 +311,9 @@ theorem not_weakLinked_of_skipped {k : ℕ} {L : BlockId} {A : BlockId}
     (hL : IsLeaderBlock U k L) (h : SkippedLeader U k) :
     ¬ WeakLinked U A L (S.slotRound k) := by
   rintro ⟨s, hs, hcard⟩
-  have hsub : authorsOf U.block s ⊆ supporters U L (S.slotRound k + 1) := by
+  have hsub : creatorsOf U.block s ⊆ supporters U L (S.slotRound k + 1) := by
     intro v hv
-    obtain ⟨b, hb, hbc⟩ := mem_authorsOf.mp hv
+    obtain ⟨b, hb, hbc⟩ := mem_creatorsOf.mp hv
     obtain ⟨hb1, hb2, -⟩ := hs b hb
     obtain ⟨hbi, hbr⟩ := mem_blocksAt.mp hb1
     exact mem_supporters.mpr ⟨b, hbi, hbr, hb2, hbc⟩
@@ -330,7 +330,7 @@ theorem certificates_eq_empty_of_skipped {k : ℕ} {L : BlockId}
   intro C hC
   obtain ⟨hCi, hCr, hcert⟩ := mem_certificates.mp hC
   have hle := Finset.card_le_card
-    (authors_voteBlocks_subset_supporters (L := L) hCi hCr)
+    (creators_voteBlocks_subset_supporters (L := L) hCi hCr)
   have h2 := supporters_capped_of_skipped hL h
   have hqc := qWeak_le_qCert (Replica := Replica)
   have h5 := nf_lt_qFast_add_qWeak (Replica := Replica)

@@ -27,7 +27,7 @@ variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
   {U : OptUniverse Replica BlockId}
 
 /-- Pointwise verdict agreement below a shared horizon. -/
-theorem decidesBelow_eq {V₁ V₂ : View U.toBlockUniverse} {g₁ g₂ : ℕ → Option BlockId}
+theorem decidesBelow_eq {V₁ V₂ : LeanDag.Hydrozoan.View U.toBlockRecord} {g₁ g₂ : ℕ → Option BlockId}
     {n : ℕ} (h₁ : DecidesBelow U V₁ g₁ n) (h₂ : DecidesBelow U V₂ g₂ n) :
     ∀ k < n, g₁ k = g₂ k := fun k hk =>
   SlotAgreement.decided_unique (h₁ k hk) V₂ (g₂ k) (h₂ k hk)

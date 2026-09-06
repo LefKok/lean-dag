@@ -53,7 +53,7 @@ identity `q_fast + q − n − f = t_plain`, stated as the ℕ equality
 
 The equality is the truncation guard announced on `tPlain`: were the
 subtraction in `tPlain` truncated, the two sides could not agree. What
-the seam consumes: a decision-round block's `q` parents meet the `q_fast`
+the seam consumes: a decision-round block's `q` refs meet the `q_fast`
 voters in at least `q_fast + q − n` replicas, at most `f` of them
 Byzantine, leaving `t_plain` non-Byzantine votes for the candidate. -/
 def EvidencePlain : Prop :=
@@ -64,7 +64,7 @@ def EvidencePlain : Prop :=
 `q_fast + q − n − f + 1 ≥ t_equiv`, stated subtraction-free as
 `n + f + t_equiv ≤ q_fast + q + 1`. The `+ 1` is the leader-exclusion
 dividend: a block that witnesses the leader's equivocation does not
-reference that leader's block, so at most `f − 1` of its parents are
+reference that leader's block, so at most `f − 1` of its refs are
 undetected Byzantine replicas, and votes for the candidate from at least
 `t_equiv = f + pOpt` parties remain. This is the row that pins
 `n ≥ 3f + c + 2·pOpt − 1`. -/

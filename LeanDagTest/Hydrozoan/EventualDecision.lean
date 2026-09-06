@@ -39,12 +39,13 @@ set_option maxRecDepth 16384
 block referencing all three blocks of the round below. -/
 def lk10 : Fin 24 → Block (Fin 4) (Fin 24) := fun i =>
   { round := (i : ℕ) / 3,
-    author := ⟨if (i : ℕ) % 3 = 0 then 0 else (i : ℕ) % 3 + 1,
+    creator := ⟨if (i : ℕ) % 3 = 0 then 0 else (i : ℕ) % 3 + 1,
       by split <;> omega⟩,
-    parents :=
+    refs :=
       if h : (i : ℕ) < 3 then ∅
       else {⟨(i : ℕ) / 3 * 3 - 3, by omega⟩, ⟨(i : ℕ) / 3 * 3 - 2, by omega⟩,
-        ⟨(i : ℕ) / 3 * 3 - 1, by omega⟩} }
+        ⟨(i : ℕ) / 3 * 3 - 1, by omega⟩},
+    payload := () }
 
 /-- The eight-round universe. -/
 def U10 : BlockUniverse (Fin 4) (Fin 24) where
@@ -70,8 +71,8 @@ theorem u10_synchronised : Synchronised U10 0 := by
     (revert b a; decide)
 
 -- The correct replicas fill every round of the run's span (rounds 2–6).
-theorem u10_populated : ∀ r, Slots.slotRound (Replica := Fin 4) 2 ≤ r →
-    r ≤ Slots.slotRound (Replica := Fin 4) (2 + 3 - 1) + 2 →
+theorem u10_populated : ∀ r, Slots.slotRound (Validator := Fin 4) 2 ≤ r →
+    r ≤ Slots.slotRound (Validator := Fin 4) (2 + 3 - 1) + 2 →
     PopulatedOn U10 (Correct : Finset (Fin 4)) r := by
   intro r h1 h2
   change 1 * (2 / 1) ≤ r at h1
@@ -135,18 +136,18 @@ theorem fairRun_four :
 -- End-to-end: RunsRecur applied concretely — fairness places a
 -- correct-led run past slot 5 at or after round 3. The bound is opaque
 -- (existential); the concrete-run guard is the application above.
-example : ∃ b, 5 ≤ b ∧ 3 ≤ Slots.slotRound (Replica := Fin 4) b ∧
-    ∀ i, i < 3 → Slots.leader (Replica := Fin 4) (b + i) ∈
+example : ∃ b, 5 ≤ b ∧ 3 ≤ Slots.slotRound (Validator := Fin 4) b ∧
+    ∀ i, i < 3 → Slots.leader (Validator := Fin 4) (b + i) ∈
       (Correct : Finset (Fin 4)) :=
   (EventualDecision.holds (Fin 4) (Fin 24)).2
     (Correct : Finset (Fin 4)) 3 5 3 fairRun_four
 
 -- End-to-end: the composed headline, all hypotheses discharged.
-example : ∃ b, 5 ≤ b ∧ 3 ≤ Slots.slotRound (Replica := Fin 4) b ∧
+example : ∃ b, 5 ≤ b ∧ 3 ≤ Slots.slotRound (Validator := Fin 4) b ∧
     ∀ (U : BlockUniverse (Fin 4) (Fin 24)),
       SynchronisedOn U (Correct : Finset (Fin 4)) 3 →
-      (∀ r, Slots.slotRound (Replica := Fin 4) b ≤ r →
-        r ≤ Slots.slotRound (Replica := Fin 4) (b + 3 - 1) + 2 →
+      (∀ r, Slots.slotRound (Validator := Fin 4) b ≤ r →
+        r ≤ Slots.slotRound (Validator := Fin 4) (b + 3 - 1) + 2 →
         PopulatedOn U (Correct : Finset (Fin 4)) r) →
       ∀ i, i < b → ∃ v, Decided U (View.full U) i v := by
   obtain ⟨b, hk, hR, hrest⟩ :=

@@ -2030,7 +2030,7 @@ The goal, restated in three parts:
    properties, automatically.
 
 **Where it stands** (2026-09-06; the sections below are the record of
-how it got here, and §11.13–§11.23 the last passes). Part 1 is four
+how it got here, and §11.13–§11.24 the last passes). Part 1 is four
 properties — `Banded`, `Agree`, `CommitsCandidate`, `Indirect` — and a
 `Support` with two laws, `Local` and `Commits` (§11.15, §11.16); the
 carrier carries the causal law itself, and synchrony is not a property
@@ -3851,6 +3851,35 @@ three lemmas that already existed, so Optimal's carrier is
 `odontocetiOnRecord` and `mahiMahiOnRecord` in place of projected
 witnesses. `Integration/ReGenesisRules.lean` is deleted, each rule's
 re-genesis being one line in its own file.
+
+### 11.24 One block, one schedule, one causal layer
+
+Three restatements went. **Causal history and counting** — `Reaches`,
+`history`, `blocksAt`, `authorsAt`, `supporters`, `blames` — are stated
+once at `BlockRecord` in `CausalHistory.lean`, `History.lean` and
+`Support.lean`, the predecessor fact taken from `Validity.Mechanised`
+where a lemma reads rounds; the core's threshold lemmas stay at its
+universe. Nemo's `CausalHistory.lean`, `History.lean` and the generic
+half of its `Support.lean` are deleted, as is FinWhale's own `blocksAt`.
+
+**Hydrozoan's block is the shared block.** `Hydrozoan.Block Replica
+BlockId` is `LeanDag.Block Replica BlockId Unit`, so `author` is
+`creator` and `parents` is `refs` throughout the arc, `authorsOf` and
+`authors` are `creatorsOf` and `creators`, and `Hydrozoan.BlockUniverse`
+is the record at `Hydrozoan.ValidWrt` with `NonByzantine` as the honest
+set, `Hydrozoan.View` the record's view. The adapter — `adaptBlock`,
+`unadapt`, `hzBlk`, `toRecord`, `ofRecord`, Barnacle's `adapt` and
+`adaptBlk` — is deleted, `Hydrozoan.onRecord` and `optOnRecord` are
+identity maps, and Hydrozoan's `Model/CausalHistory.lean` and
+`chopBlkHZ` go with it. What Hydrozoan keeps of its own is its validity
+predicate, its fault model and its rules. The one cost is name
+resolution: files in the Optimal namespace that once saw a single
+`BlockUniverse`, `View`, `Faults` or `Correct` now qualify Hydrozoan's.
+
+**One schedule.** `Slots` moves from `Mysticeti.lean` to
+`LeanDag/Slots.lean`, below every protocol, and `Hydrozoan.Slots`,
+`ofCoreSlots` and `toCoreSlots` are deleted; Hydrozoan's rules take the
+shared class. FinWhale's `Sched` is the next candidate.
 
 ### 11.5 Next steps, in order
 

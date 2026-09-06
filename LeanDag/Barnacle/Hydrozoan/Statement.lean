@@ -75,13 +75,13 @@ variable {Replica : Type} [Fintype Replica] [DecidableEq Replica]
 variable {BlockId : Type} [LinearOrder BlockId]
 
 /-- **The schedules are one class.** `LeanDag.Slots` and
-`LeanDag.Hydrozoan.Slots` carry the same five fields, so the
+`LeanDag.Slots` carry the same five fields, so the
 identification is field-for-field and every component is `rfl`. Stated
 here rather than in the helpers because a reader of the instantiation
 must see that the rule runs under the schedule the interface hands it,
 unchanged. -/
-abbrev slotsOf (S : Slots Replica) : LeanDag.Hydrozoan.Slots Replica :=
-  LeanDag.Hydrozoan.ofCoreSlots S
+abbrev slotsOf (S : Slots Replica) : LeanDag.Slots Replica :=
+  S
 
 /-- **Hydrozoan as a base rule.** The universe is Hydrozoan's own; wave
 length three; the direct commit predicate is the disjunction of the two

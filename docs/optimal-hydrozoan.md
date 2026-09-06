@@ -127,8 +127,8 @@ that no truncation occurred. `qWeak` is not used.
 def WitnessesEquivocation (U : BlockUniverse Replica BlockId) (k : ℕ)
     (b : BlockId) : Prop :=
   ∃ L₁ L₂, IsLeaderBlock U k L₁ ∧ IsLeaderBlock U k L₂ ∧ L₁ ≠ L₂ ∧
-    (∃ j ∈ (U.block b).parents, IsVote U j L₁) ∧
-    (∃ j ∈ (U.block b).parents, IsVote U j L₂)
+    (∃ j ∈ (U.block b).refs, IsVote U j L₁) ∧
+    (∃ j ∈ (U.block b).refs, IsVote U j L₂)
 ```
 
 A block witnesses an equivocation in a slot when two distinct candidates

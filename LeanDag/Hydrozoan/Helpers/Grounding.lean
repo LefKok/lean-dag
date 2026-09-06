@@ -21,7 +21,7 @@ section Fairness
 
 /-- The correct pool is nonempty: it holds at least `q ≥ 1` members. -/
 theorem correct_nonempty (Replica : Type*) [Fintype Replica]
-    [DecidableEq Replica] [F : Faults Replica] :
+    [DecidableEq Replica] [F : LeanDag.Hydrozoan.Faults Replica] :
     (Correct : Finset Replica).Nonempty :=
   Finset.card_pos.mp (lt_of_lt_of_le q_pos q_le_card_correct)
 
@@ -64,62 +64,63 @@ theorem eq_of_div_mod_eq {m i j : ℕ} (hdiv : i / m = j / m)
     _ = m * (j / m) + j % m := by rw [hdiv, hmod]
     _ = j := Nat.div_add_mod j m
 
-/-- The author of block `b` in the horizon universe: `T`'s member number
+/-- The creator of block `b` in the horizon universe: `T`'s member number
 `b mod |T|` (under the canonical enumeration of `T`). -/
-noncomputable def cyclicAuthor (T : Finset Replica) (hm : 0 < T.card)
+noncomputable def cyclicCreator (T : Finset Replica) (hm : 0 < T.card)
     (b : ℕ) : Replica :=
   (T.equivFin.symm ⟨b % T.card, Nat.mod_lt b hm⟩ : {x // x ∈ T})
 
-theorem cyclicAuthor_mem (T : Finset Replica) (hm : 0 < T.card) (b : ℕ) :
-    cyclicAuthor T hm b ∈ T :=
+theorem cyclicCreator_mem (T : Finset Replica) (hm : 0 < T.card) (b : ℕ) :
+    cyclicCreator T hm b ∈ T :=
   (T.equivFin.symm _).2
 
-/-- Two blocks share an author exactly when their indices agree mod
+/-- Two blocks share an creator exactly when their indices agree mod
 `|T|`. -/
-theorem cyclicAuthor_inj (T : Finset Replica) (hm : 0 < T.card) {a b : ℕ}
-    (h : cyclicAuthor T hm a = cyclicAuthor T hm b) :
+theorem cyclicCreator_inj (T : Finset Replica) (hm : 0 < T.card) {a b : ℕ}
+    (h : cyclicCreator T hm a = cyclicCreator T hm b) :
     a % T.card = b % T.card :=
   congrArg Fin.val (T.equivFin.symm.injective (Subtype.coe_injective h))
 
 /-- Block `r * |T| + index(v)` is `v`'s round-`r` block. -/
-theorem cyclicAuthor_index (T : Finset Replica) (hm : 0 < T.card)
+theorem cyclicCreator_index (T : Finset Replica) (hm : 0 < T.card)
     {v : Replica} (hv : v ∈ T) (r : ℕ) :
-    cyclicAuthor T hm (r * T.card + (T.equivFin ⟨v, hv⟩).val) = v := by
+    cyclicCreator T hm (r * T.card + (T.equivFin ⟨v, hv⟩).val) = v := by
   have hmod : (r * T.card + (T.equivFin ⟨v, hv⟩).val) % T.card
       = (T.equivFin ⟨v, hv⟩).val := by
     rw [Nat.mul_comm r T.card, Nat.mul_add_mod]
     exact Nat.mod_eq_of_lt (T.equivFin ⟨v, hv⟩).isLt
   have harg : (⟨(r * T.card + (T.equivFin ⟨v, hv⟩).val) % T.card,
       Nat.mod_lt _ hm⟩ : Fin T.card) = T.equivFin ⟨v, hv⟩ := Fin.ext hmod
-  unfold cyclicAuthor
+  unfold cyclicCreator
   rw [harg, Equiv.symm_apply_apply]
 
-/-- Block `b` of the horizon universe: round `b / |T|`, author `b mod
+/-- Block `b` of the horizon universe: round `b / |T|`, creator `b mod
 |T|` (cyclically through `T`), referencing ALL of the previous round's
 blocks. Genesis needs no special case: at round `0` the parent interval
 `Ico ((0−1)·|T|) (0·|T|)` is empty by ℕ subtraction. -/
 noncomputable def horizonBlock (T : Finset Replica) (hm : 0 < T.card)
     (b : ℕ) : Block Replica ℕ where
   round := b / T.card
-  author := cyclicAuthor T hm b
-  parents := Finset.Ico ((b / T.card - 1) * T.card) (b / T.card * T.card)
+  creator := cyclicCreator T hm b
+  refs := Finset.Ico ((b / T.card - 1) * T.card) (b / T.card * T.card)
+  payload := ()
 
 @[simp] theorem horizonBlock_round (T : Finset Replica) (hm : 0 < T.card)
     (b : ℕ) : (horizonBlock T hm b).round = b / T.card := rfl
 
-@[simp] theorem horizonBlock_author (T : Finset Replica) (hm : 0 < T.card)
-    (b : ℕ) : (horizonBlock T hm b).author = cyclicAuthor T hm b := rfl
+@[simp] theorem horizonBlock_creator (T : Finset Replica) (hm : 0 < T.card)
+    (b : ℕ) : (horizonBlock T hm b).creator = cyclicCreator T hm b := rfl
 
-@[simp] theorem horizonBlock_parents (T : Finset Replica) (hm : 0 < T.card)
-    (b : ℕ) : (horizonBlock T hm b).parents
+@[simp] theorem horizonBlock_refs (T : Finset Replica) (hm : 0 < T.card)
+    (b : ℕ) : (horizonBlock T hm b).refs
       = Finset.Ico ((b / T.card - 1) * T.card) (b / T.card * T.card) := rfl
 
 /-- Parent-interval membership pins the parent's round to the one
 below (and forces the child's round positive). -/
 theorem horizonBlock_parent_round (T : Finset Replica) (hm : 0 < T.card)
-    {b j : ℕ} (hj : j ∈ (horizonBlock T hm b).parents) :
+    {b j : ℕ} (hj : j ∈ (horizonBlock T hm b).refs) :
     j / T.card + 1 = b / T.card := by
-  rw [horizonBlock_parents, Finset.mem_Ico] at hj
+  rw [horizonBlock_refs, Finset.mem_Ico] at hj
   have hpos : 0 < b / T.card := by
     rcases Nat.eq_zero_or_pos (b / T.card) with hz | hz
     · rw [hz, Nat.zero_mul] at hj
@@ -135,7 +136,7 @@ end Encoding
 section Universe
 
 variable {Replica : Type*} [Fintype Replica] [DecidableEq Replica]
-  [F : Faults Replica]
+  [F : LeanDag.Hydrozoan.Faults Replica]
 
 /-- The horizon universe for `T` and `N`: `(N+1) · |T|` blocks — for
 each round `r ≤ N`, one block per member of `T` (block `r * |T| + i`
@@ -147,7 +148,7 @@ noncomputable def horizonUniverse (T : Finset Replica) (hm : 0 < T.card)
   block := horizonBlock T hm
   complete := by
     intro b hb j hj
-    rw [horizonBlock_parents, Finset.mem_Ico] at hj
+    rw [horizonBlock_refs, Finset.mem_Ico] at hj
     rw [Finset.mem_range] at hb ⊢
     calc j < b / T.card * T.card := hj.2
       _ ≤ b := Nat.div_mul_le_self b T.card
@@ -155,37 +156,37 @@ noncomputable def horizonUniverse (T : Finset Replica) (hm : 0 < T.card)
   valid := by
     intro b _
     refine ⟨fun j hj => horizonBlock_parent_round T hm hj, ?_, ?_⟩
-    · -- distinct authors: same residue and same round-interval force
+    · -- distinct creators: same residue and same round-interval force
       -- equality
       intro i hi j hj hauth
-      rw [horizonBlock_author, horizonBlock_author] at hauth
-      have hmod := cyclicAuthor_inj T hm hauth
+      rw [horizonBlock_creator, horizonBlock_creator] at hauth
+      have hmod := cyclicCreator_inj T hm hauth
       have hi' := horizonBlock_parent_round T hm hi
       have hj' := horizonBlock_parent_round T hm hj
       exact eq_of_div_mod_eq (by omega) hmod
-    · -- quorum: the parent interval carries |T| distinct authors
+    · -- quorum: the parent interval carries |T| distinct creators
       intro hpos
       rw [horizonBlock_round] at hpos
-      have hinj : Set.InjOn (fun i => (horizonBlock T hm i).author)
-          ↑(horizonBlock T hm b).parents := by
+      have hinj : Set.InjOn (fun i => (horizonBlock T hm i).creator)
+          ↑(horizonBlock T hm b).refs := by
         intro i hi j hj hauth
         rw [Finset.mem_coe] at hi hj
-        simp only [horizonBlock_author] at hauth
-        have hmod := cyclicAuthor_inj T hm hauth
+        simp only [horizonBlock_creator] at hauth
+        have hmod := cyclicCreator_inj T hm hauth
         have hi' := horizonBlock_parent_round T hm hi
         have hj' := horizonBlock_parent_round T hm hj
         exact eq_of_div_mod_eq (by omega) hmod
       have hcard := Finset.card_image_of_injOn hinj
-      unfold authors authorsOf
-      rw [hcard, horizonBlock_parents, Nat.card_Ico]
+      unfold creators creatorsOf
+      rw [hcard, horizonBlock_refs, Nat.card_Ico]
       obtain ⟨r, hr⟩ : ∃ r, b / T.card = r + 1 := ⟨b / T.card - 1, by omega⟩
       rw [hr, Nat.add_sub_cancel, Nat.succ_mul]
       omega
   no_equivocation := by
     intro i _ j _ _ hauth hround
-    rw [horizonBlock_author, horizonBlock_author] at hauth
+    rw [horizonBlock_creator, horizonBlock_creator] at hauth
     rw [horizonBlock_round, horizonBlock_round] at hround
-    exact eq_of_div_mod_eq hround (cyclicAuthor_inj T hm hauth)
+    exact eq_of_div_mod_eq hround (cyclicCreator_inj T hm hauth)
 
 @[simp] theorem horizonUniverse_ids (T : Finset Replica) (hm : 0 < T.card)
     (hq : q Replica ≤ T.card) (N : ℕ) :
@@ -197,11 +198,11 @@ noncomputable def horizonUniverse (T : Finset Replica) (hm : 0 < T.card)
 
 /-- Every block of the horizon universe is authored by a member of
 `T`. -/
-theorem horizonUniverse_authors (T : Finset Replica) (hm : 0 < T.card)
+theorem horizonUniverse_creators (T : Finset Replica) (hm : 0 < T.card)
     (hq : q Replica ≤ T.card) (N : ℕ) :
     ∀ b ∈ (horizonUniverse T hm hq N).ids,
-      ((horizonUniverse T hm hq N).block b).author ∈ T :=
-  fun b _ => cyclicAuthor_mem T hm b
+      ((horizonUniverse T hm hq N).block b).creator ∈ T :=
+  fun b _ => cyclicCreator_mem T hm b
 
 /-- The horizon universe populates every round up to its horizon. -/
 theorem horizonUniverse_populated (T : Finset Replica) (hm : 0 < T.card)
@@ -220,18 +221,18 @@ theorem horizonUniverse_populated (T : Finset Replica) (hm : 0 < T.card)
     apply div_eq_of_between hm (Nat.le_add_right _ _)
     rw [Nat.succ_mul]
     omega
-  · rw [horizonUniverse_block, horizonBlock_author]
-    exact cyclicAuthor_index T hm hv r
+  · rw [horizonUniverse_block, horizonBlock_creator]
+    exact cyclicCreator_index T hm hv r
 
 /-- The horizon universe is internally synchronised from round `0`:
-every block's parents are ALL of the previous round's blocks, `T`'s or
+every block's refs are ALL of the previous round's blocks, `T`'s or
 not (in this universe, all blocks are `T`'s anyway). -/
 theorem horizonUniverse_synchronised (T : Finset Replica) (hm : 0 < T.card)
     (hq : q Replica ≤ T.card) (N : ℕ) :
     SynchronisedOn (horizonUniverse T hm hq N) T 0 := by
   intro n _ b _ hbround _ a _ haround _
   rw [horizonUniverse_block, horizonBlock_round] at hbround haround
-  rw [horizonUniverse_block, horizonBlock_parents, hbround,
+  rw [horizonUniverse_block, horizonBlock_refs, hbround,
     Nat.add_sub_cancel, Finset.mem_Ico]
   constructor
   · have := Nat.div_mul_le_self a T.card
@@ -248,7 +249,7 @@ theorem hypothesesRealizable : HypothesesRealizable := by
   intro Replica _ _ _ T N hq
   have hm : 0 < T.card := lt_of_lt_of_le q_pos hq
   exact ⟨horizonUniverse T hm hq N,
-    horizonUniverse_authors T hm hq N,
+    horizonUniverse_creators T hm hq N,
     fun r hr => horizonUniverse_populated T hm hq N r hr,
     horizonUniverse_synchronised T hm hq N⟩
 

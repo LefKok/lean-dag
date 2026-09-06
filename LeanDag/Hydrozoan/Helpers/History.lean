@@ -16,13 +16,13 @@ namespace LeanDag
 namespace Hydrozoan
 
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
-  [DecidableEq BlockId] [F : Faults Replica]
+  [DecidableEq BlockId] [F : LeanDag.Hydrozoan.Faults Replica]
 
 /-- The causal history of `b`, computed with `n` rounds of fuel. -/
 def historyUpto (U : BlockUniverse Replica BlockId) :
     ℕ → BlockId → Finset BlockId
   | 0, b => {b}
-  | n + 1, b => insert b ((U.block b).parents.biUnion (historyUpto U n))
+  | n + 1, b => insert b ((U.block b).refs.biUnion (historyUpto U n))
 
 /-- The causal history of `b`, as a `Finset`: fuel `round + 1` always
 suffices (references descend one round per step). -/
@@ -44,7 +44,7 @@ theorem reaches_of_mem_historyUpto {n : ℕ} {b i : BlockId}
       simp only [historyUpto, Finset.mem_insert, Finset.mem_biUnion] at h
       rcases h with rfl | ⟨j, hj, hi⟩
       · exact Reaches.refl
-      · exact Reaches.of_mem_parents hj (ih hi)
+      · exact Reaches.of_mem_refs hj (ih hi)
 
 /-- Completeness: with fuel at least the block's round, the computed
 history contains everything reachable. -/
@@ -53,15 +53,15 @@ theorem mem_historyUpto_of_reaches {n : ℕ} {b i : BlockId} (hb : b ∈ U.ids)
     i ∈ historyUpto U n b := by
   induction n generalizing b with
   | zero =>
-      have hpar : (U.block b).parents = ∅ :=
-        (U.valid b hb).parents_empty_of_round_zero (by omega)
-      have := eq_of_reaches_of_parents_empty hpar h
+      have hpar : (U.block b).refs = ∅ :=
+        (U.valid b hb).refs_empty_of_round_zero (by omega)
+      have := eq_of_reaches_of_refs_empty hpar h
       simp [historyUpto, this]
   | succ n ih =>
       rcases h.cases_head with rfl | ⟨j, hstep, hreach⟩
       · simp [historyUpto]
       · have hj : j ∈ U.ids := U.complete b hb j hstep
-        have hround := round_of_mem_parents hb hstep
+        have hround := round_of_mem_refs hb hstep
         simp only [historyUpto, Finset.mem_insert, Finset.mem_biUnion]
         exact Or.inr ⟨j, hstep, ih hj (by omega) hreach⟩
 

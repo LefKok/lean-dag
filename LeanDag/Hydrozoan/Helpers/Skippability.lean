@@ -22,15 +22,15 @@ namespace Hydrozoan
 
 variable {Replica : Type} [Fintype Replica] [DecidableEq Replica]
 variable {BlockId : Type} [DecidableEq BlockId] [LinearOrder BlockId]
-variable [LeanDag.Hydrozoan.Faults Replica] [S : LeanDag.Hydrozoan.Slots Replica]
+variable [LeanDag.Hydrozoan.Faults Replica] [S : LeanDag.Slots Replica]
 variable {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
 
 /-- Every member of `T` blames the slot. -/
 theorem subset_blamesInView {V : LeanDag.Hydrozoan.View U} {T : Finset Replica} {k : ℕ}
-    (hpres : ∀ v ∈ T, ∃ c ∈ V.ids, (U.block c).author = v ∧
+    (hpres : ∀ v ∈ T, ∃ c ∈ V.ids, (U.block c).creator = v ∧
       (U.block c).round = S.slotRound k + 1)
-    (huns : ∀ c ∈ V.ids, (U.block c).author ∈ T → (U.block c).round = S.slotRound k + 1 →
-      ∀ L, LeanDag.Hydrozoan.IsLeaderBlock U k L → L ∉ (U.block c).parents) :
+    (huns : ∀ c ∈ V.ids, (U.block c).creator ∈ T → (U.block c).round = S.slotRound k + 1 →
+      ∀ L, LeanDag.Hydrozoan.IsLeaderBlock U k L → L ∉ (U.block c).refs) :
     T ⊆ LeanDag.Hydrozoan.blamesInView U V k := by
   intro v hv
   obtain ⟨c, hcV, hca, hcr⟩ := hpres v hv
@@ -43,10 +43,10 @@ theorem subset_blamesInView {V : LeanDag.Hydrozoan.View U} {T : Finset Replica} 
 /-- **The skip fires at `qFast` blamers.** -/
 theorem decided_none_of_unsupported {V : LeanDag.Hydrozoan.View U} {T : Finset Replica} {k : ℕ}
     (hq : LeanDag.Hydrozoan.qFast Replica ≤ T.card)
-    (hpres : ∀ v ∈ T, ∃ c ∈ V.ids, (U.block c).author = v ∧
+    (hpres : ∀ v ∈ T, ∃ c ∈ V.ids, (U.block c).creator = v ∧
       (U.block c).round = S.slotRound k + 1)
-    (huns : ∀ c ∈ V.ids, (U.block c).author ∈ T → (U.block c).round = S.slotRound k + 1 →
-      ∀ L, LeanDag.Hydrozoan.IsLeaderBlock U k L → L ∉ (U.block c).parents) :
+    (huns : ∀ c ∈ V.ids, (U.block c).creator ∈ T → (U.block c).round = S.slotRound k + 1 →
+      ∀ L, LeanDag.Hydrozoan.IsLeaderBlock U k L → L ∉ (U.block c).refs) :
     LeanDag.Hydrozoan.Decided U V k none :=
   LeanDag.Hydrozoan.Decided.directSkip
     (le_trans hq (Finset.card_le_card (subset_blamesInView hpres huns)))
@@ -57,15 +57,15 @@ theorem skipsUnsupported :
     Properties.SkipsUnsupported (rule (Replica := Replica) (BlockId := BlockId))
       (fun T => LeanDag.Hydrozoan.qFast Replica ≤ T.card) := by
   intro S' U V T k hq hpres huns
-  have hpres' : ∀ v ∈ T, ∃ c ∈ V.ids, (U.block c).author = v ∧
+  have hpres' : ∀ v ∈ T, ∃ c ∈ V.ids, (U.block c).creator = v ∧
       (U.block c).round = S'.slotRound k + 1 := fun v hv => by
     obtain ⟨c, hcV, hca, hcr⟩ := hpres v hv
     exact ⟨c, hcV, hca, hcr⟩
-  have huns' : ∀ c ∈ V.ids, (U.block c).author ∈ T → (U.block c).round = S'.slotRound k + 1 →
-      ∀ L, @LeanDag.Hydrozoan.IsLeaderBlock _ _ _ _ _ (ofCoreSlots S') U k L →
-        L ∉ (U.block c).parents :=
+  have huns' : ∀ c ∈ V.ids, (U.block c).creator ∈ T → (U.block c).round = S'.slotRound k + 1 →
+      ∀ L, @LeanDag.Hydrozoan.IsLeaderBlock _ _ _ _ _ S' U k L →
+        L ∉ (U.block c).refs :=
     fun c hcV hT hr L hL => huns c hcV hT hr L hL
-  exact decided_none_of_unsupported (S := ofCoreSlots S') hq hpres' huns'
+  exact decided_none_of_unsupported (S := S') hq hpres' huns'
 
 end Hydrozoan
 

@@ -6,7 +6,7 @@ import LeanDagTest.Hydrozoan.Model
 
 A concrete two-round `BlockUniverse` over the seven-replica fault model
 of `HydrozoanTest.Model`: Byzantine replica 0 equivocates at round 1
-(two blocks, ids 7 and 8), and crashed replica 1 authors its genesis
+(two blocks, ids 7 and 8), and crashed replica 1 creators its genesis
 block but nothing afterwards — halting made visible. All universe
 conditions are checked by `decide`.
 
@@ -22,19 +22,19 @@ namespace Hydrozoan
 
 open LeanDag LeanDag.Hydrozoan
 
-/-- Fourteen blocks over the seven replicas: ids 0–6 genesis (author =
+/-- Fourteen blocks over the seven replicas: ids 0–6 genesis (creator =
 id), ids 7 and 8 round-1 blocks both by Byzantine replica 0
 (equivocation, with different parent quorums), ids 9–13 round-1 blocks
-by replicas 2–6. Crashed replica 1 authors only its genesis block. -/
+by replicas 2–6. Crashed replica 1 creators only its genesis block. -/
 def lk : Fin 14 → Block (Fin 7) (Fin 14) := fun i =>
   if h : (i : ℕ) < 7 then
-    { round := 0, author := ⟨i, by omega⟩, parents := ∅ }
+    { round := 0, creator := ⟨i, by omega⟩, refs := ∅, payload := () }
   else if (i : ℕ) = 7 then
-    { round := 1, author := 0, parents := {0, 1, 2, 3, 4} }
+    { round := 1, creator := 0, refs := {0, 1, 2, 3, 4}, payload := () }
   else if (i : ℕ) = 8 then
-    { round := 1, author := 0, parents := {0, 1, 2, 3, 5} }
+    { round := 1, creator := 0, refs := {0, 1, 2, 3, 5}, payload := () }
   else
-    { round := 1, author := ⟨(i : ℕ) - 7, by omega⟩, parents := {0, 1, 2, 3, 4} }
+    { round := 1, creator := ⟨(i : ℕ) - 7, by omega⟩, refs := {0, 1, 2, 3, 4}, payload := () }
 
 /-- The witness universe: all fourteen blocks satisfy completeness,
 validity, and (`NonByzantine`-guarded) non-equivocation. -/
@@ -50,28 +50,28 @@ def U : BlockUniverse (Fin 7) (Fin 14) where
 -- equivocations.
 example :
     ¬ (∀ i ∈ U.ids, ∀ j ∈ U.ids,
-      (U.block i).author = (U.block j).author →
+      (U.block i).creator = (U.block j).creator →
       (U.block i).round = (U.block j).round → i = j) := by
   decide
 
 -- Crashed replica 1 halts after genesis: no round-1 block by it exists.
-example : ∀ i : Fin 14, (lk i).round = 1 → (lk i).author ≠ 1 := by decide
+example : ∀ i : Fin 14, (lk i).round = 1 → (lk i).creator ≠ 1 := by decide
 
 -- `predecessor` bites: a round-2 block referencing genesis blocks.
 example :
-    ¬ ValidWrt lk { round := 2, author := 2, parents := {0, 1, 2, 3, 4} } := by
+    ¬ ValidWrt lk { round := 2, creator := 2, refs := {0, 1, 2, 3, 4}, payload := () } := by
   decide
 
--- `distinct_authors` bites: parents include both of author 0's
--- equivocating round-1 blocks (five distinct authors, so `quorum` alone
+-- `distinct_creators` bites: refs include both of creator 0's
+-- equivocating round-1 blocks (five distinct creators, so `quorum` alone
 -- would pass).
 example :
-    ¬ ValidWrt lk { round := 2, author := 2, parents := {7, 8, 9, 10, 11, 12} } := by
+    ¬ ValidWrt lk { round := 2, creator := 2, refs := {7, 8, 9, 10, 11, 12}, payload := () } := by
   decide
 
--- `quorum` bites: only four distinct authors, one short of q = 5.
+-- `quorum` bites: only four distinct creators, one short of q = 5.
 example :
-    ¬ ValidWrt lk { round := 1, author := 2, parents := {0, 1, 2, 3} } := by
+    ¬ ValidWrt lk { round := 1, creator := 2, refs := {0, 1, 2, 3}, payload := () } := by
   decide
 
 end Hydrozoan

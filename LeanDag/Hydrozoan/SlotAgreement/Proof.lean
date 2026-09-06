@@ -25,7 +25,7 @@ namespace SlotAgreement
 open DirectSafety
 
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
-  [DecidableEq BlockId] [LinearOrder BlockId] [F : Faults Replica]
+  [DecidableEq BlockId] [LinearOrder BlockId] [F : LeanDag.Hydrozoan.Faults Replica]
   [S : Slots Replica] {U : BlockUniverse Replica BlockId}
 
 theorem decided_unique {V₁ : View U} {k : ℕ} {v₁ : Option BlockId}

@@ -63,7 +63,7 @@ def RunsRecur : Prop :=
 end Schedule
 
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
-  [DecidableEq BlockId] [LinearOrder BlockId] [F : Faults Replica]
+  [DecidableEq BlockId] [LinearOrder BlockId] [F : LeanDag.Hydrozoan.Faults Replica]
   [S : Slots Replica]
 
 /-- **A committed-to-be run decides everything below it.** The workhorse
@@ -89,7 +89,7 @@ def RunDecidesBelow (U : BlockUniverse Replica BlockId) : Prop :=
 tie-break order, and block universe the model admits. -/
 def Statement : Prop :=
   ∀ (Replica BlockId : Type) [Fintype Replica] [DecidableEq Replica]
-    [DecidableEq BlockId] [LinearOrder BlockId] [Faults Replica]
+    [DecidableEq BlockId] [LinearOrder BlockId] [LeanDag.Hydrozoan.Faults Replica]
     [Slots Replica],
     (∀ U : BlockUniverse Replica BlockId, RunDecidesBelow U) ∧
       RunsRecur Replica

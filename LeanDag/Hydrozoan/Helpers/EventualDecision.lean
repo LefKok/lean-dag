@@ -28,7 +28,7 @@ theorem runsRecur (Replica : Type*) [S : Slots Replica] :
     le_trans hk₀ (S.mono (le_trans (le_max_right _ _) hb)), hlead⟩
 
 variable {Replica BlockId : Type} [Fintype Replica] [DecidableEq Replica]
-  [DecidableEq BlockId] [LinearOrder BlockId] [F : Faults Replica]
+  [DecidableEq BlockId] [LinearOrder BlockId] [F : LeanDag.Hydrozoan.Faults Replica]
   [S : Slots Replica]
 
 /-- The composition: direct liveness commits each run slot (its round,

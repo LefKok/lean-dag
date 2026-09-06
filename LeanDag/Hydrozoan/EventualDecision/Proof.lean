@@ -24,7 +24,7 @@ has every slot below `b` decided on any view caught up to the run's
 last decision round. -/
 theorem ledgerProgress :
     ∀ (Replica BlockId : Type) [Fintype Replica] [DecidableEq Replica]
-      [DecidableEq BlockId] [LinearOrder BlockId] [Faults Replica]
+      [DecidableEq BlockId] [LinearOrder BlockId] [LeanDag.Hydrozoan.Faults Replica]
       [S : Slots Replica],
     ∀ (T : Finset Replica) (R k c : ℕ),
       T ⊆ (Correct : Finset Replica) → q Replica ≤ T.card →

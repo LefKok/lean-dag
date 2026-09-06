@@ -62,7 +62,7 @@ example : ∃ L, IsLeaderBlock U6 0 L ∧ SlowCommit U6 L 0 ∧
 
 /-- The low-fault configuration: no Byzantine replica, one crashed —
 one actual fault, equal to the fast allowance p = 1. -/
-instance fourReplicas : Faults (Fin 4) where
+instance fourReplicas : LeanDag.Hydrozoan.Faults (Fin 4) where
   f := 0
   c := 1
   k := 1
@@ -93,16 +93,16 @@ below. -/
 def lk7 : Fin 9 → Block (Fin 4) (Fin 9) := fun i =>
   if h : (i : ℕ) < 3 then
     { round := 0,
-      author := ⟨if (i : ℕ) = 0 then 0 else (i : ℕ) + 1, by split <;> omega⟩,
-      parents := ∅ }
+      creator := ⟨if (i : ℕ) = 0 then 0 else (i : ℕ) + 1, by split <;> omega⟩,
+      refs := ∅ , payload := () }
   else if h : (i : ℕ) < 6 then
     { round := 1,
-      author := ⟨if (i : ℕ) = 3 then 0 else (i : ℕ) - 2, by split <;> omega⟩,
-      parents := {0, 1, 2} }
+      creator := ⟨if (i : ℕ) = 3 then 0 else (i : ℕ) - 2, by split <;> omega⟩,
+      refs := {0, 1, 2} , payload := () }
   else
     { round := 2,
-      author := ⟨if (i : ℕ) = 6 then 0 else (i : ℕ) - 5, by split <;> omega⟩,
-      parents := {3, 4, 5} }
+      creator := ⟨if (i : ℕ) = 6 then 0 else (i : ℕ) - 5, by split <;> omega⟩,
+      refs := {3, 4, 5} , payload := () }
 
 /-- The low-fault universe. -/
 def U7 : BlockUniverse (Fin 4) (Fin 9) where
@@ -151,7 +151,7 @@ example : Decided U7 (View.full U7) 1 none :=
 -- pair. Slot 1's leader is the crashed replica 1 — no candidate exists,
 -- every round-2 block blames vacuously, and the three correct blamers
 -- meet q_fast exactly.
-example : Slots.leader (Replica := Fin 4) 1 = 1 := by decide
+example : Slots.leader (Validator := Fin 4) 1 = 1 := by decide
 example : ∀ L : Fin 9, ¬ IsLeaderBlock U7 1 L := by decide
 example : blames U7 1 = {0, 2, 3} := by decide
 example : SkippedLeader U7 1 := by decide

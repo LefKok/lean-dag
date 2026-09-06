@@ -48,7 +48,7 @@ def SpansEligible (c : ℕ) : Prop :=
 end Schedule
 
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
-  [DecidableEq BlockId] [LinearOrder BlockId] [F : Faults Replica]
+  [DecidableEq BlockId] [LinearOrder BlockId] [F : LeanDag.Hydrozoan.Faults Replica]
   [S : Slots Replica]
 
 /-- **The graded rule is total.** The premises are verbatim the shared
@@ -82,7 +82,7 @@ def DecidedBelowRun (U : BlockUniverse Replica BlockId) : Prop :=
 tie-break order, and block universe the model admits. -/
 def Statement : Prop :=
   ∀ (Replica BlockId : Type) [Fintype Replica] [DecidableEq Replica]
-    [DecidableEq BlockId] [LinearOrder BlockId] [Faults Replica]
+    [DecidableEq BlockId] [LinearOrder BlockId] [LeanDag.Hydrozoan.Faults Replica]
     [Slots Replica] (U : BlockUniverse Replica BlockId),
     AnchoredTotality U ∧ DecidedBelowRun U
 

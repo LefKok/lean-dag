@@ -18,7 +18,7 @@ namespace Hydrozoan
 namespace DirectLiveness
 
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
-  [DecidableEq BlockId] [LinearOrder BlockId] [F : Faults Replica]
+  [DecidableEq BlockId] [LinearOrder BlockId] [F : LeanDag.Hydrozoan.Faults Replica]
   [S : Slots Replica] {U : BlockUniverse Replica BlockId}
 
 theorem holds : Statement := by
@@ -32,7 +32,7 @@ theorem holds : Statement := by
 
 theorem fastLatency :
     ∀ (Replica BlockId : Type) [Fintype Replica] [DecidableEq Replica]
-      [DecidableEq BlockId] [LinearOrder BlockId] [Faults Replica]
+      [DecidableEq BlockId] [LinearOrder BlockId] [LeanDag.Hydrozoan.Faults Replica]
       [Slots Replica] (U : BlockUniverse Replica BlockId),
       FastLatency U := by
   intro Replica BlockId _ _ _ _ _ _ U R k hfaults hs hRk hpop0 hpop1 hlead
@@ -47,7 +47,7 @@ theorem fastLatency :
 
 theorem skipLatency :
     ∀ (Replica BlockId : Type) [Fintype Replica] [DecidableEq Replica]
-      [DecidableEq BlockId] [LinearOrder BlockId] [Faults Replica]
+      [DecidableEq BlockId] [LinearOrder BlockId] [LeanDag.Hydrozoan.Faults Replica]
       [Slots Replica] (U : BlockUniverse Replica BlockId),
       SkipLatency U := by
   intro Replica BlockId _ _ _ _ _ _ U k hfaults hpop hnolead

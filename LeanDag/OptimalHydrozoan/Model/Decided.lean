@@ -20,9 +20,9 @@ the **nearest eligible committed** slot.
 
 Two differences with `Decided`. The universe is an `OptUniverse`: only the
 decision relation and the safety statements see the leader-exclusion
-clause; the rule predicates are applied to `U.toBlockUniverse`. And the
+clause; the rule predicates are applied to `U.toBlockRecord`. And the
 evidence rung carries **no tie-break** (decision D3): two candidates
-cannot both clear it — two evidence quorums share a non-Byzantine author
+cannot both clear it — two evidence quorums share a non-Byzantine creator
 whose unique decision-round block would be evidence for both — so
 `argmin digest` of the pseudocode is vacuous; uniqueness is a theorem of
 the safety phase, not a premise here. No `LinearOrder BlockId` is needed.
@@ -38,23 +38,23 @@ variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
   [DecidableEq BlockId] [O : OptimalFaults Replica] [S : Slots Replica]
 
 /-- The verdicts a replica holding view `V` may reach on slot `k`. -/
-inductive DecidedOpt (U : OptUniverse Replica BlockId) (V : View U.toBlockUniverse) :
+inductive DecidedOpt (U : OptUniverse Replica BlockId) (V : LeanDag.Hydrozoan.View U.toBlockRecord) :
     ℕ → Option BlockId → Prop
   /-- The fast path commits a candidate: `qFastOpt` votes in view. -/
   | directFast {k : ℕ} {L : BlockId} :
-      IsLeaderBlock U.toBlockUniverse k L →
-      FastCommitOptInView U.toBlockUniverse V L (S.slotRound k) →
+      IsLeaderBlock U.toBlockRecord k L →
+      FastCommitOptInView U.toBlockRecord V L (S.slotRound k) →
       DecidedOpt U V k (some L)
   /-- The slow path commits a candidate: `qSlow` certificates in view
   (Hydrozoan's rule, unchanged). -/
   | directSlow {k : ℕ} {L : BlockId} :
-      IsLeaderBlock U.toBlockUniverse k L →
-      SlowCommitInView U.toBlockUniverse V L (S.slotRound k) →
+      IsLeaderBlock U.toBlockRecord k L →
+      SlowCommitInView U.toBlockRecord V L (S.slotRound k) →
       DecidedOpt U V k (some L)
   /-- The direct skip: `qCert` blames and a no-evidence quorum in view
   (covers the case of no candidate at all). -/
   | directSkip {k : ℕ} :
-      SkippedLeaderOptInView U.toBlockUniverse V k → DecidedOpt U V k none
+      SkippedLeaderOptInView U.toBlockRecord V k → DecidedOpt U V k none
   /-- Rung 1: anchored on the nearest eligible committed slot, a
   certificate for `L` is in the anchor's reach. -/
   | indirectCert {k j : ℕ} {A L : BlockId} :
@@ -69,9 +69,9 @@ inductive DecidedOpt (U : OptUniverse Replica BlockId) (V : View U.toBlockUniver
       -- "stop at the first undecided slot")
       (∀ i, k < i → i < j → EligibleAsAnchor Replica k i → DecidedOpt U V i none) →
       -- L is a candidate for slot k
-      IsLeaderBlock U.toBlockUniverse k L →
+      IsLeaderBlock U.toBlockRecord k L →
       -- rung 1: anchor-linked certificate
-      CertifiedIn U.toBlockUniverse A L (S.slotRound k) →
+      CertifiedIn U.toBlockRecord A L (S.slotRound k) →
       DecidedOpt U V k (some L)
   /-- Rung 2: no candidate has an anchor-linked certificate, and `L` has
   an anchor-linked quorum of fast-evidence blocks. No tie-break. -/
@@ -85,12 +85,12 @@ inductive DecidedOpt (U : OptUniverse Replica BlockId) (V : View U.toBlockUniver
       -- j is the nearest such slot (as in indirectCert)
       (∀ i, k < i → i < j → EligibleAsAnchor Replica k i → DecidedOpt U V i none) →
       -- rung 1 is empty for EVERY candidate — the strict grading
-      (∀ L', IsLeaderBlock U.toBlockUniverse k L' →
-        ¬ CertifiedIn U.toBlockUniverse A L' (S.slotRound k)) →
+      (∀ L', IsLeaderBlock U.toBlockRecord k L' →
+        ¬ CertifiedIn U.toBlockRecord A L' (S.slotRound k)) →
       -- L is a candidate for slot k
-      IsLeaderBlock U.toBlockUniverse k L →
+      IsLeaderBlock U.toBlockRecord k L →
       -- rung 2: qCert anchor-linked fast-evidence blocks
-      EvidenceLinked U.toBlockUniverse A L k →
+      EvidenceLinked U.toBlockRecord A L k →
       DecidedOpt U V k (some L)
   /-- Rung 3: anchored, and both rungs are empty for every candidate. -/
   | indirectSkip {k j : ℕ} {A : BlockId} :
@@ -103,11 +103,11 @@ inductive DecidedOpt (U : OptUniverse Replica BlockId) (V : View U.toBlockUniver
       -- j is the nearest such slot (as in indirectCert)
       (∀ i, k < i → i < j → EligibleAsAnchor Replica k i → DecidedOpt U V i none) →
       -- rung 1 empty for every candidate ...
-      (∀ L, IsLeaderBlock U.toBlockUniverse k L →
-        ¬ CertifiedIn U.toBlockUniverse A L (S.slotRound k)) →
+      (∀ L, IsLeaderBlock U.toBlockRecord k L →
+        ¬ CertifiedIn U.toBlockRecord A L (S.slotRound k)) →
       -- ... and rung 2 empty for every candidate: only then skip
-      (∀ L, IsLeaderBlock U.toBlockUniverse k L →
-        ¬ EvidenceLinked U.toBlockUniverse A L k) →
+      (∀ L, IsLeaderBlock U.toBlockRecord k L →
+        ¬ EvidenceLinked U.toBlockRecord A L k) →
       DecidedOpt U V k none
 
 end OptimalHydrozoan

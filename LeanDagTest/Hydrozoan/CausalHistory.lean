@@ -20,22 +20,22 @@ namespace Hydrozoan
 
 open LeanDag LeanDag.Hydrozoan
 
-/-- Fifteen blocks: ids 0–6 genesis (author = id), ids 7/8 the round-1
+/-- Fifteen blocks: ids 0–6 genesis (creator = id), ids 7/8 the round-1
 equivocating pair by Byzantine replica 0, ids 9–13 round-1 blocks by
 replicas 2–6 (crashed replica 1 halts after genesis), and id 14 a
-round-2 block by replica 2 referencing `{7, 9, 10, 12, 13}` (authors
+round-2 block by replica 2 referencing `{7, 9, 10, 12, 13}` (creators
 0, 2, 3, 5, 6) — excluding id 8 (the second equivocation) and id 11. -/
 def lk2 : Fin 15 → Block (Fin 7) (Fin 15) := fun i =>
   if h : (i : ℕ) < 7 then
-    { round := 0, author := ⟨i, by omega⟩, parents := ∅ }
+    { round := 0, creator := ⟨i, by omega⟩, refs := ∅, payload := () }
   else if (i : ℕ) = 7 then
-    { round := 1, author := 0, parents := {0, 1, 2, 3, 4} }
+    { round := 1, creator := 0, refs := {0, 1, 2, 3, 4}, payload := () }
   else if (i : ℕ) = 8 then
-    { round := 1, author := 0, parents := {0, 1, 2, 3, 5} }
+    { round := 1, creator := 0, refs := {0, 1, 2, 3, 5}, payload := () }
   else if h : (i : ℕ) < 14 then
-    { round := 1, author := ⟨(i : ℕ) - 7, by omega⟩, parents := {0, 1, 2, 3, 4} }
+    { round := 1, creator := ⟨(i : ℕ) - 7, by omega⟩, refs := {0, 1, 2, 3, 4}, payload := () }
   else
-    { round := 2, author := 2, parents := {7, 9, 10, 12, 13} }
+    { round := 2, creator := 2, refs := {7, 9, 10, 12, 13}, payload := () }
 
 /-- The three-round witness universe. -/
 def U2 : BlockUniverse (Fin 7) (Fin 15) where
@@ -47,19 +47,19 @@ def U2 : BlockUniverse (Fin 7) (Fin 15) where
 
 /-- A replica's local view: everything except id 8 (withheld — Byzantine
 replica 0 sent this replica only its first round-1 block) and id 11 (an
-honest block not yet delivered). Ref-closed because id 14's parents
+honest block not yet delivered). Ref-closed because id 14's refs
 avoid both. -/
 def V2 : View U2 where
   ids := {0, 1, 2, 3, 4, 5, 6, 7, 9, 10, 12, 13, 14}
   subset_ids := by decide
   complete := by decide
 
--- Direct reference: the round-2 block reaches its parents.
+-- Direct reference: the round-2 block reaches its refs.
 example : Reaches U2 14 7 := Reaches.single (by decide)
 
 -- Multi-hop: down to genesis through id 7.
 example : Reaches U2 14 0 :=
-  Reaches.of_mem_parents (i := 14) (j := 7) (by decide) (Reaches.single (by decide))
+  Reaches.of_mem_refs (i := 14) (j := 7) (by decide) (Reaches.single (by decide))
 
 -- Reflexivity: every block is in its own causal history.
 example : Reaches U2 3 3 := Reaches.refl
@@ -67,7 +67,7 @@ example : Reaches U2 3 3 := Reaches.refl
 -- Genesis reaches only itself — reachability tracks the reference
 -- structure, not just rounds (ids 0 and 1 both sit at round 0).
 example : ¬ Reaches U2 0 1 := fun h =>
-  absurd (eq_of_reaches_of_parents_empty (by decide) h) (by decide)
+  absurd (eq_of_reaches_of_refs_empty (by decide) h) (by decide)
 
 -- Round monotonicity: nothing reaches a strictly higher round.
 example : ¬ Reaches U2 0 14 := not_reaches_of_round_lt (by decide) (by decide)
@@ -94,7 +94,7 @@ example : ∀ b ∈ history U2 14, b ∈ V2.ids := by decide
 -- view-closure lemma.
 example : (0 : Fin 15) ∈ V2.ids :=
   View.mem_of_reaches (V := V2) (c := 14) (by decide)
-    (Reaches.of_mem_parents (i := 14) (j := 7) (by decide) (Reaches.single (by decide)))
+    (Reaches.of_mem_refs (i := 14) (j := 7) (by decide) (Reaches.single (by decide)))
 
 -- The view's boundary is a causal boundary: no block the view holds
 -- reaches the withheld id 8.

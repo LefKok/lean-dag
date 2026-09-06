@@ -80,17 +80,17 @@ tables. The point is joint satisfiability: the universe must meet
 population, synchrony, validity, and non-equivocation all at once.
 
 The `T`-only clause makes the claim self-supporting — no outside
-authors pad the DAG — and it is what earns the `q ≤ T.card` premise:
+creators pad the DAG — and it is what earns the `q ≤ T.card` premise:
 past genesis, a `T`-only universe cannot validly populate any round
-below quorum size (`ValidWrt` demands `q` distinct-author parents per
+below quorum size (`ValidWrt` demands `q` distinct-creator refs per
 block, and here every parent is `T`'s). Without the clause the premise
 would be dead weight, dischargeable by non-`T` padding. -/
 def HypothesesRealizable : Prop :=
   ∀ (Replica : Type) [Fintype Replica] [DecidableEq Replica]
-    [Faults Replica] (T : Finset Replica) (N : ℕ),
+    [LeanDag.Hydrozoan.Faults Replica] (T : Finset Replica) (N : ℕ),
     q Replica ≤ T.card →                   -- a quorum-sized T:
     ∃ U : BlockUniverse Replica ℕ,         -- some universe is
-      (∀ b ∈ U.ids, (U.block b).author ∈ T) ∧  -- authored by T alone,
+      (∀ b ∈ U.ids, (U.block b).creator ∈ T) ∧  -- authored by T alone,
       (∀ r, r ≤ N → PopulatedOn U T r) ∧   -- populated to the horizon
       SynchronisedOn U T 0                 -- and synchronised throughout.
 

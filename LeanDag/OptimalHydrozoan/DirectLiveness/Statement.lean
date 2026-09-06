@@ -56,18 +56,18 @@ fire in the same universe — this is the one the guaranteed quorum always
 reaches. -/
 def CommitLiveness (U : OptUniverse Replica BlockId) : Prop :=
   ∀ (T : Finset Replica) (R k : ℕ),      -- for any set T, round R, slot k:
-    T ⊆ (Correct : Finset Replica) →     -- T holds only correct replicas ...
+    T ⊆ (LeanDag.Hydrozoan.Correct : Finset Replica) →     -- T holds only correct replicas ...
     q Replica ≤ T.card →                 -- ... and is at least a DAG quorum,
-    SynchronisedOn U.toBlockUniverse T R →  -- T is internally synchronised from R,
+    SynchronisedOn U.toBlockRecord T R →  -- T is internally synchronised from R,
     R ≤ S.slotRound k →                  -- the wave lies at or after R,
-    PopulatedOn U.toBlockUniverse T (S.slotRound k) →      -- T fills the propose round ...
-    PopulatedOn U.toBlockUniverse T (S.slotRound k + 1) →  -- ... the voting round ...
-    PopulatedOn U.toBlockUniverse T (S.slotRound k + 2) →  -- ... and the decision round,
+    PopulatedOn U.toBlockRecord T (S.slotRound k) →      -- T fills the propose round ...
+    PopulatedOn U.toBlockRecord T (S.slotRound k + 1) →  -- ... the voting round ...
+    PopulatedOn U.toBlockRecord T (S.slotRound k + 2) →  -- ... and the decision round,
     S.leader k ∈ T →                     -- and the slot's leader is in T:
-    ∀ V : View U.toBlockUniverse,        -- then, on any view caught up
+    ∀ V : LeanDag.Hydrozoan.View U.toBlockRecord,        -- then, on any view caught up
       V.CoversUpto (S.slotRound k + 2) → -- ... to the decision round:
-    ∃ L, IsLeaderBlock U.toBlockUniverse k L ∧           -- a candidate exists,
-      SlowCommit U.toBlockUniverse L (S.slotRound k) ∧   -- the slow threshold is met,
+    ∃ L, IsLeaderBlock U.toBlockRecord k L ∧           -- a candidate exists,
+      SlowCommit U.toBlockRecord L (S.slotRound k) ∧   -- the slow threshold is met,
       DecidedOpt U V k (some L)          -- and its verdict is committed
 
 /-- **Skip liveness** (the arc's addition): a slot with no candidate is
@@ -82,14 +82,14 @@ deliberately the DAG quorum, uniform with `CommitLiveness`, although
 `q_cert ≤ |T|` would suffice. -/
 def SkipLiveness (U : OptUniverse Replica BlockId) : Prop :=
   ∀ (T : Finset Replica) (k : ℕ),        -- for any set T and slot k:
-    T ⊆ (Correct : Finset Replica) →     -- T holds only correct replicas ...
+    T ⊆ (LeanDag.Hydrozoan.Correct : Finset Replica) →     -- T holds only correct replicas ...
     q Replica ≤ T.card →                 -- ... and is at least a DAG quorum,
-    PopulatedOn U.toBlockUniverse T (S.slotRound k + 1) →  -- T fills the voting round ...
-    PopulatedOn U.toBlockUniverse T (S.slotRound k + 2) →  -- ... and the decision round,
-    (∀ L, ¬ IsLeaderBlock U.toBlockUniverse k L) →         -- and no candidate exists:
-    ∀ V : View U.toBlockUniverse,        -- then, on any view caught up
+    PopulatedOn U.toBlockRecord T (S.slotRound k + 1) →  -- T fills the voting round ...
+    PopulatedOn U.toBlockRecord T (S.slotRound k + 2) →  -- ... and the decision round,
+    (∀ L, ¬ IsLeaderBlock U.toBlockRecord k L) →         -- and no candidate exists:
+    ∀ V : LeanDag.Hydrozoan.View U.toBlockRecord,        -- then, on any view caught up
       V.CoversUpto (S.slotRound k + 2) → -- ... to the decision round:
-    SkippedLeaderOpt U.toBlockUniverse k ∧  -- the slot skips directly,
+    SkippedLeaderOpt U.toBlockRecord k ∧  -- the slot skips directly,
       DecidedOpt U V k none              -- and the verdict is output
 
 /-- Direct liveness of Optimal-Hydrozoan, over every fault configuration,
@@ -103,20 +103,20 @@ def Statement : Prop :=
 /-- **Performance, not liveness — deliberately outside `Statement`.**
 When the *actual* faults fit the Optimal fast allowance `pOpt`, a
 synchronised, populated wave with a correct leader fires the fast path in
-two rounds: `|Correct| = n − |byzantine ∪ crashed| ≥ n − pOpt = q_fast`.
+two rounds: `|LeanDag.Hydrozoan.Correct| = n − |byzantine ∪ crashed| ≥ n − pOpt = q_fast`.
 One more actual fault than Hydrozoan's `FastLatency` admits. It needs all
 of `Correct` — a quorum-sized `T` does not suffice in general — and only
 the propose and voting rounds. -/
 def FastLatency (U : OptUniverse Replica BlockId) : Prop :=
   ∀ (R k : ℕ),                           -- for any round R and slot k:
     (O.byzantine ∪ O.crashed).card ≤ pOpt Replica →  -- ACTUAL faults fit pOpt,
-    Synchronised U.toBlockUniverse R →   -- all correct synchronised from R,
+    Synchronised U.toBlockRecord R →   -- all correct synchronised from R,
     R ≤ S.slotRound k →                  -- the wave lies at or after R,
-    Populated U.toBlockUniverse (S.slotRound k) →        -- correct fill the propose round ...
-    Populated U.toBlockUniverse (S.slotRound k + 1) →    -- ... and the voting round,
-    S.leader k ∈ (Correct : Finset Replica) →            -- and the leader is correct:
-    ∃ L, IsLeaderBlock U.toBlockUniverse k L ∧           -- then a candidate exists ...
-      FastCommitOpt U.toBlockUniverse L (S.slotRound k)  -- ... and it fast-commits
+    Populated U.toBlockRecord (S.slotRound k) →        -- correct fill the propose round ...
+    Populated U.toBlockRecord (S.slotRound k + 1) →    -- ... and the voting round,
+    S.leader k ∈ (LeanDag.Hydrozoan.Correct : Finset Replica) →            -- and the leader is correct:
+    ∃ L, IsLeaderBlock U.toBlockRecord k L ∧           -- then a candidate exists ...
+      FastCommitOpt U.toBlockRecord L (S.slotRound k)  -- ... and it fast-commits
 
 end DirectLiveness
 

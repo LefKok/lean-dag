@@ -20,7 +20,7 @@ rather than incidental.
 `refs`; Hydrozoan's carries neither a payload nor those names. `adapt`
 renames and supplies `()`. The three field equations are `rfl`, so
 every clause the interface states over `refs` reads Hydrozoan's
-`parents` with no rewrite.
+`refs` with no rewrite.
 
 **The causal structure.** `Causality.lean` is stated over a raw lookup
 and id-set through `CausalStructure`, whose two fields are completeness
@@ -44,32 +44,12 @@ variable {Replica : Type} [Fintype Replica] [DecidableEq Replica]
 variable [LeanDag.Hydrozoan.Faults Replica]
 variable {BlockId : Type}
 
-/-- A Hydrozoan block as a core block: `author` becomes `creator`,
-`parents` becomes `refs`, and the payload is `Unit`. -/
-abbrev adapt (b : LeanDag.Hydrozoan.Block Replica BlockId) :
-    LeanDag.Block Replica BlockId Unit :=
-  LeanDag.Hydrozoan.adaptBlock b
-
-/-- The universe's lookup, adapted: the carrier's `block`. -/
-abbrev adaptBlk (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) :
-    BlockId → LeanDag.Block Replica BlockId Unit :=
-  fun i => LeanDag.Hydrozoan.adaptBlock (U.block i)
-
-@[simp] theorem adaptBlk_round (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
-    (i : BlockId) : (adaptBlk U i).round = (U.block i).round := rfl
-
-@[simp] theorem adaptBlk_creator (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
-    (i : BlockId) : (adaptBlk U i).creator = (U.block i).author := rfl
-
-@[simp] theorem adaptBlk_refs (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
-    (i : BlockId) : (adaptBlk U i).refs = (U.block i).parents := rfl
-
 /-- **A Hydrozoan universe is a causal structure.** Completeness is its
 own field; the predecessor condition is the first field of its
 validity. Nothing else of `BlockUniverse` is read, which is what makes
 the history layer available without a bridge. -/
 theorem causalStructure (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) :
-    CausalStructure (adaptBlk U) U.ids :=
+    CausalStructure U.block U.ids :=
   { complete := fun i hi j hj => U.complete i hi j hj
     refs_round := fun i hi j hj => (U.valid i hi).predecessor j hj }
 
@@ -95,7 +75,7 @@ The ids are `historyFrom` on the nose, so the interface's
 `historyView_ids` law is `rfl`. -/
 def historyView (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) (A : BlockId)
     (hA : A ∈ U.ids) : LeanDag.Hydrozoan.View U where
-  ids := historyFrom (adaptBlk U) A
+  ids := historyFrom U.block A
   subset_ids := (causalStructure U).history_subset_ids hA
   complete := fun _ hi _ hj =>
     ((causalStructure U).mem_history_iff hA).mpr

@@ -32,7 +32,7 @@ theorem eligibleAsAnchor_iff {k j : ℕ} :
 end Eligibility
 
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
-  [DecidableEq BlockId] [F : Faults Replica]
+  [DecidableEq BlockId] [F : LeanDag.Hydrozoan.Faults Replica]
   {U : BlockUniverse Replica BlockId}
 
 /-- Rung 1 through the history surrogate: decidable on concrete data. -/
@@ -50,7 +50,7 @@ is the canonical witness set, so the existential form collapses to a
 decidable cardinality bound. -/
 theorem weakLinked_iff_history {A L : BlockId} {r : ℕ} (hA : A ∈ U.ids) :
     WeakLinked U A L r ↔
-      qWeak Replica ≤ (authorsOf U.block ((blocksAt U (r + 1)).filter
+      qWeak Replica ≤ (creatorsOf U.block ((blocksAt U (r + 1)).filter
         fun b => IsVote U b L ∧ b ∈ history U A)).card := by
   constructor
   · rintro ⟨s, hs, hcard⟩

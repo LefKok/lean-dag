@@ -87,9 +87,9 @@ theorem vds_gDs : DecidesBelow OD VDs' gDs 2 := by
   · exact DecidedOpt.directFast (by decide) (by decide)
   · exact DecidedOpt.directSkip (by decide)
 example :
-    ¬ FastCommitOptInView OD.toBlockUniverse VDs' 8 (Slots.slotRound (Fin 4) 2) ∧
-      ¬ SlowCommitInView OD.toBlockUniverse VDs' 8 (Slots.slotRound (Fin 4) 2) ∧
-      ¬ SkippedLeaderOptInView OD.toBlockUniverse VDs' 2 := by
+    ¬ FastCommitOptInView OD.toBlockRecord VDs' 8 (Slots.slotRound (Fin 4) 2) ∧
+      ¬ SlowCommitInView OD.toBlockRecord VDs' 8 (Slots.slotRound (Fin 4) 2) ∧
+      ¬ SkippedLeaderOptInView OD.toBlockRecord VDs' 2 := by
   decide
 
 example : commitSeq gDs 2 = [3] := rfl
@@ -151,14 +151,14 @@ def gDbad : ℕ → Option (Fin 30)
 
 -- It decides below 7 in no view: its sequence [3, 13, 22] would have to
 -- equal [3, 8, 13, 22].
-example : ∀ V : View OD.toBlockUniverse, ¬ DecidesBelow OD V gDbad 7 := fun V h =>
+example : ∀ V : LeanDag.Hydrozoan.View OD.toBlockRecord, ¬ DecidesBelow OD V gDbad 7 := fun V h =>
   absurd ((OptimalHydrozoan.PrefixAgreement.holds (Fin 4) (Fin 30) OD).1 VD V gD gDbad 7 vd_gD h)
     (by decide)
 
 -- The theorem on data: any replica that has decided every slot below 7,
 -- in any view, outputs exactly [3, 8, 13, 22].
 example :
-    ∀ (V : View OD.toBlockUniverse) (g : ℕ → Option (Fin 30)),
+    ∀ (V : LeanDag.Hydrozoan.View OD.toBlockRecord) (g : ℕ → Option (Fin 30)),
       DecidesBelow OD V g 7 → commitSeq g 7 = [3, 8, 13, 22] :=
   fun V g h =>
     ((OptimalHydrozoan.PrefixAgreement.holds (Fin 4) (Fin 30) OD).1 VD V gD g 7 vd_gD h).symm
@@ -183,13 +183,13 @@ Round 3: 7, 8 by `1`, `2` reference `{5, 6}` — two votes for 5, and
 no-evidence for slot 1. -/
 def lkC : Fin 9 → Block (Fin 3) (Fin 9) := fun i =>
   if h : (i : ℕ) < 3 then
-    { round := 0, author := ⟨i, by omega⟩, parents := ∅ }
+    { round := 0, creator := ⟨i, by omega⟩, refs := ∅, payload := () }
   else if h : (i : ℕ) < 5 then
-    { round := 1, author := ⟨(i : ℕ) - 2, by omega⟩, parents := {1, 2} }
+    { round := 1, creator := ⟨(i : ℕ) - 2, by omega⟩, refs := {1, 2}, payload := () }
   else if h : (i : ℕ) < 7 then
-    { round := 2, author := ⟨(i : ℕ) - 4, by omega⟩, parents := {3, 4} }
+    { round := 2, creator := ⟨(i : ℕ) - 4, by omega⟩, refs := {3, 4}, payload := () }
   else
-    { round := 3, author := ⟨(i : ℕ) - 6, by omega⟩, parents := {5, 6} }
+    { round := 3, creator := ⟨(i : ℕ) - 6, by omega⟩, refs := {5, 6}, payload := () }
 
 /-- The base universe. -/
 def UC : BlockUniverse (Fin 3) (Fin 9) where
@@ -204,7 +204,7 @@ def OC : OptUniverse (Fin 3) (Fin 9) :=
   { UC with leader_excluded := leaderExcluded_of_noEquivocation UC (by decide) }
 
 /-- The full view, typed at the projection. -/
-def VC : View OC.toBlockUniverse := View.full UC
+def VC : LeanDag.Hydrozoan.View OC.toBlockRecord := View.full UC
 
 -- Thresholds and the headline on data: f = 0; two votes fast-commit
 -- here and would not in Hydrozoan (qFast = 3).
@@ -235,11 +235,11 @@ example : blames UC 1 = {1, 2} ∧ (∀ L, ¬ IsLeaderBlock UC 1 L) := by decide
 
 -- The Optimal headline theorems at f = 0: no view skips slot 0, and
 -- every replica that has decided below 3 outputs [2, 5].
-example : ∀ V : View OC.toBlockUniverse, ¬ DecidedOpt OC V 0 none := fun V h =>
+example : ∀ V : LeanDag.Hydrozoan.View OC.toBlockRecord, ¬ DecidedOpt OC V 0 none := fun V h =>
   Option.some_ne_none 2 (OptimalHydrozoan.SlotAgreement.holds (Fin 3) (Fin 9) OC VC V 0 _ none
     (DecidedOpt.directFast (by decide) (by decide)) h)
 example :
-    ∀ (V : View OC.toBlockUniverse) (g : ℕ → Option (Fin 9)),
+    ∀ (V : LeanDag.Hydrozoan.View OC.toBlockRecord) (g : ℕ → Option (Fin 9)),
       DecidesBelow OC V g 3 → commitSeq g 3 = [2, 5] :=
   fun V g h =>
     ((OptimalHydrozoan.PrefixAgreement.holds (Fin 3) (Fin 9) OC).1 VC V gC g 3 vc_gC h).symm

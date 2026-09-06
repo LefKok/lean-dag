@@ -47,17 +47,17 @@ with the run location `b` explicit: direct liveness commits each of the
 settles every slot below. -/
 def RunDecidesBelow (U : OptUniverse Replica BlockId) : Prop :=
   ∀ (T : Finset Replica) (R b c : ℕ),
-    T ⊆ (Correct : Finset Replica) →     -- a set of correct replicas ...
+    T ⊆ (LeanDag.Hydrozoan.Correct : Finset Replica) →     -- a set of correct replicas ...
     q Replica ≤ T.card →                 -- ... of at least a DAG quorum,
-    SynchronisedOn U.toBlockUniverse T R →  -- internally synchronised from R,
+    SynchronisedOn U.toBlockRecord T R →  -- internally synchronised from R,
     0 < c →                              -- a nonempty run of slots ...
     SpansEligible Replica c →            -- ... every run's end anchoring all below,
     R ≤ S.slotRound b →                  -- lying at or after R,
     (∀ i, i < c → S.leader (b + i) ∈ T) →  -- every run slot T-led,
     (∀ r, S.slotRound b ≤ r →            -- and T fills every round from
       r ≤ S.slotRound (b + c - 1) + 2 →  -- the run's propose round to its
-      PopulatedOn U.toBlockUniverse T r) →  -- last decision round:
-    ∀ V : View U.toBlockUniverse,        -- then, on any view caught up
+      PopulatedOn U.toBlockRecord T r) →  -- last decision round:
+    ∀ V : LeanDag.Hydrozoan.View U.toBlockRecord,        -- then, on any view caught up
       V.CoversUpto (S.slotRound (b + c - 1) + 2) →  -- ... to that round:
     ∀ i, i < b → ∃ v, DecidedOpt U V i v  -- all below decided.
 

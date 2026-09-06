@@ -26,9 +26,9 @@ variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
   [DecidableEq BlockId] [O : OptimalFaults Replica] [S : Slots Replica]
   {U : OptUniverse Replica BlockId}
 
-theorem decided_unique {V₁ : View U.toBlockUniverse} {k : ℕ} {v₁ : Option BlockId}
+theorem decided_unique {V₁ : LeanDag.Hydrozoan.View U.toBlockRecord} {k : ℕ} {v₁ : Option BlockId}
     (h₁ : DecidedOpt U V₁ k v₁) :
-    ∀ (V₂ : View U.toBlockUniverse) (v₂ : Option BlockId),
+    ∀ (V₂ : LeanDag.Hydrozoan.View U.toBlockRecord) (v₂ : Option BlockId),
       DecidedOpt U V₂ k v₂ → v₁ = v₂ := by
   induction h₁ with
   | @directFast k L hL h =>
@@ -127,13 +127,13 @@ theorem decided_unique {V₁ : View U.toBlockUniverse} {k : ℕ} {v₁ : Option 
             (certificates_nonempty_of_certifiedIn hcert₂))
     | indirectEvidence hkj₂ helig₂ hj₂ hmid₂ hnocert₂ hL₂ hev₂ =>
         obtain ⟨rfl, rfl⟩ :=
-          anchor_eq (Dec := fun (V : View U.toBlockUniverse) n v => DecidedOpt U V n v)
+          anchor_eq (Dec := fun (V : LeanDag.Hydrozoan.View U.toBlockRecord) n v => DecidedOpt U V n v)
             (Elig := EligibleAsAnchor Replica k)
             hkj helig hkj₂ helig₂ hj₂ hmid₂ ihj ihmid
         exact absurd hcert (hnocert₂ _ hL)
     | indirectSkip hkj₂ helig₂ hj₂ hmid₂ hnocert₂ hnoev₂ =>
         obtain ⟨rfl, rfl⟩ :=
-          anchor_eq (Dec := fun (V : View U.toBlockUniverse) n v => DecidedOpt U V n v)
+          anchor_eq (Dec := fun (V : LeanDag.Hydrozoan.View U.toBlockRecord) n v => DecidedOpt U V n v)
             (Elig := EligibleAsAnchor Replica k)
             hkj helig hkj₂ helig₂ hj₂ hmid₂ ihj ihmid
         exact absurd hcert (hnocert₂ _ hL)
@@ -152,19 +152,19 @@ theorem decided_unique {V₁ : View U.toBlockUniverse} {k : ℕ} {v₁ : Option 
           (skippedLeaderOpt_of_skippedLeaderOptInView h₂'))
     | indirectCert hkj₂ helig₂ hj₂ hmid₂ hL₂ hcert₂ =>
         obtain ⟨rfl, rfl⟩ :=
-          anchor_eq (Dec := fun (V : View U.toBlockUniverse) n v => DecidedOpt U V n v)
+          anchor_eq (Dec := fun (V : LeanDag.Hydrozoan.View U.toBlockRecord) n v => DecidedOpt U V n v)
             (Elig := EligibleAsAnchor Replica k)
             hkj helig hkj₂ helig₂ hj₂ hmid₂ ihj ihmid
         exact absurd hcert₂ (hnocert _ hL₂)
     | @indirectEvidence _ j₂ A₂ L₂ hkj₂ helig₂ hj₂ hmid₂ hnocert₂ hL₂ hev₂ =>
         obtain ⟨rfl, rfl⟩ :=
-          anchor_eq (Dec := fun (V : View U.toBlockUniverse) n v => DecidedOpt U V n v)
+          anchor_eq (Dec := fun (V : LeanDag.Hydrozoan.View U.toBlockRecord) n v => DecidedOpt U V n v)
             (Elig := EligibleAsAnchor Replica k)
             hkj helig hkj₂ helig₂ hj₂ hmid₂ ihj ihmid
         exact congrArg some (evidenceLinked_unique hL hL₂ hev hev₂)
     | indirectSkip hkj₂ helig₂ hj₂ hmid₂ hnocert₂ hnoev₂ =>
         obtain ⟨rfl, rfl⟩ :=
-          anchor_eq (Dec := fun (V : View U.toBlockUniverse) n v => DecidedOpt U V n v)
+          anchor_eq (Dec := fun (V : LeanDag.Hydrozoan.View U.toBlockRecord) n v => DecidedOpt U V n v)
             (Elig := EligibleAsAnchor Replica k)
             hkj helig hkj₂ helig₂ hj₂ hmid₂ ihj ihmid
         exact absurd hev (hnoev₂ _ hL)
@@ -180,13 +180,13 @@ theorem decided_unique {V₁ : View U.toBlockUniverse} {k : ℕ} {v₁ : Option 
     | directSkip _ => rfl
     | indirectCert hkj₂ helig₂ hj₂ hmid₂ hL₂ hcert₂ =>
         obtain ⟨rfl, rfl⟩ :=
-          anchor_eq (Dec := fun (V : View U.toBlockUniverse) n v => DecidedOpt U V n v)
+          anchor_eq (Dec := fun (V : LeanDag.Hydrozoan.View U.toBlockRecord) n v => DecidedOpt U V n v)
             (Elig := EligibleAsAnchor Replica k)
             hkj helig hkj₂ helig₂ hj₂ hmid₂ ihj ihmid
         exact absurd hcert₂ (hnocert _ hL₂)
     | indirectEvidence hkj₂ helig₂ hj₂ hmid₂ hnocert₂ hL₂ hev₂ =>
         obtain ⟨rfl, rfl⟩ :=
-          anchor_eq (Dec := fun (V : View U.toBlockUniverse) n v => DecidedOpt U V n v)
+          anchor_eq (Dec := fun (V : LeanDag.Hydrozoan.View U.toBlockRecord) n v => DecidedOpt U V n v)
             (Elig := EligibleAsAnchor Replica k)
             hkj helig hkj₂ helig₂ hj₂ hmid₂ ihj ihmid
         exact absurd hev₂ (hnoev _ hL₂)

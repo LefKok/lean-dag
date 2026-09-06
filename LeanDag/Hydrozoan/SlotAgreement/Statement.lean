@@ -18,7 +18,7 @@ invariant `q_fast + q_weak > n + f` and the rung ordering
 both rungs), the "anchor sees any slow commit" row `q + q_slow > n + f`
 (rung 1 fires at every eligible anchor), and a **strengthened** form of
 the "anchor sees the fast footprint" row — `q_fast + q − n − f ≥ q_weak`
-— because a Byzantine author's block in the anchor's history may be its
+— because a Byzantine creator's block in the anchor's history may be its
 non-voting equivocation, so only the non-Byzantine overlap contributes
 anchor-linked votes.
 -/
@@ -30,7 +30,7 @@ namespace Hydrozoan
 namespace SlotAgreement
 
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
-  [DecidableEq BlockId] [LinearOrder BlockId] [F : Faults Replica]
+  [DecidableEq BlockId] [LinearOrder BlockId] [F : LeanDag.Hydrozoan.Faults Replica]
   [S : Slots Replica]
 
 /-- Any two verdicts on one slot agree: across views, across routes
@@ -44,7 +44,7 @@ def DecidedUnique (U : BlockUniverse Replica BlockId) : Prop :=
 order, and block universe the model admits. -/
 def Statement : Prop :=
   ∀ (Replica BlockId : Type) [Fintype Replica] [DecidableEq Replica]
-    [DecidableEq BlockId] [LinearOrder BlockId] [Faults Replica]
+    [DecidableEq BlockId] [LinearOrder BlockId] [LeanDag.Hydrozoan.Faults Replica]
     [Slots Replica] (U : BlockUniverse Replica BlockId),
     DecidedUnique U
 

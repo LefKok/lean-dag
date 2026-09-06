@@ -80,7 +80,7 @@ example : ∃ v, DecidedOpt OD VD 0 v :=
 
 /-- A strict sub-view of `UD` withholding the abstaining round-7 block 28
 (a sink); the anchor's three votes remain. -/
-def VDsub : View OD.toBlockUniverse where
+def VDsub : LeanDag.Hydrozoan.View OD.toBlockRecord where
   ids := Finset.univ.erase 28
   subset_ids := by decide
   complete := by decide

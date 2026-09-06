@@ -45,7 +45,7 @@ end Sequences
 section Claims
 
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
-  [DecidableEq BlockId] [LinearOrder BlockId] [F : Faults Replica]
+  [DecidableEq BlockId] [LinearOrder BlockId] [F : LeanDag.Hydrozoan.Faults Replica]
   [S : Slots Replica]
 
 /-- `g` records a decided verdict for every slot below `n`, as judged
@@ -79,7 +79,7 @@ def LedgerPrefixConsistency (U : BlockUniverse Replica BlockId) : Prop :=
 order, and block universe the model admits. -/
 def Statement : Prop :=
   ∀ (Replica BlockId : Type) [Fintype Replica] [DecidableEq Replica]
-    [DecidableEq BlockId] [LinearOrder BlockId] [Faults Replica]
+    [DecidableEq BlockId] [LinearOrder BlockId] [LeanDag.Hydrozoan.Faults Replica]
     [Slots Replica] (U : BlockUniverse Replica BlockId),
     SeqAgreement U ∧ PrefixConsistency U ∧ LedgerPrefixConsistency U
 

@@ -30,8 +30,8 @@ instance : Slots (Fin 7) :=
 example : votingRound (Fin 7) 0 = 1 ∧ decisionRound (Fin 7) 0 = 2 := by decide
 
 -- Genesis id 2 is slot 0's candidate. Id 3 is not (right round, wrong
--- author); the equivocating id 7 is not either (wrong round and wrong
--- author).
+-- creator); the equivocating id 7 is not either (wrong round and wrong
+-- creator).
 example : IsLeaderBlock U2 0 2 := by decide
 example : ¬ IsLeaderBlock U2 0 3 := by decide
 example : ¬ IsLeaderBlock U2 0 7 := by decide
@@ -49,8 +49,8 @@ example : FastCommit U2 2 0 := by decide
 -- under-report a fast commit (the safe direction), never invent one.
 example : ¬ FastCommitInView U2 V2 2 0 := by decide
 
--- Id 14 certifies id 2: its five parents all vote for 2, from exactly
--- q_cert distinct authors.
+-- Id 14 certifies id 2: its five refs all vote for 2, from exactly
+-- q_cert distinct creators.
 example : voteBlocks U2 14 2 = {7, 9, 10, 12, 13} := by decide
 example : IsCertificate U2 14 2 := by decide
 

@@ -12,7 +12,7 @@ namespace LeanDag
 
 namespace Hydrozoan
 
-variable {Replica : Type*} [Fintype Replica] [DecidableEq Replica] [F : Faults Replica]
+variable {Replica : Type*} [Fintype Replica] [DecidableEq Replica] [F : LeanDag.Hydrozoan.Faults Replica]
 
 /-- Membership in `Correct`, unfolded. -/
 @[simp]

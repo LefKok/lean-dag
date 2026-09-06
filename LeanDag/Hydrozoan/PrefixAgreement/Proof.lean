@@ -18,7 +18,7 @@ namespace Hydrozoan
 namespace PrefixAgreement
 
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
-  [DecidableEq BlockId] [LinearOrder BlockId] [F : Faults Replica]
+  [DecidableEq BlockId] [LinearOrder BlockId] [F : LeanDag.Hydrozoan.Faults Replica]
   [S : Slots Replica] {U : BlockUniverse Replica BlockId}
 
 /-- Pointwise verdict agreement below a shared horizon. -/

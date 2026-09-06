@@ -7,9 +7,9 @@ import LeanDag.Hydrozoan.Helpers.DirectRules
 
 Generated proof layer; not part of the audit surface. Each conjunct
 lifts the view rules to the universe (Phase 4a bridges), overlaps two
-author quorums in a non-Byzantine replica (`Helpers/Counting.lean`),
+creator quorums in a non-Byzantine replica (`Helpers/Counting.lean`),
 collapses its voting blocks through `no_equivocation`, and collapses
-the two candidates through `distinct_authors`.
+the two candidates through `distinct_creators`.
 -/
 
 namespace LeanDag
@@ -19,20 +19,20 @@ namespace Hydrozoan
 namespace DirectSafety
 
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
-  [DecidableEq BlockId] [F : Faults Replica] [S : Slots Replica]
+  [DecidableEq BlockId] [F : LeanDag.Hydrozoan.Faults Replica] [S : Slots Replica]
   {U : BlockUniverse Replica BlockId}
 
 omit S in
 /-- Universe-level fast/fast core. -/
 theorem eq_of_fastCommit {L₁ L₂ : BlockId} {r : ℕ}
-    (hauthor : (U.block L₁).author = (U.block L₂).author)
+    (hcreator : (U.block L₁).creator = (U.block L₂).creator)
     (h₁ : FastCommit U L₁ r) (h₂ : FastCommit U L₂ r) : L₁ = L₂ := by
   by_contra hne
   have hsub : supporters U L₁ (r + 1) ∩ supporters U L₂ (r + 1) ⊆
       F.byzantine := by
     intro v hv
     obtain ⟨hv₁, hv₂⟩ := Finset.mem_inter.mp hv
-    exact byzantine_of_votes_two hne hauthor hv₁ hv₂
+    exact byzantine_of_votes_two hne hcreator hv₁ hv₂
   have h1 := Finset.card_union_add_card_inter
     (supporters U L₁ (r + 1)) (supporters U L₂ (r + 1))
   have h2 : (supporters U L₁ (r + 1) ∪ supporters U L₂ (r + 1)).card ≤
@@ -47,7 +47,7 @@ theorem eq_of_fastCommit {L₁ L₂ : BlockId} {r : ℕ}
 omit S in
 /-- Universe-level certificate-uniqueness core. -/
 theorem eq_of_certificates_nonempty {L₁ L₂ : BlockId} {r : ℕ}
-    (hauthor : (U.block L₁).author = (U.block L₂).author)
+    (hcreator : (U.block L₁).creator = (U.block L₂).creator)
     (h₁ : (certificates U L₁ r).Nonempty)
     (h₂ : (certificates U L₂ r).Nonempty) : L₁ = L₂ := by
   obtain ⟨C₁, hC₁⟩ := h₁
@@ -55,7 +55,7 @@ theorem eq_of_certificates_nonempty {L₁ L₂ : BlockId} {r : ℕ}
   obtain ⟨hC₁i, hC₁r, hcert₁⟩ := mem_certificates.mp hC₁
   obtain ⟨hC₂i, hC₂r, hcert₂⟩ := mem_certificates.mp hC₂
   obtain ⟨b, hb₁, hb₂⟩ :=
-    exists_common_mem_of_author_quorums (s := voteBlocks U C₁ L₁)
+    exists_common_mem_of_creator_quorums (s := voteBlocks U C₁ L₁)
       (t := voteBlocks U C₂ L₂) (r := r + 1)
       (fun b hb => ⟨(mem_voteBlocks_spec hC₁i hC₁r hb).1,
         (mem_voteBlocks_spec hC₁i hC₁r hb).2.1⟩)
@@ -66,28 +66,28 @@ theorem eq_of_certificates_nonempty {L₁ L₂ : BlockId} {r : ℕ}
         simp only [IsCertificate] at hcert₁ hcert₂
         omega)
   have hbids : b ∈ U.ids := (mem_voteBlocks_spec hC₁i hC₁r hb₁).1
-  exact (U.valid b hbids).distinct_authors
+  exact (U.valid b hbids).distinct_creators
     L₁ (mem_voteBlocks_spec hC₁i hC₁r hb₁).2.2
-    L₂ (mem_voteBlocks_spec hC₂i hC₂r hb₂).2.2 hauthor
+    L₂ (mem_voteBlocks_spec hC₂i hC₂r hb₂).2.2 hcreator
 
 omit S in
 /-- Universe-level fast/slow core. -/
 theorem eq_of_fastCommit_of_slowCommit {L₁ L₂ : BlockId} {r : ℕ}
-    (hauthor : (U.block L₁).author = (U.block L₂).author)
+    (hcreator : (U.block L₁).creator = (U.block L₂).creator)
     (h₁ : FastCommit U L₁ r) (h₂ : SlowCommit U L₂ r) : L₁ = L₂ := by
   by_contra hne
   obtain ⟨C, hC⟩ := certificates_nonempty_of_slowCommit h₂
   obtain ⟨hCi, hCr, hcert⟩ := mem_certificates.mp hC
   have hcard2 : qCert Replica ≤ (supporters U L₂ (r + 1)).card := by
     have hle := Finset.card_le_card
-      (authors_voteBlocks_subset_supporters (L := L₂) hCi hCr)
+      (creators_voteBlocks_subset_supporters (L := L₂) hCi hCr)
     simp only [IsCertificate] at hcert
     omega
   have hsub : supporters U L₁ (r + 1) ∩ supporters U L₂ (r + 1) ⊆
       F.byzantine := by
     intro v hv
     obtain ⟨hv₁, hv₂⟩ := Finset.mem_inter.mp hv
-    exact byzantine_of_votes_two hne hauthor hv₁ hv₂
+    exact byzantine_of_votes_two hne hcreator hv₁ hv₂
   have h1 := Finset.card_union_add_card_inter
     (supporters U L₁ (r + 1)) (supporters U L₂ (r + 1))
   have h2 : (supporters U L₁ (r + 1) ∪ supporters U L₂ (r + 1)).card ≤
@@ -131,7 +131,7 @@ theorem not_skippedLeader_of_slowCommit {k : ℕ} {L : BlockId}
   have hcard2 : qCert Replica ≤
       (supporters U L (votingRound Replica k)).card := by
     have hle := Finset.card_le_card
-      (authors_voteBlocks_subset_supporters (L := L) hCi hCr)
+      (creators_voteBlocks_subset_supporters (L := L) hCi hCr)
     simp only [IsCertificate] at hcert
     have : votingRound Replica k = S.slotRound k + 1 := rfl
     rw [this]

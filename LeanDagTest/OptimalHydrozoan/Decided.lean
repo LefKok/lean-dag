@@ -22,10 +22,10 @@ universe with an equivocation, for the evidence predicate itself:
   5 (no vote), and, as the paper's procedure, also "evidence" for the
   non-candidate 6 (consumers guard with `IsLeaderBlock`);
 * slot 0 (leader `3`, candidate the genesis block 3) is **directly
-  skipped with a candidate present**: every voting-round author blames it
+  skipped with a candidate present**: every voting-round creator blames it
   (block 4 does; the equivocator's other copy 5 votes for it), and three
   of the four decision-round blocks reference no vote for it — exactly
-  `qCert` no-evidence authors — while block 11 is evidence and does not
+  `qCert` no-evidence creators — while block 11 is evidence and does not
   count. A sub-view withholding block 12 keeps the blames but drops the
   no-evidence count to two, so the in-view skip fails. Slot 1 is not
   skipped, for both reasons at once: no voting block blames it, and
@@ -58,7 +58,7 @@ definitional unfolding carries the facts across.
 
 Not exercised here, deliberately: a no-evidence quorum with fewer than
 `qCert` blames, a rival at exactly `tEquiv`, and a witnessing block that
-is evidence for nothing all need `q ≥ 4` parents (at `n = 4`, `q = n − 1`),
+is evidence for nothing all need `q ≥ 4` refs (at `n = 4`, `q = n − 1`),
 and separating `q`, `qFastOpt`, `qCert`, `qSlow` (all `3` here) needs a
 larger committee — witness material for the safety phases.
 -/
@@ -82,20 +82,20 @@ example :
   decide
 
 -- Block 14 does not witness: three votes for 4, none for 5 — and it is
--- "evidence" for the non-candidate 6 too (its parents all reference 6).
+-- "evidence" for the non-candidate 6 too (its refs all reference 6).
 example : votesFor UX 14 4 = {0, 1, 3} ∧ votesFor UX 14 5 = ∅ := by decide
 example : IsFastEvidence UX 1 14 4 ∧ ¬ IsFastEvidence UX 1 14 5 := by decide
 example : IsFastEvidence UX 1 14 6 ∧ ¬ IsLeaderBlock UX 1 6 := by decide
 
 -- Slot 0 of UX: candidate 3 (genesis, leader 3), blamed by every
--- voting-round author, with exactly qCert no-evidence decision blocks.
+-- voting-round creator, with exactly qCert no-evidence decision blocks.
 example : IsLeaderBlock UX 0 3 ∧ blames UX 0 = {0, 1, 2, 3} := by decide
 example :
     IsNoFastEvidence UX 0 9 ∧ IsNoFastEvidence UX 0 10 ∧ IsNoFastEvidence UX 0 12 ∧
       ¬ IsNoFastEvidence UX 0 11 := by
   decide
 example :
-    authorsOf UX.block ((blocksAt UX 2).filter fun b => IsNoFastEvidence UX 0 b) = {0, 1, 3} := by
+    creatorsOf UX.block ((blocksAt UX 2).filter fun b => IsNoFastEvidence UX 0 b) = {0, 1, 3} := by
   decide
 example : SkippedLeaderOpt UX 0 ∧ ¬ SkippedLeaderOpt UX 1 := by decide
 -- ... for two reasons: no blames, and no no-evidence quorum either.
@@ -103,28 +103,28 @@ example : blames UX 1 = ∅ ∧ ¬ NoEvidenceQuorum UX 1 := by decide
 
 /-- The full view of `UX`, typed at the `OptUniverse` projection so the
 rule instances match. -/
-def VX : View OX.toBlockUniverse := View.full UX
+def VX : LeanDag.Hydrozoan.View OX.toBlockRecord := View.full UX
 
 example : DecidedOpt OX VX 0 none := DecidedOpt.directSkip (by decide)
 
--- Candidate 3's evidence in reach of block 14: author 2 only (block 11
+-- Candidate 3's evidence in reach of block 14: creator 2 only (block 11
 -- is not in 14's history), far below qCert.
 example : ¬ EvidenceLinked UX 14 3 0 := fun h =>
   absurd ((evidenceLinked_iff_history (by decide)).mp h) (by decide)
 
 /-- A sub-view withholding decision block 12 and its referrers 13, 14
 (ref-closure). -/
-def VXs : View OX.toBlockUniverse where
+def VXs : LeanDag.Hydrozoan.View OX.toBlockRecord where
   ids := (((Finset.univ.erase 15).erase 12).erase 13).erase 14
   subset_ids := by decide
   complete := by decide
 
--- In it the blames are intact but the no-evidence authors are only
+-- In it the blames are intact but the no-evidence creators are only
 -- {0, 1}: the in-view skip fails on its second half alone.
 example :
-    qCert (Fin 4) ≤ (blamesInView OX.toBlockUniverse VXs 0).card ∧
-      ¬ NoEvidenceQuorumInView OX.toBlockUniverse VXs 0 ∧
-      ¬ SkippedLeaderOptInView OX.toBlockUniverse VXs 0 := by
+    qCert (Fin 4) ≤ (blamesInView OX.toBlockRecord VXs 0).card ∧
+      ¬ NoEvidenceQuorumInView OX.toBlockRecord VXs 0 ∧
+      ¬ SkippedLeaderOptInView OX.toBlockRecord VXs 0 := by
   decide
 
 -- Part 2: the six-route universe.
@@ -144,29 +144,29 @@ ids 25–27 by `1`, `2`, `3` reference 22, 23, 24; id 28 by `0` references
 21, 23, 24 and abstains. -/
 def lkD : Fin 30 → Block (Fin 4) (Fin 30) := fun i =>
   if h : (i : ℕ) < 4 then
-    { round := 0, author := ⟨i, by omega⟩, parents := ∅ }
+    { round := 0, creator := ⟨i, by omega⟩, refs := ∅, payload := () }
   else if h : (i : ℕ) < 7 then
-    { round := 1, author := ⟨(i : ℕ) - 3, by omega⟩, parents := {1, 2, 3} }
+    { round := 1, creator := ⟨(i : ℕ) - 3, by omega⟩, refs := {1, 2, 3}, payload := () }
   else if h : (i : ℕ) < 11 then
-    { round := 2, author := ⟨(i : ℕ) - 7, by omega⟩, parents := {4, 5, 6} }
+    { round := 2, creator := ⟨(i : ℕ) - 7, by omega⟩, refs := {4, 5, 6}, payload := () }
   else if h : (i : ℕ) < 14 then
-    { round := 3, author := ⟨(i : ℕ) - 11, by omega⟩, parents := {7, 9, 10} }
+    { round := 3, creator := ⟨(i : ℕ) - 11, by omega⟩, refs := {7, 9, 10}, payload := () }
   else if (i : ℕ) = 14 then
-    { round := 3, author := 3, parents := {8, 9, 10} }
+    { round := 3, creator := 3, refs := {8, 9, 10}, payload := () }
   else if (i : ℕ) = 15 then
-    { round := 4, author := 0, parents := {12, 13, 14} }
+    { round := 4, creator := 0, refs := {12, 13, 14}, payload := () }
   else if h : (i : ℕ) < 18 then
-    { round := 4, author := ⟨(i : ℕ) - 15, by omega⟩, parents := {11, 13, 14} }
+    { round := 4, creator := ⟨(i : ℕ) - 15, by omega⟩, refs := {11, 13, 14}, payload := () }
   else if h : (i : ℕ) < 21 then
-    { round := 5, author := ⟨(i : ℕ) - 17, by omega⟩, parents := {15, 16, 17} }
+    { round := 5, creator := ⟨(i : ℕ) - 17, by omega⟩, refs := {15, 16, 17}, payload := () }
   else if h : (i : ℕ) < 25 then
-    { round := 6, author := ⟨(i : ℕ) - 21, by omega⟩, parents := {18, 19, 20} }
+    { round := 6, creator := ⟨(i : ℕ) - 21, by omega⟩, refs := {18, 19, 20}, payload := () }
   else if h : (i : ℕ) < 28 then
-    { round := 7, author := ⟨(i : ℕ) - 24, by omega⟩, parents := {22, 23, 24} }
+    { round := 7, creator := ⟨(i : ℕ) - 24, by omega⟩, refs := {22, 23, 24}, payload := () }
   else if (i : ℕ) = 28 then
-    { round := 7, author := 0, parents := {21, 23, 24} }
+    { round := 7, creator := 0, refs := {21, 23, 24}, payload := () }
   else
-    { round := 1, author := 0, parents := {0, 1, 2} }
+    { round := 1, creator := 0, refs := {0, 1, 2}, payload := () }
 
 /-- The base universe: every id. -/
 def UD : BlockUniverse (Fin 4) (Fin 30) where
@@ -176,13 +176,13 @@ def UD : BlockUniverse (Fin 4) (Fin 30) where
   valid := by decide
   no_equivocation := by decide
 
-/-- ... as an `OptUniverse`: no author has two blocks in one round, so
+/-- ... as an `OptUniverse`: no creator has two blocks in one round, so
 nothing witnesses an equivocation and the exclusion clause is vacuous. -/
 def OD : OptUniverse (Fin 4) (Fin 30) :=
   { UD with leader_excluded := leaderExcluded_of_noEquivocation UD (by decide) }
 
 /-- The full view, typed at the `OptUniverse` projection. -/
-def VD : View OD.toBlockUniverse := View.full UD
+def VD : LeanDag.Hydrozoan.View OD.toBlockRecord := View.full UD
 
 -- Slot 0: candidate 3, three votes (exactly qFastOpt), four certifiers.
 example :
@@ -205,7 +205,7 @@ example : DecidedOpt OD VD 6 (some 22) :=
 
 /-- A view withholding the round-7 vote 27 (a sink, so ref-closure is
 immediate). -/
-def VDm : View UD where
+def VDm : LeanDag.Hydrozoan.View UD where
   ids := Finset.univ.erase 27
   subset_ids := by decide
   complete := by decide
@@ -254,9 +254,9 @@ example : IsFastEvidence UD 2 15 8 ∧ IsFastEvidence UD 2 16 8 ∧ IsFastEviden
 -- direct route decides slot 2 in the full view.
 example : qCert (Fin 4) ≤ (blames UD 2).card ∧ ¬ NoEvidenceQuorum UD 2 := by decide
 example :
-    ¬ FastCommitOptInView OD.toBlockUniverse VD 8 2 ∧
-      ¬ SlowCommitInView OD.toBlockUniverse VD 8 2 ∧
-      ¬ SkippedLeaderOptInView OD.toBlockUniverse VD 2 := by
+    ¬ FastCommitOptInView OD.toBlockRecord VD 8 2 ∧
+      ¬ SlowCommitInView OD.toBlockRecord VD 8 2 ∧
+      ¬ SkippedLeaderOptInView OD.toBlockRecord VD 2 := by
   decide
 
 -- The rungs at the anchor: no certificate in reach, but a quorum of

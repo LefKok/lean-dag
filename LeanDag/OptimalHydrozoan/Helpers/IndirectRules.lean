@@ -21,12 +21,12 @@ open LeanDag.Hydrozoan
 
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
   [DecidableEq BlockId] [Fintype BlockId] [O : OptimalFaults Replica]
-  [S : Slots Replica] {U : BlockUniverse Replica BlockId}
+  [S : Slots Replica] {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
 
 /-- Rung 2 through the history surrogate. -/
 theorem evidenceLinked_iff_history {A L : BlockId} {k : ℕ} (hA : A ∈ U.ids) :
     EvidenceLinked U A L k ↔
-      qCert Replica ≤ (authorsOf U.block ((blocksAt U (decisionRound Replica k)).filter
+      qCert Replica ≤ (creatorsOf U.block ((blocksAt U (decisionRound Replica k)).filter
         fun b => IsFastEvidence U k b L ∧ b ∈ history U A)).card := by
   constructor
   · rintro ⟨s, hs, hcard⟩

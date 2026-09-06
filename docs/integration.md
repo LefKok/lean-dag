@@ -54,8 +54,8 @@ at the record (`Record/`). A rule proves the four facts its predicate
 owes (`Validity.Mechanised`) and, if it does not read the author, that
 the copy fill is valid (`CopyStable`); a carrier read as records
 (`DagRule.OnRecord`, `Properties/Record.lean`) then has every witness
-the properties read. The core, Nemo and FinWhale are records by
-definition; Hydrozoan is one through its block adapter. Rules on the
+the properties read. The core, Nemo, FinWhale and Hydrozoan are records
+by definition, Hydrozoan's block being the shared block with no payload. Rules on the
 core's `BlockUniverse` (the core, Odontoceti, Mahi-Mahi) take the core's
 `chop` and `skipFill` directly, in `Properties/Arcs/`.
 
@@ -65,7 +65,7 @@ core's `BlockUniverse` (the core, Odontoceti, Mahi-Mahi) take the core's
 | `NemoMechanisms.lean` | Nemo | `nemoOnRecord`, identity maps | `chopNemo`, `skipFillNemo`, `addGenesisNemo` |
 | `FinWhaleMechanisms.lean` | FinWhale | `finWhaleOnRecord`, identity on universes, repacking on views | `chopFinWhale`, `skipFillFinWhale`, `addGenesisFinWhale` |
 | `HybridMechanisms.lean` | Orcaella | `hybridOnRecord`, under `HonestNoEquiv` | `chopHybrid`, `skipFillHybrid` (the self-referencing fill with `honestNoEquiv_fill`), `addGenesisHybrid`; the prompt skip `decided_none_fresh_hybrid` |
-| `HydrozoanMechanisms.lean` | Hydrozoan | `Hydrozoan.onRecord`, the block adapter | `chopHZ`, `copyFillHZ`, `addGenesisHZ`; `decided_none_fresh_hz`; the coverage refutation |
+| `HydrozoanMechanisms.lean` | Hydrozoan | `Hydrozoan.onRecord`, identity maps | `chopHZ`, `copyFillHZ`, `addGenesisHZ`; `decided_none_fresh_hz`; the coverage refutation |
 | `OptimalMechanisms.lean` | Optimal-Hydrozoan | `optOnRecord`, under `Excluded` (`leaderExcludedAll_chopHZ`, `_copyFillHZ`, `_addGenesisHZ`) | `chopOpt`, `copyFillOpt`, `addGenesisOpt` |
 | `ReactiveMechanisms.lean` | reactive Mysticeti | — | `live_chop_reactive`, `live_skipFill_reactive`, `live_addGenesis_reactive`, `decidedBelow_of_run_chop_reactive`: the reactive precondition across each mechanism, through `coreSupport` |
 | `StackRules.lean` | core, Nemo, FinWhale | — | `stack_core`, `stack_nemo`, `stack_finwhale`: fill then cut as a `Stack`; the headline `Properties.Safe` reads any of them |

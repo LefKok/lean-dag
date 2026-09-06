@@ -25,17 +25,11 @@ namespace LeanDag
 namespace Hydrozoan
 
 /-- A view: one replica's local DAG — a subset of the universe that is
-closed under references. -/
-structure View {Replica BlockId : Type*} [Fintype Replica]
-    [DecidableEq Replica] [F : Faults Replica]
-    (U : BlockUniverse Replica BlockId) where
-  /-- The ids this replica holds. -/
-  ids : Finset BlockId
-  /-- A view holds only blocks that exist. -/
-  subset_ids : ids ⊆ U.ids
-  /-- A view is closed downward: it holds everything its blocks
-  reference. -/
-  complete : ∀ i ∈ ids, ∀ j ∈ (U.block i).parents, j ∈ ids
+closed under references. The block record's view. -/
+abbrev View {Replica BlockId : Type*} [Fintype Replica]
+    [DecidableEq Replica] [F : LeanDag.Hydrozoan.Faults Replica]
+    (U : BlockUniverse Replica BlockId) :=
+  BlockRecord.View U
 
 end Hydrozoan
 

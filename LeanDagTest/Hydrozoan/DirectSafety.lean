@@ -11,9 +11,9 @@ fast-commits while
 **zero certificates exist in the whole universe** — not "not yet"
 (the temporal reading pinned in `HydrozoanTest/DirectRules.lean`) but
 structurally, through Byzantine equivocation: replica 0's second copy
-(id 8) omits the leader from its parents, and every round-2 block
+(id 8) omits the leader from its refs, and every round-2 block
 adopts that copy, capping every certificate candidate at 4 < q_cert
-vote-authors. This universe is the anti-vacuity guard for
+vote-creators. This universe is the anti-vacuity guard for
 `FastSlowAgreement` (the theorem is not true merely because a fast
 commit drags certificates along) and the consistency argument's
 Case 1: the fast path leaves only its weak footprint for the indirect
@@ -38,37 +38,37 @@ open LeanDag LeanDag.Hydrozoan
 
 set_option maxRecDepth 8192
 
-/-- Thirty-two blocks over five rounds. Ids 0–6: genesis (author = id).
-Round 1: id 7 (author 0) votes leader 2; **id 8 (author 0), the
-equivocating copy, has parents `{0, 1, 3, 4, 5}` — it does NOT vote for
-2**; ids 9–13 (authors 2–6) vote for 2. Round 2 (ids 14–19, authors
-0, 2, 3, 4, 5, 6): every block adopts the non-voting copy — parents
-`{8, 9, 10, 11, 12}` — so its votes for 2 come from only four authors:
-no certificate. Round 3 (ids 20–25): parents `{14, 15, 16, 18, 19}`;
-id 24 (author 5 = slot 3's leader) is the anchor. Round 4 (ids 26–31):
-parents `{20, 21, 22, 24, 25}` — six votes fast-commit the anchor.
-Crashed replica 1 authors only its genesis block. -/
+/-- Thirty-two blocks over five rounds. Ids 0–6: genesis (creator = id).
+Round 1: id 7 (creator 0) votes leader 2; **id 8 (creator 0), the
+equivocating copy, has refs `{0, 1, 3, 4, 5}` — it does NOT vote for
+2**; ids 9–13 (creators 2–6) vote for 2. Round 2 (ids 14–19, creators
+0, 2, 3, 4, 5, 6): every block adopts the non-voting copy — refs
+`{8, 9, 10, 11, 12}` — so its votes for 2 come from only four creators:
+no certificate. Round 3 (ids 20–25): refs `{14, 15, 16, 18, 19}`;
+id 24 (creator 5 = slot 3's leader) is the anchor. Round 4 (ids 26–31):
+refs `{20, 21, 22, 24, 25}` — six votes fast-commit the anchor.
+Crashed replica 1 creators only its genesis block. -/
 def lk4 : Fin 32 → Block (Fin 7) (Fin 32) := fun i =>
   if h : (i : ℕ) < 7 then
-    { round := 0, author := ⟨i, by omega⟩, parents := ∅ }
+    { round := 0, creator := ⟨i, by omega⟩, refs := ∅, payload := () }
   else if (i : ℕ) = 7 then
-    { round := 1, author := 0, parents := {0, 1, 2, 3, 4} }
+    { round := 1, creator := 0, refs := {0, 1, 2, 3, 4}, payload := () }
   else if (i : ℕ) = 8 then
-    { round := 1, author := 0, parents := {0, 1, 3, 4, 5} }
+    { round := 1, creator := 0, refs := {0, 1, 3, 4, 5}, payload := () }
   else if h : (i : ℕ) < 14 then
-    { round := 1, author := ⟨(i : ℕ) - 7, by omega⟩, parents := {0, 1, 2, 3, 4} }
+    { round := 1, creator := ⟨(i : ℕ) - 7, by omega⟩, refs := {0, 1, 2, 3, 4}, payload := () }
   else if (i : ℕ) = 14 then
-    { round := 2, author := 0, parents := {8, 9, 10, 11, 12} }
+    { round := 2, creator := 0, refs := {8, 9, 10, 11, 12}, payload := () }
   else if h : (i : ℕ) < 20 then
-    { round := 2, author := ⟨(i : ℕ) - 13, by omega⟩, parents := {8, 9, 10, 11, 12} }
+    { round := 2, creator := ⟨(i : ℕ) - 13, by omega⟩, refs := {8, 9, 10, 11, 12}, payload := () }
   else if (i : ℕ) = 20 then
-    { round := 3, author := 0, parents := {14, 15, 16, 18, 19} }
+    { round := 3, creator := 0, refs := {14, 15, 16, 18, 19}, payload := () }
   else if h : (i : ℕ) < 26 then
-    { round := 3, author := ⟨(i : ℕ) - 19, by omega⟩, parents := {14, 15, 16, 18, 19} }
+    { round := 3, creator := ⟨(i : ℕ) - 19, by omega⟩, refs := {14, 15, 16, 18, 19}, payload := () }
   else if (i : ℕ) = 26 then
-    { round := 4, author := 0, parents := {20, 21, 22, 24, 25} }
+    { round := 4, creator := 0, refs := {20, 21, 22, 24, 25}, payload := () }
   else
-    { round := 4, author := ⟨(i : ℕ) - 25, by omega⟩, parents := {20, 21, 22, 24, 25} }
+    { round := 4, creator := ⟨(i : ℕ) - 25, by omega⟩, refs := {20, 21, 22, 24, 25}, payload := () }
 
 /-- The structural witness universe. -/
 def U4 : BlockUniverse (Fin 7) (Fin 32) where
@@ -86,14 +86,14 @@ def V4 : View U4 where
   subset_ids := by decide
   complete := by decide
 
--- The universe fast-commits slot 0's candidate: six of seven authors
+-- The universe fast-commits slot 0's candidate: six of seven creators
 -- vote (the equivocator counts once, through its voting copy).
 example : supporters U4 2 1 = {0, 2, 3, 4, 5, 6} := by decide
 example : FastCommit U4 2 0 := by decide
 
 -- THE STRUCTURAL FACT: zero certificates for the fast-committed leader
 -- exist anywhere — every round-2 block's votes for id 2 stop at four
--- authors.
+-- creators.
 example : certificates U4 2 0 = ∅ := by decide
 example : ¬ SlowCommit U4 2 0 := by decide
 

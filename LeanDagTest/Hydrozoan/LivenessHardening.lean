@@ -10,7 +10,7 @@ eventual-decision phases' cold audits found unguarded:
 * **A proper-subset `T`** (`U12`, eight replicas): a configuration whose
   ACTUAL faults undershoot the bounds — one Byzantine, nobody crashed —
   so `|Correct| = 7 > q = 6`, and the liveness theorem is applied at a
-  six-member `T` that excludes the correct replica 7, which authors one
+  six-member `T` that excludes the correct replica 7, which creators one
   genesis block nobody references and then goes silent. Every previous
   application used `T = Correct`; this one kills the silent
   strengthenings `T ⊆ Correct → T = Correct` and
@@ -50,7 +50,7 @@ set_option maxRecDepth 16384
 /-- Actual faults under the bounds: one Byzantine replica, NOBODY
 crashed (the crash budget `c = 1` is unspent), so seven replicas are
 correct — one more than the quorum `q = 6`. -/
-instance eightReplicas : Faults (Fin 8) where
+instance eightReplicas : LeanDag.Hydrozoan.Faults (Fin 8) where
   f := 1
   c := 1
   k := 2
@@ -78,22 +78,22 @@ example : ({1, 2, 3, 4, 5, 6} : Finset (Fin 8)) ⊆
     (7 : Fin 8) ∉ ({1, 2, 3, 4, 5, 6} : Finset (Fin 8)) ∧
     ({1, 2, 3, 4, 5, 6} : Finset (Fin 8)).card = q (Fin 8) := by decide
 
-/-- Nineteen blocks: rounds 0–2 × the six members of `T` (authors
+/-- Nineteen blocks: rounds 0–2 × the six members of `T` (creators
 1–6), plus id 18 — the correct replica 7's genesis block, which no
-later block references and whose author then falls silent. The theorem
+later block references and whose creator then falls silent. The theorem
 must fire without replica 7; the strengthened all-of-`Correct`
 hypotheses must fail because of it. -/
 def lk12 : Fin 19 → Block (Fin 8) (Fin 19) := fun i =>
   if h : (i : ℕ) < 6 then
-    { round := 0, author := ⟨(i : ℕ) + 1, by omega⟩, parents := ∅ }
+    { round := 0, creator := ⟨(i : ℕ) + 1, by omega⟩, refs := ∅, payload := () }
   else if h : (i : ℕ) < 12 then
-    { round := 1, author := ⟨(i : ℕ) - 5, by omega⟩,
-      parents := {0, 1, 2, 3, 4, 5} }
+    { round := 1, creator := ⟨(i : ℕ) - 5, by omega⟩,
+      refs := {0, 1, 2, 3, 4, 5} , payload := () }
   else if h : (i : ℕ) < 18 then
-    { round := 2, author := ⟨(i : ℕ) - 11, by omega⟩,
-      parents := {6, 7, 8, 9, 10, 11} }
+    { round := 2, creator := ⟨(i : ℕ) - 11, by omega⟩,
+      refs := {6, 7, 8, 9, 10, 11} , payload := () }
   else
-    { round := 0, author := ⟨7, by omega⟩, parents := ∅ }
+    { round := 0, creator := ⟨7, by omega⟩, refs := ∅, payload := () }
 
 /-- The proper-subset-`T` universe. -/
 def U12 : BlockUniverse (Fin 8) (Fin 19) where
@@ -149,53 +149,53 @@ example : ∃ L, IsLeaderBlock U12 0 L ∧ SlowCommit U12 L 0 ∧
 
 /-- Forty-three blocks over rounds 0–6, arranged so each below-run slot
 resolves by a different exclusive route. Round 1: five votes for slot
-0's candidate (genesis id 2) — ids 7–11 (authors 0, 2, 3, 4, 5) — and
-one abstention (id 12, author 6). Round 2: id 13 references exactly the
+0's candidate (genesis id 2) — ids 7–11 (creators 0, 2, 3, 4, 5) — and
+one abstention (id 12, creator 6). Round 2: id 13 references exactly the
 five voters and is slot 0's UNIQUE certificate; ids 14–18 adopt the
 abstainer and certify no slot-0 candidate; all reference slot 1's
 candidate id 9.
 Round 3: exactly two blocks (ids 19, 20) vote for slot 2's candidate id
 16; all reference the certificate id 13, carrying it into slot 3's
 candidate id 23. Round 4: five of six reference id 23 (slow, not
-fast); id 30 (author 6) abstains and is slot 4's candidate. Rounds
+fast); id 30 (creator 6) abstains and is slot 4's candidate. Rounds
 5–6: full six-parent references — round 5 both votes for id 30 and
 certifies id 23 (six certifiers), and proposes slot 5's candidate id
 31; round 6 fast-commits it. -/
 def lk13 : Fin 43 → Block (Fin 7) (Fin 43) := fun i =>
   if h : (i : ℕ) < 7 then
-    { round := 0, author := ⟨i, by omega⟩, parents := ∅ }
+    { round := 0, creator := ⟨i, by omega⟩, refs := ∅, payload := () }
   else if h : (i : ℕ) < 12 then
     { round := 1,
-      author := ⟨if (i : ℕ) = 7 then 0 else (i : ℕ) - 6, by split <;> omega⟩,
-      parents := {0, 2, 3, 4, 5} }
+      creator := ⟨if (i : ℕ) = 7 then 0 else (i : ℕ) - 6, by split <;> omega⟩,
+      refs := {0, 2, 3, 4, 5} , payload := () }
   else if h : (i : ℕ) < 13 then
-    { round := 1, author := ⟨6, by omega⟩, parents := {0, 1, 3, 4, 5} }
+    { round := 1, creator := ⟨6, by omega⟩, refs := {0, 1, 3, 4, 5}, payload := () }
   else if h : (i : ℕ) < 14 then
-    { round := 2, author := ⟨0, by omega⟩, parents := {7, 8, 9, 10, 11} }
+    { round := 2, creator := ⟨0, by omega⟩, refs := {7, 8, 9, 10, 11}, payload := () }
   else if h : (i : ℕ) < 19 then
-    { round := 2, author := ⟨(i : ℕ) - 12, by omega⟩,
-      parents := {8, 9, 10, 11, 12} }
+    { round := 2, creator := ⟨(i : ℕ) - 12, by omega⟩,
+      refs := {8, 9, 10, 11, 12} , payload := () }
   else if h : (i : ℕ) < 21 then
     { round := 3,
-      author := ⟨if (i : ℕ) = 19 then 0 else (i : ℕ) - 18, by split <;> omega⟩,
-      parents := {13, 14, 16, 17, 18} }
+      creator := ⟨if (i : ℕ) = 19 then 0 else (i : ℕ) - 18, by split <;> omega⟩,
+      refs := {13, 14, 16, 17, 18} , payload := () }
   else if h : (i : ℕ) < 25 then
-    { round := 3, author := ⟨(i : ℕ) - 18, by omega⟩,
-      parents := {13, 14, 15, 17, 18} }
+    { round := 3, creator := ⟨(i : ℕ) - 18, by omega⟩,
+      refs := {13, 14, 15, 17, 18} , payload := () }
   else if h : (i : ℕ) < 30 then
     { round := 4,
-      author := ⟨if (i : ℕ) = 25 then 0 else (i : ℕ) - 24, by split <;> omega⟩,
-      parents := {20, 21, 22, 23, 24} }
+      creator := ⟨if (i : ℕ) = 25 then 0 else (i : ℕ) - 24, by split <;> omega⟩,
+      refs := {20, 21, 22, 23, 24} , payload := () }
   else if h : (i : ℕ) < 31 then
-    { round := 4, author := ⟨6, by omega⟩, parents := {19, 20, 21, 22, 24} }
+    { round := 4, creator := ⟨6, by omega⟩, refs := {19, 20, 21, 22, 24}, payload := () }
   else if h : (i : ℕ) < 37 then
     { round := 5,
-      author := ⟨if (i : ℕ) = 31 then 0 else (i : ℕ) - 30, by split <;> omega⟩,
-      parents := {25, 26, 27, 28, 29, 30} }
+      creator := ⟨if (i : ℕ) = 31 then 0 else (i : ℕ) - 30, by split <;> omega⟩,
+      refs := {25, 26, 27, 28, 29, 30} , payload := () }
   else
     { round := 6,
-      author := ⟨if (i : ℕ) = 37 then 0 else (i : ℕ) - 36, by split <;> omega⟩,
-      parents := {31, 32, 33, 34, 35, 36} }
+      creator := ⟨if (i : ℕ) = 37 then 0 else (i : ℕ) - 36, by split <;> omega⟩,
+      refs := {31, 32, 33, 34, 35, 36} , payload := () }
 
 /-- The route-diversification universe. -/
 def U13 : BlockUniverse (Fin 7) (Fin 43) where
@@ -289,7 +289,7 @@ example : ∀ i, i < 3 → ∃ v, Decided U13 (View.full U13) i v :=
 
 /-- A crash-only configuration with an unspent budget: `c = 2` but only
 replica 1 actually crashed. -/
-instance sixReplicas : Faults (Fin 6) where
+instance sixReplicas : LeanDag.Hydrozoan.Faults (Fin 6) where
   f := 0
   c := 2
   k := 1
@@ -324,13 +324,14 @@ round 0, slot 1 at round 3; rounds 1–2 are the inter-slot gap the
 sparse schedule leaves, and round 5 is slot 1's decision round. -/
 def lk14 : Fin 30 → Block (Fin 6) (Fin 30) := fun i =>
   { round := (i : ℕ) / 5,
-    author := ⟨if (i : ℕ) % 5 = 0 then 0 else (i : ℕ) % 5 + 1,
+    creator := ⟨if (i : ℕ) % 5 = 0 then 0 else (i : ℕ) % 5 + 1,
       by split <;> omega⟩,
-    parents :=
+    refs :=
       if h : (i : ℕ) < 5 then ∅
       else {⟨(i : ℕ) / 5 * 5 - 5, by omega⟩, ⟨(i : ℕ) / 5 * 5 - 4, by omega⟩,
         ⟨(i : ℕ) / 5 * 5 - 3, by omega⟩, ⟨(i : ℕ) / 5 * 5 - 2, by omega⟩,
-        ⟨(i : ℕ) / 5 * 5 - 1, by omega⟩} }
+        ⟨(i : ℕ) / 5 * 5 - 1, by omega⟩},
+    payload := () }
 
 /-- The sparse-schedule universe. -/
 def U14 : BlockUniverse (Fin 6) (Fin 30) where

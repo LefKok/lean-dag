@@ -1,4 +1,5 @@
 import LeanDag.Hydrozoan.Model.BlockUniverse
+import LeanDag.Slots
 
 /-!
 # Slots and the leader schedule
@@ -20,21 +21,6 @@ namespace LeanDag
 
 namespace Hydrozoan
 
-/-- The slot schedule: which round each slot is proposed in and which
-replica leads it. -/
-class Slots (Replica : Type*) where
-  /-- The round at which slot `k` is proposed (the paper's
-  `ProposeRound`). -/
-  slotRound : ℕ → ℕ
-  /-- The replica whose block is the slot-`k` candidate. -/
-  leader : ℕ → Replica
-  /-- Slots are enumerated in round order. -/
-  mono : Monotone slotRound
-  /-- Slot rounds are unbounded. -/
-  unbounded : ∀ n, ∃ k, n ≤ slotRound k
-  /-- Distinct slots differ in round or in leader. -/
-  keyed : Function.Injective fun k => (slotRound k, leader k)
-
 section SlotArithmetic
 
 variable (Replica : Type*) [S : Slots Replica]
@@ -52,17 +38,17 @@ end SlotArithmetic
 section LeaderBlocks
 
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
-  [F : Faults Replica] [S : Slots Replica]
+  [F : LeanDag.Hydrozoan.Faults Replica] [S : Slots Replica]
 
 /-- `L` is a candidate block for slot `k`: the right round, the right
-author (the paper's `GetLeaderBlocks`, as a membership predicate).
+creator (the paper's `GetLeaderBlocks`, as a membership predicate).
 Because replicas may equivocate, several blocks can satisfy this for one
-slot — the rules count authors, and the graded rule's tie-break picks
+slot — the rules count creators, and the graded rule's tie-break picks
 among copies. Reducible so decidability is inferable inside filters. -/
 @[reducible]
 def IsLeaderBlock (U : BlockUniverse Replica BlockId) (k : ℕ) (L : BlockId) :
     Prop :=
-  L ∈ U.ids ∧ (U.block L).round = S.slotRound k ∧ (U.block L).author = S.leader k
+  L ∈ U.ids ∧ (U.block L).round = S.slotRound k ∧ (U.block L).creator = S.leader k
 
 end LeaderBlocks
 

@@ -62,14 +62,14 @@ class Faults (Replica : Type*) [Fintype Replica] [DecidableEq Replica] where
 
 section Thresholds
 
-variable (Replica : Type*) [Fintype Replica] [DecidableEq Replica] [F : Faults Replica]
+variable (Replica : Type*) [Fintype Replica] [DecidableEq Replica] [F : LeanDag.Hydrozoan.Faults Replica]
 
 /-- `p = ⌊(c + k)/2⌋` — the fast path's fault allowance. Derived from `c`
 and `k` (ℕ division is floor division), never an input. -/
 def p : ℕ := (F.c + F.k) / 2
 
 /-- `q = n − f − c`: the DAG quorum governing round advancement and the
-number of parents each block references (`q` in the paper). -/
+number of refs each block references (`q` in the paper). -/
 def q : ℕ := Fintype.card Replica - F.f - F.c
 
 /-- `q_fast = n − p`: the quorum of votes at the voting round to
@@ -97,7 +97,7 @@ end Thresholds
 
 section Pools
 
-variable {Replica : Type*} [Fintype Replica] [DecidableEq Replica] [F : Faults Replica]
+variable {Replica : Type*} [Fintype Replica] [DecidableEq Replica] [F : LeanDag.Hydrozoan.Faults Replica]
 
 /-- The correct replicas: neither Byzantine nor crashed. The pool that
 availability and liveness arguments count. -/

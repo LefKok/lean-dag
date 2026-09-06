@@ -15,12 +15,12 @@ open LeanDag.Hydrozoan
 
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
   [DecidableEq BlockId] [O : OptimalFaults Replica] [S : Slots Replica]
-  {U : OptUniverse Replica BlockId} {V : View U.toBlockUniverse}
+  {U : OptUniverse Replica BlockId} {V : LeanDag.Hydrozoan.View U.toBlockRecord}
 
 /-- Every commit verdict names a candidate of its slot: each committing
 constructor carries `IsLeaderBlock`. -/
 theorem isLeaderBlock_of_decidedOpt {k : ℕ} {L : BlockId}
-    (h : DecidedOpt U V k (some L)) : IsLeaderBlock U.toBlockUniverse k L := by
+    (h : DecidedOpt U V k (some L)) : IsLeaderBlock U.toBlockRecord k L := by
   cases h with
   | directFast hL _ => exact hL
   | directSlow hL _ => exact hL

@@ -27,7 +27,7 @@ indirect constructors, some rung fires: a certificate hit
 (`indirectCert`), else — rung 1 empty for every candidate — an evidence
 hit at any clearing candidate (`indirectEvidence`), else both rungs empty
 and the slot skips (`indirectSkip`). -/
-theorem decidedOpt_of_anchor {V : View U.toBlockUniverse} {k j : ℕ} {A : BlockId}
+theorem decidedOpt_of_anchor {V : LeanDag.Hydrozoan.View U.toBlockRecord} {k j : ℕ} {A : BlockId}
     (helig : EligibleAsAnchor Replica k j)
     (hj : DecidedOpt U V j (some A))
     (hmid : ∀ i, k < i → i < j → EligibleAsAnchor Replica k i →
@@ -35,13 +35,13 @@ theorem decidedOpt_of_anchor {V : View U.toBlockUniverse} {k j : ℕ} {A : Block
     ∃ v, DecidedOpt U V k v := by
   classical
   have hkj : k < j := lt_of_eligibleAsAnchor helig
-  by_cases hc : ∃ L, IsLeaderBlock U.toBlockUniverse k L ∧
-      CertifiedIn U.toBlockUniverse A L (S.slotRound k)
+  by_cases hc : ∃ L, IsLeaderBlock U.toBlockRecord k L ∧
+      CertifiedIn U.toBlockRecord A L (S.slotRound k)
   · obtain ⟨L, hL, hcert⟩ := hc
     exact ⟨some L, DecidedOpt.indirectCert hkj helig hj hmid hL hcert⟩
   · push Not at hc
-    by_cases he : ∃ L, IsLeaderBlock U.toBlockUniverse k L ∧
-        EvidenceLinked U.toBlockUniverse A L k
+    by_cases he : ∃ L, IsLeaderBlock U.toBlockRecord k L ∧
+        EvidenceLinked U.toBlockRecord A L k
     · obtain ⟨L, hL, hev⟩ := he
       exact ⟨some L, DecidedOpt.indirectEvidence hkj helig hj hmid hc hL hev⟩
     · push Not at he
@@ -51,7 +51,7 @@ open Classical in
 /-- **A committed run decides everything below it** — Hydrozoan's fuel
 induction on `b − i`, each slot extracting its nearest eligible committed
 anchor by `Nat.find`. -/
-theorem decidedOpt_below_of_committed_run {V : View U.toBlockUniverse} {b n : ℕ}
+theorem decidedOpt_below_of_committed_run {V : LeanDag.Hydrozoan.View U.toBlockRecord} {b n : ℕ}
     (hbn : b ≤ n)
     (hspan : ∀ i, i < b → EligibleAsAnchor Replica i n)
     (hrun : ∀ j, b ≤ j → j ≤ n → ∃ B, DecidedOpt U V j (some B)) :
@@ -88,25 +88,25 @@ theorem decidedOpt_below_of_committed_run {V : View U.toBlockUniverse} {b n : �
 
 section ViewMono
 
-variable {B : BlockUniverse Replica BlockId}
+variable {B : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
 
 omit S in
 /-- A larger view holds every supporter the smaller one does. -/
-theorem fastCommitOptInView_mono {V V' : View B} (hsub : V.ids ⊆ V'.ids)
+theorem fastCommitOptInView_mono {V V' : LeanDag.Hydrozoan.View B} (hsub : V.ids ⊆ V'.ids)
     {L : BlockId} {r : ℕ} (h : FastCommitOptInView B V L r) :
     FastCommitOptInView B V' L r :=
   le_trans h (Finset.card_le_card (Finset.image_subset_image
     (Finset.inter_subset_inter Finset.Subset.rfl hsub)))
 
 /-- A larger view holds every no-evidence block the smaller one does. -/
-theorem noEvidenceQuorumInView_mono {V V' : View B} (hsub : V.ids ⊆ V'.ids)
+theorem noEvidenceQuorumInView_mono {V V' : LeanDag.Hydrozoan.View B} (hsub : V.ids ⊆ V'.ids)
     {k : ℕ} (h : NoEvidenceQuorumInView B V k) : NoEvidenceQuorumInView B V' k := by
   obtain ⟨s, hs, hcard⟩ := h
   exact ⟨s, fun b hb => ⟨(hs b hb).1, hsub (hs b hb).2.1, (hs b hb).2.2⟩, hcard⟩
 
 /-- A larger view holds every blame and no-evidence block the smaller
 one does. -/
-theorem skippedLeaderOptInView_mono {V V' : View B} (hsub : V.ids ⊆ V'.ids)
+theorem skippedLeaderOptInView_mono {V V' : LeanDag.Hydrozoan.View B} (hsub : V.ids ⊆ V'.ids)
     {k : ℕ} (h : SkippedLeaderOptInView B V k) : SkippedLeaderOptInView B V' k :=
   ⟨le_trans h.1 (Finset.card_le_card (Finset.image_subset_image
     (Finset.inter_subset_inter Finset.Subset.rfl hsub))),
@@ -117,7 +117,7 @@ end ViewMono
 /-- **Verdicts persist as a view grows.** Structural induction on the
 derivation; the rung tests (`CertifiedIn`, `EvidenceLinked`) are
 universe-level, so the negated premises transport unchanged. -/
-theorem decidedOpt_mono {V V' : View U.toBlockUniverse} (hsub : V.ids ⊆ V'.ids)
+theorem decidedOpt_mono {V V' : LeanDag.Hydrozoan.View U.toBlockRecord} (hsub : V.ids ⊆ V'.ids)
     {k : ℕ} {v : Option BlockId} (h : DecidedOpt U V k v) : DecidedOpt U V' k v := by
   induction h with
   | directFast hL hfc =>
@@ -134,8 +134,8 @@ theorem decidedOpt_mono {V V' : View U.toBlockUniverse} (hsub : V.ids ⊆ V'.ids
       exact DecidedOpt.indirectSkip hkj helig ihj ihmid hnc hne
 
 /-- Any view's verdicts hold at the eventual view. -/
-theorem decidedOpt_full {V : View U.toBlockUniverse} {k : ℕ} {v : Option BlockId}
-    (h : DecidedOpt U V k v) : DecidedOpt U (View.full U.toBlockUniverse) k v :=
+theorem decidedOpt_full {V : LeanDag.Hydrozoan.View U.toBlockRecord} {k : ℕ} {v : Option BlockId}
+    (h : DecidedOpt U V k v) : DecidedOpt U (View.full U.toBlockRecord) k v :=
   decidedOpt_mono V.subset_ids h
 
 end OptimalHydrozoan

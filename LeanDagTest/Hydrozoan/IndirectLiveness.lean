@@ -86,12 +86,13 @@ example : ∃ v, Decided U5 Vfull5 0 v :=
 referencing all three blocks of the round below. -/
 def lk8 : Fin 18 → Block (Fin 4) (Fin 18) := fun i =>
   { round := (i : ℕ) / 3,
-    author := ⟨if (i : ℕ) % 3 = 0 then 0 else (i : ℕ) % 3 + 1,
+    creator := ⟨if (i : ℕ) % 3 = 0 then 0 else (i : ℕ) % 3 + 1,
       by split <;> omega⟩,
-    parents :=
+    refs :=
       if h : (i : ℕ) < 3 then ∅
       else {⟨(i : ℕ) / 3 * 3 - 3, by omega⟩, ⟨(i : ℕ) / 3 * 3 - 2, by omega⟩,
-        ⟨(i : ℕ) / 3 * 3 - 1, by omega⟩} }
+        ⟨(i : ℕ) / 3 * 3 - 1, by omega⟩},
+    payload := () }
 
 /-- The committed-run universe. -/
 def U8 : BlockUniverse (Fin 4) (Fin 18) where
@@ -103,9 +104,9 @@ def U8 : BlockUniverse (Fin 4) (Fin 18) where
 
 -- The run: slots 2, 3, 4 are led by the correct replicas 2, 3, 0, whose
 -- blocks (ids 7, 11, 12) all fast-commit in the full view.
-example : Slots.leader (Replica := Fin 4) 2 = 2 ∧
-    Slots.leader (Replica := Fin 4) 3 = 3 ∧
-    Slots.leader (Replica := Fin 4) 4 = 0 := by decide
+example : Slots.leader (Validator := Fin 4) 2 = 2 ∧
+    Slots.leader (Validator := Fin 4) 3 = 3 ∧
+    Slots.leader (Validator := Fin 4) 4 = 0 := by decide
 example : IsLeaderBlock U8 2 7 ∧ IsLeaderBlock U8 3 11 ∧
     IsLeaderBlock U8 4 12 := by decide
 example : FastCommitInView U8 (View.full U8) 7 2 ∧
@@ -117,7 +118,7 @@ example : FastCommitInView U8 (View.full U8) 7 2 ∧
 -- candidate every round-2 block blames vacuously, so the direct skip
 -- happens to fire here as well — U9 below is where the direct rules
 -- are provably out of reach.)
-example : Slots.leader (Replica := Fin 4) 1 = 1 := by decide
+example : Slots.leader (Validator := Fin 4) 1 = 1 := by decide
 example : ∀ L : Fin 18, ¬ IsLeaderBlock U8 1 L := by decide
 
 -- Slot 1's nearest eligible anchor is the run's END: slots 2 and 3,
@@ -166,8 +167,8 @@ example : Decided U8 (View.full U8) 1 none :=
 
 /-- Forty-three blocks over rounds 0–6. Round 0: all seven genesis
 blocks. From round 1 on, six blocks per round (crashed replica 1
-silent). At round 1 exactly three blocks (authors 2, 3, 4 — ids 7, 8, 9)
-vote for slot 0's candidate (genesis id 2); the other three (authors
+silent). At round 1 exactly three blocks (creators 2, 3, 4 — ids 7, 8, 9)
+vote for slot 0's candidate (genesis id 2); the other three (creators
 0, 5, 6 — ids 10, 11, 12) reference five round-0 blocks avoiding it.
 Rounds 2–6 each reference five blocks of the round below, carrying the
 three votes into every later block's history. Rounds 4–6 fast-commit
@@ -176,34 +177,34 @@ slot's candidate — id 23 (leader 5), id 30 (leader 6), id 31 (leader 0,
 the Byzantine replica behaving well for this slot). -/
 def lk9 : Fin 43 → Block (Fin 7) (Fin 43) := fun i =>
   if h : (i : ℕ) < 7 then
-    { round := 0, author := ⟨i, by omega⟩, parents := ∅ }
+    { round := 0, creator := ⟨i, by omega⟩, refs := ∅, payload := () }
   else if h : (i : ℕ) < 10 then
-    { round := 1, author := ⟨(i : ℕ) - 5, by omega⟩,
-      parents := {0, 2, 3, 4, 5} }
+    { round := 1, creator := ⟨(i : ℕ) - 5, by omega⟩,
+      refs := {0, 2, 3, 4, 5} , payload := () }
   else if h : (i : ℕ) < 13 then
     { round := 1,
-      author := ⟨if (i : ℕ) = 10 then 0 else (i : ℕ) - 6, by split <;> omega⟩,
-      parents := {0, 1, 3, 4, 5} }
+      creator := ⟨if (i : ℕ) = 10 then 0 else (i : ℕ) - 6, by split <;> omega⟩,
+      refs := {0, 1, 3, 4, 5} , payload := () }
   else if h : (i : ℕ) < 19 then
     { round := 2,
-      author := ⟨if (i : ℕ) = 13 then 0 else (i : ℕ) - 12, by split <;> omega⟩,
-      parents := {7, 8, 9, 10, 11} }
+      creator := ⟨if (i : ℕ) = 13 then 0 else (i : ℕ) - 12, by split <;> omega⟩,
+      refs := {7, 8, 9, 10, 11} , payload := () }
   else if h : (i : ℕ) < 25 then
     { round := 3,
-      author := ⟨if (i : ℕ) = 19 then 0 else (i : ℕ) - 18, by split <;> omega⟩,
-      parents := {13, 14, 15, 16, 17} }
+      creator := ⟨if (i : ℕ) = 19 then 0 else (i : ℕ) - 18, by split <;> omega⟩,
+      refs := {13, 14, 15, 16, 17} , payload := () }
   else if h : (i : ℕ) < 31 then
     { round := 4,
-      author := ⟨if (i : ℕ) = 25 then 0 else (i : ℕ) - 24, by split <;> omega⟩,
-      parents := {20, 21, 22, 23, 24} }
+      creator := ⟨if (i : ℕ) = 25 then 0 else (i : ℕ) - 24, by split <;> omega⟩,
+      refs := {20, 21, 22, 23, 24} , payload := () }
   else if h : (i : ℕ) < 37 then
     { round := 5,
-      author := ⟨if (i : ℕ) = 31 then 0 else (i : ℕ) - 30, by split <;> omega⟩,
-      parents := {26, 27, 28, 29, 30} }
+      creator := ⟨if (i : ℕ) = 31 then 0 else (i : ℕ) - 30, by split <;> omega⟩,
+      refs := {26, 27, 28, 29, 30} , payload := () }
   else
     { round := 6,
-      author := ⟨if (i : ℕ) = 37 then 0 else (i : ℕ) - 36, by split <;> omega⟩,
-      parents := {31, 32, 33, 34, 35} }
+      creator := ⟨if (i : ℕ) = 37 then 0 else (i : ℕ) - 36, by split <;> omega⟩,
+      refs := {31, 32, 33, 34, 35} , payload := () }
 
 /-- The weak-rung universe. -/
 def U9 : BlockUniverse (Fin 7) (Fin 43) where
@@ -234,7 +235,7 @@ example : IsLeaderBlock U9 3 23 ∧ FastCommitInView U9 (View.full U9) 23 3 := b
 
 -- The three votes sit in the anchor's causal history: the weak rung's
 -- footprint, at exactly q_weak.
-example : qWeak (Fin 7) ≤ (authorsOf U9.block ((blocksAt U9 1).filter
+example : qWeak (Fin 7) ≤ (creatorsOf U9.block ((blocksAt U9 1).filter
     fun b => IsVote U9 b 2 ∧ b ∈ history U9 23)).card := by decide
 
 -- The positive `indirectWeak` derivation — the first on a universe
@@ -311,7 +312,7 @@ example : ∃ v, Decided U9 (View.full U9) 0 v :=
 -- history): a NONZERO footprint that still misses q_weak = 3. Guards
 -- the weak threshold itself — a weakening to "any vote suffices" would
 -- flip this example.
-example : (authorsOf U9.block ((blocksAt U9 1).filter
+example : (creatorsOf U9.block ((blocksAt U9 1).filter
     fun b => IsVote U9 b 1 ∧ b ∈ history U9 23)).card = 2 := by decide
 example : ¬ WeakLinked U9 23 1 0 := fun h =>
   absurd ((weakLinked_iff_history (by decide)).mp h) (by decide)
@@ -321,7 +322,7 @@ example : ¬ WeakLinked U9 23 1 0 := fun h =>
 /-- The tie-break configuration: one Byzantine replica, no crashes,
 `k = 1` — the tight count `n = 5`, and the first configuration with
 `p = 0` (no fast allowance at all). -/
-instance fiveReplicas : Faults (Fin 5) where
+instance fiveReplicas : LeanDag.Hydrozoan.Faults (Fin 5) where
   f := 1
   c := 0
   k := 1
@@ -343,35 +344,35 @@ example : p (Fin 5) = 0 ∧ q (Fin 5) = 4 ∧ qFast (Fin 5) = 5 ∧
 
 /-- Twenty-six blocks over rounds 0–4. Round 0 has SIX blocks: ids 0
 and 1 are the Byzantine leader's equivocating slot-0 copies, ids 2–5
-the other genesis blocks (authors 1–4). Round 1's five voters split
-between the copies — ids 6, 7, 8 (authors 0, 1, 2) vote copy 0, ids
-9, 10 (authors 3, 4) vote copy 1 — so both copies clear `q_weak = 2`
+the other genesis blocks (creators 1–4). Round 1's five voters split
+between the copies — ids 6, 7, 8 (creators 0, 1, 2) vote copy 0, ids
+9, 10 (creators 3, 4) vote copy 1 — so both copies clear `q_weak = 2`
 and neither can ever reach `q_cert = 4`. Rounds 2–3 carry all five
 voters into the history of slot 3's candidate (id 19, correct leader
 3); round 4 fast-commits it. -/
 def lk11 : Fin 26 → Block (Fin 5) (Fin 26) := fun i =>
   if h : (i : ℕ) < 2 then
-    { round := 0, author := 0, parents := ∅ }
+    { round := 0, creator := 0, refs := ∅, payload := () }
   else if h : (i : ℕ) < 6 then
-    { round := 0, author := ⟨(i : ℕ) - 1, by omega⟩, parents := ∅ }
+    { round := 0, creator := ⟨(i : ℕ) - 1, by omega⟩, refs := ∅, payload := () }
   else if h : (i : ℕ) < 9 then
-    { round := 1, author := ⟨(i : ℕ) - 6, by omega⟩,
-      parents := {0, 2, 3, 4} }
+    { round := 1, creator := ⟨(i : ℕ) - 6, by omega⟩,
+      refs := {0, 2, 3, 4} , payload := () }
   else if h : (i : ℕ) < 11 then
-    { round := 1, author := ⟨(i : ℕ) - 6, by omega⟩,
-      parents := {1, 2, 3, 4} }
+    { round := 1, creator := ⟨(i : ℕ) - 6, by omega⟩,
+      refs := {1, 2, 3, 4} , payload := () }
   else if h : (i : ℕ) < 14 then
-    { round := 2, author := ⟨(i : ℕ) - 11, by omega⟩,
-      parents := {6, 7, 8, 9} }
+    { round := 2, creator := ⟨(i : ℕ) - 11, by omega⟩,
+      refs := {6, 7, 8, 9} , payload := () }
   else if h : (i : ℕ) < 16 then
-    { round := 2, author := ⟨(i : ℕ) - 11, by omega⟩,
-      parents := {7, 8, 9, 10} }
+    { round := 2, creator := ⟨(i : ℕ) - 11, by omega⟩,
+      refs := {7, 8, 9, 10} , payload := () }
   else if h : (i : ℕ) < 21 then
-    { round := 3, author := ⟨(i : ℕ) - 16, by omega⟩,
-      parents := {12, 13, 14, 15} }
+    { round := 3, creator := ⟨(i : ℕ) - 16, by omega⟩,
+      refs := {12, 13, 14, 15} , payload := () }
   else
-    { round := 4, author := ⟨(i : ℕ) - 21, by omega⟩,
-      parents := {16, 17, 18, 19, 20} }
+    { round := 4, creator := ⟨(i : ℕ) - 21, by omega⟩,
+      refs := {16, 17, 18, 19, 20} , payload := () }
 
 /-- The tie-break universe. -/
 def U11 : BlockUniverse (Fin 5) (Fin 26) where

@@ -11,11 +11,11 @@ carries the whole direct layer and rung 1 unchanged, and what is left is
 the fast path — fast evidence, the no-evidence quorum, and the anchored
 evidence rung.
 
-**Every new rule is a count over one block's parents**, which is what
-makes them transportable. `IsFastEvidence U k C L` reads `C`'s parents
+**Every new rule is a count over one block's refs**, which is what
+makes them transportable. `IsFastEvidence U k C L` reads `C`'s refs
 and the votes they cast, so a band two rounds above the floor fixes it
 exactly, for *every* candidate whatever — old ones because references
-are unchanged, and ones the band added because an old block's parents
+are unchanged, and ones the band added because an old block's refs
 reference only old blocks, so a new candidate collects no votes at all.
 
 **That is what saves the skip.** `IsNoFastEvidence` quantifies over the
@@ -37,27 +37,27 @@ open LeanDag.Properties
 variable {Replica : Type} [Fintype Replica] [DecidableEq Replica]
 variable {BlockId : Type} [DecidableEq BlockId] [LinearOrder BlockId]
 variable [O : OptimalFaults Replica]
-variable [S : LeanDag.Hydrozoan.Slots Replica]
+variable [S : LeanDag.Slots Replica]
 variable {U U' : LeanDag.Hydrozoan.BlockUniverse Replica BlockId} {lo hi g g' : ℕ}
 
 /-! ## The votes a decision-round block references -/
 
-/-- **A block's parents vote the same way in both universes**, for every
+/-- **A block's refs vote the same way in both universes**, for every
 candidate whatever. Two rounds of slack, as for a certificate: the count
-reads the parents' own parents. -/
+reads the refs' own refs. -/
 theorem votesFor_bnd (h : AgreeBand rule U U' lo hi g g') {C : BlockId}
     (hC : C ∈ U.ids) (h1 : lo + 1 < (U.block C).round + g)
     (h2 : (U.block C).round + g ≤ hi) (L : BlockId) :
     votesFor U' C L = votesFor U C L := by
   unfold votesFor
-  rw [voteBlocks_bnd h hC h1 h2, authorsOf_bnd h]
+  rw [voteBlocks_bnd h hC h1 h2, creatorsOf_bnd h]
   intro b hb
   have hbp := (Finset.mem_filter.mp hb).1
   have := (U.valid C hC).predecessor b hbp
   exact ⟨U.complete C hC b hbp, by omega, by omega⟩
 
 /-- **And a candidate the band added collects none.** An old block's
-parents are old and reference only old blocks. -/
+refs are old and reference only old blocks. -/
 theorem votesFor_eq_empty_of_novel (h : AgreeBand rule U U' lo hi g g') {C L : BlockId}
     (hC : C ∈ U.ids) (h1 : lo + 1 < (U.block C).round + g)
     (h2 : (U.block C).round + g ≤ hi) (hL : L ∉ U.ids) :
@@ -70,20 +70,20 @@ theorem votesFor_eq_empty_of_novel (h : AgreeBand rule U U' lo hi g g') {C L : B
     exact hL (U.complete b (U.complete C hC b hbp) L hbv)
   unfold votesFor
   rw [hempty]
-  simp [LeanDag.Hydrozoan.authorsOf]
+  simp [LeanDag.creatorsOf]
 
 /-- **Witnessing an equivocation is the same event.** Both directions: a
 witness on the larger side is voted for by an old parent, so it is a
 candidate the band already had. -/
 theorem witnessesEquivocation_bnd (h : AgreeBand rule U U' lo hi g g')
-    {S S' : LeanDag.Hydrozoan.Slots Replica} {k k' : ℕ}
+    {S S' : LeanDag.Slots Replica} {k k' : ℕ}
     (hkk : S.slotRound k + g = S'.slotRound k' + g') (hlead : S.leader k = S'.leader k')
     (hk1 : lo ≤ S.slotRound k + g) (hk2 : S.slotRound k + g ≤ hi)
     {C : BlockId} (hC : C ∈ U.ids) (h1 : lo + 1 < (U.block C).round + g)
     (h2 : (U.block C).round + g ≤ hi) :
     WitnessesEquivocation (S := S') U' k' C ↔ WitnessesEquivocation (S := S) U k C := by
-  have hpar : (U'.block C).parents = (U.block C).parents := bnd_parents h hC (by omega) h2
-  have hold : ∀ j ∈ (U.block C).parents,
+  have hpar : (U'.block C).refs = (U.block C).refs := bnd_refs h hC (by omega) h2
+  have hold : ∀ j ∈ (U.block C).refs,
       j ∈ U.ids ∧ (U.block j).round + 1 = (U.block C).round :=
     fun j hj => ⟨U.complete C hC j hj, (U.valid C hC).predecessor j hj⟩
   constructor
@@ -111,7 +111,7 @@ equivocation test is the same test, and the rival clause survives the
 band's new candidates because they collect no votes and `t_equiv` is at
 least one. -/
 theorem isFastEvidence_bnd (h : AgreeBand rule U U' lo hi g g')
-    {S S' : LeanDag.Hydrozoan.Slots Replica} {k k' : ℕ}
+    {S S' : LeanDag.Slots Replica} {k k' : ℕ}
     (hkk : S.slotRound k + g = S'.slotRound k' + g') (hlead : S.leader k = S'.leader k')
     (hk1 : lo ≤ S.slotRound k + g) (hk2 : S.slotRound k + g ≤ hi)
     {C : BlockId} (hC : C ∈ U.ids) (h1 : lo + 1 < (U.block C).round + g)
@@ -147,7 +147,7 @@ theorem isFastEvidence_bnd (h : AgreeBand rule U U' lo hi g g')
 candidates by the equivalence above, and a candidate the band added
 because it collects no votes and both thresholds are at least one. -/
 theorem isNoFastEvidence_bnd (h : AgreeBand rule U U' lo hi g g')
-    {S S' : LeanDag.Hydrozoan.Slots Replica} {k k' : ℕ}
+    {S S' : LeanDag.Slots Replica} {k k' : ℕ}
     (hkk : S.slotRound k + g = S'.slotRound k' + g') (hlead : S.leader k = S'.leader k')
     (hk1 : lo ≤ S.slotRound k + g) (hk2 : S.slotRound k + g ≤ hi)
     {C : BlockId} (hC : C ∈ U.ids) (h1 : lo + 1 < (U.block C).round + g)
@@ -193,7 +193,7 @@ theorem noEvidenceQuorumInView_bnd (h : AgreeBand rule U U' lo hi g g')
     {V : LeanDag.Hydrozoan.View U} {V' : LeanDag.Hydrozoan.View U'}
     (hv : ∀ b, b ∈ V.ids → lo ≤ (U.block b).round + g → (U.block b).round + g ≤ hi →
       b ∈ V'.ids)
-    {S S' : LeanDag.Hydrozoan.Slots Replica} {k k' : ℕ}
+    {S S' : LeanDag.Slots Replica} {k k' : ℕ}
     (hkk : S.slotRound k + g = S'.slotRound k' + g') (hlead : S.leader k = S'.leader k')
     (h1 : lo ≤ S.slotRound k + g) (h2 : S.slotRound k + 2 + g ≤ hi)
     (hq : NoEvidenceQuorumInView (S := S) U V k) :
@@ -213,7 +213,7 @@ theorem noEvidenceQuorumInView_bnd (h : AgreeBand rule U U' lo hi g g')
         (by omega) (by omega) (by omega) hbA,
       hv b hbV (by omega) (by omega),
       isNoFastEvidence_bnd h hkk hlead h1 (by omega) hbU (by omega) (by omega) hbn⟩
-  · rw [authorsOf_bnd h (fun b hb => ⟨(hsU b hb).1, by have := (hsU b hb).2; omega,
+  · rw [creatorsOf_bnd h (fun b hb => ⟨(hsU b hb).1, by have := (hsU b hb).2; omega,
       by have := (hsU b hb).2; omega⟩)]
     exact hcard
 
@@ -223,7 +223,7 @@ theorem skippedLeaderOptInView_bnd (h : AgreeBand rule U U' lo hi g g')
     {V : LeanDag.Hydrozoan.View U} {V' : LeanDag.Hydrozoan.View U'}
     (hv : ∀ b, b ∈ V.ids → lo ≤ (U.block b).round + g → (U.block b).round + g ≤ hi →
       b ∈ V'.ids)
-    {S S' : LeanDag.Hydrozoan.Slots Replica} {k k' : ℕ}
+    {S S' : LeanDag.Slots Replica} {k k' : ℕ}
     (hkk : S.slotRound k + g = S'.slotRound k' + g') (hlead : S.leader k = S'.leader k')
     (h1 : lo ≤ S.slotRound k + g) (h2 : S.slotRound k + 2 + g ≤ hi)
     (hs : SkippedLeaderOptInView (S := S) U V k) :
@@ -238,10 +238,10 @@ Three parts, as for Hydrozoan's two anchored tests: forward, back for a
 candidate the band already had, and — the clause a one-directional band
 forces — that a candidate the band did not carry passes the test on
 neither side, because the anchor's cone never leaves the blocks the band
-had and an old block's parents vote only for old blocks. -/
+had and an old block's refs vote only for old blocks. -/
 
 theorem evidenceLinked_bnd (h : AgreeBand rule U U' lo hi g g')
-    {S S' : LeanDag.Hydrozoan.Slots Replica} {k k' : ℕ}
+    {S S' : LeanDag.Slots Replica} {k k' : ℕ}
     (hkk : S.slotRound k + g = S'.slotRound k' + g') (hlead : S.leader k = S'.leader k')
     (h1 : lo ≤ S.slotRound k + g) (h2 : S.slotRound k + 2 + g ≤ hi)
     {A L : BlockId} (hA : A ∈ U.ids) (hAlo : lo ≤ (U.block A).round + g)
@@ -263,12 +263,12 @@ theorem evidenceLinked_bnd (h : AgreeBand rule U U' lo hi g g')
         (by omega) (by omega) (by omega) hbA,
       (isFastEvidence_bnd h hkk hlead h1 (by omega) hbU (by omega) (by omega) L).mpr hbe,
       AgreeBand.reaches_of h hA hAhi hbre (by omega)⟩
-  · rw [authorsOf_bnd h (fun b hb => ⟨(hsU b hb).1, by have := (hsU b hb).2; omega,
+  · rw [creatorsOf_bnd h (fun b hb => ⟨(hsU b hb).1, by have := (hsU b hb).2; omega,
       by have := (hsU b hb).2; omega⟩)]
     exact hcard
 
 theorem evidenceLinked_bnd_old (h : AgreeBand rule U U' lo hi g g')
-    {S S' : LeanDag.Hydrozoan.Slots Replica} {k k' : ℕ}
+    {S S' : LeanDag.Slots Replica} {k k' : ℕ}
     (hkk : S.slotRound k + g = S'.slotRound k' + g') (hlead : S.leader k = S'.leader k')
     (h1 : lo ≤ S.slotRound k + g) (h2 : S.slotRound k + 2 + g ≤ hi)
     {A L : BlockId} (hA : A ∈ U.ids) (hAlo : lo ≤ (U.block A).round + g)
@@ -294,12 +294,12 @@ theorem evidenceLinked_bnd_old (h : AgreeBand rule U U' lo hi g g')
     exact ⟨Finset.mem_filter.mpr ⟨hbU, by omega⟩,
       (isFastEvidence_bnd h hkk hlead h1 (by omega) hbU (by omega) (by omega) L).mp hbe,
       hbreU⟩
-  · rw [← authorsOf_bnd h (fun b hb => ⟨(hsU b hb).1, by have := (hsU b hb).2; omega,
+  · rw [← creatorsOf_bnd h (fun b hb => ⟨(hsU b hb).1, by have := (hsU b hb).2; omega,
       by have := (hsU b hb).2; omega⟩)]
     exact hcard
 
 theorem not_evidenceLinked_bnd_novel (h : AgreeBand rule U U' lo hi g g')
-    {S S' : LeanDag.Hydrozoan.Slots Replica} {k k' : ℕ}
+    {S S' : LeanDag.Slots Replica} {k k' : ℕ}
     (hkk : S.slotRound k + g = S'.slotRound k' + g') (hlead : S.leader k = S'.leader k')
     (h1 : lo ≤ S.slotRound k + g) (h2 : S.slotRound k + 2 + g ≤ hi)
     {A L : BlockId} (hA : A ∈ U.ids) (hAlo : lo ≤ (U.block A).round + g)
@@ -330,7 +330,7 @@ theorem not_evidenceLinked_bnd_novel (h : AgreeBand rule U U' lo hi g g')
       simp only [Finset.card_empty] at this
       omega
   rw [hsempty] at hcard
-  simp only [LeanDag.Hydrozoan.authorsOf, Finset.image_empty, Finset.card_empty,
+  simp only [LeanDag.creatorsOf, Finset.image_empty, Finset.card_empty,
     Nat.le_zero] at hcard
   have : 0 < LeanDag.Hydrozoan.qCert Replica := by
     unfold LeanDag.Hydrozoan.qCert; omega
@@ -344,7 +344,7 @@ on them. This is the tightness `Properties.Indirect` and
 `Properties.DecidedBelow` ask for. -/
 
 omit S [LinearOrder BlockId] in
-theorem witnessesEquivocation_sched {S₁ S₂ : LeanDag.Hydrozoan.Slots Replica} {k : ℕ}
+theorem witnessesEquivocation_sched {S₁ S₂ : LeanDag.Slots Replica} {k : ℕ}
     {b : BlockId} (hround : S₁.slotRound k = S₂.slotRound k)
     (hk : S₁.leader k = S₂.leader k) :
     WitnessesEquivocation (S := S₁) U k b ↔ WitnessesEquivocation (S := S₂) U k b := by
@@ -356,7 +356,7 @@ theorem witnessesEquivocation_sched {S₁ S₂ : LeanDag.Hydrozoan.Slots Replica
       LeanDag.Hydrozoan.isLeaderBlock_sched hround.symm hk.symm hL₂, hne, hv₁, hv₂⟩
 
 omit S [LinearOrder BlockId] in
-theorem isFastEvidence_sched {S₁ S₂ : LeanDag.Hydrozoan.Slots Replica} {k : ℕ}
+theorem isFastEvidence_sched {S₁ S₂ : LeanDag.Slots Replica} {k : ℕ}
     {C L : BlockId} (hround : S₁.slotRound k = S₂.slotRound k)
     (hk : S₁.leader k = S₂.leader k) :
     IsFastEvidence (S := S₁) U k C L ↔ IsFastEvidence (S := S₂) U k C L := by
@@ -375,7 +375,7 @@ theorem isFastEvidence_sched {S₁ S₂ : LeanDag.Hydrozoan.Slots Replica} {k : 
       hriv L' (LeanDag.Hydrozoan.isLeaderBlock_sched hround hk hL') hne⟩
 
 omit S [LinearOrder BlockId] in
-theorem evidenceLinked_sched {S₁ S₂ : LeanDag.Hydrozoan.Slots Replica} {k : ℕ}
+theorem evidenceLinked_sched {S₁ S₂ : LeanDag.Slots Replica} {k : ℕ}
     {A L : BlockId} (hround : S₁.slotRound k = S₂.slotRound k)
     (hk : S₁.leader k = S₂.leader k) :
     EvidenceLinked (S := S₁) U A L k ↔ EvidenceLinked (S := S₂) U A L k := by
@@ -403,16 +403,16 @@ is only which rules are transported at the leaves. -/
 theorem bandedOpt_aux {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
     (hle : ∀ b ∈ U.ids, ∀ m, (U.block b).round = LeanDag.Hydrozoan.decisionRound Replica m →
       WitnessesEquivocation U m b →
-      ∀ j ∈ (U.block b).parents, (U.block j).author ≠ S.leader m)
+      ∀ j ∈ (U.block b).refs, (U.block j).creator ≠ S.leader m)
     {V : LeanDag.Hydrozoan.View U} {k : ℕ} {v : Option BlockId}
     (hd : DecidedOpt { U with leader_excluded := hle } V k v) :
     ∃ top, S.slotRound k + 2 ≤ top ∧
-      ∀ (g g' d d' : ℕ) (S' : LeanDag.Hydrozoan.Slots Replica)
+      ∀ (g g' d d' : ℕ) (S' : LeanDag.Slots Replica)
         (U' : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
         (hle' : ∀ b ∈ U'.ids, ∀ m,
           (U'.block b).round = LeanDag.Hydrozoan.decisionRound (S := S') Replica m →
           WitnessesEquivocation (S := S') U' m b →
-          ∀ j ∈ (U'.block b).parents, (U'.block j).author ≠ S'.leader m)
+          ∀ j ∈ (U'.block b).refs, (U'.block j).creator ≠ S'.leader m)
         (V' : LeanDag.Hydrozoan.View U') (k' : ℕ),
         k + d' = k' + d →
         (∀ m m', m + d' = m' + d → S.slotRound m + g = S'.slotRound m' + g') →

@@ -25,7 +25,7 @@ open LeanDag.Hydrozoan
 
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
   [DecidableEq BlockId] [O : OptimalFaults Replica]
-  {U : BlockUniverse Replica BlockId}
+  {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
 
 /-- Hydrozoan's certificate, read through `votesFor`. -/
 theorem isCertificate_iff_votesFor (C L : BlockId) :
@@ -36,7 +36,7 @@ instance decidableFastCommitOpt (L : BlockId) (r : ℕ) :
     Decidable (FastCommitOpt U L r) :=
   inferInstanceAs (Decidable (qFastOpt Replica ≤ (supporters U L (r + 1)).card))
 
-instance decidableFastCommitOptInView (V : View U) (L : BlockId) (r : ℕ) :
+instance decidableFastCommitOptInView (V : LeanDag.Hydrozoan.View U) (L : BlockId) (r : ℕ) :
     Decidable (FastCommitOptInView U V L r) :=
   inferInstanceAs (Decidable (qFastOpt Replica ≤ (supportersInView U V L (r + 1)).card))
 
@@ -65,7 +65,7 @@ instance decidableIsNoFastEvidence (k : ℕ) (C : BlockId) :
 of no-evidence decision-round blocks. -/
 theorem noEvidenceQuorum_iff_filter {k : ℕ} :
     NoEvidenceQuorum U k ↔
-      qCert Replica ≤ (authorsOf U.block ((blocksAt U (decisionRound Replica k)).filter
+      qCert Replica ≤ (creatorsOf U.block ((blocksAt U (decisionRound Replica k)).filter
         fun b => IsNoFastEvidence U k b)).card := by
   constructor
   · rintro ⟨s, hs, hcard⟩
@@ -79,9 +79,9 @@ theorem noEvidenceQuorum_iff_filter {k : ℕ} :
     exact Finset.mem_filter.mp hb
 
 /-- The in-view no-evidence quorum through its canonical witness set. -/
-theorem noEvidenceQuorumInView_iff_filter {V : View U} {k : ℕ} :
+theorem noEvidenceQuorumInView_iff_filter {V : LeanDag.Hydrozoan.View U} {k : ℕ} :
     NoEvidenceQuorumInView U V k ↔
-      qCert Replica ≤ (authorsOf U.block ((blocksAt U (decisionRound Replica k)).filter
+      qCert Replica ≤ (creatorsOf U.block ((blocksAt U (decisionRound Replica k)).filter
         fun b => b ∈ V.ids ∧ IsNoFastEvidence U k b)).card := by
   constructor
   · rintro ⟨s, hs, hcard⟩
@@ -98,14 +98,14 @@ theorem noEvidenceQuorumInView_iff_filter {V : View U} {k : ℕ} :
 instance decidableNoEvidenceQuorum (k : ℕ) : Decidable (NoEvidenceQuorum U k) :=
   decidable_of_iff _ noEvidenceQuorum_iff_filter.symm
 
-instance decidableNoEvidenceQuorumInView (V : View U) (k : ℕ) :
+instance decidableNoEvidenceQuorumInView (V : LeanDag.Hydrozoan.View U) (k : ℕ) :
     Decidable (NoEvidenceQuorumInView U V k) :=
   decidable_of_iff _ noEvidenceQuorumInView_iff_filter.symm
 
 instance decidableSkippedLeaderOpt (k : ℕ) : Decidable (SkippedLeaderOpt U k) :=
   inferInstanceAs (Decidable (qCert Replica ≤ (blames U k).card ∧ NoEvidenceQuorum U k))
 
-instance decidableSkippedLeaderOptInView (V : View U) (k : ℕ) :
+instance decidableSkippedLeaderOptInView (V : LeanDag.Hydrozoan.View U) (k : ℕ) :
     Decidable (SkippedLeaderOptInView U V k) :=
   inferInstanceAs
     (Decidable (qCert Replica ≤ (blamesInView U V k).card ∧ NoEvidenceQuorumInView U V k))

@@ -51,21 +51,21 @@ variable {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId} {i : BlockId}
 
 /-- A truncated block, in Hydrozoan's vocabulary: the round rebased. -/
 @[simp] theorem chopHZ_round : ((chopHZ U G).block i).round = (U.block i).round - G :=
-  chopBlk_round (blk := (LeanDag.Hydrozoan.toRecord U).block)
+  chopBlk_round
 
-/-- The author kept. -/
-@[simp] theorem chopHZ_author : ((chopHZ U G).block i).author = (U.block i).author :=
-  chopBlk_creator (blk := (LeanDag.Hydrozoan.toRecord U).block)
+/-- The creator kept. -/
+@[simp] theorem chopHZ_creator : ((chopHZ U G).block i).creator = (U.block i).creator :=
+  chopBlk_creator
 
-/-- Parents dropped at or below the horizon. -/
-theorem chopHZ_parents_of_le (h : (U.block i).round ≤ G) :
-    ((chopHZ U G).block i).parents = ∅ :=
-  chopBlk_refs_of_le (blk := (LeanDag.Hydrozoan.toRecord U).block) h
+/-- Refs dropped at or below the horizon. -/
+theorem chopHZ_refs_of_le (h : (U.block i).round ≤ G) :
+    ((chopHZ U G).block i).refs = ∅ :=
+  chopBlk_refs_of_le h
 
 /-- And kept strictly above it. -/
-theorem chopHZ_parents_of_lt (h : G < (U.block i).round) :
-    ((chopHZ U G).block i).parents = (U.block i).parents :=
-  chopBlk_refs_of_lt (blk := (LeanDag.Hydrozoan.toRecord U).block) h
+theorem chopHZ_refs_of_lt (h : G < (U.block i).round) :
+    ((chopHZ U G).block i).refs = (U.block i).refs :=
+  chopBlk_refs_of_lt h
 
 /-- The truncated view: the record's. -/
 def chopViewHZ (V : LeanDag.Hydrozoan.View U) (G : ℕ) : LeanDag.Hydrozoan.View (chopHZ U G) :=
@@ -73,43 +73,36 @@ def chopViewHZ (V : LeanDag.Hydrozoan.View U) (G : ℕ) : LeanDag.Hydrozoan.View
 
 /-! ## The fill -/
 
-/-- A Hydrozoan universe's blocks, read as core blocks with no payload —
-the shape a Safe Skip message is stated over. -/
-def hzBlk (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) :
-    BlockId → Block Replica BlockId Unit :=
-  fun i => LeanDag.Hydrozoan.adaptBlock (U.block i)
-
-theorem hzBlk_round (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) (i : BlockId) :
-    (hzBlk U i).round = (U.block i).round := rfl
-
 /-- **The copy fill, at Hydrozoan's universe**: the record's, through
 the adapter. One block per gap round, by the recovering replica,
-carrying the donor's parents at that round. -/
+carrying the donor's refs at that round. -/
 def copyFillHZ (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
-    (sk : SkipData U.ids (hzBlk U)) : LeanDag.Hydrozoan.BlockUniverse Replica BlockId :=
+    (sk : SkipData U.ids U.block) : LeanDag.Hydrozoan.BlockUniverse Replica BlockId :=
   LeanDag.Hydrozoan.onRecord.copyFill U sk
 
-variable {sk : SkipData U.ids (hzBlk U)}
+variable {sk : SkipData U.ids U.block}
+
+theorem mem_copyFillHZ_ids {b : BlockId} :
+    b ∈ (copyFillHZ U sk).ids ↔ b ∈ U.ids ∨ b ∈ sk.freshIds := Finset.mem_union
 
 @[simp] theorem copyFillHZ_block_old {b : BlockId} (hb : b ∈ U.ids) :
     (copyFillHZ U sk).block b = U.block b := by
-  change LeanDag.Hydrozoan.unadapt (sk.fillMap _ b) = U.block b
-  rw [SkipData.fillMap_old hb]; rfl
+  change sk.fillMap _ b = U.block b
+  rw [SkipData.fillMap_old hb]
 
 @[simp] theorem copyFillHZ_block_fresh {k : ℕ} :
-    (copyFillHZ U sk).block (sk.fresh k) =
-      ⟨k, sk.v1, (U.block (sk.line k)).parents⟩ := by
-  change LeanDag.Hydrozoan.unadapt (sk.fillMap _ (sk.fresh k)) = _
+    (copyFillHZ U sk).block (sk.fresh k) = sk.copyBlock k := by
+  change sk.fillMap _ (sk.fresh k) = _
   rw [SkipData.fillMap_fresh]; rfl
 
-/-- An old block's parents are old. -/
-theorem copyFillHZ_parents_old {b : BlockId} (hb : b ∈ U.ids) :
-    ∀ j ∈ ((copyFillHZ U sk).block b).parents, j ∈ U.ids := by
+/-- An old block's refs are old. -/
+theorem copyFillHZ_refs_old {b : BlockId} (hb : b ∈ U.ids) :
+    ∀ j ∈ ((copyFillHZ U sk).block b).refs, j ∈ U.ids := by
   rw [copyFillHZ_block_old hb]
   exact U.complete b hb
 
 /-- The old view, read in the filled universe: the record's. -/
-def liftViewHZ (sk : SkipData U.ids (hzBlk U)) (V : LeanDag.Hydrozoan.View U) :
+def liftViewHZ (sk : SkipData U.ids U.block) (V : LeanDag.Hydrozoan.View U) :
     LeanDag.Hydrozoan.View (copyFillHZ U sk) :=
   LeanDag.Hydrozoan.onRecord.liftViewCopy sk V
 
@@ -124,38 +117,42 @@ theorem extends_copyFillHZ :
 refutation at `extends_copyFillHZ`: a reliable set holding the
 recovering replica is uncovered at every gap round, for the same reason
 the fill is safe. -/
-theorem not_synchronisedOn_copyFillHZ {sk : SkipData U.ids (hzBlk U)} {T : Finset Replica}
+theorem not_synchronisedOn_copyFillHZ {sk : SkipData U.ids U.block} {T : Finset Replica}
     {R k : ℕ} (hv1 : sk.v1 ∈ T) (hk1 : sk.r0 < k) (hk2 : k ≤ sk.r) (hk : R ≤ k)
     {b : BlockId} (hb : b ∈ U.ids) (hbround : (U.block b).round = k + 1)
-    (hbc : (U.block b).author ∈ T) :
+    (hbc : (U.block b).creator ∈ T) :
     ¬ Timed.SynchronisedOn (LeanDag.Hydrozoan.rule (Replica := Replica) (BlockId := BlockId))
       (copyFillHZ U sk) T R :=
   Timed.not_synchronisedOn_of_extends extends_copyFillHZ hk
     (f := sk.fresh k)
     ⟨Finset.mem_union_right _ (sk.mem_freshIds.mpr ⟨k, hk1, hk2, rfl⟩), sk.hfresh_new k⟩
-    (by simp [copyFillHZ_block_fresh]) (by simpa [copyFillHZ_block_fresh] using hv1)
+    (by simp [copyFillHZ_block_fresh, SkipData.copyBlock])
+    (by simpa [copyFillHZ_block_fresh, SkipData.copyBlock] using hv1)
     hb hbround hbc
 
 /-! ## Re-genesis -/
 
 /-- **Re-genesis, at Hydrozoan's universe**: the record's. -/
 def addGenesisHZ (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) (v : Replica) (g : BlockId)
-    (hg : g ∉ U.ids) (hsev : ∀ b ∈ U.ids, (U.block b).author ≠ v) :
+    (hg : g ∉ U.ids) (hsev : ∀ b ∈ U.ids, (U.block b).creator ≠ v) :
     LeanDag.Hydrozoan.BlockUniverse Replica BlockId :=
   LeanDag.Hydrozoan.onRecord.addGenesis U v g () hg hsev
 
 variable {v : Replica} {g : BlockId}
-variable {hg : g ∉ U.ids} {hsev : ∀ b ∈ U.ids, (U.block b).author ≠ v}
+variable {hg : g ∉ U.ids} {hsev : ∀ b ∈ U.ids, (U.block b).creator ≠ v}
+
+theorem mem_addGenesisHZ_ids {b : BlockId} :
+    b ∈ (addGenesisHZ U v g hg hsev).ids ↔ b = g ∨ b ∈ U.ids := Finset.mem_insert
 
 @[simp] theorem addGenesisHZ_block_old {b : BlockId} (hb : b ∈ U.ids) :
     (addGenesisHZ U v g hg hsev).block b = U.block b := by
-  change LeanDag.Hydrozoan.unadapt (if b ∈ U.ids then _ else _) = U.block b
+  change (if b ∈ U.ids then _ else _) = U.block b
   rw [if_pos hb]; rfl
 
 @[simp] theorem addGenesisHZ_block_new :
-    (addGenesisHZ U v g hg hsev).block g = ⟨0, v, ∅⟩ := by
-  change LeanDag.Hydrozoan.unadapt (if g ∈ U.ids then _ else _) = _
-  rw [if_neg hg]; rfl
+    (addGenesisHZ U v g hg hsev).block g = ⟨0, v, ∅, ()⟩ := by
+  change (if g ∈ U.ids then _ else _) = _
+  rw [if_neg hg]
 
 /-! ## Promptness: the fill cannot conjure a commit, for Hydrozoan -/
 
@@ -168,12 +165,12 @@ theorem candidates_fresh_hz (S : Slots Replica) {k : ℕ}
       (copyFillHZ U sk) k L) : L ∉ U.ids := by
   intro hLU
   obtain ⟨-, hLr, hLc⟩ := hL
-  have hLr' : (LeanDag.Hydrozoan.adaptBlock ((copyFillHZ U sk).block L)).round = S.slotRound k := hLr
-  have hLc' : (LeanDag.Hydrozoan.adaptBlock ((copyFillHZ U sk).block L)).creator = S.leader k := hLc
+  have hLr' : (((copyFillHZ U sk).block L)).round = S.slotRound k := hLr
+  have hLc' : (((copyFillHZ U sk).block L)).creator = S.leader k := hLc
   rw [copyFillHZ_block_old hLU] at hLr' hLc'
   exact sk.hgap L hLU (by rw [← hlead]; exact hLc')
-    (by change sk.r0 < (LeanDag.Hydrozoan.adaptBlock (U.block L)).round; omega)
-    (by change (LeanDag.Hydrozoan.adaptBlock (U.block L)).round ≤ sk.r; omega)
+    (by change sk.r0 < ((U.block L)).round; omega)
+    (by change ((U.block L)).round ≤ sk.r; omega)
 
 /-- **SS3 for Hydrozoan**, from its `SkipsUnsupported`: the slot the
 recovering replica leads at a gap round is skipped at once, at the grade
@@ -190,9 +187,9 @@ theorem decided_none_fresh_hz (S : Slots Replica) {V : LeanDag.Hydrozoan.View U}
       obtain ⟨c, hcV, hcc, hcr⟩ := hpres v hv
       have hcU : c ∈ U.ids := V.subset_ids hcV
       refine ⟨c, hcV, ?_, ?_⟩
-      · show (LeanDag.Hydrozoan.adaptBlock ((copyFillHZ U sk).block c)).creator = v
+      · show (((copyFillHZ U sk).block c)).creator = v
         rw [copyFillHZ_block_old hcU]; exact hcc
-      · show (LeanDag.Hydrozoan.adaptBlock ((copyFillHZ U sk).block c)).round = S.slotRound k + 1
+      · show (((copyFillHZ U sk).block c)).round = S.slotRound k + 1
         rw [copyFillHZ_block_old hcU]; exact hcr)
     (fun L hL => candidates_fresh_hz S hlead hk1 hk2 hL)
     (fun c hcV _ _ => V.subset_ids hcV)

@@ -65,27 +65,27 @@ A. Ids 13, 14: round 3 by `1` (witnessing, excludes `0`) and `3`
 *and* including `0` — the invalid block. -/
 def lkX : Fin 16 → Block (Fin 4) (Fin 16) := fun i =>
   if h : (i : ℕ) < 4 then
-    { round := 0, author := ⟨i, by omega⟩, parents := ∅ }
+    { round := 0, creator := ⟨i, by omega⟩, refs := ∅, payload := () }
   else if (i : ℕ) = 4 then
-    { round := 1, author := 0, parents := {0, 1, 2} }
+    { round := 1, creator := 0, refs := {0, 1, 2}, payload := () }
   else if (i : ℕ) = 5 then
-    { round := 1, author := 0, parents := {0, 1, 3} }
+    { round := 1, creator := 0, refs := {0, 1, 3}, payload := () }
   else if h : (i : ℕ) < 9 then
-    { round := 1, author := ⟨(i : ℕ) - 5, by omega⟩, parents := {0, 1, 2} }
+    { round := 1, creator := ⟨(i : ℕ) - 5, by omega⟩, refs := {0, 1, 2}, payload := () }
   else if (i : ℕ) = 9 then
-    { round := 2, author := 0, parents := {4, 6, 7} }
+    { round := 2, creator := 0, refs := {4, 6, 7}, payload := () }
   else if (i : ℕ) = 10 then
-    { round := 2, author := 1, parents := {4, 6, 7} }
+    { round := 2, creator := 1, refs := {4, 6, 7}, payload := () }
   else if (i : ℕ) = 11 then
-    { round := 2, author := 2, parents := {5, 6, 7} }
+    { round := 2, creator := 2, refs := {5, 6, 7}, payload := () }
   else if (i : ℕ) = 12 then
-    { round := 2, author := 3, parents := {4, 6, 8} }
+    { round := 2, creator := 3, refs := {4, 6, 8}, payload := () }
   else if (i : ℕ) = 13 then
-    { round := 3, author := 1, parents := {10, 11, 12} }
+    { round := 3, creator := 1, refs := {10, 11, 12}, payload := () }
   else if (i : ℕ) = 14 then
-    { round := 3, author := 3, parents := {9, 10, 12} }
+    { round := 3, creator := 3, refs := {9, 10, 12}, payload := () }
   else
-    { round := 3, author := 2, parents := {9, 10, 11} }
+    { round := 3, creator := 2, refs := {9, 10, 11}, payload := () }
 
 /-- The Hydrozoan universe of ids 0–14 (id 15 left out). -/
 def UX : BlockUniverse (Fin 4) (Fin 16) where
@@ -106,10 +106,10 @@ def OX : OptUniverse (Fin 4) (Fin 16) :=
 example : IsLeaderBlock UX 1 4 ∧ IsLeaderBlock UX 1 5 ∧ ¬ IsLeaderBlock UX 1 6 := by
   decide
 
--- Id 13 witnesses slot 1's equivocation (its parents 10 and 11 vote for
--- 4 and 5); id 14 does not (its parents all vote for 4); and the
+-- Id 13 witnesses slot 1's equivocation (its refs 10 and 11 vote for
+-- 4 and 5); id 14 does not (its refs all vote for 4); and the
 -- voting-round block 9, which references copy 4 directly, does not
--- either — witnessing is about the parents' votes, one round up.
+-- either — witnessing is about the refs' votes, one round up.
 example :
     WitnessesEquivocation UX 1 13 ∧ ¬ WitnessesEquivocation UX 1 14 ∧
       ¬ WitnessesEquivocation UX 1 9 := by
@@ -119,19 +119,19 @@ example :
 -- replica 0, while the non-witnessing block 14 does (id 9) and is
 -- allowed to.
 example :
-    (∀ j ∈ (UX.block 13).parents, (UX.block j).author ≠ 0) ∧
-      (9 ∈ (UX.block 14).parents ∧ (UX.block 9).author = 0) := by
+    (∀ j ∈ (UX.block 13).refs, (UX.block j).creator ≠ 0) ∧
+      (9 ∈ (UX.block 14).refs ∧ (UX.block 9).creator = 0) := by
   decide
 
 -- Exclusion sits exactly on the DAG quorum: after dropping replica 0's
--- vote, block 13 keeps q = 3 parents — the correct replicas alone, as in
+-- vote, block 13 keeps q = 3 refs — the correct replicas alone, as in
 -- the paper's lem:opt-admissible at the tight committee ...
-example : (authors UX.block (UX.block 13)).card = q (Fin 4) := by decide
+example : (creators UX.block (UX.block 13)).card = q (Fin 4) := by decide
 
 /-- ... and exclusion cannot go below it: a witnessing block that also
-dropped replica 3's vote would have two parents. -/
+dropped replica 3's vote would have two refs. -/
 def twoParentWitness : Block (Fin 4) (Fin 16) :=
-  { round := 3, author := 2, parents := {10, 11} }
+  { round := 3, creator := 2, refs := {10, 11}, payload := () }
 
 example : ¬ ValidWrt lkX twoParentWitness := by decide
 
@@ -139,8 +139,8 @@ example : ¬ ValidWrt lkX twoParentWitness := by decide
 -- the one candidate 3, so block 12 — at slot 0's decision round — does
 -- not witness and keeps replica 3's block 8 freely.
 example :
-    ¬ WitnessesEquivocation UX 0 12 ∧ 8 ∈ (UX.block 12).parents ∧
-      (UX.block 8).author = Slots.leader 0 := by
+    ¬ WitnessesEquivocation UX 0 12 ∧ 8 ∈ (UX.block 12).refs ∧
+      (UX.block 8).creator = Slots.leader 0 := by
   decide
 
 /-- Two slots per round: slot `k` at round `k / 2`, led by `(k + 2) % 4`.
@@ -159,9 +159,9 @@ def fourSlotsTwoPerRound : Slots (Fin 4) where
 
 /-- The same table under the two-slots-per-round schedule is again an
 `OptUniverse`: slots with a decision round ≤ 3 have index ≤ 3. -/
-def OX2 : @OptUniverse (Fin 4) (Fin 16) _ _ _ _ fourSlotsTwoPerRound :=
-  letI := fourSlotsTwoPerRound
-  { UX with
+def OX2 : @OptUniverse (Fin 4) (Fin 16) _ _ _ _ fourSlotsTwoPerRound := by
+  letI : Slots (Fin 4) := fourSlotsTwoPerRound
+  exact { UX with
     leader_excluded :=
       leaderExcluded_of_bounded UX 3 3
         (fun k hk => by change k / 2 + 2 ≤ 3 at hk; omega) (by decide) (by decide) }
@@ -176,8 +176,8 @@ example :
       @IsLeaderBlock (Fin 4) (Fin 16) _ _ _ fourSlotsTwoPerRound UX 3 6 ∧
       @WitnessesEquivocation (Fin 4) (Fin 16) _ _ _ fourSlotsTwoPerRound UX 2 13 ∧
       ¬ @WitnessesEquivocation (Fin 4) (Fin 16) _ _ _ fourSlotsTwoPerRound UX 3 13 ∧
-      (∀ j ∈ (UX.block 13).parents, (UX.block j).author ≠ 0) ∧
-      10 ∈ (UX.block 13).parents ∧ (UX.block 10).author = 1 := by
+      (∀ j ∈ (UX.block 13).refs, (UX.block j).creator ≠ 0) ∧
+      10 ∈ (UX.block 13).refs ∧ (UX.block 10).creator = 1 := by
   decide
 
 /-- The same table with id 15 admitted: a valid Hydrozoan universe. -/
@@ -190,13 +190,13 @@ def UbadX : BlockUniverse (Fin 4) (Fin 16) where
 
 -- Id 15 witnesses the equivocation and references replica 0's vote 9 ...
 example :
-    WitnessesEquivocation UbadX 1 15 ∧ 9 ∈ (UbadX.block 15).parents ∧
-      (UbadX.block 9).author = Slots.leader 1 := by
+    WitnessesEquivocation UbadX 1 15 ∧ 9 ∈ (UbadX.block 15).refs ∧
+      (UbadX.block 9).creator = Slots.leader 1 := by
   decide
 
 -- ... so no `OptUniverse` extends `UbadX`: the clause bites, at
 -- exactly (b, k, j) = (15, 1, 9).
-example : ¬ ∃ O : OptUniverse (Fin 4) (Fin 16), O.toBlockUniverse = UbadX := by
+example : ¬ ∃ O : OptUniverse (Fin 4) (Fin 16), O.toBlockRecord = UbadX := by
   rintro ⟨O, h⟩
   have hx := O.leader_excluded 15 (by rw [h]; decide) 1 (by rw [h]; decide)
     (by rw [h]; decide) 9 (by rw [h]; decide)

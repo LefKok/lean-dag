@@ -47,15 +47,15 @@ theorem byzantine_eq_empty_of_f_eq_zero (hf : O.f = 0) :
   rw [hf] at h
   exact Finset.card_eq_zero.mp (Nat.le_zero.mp h)
 
-variable {U : BlockUniverse Replica BlockId}
+variable {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
 
 /-- A fast commit seen in a view holds in the universe. -/
-theorem fastCommitOpt_of_fastCommitOptInView {V : View U} {L : BlockId} {r : ℕ}
+theorem fastCommitOpt_of_fastCommitOptInView {V : LeanDag.Hydrozoan.View U} {L : BlockId} {r : ℕ}
     (h : FastCommitOptInView U V L r) : FastCommitOpt U L r :=
   le_trans h (Finset.card_le_card (Finset.image_subset_image Finset.inter_subset_left))
 
 /-- The blame half of a skip seen in a view holds in the universe. -/
-theorem qCert_le_blames_of_skippedLeaderOptInView [S : Slots Replica] {V : View U} {k : ℕ}
+theorem qCert_le_blames_of_skippedLeaderOptInView [S : Slots Replica] {V : LeanDag.Hydrozoan.View U} {k : ℕ}
     (h : SkippedLeaderOptInView U V k) : qCert Replica ≤ (blames U k).card :=
   le_trans h.1 (Finset.card_le_card (Finset.image_subset_image Finset.inter_subset_left))
 

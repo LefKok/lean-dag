@@ -35,7 +35,7 @@ theorem lt_of_eligibleAsAnchor {k j : ℕ}
 end Eligibility
 
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
-  [DecidableEq BlockId] [F : Faults Replica] {U : BlockUniverse Replica BlockId}
+  [DecidableEq BlockId] [F : LeanDag.Hydrozoan.Faults Replica] {U : BlockUniverse Replica BlockId}
 
 section Totality
 

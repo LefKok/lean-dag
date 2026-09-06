@@ -28,8 +28,8 @@ omit [DecidableEq BlockId] in
 the Optimal fast quorum. -/
 theorem qFastOpt_le_card_correct
     (h : (O.byzantine ∪ O.crashed).card ≤ pOpt Replica) :
-    qFastOpt Replica ≤ (Correct : Finset Replica).card := by
-  have hcompl : (Correct : Finset Replica).card
+    qFastOpt Replica ≤ (LeanDag.Hydrozoan.Correct : Finset Replica).card := by
+  have hcompl : (LeanDag.Hydrozoan.Correct : Finset Replica).card
       = Fintype.card Replica - (O.byzantine ∪ O.crashed).card :=
     Finset.card_compl _
   have hle : (O.byzantine ∪ O.crashed).card ≤ Fintype.card Replica :=
@@ -39,8 +39,8 @@ theorem qFastOpt_le_card_correct
 
 section Skip
 
-variable [S : Slots Replica] {U : BlockUniverse Replica BlockId}
-  {V : View U} {T : Finset Replica} {k : ℕ}
+variable [S : Slots Replica] {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
+  {V : LeanDag.Hydrozoan.View U} {T : Finset Replica} {k : ℕ}
 
 /-- Every `T`-authored voting-round block blames a candidate-less slot, in
 any view caught up to the voting round. -/
@@ -51,7 +51,7 @@ theorem subset_blamesInView_of_coversUpto
     T ⊆ blamesInView U V k := by
   intro v hv
   obtain ⟨b, hb, hbr, hba⟩ := hpop v hv
-  simp only [blamesInView, mem_authorsOf]
+  simp only [blamesInView, mem_creatorsOf]
   refine ⟨b, Finset.mem_inter.mpr
     ⟨Finset.mem_filter.mpr ⟨mem_blocksAt.mpr ⟨hb, hbr⟩, ?_⟩,
       hcov b hb (le_of_eq hbr)⟩, hba⟩
@@ -68,15 +68,15 @@ theorem noEvidenceQuorumInView_of_coversUpto
     (hcov : V.CoversUpto (S.slotRound k + 2)) :
     NoEvidenceQuorumInView U V k := by
   refine ⟨(blocksAt U (decisionRound Replica k)).filter
-    (fun b => (U.block b).author ∈ T), fun b hb => ?_, ?_⟩
+    (fun b => (U.block b).creator ∈ T), fun b hb => ?_, ?_⟩
   · obtain ⟨hb1, -⟩ := Finset.mem_filter.mp hb
     obtain ⟨hbu, hbr⟩ := mem_blocksAt.mp hb1
     exact ⟨hb1, hcov b hbu (le_of_eq hbr), fun L hL _ => hnolead L hL⟩
-  · have hsub : T ⊆ authorsOf U.block ((blocksAt U (decisionRound Replica k)).filter
-        (fun b => (U.block b).author ∈ T)) := by
+  · have hsub : T ⊆ creatorsOf U.block ((blocksAt U (decisionRound Replica k)).filter
+        (fun b => (U.block b).creator ∈ T)) := by
       intro v hv
       obtain ⟨b, hb, hbr, hba⟩ := hpop v hv
-      exact mem_authorsOf.mpr ⟨b, Finset.mem_filter.mpr
+      exact mem_creatorsOf.mpr ⟨b, Finset.mem_filter.mpr
         ⟨mem_blocksAt.mpr ⟨hb, by simp only [decisionRound]; exact hbr⟩, hba ▸ hv⟩, hba⟩
     have h1 := Finset.card_le_card hsub
     have h2 := qCert_le_q_opt (Replica := Replica)
