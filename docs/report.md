@@ -74,18 +74,25 @@ conditions, and live at the classical bound under a fairness clause the
 mechanisation sharpens: a lone committed leader settles almost nothing
 below it, and progress requires committed leaders at adjacent rounds.
 
-Finally we ask whether the first seven compose, and answer it by
-naming the invariants each consumes and proving the two universe
-transformers preserve them: a validator running four mechanisms at once
-still cannot disagree about a verdict. What is visible only from the
-composition is a set of deployment constraints no single account can
-state — a garbage-collection lag bounds the outage a one-message
-recovery can span, a horizon must fall on an epoch boundary of an
-adaptive schedule, and a validator pruned past its own history is a
-reader until it re-genesises, counting against the fault budget
+Finally we ask whether all of this composes, and answer it once rather
+than pairwise. A small set of **properties of a commit rule** — a band
+the verdicts read, agreement, candidacy, the indirect rule, and a
+*support* saying what a commit counts — is enough for every mechanism
+to be proved against, and every rule with a carrier shows them: the
+core and its reactive execution, Odontoceti, Nemo-Nemo, Orcaella,
+Mahi-Mahi, FinWhale, Hydrozoan and Optimal-Hydrozoan. Two headline
+theorems then say what a rule gets — safety across any stack of cuts,
+fills and re-genesis, and liveness with certification as the only
+antecedent, so that a timed and a reactive execution share it — and
+synchrony is kept out of the properties by construction. What is
+visible only from the composition is a set of deployment constraints no
+single account can state — a garbage-collection lag bounds the outage a
+one-message recovery can span, a horizon must fall on an epoch boundary
+of an adaptive schedule, and a validator pruned past its own history is
+a reader until it re-genesises, counting against the fault budget
 meanwhile.
 
-The development comprises roughly 52,000 lines of Lean 4 over Mathlib. Every
+The development comprises roughly 83,000 lines of Lean 4 over Mathlib, of which 21,000 are witnesses. Every
 principal result depends on exactly Lean's three standard axioms; every
 definition is exercised on concrete models by `decide` before anything is
 proved from it. All displayed Lean in this report is drawn from the source
@@ -4910,71 +4917,40 @@ twice over (I17, I19).
 
 ### 16.1 Three layers, and what can break them
 
-The invariants do not all live at one level, and the level determines
-which mechanism can disturb them.
+*(the record of the first route; the method as it stands is §16.9)*
 
-| Layer | Object | Disturbed by |
-|:---|:---|:---|
-| U | `BlockUniverse` | `chop` (§9), `skipFill` (§12) |
-| D | `Delivery U`, indexed by the universe | `chopD` (§9) |
-| S | `Slots Validator`, independent of the universe | `Slots.chop` (§9), `slotsOf` (§13) |
-
-At layer U the invariants are the DAG laws (§2.2), `PopulatedOn` and
-`SynchronisedOn` (§6.3–§6.4), `DoSValid` (§8.2), `HonestNoEquiv`
-(§14.1) and the verdict facts of §3.5. At layer D they are the
-delivery conditions and the storage budgets of §8.4. At layer S they
-are `FairScheduleOn` and `FairRunOn` (§6.6), `SpansEligible`, and
-§13.4's `PlacesRuns`.
-
-That every theorem of §§5–14 is stated against some subset of this list
-is checked rather than assumed: the extraction of §25 is queried for
-hypothesis-position identifiers of thirteen capstones, and the
-dependency is that the layering is closed. Two corrections came out of
-that check. The schedule layer appears in five capstones and belongs in
-the list; and layer D is *universe-indexed*, so a universe transformer
-needs a delivery transformer of its own before layer-D invariants can
-be stated for it at all — which `chop` has (`chopD`) and `skipFill`
-does not.
+The first route named the invariants each arc consumes and asked which
+mechanism can disturb them. They live at three levels: the universe
+(`BlockUniverse`, disturbed by `chop` and `skipFill`), the delivery
+structure indexed by it (`Delivery U`, disturbed by `chopD`), and the
+schedule (`Slots`, disturbed by `Slots.chop` and `slotsOf`). Two facts
+from that analysis still matter. Layer D is *universe-indexed*, so a
+universe transformer needs a delivery transformer of its own before
+layer-D invariants can be stated for it at all, which `chop` has and
+`skipFill` does not (§16.8). And the schedule layer does not interact
+with the other two: `Slots.chop` and `slotsOf` read a `Slots` instance
+and nothing else, which is why composition on that axis needs no lemma.
 
 ### 16.2 Preservation
 
-Each cell of the table below is one lemma of the shape `I U → I (F U)`,
-after which every property stated against named invariants transfers to
-`F U` with no further proof.
+*(the record of the first route)*
 
-| Invariant | `chop U G` | `skipFill` |
-|:---|:---|:---|
-| DAG laws | definitional | definitional (SS1) |
-| `PopulatedOn` | `populated_chop` | SS2 |
-| `SynchronisedOn` | I2 `synchronisedOn_chop` | **refuted** (I4) |
-| `DoSValid` | `dosValid_chop` | open (§16.7) |
-| `HonestNoEquiv` | I1 `honestNoEquiv_chop` | I1 `honestNoEquiv_skipFill` |
-| verdicts | G3 `decided_chop_iff` | SS5 `decided_fill_of_persist` |
-
-**I1** is what lets §14's hybrid model be used inside §9's truncation
-and across §12's fill: a hybrid universe stays one on both sides. The
-fill's half is the argument `skipFill`'s own non-equivocation field
-makes for the correct class, at the wider honest class, and it consumes
-the same clause — `hgap`, the crash itself.
-
-**I2** needs only the horizon offset `R ≤ G + R'`, with no base-layer
-exception. Coverage constrains a block at chopped round `n + 1`, which
-lies above the cut by construction, so `chop` retains its references
-and the original clause applies unchanged. A condition that quantifies *upward* transports through truncation with
-fewer side conditions than one pinned at a fixed round.
-
-At layer S, **I3** carried fairness and shape through `Slots.chop`, which
-is what gives a validator joining from a truncation a schedule that is
-fair and spanning in its own right. Those three lemmas are retired: the
-`Truncates` witness carries the schedule in its `slotRound` and `leader`
-clauses, and liveness across the cut is `Support.live_of_truncates`
-with no fairness lemma in between. The corresponding cell for
-`slotsOf` is empty on purpose: an adaptive policy changes who leads, so
-fairness of the induced instance cannot follow from the base
-schedule's, and §13.4's `PlacesRuns` is the replacement. That contrast
-explains its otherwise peculiar shape — it quantifies over every
-verdict function the policy might see, because no fact about the base
-schedule survives reassignment.
+Each cell of the route's table was one lemma of the shape
+`I U → I (F U)`, after which every property stated against named
+invariants transferred to `F U`. The properties made most of the table
+redundant: verdicts transfer by `LocalTruncate.of_banded` and
+`Persist.of_banded`, production and coverage by the `Sustains`
+witness, and the schedule's fairness by the `Truncates` witness, with
+no lemma per invariant. Two cells survive because they are not
+properties. `HonestNoEquiv`, the hybrid model's carrier invariant,
+survives the cut and the fill (I1, `honestNoEquiv_chop` and
+`honestNoEquiv_skipFill`, `Integration/Preservation.lean`), which is
+what lets Orcaella's carrier be transformed at all; the fill's half
+consumes `hgap`, the crash itself. And coverage survives the cut at a
+horizon offset (I2, `synchronisedOn_chop`, now in
+`Integration/Coverage.lean`) and is **refuted** under the fill (I4,
+§16.3), which is a fact about the timed model rather than about any
+rule.
 
 ### 16.3 Coverage under the fill
 
@@ -5115,20 +5091,13 @@ Safe Skip serves — is honest but not correct. `SkipMsg` carried
 `v1 ∈ Correct`, so the structure could not describe its own motivating
 case. The hypothesis was stronger than its use: it appeared once,
 pinning `v1`'s round-`r0` block to the anchor at the fill's boundary.
-§12.1 now carries that fact directly as `hB1uniq`, with
-`hB1uniq_of_correct` recovering the base model's route; the lemma that
-supplied §14's from `HonestNoEquiv`, and the lifecycle theorem built on
-it, were retired with the direct composition. Neither arc was mistaken;
-one stated a hypothesis in terms of a class the other splits.
-
-The lifecycle then composes without further work. A halted validator's
-slot is skipped by L5 — whose hypothesis says nothing about *why* the
-leader is absent, so a crash-prone leader, a withholding Byzantine
-leader and a correct leader that has not yet built are
-indistinguishable there — and after recovery SS2 restores production
-with the validator back in the reliable set. No lemma relates
-`AdaptivePolicy` to `HybridFaults`, and none is needed: the crash class
-is invisible in verdicts, which is all a policy reads.
+§12.1 carries that fact directly as `hB1uniq`, with `hB1uniq_of_correct`
+recovering the base model's route. The lifecycle theorem that was built
+on it is retired with the direct composition; what it said — a halted
+validator's slot is skipped by L5, whose hypothesis does not say *why*
+the leader is absent, and after recovery SS2 restores production with
+the validator back in the reliable set — is now read off the headline
+at Orcaella's carrier, since the crash class is invisible in verdicts.
 
 ### 16.6 Re-genesis, and the long outage
 
@@ -9853,8 +9822,8 @@ rather than an unsatisfiable hypothesis.
 
 ## 25. Mechanisation
 
-The development comprises approximately 52,000 lines of Lean 4 (v4.32.2)
-against Mathlib, of which some 37,000 constitute the library and 15,000
+The development comprises approximately 83,000 lines of Lean 4 (v4.32.2)
+against Mathlib, of which some 61,000 constitute the library and 21,000
 the models of §24 and the witness files of the arcs. A full build reports
 no errors.
 
@@ -9934,18 +9903,26 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `Hybrid/Decision.lean` | the decision relation with canonicity; agreement |
 | `Hybrid/Liveness.lean` | the liveness chain at quorum `q` |
 | `Hybrid/Conservativity.lean` | the crash-free collapse onto Odontoceti |
-| `Integration/Preservation.lean` | the layer-U preservation lemmas |
+| `Integration/Preservation.lean` | `HonestNoEquiv` across the cut and the fill |
 | `Integration/Coverage.lean` | coverage refuted under the fill, and recovered above it |
-| `Integration/ScheduleShape.lean` | fairness and shape under truncation |
 | `Integration/Joiner.lean` | horizon-stability; epoch alignment |
 | `Integration/Retention.lean` | anchor retention; the outage bound; the severed chain |
 | `Integration/ReGenesis.lean` | re-genesis at the cut; convergence; the exposure condition |
-| `Integration/Stack.lean` | the composition capstone |
-| `Integration/Lifecycle.lean` | the crash-prone lifecycle |
 | `Integration/Exposure.lean` | the fill's cone growth; the enforceable exposure check |
 | `Integration/DeliveryFill.lean` | the fill's delivery layer, and the budgets over it |
 | `Integration/Margin.lean` | the budget without the author; severance and the fault budget |
 | `Integration/CommonTarget.lean` | fills against a common-core target |
+| `Properties/Carrier.lean` | `DagRule` with its three laws; `RebasedAbove` |
+| `Properties/Band.lean`, `Agree.lean`, `Candidate.lean`, `Commit.lean` | the four properties: `Banded`, `Agree`, `CommitsCandidate`, `Indirect` |
+| `Properties/Support.lean`, `Derived/LeaderCommits.lean` | the support, its two laws, `live`; `LeaderCommits` derived |
+| `Properties/Optional/` | `CommitsDirect`, `SkipsUnsupported`, `Quorate`, `SelfParent`, `NoEquiv` |
+| `Properties/Derived/` | `Persist`, `LocalTruncate`, `Descends`, `DecidedBelow`, progress |
+| `Properties/Extends.lean`, `Sustain.lean`, `Truncate.lean`, `Compose.lean` | the mechanism relations and their composition |
+| `Properties/Arcs/GC.lean`, `SafeSkip.lean`, `Liveness.lean`, `Quality.lean` | the generic theorems: cut, fill, prompt skip, liveness across a mechanism, chain quality |
+| `Properties/Arcs/Stack.lean`, `Headline.lean` | any stack of mechanisms is one; the safety and liveness headlines |
+| `Timed/Coverage.lean` | the timed model: coverage, `OfCoverage`, the bridge into `live` |
+| `MysticetiProperties.lean`, `OdontocetiProperties.lean`, `NemoProperties.lean`, `HybridProperties.lean`, `MahiMahiProperties.lean`, `FinWhale/Carrier.lean`, `Hydrozoan/Helpers/`, `OptimalHydrozoan/Carrier.lean`, `Reactive/MysticetiProperties.lean` | each rule's carrier, properties, support and headlines |
+| `Integration/NemoMechanisms.lean`, `FinWhaleMechanisms.lean`, `HybridMechanisms.lean`, `HydrozoanMechanisms.lean`, `OptimalMechanisms.lean`, `ReactiveMechanisms.lean`, `ReGenesisRules.lean`, `StackRules.lean` | the mechanism cells at each rule: witnesses and instances |
 | `Nemo/Basic.lean` | the majority quorum and its intersection; crash validity; the universe with universal non-equivocation |
 | `Nemo/CausalHistory.lean`, `Nemo/History.lean` | reachability and the finite cone, restated over the crash universe |
 | `Nemo/Support.lean` | the hitting, coverage and propagation lemmas at the majority |
@@ -10178,10 +10155,12 @@ found; garbage collection took every theorem verbatim because
 whole DAG layer because its quorums are the `n − f` the development is
 parameterised by. When an abstraction is placed correctly, new
 developments read like instantiations; when it is misplaced, they read
-like refactors. The one refactor resisted — a rule-parameterised
-decision relation shared between §3.5 and §10.3 — is the cost of that
-discipline, incurred twice in mirrored proofs rather than once in
-modifications to the core.
+like refactors. The rule-parameterised treatment that §3.5 and §10.3
+first seemed to call for arrived the same way, additively: the
+properties of §16.9 are stated over a carrier that every rule
+instantiates, the rules' own decision relations are untouched, and
+what had been mirrored proofs became one proof per property and one
+line per rule.
 
 §16 is the exception, and a measured one. Composing §12 with §14
 required weakening a hypothesis of §12 — `v1 ∈ Correct` to the fact
@@ -10191,8 +10170,9 @@ crash-prone validator Safe Skip serves is honest but not correct. The
 change is conservative, one field and one proof line, and it is a
 different act from a refactor. The rule it suggests is that existing
 code may be modified when a result cannot otherwise be stated, and not
-for elegance — which is why the rule-parameterised relation above is
-still resisted.
+for elegance. The properties respected it: the only edits to frozen
+files they required were two record fields, a carrier law and a parent
+structure, each a fact every instance already had.
 
 **Enforceability is a specification discipline.** The principal result of §8
 (`dos_resistance`) quotes only conduct a validator can execute — an
@@ -10270,6 +10250,15 @@ theorem.
 
 **Certified DAGs.** The certified variant, in which a certificate round is
 explicit, is outside the scope of the present development.
+
+**The properties' reach.** Black Marlin (§18) commits by round with no
+slot-indexed relation and has no carrier, so none of §16.9 applies to
+it. The linearisation of a commit's cone is outside the properties by
+design. And the liveness headline's antecedent contains the reader's own
+view being caught up to a horizon, a delivery assumption each execution
+model owes; the timed model discharges it from view convergence and the
+reactive model from its wait clauses, and the headline is conditional
+on it.
 
 None of these affects whether the stated theorems are true; each concerns how
 much they say.
@@ -10398,9 +10387,12 @@ two files beneath a `Prop`-valued interface, where the whole of the
 network's contribution reduces to one clause of view convergence and the
 structural condition is *derived* — three ways over (§6.7–§6.9).
 
-The same foundation then carried three developments it was not designed for,
-essentially unchanged — which is the strongest evidence the abstraction is
-placed correctly. The denial-of-service account reused the delivery layer and
+The same foundation then carried every development after it, essentially
+unchanged — which is the strongest evidence the abstraction is placed
+correctly — and the developments in turn were carried by a second
+abstraction placed above them: four properties of a commit rule and a
+support, against which each mechanism is proved once and which nine
+rules show (§16.9). The denial-of-service account reused the delivery layer and
 the self-parent clause; garbage collection reused every theorem verbatim on
 the truncated universe, because truncation was arranged to be a universe; and
 Odontoceti reused the entire DAG layer because its quorums are
@@ -10415,10 +10407,10 @@ What remains open is catalogued in §26.6: the backoff dynamics, wall-clock
 latency, block-level total order, and liveness below the growth clause.
 Beyond those, two directions suggest themselves. The commit-free,
 evidence-based horizon rule sketched in the garbage-collection document
-would extend pruning into asynchrony; and the decision relation, now
-instantiated twice at different wavelengths with near-identical agreement
-proofs, invites a rule-parameterised treatment — resisted here to keep each
-development additive, but natural the third time a commit rule arrives.
+would extend pruning into asynchrony; and the properties, having
+absorbed every mechanism here, are the interface a tenth rule would be
+written against — the cost of adding one is now the band and the
+support, and everything else is a line.
 
 ---
 
