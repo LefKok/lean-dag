@@ -4,6 +4,7 @@ import LeanDag.SafeSkip.Basic
 import LeanDag.Properties.Arcs.GC
 import LeanDag.Properties.Arcs.SafeSkip
 import LeanDag.Properties.Arcs.Liveness
+import LeanDag.Timed.Extension
 import LeanDag.GC.ChopDecided
 
 /-!
@@ -335,6 +336,22 @@ theorem extends_copyFillHZ {sk : SkipData U.ids (hzBlk U)} :
     show LeanDag.Hydrozoan.adaptBlock ((copyFillHZ U sk).block b) =
       LeanDag.Hydrozoan.adaptBlock (U.block b)
     rw [copyFillHZ_block_old hb]
+
+/-- **The copy fill does not restore coverage either.** The generic
+refutation at `extends_copyFillHZ`: a reliable set holding the
+recovering replica is uncovered at every gap round, for the same reason
+the fill is safe. -/
+theorem not_synchronisedOn_copyFillHZ {sk : SkipData U.ids (hzBlk U)} {T : Finset Replica}
+    {R k : ℕ} (hv1 : sk.v1 ∈ T) (hk1 : sk.r0 < k) (hk2 : k ≤ sk.r) (hk : R ≤ k)
+    {b : BlockId} (hb : b ∈ U.ids) (hbround : (U.block b).round = k + 1)
+    (hbc : (U.block b).author ∈ T) :
+    ¬ Timed.SynchronisedOn (LeanDag.Hydrozoan.rule (Replica := Replica) (BlockId := BlockId))
+      (copyFillHZ U sk) T R :=
+  Timed.not_synchronisedOn_of_extends extends_copyFillHZ hk
+    (f := sk.fresh k)
+    ⟨Finset.mem_union_right _ (sk.mem_freshIds.mpr ⟨k, hk1, hk2, rfl⟩), sk.hfresh_new k⟩
+    (by simp [copyFillHZ_block_fresh]) (by simpa [copyFillHZ_block_fresh] using hv1)
+    hb hbround hbc
 
 /-- **What the fill sustains**: from the top of its gap. -/
 theorem sustains_copyFillHZ {sk : SkipData U.ids (hzBlk U)} :

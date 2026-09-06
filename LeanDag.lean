@@ -48,6 +48,7 @@ import LeanDag.Integration.AdaptiveHydrozoan
 import LeanDag.Adaptive.Basic
 import LeanDag.Adaptive.Policy
 import LeanDag.Adaptive.Run
+import LeanDag.Adaptive.Joiner
 import LeanDag.Adaptive.Liveness
 import LeanDag.Adaptive.Growth
 import LeanDag.Adaptive.Mysticeti
@@ -104,6 +105,7 @@ import LeanDag.Properties.Derived.LeaderCommits
 import LeanDag.Properties.Arcs.Liveness
 import LeanDag.Properties.Optional.SelfParent
 import LeanDag.Timed.Coverage
+import LeanDag.Timed.Extension
 import LeanDag.Properties.Compose
 import LeanDag.Properties.Deliver
 import LeanDag.MysticetiProperties

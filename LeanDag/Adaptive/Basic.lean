@@ -37,6 +37,23 @@ theorem epochOf_mono (W : ℕ) {j k : ℕ} (h : j ≤ k) :
     epochOf W j ≤ epochOf W k :=
   Nat.div_le_div_right h
 
+/-- **Epoch alignment.** When a base slot is a whole number of epochs,
+a numbering that starts there is the original shifted by a constant,
+and every epoch window corresponds. This is what a cut must respect
+under an adaptive schedule: a joiner's slot `k` is the network's
+`d + k`, so the two agree about which epoch a slot belongs to only when
+`d` falls on an epoch boundary. -/
+theorem epochOf_add_of_dvd {W d : ℕ} (hW : 0 < W) (hdvd : W ∣ d) (k : ℕ) :
+    epochOf W (d + k) = d / W + epochOf W k := by
+  obtain ⟨c, rfl⟩ := hdvd
+  unfold epochOf
+  rw [Nat.mul_div_cancel_left c hW, Nat.mul_add_div hW]
+
+/-- Without alignment the correspondence fails: at `W = 2, d = 1` the
+first two slots of the new numbering straddle an epoch boundary of the
+old. -/
+example : epochOf 2 (1 + 1) ≠ 1 / 2 + epochOf 2 1 := by decide
+
 section Slots
 
 variable [S : Slots Validator]

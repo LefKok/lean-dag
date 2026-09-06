@@ -84,35 +84,43 @@ parents are the donor's, so it adds no edge and witnesses nothing new.
 Everything below is a fact about a mechanism, not about a rule, and no
 property reaches it. The labels are the report's (§16.3–§16.7).
 
-### 3.1 Coverage under the fill (`Coverage.lean`)
+### 3.1 Coverage under the fill (`Coverage.lean`, `Timed/Extension.lean`)
 
-Coverage behaves in three ways under the Safe Skip fill. It **fails**
-for any reliable set that contains the recovering validator, at every
-gap round: an old reliable block one round up references no fresh
-identifier (`not_synchronisedOn_skipFill`, I4). This needs nothing
-beyond what makes the fill worth doing, and it is the same fact that
-makes the fill safe — no old block references a fresh id, so the fill
-can manufacture neither a commit nor coverage. It is **preserved** for
-any reliable set excluding the recovering validator
-(`synchronisedOn_skipFill_of_notMem`), and it **returns** strictly above
-the fill for any set (`synchronisedOn_skipFill_above`, from the fill's
-`Sustains` witness). Coverage also survives the cut at a horizon offset
-(`synchronisedOn_chop`, I2, from the cut's `Sustains`).
+Coverage behaves in three ways under a fill, and each is a theorem at
+the relation the fill delivers. It **fails** for any reliable set that
+holds the author of a novel block, at that block's round: an old
+reliable block one round up references no novel identifier
+(`Timed.not_synchronisedOn_of_extends`, at any rule's `Extends`). This
+needs nothing beyond what makes a fill worth doing, and it is the same
+fact that makes the fill safe: no old block references a new id, so
+the fill can manufacture neither a commit nor coverage. It is
+**preserved** for any reliable set holding no novel author
+(`Timed.synchronisedOn_of_extends`), and it **returns** strictly above
+the settling round for any set (`Timed.synchronisedOn_of_rebased`, at
+the `Sustains` witness). The core reads all three at Safe Skip
+(`not_synchronisedOn_skipFill`, I4, `synchronisedOn_skipFill_of_notMem`,
+`synchronisedOn_skipFill_above`) and the cut at a horizon offset
+(`synchronisedOn_chop`, I2); Hydrozoan reads the refutation at its copy
+fill (`not_synchronisedOn_copyFillHZ`).
 
 What the fill restores is *production*, which is what liveness reads,
 and a recovering validator is outside every covered set for the
 duration of its gap.
 
-### 3.2 Where a horizon may be put (`Joiner.lean`, `Retention.lean`)
+### 3.2 Where a horizon may be put (`Joiner.lean`, `Adaptive/Joiner.lean`, `Retention.lean`)
 
-**The joiner** (I5). A validator joining from a truncation under an
-adaptive schedule computes the same leaders as the network exactly when
-the policy's rule is horizon-stable (`HorizonStable`,
-`joiner_assign_agree`), and its verdicts agree with the network's by
-cross-cut agreement at the adaptive schedule (`joiner_decided_agree`,
-`joiner_run_decided_agree`). The two schedule transformers commute
-(`slotsChop_slotsOf`). Epochs align only when the base slot is a
-multiple of the epoch width (`epochOf_add_of_dvd`): **a
+**The joiner** (I5, `Adaptive/Joiner.lean`). A validator joining from a
+cut under an adaptive schedule computes the same leaders as the network
+exactly when the policy's rule is horizon-stable
+(`Adaptive.HorizonStable`, `joiner_assign_agree`), and its verdicts
+agree with the network's by cross-rebase agreement at the adaptive
+schedule (`Adaptive.joiner_run_decided_agree`, from `Agree` and
+`Banded`). Rebasing a schedule commutes with installing a shifted
+assignment (`Rebases.slotsOf`), so any rule's cut is a cut at the
+adaptive schedule (`Truncates.slotsOf`); the core's `Joiner.lean` is
+these at `truncates_chop`, where the two constructions are equal by
+`rfl` (`slotsChop_slotsOf_eq`). Epochs align only when the base slot is
+a multiple of the epoch width (`epochOf_add_of_dvd`): **a
 garbage-collection base slot must be a multiple of the adaptive epoch
 width.**
 

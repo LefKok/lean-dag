@@ -137,7 +137,9 @@ Hydrozoan's skip counts blames at the slot and the count does not move
 when no old block references a fresh identifier; the prompt skip at the
 fill is `decided_none_fresh_hz`, at grade `qFast ≤ |T|`, with
 `decided_none_fresh_agree_hz` saying no view decides that slot
-otherwise.
+otherwise. The same witness gives what the fill does to coverage:
+`not_synchronisedOn_copyFillHZ` is the generic refutation of
+`Timed/Extension.lean` at `extends_copyFillHZ`.
 
 `Integration/OptimalMechanisms.lean` takes the same cut and fill with
 exclusion carried across each: `leaderExcludedAll_chopHZ` (a block

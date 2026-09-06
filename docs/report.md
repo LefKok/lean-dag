@@ -5097,8 +5097,12 @@ in verdicts, which is all a policy reads.
 
 ### 16.3 Coverage under the fill
 
-Coverage behaves in three ways under the Safe Skip fill, and the
-division is the result.
+Coverage behaves in three ways under a fill, and all three follow from
+one fact about extensions: an old block references only old
+identifiers (`Extends.old_refs_old`). `Timed/Extension.lean` states
+the refutation and the preservation once, for every rule; the core
+reads them at the fill's `Extends` witness, and Hydrozoan's copy fill
+reads the refutation at its own (`not_synchronisedOn_copyFillHZ`).
 
 **It fails for a reliable set containing the recovering validator, at
 the rounds that validator slept through.**
@@ -5122,9 +5126,9 @@ a commit nor coverage. The hypotheses are exhibited satisfiable on
 `Ucrash` (§24), so the refutation is not vacuous.
 
 **It is preserved for any reliable set that excludes the recovering
-validator** (`synchronisedOn_skipFill_of_notMem`). The filled blocks
-are that validator's alone, so a clause quantified over the others
-never encounters them.
+validator** (`synchronisedOn_skipFill_of_notMem`, from
+`synchronisedOn_of_extends`). The filled blocks are that validator's
+alone, so a clause quantified over the others never encounters them.
 
 **It returns strictly above the fill**
 (`synchronisedOn_skipFill_above`), for any set, and it survives the cut
@@ -5151,28 +5155,35 @@ from a single arc.
 **I5 — the joiner's two obligations.** §13's adaptive schedule is a
 function of the committed verdicts, and §9 prunes verdicts below a
 horizon; a validator joining from the truncation may not hold what the
-policy reads. The schedule half of the question is settled by
-computation: truncating an adaptive schedule and adapting a truncated
-one give the same rounds and the same leaders, `slotsChop_slotsOf`
-closing by `rfl` provided the assignment used inside the truncation is
-the original one shifted past the base slot. All the content lies in
-whether a joiner can *produce* that shifted assignment, which is
+policy reads. Both halves of the answer are generic
+(`Adaptive/Joiner.lean`). The schedule half is arithmetic on the
+relation a cut delivers: rebasing a schedule commutes with installing
+an assignment shifted past the base slot (`Rebases.slotsOf`), so a cut
+at the base schedule is a cut at the adaptive one
+(`Truncates.slotsOf`); at the core the two constructions are
+definitionally equal and `slotsChop_slotsOf_eq` closes by `rfl`. All
+the content lies in whether a joiner can *produce* that shifted
+assignment, which is
 
 ```lean
-def HorizonStable (P : AdaptivePolicy Validator BlockId Payload) (d G : ℕ)
-    (pick' : (U' : BlockUniverse Validator BlockId Payload) →
-      View Validator BlockId Payload U' → (ℕ → Option BlockId) → ℕ → Validator) : Prop :=
-  ∀ (U : BlockUniverse Validator BlockId Payload) (V : View Validator BlockId Payload U)
-    (V' : View Validator BlockId Payload (chop U G)) (v : ℕ → Option BlockId)
-    (k : ℕ), pick' (chop U G) V' (fun m => v (d + m)) k = P.pick U V v (d + k)
+def HorizonStable (P : Policy R) (G d : ℕ)
+    (pick' : (U' : R.Universe) → R.View U' → (ℕ → Option BlockId) → ℕ → Validator) : Prop :=
+  ∀ (U U' : R.Universe), RebasedAbove R U U' G G →
+    ∀ (V : R.View U) (V' : R.View U') (v : ℕ → Option BlockId) (k : ℕ),
+      pick' U' V' (fun m => v (d + m)) k = P.pick U V v (d + k)
 ```
 
 Under it a joiner computes exactly the leaders the network is using
 (`joiner_assign_agree`), so the two run one schedule seen from two
-origins. The obligation is stated on the policy's *rule* rather than on
-an `AdaptivePolicy`, because a policy is indexed by its `Slots`
-instance and a joiner's inhabits a different type; the rule is the part
-that survives re-indexing.
+origins, and cross-cut agreement at that schedule, `Agree` and `Banded`
+through `decided_agree_rebased`, gives `joiner_run_decided_agree`:
+pruning does not split the ledger, even when the schedule is derived
+from it. The obligation is stated on the policy's *rule* rather than on
+a `Policy`, because a policy is indexed by its `Slots` instance and a
+joiner's inhabits a different type; the rule is the part that survives
+re-indexing. The cut enters only as `RebasedAbove R U U' G G`, the
+universe half of `Truncates`, since horizon-stability is about what the
+two validators hold and not about how their slots are numbered.
 
 A second obligation is independent of the policy. Horizon-stability
 aligns leaders, not *epochs*: a joiner's slot `k` is the network's
@@ -9727,6 +9738,7 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `Adaptive/Policy.lean` | the reassignment policy and its clauses |
 | `Adaptive/Run.lean` | the adaptive run; safety as uniqueness; conservativity; the agreed ledger |
 | `Adaptive/Liveness.lean` | the bounded descent; the fairness clause; existence |
+| `Adaptive/Joiner.lean` | the joiner across a cut: horizon-stability, the schedule transformers commute, agreement at the adaptive schedule |
 | `Adaptive/Odontoceti.lean` | the two-round mirror |
 | `Hybrid/Faults.lean` | the hybrid model; the derived instance; `HonestNoEquiv`; the counting core |
 | `Hybrid/Rules.lean` | the rules at the admissible interval; the arithmetic core H2–H5 |
@@ -9734,8 +9746,8 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `Hybrid/Liveness.lean` | the liveness chain at quorum `q` |
 | `Hybrid/Conservativity.lean` | the crash-free collapse onto Odontoceti |
 | `Integration/Preservation.lean` | `HonestNoEquiv` across the cut and the fill |
-| `Integration/Coverage.lean` | coverage refuted under the fill, and recovered above it |
-| `Integration/Joiner.lean` | horizon-stability; epoch alignment |
+| `Integration/Coverage.lean` | coverage under the fill, at the core: the extension theorems at the fill's witnesses |
+| `Integration/Joiner.lean` | the joiner at the core's cut |
 | `Integration/Retention.lean` | anchor retention; the outage bound; the severed chain |
 | `Integration/ReGenesis.lean` | re-genesis at the cut; convergence; the exposure condition |
 | `Integration/Exposure.lean` | the fill's cone growth; the enforceable exposure check |
@@ -9751,6 +9763,7 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `Properties/Arcs/GC.lean`, `SafeSkip.lean`, `Liveness.lean`, `Quality.lean` | the generic theorems: cut, fill, prompt skip, liveness across a mechanism, chain quality |
 | `Properties/Arcs/Stack.lean`, `Headline.lean` | any stack of mechanisms is one; the safety and liveness headlines |
 | `Timed/Coverage.lean` | the timed model: coverage, `OfCoverage`, the bridge into `live` |
+| `Timed/Extension.lean` | coverage under an extension: refuted for a set holding a novel author, preserved for any other |
 | `MysticetiProperties.lean`, `OdontocetiProperties.lean`, `NemoProperties.lean`, `HybridProperties.lean`, `MahiMahiProperties.lean`, `FinWhale/Carrier.lean`, `Hydrozoan/Helpers/`, `OptimalHydrozoan/Carrier.lean`, `Reactive/MysticetiProperties.lean` | each rule's carrier, properties, support and headlines |
 | `Integration/NemoMechanisms.lean`, `FinWhaleMechanisms.lean`, `HybridMechanisms.lean`, `HydrozoanMechanisms.lean`, `OptimalMechanisms.lean`, `ReactiveMechanisms.lean`, `ReGenesisRules.lean`, `StackRules.lean` | the mechanism cells at each rule: witnesses and instances |
 | `Nemo/Basic.lean` | the majority quorum and its intersection; crash validity; the universe with universal non-equivocation |
@@ -10608,8 +10621,8 @@ reused.
 |:---|:---|:---|
 | I1 | honest non-equivocation survives truncation and the fill | `honestNoEquiv_chop`, `honestNoEquiv_skipFill` *(Integration/Preservation)* |
 | I2 | coverage survives truncation, at a horizon offset | `synchronisedOn_chop` *(Integration/Coverage)* |
-| I4 | coverage under the fill: refuted for a set including the recovering validator, preserved otherwise, restored above the fill | `not_synchronisedOn_skipFill`, `synchronisedOn_skipFill_of_notMem`, `synchronisedOn_skipFill_above` *(Integration/Coverage)* |
-| I5 | the joiner: horizon-stability, and epoch alignment | `HorizonStable`, `joiner_assign_agree`, `epochOf_add_of_dvd` *(Integration/Joiner)* |
+| I4 | coverage under the fill: refuted for a set including the recovering validator, preserved otherwise, restored above the fill | `not_synchronisedOn_skipFill`, `synchronisedOn_skipFill_of_notMem`, `synchronisedOn_skipFill_above` *(Integration/Coverage)*, from `not_synchronisedOn_of_extends`, `synchronisedOn_of_extends` *(Timed/Extension)* |
+| I5 | the joiner: horizon-stability, and epoch alignment | `HorizonStable`, `joiner_run_decided_agree` *(Adaptive/Joiner)*, `epochOf_add_of_dvd` *(Adaptive/Basic)*, at the core in *Integration/Joiner* |
 | I6 | anchor retention, and the lag bounds the outage | `anchor_pruned`, `chopMsg`, `outage_bounded_by_lag` *(Integration/Retention)* |
 | I7 | the headlines at the core: safety across any stack, liveness at the support | `MysticetiProperties.safety`, `MysticetiProperties.liveness`, `stack_core` *(MysticetiProperties, Integration/StackRules)* |
 | I8 | a severed chain cannot restart | `no_blocks_of_no_genesis`, `severed_of_pruned_anchor` *(Integration/Retention)* |
@@ -13348,23 +13361,6 @@ noncomputable def denote [DecidableEq BlockId] : BlockUniverse Validator BlockId
 **The round jump.** The universe in which the sender produces at the round above the target: the fill, elaborated from the compact message. Being a `skipFill`, everything proved of the fill — SS1 through SS6 — applies to it verbatim.
 
 ### Integration: composing the arcs
-
-#### `HorizonStable`
-
-*def, `Integration.Joiner.lean`*
-
-```lean
-def HorizonStable (P : AdaptivePolicy Validator BlockId Payload) (d G : ℕ)
-    (pick' : (U' : BlockUniverse Validator BlockId Payload) →
-      View Validator BlockId Payload U' → (ℕ → Option BlockId) → ℕ → Validator) : Prop :=
-  ∀ (U : BlockUniverse Validator BlockId Payload) (V : View Validator BlockId Payload U)
-    (V' : View Validator BlockId Payload (chop U G)) (v : ℕ → Option BlockId)
-    (k : ℕ), pick' (chop U G) V' (fun m => v (d + m)) k = P.pick U V v (d + k)
-```
-
-**Horizon-stability.** The joiner's rule, run on the truncation with the joiner's own slot indices, returns what the network's policy returns on the full history at the corresponding slot.
-
-Read as a deployment obligation: *a validator that pruned below `G` and re-indexed from `d` must still compute the leaders everyone else is using.* A policy that reads arbitrarily far back into committed history cannot satisfy this, which is the substantive content — such a policy is incompatible with garbage collection, and saying so precisely is the point of I9.
 
 #### `chopMsg`
 
@@ -22437,6 +22433,22 @@ def Policy.Stable {R : DagRule Validator BlockId Payload} (P : Policy R) : Prop 
 
 **Stability under extension.** The rule returns the same leader for the same verdicts on an extended universe.
 
+#### `HorizonStable`
+
+*def, `Adaptive.Joiner.lean`*
+
+```lean
+def HorizonStable (P : Policy R) (G d : ℕ)
+    (pick' : (U' : R.Universe) → R.View U' → (ℕ → Option BlockId) → ℕ → Validator) : Prop :=
+  ∀ (U U' : R.Universe), RebasedAbove R U U' G G →
+    ∀ (V : R.View U) (V' : R.View U') (v : ℕ → Option BlockId) (k : ℕ),
+      pick' U' V' (fun m => v (d + m)) k = P.pick U V v (d + k)
+```
+
+**Horizon-stability.** The joiner's rule, run on a cut of the universe with the joiner's own slot indices, returns what the network's policy returns on the full history at the corresponding slot.
+
+Read as a deployment obligation: *a validator that pruned below `G` and re-indexed from `d` must still compute the leaders everyone else is using.*
+
 #### `AdaptivePolicy`
 
 *abbrev, `Adaptive.Mysticeti.lean`*
@@ -26408,7 +26420,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 1088 theorems that either another module of the
+The 1097 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -30277,9 +30289,9 @@ theorem not_synchronisedOn_skipFill (sk : SkipMsg U) {T : Finset Validator}
     ¬ SynchronisedOn sk.skipFill T R
 ```
 
-**I5, refuted.** The fill does not restore coverage. If the recovering validator is counted reliable — which is exactly what SS2 does — then at any gap round `k` above the coverage round, an old reliable block at `k+1` fails to reference the filled block at `k`, because no old block references a fresh identifier.
+**I4, refuted.** The fill does not restore coverage. If the recovering validator is counted reliable — which is exactly what SS2 does — then at any gap round `k` above the coverage round, an old reliable block at `k+1` fails to reference the filled block at `k`.
 
-The hypotheses are the situation SS2 creates, not a contrived one: `hv1` puts `v1` in the reliable set, `hk` places the gap round in the covered range, and `hb` asks only that some reliable validator built at the round above — which `PopulatedOn` supplies.
+The hypotheses are the situation SS2 creates: `hv1` puts `v1` in the reliable set, `hk` places the gap round in the covered range, and `hb` asks only that some reliable validator built at the round above, which `PopulatedOn` supplies.
 
 #### `synchronisedOn_skipFill_of_notMem`
 
@@ -30291,9 +30303,7 @@ theorem synchronisedOn_skipFill_of_notMem (sk : SkipMsg U) {T : Finset Validator
     SynchronisedOn sk.skipFill T R
 ```
 
-**The refutation is narrow: it is about counting the recovering validator reliable during the gap it slept through.** Exclude it from the reliable set and coverage is untouched — the fill's blocks are its alone, so the clause never quantifies over them.
-
-Together with `not_synchronisedOn_skipFill` and `synchronisedOn_skipFill_above` this is the whole picture. Coverage fails only where it should: over a set that includes the recovering validator, at rounds during which it was absent. It holds for every other set, and for every set above the fill.
+**The refutation is narrow: it is about counting the recovering validator reliable during the gap it slept through.** Exclude it from the reliable set and coverage is untouched: the fill's blocks are its alone, so the clause never quantifies over them.
 
 #### `synchronisedOn_skipFill_above`
 
@@ -30305,9 +30315,9 @@ theorem synchronisedOn_skipFill_above (sk : SkipMsg U) {T : Finset Validator}
     SynchronisedOn sk.skipFill T R'
 ```
 
-**I5, positively.** Coverage holds *strictly* above the fill: past the target round every block is old, references are preserved, and the original condition applies unchanged. This is the form a liveness argument after recovery consumes — the recovered validator is building its own blocks again, and the network covers them in the ordinary way.
+**I4, positively.** Coverage holds *strictly* above the fill: past the target round every block is old, references are preserved, and the original condition applies unchanged. This is the form a liveness argument after recovery consumes.
 
-The strictness is not slack in the proof. At `n = sk.r` the lower block may still be the last filled one, and `not_synchronisedOn_skipFill` refutes coverage there; `sk.r < R'` is exactly the first round at which every block in play is old. The proof is `Timed.synchronisedOn_of_rebased` at the fill's `Sustains` witness: what was a direct argument about old blocks is the generic one.
+The strictness is not slack. At `n = sk.r` the lower block may still be the last filled one, and `not_synchronisedOn_skipFill` refutes coverage there; `sk.r < R'` is exactly the first round at which every block in play is old.
 
 #### `synchronisedOn_chop`
 
@@ -30319,35 +30329,26 @@ theorem synchronisedOn_chop {T : Finset Validator} {Rs R' : ℕ}
     LeanDag.SynchronisedOn (chop U G) T R'
 ```
 
-**Synchrony survives the cut, from the rebase.** `Sustains` applied, as votes and production already were; stated here because synchrony is the timed model's and not the properties'.
+**Synchrony survives the cut, from the rebase** (I2). `Sustains` applied, as votes and production already were.
 
-#### `joiner_assign_agree`
-
-*theorem, `Integration.Joiner.lean`*
-
-```lean
-theorem joiner_assign_agree {V : View Validator BlockId Payload U}
-    {pick' : (U' : BlockUniverse Validator BlockId Payload) →
-      View Validator BlockId Payload U' → (ℕ → Option BlockId) → ℕ → Validator}
-    (hs : HorizonStable P d G pick') (R : AdaptiveRun P U V)
-    (V' : View Validator BlockId Payload (chop U G)) (k : ℕ) :
-    pick' (chop U G) V' (fun m => R.vdct (d + m)) k = R.assign (d + k)
-```
-
-**I9, the assignment half.** Under a horizon-stable rule a joiner computes exactly the leaders the network is using: its assignment at its own slot `k` is the full-history run's assignment at slot `d + k`.
-
-Nothing here is about verdicts — it is the statement that the two validators do not *disagree about who leads*, which is the premise any agreement argument between them must have and the thing garbage collection threatened.
-
-#### `epochOf_add_of_dvd`
+#### `joiner_run_decided_agree`
 
 *theorem, `Integration.Joiner.lean`*
 
 ```lean
-theorem epochOf_add_of_dvd {W : ℕ} (hW : 0 < W) (hdvd : W ∣ d) (k : ℕ) :
-    epochOf W (d + k) = d / W + epochOf W k
+theorem joiner_run_decided_agree (hd : G ≤ S.slotRound d)
+    (hs : HorizonStable P G d pick')
+    {V : View Validator BlockId Payload U} (R : AdaptiveRun P U V)
+    (V' : View Validator BlockId Payload (chop U G))
+    {W : View Validator BlockId Payload (chop U G)} {k : ℕ} {w v : Option BlockId}
+    (hW : Decided (S := slotsOf (S := S.chop G d hd)
+            (injective_slotRound_chop hd P.inj)
+            (fun m => pick' (chop U G) V' (fun j => R.vdct (d + j)) m))
+          (chop U G) W k w)
+    (hV : Decided (S := slotsOf P.inj R.assign) U V (d + k) v) : w = v
 ```
 
-**Epoch alignment.** When the base slot is a whole number of epochs, the joiner's epoch numbering is the network's shifted by a constant, and every epoch window corresponds.
+**I5, whole.** A joiner that computed its own schedule from its own truncated view, under a horizon-stable rule, agrees with the network's run on every shared slot: *pruning does not split the ledger, even when the schedule is derived from it.*
 
 #### `anchor_pruned`
 
@@ -31030,6 +31031,17 @@ The two derived instances are equal, so a block universe over the `Faults5` deve
 theorem epochOf_lt_iff {W k e : ℕ} (hW : 0 < W) :
     epochOf W k < e ↔ k < W * e
 ```
+
+#### `epochOf_add_of_dvd`
+
+*theorem, `Adaptive.Basic.lean`*
+
+```lean
+theorem epochOf_add_of_dvd {W d : ℕ} (hW : 0 < W) (hdvd : W ∣ d) (k : ℕ) :
+    epochOf W (d + k) = d / W + epochOf W k
+```
+
+**Epoch alignment.** When a base slot is a whole number of epochs, a numbering that starts there is the original shifted by a constant, and every epoch window corresponds. This is what a cut must respect under an adaptive schedule: a joiner's slot `k` is the network's `d + k`, so the two agree about which epoch a slot belongs to only when `d` falls on an epoch boundary.
 
 #### `slotsOf_leader`
 
@@ -36764,6 +36776,96 @@ theorem run_agree_extends (hext : Extends R U U')
 
 **The fixpoint is a prefix of the fixpoint on any extension.** Two total runs, on a universe and an extension of it, hold the same verdicts and run the same schedule.
 
+#### `Rebases.slotsOf`
+
+*theorem, `Adaptive.Joiner.lean`*
+
+```lean
+theorem Rebases.slotsOf {S S' : Slots Validator} {G d : ℕ} (h : Rebases S S' G d)
+    (hinj : Function.Injective S.slotRound) (a : ℕ → Validator) :
+    Rebases (slotsOf (S := S) hinj a)
+      (slotsOf (S := S') (h.injective hinj) (fun m => a (d + m))) G d where
+  slotRound
+```
+
+**Rebasing commutes with adapting.** Rebase a schedule and then install an assignment shifted past the base slot, or install the assignment first and rebase: the same rounds, the same leaders.
+
+#### `Truncates.slotsOf`
+
+*theorem, `Adaptive.Joiner.lean`*
+
+```lean
+theorem Truncates.slotsOf {U U' : R.Universe} {S S' : Slots Validator} {G d : ℕ}
+    (h : Truncates R U U' S S' G d) (hinj : Function.Injective S.slotRound)
+    (a : ℕ → Validator) :
+    Truncates R U U' (slotsOf (S := S) hinj a)
+      (slotsOf (S := S') (h.toRebases.injective hinj) (fun m => a (d + m))) G d
+```
+
+And so a cut at the base schedule is a cut at the adaptive one.
+
+#### `joiner_assign_agree`
+
+*theorem, `Adaptive.Joiner.lean`*
+
+```lean
+theorem joiner_assign_agree (hs : HorizonStable P G d pick')
+    {U U' : R.Universe} (h : RebasedAbove R U U' G G)
+    {V : R.View U} (A : Run P U V) (V' : R.View U') (k : ℕ) :
+    pick' U' V' (fun m => A.vdct (d + m)) k = A.assign (d + k)
+```
+
+**The assignment half.** Under a horizon-stable rule a joiner computes exactly the leaders the network is using: its assignment at its own slot `k` is the full run's assignment at slot `d + k`.
+
+#### `joiner_leader_agree`
+
+*theorem, `Adaptive.Joiner.lean`*
+
+```lean
+theorem joiner_leader_agree (hs : HorizonStable P G d pick')
+    {U U' : R.Universe} (ht : Truncates R U U' S S' G d)
+    {V : R.View U} (A : Run P U V) (V' : R.View U') (k : ℕ) :
+    (slotsOf (S := S') (ht.toRebases.injective P.inj)
+        (fun m => pick' U' V' (fun j => A.vdct (d + j)) m)).leader k
+      = (slotsOf P.inj A.assign).leader (d + k)
+```
+
+The joiner's schedule *is* the network's, seen from another origin.
+
+#### `joiner_decided_agree`
+
+*theorem, `Adaptive.Joiner.lean`*
+
+```lean
+theorem joiner_decided_agree (ha : Agree R) (hb : Banded R)
+    {U U' : R.Universe} (ht : Truncates R U U' S S' G d)
+    (hinj : Function.Injective S.slotRound) (a : ℕ → Validator)
+    {V : R.View U} {V' : R.View U'} (hv : ViewAgreeAbove R V V' G)
+    {W : R.View U'} {k : ℕ} {w v : Option BlockId}
+    (hW : R.Decided (slotsOf (S := S') (ht.toRebases.injective hinj) (fun m => a (d + m))) W k w)
+    (hV : R.Decided (slotsOf (S := S) hinj a) V (d + k) v) : w = v
+```
+
+**The verdict half.** Across a cut, the truncation under the shifted assignment and the original under the assignment agree on every shared slot, from any view of the truncation. `decided_agree_rebased` at the adaptive schedule; nothing about adaptivity enters.
+
+#### `joiner_run_decided_agree`
+
+*theorem, `Adaptive.Joiner.lean`*
+
+```lean
+theorem joiner_run_decided_agree (ha : Agree R) (hb : Banded R)
+    (hs : HorizonStable P G d pick')
+    {U U' : R.Universe} (ht : Truncates R U U' S S' G d)
+    {V : R.View U} (A : Run P U V) (V' : R.View U')
+    {V₀ : R.View U'} (hv : ViewAgreeAbove R V V₀ G)
+    {W : R.View U'} {k : ℕ} {w v : Option BlockId}
+    (hW : R.Decided (slotsOf (S := S') (ht.toRebases.injective P.inj)
+            (fun m => pick' U' V' (fun j => A.vdct (d + j)) m)) W k w)
+    (hV : R.Decided (slotsOf P.inj A.assign) V (d + k) v) : w = v
+```
+
+**The joiner, whole.** A joiner that computed its own schedule from its own view `V'` of the truncation, under a horizon-stable rule, agrees with the network's run on every shared slot. The agreement is read through some view `V₀` of the truncation agreeing with the network's above the horizon, which a cut supplies.
+
 #### `isLeaderBlock_slotsOf_congr`
 
 *theorem, `Adaptive.Mysticeti.lean`*
@@ -40375,6 +40477,18 @@ theorem old_refs_old (he : Extends R U U')
 
 **An old block references only old blocks**, so nothing that was already present can reach what the extension added. This is the formal content of "blocks nothing references cannot change a verdict", and it is *derived* rather than assumed: an extension leaves old blocks alone, and an old block's references were already inside `U`.
 
+#### `not_novel_of_mem_refs`
+
+*theorem, `Properties.Extends.lean`*
+
+```lean
+theorem not_novel_of_mem_refs (he : Extends R U U')
+    {b : BlockId} (hb : b ∈ R.ids U) {j : BlockId} (hj : j ∈ (R.block U' b).refs) :
+    ¬ Novel R U U' j
+```
+
+Restated: an old block never references a novel identifier.
+
 #### `reaches_old`
 
 *theorem, `Properties.Extends.lean`*
@@ -40659,6 +40773,35 @@ theorem decidedBelow_of_fairRun (sp : Support R) {rel : Reliability Validator}
 
 **Everything below a fair run is decided, on a covered DAG.** The timed reading of `Support.decidedBelow_of_fairRun`: the run is placed past the synchrony round as well as past `k`, and the bridge supplies the window.
 
+#### `not_synchronisedOn_of_extends`
+
+*theorem, `Timed.Extension.lean`*
+
+```lean
+theorem not_synchronisedOn_of_extends {U U' : R.Universe} (he : Extends R U U')
+    {T : Finset Validator} {R₀ k : ℕ} (hk : R₀ ≤ k)
+    {f : BlockId} (hf : Novel R U U' f) (hfr : (R.block U' f).round = k)
+    (hfc : (R.block U' f).creator ∈ T)
+    {b : BlockId} (hb : b ∈ R.ids U) (hbr : (R.block U b).round = k + 1)
+    (hbc : (R.block U b).creator ∈ T) :
+    ¬ SynchronisedOn R U' T R₀
+```
+
+**An extension does not restore coverage** for a set that counts a novel block's author reliable. An old reliable block at the round above the novel one references only old identifiers, and coverage would have it reference the novel one.
+
+#### `synchronisedOn_of_extends`
+
+*theorem, `Timed.Extension.lean`*
+
+```lean
+theorem synchronisedOn_of_extends {U U' : R.Universe} (he : Extends R U U')
+    {T : Finset Validator} {R₀ : ℕ} (hs : SynchronisedOn R U T R₀)
+    (hnew : ∀ b, Novel R U U' b → (R.block U' b).creator ∉ T) :
+    SynchronisedOn R U' T R₀
+```
+
+**An extension preserves coverage** for a set holding no author of a novel block: every block the clause reaches is old, and old blocks are unchanged.
+
 #### `waveRobin_fairRun`
 
 *theorem, `WaveRobin.lean`*
@@ -40698,7 +40841,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 1025 lemmas used only within the file that proves
+The 1028 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -41147,17 +41290,23 @@ subsection per module, in the layer order of Appendices B and C.
 | `toSkipMsg_line` | — |
 | `toSkipMsg_r` | — |
 
+### `Integration/Coverage.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `extends_skipFill` | The fill is an extension of the core's carrier. |
+
 ### `Integration/Joiner.lean` (7)
 
 | Lemma | Role |
 |:---|:---|
-| `horizonStable_const_zero` | The constant policy is horizon-stable exactly when the base slot is the origin — which is the degenerate … |
-| `injective_slotRound_chop` | Truncation preserves one-leader-per-round. Injectivity of the rebased rounds needs the base-slot … |
-| `joiner_decided_agree` | I9's verdict half. The joiner and the network agree on every shared slot, from an *arbitrary* view of the … |
-| `joiner_leader_agree` | The joiner's schedule *is* the network's, seen from another origin: combining the assignment agreement … |
-| `joiner_run_decided_agree` | I9, whole. A joiner that computed its own schedule from its own truncated view, under a horizon-stable … |
-| `slotsChop_slotsOf` | The transformers commute. Truncating an adaptive schedule and adapting a truncated one give the same … |
-| `slotsChop_slotsOf_eq` | The transformers commute as schedules, not only field by field. Both sides are rebases of `slotsOf hinj a` … |
+| `injective_slotRound_chop` | Truncation preserves one-leader-per-round. |
+| `joiner_assign_agree` | I5, the assignment half. Under a horizon-stable rule a joiner computes exactly the leaders the network is … |
+| `joiner_decided_agree` | I5's verdict half, at the core: the joiner and the network agree on every shared slot, from an arbitrary … |
+| `joiner_leader_agree` | The joiner's schedule *is* the network's, seen from another origin. |
+| `rebases_chop` | The cut rebases the schedule. A schedule fact with no universe in it. |
+| `slotsChop_slotsOf` | The transformers commute, field by field: truncating an adaptive schedule and adapting a truncated one … |
+| `slotsChop_slotsOf_eq` | And as schedules. Both sides are rebases of `slotsOf hinj a` by the same offset from the same base slot, … |
 
 ### `Integration/Retention.lean` (4)
 
@@ -42079,6 +42228,13 @@ subsection per module, in the layer order of Appendices B and C.
 | `partialRun_agree_extends` | Partial runs agree across growth. A run on `U` and a run on an extension `U'`, from views one contained in … |
 | `partialRun_assign_agree_extends` | Assignments agree across growth wherever the common verdicts determine them. |
 
+### `Adaptive/Joiner.lean` (2)
+
+| Lemma | Role |
+|:---|:---|
+| `Rebases.injective` | A rebase preserves one-leader-per-round: the rebased rounds are the original's, shifted and offset, so … |
+| `horizonStable_const_zero` | The constant policy is horizon-stable exactly when the base slot is the origin, which is the degenerate … |
+
 ### `Adaptive/Mysticeti.lean` (8)
 
 | Lemma | Role |
@@ -42379,7 +42535,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `sustains_skipFill_hybrid` | What the fill sustains, for Hybrid — the core's witness, projected field by field. |
 | `truncates_chop_hybrid` | The cut is a truncation of Hybrid's carrier. The core's witness, projected: the subtype's `ids` and … |
 
-### `Integration/HydrozoanMechanisms.lean` (10)
+### `Integration/HydrozoanMechanisms.lean` (11)
 
 | Lemma | Role |
 |:---|:---|
@@ -42392,6 +42548,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `decided_none_fresh_agree_hz` | And it conflicts with no verdict. |
 | `decided_none_fresh_hz` | SS3 for Hydrozoan, from its `SkipsUnsupported`: the slot the recovering replica leads at a gap round is … |
 | `extends_copyFillHZ` | The fill is an extension of Hydrozoan's carrier. |
+| `not_synchronisedOn_copyFillHZ` | The copy fill does not restore coverage either. The generic refutation at `extends_copyFillHZ`: a reliable … |
 | `sustains_copyFillHZ` | What the fill sustains: from the top of its gap. |
 
 ### `Integration/NemoMechanisms.lean` (10)
@@ -42717,12 +42874,11 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `decidedBelow_run` | And the verdicts of the run itself. |
 
-### `Properties/Extends.lean` (5)
+### `Properties/Extends.lean` (4)
 
 | Lemma | Role |
 |:---|:---|
 | `isCandidate` | And a candidate of `U` is a candidate of `U'` at the same slot. |
-| `not_novel_of_mem_refs` | Restated: an old block never references a novel identifier. |
 | `refl` | Extension is reflexive. |
 | `round` | An old block keeps its round. |
 | `trans` | And transitive, so a sequence of extensions is one. |

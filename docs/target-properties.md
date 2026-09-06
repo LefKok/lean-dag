@@ -373,7 +373,9 @@ inclusion. Black Marlin is out of scope by decision.
 `Candidate`, `Commit`), `Support`, `Optional/`, `Derived/`, the
 mechanism relations (`Extends`, `Sustain`, `Truncate`, `Compose`), and
 `Arcs/` (`GC`, `SafeSkip`, `Liveness`, `Quality`, `Stack`, `Headline`).
-`Timed/Coverage.lean` — the timed model. Each rule's conformance in
+`Timed/Coverage.lean` — the timed model, and `Timed/Extension.lean` —
+coverage under an extension; `Adaptive/Joiner.lean` — the joiner
+across a cut. Each rule's conformance in
 its `*Properties.lean` or `Carrier.lean`; each rule's mechanism cells
 in `Integration/*Mechanisms.lean`, `Integration/ReGenesisRules.lean`
 and `Properties/Arcs/`.
@@ -2025,7 +2027,7 @@ The goal, restated in three parts:
    properties, automatically.
 
 **Where it stands** (2026-09-06; the sections below are the record of
-how it got here, and §11.13–§11.20 the last passes). Part 1 is four
+how it got here, and §11.13–§11.21 the last passes). Part 1 is four
 properties — `Banded`, `Agree`, `CommitsCandidate`, `Indirect` — and a
 `Support` with two laws, `Local` and `Commits` (§11.15, §11.16); the
 carrier carries the causal law itself, and synchrony is not a property
@@ -3706,6 +3708,51 @@ and stack `der` — now from the native witnesses. `audit-bespoke.py`
 still reports no bespoke links. The six Hydrozoan integration test
 files are gone with the cluster; `LeanDagTest/Integration.lean` keeps
 the axiom checks for what survives.
+
+### 11.21 Coverage and the joiner, generic
+
+Two results of `Integration/` were stated at the core's cut and fill
+while depending on nothing the core has. Both are now theorems at the
+relations, and the core's files are their instances.
+
+**Coverage under an extension** (`Timed/Extension.lean`). What the Safe
+Skip fill does to coverage follows from one fact about extensions, that
+an old block references only old identifiers
+(`Extends.old_refs_old`). `not_synchronisedOn_of_extends`: a reliable
+set holding the author of a novel block is uncovered at that block's
+round, given an old reliable block one round up. `synchronisedOn_of_extends`:
+a set holding no novel author keeps its coverage. The positive form
+above the settling round was already `synchronisedOn_of_rebased`.
+`Integration/Coverage.lean` keeps its four statements and proves each
+by the generic theorem at `extends_of_skipFill` or `sustains_skipFill`;
+`not_synchronisedOn_copyFillHZ` is the refutation at Hydrozoan's copy
+fill, a cell that did not exist before because the direct proof was
+about the core's block record.
+
+**The joiner** (`Adaptive/Joiner.lean`). `Rebases.injective` and
+`Rebases.slotsOf` say that rebasing a schedule preserves
+one-leader-per-round and commutes with installing an assignment shifted
+past the base slot; `Truncates.slotsOf` lifts that to a cut, so any
+rule's cut at its base schedule is a cut at the adaptive one.
+`Adaptive.HorizonStable` is stated over `RebasedAbove R U U' G G`, the
+universe half of `Truncates`, since horizon-stability is about what
+the two validators hold and not how their slots are numbered.
+`joiner_assign_agree`, `joiner_leader_agree`, `joiner_decided_agree`
+and `joiner_run_decided_agree` are then at any rule with `Agree` and
+`Banded`, the verdict half being `decided_agree_rebased` at the
+adaptive schedule. `Integration/Joiner.lean` is these at
+`truncates_chop` and `viewAgreeAbove_chop`, plus `rebases_chop`, the
+core's cut as a schedule rebase, and the two `rfl` lemmas saying the
+core's constructions coincide definitionally. `epochOf_add_of_dvd`
+moves to `Adaptive/Basic.lean`, being arithmetic on epochs.
+
+What this leaves in `Integration/` that is stated at the core alone is
+what no relation between universes states: the recovery message's
+anchor (`Retention.lean`), the re-genesis block and its convergence
+(`ReGenesis.lean`), the exposure condition and the storage budgets
+(`Exposure.lean`, `DeliveryFill.lean`, `Margin.lean`,
+`CommonTarget.lean`), and Orcaella's carrier invariant
+(`Preservation.lean`).
 
 ### 11.5 Next steps, in order
 

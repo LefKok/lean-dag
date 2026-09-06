@@ -6,6 +6,7 @@ import LeanDag.Integration.Exposure
 import LeanDag.Integration.DeliveryFill
 import LeanDag.Integration.Margin
 import LeanDag.Integration.CommonTarget
+import LeanDag.Integration.HydrozoanMechanisms
 import LeanDagTest.SafeSkip
 
 /-!
@@ -172,7 +173,11 @@ example : urecover.r = 1 := by
 
 #print axioms LeanDag.Integration.slotsChop_slotsOf
 #print axioms LeanDag.Integration.joiner_assign_agree
-#print axioms LeanDag.Integration.epochOf_add_of_dvd
+#print axioms LeanDag.epochOf_add_of_dvd
+#print axioms LeanDag.Adaptive.joiner_run_decided_agree
+#print axioms LeanDag.Timed.not_synchronisedOn_of_extends
+#print axioms LeanDag.Timed.synchronisedOn_of_extends
+#print axioms LeanDag.Integration.not_synchronisedOn_copyFillHZ
 #print axioms LeanDag.Integration.honestNoEquiv_chop
 #print axioms LeanDag.Integration.honestNoEquiv_skipFill
 #print axioms LeanDag.Integration.synchronisedOn_chop
