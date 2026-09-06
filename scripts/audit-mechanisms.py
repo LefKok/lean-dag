@@ -12,7 +12,11 @@ behind. Both audits check what exists; this one checks what does not.
 A cell is:
 
 * `yes`  — some declaration applies one of the mechanism's generic
-           theorems and names one of the rule's carriers;
+           theorems and names one of the rule's carriers; or, for the
+           cut, the fill and re-genesis, the carrier has a
+           `DagRule.OnRecord` instance, since every verdict cell of
+           those three mechanisms is `Properties/Arcs/Record.lean` at
+           such an instance and nothing is written per cell;
 * `open` — the rule shows everything the mechanism asks for and no such
            declaration exists. That is the gap this audit is for: not a
            defect, but work the properties have already paid for and
@@ -51,19 +55,25 @@ MECHANISMS = [
       "LeanDag.Properties.Arcs.decided_of_truncate",
       "LeanDag.Properties.Arcs.decided_of_truncated",
       "LeanDag.Properties.Arcs.decided_agree_truncate",
-      "LeanDag.Properties.Arcs.decided_agree_horizons"],
+      "LeanDag.Properties.Arcs.decided_agree_horizons",
+      "LeanDag.Properties.DagRule.OnRecord.decided_chop_iff",
+      "LeanDag.Properties.DagRule.OnRecord.decided_agree_chop"],
      ["Banded", "Agree"]),
     ("extension", {},
      ["LeanDag.Properties.Persist.of_banded",
       "LeanDag.Properties.Arcs.decided_skipFill",
       "LeanDag.Properties.Arcs.decided_agree_extends",
       "LeanDag.Properties.Arcs.decided_fill_of_persist",
-      "LeanDag.Properties.Arcs.decided_fill_agree_of_properties"],
+      "LeanDag.Properties.Arcs.decided_fill_agree_of_properties",
+      "LeanDag.Properties.DagRule.OnRecord.decided_fill",
+      "LeanDag.Properties.DagRule.OnRecord.decided_agree_fill",
+      "LeanDag.Properties.DagRule.OnRecord.decided_copyFill",
+      "LeanDag.Properties.DagRule.OnRecord.decided_agree_copyFill"],
      ["Banded", "Agree"]),
     ("re-genesis", {},
-     ["LeanDag.Integration.addGenesis", "LeanDag.Integration.addGenesisNemo",
-      "LeanDag.Integration.addGenesisFinWhale", "LeanDag.Integration.addGenesisHZ",
-      "LeanDag.Integration.addGenesisHybrid", "LeanDag.Integration.addGenesisOpt"],
+     ["LeanDag.Integration.addGenesis", "LeanDag.Properties.DagRule.OnRecord.addGenesis",
+      "LeanDag.Properties.DagRule.OnRecord.decided_addGenesis",
+      "LeanDag.Properties.DagRule.OnRecord.decided_agree_addGenesis"],
      ["Banded", "Agree"]),
     ("adaptive leaders", {},
      ["LeanDag.Barnacle.descent_of_support"],
@@ -134,6 +144,18 @@ def main():
                         for r, cs, _ in conformance.RULES:
                             if r == rule:
                                 applied[name].update(cs)
+
+    # A carrier read as block records has the cut, the fill and
+    # re-genesis, with every verdict cell, at the instance: the
+    # instance is the application.
+    ON_RECORD = "LeanDag.Properties.DagRule.OnRecord"
+    for d, used in uses.items():
+        if ON_RECORD not in used:
+            continue
+        for carrier in {c for _, cs, _ in conformance.RULES for c in cs}:
+            if "LeanDag." + carrier in used:
+                for name in ("garbage collection", "extension", "re-genesis"):
+                    applied[name].add(carrier)
 
     width = max(len(name) for name, _, _ in conformance.RULES) + 1
     cols = [name for name, _, _, _ in MECHANISMS]

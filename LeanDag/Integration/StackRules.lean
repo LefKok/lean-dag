@@ -1,7 +1,6 @@
 import LeanDag.Properties.Arcs.Stack
 import LeanDag.Properties.Arcs.GC
 import LeanDag.Properties.Arcs.SafeSkip
-import LeanDag.Integration.ReGenesisRules
 import LeanDag.Integration.NemoMechanisms
 import LeanDag.Integration.FinWhaleMechanisms
 
@@ -63,10 +62,10 @@ theorem stack_nemo (sk : SkipData U.ids U.block) (hd : G ≤ S.slotRound d) :
     Stack (NemoProperties.nemoRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload)) U S (chopNemo (skipFillNemo U sk) G) (S.chop G d hd)
       G (max (sk.r + 1) G) d := by
-  have st := Stack.step (Rebased.of_sustains (S := S) (sustains_skipFill_nemo (sk := sk)))
-    (Stack.step (Rebased.of_truncates (truncates_chop_nemo (U := skipFillNemo U sk) hd))
+  have st := Stack.step (Rebased.of_sustains (S := S) (nemoOnRecord.sustains_copyFill U sk))
+    (Stack.step (Rebased.of_truncates (nemoOnRecord.truncates_chop (skipFillNemo U sk) hd))
       Stack.nil)
-  simpa using st
+  simpa [chopNemo] using st
 
 end Nemo
 
@@ -83,10 +82,10 @@ theorem stack_finwhale (sk : SkipData D.ids D.block) (hd : G ≤ S.slotRound d) 
     Stack (FinWhaleProperties.finWhaleRule (Validator := Validator) (BlockId := B)
       (Payload := Payload)) D S (chopFinWhale (skipFillFinWhale D sk) G) (S.chop G d hd)
       G (max (sk.r + 1) G) d := by
-  have st := Stack.step (Rebased.of_sustains (S := S) (sustains_skipFill_finwhale (sk := sk)))
+  have st := Stack.step (Rebased.of_sustains (S := S) (finWhaleOnRecord.sustains_copyFill D sk))
     (Stack.step (Rebased.of_truncates
-      (truncates_chop_finwhale (D := skipFillFinWhale D sk) hd)) Stack.nil)
-  simpa using st
+      (finWhaleOnRecord.truncates_chop (skipFillFinWhale D sk) hd)) Stack.nil)
+  simpa [chopFinWhale] using st
 
 end FinWhale
 

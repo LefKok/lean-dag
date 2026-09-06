@@ -130,13 +130,18 @@ def ofRecord (W : BlockRecord Replica BlockId Unit validity (NonByzantine : Fins
 
 /-- **The carrier, on the record.** -/
 def onRecord : (rule (Replica := Replica) (BlockId := BlockId)).OnRecord validity
-    (NonByzantine : Finset Replica) where
+    (NonByzantine : Finset Replica) BlockRecord.Any where
   toRec := toRecord
-  ofRec := ofRecord
+  inv := fun _ => True.intro
+  ofRec := fun W _ => ofRecord W
   ids_to := fun _ => rfl
   block_to := fun _ => rfl
-  ids_of := fun _ => rfl
-  block_of := fun _ => rfl
+  ids_of := fun _ _ => rfl
+  block_of := fun _ _ => rfl
+  toView := fun V => ⟨V.ids, V.subset_ids, V.complete⟩
+  ofView := fun V => ⟨V.ids, V.subset_ids, V.complete⟩
+  viewIds_to := fun _ => rfl
+  viewIds_of := fun _ => rfl
 
 end Hydrozoan
 

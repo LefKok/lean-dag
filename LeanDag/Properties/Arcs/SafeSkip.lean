@@ -185,7 +185,7 @@ theorem sustains_skipFill (sk : SkipMsg U) :
     Sustains (MysticetiProperties.mysticetiRule (Payload := Payload))
       U sk.skipFill 0 (sk.r + 1) :=
   coreOnRecord.sustains_fill (U := U) (sk := sk) (B := sk.selfBlocks U.complete)
-    (hB := fun _ hk1 hk2 => sk.fillBlock_valid hk1 hk2)
+    (hB := fun _ hk1 hk2 => sk.fillBlock_valid hk1 hk2) (hI := True.intro)
 
 /-! ### The filled slot is decided, and SS3 falls out
 
@@ -262,40 +262,16 @@ end Core
 
 end Faults
 
-/-! ### And for Odontoceti, whose universes are the core's
+/-! ### The prompt skip, for Odontoceti
 
-`scripts/audit-mechanisms.py` asked for this cell. The four equations
-`extends_of_skipFill` is stated through are what makes it free: the two
-carriers project identically, so the rule's `ids` and `block` *are* the
-core universe's and every equation is `rfl`. A rule with its own
-universe record would have to build its own fill instead, which is the
-limit `docs/target-properties.md` §11.4 records. -/
+The fill's verdict cells are `Arcs/Record.lean` at `odontocetiOnRecord`;
+what is stated here is the prompt skip, which reads the rule's
+`SkipsUnsupported`. -/
 
 section Odontoceti
 
 variable [Faults5 Validator] {B : Type} [LinearOrder B]
 variable {W : BlockUniverse Validator B Payload}
-
-/-- **Verdicts survive the fill, for Odontoceti.** -/
-theorem decided_fill_odontoceti [S : Slots Validator] (sk : SkipMsg W)
-    {V : View Validator B Payload W} {k : ℕ} {v : Option B}
-    (h : Odontoceti.Decided W V k v) :
-    Odontoceti.Decided (U := sk.skipFill) (sk.liftView V) k v :=
-  decided_skipFill (R := OdontocetiProperties.odontocetiRule (Payload := Payload))
-    (Persist.of_banded OdontocetiProperties.banded) sk
-    (U := W) (U' := sk.skipFill) rfl rfl rfl rfl (fun _ hb => hb) h
-
-/-- **And agreement across it.** -/
-theorem decided_fill_agree_odontoceti [S : Slots Validator] (sk : SkipMsg W)
-    {V : View Validator B Payload W} {Y : View Validator B Payload sk.skipFill}
-    {k : ℕ} {v w : Option B}
-    (hv : Odontoceti.Decided W V k v)
-    (hw : Odontoceti.Decided (U := sk.skipFill) Y k w) : v = w :=
-  decided_agree_extends OdontocetiProperties.agree
-    (Persist.of_banded OdontocetiProperties.banded)
-    (extends_of_skipFill (OdontocetiProperties.odontocetiRule (Payload := Payload)) sk
-      (U := W) (U' := sk.skipFill) rfl rfl rfl rfl)
-    (V' := sk.liftView V) (fun _ hb => hb) hv hw
 
 /-- **SS3 for Odontoceti**: the slot the recovering replica leads at a
 gap round is skipped at once, from its `SkipsUnsupported`. -/
@@ -337,36 +313,3 @@ theorem decided_none_fresh_agree_odontoceti [S : Slots Validator] (sk : SkipMsg 
 
 end Odontoceti
 
-/-! ### And for Mahi-Mahi, at each wave width
-
-The same four `rfl`s: its universes are the core's at the core's fault
-model, so the fill is the core's and the two theorems are the generic
-ones at Mahi-Mahi's band and agreement. -/
-
-section MahiMahi
-
-variable [Faults Validator] {B : Type} [LinearOrder B]
-variable {W : BlockUniverse Validator B Payload} {w : ℕ}
-
-/-- **Verdicts survive the fill, for Mahi-Mahi.** -/
-theorem decided_fill_mahimahi [S : Slots Validator] (hw : 2 ≤ w) (sk : SkipMsg W)
-    {V : View Validator B Payload W} {k : ℕ} {v : Option B}
-    (h : MahiMahi.Decided w W V k v) :
-    MahiMahi.Decided (U := sk.skipFill) w (sk.liftView V) k v :=
-  decided_skipFill (R := MahiMahiProperties.mahiMahiRule (Payload := Payload) w)
-    (Persist.of_banded (MahiMahiProperties.banded hw)) sk
-    (U := W) (U' := sk.skipFill) rfl rfl rfl rfl (fun _ hb => hb) h
-
-/-- **And agreement across it.** -/
-theorem decided_fill_agree_mahimahi [S : Slots Validator] (hw : 2 ≤ w) (sk : SkipMsg W)
-    {V : View Validator B Payload W} {Y : View Validator B Payload sk.skipFill}
-    {k : ℕ} {v v' : Option B}
-    (hv : MahiMahi.Decided w W V k v)
-    (hw' : MahiMahi.Decided (U := sk.skipFill) w Y k v') : v = v' :=
-  decided_agree_extends (MahiMahiProperties.agree hw)
-    (Persist.of_banded (MahiMahiProperties.banded hw))
-    (extends_of_skipFill (MahiMahiProperties.mahiMahiRule (Payload := Payload) w) sk
-      (U := W) (U' := sk.skipFill) rfl rfl rfl rfl)
-    (V' := sk.liftView V) (fun _ hb => hb) hv hw'
-
-end MahiMahi

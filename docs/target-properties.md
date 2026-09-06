@@ -380,8 +380,8 @@ universe is, and the cut, fill and re-genesis built once at it;
 `Properties/Record.lean` — a carrier read as records, with every
 mechanism's witnesses. Each rule's conformance in
 its `*Properties.lean` or `Carrier.lean`; each rule's mechanism cells
-in `Integration/*Mechanisms.lean`, `Integration/ReGenesisRules.lean`
-and `Properties/Arcs/`.
+in `Integration/*Mechanisms.lean` and `Properties/Arcs/`, each an
+`OnRecord` instance with the constructions named.
 
 Six scripts keep it honest and run in CI: `audit-conformance.py` (what
 each rule shows, and the headlines), `audit-mechanisms.py` (which
@@ -2030,7 +2030,7 @@ The goal, restated in three parts:
    properties, automatically.
 
 **Where it stands** (2026-09-06; the sections below are the record of
-how it got here, and §11.13–§11.22 the last passes). Part 1 is four
+how it got here, and §11.13–§11.23 the last passes). Part 1 is four
 properties — `Banded`, `Agree`, `CommitsCandidate`, `Indirect` — and a
 `Support` with two laws, `Local` and `Commits` (§11.15, §11.16); the
 carrier carries the causal law itself, and synchrony is not a property
@@ -3808,6 +3808,49 @@ between them and keep every lemma name, so their consumers are
 untouched. FinWhale's `correct_single` is renamed `no_equivocation`,
 the record's name for the clause; Minnow, which has no carrier, keeps
 its own `Dag`.
+
+### 11.23 The carrier bridge carries the cells
+
+The record left each rule stating its verdict cells and view lifts by
+hand, one line each but sixty of them, and the two carriers under an
+invariant still proved their constructions by projection. Four changes
+close that.
+
+**One block operator.** The core's `chopBlock` was `chopBlk U.block`
+under a second name with six lemmas of its own; it is gone, and the
+seven files that read it read `chopBlk`. Hydrozoan's `chopBlkHZ` is gone
+too; the four facts Optimal's exclusion proof needs about a truncated
+block are stated at `chopHZ` directly.
+
+**View maps on the bridge.** `DagRule.OnRecord` carries `toView` and
+`ofView` with their id laws, so `chopView`, `liftView` and
+`liftViewCopy` are generic, with `viewAgreeAbove_chop` and the subset
+facts the transport theorems read. FinWhale's subtype view and
+Hydrozoan's own view are each two lines of repacking.
+
+**The verdict bundle.** `Properties/Arcs/Record.lean` proves
+`decided_chop_iff`, `decided_agree_chop`, `decided_fill`,
+`decided_agree_fill`, `decided_copyFill`, `decided_agree_copyFill`,
+`decided_addGenesis` and `decided_agree_addGenesis` at any carrier on
+the record with `Banded` and `Agree`. The per-rule statements are
+deleted: a rule's cell is its instance, and `audit-mechanisms.py` reads
+an instance as the cut, fill and re-genesis cells collected. The core
+keeps its own named theorems, which its chapters display.
+
+**Invariants on the bridge.** `OnRecord` takes the invariant a carrier
+adds — `Any` for the core, Nemo, FinWhale and Hydrozoan — and
+`Invariant.Mechanised` asks that it survive the cut, the copy fill and
+re-genesis; the general fill takes the invariant by hand, since a
+reading other than the copy is the rule's own. `HonestNoEquiv` is
+mechanised in `Integration/Preservation.lean`, with `honestNoEquiv_fill`
+now at any reading, so Orcaella's carrier is `hybridOnRecord` and its
+self-referencing fill supplies that lemma; leader exclusion is
+`Excluded` in `Integration/OptimalMechanisms.lean`, mechanised by the
+three lemmas that already existed, so Optimal's carrier is
+`optOnRecord`. Odontoceti and Mahi-Mahi, on the core's record, have
+`odontocetiOnRecord` and `mahiMahiOnRecord` in place of projected
+witnesses. `Integration/ReGenesisRules.lean` is deleted, each rule's
+re-genesis being one line in its own file.
 
 ### 11.5 Next steps, in order
 

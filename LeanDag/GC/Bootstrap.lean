@@ -166,11 +166,11 @@ def joinView {R m t : ℕ} (hs : Synchronised U R)
     rw [chop_block_eq] at hj
     rcases Finset.mem_union.mp hi with h | h
     · obtain ⟨⟨hids, hround⟩, -⟩ := mem_base.mp h
-      rw [chopBlock_refs_of_le (by omega)] at hj
+      rw [chopBlk_refs_of_le (by omega)] at hj
       simp at hj
     · obtain ⟨hiv, hround⟩ := Finset.mem_filter.mp h
       have hiids : i ∈ U.ids := viewUpto_subset_ids hiv
-      rw [chopBlock_refs_of_lt hround] at hj
+      rw [chopBlk_refs_of_lt hround] at hj
       have hjv : j ∈ viewUpto D w m := mem_viewUpto_of_mem_refs hiv hj
       have hjr : (U.block j).round + 1 = (U.block i).round :=
         U.round_of_mem_refs hiids hj

@@ -39,49 +39,6 @@ variable {G : ℕ} {b i j : BlockId}
 
 /-! ## The core's universe -/
 
-/-- The core's truncation of a block is that, at the core's universe. -/
-def chopBlock (U : BlockUniverse Validator BlockId Payload) (G : ℕ)
-    (i : BlockId) : Block Validator BlockId Payload :=
-  chopBlk U.block G i
-
-/-- Truncation leaves authorship unchanged. -/
-@[simp]
-theorem chopBlock_creator :
-    (chopBlock U G i).creator = (U.block i).creator := by
-  unfold chopBlock chopBlk; split <;> rfl
-
-/-- Truncation rebases rounds by the cut. -/
-@[simp]
-theorem chopBlock_round :
-    (chopBlock U G i).round = (U.block i).round - G := by
-  unfold chopBlock chopBlk; split <;> rfl
-
-/-- Truncation leaves payloads unchanged. -/
-@[simp]
-theorem chopBlock_payload :
-    (chopBlock U G i).payload = (U.block i).payload := by
-  unfold chopBlock chopBlk; split <;> rfl
-
-/-- At or below the cut a block becomes a genesis: its references are dropped. -/
-theorem chopBlock_refs_of_le (h : (U.block i).round ≤ G) :
-    (chopBlock U G i).refs = ∅ := chopBlk_refs_of_le h
-
-/-- Above the cut references are untouched. -/
-theorem chopBlock_refs_of_lt (h : G < (U.block i).round) :
-    (chopBlock U G i).refs = (U.block i).refs := chopBlk_refs_of_lt h
-
-/-- The truncation's references never exceed the original's. -/
-theorem chopBlock_refs_subset :
-    (chopBlock U G i).refs ⊆ (U.block i).refs := by
-  rcases Nat.lt_or_ge G (U.block i).round with h | h
-  · rw [chopBlock_refs_of_lt h]
-  · rw [chopBlock_refs_of_le h]; exact Finset.empty_subset _
-
-/-- Creators are untouched, so creator sets are, pointwise. -/
-theorem creatorsOf_chopBlock (s : Finset BlockId) :
-    creatorsOf (chopBlock U G) s = creatorsOf U.block s :=
-  creatorsOf_chopBlk s
-
 /-- **The cut**: the block record's, at the core. -/
 def chop (U : BlockUniverse Validator BlockId Payload) (G : ℕ) :
     BlockUniverse Validator BlockId Payload :=
@@ -91,7 +48,7 @@ theorem mem_chop_ids :
     i ∈ (chop U G).ids ↔ i ∈ U.ids ∧ G ≤ (U.block i).round :=
   BlockRecord.mem_chop_ids
 
-theorem chop_block_eq : (chop U G).block = chopBlock U G := rfl
+theorem chop_block_eq : (chop U G).block = chopBlk U.block G := rfl
 
 /-! ## Transfer lemmas: rounds, layers, reachability, cones -/
 
@@ -101,7 +58,7 @@ theorem reaches_of_reaches_chop (h : Reaches (chop U G) b i) :
   induction h with
   | refl => exact Reaches.refl
   | tail _ hstep ih =>
-      exact ih.trans (Reaches.single (chopBlock_refs_subset hstep))
+      exact ih.trans (Reaches.single (chopBlk_refs_subset hstep))
 
 /-- A path of the original whose endpoint stays at or above the cut never
 dips below it, so it survives truncation whole. -/
@@ -115,8 +72,8 @@ theorem reaches_chop_of_reaches (hb : b ∈ U.ids) (h : Reaches U b i)
       have hy_round := U.round_of_mem_refs hb hstep
       have hi_le := round_le_of_reaches hy_ids hrest
       refine Relation.ReflTransGen.head ?_ (ih hy_ids)
-      show y ∈ (chopBlock U G x).refs
-      rw [chopBlock_refs_of_lt (by omega)]
+      show y ∈ (chopBlk U.block G x).refs
+      rw [chopBlk_refs_of_lt (by omega)]
       exact hstep
 
 theorem reaches_chop_iff (hb : b ∈ (chop U G).ids) :
@@ -154,12 +111,12 @@ theorem exposedIn_of_exposedIn_chop {X : Validator}
   refine ⟨x, hx.1, y, hy.1, ?_⟩
   obtain ⟨hne, hxc, hyc, hround⟩ := hpair
   refine ⟨hne, ?_, ?_, ?_⟩
-  · rw [← chopBlock_creator (U := U) (G := G)]; exact hxc
-  · rw [← chopBlock_creator (U := U) (G := G)]; exact hyc
+  · rw [← chopBlk_creator (blk := U.block) (G := G)]; exact hxc
+  · rw [← chopBlk_creator (blk := U.block) (G := G)]; exact hyc
   · have hxG := hx.2
     have hyG := hy.2
     have hr := hround
-    rw [chop_block_eq, chopBlock_round, chopBlock_round] at hr
+    rw [chop_block_eq, chopBlk_round, chopBlk_round] at hr
     omega
 
 /-- **G1, DoS half — the one-way door.** The condition survives
@@ -169,9 +126,9 @@ theorem dosValid_chop (hdos : DoSValid U) : DoSValid (chop U G) := by
   intro b hb i hi
   intro hexp
   have hbU := (mem_chop_ids.mp hb).1
-  have hiU : i ∈ (U.block b).refs := chopBlock_refs_subset hi
+  have hiU : i ∈ (U.block b).refs := chopBlk_refs_subset hi
   have := hdos b hbU i hiU
-  rw [← chopBlock_creator (U := U) (G := G)] at this
+  rw [← chopBlk_creator (blk := U.block) (G := G)] at this
   exact this (exposedIn_of_exposedIn_chop hb hexp)
 
 end LeanDag

@@ -111,13 +111,18 @@ variable [Faults Validator] {U : BlockUniverse Validator BlockId Payload} {G : �
 identity. -/
 def coreOnRecord :
     (MysticetiProperties.mysticetiRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload)).OnRecord ValidWrt (Correct : Finset Validator) where
+      (Payload := Payload)).OnRecord ValidWrt (Correct : Finset Validator) BlockRecord.Any where
   toRec := fun U => U
-  ofRec := fun W => W
+  inv := fun _ => True.intro
+  ofRec := fun W _ => W
   ids_to := fun _ => rfl
   block_to := fun _ => rfl
-  ids_of := fun _ => rfl
-  block_of := fun _ => rfl
+  ids_of := fun _ _ => rfl
+  block_of := fun _ _ => rfl
+  toView := fun V => V
+  ofView := fun V => V
+  viewIds_to := fun _ => rfl
+  viewIds_of := fun _ => rfl
 
 /-- **The cut sustains the core from its horizon.** The record's witness. -/
 theorem sustains_chop :
@@ -219,101 +224,57 @@ theorem noEquivOn_chop (hd : G ≤ S.slotRound d) {T : Finset Validator}
 end CoreTruncate
 
 
-/-! ## The same cut, for a second protocol
+/-! ## The rules on the core's record
 
-Odontoceti gets garbage collection here with **no bespoke route in
-existence**: it has no `ChopDecided` of its own and never had one. The
-core's had to be deleted to make the point; this one makes it by
-construction.
+Odontoceti and Mahi-Mahi run on the core's universes, so their carriers
+read as records by the identity maps, and every mechanism cell — the
+cut, the fill, re-genesis, and the verdict theorems across each — is
+`Arcs/Record.lean` at the instance. Nothing is written per cell. -/
 
-Nothing below is about Odontoceti's rule. The witness is the core's,
-transported by the three-plus-three fields, because the two carriers
-project identically; the transport and the agreement are the generic
-theorems at Odontoceti's band. A third protocol with a band would take
-the same lines. -/
-
-section OdontocetiTruncate
+section OdontocetiRecord
 
 variable [Faults5 Validator] {B : Type} [LinearOrder B]
-variable {U : BlockUniverse Validator B Payload}
-variable {S : Slots Validator} {G d : ℕ}
 
-/-- **The cut is a truncation of Odontoceti's carrier too.** -/
-theorem truncates_chop_odontoceti (hd : G ≤ S.slotRound d) :
-    Truncates (OdontocetiProperties.odontocetiRule (BlockId := B) (Payload := Payload))
-      U (chop U G) S (S.chop G d hd) G d :=
-  let h := truncates_chop (Validator := Validator) (BlockId := B) (Payload := Payload)
-    (U := U) (S := S) (G := G) (d := d) hd
-  { mem := h.mem, round := h.round, creator := h.creator, refs := h.refs
-    slotRound := h.slotRound, leader := h.leader, base := h.base }
+/-- **Odontoceti's carrier, read as block records**: the core's, at its
+fault model. -/
+def odontocetiOnRecord :
+    (OdontocetiProperties.odontocetiRule (Validator := Validator) (BlockId := B)
+      (Payload := Payload)).OnRecord ValidWrt (Correct : Finset Validator) BlockRecord.Any where
+  toRec := fun U => U
+  inv := fun _ => True.intro
+  ofRec := fun W _ => W
+  ids_to := fun _ => rfl
+  block_to := fun _ => rfl
+  ids_of := fun _ _ => rfl
+  block_of := fun _ _ => rfl
+  toView := fun V => V
+  ofView := fun V => V
+  viewIds_to := fun _ => rfl
+  viewIds_of := fun _ => rfl
 
-/-- **Verdict transport across the cut, for Odontoceti.** -/
-theorem decided_chop_iff_odontoceti (hd : G ≤ S.slotRound d)
-    {V : View Validator B Payload U} {k : ℕ} {v : Option B} :
-    Odontoceti.Decided U V (d + k) v ↔
-      Odontoceti.Decided (S := S.chop G d hd) (chop U G) (V.chop G) k v :=
-  LocalTruncate.of_banded OdontocetiProperties.banded
-    S (S.chop G d hd) U (chop U G) G d (truncates_chop_odontoceti hd) V (V.chop G)
-    viewAgreeAbove_chop k v
+end OdontocetiRecord
 
-/-- **And cross-cut agreement**, from an arbitrary view of the
-truncation. -/
-theorem decided_agree_chop_odontoceti (hd : G ≤ S.slotRound d)
-    {W : View Validator B Payload (chop U G)}
-    {V : View Validator B Payload U} {k : ℕ} {w v : Option B}
-    (hW : Odontoceti.Decided (S := S.chop G d hd) (chop U G) W k w)
-    (hV : Odontoceti.Decided U V (d + k) v) : w = v :=
-  decided_agree_truncate OdontocetiProperties.agree
-    (LocalTruncate.of_banded OdontocetiProperties.banded)
-    (truncates_chop_odontoceti hd) viewAgreeAbove_chop hW hV
-
-end OdontocetiTruncate
-
-/-! ## And for Mahi-Mahi, at each wave width
-
-The third rule to take these lines, and the cheapest: its universes are
-the core's at the core's fault model, so the witness is the core's
-projected and the two theorems are the generic ones at Mahi-Mahi's band.
-`2 ≤ w` travels with the band and nothing else here notices the wave.
-
-`scripts/audit-mechanisms.py` asked for this cell. -/
-
-section MahiMahiTruncate
+section MahiMahiRecord
 
 variable [Faults Validator] {B : Type} [LinearOrder B]
-variable {U : BlockUniverse Validator B Payload}
-variable {S : Slots Validator} {G d w : ℕ}
 
-/-- **The cut is a truncation of Mahi-Mahi's carrier too.** -/
-theorem truncates_chop_mahimahi (hd : G ≤ S.slotRound d) :
-    Truncates (MahiMahiProperties.mahiMahiRule (BlockId := B) (Payload := Payload) w)
-      U (chop U G) S (S.chop G d hd) G d :=
-  let h := truncates_chop (Validator := Validator) (BlockId := B) (Payload := Payload)
-    (U := U) (S := S) (G := G) (d := d) hd
-  { mem := h.mem, round := h.round, creator := h.creator, refs := h.refs
-    slotRound := h.slotRound, leader := h.leader, base := h.base }
+/-- **Mahi-Mahi's carrier, read as block records**, at each wave width. -/
+def mahiMahiOnRecord (w : ℕ) :
+    (MahiMahiProperties.mahiMahiRule (Validator := Validator) (BlockId := B)
+      (Payload := Payload) w).OnRecord ValidWrt (Correct : Finset Validator) BlockRecord.Any where
+  toRec := fun U => U
+  inv := fun _ => True.intro
+  ofRec := fun W _ => W
+  ids_to := fun _ => rfl
+  block_to := fun _ => rfl
+  ids_of := fun _ _ => rfl
+  block_of := fun _ _ => rfl
+  toView := fun V => V
+  ofView := fun V => V
+  viewIds_to := fun _ => rfl
+  viewIds_of := fun _ => rfl
 
-/-- **Verdict transport across the cut, for Mahi-Mahi.** -/
-theorem decided_chop_iff_mahimahi (hw : 2 ≤ w) (hd : G ≤ S.slotRound d)
-    {V : View Validator B Payload U} {k : ℕ} {v : Option B} :
-    MahiMahi.Decided w U V (d + k) v ↔
-      MahiMahi.Decided (S := S.chop G d hd) w (chop U G) (V.chop G) k v :=
-  LocalTruncate.of_banded (MahiMahiProperties.banded hw)
-    S (S.chop G d hd) U (chop U G) G d (truncates_chop_mahimahi hd) V (V.chop G)
-    viewAgreeAbove_chop k v
-
-/-- **And cross-cut agreement**, from an arbitrary view of the
-truncation. -/
-theorem decided_agree_chop_mahimahi (hw : 2 ≤ w) (hd : G ≤ S.slotRound d)
-    {W : View Validator B Payload (chop U G)}
-    {V : View Validator B Payload U} {k : ℕ} {w' v : Option B}
-    (hW : MahiMahi.Decided (S := S.chop G d hd) w (chop U G) W k w')
-    (hV : MahiMahi.Decided w U V (d + k) v) : w' = v :=
-  decided_agree_truncate (MahiMahiProperties.agree hw)
-    (LocalTruncate.of_banded (MahiMahiProperties.banded hw))
-    (truncates_chop_mahimahi hd) viewAgreeAbove_chop hW hV
-
-end MahiMahiTruncate
+end MahiMahiRecord
 
 end Arcs
 

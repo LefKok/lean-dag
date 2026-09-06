@@ -59,30 +59,42 @@ definition; Hydrozoan is one through its block adapter. Rules on the
 core's `BlockUniverse` (the core, Odontoceti, Mahi-Mahi) take the core's
 `chop` and `skipFill` directly, in `Properties/Arcs/`.
 
-| file | rule | cut | fill | what is applied |
-|---|---|---|---|---|
-| `NemoMechanisms.lean` | Nemo | `chopNemo`, `truncates_chop_nemo` | `skipFillNemo`, `extends_skipFill_nemo`, `sustains_skipFill_nemo` | `decided_chop_iff_nemo`, `decided_agree_chop_nemo`, `decided_skipFill_nemo`, `decided_agree_skipFill_nemo` |
-| `FinWhaleMechanisms.lean` | FinWhale | `chopFinWhale`, `truncates_chop_finwhale` | `skipFillFinWhale`, the two witnesses | the four verdict theorems, `_finwhale` |
-| `HybridMechanisms.lean` | Orcaella | `chopHybrid`, `truncates_chop_hybrid` | `skipFillHybrid`, the two witnesses | the four verdict theorems, `_hybrid`, and the prompt skip `decided_none_fresh_hybrid` with its agreement form |
-| `HydrozoanMechanisms.lean` | Hydrozoan | `chopHZ` (`chopBlkHZ`, `chopViewHZ`), `truncates_chop_hz` | `copyFillHZ`, `extends_copyFillHZ`, `sustains_copyFillHZ` | the four verdict theorems, `_hz`, and `decided_none_fresh_hz` |
-| `OptimalMechanisms.lean` | Optimal-Hydrozoan | `chopOpt`, with `leaderExcludedAll_chopHZ` | `copyFillOpt`, with `leaderExcludedAll_copyFillHZ` | the four verdict theorems, `_opt` |
-| `ReGenesis.lean`, `ReGenesisRules.lean` | every rule | — | `addGenesis` and its per-rule forms (`addGenesisNemo`, `addGenesisFinWhale`, `addGenesisHybrid`, `addGenesisHZ`, `addGenesisOpt`) as `Extends` and `Sustains` witnesses | `decided_addGenesis*`, `decided_agree_addGenesis*` |
-| `ReactiveMechanisms.lean` | reactive Mysticeti | — | — | `live_chop_reactive`, `live_skipFill_reactive`, `live_addGenesis_reactive`, `decidedBelow_of_run_chop_reactive`: the reactive precondition across each mechanism, through `coreSupport` |
-| `StackRules.lean` | core, Nemo, FinWhale | fill then cut, as a `Stack` | | `stack_core`, `stack_nemo`, `stack_finwhale`; the headline `Properties.Safe` reads any of them |
-| `AdaptiveHydrozoan.lean`, `AdaptiveReactive.lean` | Hydrozoan; reactive Mysticeti | — | — | the adaptive leader mechanism (`Adaptive.run_agree`, `run_exists`) at those rules' properties |
+| file | rule | instance | constructions |
+|---|---|---|---|
+| `Properties/Arcs/GC.lean` | core, Odontoceti, Mahi-Mahi | `coreOnRecord`, `odontocetiOnRecord`, `mahiMahiOnRecord`, identity maps | the core's `chop`, `skipFill`, `addGenesis` |
+| `NemoMechanisms.lean` | Nemo | `nemoOnRecord`, identity maps | `chopNemo`, `skipFillNemo`, `addGenesisNemo` |
+| `FinWhaleMechanisms.lean` | FinWhale | `finWhaleOnRecord`, identity on universes, repacking on views | `chopFinWhale`, `skipFillFinWhale`, `addGenesisFinWhale` |
+| `HybridMechanisms.lean` | Orcaella | `hybridOnRecord`, under `HonestNoEquiv` | `chopHybrid`, `skipFillHybrid` (the self-referencing fill with `honestNoEquiv_fill`), `addGenesisHybrid`; the prompt skip `decided_none_fresh_hybrid` |
+| `HydrozoanMechanisms.lean` | Hydrozoan | `Hydrozoan.onRecord`, the block adapter | `chopHZ`, `copyFillHZ`, `addGenesisHZ`; `decided_none_fresh_hz`; the coverage refutation |
+| `OptimalMechanisms.lean` | Optimal-Hydrozoan | `optOnRecord`, under `Excluded` (`leaderExcludedAll_chopHZ`, `_copyFillHZ`, `_addGenesisHZ`) | `chopOpt`, `copyFillOpt`, `addGenesisOpt` |
+| `ReactiveMechanisms.lean` | reactive Mysticeti | — | `live_chop_reactive`, `live_skipFill_reactive`, `live_addGenesis_reactive`, `decidedBelow_of_run_chop_reactive`: the reactive precondition across each mechanism, through `coreSupport` |
+| `StackRules.lean` | core, Nemo, FinWhale | — | `stack_core`, `stack_nemo`, `stack_finwhale`: fill then cut as a `Stack`; the headline `Properties.Safe` reads any of them |
+| `AdaptiveHydrozoan.lean`, `AdaptiveReactive.lean` | Hydrozoan; reactive Mysticeti | — | the adaptive leader mechanism (`Adaptive.run_agree`, `run_exists`) at those rules' properties |
+
+Every witness (`truncates_chop`, `sustains_chop`, `extends_fill`,
+`sustains_fill`, `extends_addGenesis`, `sustains_addGenesis`) and every
+verdict cell (`decided_chop_iff`, `decided_agree_chop`, `decided_fill`,
+`decided_agree_fill`, `decided_addGenesis`, `decided_agree_addGenesis`)
+is a theorem of `DagRule.OnRecord` (`Properties/Record.lean`,
+`Properties/Arcs/Record.lean`), so a row's instance is the whole of its
+cell; `audit-mechanisms.py` reads an instance as the cut, fill and
+re-genesis cells collected.
 
 The Hydrozoan and Optimal cells are described in more detail in
 `docs/hydrozoan-integration.md`. What every row has in common: the
-construction and its witnesses are one line each at the record, the
-verdict theorems are one line each, and the file proves nothing about
-the rule's decision relation.
+instance is a dozen `rfl`s, the constructions are one line each, and
+the file proves nothing about the rule's decision relation.
 
-The two Optimal cells carry one invariant that is not a property, leader
-exclusion, across the cut and the copy fill. Across the cut: a block
-bound by exclusion sits two rounds above the horizon, so it keeps its
-parents, its parents keep theirs and their authors, and its candidates
-are old blocks at a rebased round. Across the fill: a filled block's
-parents are the donor's, so it adds no edge and witnesses nothing new.
+Orcaella and Optimal-Hydrozoan each carry one invariant that is not a
+property, and each shows it survives the cut, the copy fill and
+re-genesis once (`Invariant.Mechanised`). Honest non-equivocation
+survives because the cut removes blocks, any fill adds blocks only at
+gap rounds the crash left empty, and re-genesis adds a block by an
+author with none. Leader exclusion survives the cut because a block
+bound by it sits two rounds above the horizon, so it keeps its parents
+and its parents keep theirs; the copy fill because a filled block's
+parents are the donor's, so no edge is added; and re-genesis because
+the new block is bound by no exclusion and is its author's only block.
 
 ## 3. What the properties do not state
 

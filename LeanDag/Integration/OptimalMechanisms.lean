@@ -2,14 +2,17 @@ import LeanDag.OptimalHydrozoan.Carrier
 import LeanDag.Integration.HydrozoanMechanisms
 
 /-!
-# Garbage collection and crash recovery for Optimal-Hydrozoan
+# Garbage collection, crash recovery and re-genesis for Optimal-Hydrozoan
 
-Optimal-Hydrozoan's universes are Hydrozoan's with leader exclusion.
-Its cut is `chopHZ` and its fill is `copyFillHZ`, each with the one
-invariant carried: exclusion survives the cut because a block two rounds
-above the horizon keeps its parents and its parents keep theirs, and
-survives the copy fill because a filled block's parents are the
-donor's and old blocks vote only for old blocks.
+Optimal-Hydrozoan's universes are Hydrozoan's under leader exclusion.
+`Excluded` is that invariant on the record, and it is mechanised: it
+survives the cut because a block two rounds above the horizon keeps its
+parents and its parents keep theirs; the copy fill because a filled
+block's parents are the donor's and old blocks vote only for old
+blocks; and re-genesis because the new block is bound by no exclusion
+and is its author's only block. The carrier then reads as records under
+`Excluded`, through Hydrozoan's adapter, and every mechanism cell is
+`Arcs/Record.lean` at that instance.
 
 The fill cell is the one the skip-fill refutation had put out of
 scope. That was a fact about the core's `skipFill`, whose self
@@ -41,33 +44,29 @@ theorem leaderExcludedAll_chopHZ (hU : LeaderExcludedAll U) :
     LeaderExcludedAll (chopHZ U G) := by
   intro b hb v h2 hwit j hj
   rw [mem_chopHZ_ids] at hb
-  have h2' : 2 ≤ (chopBlkHZ U.block G b).round := h2
-  rw [chopBlkHZ_round] at h2'
-  have hjb : j ∈ (chopBlkHZ U.block G b).parents := hj
-  rw [chopBlkHZ_parents_of_lt (by omega)] at hjb
+  have h2' := h2
+  rw [chopHZ_round] at h2'
+  have hjb := hj
+  rw [chopHZ_parents_of_lt (by omega)] at hjb
   have hjU := U.complete b hb.1 j hjb
-  show (chopBlkHZ U.block G j).author ≠ v
-  rw [chopBlkHZ_author]
+  rw [chopHZ_author]
   obtain ⟨L₁, L₂, hL₁, hL₂, hne, ⟨j₁, hj₁, hv₁⟩, ⟨j₂, hj₂, hv₂⟩⟩ := hwit
   have hpar : ∀ j', j' ∈ ((chopHZ U G).block b).parents → j' ∈ (U.block b).parents := by
     intro j' hj'
-    have := hj'
-    rw [chopHZ_block, chopBlkHZ_parents_of_lt (by omega)] at this
-    exact this
+    rwa [chopHZ_parents_of_lt (by omega)] at hj'
   have hcand : ∀ L j', j' ∈ (U.block b).parents →
       LeanDag.Hydrozoan.IsVote (chopHZ U G) j' L →
-      IsCandidateAt (chopHZ U G) ((chopBlkHZ U.block G b).round - 2) v L →
+      IsCandidateAt (chopHZ U G) (((chopHZ U G).block b).round - 2) v L →
       IsCandidateAt U ((U.block b).round - 2) v L ∧ LeanDag.Hydrozoan.IsVote U j' L := by
     intro L j' hj' hv hc
     have hj'U := U.complete b hb.1 j' hj'
     have hj'r := (U.valid b hb.1).predecessor j' hj'
     unfold LeanDag.Hydrozoan.IsVote at hv ⊢
-    rw [chopHZ_block, chopBlkHZ_parents_of_lt (by omega)] at hv
+    rw [chopHZ_parents_of_lt (by omega)] at hv
     obtain ⟨hLm, hLr, hLa⟩ := hc
     rw [mem_chopHZ_ids] at hLm
-    rw [chopHZ_block, chopBlkHZ_round] at hLr
-    rw [chopHZ_block, chopBlkHZ_author] at hLa
-    rw [chopBlkHZ_round] at hLr
+    rw [chopHZ_round, chopHZ_round] at hLr
+    rw [chopHZ_author] at hLa
     exact ⟨⟨hLm.1, by omega, hLa⟩, hv⟩
   obtain ⟨hc₁, hv₁'⟩ := hcand L₁ j₁ (hpar j₁ hj₁) hv₁ hL₁
   obtain ⟨hc₂, hv₂'⟩ := hcand L₂ j₂ (hpar j₂ hj₂) hv₂ hL₂
@@ -133,133 +132,114 @@ theorem leaderExcludedAll_copyFillHZ (hU : LeaderExcludedAll U) :
       ⟨j₂, hj₂, by unfold LeanDag.Hydrozoan.IsVote at hv₂ ⊢
                    rw [copyFillHZ_block_old hj₂U] at hv₂; exact hv₂⟩⟩ j hj
 
+/-- **Leader exclusion survives re-genesis.** The new block sits at round
+zero, so it is bound by no exclusion; and it is its author's only
+block, so it can be no second candidate of a witnessed equivocation and
+no parent of anything old. Every old block's witnesses and parents are
+unchanged. -/
+theorem leaderExcludedAll_addGenesisHZ {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
+    (hU : LeaderExcludedAll U) {v : Replica} {g : BlockId} {hg : g ∉ U.ids}
+    {hsev : ∀ b ∈ U.ids, (U.block b).author ≠ v} :
+    LeaderExcludedAll (addGenesisHZ U v g hg hsev) := by
+  intro b hb u h2 hwit j hj
+  rcases Finset.mem_insert.mp hb with rfl | hbU
+  · rw [addGenesisHZ_block_new] at h2
+    simp at h2
+  · rw [addGenesisHZ_block_old hbU] at h2 hwit hj
+    have hjU := U.complete b hbU j hj
+    rw [addGenesisHZ_block_old hjU]
+    obtain ⟨L₁, L₂, hL₁, hL₂, hne, ⟨j₁, hj₁, hv₁⟩, ⟨j₂, hj₂, hv₂⟩⟩ := hwit
+    have hj₁' : j₁ ∈ (U.block b).parents := by rwa [addGenesisHZ_block_old hbU] at hj₁
+    have hj₂' : j₂ ∈ (U.block b).parents := by rwa [addGenesisHZ_block_old hbU] at hj₂
+    by_cases huv : u = v
+    · subst huv
+      have hc : ∀ L, IsCandidateAt (addGenesisHZ U u g hg hsev) ((U.block b).round - 2) u L →
+          L = g := by
+        rintro L ⟨hLm, -, hLa⟩
+        rcases Finset.mem_insert.mp hLm with rfl | hLU
+        · rfl
+        · rw [addGenesisHZ_block_old hLU] at hLa
+          exact absurd hLa (hsev L hLU)
+      exact absurd ((hc L₁ hL₁).trans (hc L₂ hL₂).symm) hne
+    · have hcand : ∀ L, IsCandidateAt (addGenesisHZ U v g hg hsev) ((U.block b).round - 2) u L →
+          IsCandidateAt U ((U.block b).round - 2) u L := by
+        rintro L ⟨hLm, hLr, hLa⟩
+        rcases Finset.mem_insert.mp hLm with rfl | hLU
+        · rw [addGenesisHZ_block_new] at hLa
+          exact absurd hLa.symm huv
+        · rw [addGenesisHZ_block_old hLU] at hLr hLa
+          exact ⟨hLU, hLr, hLa⟩
+      have hvote : ∀ j ∈ (U.block b).parents, ∀ L,
+          LeanDag.Hydrozoan.IsVote (addGenesisHZ U v g hg hsev) j L →
+          LeanDag.Hydrozoan.IsVote U j L := by
+        intro j hj L hv
+        have hjU := U.complete b hbU j hj
+        unfold LeanDag.Hydrozoan.IsVote at hv ⊢
+        rw [addGenesisHZ_block_old hjU] at hv
+        exact hv
+      exact hU b hbU u h2 ⟨L₁, L₂, hcand L₁ hL₁, hcand L₂ hL₂, hne,
+        ⟨j₁, hj₁', hvote j₁ hj₁' L₁ hv₁⟩, ⟨j₂, hj₂', hvote j₂ hj₂' L₂ hv₂⟩⟩ j hj
+
+/-- **Leader exclusion, as an invariant on the record.** -/
+def Excluded (W : BlockRecord Replica BlockId Unit LeanDag.Hydrozoan.validity
+    (LeanDag.Hydrozoan.NonByzantine : Finset Replica)) : Prop :=
+  LeaderExcludedAll (LeanDag.Hydrozoan.ofRecord W)
+
+/-- **And it is mechanised**: the three facts above, read at the record. -/
+instance Excluded.mechanised :
+    BlockRecord.Invariant.Mechanised (Excluded (Replica := Replica) (BlockId := BlockId)) where
+  chop := fun G h => leaderExcludedAll_chopHZ (U := LeanDag.Hydrozoan.ofRecord _) (G := G) h
+  copyFill := fun sk h =>
+    leaderExcludedAll_copyFillHZ (U := LeanDag.Hydrozoan.ofRecord _) (sk := sk) h
+  addGenesis := fun v g _ hg hsev h =>
+    leaderExcludedAll_addGenesisHZ (U := LeanDag.Hydrozoan.ofRecord _) (v := v) (g := g)
+      (hg := hg) (hsev := hsev) h
+
 end HZ
 
 section Opt
 
 variable [O : LeanDag.OptimalHydrozoan.OptimalFaults Replica]
+
+/-- **Optimal-Hydrozoan's carrier, on the record**: Hydrozoan's adapter,
+under `Excluded`. -/
+def optOnRecord :
+    (OptimalHydrozoanProperties.optimalRule (Replica := Replica)
+      (BlockId := BlockId)).OnRecord LeanDag.Hydrozoan.validity
+      (LeanDag.Hydrozoan.NonByzantine : Finset Replica) Excluded where
+  toRec := fun W => LeanDag.Hydrozoan.toRecord W.val
+  inv := fun W => W.property
+  ofRec := fun W h => ⟨LeanDag.Hydrozoan.ofRecord W, h⟩
+  ids_to := fun _ => rfl
+  block_to := fun _ => rfl
+  ids_of := fun _ _ => rfl
+  block_of := fun _ _ => rfl
+  toView := fun V => ⟨V.ids, V.subset_ids, V.complete⟩
+  ofView := fun V => ⟨V.ids, V.subset_ids, V.complete⟩
+  viewIds_to := fun _ => rfl
+  viewIds_of := fun _ => rfl
+
 variable {W : (OptimalHydrozoanProperties.optimalRule (Replica := Replica)
   (BlockId := BlockId)).Universe}
 
-/-! ### The cut -/
-
-/-- **The cut, at Optimal-Hydrozoan's carrier.** -/
+/-- **The cut, at Optimal-Hydrozoan's carrier**: the record's. -/
 def chopOpt (W : (OptimalHydrozoanProperties.optimalRule (Replica := Replica)
     (BlockId := BlockId)).Universe) (G : ℕ) :
     (OptimalHydrozoanProperties.optimalRule (Replica := Replica) (BlockId := BlockId)).Universe :=
-  ⟨chopHZ W.val G, leaderExcludedAll_chopHZ W.property⟩
+  optOnRecord.chop W G
 
-/-- **The cut is a truncation of Optimal-Hydrozoan's carrier** —
-Hydrozoan's witness, projected. -/
-theorem truncates_chop_opt (hd : G ≤ S.slotRound d) :
-    Truncates (OptimalHydrozoanProperties.optimalRule (Replica := Replica) (BlockId := BlockId))
-      W (chopOpt W G) S (S.chop G d hd) G d :=
-  let h := truncates_chop_hz (U := W.val) hd
-  { mem := h.mem, round := h.round, creator := h.creator, refs := h.refs,
-    slotRound := h.slotRound, leader := h.leader, base := h.base }
-
-theorem viewAgreeAbove_chop_opt {V : LeanDag.Hydrozoan.View W.val} :
-    ViewAgreeAbove (OptimalHydrozoanProperties.optimalRule (Replica := Replica)
-      (BlockId := BlockId)) (U := W) (U' := chopOpt W G) V (chopViewHZ V G) G :=
-  fun b hb hr => viewAgreeAbove_chop_hz (U := W.val) b hb hr
-
-/-- **Verdict transport across the cut, for Optimal-Hydrozoan.** -/
-theorem decided_chop_iff_opt (hd : G ≤ S.slotRound d) {V : LeanDag.Hydrozoan.View W.val}
-    {k : ℕ} {v : Option BlockId} :
-    (OptimalHydrozoanProperties.optimalRule (Replica := Replica) (BlockId := BlockId)).Decided
-      S V (d + k) v ↔
-      (OptimalHydrozoanProperties.optimalRule (Replica := Replica) (BlockId := BlockId)).Decided
-        (S.chop G d hd) (U := chopOpt W G) (chopViewHZ V G) k v :=
-  LocalTruncate.of_banded OptimalHydrozoanProperties.banded
-    S (S.chop G d hd) W (chopOpt W G) G d (truncates_chop_opt hd) V (chopViewHZ V G)
-    viewAgreeAbove_chop_opt k v
-
-/-- **And cross-cut agreement.** -/
-theorem decided_agree_chop_opt (hd : G ≤ S.slotRound d)
-    {X : LeanDag.Hydrozoan.View (chopOpt W G).val} {V : LeanDag.Hydrozoan.View W.val}
-    {k : ℕ} {w v : Option BlockId}
-    (hW : (OptimalHydrozoanProperties.optimalRule (Replica := Replica)
-      (BlockId := BlockId)).Decided (S.chop G d hd) (U := chopOpt W G) X k w)
-    (hV : (OptimalHydrozoanProperties.optimalRule (Replica := Replica)
-      (BlockId := BlockId)).Decided S V (d + k) v) : w = v :=
-  decided_agree_truncate OptimalHydrozoanProperties.agree
-    (LocalTruncate.of_banded OptimalHydrozoanProperties.banded)
-    (truncates_chop_opt hd) viewAgreeAbove_chop_opt hW hV
-
-/-! ### The fill -/
-
-
-/-- **The fill, at Optimal-Hydrozoan's carrier**: the copy fill with
-leader exclusion carried. -/
+/-- **The fill, at Optimal-Hydrozoan's carrier**: the record's copy fill. -/
 def copyFillOpt (W : (OptimalHydrozoanProperties.optimalRule (Replica := Replica)
     (BlockId := BlockId)).Universe) (sk : SkipData W.val.ids (hzBlk W.val)) :
     (OptimalHydrozoanProperties.optimalRule (Replica := Replica) (BlockId := BlockId)).Universe :=
-  ⟨copyFillHZ W.val sk, leaderExcludedAll_copyFillHZ W.property⟩
+  optOnRecord.copyFill W sk
 
-variable {sk : SkipData W.val.ids (hzBlk W.val)}
-
-/-- **The fill is an extension of Optimal-Hydrozoan's carrier.** -/
-theorem extends_copyFill_opt :
-    Extends (OptimalHydrozoanProperties.optimalRule (Replica := Replica) (BlockId := BlockId))
-      W (copyFillOpt W sk) where
-  subset := fun _ h => Finset.mem_union_left _ h
-  block := fun b hb => by
-    show LeanDag.Hydrozoan.adaptBlock ((copyFillHZ W.val sk).block b) =
-      LeanDag.Hydrozoan.adaptBlock (W.val.block b)
-    rw [copyFillHZ_block_old hb]
-
-/-- **What the fill sustains**: from the top of its gap. -/
-theorem sustains_copyFill_opt :
-    Sustains (OptimalHydrozoanProperties.optimalRule (Replica := Replica) (BlockId := BlockId))
-      W (copyFillOpt W sk) 0 (sk.r + 1) where
-  mem := fun b => by
-    show (b ∈ W.val.ids ∧ sk.r + 1 ≤ (W.val.block b).round) ↔
-      (b ∈ (copyFillHZ W.val sk).ids ∧ sk.r + 1 ≤ ((copyFillHZ W.val sk).block b).round + 0)
-    constructor
-    · rintro ⟨hb, hr⟩
-      exact ⟨Finset.mem_union_left _ hb, by rw [copyFillHZ_block_old hb]; omega⟩
-    · rintro ⟨hb, hr⟩
-      have hbU : b ∈ W.val.ids := by
-        rcases Finset.mem_union.mp hb with ho | hfr
-        · exact ho
-        · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hfr
-          rw [copyFillHZ_block_fresh] at hr
-          simp only at hr
-          omega
-      exact ⟨hbU, by rw [copyFillHZ_block_old hbU] at hr; omega⟩
-  round := fun b hb _ => by
-    show ((copyFillHZ W.val sk).block b).round + 0 = (W.val.block b).round
-    rw [copyFillHZ_block_old hb]; omega
-  creator := fun b hb _ => by
-    show ((copyFillHZ W.val sk).block b).author = (W.val.block b).author
-    rw [copyFillHZ_block_old hb]
-  refs := fun b hb _ => by
-    show ((copyFillHZ W.val sk).block b).parents = (W.val.block b).parents
-    rw [copyFillHZ_block_old hb]
-
-/-- **Verdicts survive the recovery, for Optimal-Hydrozoan** — the cell
-the skip-fill refutation had put out of scope, closed by the fill that
-adds no edge. -/
-theorem decided_copyFill_opt (S : Slots Replica) {V : LeanDag.Hydrozoan.View W.val}
-    {V' : LeanDag.Hydrozoan.View (copyFillOpt W sk).val} (hsub : V.ids ⊆ V'.ids)
-    {k : ℕ} {u : Option BlockId}
-    (h : (OptimalHydrozoanProperties.optimalRule (Replica := Replica)
-      (BlockId := BlockId)).Decided S V k u) :
-    (OptimalHydrozoanProperties.optimalRule (Replica := Replica)
-      (BlockId := BlockId)).Decided S V' k u :=
-  Persist.of_banded OptimalHydrozoanProperties.banded S W _ extends_copyFill_opt V V' hsub k u h
-
-/-- **And agreement across it.** -/
-theorem decided_agree_copyFill_opt (S : Slots Replica) {V : LeanDag.Hydrozoan.View W.val}
-    {V' V'' : LeanDag.Hydrozoan.View (copyFillOpt W sk).val} (hsub : V.ids ⊆ V'.ids)
-    {k : ℕ} {u u' : Option BlockId}
-    (h : (OptimalHydrozoanProperties.optimalRule (Replica := Replica)
-      (BlockId := BlockId)).Decided S V k u)
-    (h' : (OptimalHydrozoanProperties.optimalRule (Replica := Replica)
-      (BlockId := BlockId)).Decided S V'' k u') : u = u' :=
-  decided_agree_extends OptimalHydrozoanProperties.agree
-    (Persist.of_banded OptimalHydrozoanProperties.banded) extends_copyFill_opt (V' := V')
-    hsub h h'
+/-- **Re-genesis, at Optimal-Hydrozoan's carrier**: the record's. -/
+def addGenesisOpt (W : (OptimalHydrozoanProperties.optimalRule (Replica := Replica)
+    (BlockId := BlockId)).Universe) (v : Replica) (g : BlockId)
+    (hg : g ∉ W.val.ids) (hsev : ∀ b ∈ W.val.ids, (W.val.block b).author ≠ v) :
+    (OptimalHydrozoanProperties.optimalRule (Replica := Replica) (BlockId := BlockId)).Universe :=
+  optOnRecord.addGenesis W v g () hg hsev
 
 end Opt
 

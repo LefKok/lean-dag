@@ -4,6 +4,7 @@ import LeanDag.BlockRecord
 import LeanDag.Record.Chop
 import LeanDag.Record.Fill
 import LeanDag.Record.Genesis
+import LeanDag.Record.Invariant
 import LeanDag.Causality
 import LeanDag.Participation
 import LeanDag.BlockDag
@@ -71,7 +72,6 @@ import LeanDag.Integration.HybridMechanisms
 import LeanDag.Integration.NemoMechanisms
 import LeanDag.Integration.FinWhaleMechanisms
 import LeanDag.Integration.ReactiveMechanisms
-import LeanDag.Integration.ReGenesisRules
 import LeanDag.Integration.HydrozoanMechanisms
 import LeanDag.Integration.OptimalMechanisms
 import LeanDag.Properties.Arcs.Stack
@@ -112,6 +112,7 @@ import LeanDag.Timed.Coverage
 import LeanDag.Timed.Extension
 import LeanDag.Properties.Compose
 import LeanDag.Properties.Record
+import LeanDag.Properties.Arcs.Record
 import LeanDag.Properties.Deliver
 import LeanDag.MysticetiProperties
 import LeanDag.Odontoceti.Carrier
