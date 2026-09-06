@@ -10,6 +10,8 @@ import LeanDag.Properties.Support
 
 import LeanDag.Timed.Coverage
 
+import LeanDag.Properties.Arcs.Headline
+
 /-!
 # Mahi-Mahi's band, and the two liveness properties
 
@@ -638,6 +640,17 @@ theorem indirect {w : ℕ} (hw : 1 ≤ w) :
     show ¬ MahiMahi.CertifiedIn U w A L (S'.slotRound i)
     rw [hround]
     exact hc L hLS
+
+/-! ## The headlines -/
+
+theorem safety (hw : 2 ≤ w) : Properties.Safe (mahiMahiRule (Validator := Validator)
+    (BlockId := BlockId) (Payload := Payload) w) :=
+  Properties.safety (banded hw) (agree hw) (commitsCandidate w)
+
+theorem liveness (hw : 2 ≤ w) : Properties.Support.Lives (mmSupport (Validator := Validator)
+    (BlockId := BlockId) (Payload := Payload) w) (coreReliability Validator) :=
+  Properties.Support.liveness (mmSupport_commits hw) (commitsCandidate w) (selfParent w)
+    (noEquiv w)
 
 end MahiMahiProperties
 

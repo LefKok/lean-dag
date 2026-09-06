@@ -330,14 +330,6 @@ theorem decided_agree (hne : HonestNoEquiv U) (hk : Admissible Validator k)
     (h₂ : Decided k U V₂ s v₂) : v₁ = v₂ :=
   decided_unique hne hk h₁ V₂ v₂ h₂
 
-/-- **Safety.** Two committed blocks for one slot are the same block,
-across any two views and any two routes. -/
-theorem safety (hne : HonestNoEquiv U) (hk : Admissible Validator k)
-    {V₁ V₂ : View Validator BlockId Payload U} {s : ℕ}
-    {L₁ L₂ : BlockId} (h₁ : Decided k U V₁ s (some L₁))
-    (h₂ : Decided k U V₂ s (some L₂)) : L₁ = L₂ :=
-  Option.some.inj (decided_unique hne hk h₁ V₂ (some L₂) h₂)
-
 end Hybrid
 
 end LeanDag

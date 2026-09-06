@@ -15,6 +15,8 @@ import LeanDag.Properties.Arcs.Liveness
 
 import LeanDag.Timed.Coverage
 
+import LeanDag.Properties.Arcs.Headline
+
 /-!
 # Odontoceti conforms to the target properties
 
@@ -570,5 +572,24 @@ theorem all_decided_below_of_fairRun_correct {c : ℕ} (hc : 0 < c)
 
 end Odontoceti
 
+
+namespace OdontocetiProperties
+
+/-! ## The headlines -/
+
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
+variable [F : Faults5 Validator]
+variable {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
+
+theorem safety : Properties.Safe (odontocetiRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)) :=
+  Properties.safety banded agree commitsCandidate
+
+theorem liveness : Properties.Support.Lives (Properties.voteSupport (odontocetiRule
+    (Validator := Validator) (BlockId := BlockId) (Payload := Payload)))
+    (coreReliability Validator) :=
+  Properties.Support.liveness voteSupport_commits commitsCandidate selfParent noEquiv
+
+end OdontocetiProperties
 
 end LeanDag

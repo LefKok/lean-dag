@@ -316,13 +316,6 @@ theorem decided_unique {V₁ : View Validator BlockId Payload U} {k : ℕ}
       exact absurd ht₂ (hnone _ hL₂)
     | indirectSkip _ _ _ _ _ => rfl
 
-/-- **O6 (safety).** Two committed blocks for one slot are the same
-block, across any two views and any two routes. -/
-theorem safety {V₁ V₂ : View Validator BlockId Payload U} {k : ℕ}
-    {L₁ L₂ : BlockId} (h₁ : Decided U V₁ k (some L₁))
-    (h₂ : Decided U V₂ k (some L₂)) : L₁ = L₂ :=
-  Option.some.inj (decided_unique h₁ V₂ (some L₂) h₂)
-
 end Odontoceti
 
 end LeanDag

@@ -68,6 +68,9 @@ OBLIGATIONS = ["Banded", "Agree", "CommitsCandidate", "Indirect", "Support",
                "OfCoverage"]
 REQUIRED = 5
 DERIVED = ["LeaderCommits", "Persist", "LocalTruncate", "Descends"]
+# The headlines (`Properties/Arcs/Headline.lean`): safety across any stack, and
+# liveness (progress and inclusion) at the rule's support, each instantiated once.
+HEADLINE = ["Safe", "Lives", "Progresses"]
 # What each derived property follows from. `Descends` used to be an
 # obligation and is now the indirect rule with a downward induction on
 # top (`Properties/Derived/Descent.lean`).
@@ -105,11 +108,13 @@ def conclusions(decls):
         is_stmt = d["kind"] == "def" and d["name"] in ("Statement", "holds")
         if d["kind"] != "theorem" and not is_stmt:
             continue
-        for prop in OBLIGATIONS + DERIVED:
+        for prop in OBLIGATIONS + DERIVED + HEADLINE:
             if prop == "Support":
                 hit = re.search(r"\)\.Commits\s*\(", flat) or re.search(r"\.Commits\s+\(", flat)
             elif prop == "OfCoverage":
                 hit = re.search(r":\s*(LeanDag\.)?(Timed\.)?OfCoverage\b", flat)
+            elif prop in ("Lives", "Progresses"):
+                hit = re.search(r":\s*(LeanDag\.)?(Properties\.)?Support\." + prop + r"\b", flat)
             else:
                 hit = (re.search(r":\s*(LeanDag\.)?(Properties\.)?" + prop + r"\b", flat)
                        or (is_stmt and re.search(r"Properties\." + prop + r"\b", flat)))
@@ -135,7 +140,7 @@ def main():
         return 1
     shown = conclusions(json.loads(path.read_text()))
 
-    cols = OBLIGATIONS + ["|"] + DERIVED
+    cols = OBLIGATIONS + ["|"] + DERIVED + ["|"] + ["Safe", "Lives"]
     short = {"Causal": "caus", "Banded": "band", "Agree": "agre",
              "CommitsCandidate": "cand", "LeaderCommits": "lead",
              "Indirect": "indr", "Support": "supp",
@@ -144,6 +149,7 @@ def main():
              "Descends": "desc",
              "SkipsUnsupported": "skip*", "Quorate": "quor*",
              "Persist": "pers", "LocalTruncate": "trnc",
+             "Safe": "safe", "Lives": "live",
              "|": "|"}
     width = max(len(name) for name, _, _ in RULES) + 1
     print("obligations, then what follows from them "
@@ -161,6 +167,8 @@ def main():
             elif c in DERIVED and carriers and has(DERIVED_FROM[c]):
                 # a consequence of the band: nothing to show per protocol
                 cells.append("der ")
+            elif c == "Lives" and carriers and has("Progresses"):
+                cells.append("prog")
             else:
                 cells.append("--  ")
         print(name.ljust(width) + "  ".join(cells) + ("   " + note if note else ""))
@@ -191,6 +199,10 @@ def main():
     print("`supp`: the rule has a `Support` with its `Commits` law (`Properties/Support.lean`),\n"
           "  so `LeaderCommits`, liveness on a covered DAG and liveness across every\n"
           "  `Sustains` are the generic theorems applied (`Arcs/Liveness.lean`).")
+    print("`safe`, `live`: the headlines (`Properties/Arcs/Headline.lean`) instantiated at the\n"
+          "  rule — safety across any stack of mechanisms; liveness as progress and inclusion\n"
+          "  at the rule's support, `prog` where the rule has no self-parent clause and shows\n"
+          "  progress only.")
     print("`lead` is derived: `LeaderCommits` at `Support.live` follows from the support's\n"
           "  `Commits` law. A rule that also states it against a precondition of its own\n"
           "  reads `yes`; one that relies on the derivation reads `der`.")

@@ -1,3 +1,4 @@
+import LeanDag.HybridProperties
 import LeanDag.Hybrid.Conservativity
 import LeanDag.Schedule
 import LeanDagTest.Odontoceti.Model
@@ -230,7 +231,7 @@ example : HonestNoEquiv U11 := honestNoEquiv_of_fc_zero rfl U11
 example : HonestNoEquiv U11 := by decide
 
 #print axioms LeanDag.Hybrid.decided_unique
-#print axioms LeanDag.Hybrid.safety
+#print axioms LeanDag.HybridProperties.safety
 #print axioms LeanDag.Hybrid.all_decided_below_of_fairRun
 #print axioms LeanDag.Hybrid.toHybrid_toFaults
 

@@ -20,6 +20,8 @@ import LeanDag.Liveness
 
 import LeanDag.Timed.Coverage
 
+import LeanDag.Properties.Arcs.Headline
+
 /-!
 # The core rule as a carrier, and what it makes of a sustaining mechanism
 
@@ -1364,5 +1366,27 @@ theorem all_decided_below_of_fairRun_correct {c : ℕ} (hc : 0 < c)
   all_decided_below_of_fairRun hc Finset.Subset.rfl card_correct hspan fair R k
 
 end Ledger
+
+namespace MysticetiProperties
+
+/-! ## The headlines -/
+
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
+variable [F : Faults Validator]
+variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
+
+/-- **Safety**, across any stack of mechanisms, for the core and for its
+reactive execution alike. -/
+theorem safety : Properties.Safe (mysticetiRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)) :=
+  Properties.safety banded agree commitsCandidate
+
+/-- **Liveness**, at the core's support: certification is the only
+antecedent, so the timed and the reactive execution share it. -/
+theorem liveness : Properties.Support.Lives (coreSupport (Validator := Validator)
+    (BlockId := BlockId) (Payload := Payload)) (coreReliability Validator) :=
+  Properties.Support.liveness coreSupport_commits commitsCandidate selfParent noEquiv
+
+end MysticetiProperties
 
 end LeanDag

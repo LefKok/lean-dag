@@ -70,6 +70,7 @@ import LeanDag.Integration.ReGenesisRules
 import LeanDag.Integration.HydrozoanMechanisms
 import LeanDag.Integration.OptimalMechanisms
 import LeanDag.Properties.Arcs.Stack
+import LeanDag.Properties.Arcs.Headline
 import LeanDag.Integration.StackRules
 import LeanDag.Barnacle.MahiMahi.Proof
 import LeanDag.Barnacle.FinWhale.Proof

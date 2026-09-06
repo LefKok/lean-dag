@@ -14,6 +14,8 @@ import LeanDag.Properties.Optional.Quorate
 
 import LeanDag.Timed.Coverage
 
+import LeanDag.Properties.Arcs.Headline
+
 /-!
 # Optimal-Hydrozoan as a carrier, and the three properties its rules give
 
@@ -427,6 +429,16 @@ theorem indirect :
         refine hw L' (hls L' hL') ?_
         exact (LeanDag.OptimalHydrozoan.evidenceLinked_sched (U := U.val)
           (by exact hsk.symm) (by exact hlk.symm)).mp he'
+
+/-! ## The headlines -/
+
+theorem safety [LinearOrder BlockId] :
+    Properties.Safe (optimalRule (Replica := Replica) (BlockId := BlockId)) :=
+  Properties.safety banded agree commitsCandidate
+
+theorem progress : Properties.Support.Progresses
+    (optSupport (Replica := Replica) (BlockId := BlockId)) (LeanDag.Hydrozoan.hzReliability Replica) :=
+  Properties.Support.progress optSupport_commits
 
 end OptimalHydrozoanProperties
 

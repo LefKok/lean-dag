@@ -9,6 +9,8 @@ import LeanDag.Properties.Band
 import LeanDag.Properties.Derived.Descent
 import LeanDag.Properties.Derived.Bounded
 
+import LeanDag.Properties.Arcs.Headline
+
 /-!
 # Hybrid conforms to the target properties
 
@@ -466,6 +468,19 @@ theorem descends {kt : ℕ} {S : Slots Validator} {c : ℕ} (hc : 0 < c)
       (Payload := Payload) kt) S c :=
   Descends.of_indirect (indirect kt) hc
     (fun b i hi => Hybrid.eligible_iff.mp (hspans b i hi))
+
+/-! ## The headlines -/
+
+theorem safety {kt : ℕ} (hpos : 0 < kt) (hk : Hybrid.Admissible Validator kt) :
+    Properties.Safe (hybridRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) kt) :=
+  Properties.safety (banded hpos) (agree hk) (commitsCandidate kt)
+
+theorem liveness (kt : ℕ) : Properties.Support.Lives (Properties.voteSupport (hybridRule
+    (Validator := Validator) (BlockId := BlockId) (Payload := Payload) kt))
+    (coreReliability Validator) :=
+  Properties.Support.liveness (voteSupport_commits kt) (commitsCandidate kt) (selfParent kt)
+    (noEquiv kt)
 
 end HybridProperties
 

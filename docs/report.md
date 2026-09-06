@@ -292,7 +292,7 @@ proof effort with no corresponding proof content.
    a capstone in which a validator recovered by Safe Skip, then
    truncated, read in the hybrid model under an adaptive schedule still
    cannot disagree about a verdict (I7; since retired in favour of
-   `stack_core_safe_and_live`, proved through the properties). Four
+   the safety headline `MysticetiProperties.safety`, proved through the properties). Four
    kinds of result are visible only here. Coverage is refuted under the
    fill, with an exact boundary and for the same reason the fill is
    safe (I4). Three conditions constrain where a horizon may fall
@@ -509,7 +509,7 @@ fault tolerance (`Hybrid.decided_unique` (H6),
 `hybrid_bound_necessary` (H10)); and crash-fault consensus
 (`Nemo.decided_unique` (NN5), `Nemo.all_decided_below_of_fairRun`
 (NN8)). §16 composes the first seven
-(`stack_core_safe_and_live` (I7)) and collects the deployment conditions
+(`MysticetiProperties.safety` (I7)) and collects the deployment conditions
 their composition reveals.
 
 §§17–23 analyse seven protocols of the family against this development:
@@ -3399,10 +3399,15 @@ of §10.4. With it, agreement and safety follow the pattern of §5.5:
 ```lean
 theorem decided_unique (h₁ : Decided U V₁ k v₁) :
     ∀ V₂ v₂, Decided U V₂ k v₂ → v₁ = v₂
-
-theorem safety (h₁ : Decided U V₁ k (some L₁))
-    (h₂ : Decided U V₂ k (some L₂)) : L₁ = L₂
 ```
+
+Safety proper is the headline (`Properties/Arcs/Headline.lean`) at
+Odontoceti's rule, `OdontocetiProperties.safety : Properties.Safe
+odontocetiRule`: across any stack of mechanisms, verdicts transport,
+any two views agree, a commit is the slot's candidate and no block is
+committed twice. The rule-level statement that two committed blocks for
+one slot coincide was its second clause at the empty stack, and is
+retired.
 
 The induction closes case by case: the direct/direct diagonal by O1 and
 O1′; every direct/indirect crossing by O2, O3 and O4′; and the
@@ -4877,8 +4882,8 @@ implementation computes the same five verdicts on it.
 > code. What replaces it is the properties arc (`target-properties.md`):
 > every mechanism is proved once against `Banded`, `Agree`,
 > `CommitsCandidate`, `Indirect` and a `Support`, and the composition
-> is `Stack.safe_and_live` (`Properties/Arcs/Stack.lean`), instantiated
-> for the core as `stack_core_safe_and_live` (`Integration/StackRules`).
+> is `Stack.safe_and_live` (`Properties/Arcs/Stack.lean`), and the headline
+> `MysticetiProperties.safety` (`Properties/Arcs/Headline.lean`) at the core.
 > What survives of this section in code is §16.2's preservation lemmas,
 > §16.3's coverage results, §16.4's retention and §16.6's re-genesis.
 > The rest is kept as the record of how the composition was first
@@ -5103,17 +5108,13 @@ a verdict, and still decides. The theorem that first said so read the
 verdicts through the hybrid model under an adaptive schedule, and
 discharged every invariant its arcs required by chains of the lemmas of
 §16.2. It is retired: the statement now in the code is
+`MysticetiProperties.safety : Properties.Safe mysticetiRule`, which is
+`Properties.safety banded agree commitsCandidate`,
 
-```lean
-theorem stack_core_safe_and_live (sk : SkipMsg U) (hd : G ≤ S.slotRound d)
-    {V : View Validator BlockId Payload U} {V' : View Validator BlockId Payload (chop sk.skipFill G)}
-    (hv : ViewAgreeAbove (MysticetiProperties.mysticetiRule (Payload := Payload)) V V'
-      (max (sk.r + 1) G)) :
-    …
-```
-
-which is `Stack.safe_and_live` (`Properties/Arcs/Stack.lean`) applied to
-the two witnesses `sustains_skipFill` and `truncates_chop`, and needs no
+`MysticetiProperties.safety`, the safety headline
+(`Properties/Arcs/Headline.lean`) at the core's rule: it quantifies over
+every stack of mechanisms, so the fill-then-cut stack `stack_core`
+(`Integration/StackRules`) is one instance, and it needs no
 preservation chain because the properties are stated once against the
 rule and carried by the witnesses.
 
@@ -9760,16 +9761,16 @@ no errors.
 `commits_recur_on`, `ViewPace.commits_recur_via_pace`,
 `all_decided_below_of_fairRun` (L10), `card_history_le'`, `dos_resistance`,
 `decided_chop_iff`, `decided_agree_chop`, `card_retained_le`, `bootstrap_agree`,
-`chop_chop`, `Odontoceti.decided_unique`, `Odontoceti.safety` and
+`chop_chop`, `Odontoceti.decided_unique`, `OdontocetiProperties.safety` and
 `Odontoceti.all_decided_below_of_fairRun`, `chain_quality`,
 `committed_of_correct_block`, `decided_fill_of_persist` (SS5) and
 `decided_fill_agree_of_properties` (SS6), `SkipMsg.skipFill_eq_of_core` (SS9)
 and `JumpMsg.denote_eq_of_core` (SS10), `adaptiveRun_agree` (AL3) and
 `adaptiveRun_exists` (AL5), `Hybrid.decided_unique` (H6),
-`Hybrid.safety`, `hybrid_bound_necessary` (H10), `Nemo.decided_unique`
+`HybridProperties.safety`, `hybrid_bound_necessary` (H10), `Nemo.decided_unique`
 (NN5), `Nemo.outputAt_agree` (NN6) and
 `Nemo.all_decided_below_of_fairRun` (NN8), and
-`stack_core_safe_and_live` (I7) — depends on exactly `propext`,
+`MysticetiProperties.safety` and `MysticetiProperties.liveness` (I7) — depends on exactly `propext`,
 `Classical.choice` and `Quot.sound`, which constitute the whole axiom set of
 Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 `native_decide` and the extended trusted base it entails.
@@ -10491,7 +10492,7 @@ reused.
 | O3 | support propagation: every anchor's cone is the certificate | `thickLink_of_directCommit` *(Odontoceti/Rules)* |
 | O4′ | a direct commit excludes every rival candidate | `eq_of_directCommit_of_thickLink` *(Odontoceti/Rules)* |
 | O5 | agreement, under canonicity | `Odontoceti.decided_unique` *(Odontoceti/Decision)* |
-| O6 | safety | `Odontoceti.safety` *(Odontoceti/Decision)* |
+| O6 | safety, as the headline across any stack | `OdontocetiProperties.safety`, `OdontocetiProperties.liveness` *(OdontocetiProperties)* |
 | O7 | a correct leader commits in one step | `Odontoceti.decided_of_leader_mem` *(Odontoceti/Liveness)* |
 | O8 | a run of two spans eligibility | `Odontoceti.spansEligible_two` *(Odontoceti/Liveness)* |
 | O9 | a committed run clears everything below | `Odontoceti.decided_below_of_committed_run` *(Odontoceti/Liveness)* |
@@ -10556,7 +10557,7 @@ reused.
 | H3 | a skipped leader caps at `2·fb + fc` supporters, below the interval | `Hybrid.card_supporters_le_of_directSkip`, `Hybrid.not_thickLink_of_directSkip` *(Hybrid/Rules)* |
 | H4 | link integrity: every anchor carries the interval's upper end | `Hybrid.thickLink_of_directCommit` *(Hybrid/Rules)* |
 | H5 | a direct commit excludes every rival candidate | `Hybrid.eq_of_directCommit_of_thickLink` *(Hybrid/Rules)* |
-| H6 | agreement and safety, at every admissible threshold | `Hybrid.decided_unique`, `Hybrid.safety` *(Hybrid/Decision)* |
+| H6 | agreement and safety, at every admissible threshold | `Hybrid.decided_unique`, `HybridProperties.safety` *(Hybrid/Decision, HybridProperties)* |
 | H7 | liveness over the reliable-correct interface | `Hybrid.decided_of_leader_mem`, `Hybrid.all_decided_below_of_fairRun` *(Hybrid/Liveness)* |
 | H8 | conservativity: the crash-free hybrid is Odontoceti | `Faults5.toHybrid`, `Hybrid.toHybrid_toFaults` *(Hybrid/Conservativity)* |
 | H9 | one crash at four validators; the tight hybrid committee | `Uhyb4`, `Uhyb9` witnesses *(LeanDagTest/Hybrid)* |
@@ -10675,7 +10676,7 @@ reused.
 | I4 | coverage under the fill: refuted for a set including the recovering validator, preserved otherwise, restored above the fill | `not_synchronisedOn_skipFill`, `synchronisedOn_skipFill_of_notMem`, `synchronisedOn_skipFill_above` *(Integration/Coverage)* |
 | I5 | the joiner: horizon-stability, and epoch alignment | `HorizonStable`, `joiner_assign_agree`, `epochOf_add_of_dvd` *(Integration/Joiner)* |
 | I6 | anchor retention, and the lag bounds the outage | `anchor_pruned`, `chopMsg`, `outage_bounded_by_lag` *(Integration/Retention)* |
-| I7 | the composition capstone, through the properties | `stack_core`, `stack_core_safe_and_live` *(Integration/StackRules)* |
+| I7 | the composition capstone, through the properties: the headlines at the core | `MysticetiProperties.safety`, `MysticetiProperties.liveness`, `stack_core` *(MysticetiProperties, Integration/StackRules)* |
 | I8 | a severed chain cannot restart | `no_blocks_of_no_genesis`, `severed_of_pruned_anchor` *(Integration/Retention)* |
 | I9 | the hypothesis the crash-prone lifecycle forced; the lifecycle theorem is retired (§16.5) | `hB1uniq`, `hB1uniq_of_correct` *(SafeSkip/Basic)* |
 | I10 | re-genesis at the cut | `addGenesis`, `populatedOn_addGenesis` *(Integration/ReGenesis)* |
@@ -25844,6 +25845,72 @@ def ViewAgreeAbove (R : DagRule Validator BlockId Payload) {U U' : R.Universe}
 
 A truncation asks exactly this of its views, so there is one definition where there were two: `ViewTruncates` was the same proposition under another name.
 
+#### `Safe`
+
+*def, `Properties.Arcs.Headline.lean`*
+
+```lean
+def Safe (R : DagRule Validator BlockId Payload) : Prop :=
+  ∀ {U U' : R.Universe} {S S' : Slots Validator} {G R₀ d : ℕ}, Stack R U S U' S' G R₀ d →
+    ∀ {V : R.View U} {V' : R.View U'}, ViewAgreeAbove R V V' R₀ →
+      (∀ (k : ℕ) (v : Option BlockId), R₀ ≤ S.slotRound (d + k) →
+          (R.Decided S V (d + k) v ↔ R.Decided S' V' k v)) ∧
+      (∀ (W : R.View U') (k : ℕ) (w v : Option BlockId), R₀ ≤ S.slotRound (d + k) →
+          R.Decided S' W k w → R.Decided S V (d + k) v → w = v) ∧
+      (∀ (W : R.View U') (k : ℕ) (L : BlockId), R.Decided S' W k (some L) →
+          R.IsCandidate S' U' k L) ∧
+      (∀ (W : R.View U') (k k' : ℕ) (L : BlockId), R.Decided S' W k (some L) →
+          R.Decided S' W k' (some L) → k = k')
+```
+
+**Safety, across any stack of mechanisms.**
+
+#### `Progresses`
+
+*def, `Properties.Arcs.Headline.lean`*
+
+```lean
+def Progresses : Prop :=
+  ∀ (S : Slots Validator) (c : ℕ), 0 < c → Descends R S c → ∀ (T : Finset Validator),
+    (∀ k, ∃ k', k ≤ k' ∧ ∀ i, i < c → S.leader (k' + i) ∈ T) →
+    (∀ k, ∃ b, k ≤ b ∧ ∀ (U : R.Universe) (V : R.View U), sp.live rel S V T b (b + c) →
+        ∀ i, i < b → ∃ v, DecidedBelow R S (b + c) V i v) ∧
+    (∀ k, ∃ k', k ≤ k' ∧ S.leader k' ∈ T ∧
+        ∀ (U : R.Universe) (V : R.View U), sp.live rel S V T k' (k' + 1) →
+          ∃ L, DecidedBelow R S (k' + 1) V k' (some L))
+```
+
+**Progress**: the ledger does not stall, and commits recur. Both clauses name the slot by the schedule first and ask of the execution only `live` on that window.
+
+#### `Includes`
+
+*def, `Properties.Arcs.Headline.lean`*
+
+```lean
+def Includes : Prop :=
+  ∀ (S : Slots Validator) (T : Finset Validator), T ⊆ rel.correct →
+    (∀ v ∈ T, ∀ n, ∃ k, n ≤ k ∧ S.leader k = v) →
+    ∀ (m : ℕ), ∀ v ∈ T, ∃ k', m ≤ S.slotRound k' ∧ S.leader k' = v ∧
+      ∀ (U : R.Universe) (V : R.View U), sp.live rel S V T k' (k' + 1) →
+        ∃ L, R.Decided S V k' (some L) ∧
+          ∀ b ∈ R.ids U, (R.block U b).creator = v → (R.block U b).round = m →
+            b ∈ historyFrom (R.block U) L ∧
+              ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
+                b ∈ Arcs.ledgerSetOf R U g n
+```
+
+**Inclusion**: every block by a reliable author enters the ledger through a slot its author leads, under a schedule fair to each.
+
+#### `Lives`
+
+*def, `Properties.Arcs.Headline.lean`*
+
+```lean
+def Lives : Prop := sp.Progresses rel ∧ sp.Includes rel
+```
+
+**Liveness**: progress and inclusion.
+
 #### `coveredAt`
 
 *def, `Properties.Arcs.Quality.lean`*
@@ -26572,7 +26639,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 1058 theorems that either another module of the
+The 1070 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -29964,18 +30031,6 @@ theorem decided_unique {V₁ : View Validator BlockId Payload U} {k : ℕ}
 
 Structural induction on the first derivation, exactly M6's shape. The direct/direct diagonal closes by O1/O1′; every direct-versus-indirect crossing closes by O2/O3/O4′ — the two-round replacements for M2/M3/M4/M5′; and the one real case, indirect against indirect, closes by the anchor trichotomy: an earlier anchor is covered by the *other* validator's intermediate-skip premise, and a shared anchor forces a shared verdict — skip against commit by the `hnone` premise, commit against commit by canonicity, which is the step the thesis's Lemma 5 takes silently.
 
-#### `safety`
-
-*theorem, `Odontoceti.Decision.lean`*
-
-```lean
-theorem safety {V₁ V₂ : View Validator BlockId Payload U} {k : ℕ}
-    {L₁ L₂ : BlockId} (h₁ : Decided U V₁ k (some L₁))
-    (h₂ : Decided U V₂ k (some L₂)) : L₁ = L₂
-```
-
-**O6 (safety).** Two committed blocks for one slot are the same block, across any two views and any two routes.
-
 #### `directCommit_of_votesAt`
 
 *theorem, `Odontoceti.Liveness.lean`*
@@ -31138,19 +31193,6 @@ theorem decided_agree (hne : HonestNoEquiv U) (hk : Admissible Validator k)
 ```
 
 Agreement, in M6's binary shape.
-
-#### `safety`
-
-*theorem, `Hybrid.Decision.lean`*
-
-```lean
-theorem safety (hne : HonestNoEquiv U) (hk : Admissible Validator k)
-    {V₁ V₂ : View Validator BlockId Payload U} {s : ℕ}
-    {L₁ L₂ : BlockId} (h₁ : Decided k U V₁ s (some L₁))
-    (h₂ : Decided k U V₂ s (some L₂)) : L₁ = L₂
-```
-
-**Safety.** Two committed blocks for one slot are the same block, across any two views and any two routes.
 
 #### `directCommit_of_leader_mem`
 
@@ -37585,18 +37627,6 @@ theorem banded : Banded (finWhaleRule (Validator := Validator) (BlockId := Block
 
 Three cases, and the third is the one with content. A slot the smaller view decided directly stays decided the same way, because a commit and a skip both survive a band. A slot it decided from an anchor keeps its anchor — the anchor's commit and the skips below it transport by the induction hypothesis — and then the tie-break is the same function of the same anchor. What is left is the larger view deciding *directly* a slot the smaller one decided from an anchor, and that is settled inside `D'` alone: a direct commit pins what the tie-break may name, and a direct skip bars it naming anything.
 
-#### `fwSupport_local`
-
-*theorem, `FinWhale.Carrier.lean`*
-
-```lean
-theorem fwSupport_local :
-    Support.Local (R := finWhaleRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload)) fwSupport
-```
-
-**Law 1.** A certifier two rounds above the settling round keeps its parents, and each parent keeps its parents and its author, so its voting parents are the same validators.
-
 #### `fwSupport_ofCoverage`
 
 *theorem, `FinWhale.Carrier.lean`*
@@ -37645,6 +37675,15 @@ theorem commitsDirect : CommitsDirect
 
 **And a direct commit is a verdict**, at every schedule. `IsCandidate` places the block at the slot, `DirectCommitIn` puts it in the view and certifies it, and `decided_of_directCommit` runs the pass that reads the commit off.
 
+#### `safety`
+
+*theorem, `FinWhale.Carrier.lean`*
+
+```lean
+theorem safety : Properties.Safe (finWhaleRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload))
+```
+
 #### `quorate`
 
 *theorem, `Hybrid.Carrier.lean`*
@@ -37655,6 +37694,28 @@ theorem quorate (k : ℕ) : Quorate (hybridRule (Validator := Validator) (BlockI
 ```
 
 **Hybrid's universes are quorate**, at the derived fault model: `f = fb + fc`, so a quorum of `n − fb − fc` distinct authors is what validity already asks for.
+
+#### `selfParent`
+
+*theorem, `Hybrid.Carrier.lean`*
+
+```lean
+theorem selfParent (k : ℕ) : SelfParent (hybridRule (Validator := Validator)
+    (BlockId := BlockId) (Payload := Payload) k)
+```
+
+**P3′ at the carrier.**
+
+#### `noEquiv`
+
+*theorem, `Hybrid.Carrier.lean`*
+
+```lean
+theorem noEquiv (k : ℕ) : NoEquiv (hybridRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload) k) (coreReliability Validator)
+```
+
+**One block per correct author per round.**
 
 #### `agree`
 
@@ -37843,6 +37904,16 @@ theorem indirect (kt : ℕ) :
 ```
 
 **H-A3 as a property.** The two indirect constructors, by cases on a thick-linked candidate at the slot, committing the least one.
+
+#### `safety`
+
+*theorem, `HybridProperties.lean`*
+
+```lean
+theorem safety {kt : ℕ} (hpos : 0 < kt) (hk : Hybrid.Admissible Validator kt) :
+    Properties.Safe (hybridRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) kt)
+```
 
 #### `bnd_parents`
 
@@ -38205,6 +38276,14 @@ theorem decided_none_of_unsupported {V : LeanDag.Hydrozoan.View U} {T : Finset R
 theorem holds : Statement
 ```
 
+#### `safety`
+
+*theorem, `Hydrozoan.Properties.Proof.lean`*
+
+```lean
+theorem safety : LeanDag.Properties.Safe (rule (Replica := Replica) (BlockId := BlockId))
+```
+
 #### `truncates_chop_finwhale`
 
 *theorem, `Integration.FinWhaleMechanisms.lean`*
@@ -38436,31 +38515,6 @@ theorem stack_core (sk : SkipMsg U) (hd : G ≤ S.slotRound d) :
 
 **The core's fill-then-cut is a stack**, settling at the later of the gap's top and the horizon, shifted by the horizon, re-indexed from the base slot.
 
-#### `stack_core_safe_and_live`
-
-*theorem, `Integration.StackRules.lean`*
-
-```lean
-theorem stack_core_safe_and_live (sk : SkipMsg U) (hd : G ≤ S.slotRound d)
-    {V : View Validator BlockId Payload U} {V' : View Validator BlockId Payload (chop sk.skipFill G)}
-    (hv : ViewAgreeAbove (MysticetiProperties.mysticetiRule (Payload := Payload)) V V'
-      (max (sk.r + 1) G)) :
-    (∀ (k : ℕ) (v : Option BlockId), max (sk.r + 1) G ≤ S.slotRound (d + k) →
-        (Decided U V (d + k) v ↔ Decided (S := S.chop G d hd) (chop sk.skipFill G) V' k v)) ∧
-    (∀ (W : View Validator BlockId Payload (chop sk.skipFill G)) (k : ℕ) (w v : Option BlockId),
-        max (sk.r + 1) G ≤ S.slotRound (d + k) →
-        Decided (S := S.chop G d hd) (chop sk.skipFill G) W k w → Decided U V (d + k) v → w = v) ∧
-    (∀ {rel : Reliability Validator} {T : Finset Validator} {lo K : ℕ},
-        MysticetiProperties.coreSupport.live rel S (U := U) V T lo K →
-        max (sk.r + 1) G ≤ S.slotRound lo → d ≤ lo → lo < K →
-        (∀ N, G ≤ N → CoversUpto (MysticetiProperties.mysticetiRule (Payload := Payload)) V N →
-          CoversUpto (MysticetiProperties.mysticetiRule (Payload := Payload)) V' (N - G)) →
-        MysticetiProperties.coreSupport.live rel (S.chop G d hd) (U := chop sk.skipFill G) V' T
-          (lo - d) (K - d))
-```
-
-**Safety and liveness across the core's stack**, from the properties.
-
 #### `quorate`
 
 *theorem, `MahiMahi.Carrier.lean`*
@@ -38471,6 +38525,28 @@ theorem quorate (w : ℕ) : Quorate (mahiMahiRule (Validator := Validator) (Bloc
 ```
 
 **And they are quorate**, at the core's fault model: validity's counting clause read at the carrier, which is what chain quality reads (`Properties/Arcs/Quality.lean`).
+
+#### `selfParent`
+
+*theorem, `MahiMahi.Carrier.lean`*
+
+```lean
+theorem selfParent (w : ℕ) : SelfParent (mahiMahiRule (Validator := Validator)
+    (BlockId := BlockId) (Payload := Payload) w)
+```
+
+**P3′ at the carrier.**
+
+#### `noEquiv`
+
+*theorem, `MahiMahi.Carrier.lean`*
+
+```lean
+theorem noEquiv (w : ℕ) : NoEquiv (mahiMahiRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload) w) (coreReliability Validator)
+```
+
+**One block per correct author per round.**
 
 #### `agree`
 
@@ -38557,6 +38633,15 @@ theorem indirect {w : ℕ} (hw : 1 ≤ w) :
 **The indirect rule, with its bound.** The anchor is the committed slot `j`; the eligible slots between are skipped, so `j` is the nearest. The case split reads slot `i`'s candidates and the anchor's cone, and a schedule naming the same leader at `i` and the same rounds changes neither — which is the second quantifier.
 
 Shorter than Odontoceti's by a clause: the indirect test is "a certificate in the anchor's cone", and two certificates at one slot name the same candidate, so there is no tie-break to preserve.
+
+#### `safety`
+
+*theorem, `MahiMahiProperties.lean`*
+
+```lean
+theorem safety (hw : 2 ≤ w) : Properties.Safe (mahiMahiRule (Validator := Validator)
+    (BlockId := BlockId) (Payload := Payload) w)
+```
 
 #### `isLeaderBlock_congr`
 
@@ -39058,6 +39143,17 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
 
 This is what "the ledger does not stall" means operationally: `commitSeq` reads verdicts in slot order and halts at the first undecided slot, so a prefix of decided slots growing without bound is exactly the ledger advancing. Contrast L6, which gives infinitely many *commits* while saying nothing about the gaps between them.
 
+#### `safety`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem safety : Properties.Safe (mysticetiRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload))
+```
+
+**Safety**, across any stack of mechanisms, for the core and for its reactive execution alike.
+
 #### `quorate`
 
 *theorem, `Nemo.Carrier.lean`*
@@ -39161,6 +39257,15 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
 
 The quantifier order is the content: the slot `b` is fixed by the *schedule* alone, before any universe is named, so "eventually" means "any DAG grown past this schedule-fixed slot". Crashed-leader slots are settled here and only here: they descend onto the run via `indirectSkip`.
 
+#### `safety`
+
+*theorem, `NemoProperties.lean`*
+
+```lean
+theorem safety : Properties.Safe (nemoRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload))
+```
+
 #### `quorate`
 
 *theorem, `Odontoceti.Carrier.lean`*
@@ -39171,6 +39276,28 @@ theorem quorate : Quorate (odontocetiRule (Validator := Validator) (BlockId := B
 ```
 
 **Odontoceti's universes are quorate**: the core's `BlockUniverse`, so the core's clause, at the five-fault committee.
+
+#### `selfParent`
+
+*theorem, `Odontoceti.Carrier.lean`*
+
+```lean
+theorem selfParent : SelfParent (odontocetiRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload))
+```
+
+**P3′ at the carrier.**
+
+#### `noEquiv`
+
+*theorem, `Odontoceti.Carrier.lean`*
+
+```lean
+theorem noEquiv : NoEquiv (odontocetiRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)) (coreReliability Validator)
+```
+
+**One block per correct author per round.**
 
 #### `agree`
 
@@ -39262,6 +39389,15 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
 ```
 
 **O10 (thesis Theorem 12).** Under production and post-`R` synchrony, a recurring run of `c` correct-led slots decides every slot below it, on any view caught up to the horizon — with the run placed past both the target and `R` by fairness. Note the horizon: the run's last slot needs rounds up to its `slotRound + 1` only.
+
+#### `safety`
+
+*theorem, `OdontocetiProperties.lean`*
+
+```lean
+theorem safety : Properties.Safe (odontocetiRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload))
+```
 
 #### `quorate`
 
@@ -39356,6 +39492,15 @@ theorem indirect :
 **The graded rule is total, at a bound.** Three rungs and three cases: an anchor-linked certificate, an anchor-linked evidence quorum, or neither, in which case the slot skips. Every clause reads slot `k`'s own candidates and the anchor's history, and neither moves when the leaders of other slots are reassigned — which is the second quantifier.
 
 Shorter than Hydrozoan's by one clause: the evidence rung carries no tie-break, two candidates being unable to clear it at once (decision D3), so no least candidate has to be chosen.
+
+#### `safety`
+
+*theorem, `OptimalHydrozoan.Carrier.lean`*
+
+```lean
+theorem safety [LinearOrder BlockId] :
+    Properties.Safe (optimalRule (Replica := Replica) (BlockId := BlockId))
+```
 
 #### `evidenceLinked_sched`
 
@@ -39489,6 +39634,37 @@ theorem decided_agree_chop (hd : G ≤ S.slotRound d)
 ```
 
 **G4 re-derived.** `GC/ChopDecided.decided_agree_chop` proves this by running the core's uniqueness inside the truncation and carrying the verdict across by induction. Here it is two properties applied.
+
+#### `safety`
+
+*theorem, `Properties.Arcs.Headline.lean`*
+
+```lean
+theorem safety (hb : Banded R) (ha : Agree R) (hcc : CommitsCandidate R) : Safe R
+```
+
+**The safety headline.** Transport and agreement are `Stack.safe_and_live`'s first two clauses; integrity is `CommitsCandidate`; uniqueness is the keyed schedule.
+
+#### `progress`
+
+*theorem, `Properties.Arcs.Headline.lean`*
+
+```lean
+theorem progress (hlc : sp.Commits rel) : sp.Progresses rel
+```
+
+**Progress, from Law 2.**
+
+#### `liveness`
+
+*theorem, `Properties.Arcs.Headline.lean`*
+
+```lean
+theorem liveness (hlc : sp.Commits rel) (hcc : CommitsCandidate R) (hsp : SelfParent R)
+    (hne : NoEquiv R rel) : sp.Lives rel
+```
+
+**The liveness headline.**
 
 #### `coversUpto_of_truncates`
 
@@ -40314,16 +40490,6 @@ theorem agreeBand_of_rebasedAbove {U U' : R.Universe} {G R₀ : ℕ}
 
 **A `RebasedAbove` is a band from its settling round up to any ceiling**, at offsets `0` and `G`. What lets a rule discharge `Local` with the band lemmas it already has for `Banded`.
 
-#### `voteSupport_local`
-
-*theorem, `Properties.Support.lean`*
-
-```lean
-theorem voteSupport_local : (voteSupport R).Local
-```
-
-**Law 1 for vote support.** A block strictly above the settling round keeps its references.
-
 #### `populatedOn_insert_of_extends`
 
 *theorem, `Properties.Sustain.lean`*
@@ -40535,7 +40701,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 1044 lemmas used only within the file that proves
+The 1049 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -42069,19 +42235,21 @@ subsection per module, in the layer order of Appendices B and C.
 | `spSkip_new` | And a candidate the band adds is skipped too. An old block two rounds above the slot carries a quorum of … |
 | `voters_subset` | Votes survive: an old voter is a voter. |
 
-### `FinWhale/Carrier.lean` (19)
+### `FinWhale/Carrier.lean` (21)
 
 | Lemma | Role |
 |:---|:---|
 | `assignment_passOf` | And it is an assignment. Well formed by `wellFormed_decOf`, committing only blocks of the slot by … |
 | `decided_iff` | A verdict of this rule is the pass's verdict. One direction is the pass being an assignment; the other is … |
 | `decided_of_directCommit` | A direct commit in view is a verdict, at any schedule and with no side condition. |
+| `fwSupport_local` | Law 1. A certifier two rounds above the settling round keeps its parents, and each parent keeps its … |
 | `le_dagHorizon` | An assignment commits only below the horizon: a commit names a block of the slot, so the slot's round is … |
 | `lt_of_elig` | Eligible slots are above: a schedule's rounds are monotone, so three rounds up is at least one slot up. |
 | `mem_blocksAt` | Membership of a round layer, unfolded once so the proofs below do not have to. |
 | `mem_slotBlocks` | And of a slot's blocks. |
 | `noEquiv` | One block per correct author per round, from the DAG's `correct_single`. |
 | `pass_indirect` | Two schedules sharing a slot's round and leader decide it alike, given a common anchor. Either a direct … |
+| `progress` | — |
 | `rle` | Every slot the pass reaches sits at the schedule's round for it, so the horizon really is above every slot … |
 | `slotBlocks_restrict_subset` | A view's slot blocks are the universe's. |
 | `slotRound_le_of_decided` | A decided slot's round is one the DAG reaches. Every route to a verdict names a block: a direct commit … |
@@ -42092,13 +42260,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `verdictIs_optOf` | And reading it back is the verdict, wherever the slot is decided. |
 | `view_bounded` | A view is finite, so its blocks stop at a round. |
 | `voteSupport_fast_commits` | Law 3 of `voteSupport`, for FinWhale's fast path: `n − p` votes held by a caught-up view are a fast commit … |
-
-### `Hybrid/Carrier.lean` (2)
-
-| Lemma | Role |
-|:---|:---|
-| `noEquiv` | One block per correct author per round. |
-| `selfParent` | P3′ at the carrier. |
 
 ### `Hybrid/Checkpoint/RecoveryProofs.lean` (14)
 
@@ -42132,7 +42293,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `mem_recoveryCorrect` | Recovery-correct membership excludes all three fault classes. |
 | `mem_reliableSigner` | Reliable signing excludes precisely the two classes allowed to equivocate. |
 
-### `HybridProperties.lean` (10)
+### `HybridProperties.lean` (11)
 
 | Lemma | Role |
 |:---|:---|
@@ -42141,6 +42302,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `descends` | And a committed run decides everything below it. |
 | `directCommitIn_band` | And so does the direct commit. |
 | `directSkipSlotIn_band` | And the slot-level skip transports, which is what the repair was for. Blockers stay blockers: a … |
+| `liveness` | — |
 | `not_thickLink_band_novel` | A candidate the band did not carry passes the indirect test from no old anchor. Its supporters would sit … |
 | `skipsUnsupported` | Hybrid skips an unsupported slot from a hybrid quorum. |
 | `supportersIn_band` | Supporters survive the band. |
@@ -42198,6 +42360,12 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `no_base_of_naive_shift` | A pure shift by a positive horizon admits no round-zero block, and a non-empty valid universe must have … |
 | `parents_empty_of_round_zero` | A block at round zero has no parents: the predecessor condition is unsatisfiable there. |
+
+### `Hydrozoan/Properties/Proof.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `progress` | — |
 
 ### `Integration/AdaptiveHydrozoan.lean` (4)
 
@@ -42331,23 +42499,14 @@ subsection per module, in the layer order of Appendices B and C.
 | `live_chop_reactive` | The reactive precondition survives the cut, as the support's, at the re-indexed schedule. |
 | `live_skipFill_reactive` | And the fill, on any view of it caught up as far as the old one. |
 
-### `Integration/StackRules.lean` (4)
+### `Integration/StackRules.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
 | `stack_finwhale` | — |
-| `stack_finwhale_safe_and_live` | Safety and liveness across FinWhale's stack. |
 | `stack_nemo` | — |
-| `stack_nemo_safe_and_live` | Safety and liveness across Nemo's stack. |
 
-### `MahiMahi/Carrier.lean` (2)
-
-| Lemma | Role |
-|:---|:---|
-| `noEquiv` | One block per correct author per round. |
-| `selfParent` | P3′ at the carrier. |
-
-### `MahiMahiProperties.lean` (13)
+### `MahiMahiProperties.lean` (14)
 
 | Lemma | Role |
 |:---|:---|
@@ -42360,12 +42519,13 @@ subsection per module, in the layer order of Appendices B and C.
 | `directCommitIn_band` | And so does the direct commit. |
 | `directCommitIn_of_coversUpto` | A view caught up to the decision round holds every certificate, so it commits what the DAG commits. |
 | `directSkipIn_band` | And the direct skip. A blamer stays a blamer, and a candidate the band added changes nothing: the blame … |
+| `liveness` | — |
 | `mmSupport_local` | Law 1: `certifies_band` at the band a `RebasedAbove` is. |
 | `not_certifiedIn_band_novel` | — |
 | `toCore` | The two carriers project identically, so a band for one is a band for the other. |
 | `votes_band` | A vote is the vote it was. Both clauses read the same cone, and `candidatesAt_band` settles it as an … |
 
-### `MysticetiProperties.lean` (33)
+### `MysticetiProperties.lean` (34)
 
 | Lemma | Role |
 |:---|:---|
@@ -42392,6 +42552,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `ext_mem` | — |
 | `isLeaderBlock_mono` | — |
 | `isLeaderBlock_old` | — |
+| `liveness` | Liveness, at the core's support: certification is the only antecedent, so the timed and the reactive … |
 | `lt_bound` | The decided slot lies below the bound. |
 | `mem_certificates_band` | — |
 | `mem_certificates_old` | — |
@@ -42412,7 +42573,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `nemoRule_viewIds` | — |
 | `noEquiv` | One block per author per round: the crash model's universal non-equivocation, at any of its reliability … |
 
-### `NemoProperties.lean` (12)
+### `NemoProperties.lean` (13)
 
 | Lemma | Role |
 |:---|:---|
@@ -42426,17 +42587,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `isLeaderBlock_band` | A candidate of a slot is a candidate of the slot the shift names. |
 | `memB` | — |
 | `not_certifiedIn_band_novel` | A candidate the band did not carry is certified from no old anchor. Its certificate would have to lie in … |
+| `progress` | — |
 | `refsB` | — |
 | `supportersIn_band` | The supporters a view holds transport. A voting-round block the view held is a block of the shifted … |
 
-### `Odontoceti/Carrier.lean` (2)
-
-| Lemma | Role |
-|:---|:---|
-| `noEquiv` | One block per correct author per round. |
-| `selfParent` | P3′ at the carrier. |
-
-### `OdontocetiProperties.lean` (12)
+### `OdontocetiProperties.lean` (13)
 
 | Lemma | Role |
 |:---|:---|
@@ -42446,6 +42601,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `decidedBelow_of_decidedWithin` | Odontoceti's bounded relation lands in the derived one. |
 | `descends` | And a committed run decides everything below it. Was a downward induction carrying the bound by hand; it … |
 | `directCommitIn_band` | And so does the direct commit. |
+| `liveness` | — |
 | `not_thickLink_band_novel` | A candidate the band did not carry is thick-linked from no old anchor. Its supporters would have to sit in … |
 | `skipsUnsupported` | Odontoceti skips an unsupported slot from a correct quorum. |
 | `supportersIn_band` | Supporters survive the band. A block one round above the slot that referenced the candidate references it … |
@@ -42453,7 +42609,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `thickLink_threshold_pos` | The thick-link threshold is positive: `Faults5` asks for `5f + 1` validators, so `card − 3f ≥ 2f + 1`. |
 | `toCore` | The two carriers project identically, so a band for one is a band for the other. |
 
-### `OptimalHydrozoan/Carrier.lean` (5)
+### `OptimalHydrozoan/Carrier.lean` (6)
 
 | Lemma | Role |
 |:---|:---|
@@ -42461,6 +42617,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `leaderCommits` | A reliably-led slot commits, now a corollary of the support. |
 | `optSupport_live_of_optLive` | Optimal-Hydrozoan's precondition is the support's. |
 | `optSupport_local` | Law 1, Hydrozoan's at the underlying universe. |
+| `progress` | — |
 | `voteSupport_fast_commits` | Law 3 of `voteSupport`, for Optimal-Hydrozoan's fast path. |
 
 ### `OptimalHydrozoan/Helpers/Banded.lean` (13)
@@ -42496,6 +42653,14 @@ subsection per module, in the layer order of Appendices B and C.
 | `noEquivOn_chop` | And so does non-equivocation, from the truncation. |
 | `truncates_chop_mahimahi` | The cut is a truncation of Mahi-Mahi's carrier too. |
 | `truncates_chop_odontoceti` | The cut is a truncation of Odontoceti's carrier too. |
+
+### `Properties/Arcs/Headline.lean` (3)
+
+| Lemma | Role |
+|:---|:---|
+| `DagRule.IsCandidate.slot_unique` | A block is the candidate of one slot. Two slots with the same candidate share its round and author, and … |
+| `Safe.prefix_agree` | The ledger reading. Two validators' verdict functions agree on every slot both have decided above the … |
+| `inclusion` | Inclusion, from Law 2 and self-reference. |
 
 ### `Properties/Arcs/Liveness.lean` (2)
 
@@ -42613,6 +42778,12 @@ subsection per module, in the layer order of Appendices B and C.
 | Lemma | Role |
 |:---|:---|
 | `mono` | A protocol skipping under a weaker condition skips under a stronger one, so the grades compare. |
+
+### `Properties/Support.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `voteSupport_local` | Law 1 for vote support. A block strictly above the settling round keeps its references. |
 
 ### `Properties/Sustain.lean` (1)
 

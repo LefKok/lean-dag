@@ -333,7 +333,7 @@ example : ∀ i, i < 3 → ∃ v,
       · exact ⟨28, uskip_slot4⟩)
 
 #print axioms Odontoceti.decided_unique
-#print axioms Odontoceti.safety
+#print axioms LeanDag.OdontocetiProperties.safety
 #print axioms Odontoceti.all_decided_below_of_fairRun
 #print axioms utwin6_both_pass
 #print axioms uskip_slot1

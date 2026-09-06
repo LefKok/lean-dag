@@ -12,6 +12,8 @@ import LeanDag.Properties.Arcs.Liveness
 
 import LeanDag.Timed.Coverage
 
+import LeanDag.Properties.Arcs.Headline
+
 /-!
 # Nemo conforms to the target properties
 
@@ -457,5 +459,26 @@ theorem all_decided_below_of_fairRun_live {c : ℕ} (hc : 0 < c)
 
 end Nemo
 
+
+namespace NemoProperties
+
+/-! ## The headlines
+
+Nemo's model has no self-parent clause, so it shows progress and not
+inclusion. -/
+
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
+variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
+
+theorem safety : Properties.Safe (nemoRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)) :=
+  Properties.safety banded agree commitsCandidate
+
+theorem progress (hn : 0 < Fintype.card Validator) :
+    Properties.Support.Progresses (Properties.voteSupport (nemoRule (Validator := Validator)
+      (BlockId := BlockId) (Payload := Payload))) (nemoReliability Validator hn) :=
+  Properties.Support.progress (voteSupport_commits hn)
+
+end NemoProperties
 
 end LeanDag

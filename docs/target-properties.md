@@ -3211,6 +3211,52 @@ FinWhale show `NoEquiv` only, Nemo's model having dropped the
 self-parent clause on purpose; Hydrozoan and Optimal show neither.
 Those rules keep the coverage half, which needs only `Quorate`.
 
+### 11.18 The headlines
+
+`Properties/Arcs/Headline.lean` states the two theorems a protocol gets
+for showing the properties, in the shape a reader of a consensus paper
+expects, and every rule instantiates each in one line.
+
+**Safety** — `Safe R`, from `Banded`, `Agree` and `CommitsCandidate`.
+Quantified over every `Stack`: any composition of cuts, fills and
+re-genesis, in any order, the empty stack included. Four clauses:
+verdicts above the settling round transport to the composite's
+numbering; any view of the composite agrees with any view of the
+source; a commit is a real block of its slot; and no block is committed
+at two slots (`IsCandidate.slot_unique`, from `Slots.keyed`). The
+ledger reading, that two validators with decided prefixes agree on the
+common prefix, is `Safe.prefix_agree`.
+
+**Liveness** — `Lives sp rel`, from the support's `Commits`,
+`CommitsCandidate`, `SelfParent` and `NoEquiv`, as `Progresses ∧
+Includes`. One antecedent, `Support.live`; no synchrony (§11.16), so a
+timed and a reactive execution instantiate the same theorem. Three
+clauses, the schedule quantified before the execution: every slot
+below a fair run is decided; a reliably-led slot the execution commits
+lies past every point; every block by a reliable author enters the
+ledger through a slot its author leads. `Progresses` alone is the first
+two, for the rules whose model has no self-parent clause.
+
+**Instances.** `MysticetiProperties.safety`/`liveness` (shared by the
+reactive execution), `OdontocetiProperties.safety`/`liveness`,
+`HybridProperties.safety`/`liveness`, `MahiMahiProperties.safety`/
+`liveness`; `NemoProperties`, `FinWhaleProperties`,
+`Hydrozoan.Properties` and `OptimalHydrozoanProperties` show `safety`
+and `progress`. `audit-conformance.py` scores them in two new columns.
+
+**What they retired.** The per-rule stack theorems
+`stack_core_safe_and_live`, `stack_nemo_safe_and_live` and
+`stack_finwhale_safe_and_live` (the headline at three stacks; the stack
+witnesses `stack_core`, `stack_nemo`, `stack_finwhale` stay), and the
+rule-level `Odontoceti.safety` and `Hybrid.safety` (the headline's
+second clause at the empty stack, restricted to commits).
+
+**What they leave out, on purpose.** The linearisation of each commit's
+cone is per protocol and outside the properties. And `live` contains
+the reader's own view being caught up to a horizon, which is a delivery
+assumption about one validator; each execution model owes it, and the
+headline is conditional on it.
+
 **What the audits show.** `audit-mechanisms.py` reads the same matrix
 as before — every cell for Hydrozoan and Optimal-Hydrozoan `yes`, live
 and stack `der` — now from the native witnesses. `audit-bespoke.py`

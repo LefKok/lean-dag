@@ -11,6 +11,8 @@ import LeanDag.Properties.Support
 
 import LeanDag.Timed.Coverage
 
+import LeanDag.Properties.Arcs.Headline
+
 /-!
 # FinWhale as a carrier
 
@@ -887,6 +889,19 @@ theorem commitsDirect : CommitsDirect
   rintro S D V k L ⟨-, hround, hcreator⟩ ⟨hmem, hdir⟩
   exact decided_of_directCommit V.property
     (mem_slotBlocks.2 ⟨⟨hmem, hround⟩, hcreator⟩) hdir
+
+/-! ## The headlines
+
+FinWhale's DAG carries no self-parent clause at the carrier, so it
+shows progress and not inclusion. -/
+
+theorem safety : Properties.Safe (finWhaleRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)) :=
+  Properties.safety banded agree commitsCandidate
+
+theorem progress : Properties.Support.Progresses (fwSupport (Validator := Validator)
+    (BlockId := BlockId) (Payload := Payload)) (coreReliability Validator) :=
+  Properties.Support.progress fwSupport_commits
 
 end FinWhaleProperties
 

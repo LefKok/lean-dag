@@ -158,7 +158,8 @@ def main():
     # from the witnesses the mechanisms already have. A rule with a support
     # and witnesses for two mechanisms therefore composes them with nothing
     # written; `yes` records an assembled stack.
-    STACK_ENTRIES = ["LeanDag.Properties.Stack.safe_and_live",
+    STACK_ENTRIES = ["LeanDag.Properties.safety",
+                     "LeanDag.Properties.Stack.safe_and_live",
                      "LeanDag.Properties.Stack.rebased",
                      "LeanDag.Properties.decided_of_rebased",
                      "LeanDag.Properties.Support.live_of_rebased"]
@@ -220,7 +221,7 @@ def main():
           "  `yes` where an instance is written.")
     print("`stack`: the mechanisms compose with one another — `der` from the rule's support\n"
           "  and witnesses for two of them (`Stack.safe_and_live`, `Arcs/Stack.lean`),\n"
-          "  `yes` where a stack is assembled.")
+          "  `yes` where a stack is assembled or the headline `Properties.Safe` is instantiated.")
     print("\n`--`: the rule has no carrier, does not show what the mechanism asks "
           "(which is\n`audit-conformance.py`'s business), or is out of scope for it:")
     for name, skip, _, _ in MECHANISMS:

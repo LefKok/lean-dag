@@ -4,6 +4,8 @@ import LeanDag.Hydrozoan.Helpers.Commit
 import LeanDag.Properties.Derived.FromBand
 import LeanDag.Hydrozoan.Helpers.SlotAgreement
 
+import LeanDag.Properties.Arcs.Headline
+
 /-!
 # Hydrozoan conforms to the target properties — proof
 
@@ -63,6 +65,18 @@ theorem holds : Statement := by
           L ∉ (U.block c).parents :=
       fun c hcV hT hr L hL => huns c hcV hT hr L hL
     exact decided_none_of_unsupported (S := ofCoreSlots S) hq hpres' huns'
+
+/-! ## The headlines
+
+Hydrozoan's model has no self-parent clause, so it shows progress and
+not inclusion. -/
+
+theorem safety : LeanDag.Properties.Safe (rule (Replica := Replica) (BlockId := BlockId)) :=
+  LeanDag.Properties.safety banded agree commitsCandidate
+
+theorem progress : LeanDag.Properties.Support.Progresses
+    (hzSupport (Replica := Replica) (BlockId := BlockId)) (hzReliability Replica) :=
+  LeanDag.Properties.Support.progress hzSupport_commits
 
 end Properties
 
