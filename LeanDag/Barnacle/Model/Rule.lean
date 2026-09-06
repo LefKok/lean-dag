@@ -111,7 +111,7 @@ def CoversUpto (R : BaseRule Validator BlockId Payload) (U : R.Universe)
 /-- **The laws of a base rule** — what the leader-count mechanism
 consumes of the protocol, and what each instantiation is proved to
 satisfy. A2 — a validator holds a block only with its whole causal
-history — has moved into `BaseRule` itself, as the fields `viewSound`
+history — is carried by `BaseRule` itself, as the fields `viewSound`
 and `viewComplete`; `agree` is the safety half of A4 (for a fixed
 schedule, verdicts agree across views); `decided_of_directCommitIn` ties
 the direct predicate to the relation, which is what makes the window

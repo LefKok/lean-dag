@@ -13,8 +13,8 @@ a rule contributes to it is nothing: the stack is assembled from the
 witnesses its mechanisms already have — `Rebased.of_sustains` on a fill
 or a re-genesis, `Rebased.of_truncates` on a cut — and
 `Stack.safe_and_live` reads it. Three rules are shown below, one with
-the core's universe and two with their own, and the deployment order
-of `Integration/Stack.lean`: fill, then cut. A longer stack is one more
+the core's universe and two with their own, in the order a deployment
+takes: fill, then cut. A longer stack is one more
 `Stack.step`.
 
 What a stack gives is read by the headline: `Properties.Safe`, which
