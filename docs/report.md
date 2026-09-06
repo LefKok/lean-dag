@@ -3944,8 +3944,8 @@ certification transports both ways for old anchors and fails outright
 for fresh candidates. SS4 was once a dozen rule-by-rule transfer lemmas
 and is now a consequence of `Banded`: the fill is an extension, and
 `Persist` carries every verdict across an extension, so the per-rule
-transfers were deleted with the induction they served
-(`docs/target-properties.md` §11.12).
+transfers were deleted with the induction they served (recorded in
+`docs/target-properties.md`, under what the generic layer made redundant).
 
 The direct skip needs no obligation at all, and an earlier form of this
 theorem thought otherwise. When `Decided.directSkip` quantified over the
