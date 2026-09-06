@@ -71,12 +71,6 @@ variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : LeanDag.FinWhale.Params Validator]
 variable {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
 
-/-- Membership of a round layer, unfolded once so the proofs below do
-not have to. -/
-theorem mem_blocksAt {D : Dag Validator BlockId Payload} {b : BlockId} {n : ℕ} :
-    b ∈ LeanDag.FinWhale.blocksAt D n ↔ b ∈ D.ids ∧ (D.block b).round = n := by
-  unfold LeanDag.FinWhale.blocksAt; exact Finset.mem_filter
-
 /-- And of a slot's blocks. -/
 theorem mem_slotBlocks {S : Sched Validator} {D : Dag Validator BlockId Payload}
     {b : BlockId} {n : ℕ} :
@@ -382,7 +376,7 @@ theorem slotRound_le_of_decided {D : Dag Validator BlockId Payload} {S : Slots V
         simp only [LeanDag.FinWhale.spQuorum] at hcard; omega
       obtain ⟨v₀, hv₀⟩ := Finset.card_pos.1 hpos
       obtain ⟨c, hc, -, -⟩ := hnon v₀ hv₀
-      simp only [LeanDag.FinWhale.blocksAt, Finset.mem_filter] at hc
+      simp only [LeanDag.blocksAt, Finset.mem_filter] at hc
       have hcr : (D.block c).round = S.slotRound m + 2 := hc.2
       have := hsup c hc.1
       omega

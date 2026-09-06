@@ -98,11 +98,11 @@ theorem supportersIn_band (h : AgreeBand (nemoRule (Payload := Payload)) U U' lo
   obtain ⟨q, hq, hvq⟩ := Finset.mem_image.mp hw
   obtain ⟨hqf, hqV⟩ := Finset.mem_inter.mp hq
   obtain ⟨hqA, hqL⟩ := Finset.mem_filter.mp hqf
-  have hqU : q ∈ U.ids := (Nemo.mem_blocksAt.mp hqA).1
-  have hqr : (U.block q).round = r + 1 := (Nemo.mem_blocksAt.mp hqA).2
+  have hqU : q ∈ U.ids := (mem_blocksAt.mp hqA).1
+  have hqr : (U.block q).round = r + 1 := (mem_blocksAt.mp hqA).2
   refine Finset.mem_image.mpr ⟨q, Finset.mem_inter.mpr ⟨Finset.mem_filter.mpr ⟨?_, ?_⟩,
     hV q hqV (by omega) (by omega)⟩, ?_⟩
-  · exact Nemo.mem_blocksAt.mpr
+  · exact mem_blocksAt.mpr
       ⟨memB h hqU (by omega) (by omega),
        by have := blockB h hqU (by omega) (by omega); omega⟩
   · rw [refsB h hqU (by omega) (by omega)]; exact hqL
@@ -129,18 +129,18 @@ theorem certifiedIn_band (h : AgreeBand (nemoRule (Payload := Payload)) U U' lo 
   have hA' : A ∈ U'.ids := memB h hA hAlo hAhi
   constructor
   · rintro ⟨p, hp, hpr, hpL⟩
-    have hpre : ReachesFrom U'.block A p := (Nemo.mem_history_iff hA').mp hp
+    have hpre : ReachesFrom U'.block A p := (mem_history_iff hA').mp hp
     obtain ⟨hpU, hpreU, hpeq⟩ :=
       AgreeBand.reaches_old h hA hAlo hAhi hpre (by
         show lo ≤ (U'.block p).round + g'; omega)
     have hpeq' : (U.block p).round + g = (U'.block p).round + g' := hpeq
-    refine ⟨p, (Nemo.mem_history_iff hA).mpr hpreU, by omega, ?_⟩
+    refine ⟨p, (mem_history_iff hA).mpr hpreU, by omega, ?_⟩
     rwa [refsB h hpU (by omega) (by omega)] at hpL
   · rintro ⟨p, hp, hpr, hpL⟩
-    have hpre : ReachesFrom U.block A p := (Nemo.mem_history_iff hA).mp hp
+    have hpre : ReachesFrom U.block A p := (mem_history_iff hA).mp hp
     have hpU : p ∈ U.ids := U.causal.mem_ids_of_reaches hA hpre
     have hb := blockB h hpU (by omega) (by omega)
-    refine ⟨p, (Nemo.mem_history_iff hA').mpr
+    refine ⟨p, (mem_history_iff hA').mpr
       (AgreeBand.reaches_of h hA hAhi hpre (by
         show lo ≤ (U.block p).round + g; omega)), by omega, ?_⟩
     rw [refsB h hpU (by omega) (by omega)]; exact hpL
@@ -158,7 +158,7 @@ theorem not_certifiedIn_band_novel
   intro hc
   rw [certifiedIn_band h hA hAlo hAhi hrr hr hhi] at hc
   obtain ⟨p, hp, -, hpL⟩ := hc
-  have hpre : ReachesFrom U.block A p := (Nemo.mem_history_iff hA).mp hp
+  have hpre : ReachesFrom U.block A p := (mem_history_iff hA).mp hp
   exact hL (U.complete p (U.causal.mem_ids_of_reaches hA hpre) L hpL)
 
 end Band
@@ -337,7 +337,7 @@ theorem voteSupport_commits (hn : 0 < Fintype.card Validator) :
     intro w hw
     obtain ⟨b, hb, hbc, hbr⟩ := hpop (S.slotRound k + 1) (by omega)
       (by change S.slotRound k + 1 ≤ S.slotRound k + 1; omega) w hw
-    exact Nemo.mem_supporters.mpr ⟨b, hb, hbr, hcert L ⟨hLmem, hLr, hLc⟩ w hw b hb hbc hbr, hbc⟩
+    exact mem_supporters.mpr ⟨b, hb, hbr, hcert L ⟨hLmem, hLr, hLc⟩ w hw b hb hbc hbr, hbc⟩
   have hin : Nemo.DirectCommitIn U V L (S.slotRound k) := Nemo.directCommitIn_of_coversUpto hdc hcov
   refine ⟨L, by omega, Nemo.Decided.directCommit ⟨hLmem, hLr, hLc⟩ hin, ?_⟩
   intro S' hround hlead'

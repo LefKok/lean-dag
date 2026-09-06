@@ -75,8 +75,8 @@ example : ¬ LeanDag.Nemo.SynchronisedOn U3 Finset.univ 0 := fun h =>
     (by decide)
 
 -- Validator 1's blocks are never referenced by anyone but validator 1.
-example : (LeanDag.Nemo.supporters U3 4 2 : Finset (Fin 3)) = {1} := by decide
-example : (LeanDag.Nemo.supporters U3 1 1 : Finset (Fin 3)) = {1} := by decide
+example : (LeanDag.supporters U3 4 2 : Finset (Fin 3)) = {1} := by decide
+example : (LeanDag.supporters U3 1 1 : Finset (Fin 3)) = {1} := by decide
 
 theorem u3_good :
     (nemoLive (Validator := Fin 3) (BlockId := Fin 24) (Payload := Unit)).Good U3 0 7 :=

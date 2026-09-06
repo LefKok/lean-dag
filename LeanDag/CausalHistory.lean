@@ -25,18 +25,20 @@ block's references sit at a strictly smaller round.
 namespace LeanDag
 
 variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
-variable [F : Faults Validator]
 variable {BlockId : Type*} {Payload : Type*}
-variable {U : BlockUniverse Validator BlockId Payload}
+variable {P : Validity Validator BlockId Payload} {honest : Finset Validator}
+variable {U : BlockRecord Validator BlockId Payload P honest}
 
-/-- **A universe is a causal structure.** The two facts the history layer
-consumes, projected out of the universe's completeness and validity. -/
-theorem BlockUniverse.causal (U : BlockUniverse Validator BlockId Payload) :
+/-- **A block record is a causal structure.** The two facts the history
+layer consumes, projected out of the record's completeness and the
+predecessor fact its validity owes. Stated at the record, so every
+rule's universe has it. -/
+theorem BlockRecord.causal [P.Mechanised] (U : BlockRecord Validator BlockId Payload P honest) :
     CausalStructure U.block U.ids :=
-  ⟨U.complete, fun _ hi _ hj => U.round_of_mem_refs hi hj⟩
+  ⟨U.complete, fun i hi j hj => Validity.Mechanised.pred U.block (U.block i) (U.valid i hi) j hj⟩
 
 /-- `Reaches U c b` — `b` lies in the causal history of `c`. -/
-def Reaches (U : BlockUniverse Validator BlockId Payload) : BlockId → BlockId → Prop :=
+def Reaches (U : BlockRecord Validator BlockId Payload P honest) : BlockId → BlockId → Prop :=
   ReachesFrom U.block
 
 namespace Reaches
@@ -62,6 +64,8 @@ theorem of_mem_refs {i j b : BlockId} (hij : j ∈ (U.block i).refs) (hjb : Reac
   ReachesFrom.of_mem_refs hij hjb
 
 end Reaches
+
+variable [P.Mechanised]
 
 /-- Causal history stays inside the universe: completeness propagates along
 every step. -/
@@ -101,12 +105,14 @@ Both facts below are the structural layer's `mem_of_reaches_of_closed` at a
 view's holdings rather than a universe's population: the closure is all the
 walk ever needed. -/
 
+omit [P.Mechanised] in
 /-- **T6a.** Causal history never escapes a view. -/
-theorem View.mem_of_reaches {U : BlockUniverse Validator BlockId Payload}
-    {V : View Validator BlockId Payload U} {c b : BlockId}
+theorem View.mem_of_reaches {U : BlockRecord Validator BlockId Payload P honest}
+    {V : U.View} {c b : BlockId}
     (hc : c ∈ V.ids) (h : Reaches U c b) : b ∈ V.ids :=
   mem_of_reaches_of_closed V.complete hc h
 
+omit [P.Mechanised] in
 /-- **T6a, in the form the commit rules consume.** Asking "is there a `P`-block
 in `c`'s causal history?" gives the same answer whether or not the search is
 confined to the view. Restricting to `V` changes nothing, because the answer
@@ -114,10 +120,10 @@ could never have lain outside it.
 
 This is what makes a view-relative certificate check well defined: two
 validators with different views but the same anchor cannot disagree. -/
-theorem View.exists_reaches_iff {U : BlockUniverse Validator BlockId Payload}
-    {V : View Validator BlockId Payload U} {P : BlockId → Prop} {c : BlockId}
+theorem View.exists_reaches_iff {U : BlockRecord Validator BlockId Payload P honest}
+    {V : U.View} {Q : BlockId → Prop} {c : BlockId}
     (hc : c ∈ V.ids) :
-    (∃ b, b ∈ V.ids ∧ P b ∧ Reaches U c b) ↔ (∃ b, P b ∧ Reaches U c b) := by
+    (∃ b, b ∈ V.ids ∧ Q b ∧ Reaches U c b) ↔ (∃ b, Q b ∧ Reaches U c b) := by
   constructor
   · rintro ⟨b, _, hP, hr⟩
     exact ⟨b, hP, hr⟩

@@ -1,6 +1,7 @@
 import LeanDag.FinWhale.Model.Params
 import LeanDag.Causality
 import LeanDag.BlockRecord
+import LeanDag.Support
 
 /-!
 # FinWhale — the fast path, as the paper defines it
@@ -182,10 +183,6 @@ def Sched.Elig (S : Sched Validator) (r a : ℕ) : Prop := S.round r + 3 ≤ S.r
 
 instance (S : Sched Validator) : DecidableRel S.Elig :=
   fun _ _ => inferInstanceAs (Decidable (_ ≤ _))
-
-/-- The blocks of a round. -/
-def blocksAt (D : Dag Validator BlockId Payload) (r : ℕ) : Finset BlockId :=
-  D.ids.filter (fun b => (D.block b).round = r)
 
 /-- The validators whose round-`(r+1)` block references `l`: `l`'s voters. -/
 def voters (D : Dag Validator BlockId Payload) (l : BlockId) : Finset Validator :=

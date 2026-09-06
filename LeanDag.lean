@@ -140,8 +140,6 @@ import LeanDag.SafeSkip.Basic
 import LeanDag.SafeSkip.Invariance
 import LeanDag.SafeSkip.Jump
 import LeanDag.Nemo.Basic
-import LeanDag.Nemo.CausalHistory
-import LeanDag.Nemo.History
 import LeanDag.Nemo.Support
 import LeanDag.Nemo.Rules
 import LeanDag.Nemo.Decision

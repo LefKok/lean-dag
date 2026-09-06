@@ -40,12 +40,17 @@ references the target.
 namespace LeanDag
 
 variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
-variable [F : Faults Validator]
 variable {BlockId : Type*} {Payload : Type*}
-variable {U : BlockUniverse Validator BlockId Payload}
+
+/-! ## Counting, at any block record -/
+
+section Generic
+
+variable {P : Validity Validator BlockId Payload} {honest : Finset Validator}
+variable {U : BlockRecord Validator BlockId Payload P honest}
 
 /-- The ids present at a given round. -/
-def blocksAt (U : BlockUniverse Validator BlockId Payload) (n : ℕ) : Finset BlockId :=
+def blocksAt (U : BlockRecord Validator BlockId Payload P honest) (n : ℕ) : Finset BlockId :=
   U.ids.filter (fun i => (U.block i).round = n)
 
 /-- The distinct authors of the round-`n` blocks in a set of ids — an
@@ -53,7 +58,7 @@ image, so an equivocator's duplicates collapse: this counts validators,
 not blocks, which is what makes a quorum of it a real quorum. Over
 `U.ids` it is `authorsAt`; over a validator's holdings it is the trigger
 of the pacemaker's progress rule (`PaceCore.advances`). -/
-def authorsIn (U : BlockUniverse Validator BlockId Payload)
+def authorsIn (U : BlockRecord Validator BlockId Payload P honest)
     (s : Finset BlockId) (n : ℕ) : Finset Validator :=
   creatorsOf U.block (s.filter fun b => (U.block b).round = n)
 
@@ -64,13 +69,13 @@ theorem mem_authorsIn {s : Finset BlockId} {v : Validator} {n : ℕ} :
   tauto
 
 /-- The validators holding a block at a given round — the pool `p`. -/
-def authorsAt (U : BlockUniverse Validator BlockId Payload) (n : ℕ) : Finset Validator :=
+def authorsAt (U : BlockRecord Validator BlockId Payload P honest) (n : ℕ) : Finset Validator :=
   creatorsOf U.block (blocksAt U n)
 
 /-- `authorsAt` is `authorsIn` over the whole universe: L0's density and
 the progress rule's trigger are one measure, read off `U.ids` there and
 off a validator's holdings here. -/
-theorem authorsAt_eq_authorsIn (U : BlockUniverse Validator BlockId Payload) (n : ℕ) :
+theorem authorsAt_eq_authorsIn (U : BlockRecord Validator BlockId Payload P honest) (n : ℕ) :
     authorsAt U n = authorsIn U U.ids n := rfl
 
 /-- Membership in `blocksAt`, unfolded. -/
@@ -87,15 +92,13 @@ theorem mem_authorsAt {v : Validator} {n : ℕ} :
 
 /-- The author pool never exceeds the validator set. This is what turns the
 `p - 2f` threshold into the uniform `f+1` one. -/
-theorem card_authorsAt_le_univ {n : ℕ} : (authorsAt U n).card ≤ Fintype.card Validator := by
-  have h := Finset.card_le_univ (authorsAt U n)
-  have := F.card_validators
-  omega
+theorem card_authorsAt_le_univ {n : ℕ} : (authorsAt U n).card ≤ Fintype.card Validator :=
+  Finset.card_le_univ (authorsAt U n)
 
 /-- The creators of a round-`(n+1)` block's references all hold round-`n`
 blocks. This is what confines a round-`(r+2)` block's choices to the same
 pool the threshold is measured against. -/
-theorem creators_refs_subset_authorsAt {c : BlockId} {n : ℕ}
+theorem creators_refs_subset_authorsAt [P.Mechanised] {c : BlockId} {n : ℕ}
     (hc : c ∈ U.ids) (hcr : (U.block c).round = n + 1) :
     creatorsOf U.block (U.block c).refs ⊆ authorsAt U n := by
   intro v hv
@@ -103,8 +106,54 @@ theorem creators_refs_subset_authorsAt {c : BlockId} {n : ℕ}
   obtain ⟨i, hi_mem, hi_creator⟩ := hv
   rw [mem_authorsAt]
   refine ⟨i, U.complete c hc i hi_mem, ?_, hi_creator⟩
-  have := U.round_of_mem_refs hc hi_mem
+  have := Validity.Mechanised.pred U.block (U.block c) (U.valid c hc) i hi_mem
   omega
+
+variable [DecidableEq BlockId]
+
+/-- The validators whose round-`n` block references `b`. -/
+def supporters (U : BlockRecord Validator BlockId Payload P honest) (b : BlockId) (n : ℕ) :
+    Finset Validator :=
+  creatorsOf U.block ((blocksAt U n).filter (fun q => b ∈ (U.block q).refs))
+
+/-- Membership in `supporters`, unfolded: a supporter has a round-`n` block referencing `b`. -/
+theorem mem_supporters {b : BlockId} {n : ℕ} {v : Validator} :
+    v ∈ supporters U b n ↔
+      ∃ q ∈ U.ids, (U.block q).round = n ∧ b ∈ (U.block q).refs ∧ (U.block q).creator = v := by
+  simp [supporters, mem_creatorsOf]
+  tauto
+
+theorem supporters_subset_authorsAt {b : BlockId} {n : ℕ} :
+    supporters U b n ⊆ authorsAt U n :=
+  Finset.image_subset_image (Finset.filter_subset _ _)
+
+/-- The validators whose round-`n` block declines to reference `L`.
+
+The complement of `supporters U L n` *within the round-`n` author pool* —
+but only for correct validators. A Byzantine author can appear in both, by
+publishing one round-`n` block that votes and another that does not; ruling
+that out for correct validators is exactly what
+`blames_inter_supporters_subset_byzantine`
+does, and is the whole content of M3. -/
+def blames (U : BlockRecord Validator BlockId Payload P honest) (L : BlockId) (n : ℕ) :
+    Finset Validator :=
+  creatorsOf U.block ((blocksAt U n).filter (fun q => L ∉ (U.block q).refs))
+
+/-- Membership in `blames`, unfolded: a blamer has a round-`n` block that omits `L`. -/
+theorem mem_blames {L : BlockId} {n : ℕ} {v : Validator} :
+    v ∈ blames U L n ↔
+      ∃ q ∈ U.ids, (U.block q).round = n ∧ L ∉ (U.block q).refs ∧ (U.block q).creator = v := by
+  simp [blames, mem_creatorsOf]
+  tauto
+
+end Generic
+
+/-! ## The core's thresholds -/
+
+section Core
+
+variable [F : Faults Validator]
+variable {U : BlockUniverse Validator BlockId Payload}
 
 /-- **The hitting lemma.** A round-`(n+1)` block cannot avoid referencing a
 block satisfying `P`, once `f+1`-or-so *correct* validators have published
@@ -241,22 +290,6 @@ argument that first used them. -/
 
 variable [DecidableEq BlockId]
 
-/-- The validators whose round-`n` block references `b`. -/
-def supporters (U : BlockUniverse Validator BlockId Payload) (b : BlockId) (n : ℕ) :
-    Finset Validator :=
-  creatorsOf U.block ((blocksAt U n).filter (fun q => b ∈ (U.block q).refs))
-
-/-- Membership in `supporters`, unfolded: a supporter has a round-`n` block referencing `b`. -/
-theorem mem_supporters {b : BlockId} {n : ℕ} {v : Validator} :
-    v ∈ supporters U b n ↔
-      ∃ q ∈ U.ids, (U.block q).round = n ∧ b ∈ (U.block q).refs ∧ (U.block q).creator = v := by
-  simp [supporters, mem_creatorsOf]
-  tauto
-
-theorem supporters_subset_authorsAt {b : BlockId} {n : ℕ} :
-    supporters U b n ⊆ authorsAt U n :=
-  Finset.image_subset_image (Finset.filter_subset _ _)
-
 /-- Validators that are both correct and back `b` with their round-`n`
 block. This is exactly what the coverage lemmas consume. -/
 def correctSupporters (U : BlockUniverse Validator BlockId Payload) (b : BlockId) (n : ℕ) :
@@ -272,25 +305,6 @@ theorem correctSupporters_correct {b : BlockId} {n : ℕ} {v : Validator}
     (hv : v ∈ correctSupporters U b n) : v ∈ (Correct : Finset Validator) :=
   Finset.mem_of_mem_inter_right hv
 
-
-/-- The validators whose round-`n` block declines to reference `L`.
-
-The complement of `supporters U L n` *within the round-`n` author pool* —
-but only for correct validators. A Byzantine author can appear in both, by
-publishing one round-`n` block that votes and another that does not; ruling
-that out for correct validators is exactly what
-`blames_inter_supporters_subset_byzantine`
-does, and is the whole content of M3. -/
-def blames (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (n : ℕ) :
-    Finset Validator :=
-  creatorsOf U.block ((blocksAt U n).filter (fun q => L ∉ (U.block q).refs))
-
-/-- Membership in `blames`, unfolded: a blamer has a round-`n` block that omits `L`. -/
-theorem mem_blames {L : BlockId} {n : ℕ} {v : Validator} :
-    v ∈ blames U L n ↔
-      ∃ q ∈ U.ids, (U.block q).round = n ∧ L ∉ (U.block q).refs ∧ (U.block q).creator = v := by
-  simp [blames, mem_creatorsOf]
-  tauto
 
 /-- A correct validator cannot both vote for `L` and blame it: that would be
 two distinct round-`n` blocks by one correct author. So the overlap between
@@ -332,5 +346,7 @@ theorem card_supporters_le_of_card_blames {L : BlockId} {n : ℕ}
     le_trans (Finset.card_le_card blames_inter_supporters_subset_byzantine) F.card_byzantine
   have hadd := Finset.card_union_add_card_inter (blames U L n) (supporters U L n)
   omega
+
+end Core
 
 end LeanDag

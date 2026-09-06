@@ -20,16 +20,16 @@ steps suffice from any block of the universe.
 namespace LeanDag
 
 variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
-variable [F : Faults Validator]
 variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
-variable {U : BlockUniverse Validator BlockId Payload}
+variable {P : Validity Validator BlockId Payload} {honest : Finset Validator}
+variable {U : BlockRecord Validator BlockId Payload P honest}
 
 /-- Everything reachable from `b` in at most `n` reference steps.
 
 Structural in the fuel `n`, so it is computable and needs no decidability
 hypothesis. Outside `U.ids` it still evaluates — to junk, like `U.block`
 itself — and every statement below quantifies over ids of the universe. -/
-def historyUpto (U : BlockUniverse Validator BlockId Payload) :
+def historyUpto (U : BlockRecord Validator BlockId Payload P honest) :
     ℕ → BlockId → Finset BlockId :=
   historyUptoFrom U.block
 
@@ -60,6 +60,8 @@ theorem reaches_of_mem_historyUpto {n : ℕ} {b i : BlockId}
     (h : i ∈ historyUpto U n b) : Reaches U b i :=
   reaches_of_mem_historyUptoFrom h
 
+variable [P.Mechanised]
+
 /-- **Completeness**, with the fuel accounted for. A path from `b` drops the
 round by one per step (T2), so `round b` steps exhaust it — and one more is
 harmless by `historyUpto_mono`.
@@ -70,8 +72,9 @@ theorem mem_historyUpto_of_reaches {n : ℕ} {b i : BlockId} (hb : b ∈ U.ids)
     (hn : (U.block b).round ≤ n) (h : Reaches U b i) : i ∈ historyUpto U n b :=
   U.causal.mem_historyUpto_of_reaches hb hn h
 
+omit [P.Mechanised] in
 /-- The causal history of `b`, as a `Finset`. -/
-def history (U : BlockUniverse Validator BlockId Payload) (b : BlockId) : Finset BlockId :=
+def history (U : BlockRecord Validator BlockId Payload P honest) (b : BlockId) : Finset BlockId :=
   historyFrom U.block b
 
 /-- **The representation is faithful** (`dos-equivocation-and-growth.md` §7 S6). For a block of the universe,
@@ -80,6 +83,7 @@ theorem mem_history_iff {b i : BlockId} (hb : b ∈ U.ids) :
     i ∈ history U b ↔ Reaches U b i :=
   U.causal.mem_history_iff hb
 
+omit [P.Mechanised] in
 /-- A block lies in its own causal history. -/
 @[simp]
 theorem mem_history_self {b : BlockId} : b ∈ history U b := mem_historyFrom_self

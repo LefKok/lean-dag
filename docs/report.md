@@ -1529,7 +1529,7 @@ round.
 ```lean
 theorem View.mem_of_reaches (hc : c ∈ V.ids) (h : Reaches U c b) : b ∈ V.ids
 theorem View.exists_reaches_iff (hc : c ∈ V.ids) :
-    (∃ b, b ∈ V.ids ∧ P b ∧ Reaches U c b) ↔ (∃ b, P b ∧ Reaches U c b)
+    (∃ b, b ∈ V.ids ∧ Q b ∧ Reaches U c b) ↔ (∃ b, Q b ∧ Reaches U c b)
 ```
 
 Causal history does not escape a view. The second form is what makes a
@@ -9761,9 +9761,9 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `BlockRecord.lean` | the block record and its view; `chopBlk`; what a validity predicate owes the mechanisms (`Mechanised`, `CopyStable`) |
 | `Record/Chop.lean`, `Record/Fill.lean`, `Record/Genesis.lean` | the cut, the fill and re-genesis, built once at the record |
 | `BlockDag.lean` | `BlockUniverse` and `View` as the record at `ValidWrt`; the core's validity is mechanised; T1 |
-| `CausalHistory.lean` | `Reaches`; T2, T6a |
-| `Support.lean` | counting vocabulary; the hitting, propagation and coverage lemmas |
-| `History.lean` | causal history as a `Finset` |
+| `CausalHistory.lean` | `Reaches` at any block record; T2, T6a |
+| `Support.lean` | counting vocabulary at any block record; the core's hitting, propagation and coverage lemmas |
+| `History.lean` | causal history as a `Finset`, at any block record |
 | `Persistence.lean` | T3 |
 | `CommonCore.lean` | T3a, T3c |
 | `Mysticeti.lean` | the commit rule; eligibility; M1–M6; the ledger |
@@ -9836,7 +9836,6 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `MysticetiProperties.lean`, `OdontocetiProperties.lean`, `NemoProperties.lean`, `HybridProperties.lean`, `MahiMahiProperties.lean`, `FinWhale/Carrier.lean`, `Hydrozoan/Helpers/`, `OptimalHydrozoan/Carrier.lean`, `Reactive/MysticetiProperties.lean` | each rule's carrier, properties, support and headlines |
 | `Integration/NemoMechanisms.lean`, `FinWhaleMechanisms.lean`, `HybridMechanisms.lean`, `HydrozoanMechanisms.lean`, `OptimalMechanisms.lean`, `ReactiveMechanisms.lean`, `StackRules.lean` | the mechanism cells at each rule: witnesses and instances |
 | `Nemo/Basic.lean` | the majority quorum and its intersection; crash validity; the universe with universal non-equivocation |
-| `Nemo/CausalHistory.lean`, `Nemo/History.lean` | reachability and the finite cone, restated over the crash universe |
 | `Nemo/Support.lean` | the hitting, coverage and propagation lemmas at the majority |
 | `Nemo/Rules.lean` | the wave-two rules: the vote is the certificate; link integrity |
 | `Nemo/Decision.lean` | the three-constructor decision relation; agreement without hypotheses; the ledger |
@@ -10787,7 +10786,7 @@ reused.
 
 ## Appendix B. The definition reference
 
-The 345 definitions and structures the report names, in
+The 341 definitions and structures the report names, in
 the order a reader meets them. Each entry is the source text,
 unabridged, with the explanation the source carries. This
 appendix is generated from the compiled development by
@@ -10941,7 +10940,7 @@ structure CausalStructure (blk : BlockId → Block Validator BlockId Payload)
 *def, `CausalHistory.lean`*
 
 ```lean
-def Reaches (U : BlockUniverse Validator BlockId Payload) : BlockId → BlockId → Prop :=
+def Reaches (U : BlockRecord Validator BlockId Payload P honest) : BlockId → BlockId → Prop :=
   ReachesFrom U.block
 ```
 
@@ -10952,7 +10951,7 @@ def Reaches (U : BlockUniverse Validator BlockId Payload) : BlockId → BlockId 
 *def, `History.lean`*
 
 ```lean
-def history (U : BlockUniverse Validator BlockId Payload) (b : BlockId) : Finset BlockId :=
+def history (U : BlockRecord Validator BlockId Payload P honest) (b : BlockId) : Finset BlockId :=
   historyFrom U.block b
 ```
 
@@ -10963,7 +10962,7 @@ The causal history of `b`, as a `Finset`.
 *def, `Support.lean`*
 
 ```lean
-def authorsAt (U : BlockUniverse Validator BlockId Payload) (n : ℕ) : Finset Validator :=
+def authorsAt (U : BlockRecord Validator BlockId Payload P honest) (n : ℕ) : Finset Validator :=
   creatorsOf U.block (blocksAt U n)
 ```
 
@@ -10974,7 +10973,7 @@ The validators holding a block at a given round — the pool `p`.
 *def, `Support.lean`*
 
 ```lean
-def supporters (U : BlockUniverse Validator BlockId Payload) (b : BlockId) (n : ℕ) :
+def supporters (U : BlockRecord Validator BlockId Payload P honest) (b : BlockId) (n : ℕ) :
     Finset Validator :=
   creatorsOf U.block ((blocksAt U n).filter (fun q => b ∈ (U.block q).refs))
 ```
@@ -10986,7 +10985,7 @@ The validators whose round-`n` block references `b`.
 *def, `Support.lean`*
 
 ```lean
-def blames (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (n : ℕ) :
+def blames (U : BlockRecord Validator BlockId Payload P honest) (L : BlockId) (n : ℕ) :
     Finset Validator :=
   creatorsOf U.block ((blocksAt U n).filter (fun q => L ∉ (U.block q).refs))
 ```
@@ -12897,51 +12896,6 @@ abbrev View (Validator BlockId Payload : Type*) [Fintype Validator]
 ```
 
 A view: one validator's local, reference-closed sub-DAG.
-
-#### `Reaches`
-
-*def, `Nemo.CausalHistory.lean`*
-
-```lean
-def Reaches (U : Universe Validator BlockId Payload) : BlockId → BlockId → Prop :=
-  ReachesFrom U.block
-```
-
-`Reaches U c b` — `b` lies in the causal history of `c`.
-
-#### `history`
-
-*def, `Nemo.History.lean`*
-
-```lean
-def history (U : Universe Validator BlockId Payload) (b : BlockId) : Finset BlockId :=
-  historyFrom U.block b
-```
-
-The causal history of `b`, as a `Finset`.
-
-#### `authorsAt`
-
-*def, `Nemo.Support.lean`*
-
-```lean
-def authorsAt (U : Universe Validator BlockId Payload) (n : ℕ) : Finset Validator :=
-  creatorsOf U.block (blocksAt U n)
-```
-
-The validators holding a block at a given round — the pool `p`.
-
-#### `supporters`
-
-*def, `Nemo.Support.lean`*
-
-```lean
-def supporters (U : Universe Validator BlockId Payload) (b : BlockId) (n : ℕ) :
-    Finset Validator :=
-  creatorsOf U.block ((blocksAt U n).filter (fun q => b ∈ (U.block q).refs))
-```
-
-The validators whose round-`n` block references `b`.
 
 #### `DirectCommit`
 
@@ -17128,7 +17082,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 531 theorems the body or Appendix A names, each
+The 530 theorems the body or Appendix A names, each
 the source statement, unabridged. Generated with Appendix B;
 a theorem the report does not name is a step of an argument
 rather than a result it presents, and the source is its
@@ -17196,16 +17150,16 @@ theorem round_le_of_reaches (C : CausalStructure blk ids)
 
 **Causal history runs downward in rounds.**
 
-#### `BlockUniverse.causal`
+#### `BlockRecord.causal`
 
 *theorem, `CausalHistory.lean`*
 
 ```lean
-theorem BlockUniverse.causal (U : BlockUniverse Validator BlockId Payload) :
+theorem BlockRecord.causal [P.Mechanised] (U : BlockRecord Validator BlockId Payload P honest) :
     CausalStructure U.block U.ids
 ```
 
-**A universe is a causal structure.** The two facts the history layer consumes, projected out of the universe's completeness and validity.
+**A block record is a causal structure.** The two facts the history layer consumes, projected out of the record's completeness and the predecessor fact its validity owes. Stated at the record, so every rule's universe has it.
 
 #### `round_le_of_reaches`
 
@@ -17225,8 +17179,8 @@ This is the substantive half of T2 — reflexivity, single steps and transitivit
 *theorem, `CausalHistory.lean`*
 
 ```lean
-theorem View.mem_of_reaches {U : BlockUniverse Validator BlockId Payload}
-    {V : View Validator BlockId Payload U} {c b : BlockId}
+theorem View.mem_of_reaches {U : BlockRecord Validator BlockId Payload P honest}
+    {V : U.View} {c b : BlockId}
     (hc : c ∈ V.ids) (h : Reaches U c b) : b ∈ V.ids
 ```
 
@@ -17237,10 +17191,10 @@ theorem View.mem_of_reaches {U : BlockUniverse Validator BlockId Payload}
 *theorem, `CausalHistory.lean`*
 
 ```lean
-theorem View.exists_reaches_iff {U : BlockUniverse Validator BlockId Payload}
-    {V : View Validator BlockId Payload U} {P : BlockId → Prop} {c : BlockId}
+theorem View.exists_reaches_iff {U : BlockRecord Validator BlockId Payload P honest}
+    {V : U.View} {Q : BlockId → Prop} {c : BlockId}
     (hc : c ∈ V.ids) :
-    (∃ b, b ∈ V.ids ∧ P b ∧ Reaches U c b) ↔ (∃ b, P b ∧ Reaches U c b)
+    (∃ b, b ∈ V.ids ∧ Q b ∧ Reaches U c b) ↔ (∃ b, Q b ∧ Reaches U c b)
 ```
 
 **T6a, in the form the commit rules consume.** Asking "is there a `P`-block in `c`'s causal history?" gives the same answer whether or not the search is confined to the view. Restricting to `V` changes nothing, because the answer could never have lain outside it.
@@ -17252,7 +17206,7 @@ This is what makes a view-relative certificate check well defined: two validator
 *theorem, `Support.lean`*
 
 ```lean
-theorem authorsAt_eq_authorsIn (U : BlockUniverse Validator BlockId Payload) (n : ℕ) :
+theorem authorsAt_eq_authorsIn (U : BlockRecord Validator BlockId Payload P honest) (n : ℕ) :
     authorsAt U n = authorsIn U U.ids n
 ```
 
@@ -20333,17 +20287,6 @@ theorem eq_of_mem_refs_of_creator_eq {i j k : BlockId} (hi : i ∈ U.ids)
 ```
 
 Distinct creators among references are automatic under crash: two refs of the same block sharing a creator sit at the same round (`predecessor`), so universal `no_equivocation` identifies them. This is why the crash `ValidWrt` has no `distinct_creators` field.
-
-#### `Universe.causal`
-
-*theorem, `Nemo.CausalHistory.lean`*
-
-```lean
-theorem Universe.causal (U : Universe Validator BlockId Payload) :
-    CausalStructure U.block U.ids
-```
-
-**The crash universe is a causal structure.** Completeness is a field; the round condition is the predecessor clause of crash validity. This is the arc's one bridge to the shared layer.
 
 #### `exists_mem_refs_of_correct_support_of_card`
 
