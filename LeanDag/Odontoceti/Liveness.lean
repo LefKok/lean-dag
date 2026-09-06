@@ -117,21 +117,6 @@ theorem decided_of_leader_mem
     directCommit_of_leader_mem hcard hs hR hpop0 hpop1 hlead
   exact ⟨L, hLb, Decided.directCommit hLb (directCommitIn_of_coversUpto hdc hcov)⟩
 
-/-- **O7 against a horizon**, the two-round counterpart of
-`decided_of_leader_of_populated`: the rule needs the leader's round and
-the one above it, so two rounds are read off the horizon rather than
-three. -/
-theorem decided_of_leader_of_populated (_hT : T ⊆ (Correct : Finset Validator))
-    (hcard : quorumCard Validator ≤ T.card)
-    (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
-    (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) (hN : S.slotRound k + 1 ≤ N)
-    (V : View Validator BlockId Payload U) (hcov : V.CoversUpto N)
-    (hlead : S.leader k ∈ T) :
-    ∃ L, IsLeaderBlock U k L ∧ Decided U V k (some L) :=
-  decided_of_leader_mem hcard hs hR
-    (hpop _ (by omega) (by omega)) (hpop _ (by omega) (by omega))
-    V (hcov.mono hN) hlead
-
 /-- The same at `T := Correct`. -/
 theorem decided_of_correct_leader (hs : Synchronised U R)
     (hR : R ≤ S.slotRound k)
@@ -221,57 +206,6 @@ theorem decided_below_of_committed_run
           hmid hc⟩
   intro i hi
   exact key (b - i) i hi (le_refl _)
-
-/-! ## O10 — liveness, composed -/
-
-/-- **O10 (thesis Theorem 12).** Under production and post-`R`
-synchrony, a recurring run of `c` correct-led slots decides
-every slot below it, on any view caught up to the horizon — with the
-run placed past both the target and `R` by fairness. Note the horizon:
-the run's last slot needs rounds up to its `slotRound + 1` only. -/
-theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
-    (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : quorumCard Validator ≤ T.card)
-    (hspan : SpansEligible Validator c)
-    (fair : FairRunOn T c) (R : ℕ) (k : ℕ) :
-    ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ)
-        (V : View Validator BlockId Payload U),
-        (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → SynchronisedOn U T R →
-        S.slotRound (b + c - 1) + 1 ≤ N → V.CoversUpto N →
-        ∀ i, i < b → ∃ v, Decided U V i v := by
-  obtain ⟨k₀, hk₀⟩ := S.unbounded R
-  obtain ⟨b, hb, hrunT⟩ := fair (max k k₀)
-  have hRb : R ≤ S.slotRound b :=
-    le_trans hk₀ (S.mono (le_trans (le_max_right k k₀) hb))
-  refine ⟨b, le_trans (le_max_left _ _) hb, hRb, ?_⟩
-  intro U N V hpop hs hN hcov
-  have hrun : ∀ j, b ≤ j → j ≤ b + c - 1 →
-      ∃ B, Decided U V j (some B) := by
-    intro j hj1 hj2
-    have hlead : S.leader j ∈ T := by
-      have := hrunT (j - b) (by omega)
-      rwa [Nat.add_sub_cancel' hj1] at this
-    have hRj : R ≤ S.slotRound j := le_trans hRb (S.mono hj1)
-    have hjr : S.slotRound j ≤ S.slotRound (b + c - 1) := S.mono (by omega)
-    obtain ⟨L, _, hdec⟩ :=
-      decided_of_leader_of_populated hT hcard hs hRj hpop (by omega) V hcov hlead
-    exact ⟨L, hdec⟩
-  exact decided_below_of_committed_run (by omega)
-    (fun i hi => hspan b i hi) hrun
-
-/-- **O10 at `T := Correct`.** -/
-theorem all_decided_below_of_fairRun_correct {c : ℕ} (hc : 0 < c)
-    (hspan : SpansEligible Validator c)
-    (fair : FairRunOn (Correct : Finset Validator) c) (R : ℕ) (k : ℕ) :
-    ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ)
-        (V : View Validator BlockId Payload U),
-        (∀ r, R ≤ r → r ≤ N → Populated U r) → Synchronised U R →
-        S.slotRound (b + c - 1) + 1 ≤ N → V.CoversUpto N →
-        ∀ i, i < b → ∃ v, Decided U V i v :=
-  all_decided_below_of_fairRun hc Finset.Subset.rfl card_correct hspan
-    fair R k
 
 end Odontoceti
 

@@ -3103,6 +3103,22 @@ not say. One generic lemma was added for this: `coversUpto_of_truncates`
 agrees above the horizon, which replaces the cut-specific
 `coversUpto_chop` the reactive cells used.
 
+**The ledger does not stall, once.** L10, O10 and NN8 — the core's,
+Odontoceti's and Nemo's "every slot below a fair run is decided" — were
+three copies of one argument: commit each slot of the run, then descend.
+`Support.decidedBelow_of_fairRun` (`Arcs/Liveness.lean`) is that
+argument for any rule with a support and `Descends`: the run is named by
+the schedule alone, `Support.leaderCommits` commits it, and
+`decidedBelow_of_run` settles what is under it. The three theorems keep
+their statements and are now that theorem at `coreSupport`, at
+Odontoceti's and at Nemo's vote support; they moved from the protocols'
+`Liveness.lean` files to their `*Properties.lean` files, which is where
+the supports are. With them went the copies of the horizon form of L4
+and, for Nemo, of the committed-run descent, which only the direct
+proofs consumed. Hybrid keeps its direct H7: its carrier bakes
+`HonestNoEquiv` into the universe, and the direct theorem never needed
+it, so the property route would state a weaker theorem.
+
 **What the audits show.** `audit-mechanisms.py` reads the same matrix
 as before — every cell for Hydrozoan and Optimal-Hydrozoan `yes`, live
 and stack `der` — now from the native witnesses. `audit-bespoke.py`

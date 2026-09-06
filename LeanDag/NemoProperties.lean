@@ -8,6 +8,8 @@ import LeanDag.Properties.Derived.Bounded
 import LeanDag.Properties.Derived.LeaderCommits
 import LeanDag.Properties.Support
 
+import LeanDag.Properties.Arcs.Liveness
+
 /-!
 # Nemo conforms to the target properties
 
@@ -390,5 +392,67 @@ theorem descends {S : Slots Validator} {c : ℕ} (hc : 0 < c)
     (fun b i hi => Nemo.eligible_iff.mp (hspans b i hi))
 
 end NemoProperties
+
+namespace Nemo
+
+/-! ## Liveness, composed
+
+`Support.decidedBelow_of_fairRun` at Nemo's vote support, under the
+majority fault model `nemoReliability`. The direct proof this replaced
+committed each slot of the run and ran the crash descent; both are the
+generic theorems now. -/
+
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
+variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
+variable [C : CrashFaults Validator] [S : Slots Validator] {T : Finset Validator}
+
+/-- **Liveness.** Under post-`R` coverage, growth to the horizon, and a
+recurring run of `c` reliable-led slots, every slot below the run is
+decided — the run placed past both the target and `R` by fairness.
+
+The quantifier order is the content: the slot `b` is fixed by the *schedule*
+alone, before any universe is named, so "eventually" means "any DAG grown
+past this schedule-fixed slot". Crashed-leader slots are settled here and
+only here: they descend onto the run via `indirectSkip`. -/
+theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
+    (hT : T ⊆ Live Validator)
+    (hcard : majority Validator ≤ T.card)
+    (hspan : SpansEligible Validator c)
+    (fair : FairRunOn T c) (R : ℕ) (s : ℕ) :
+    ∃ b, s ≤ b ∧ R ≤ S.slotRound b ∧
+      ∀ (U : Universe Validator BlockId Payload) (N : ℕ)
+        (V : View Validator BlockId Payload U),
+        (∀ r ≤ N, Populated U r) → SynchronisedOn U T R →
+        S.slotRound (b + c - 1) + 1 ≤ N → V.CoversUpto N →
+        ∀ i, i < b → ∃ v, Decided U V i v := by
+  have hTn := Finset.card_le_univ T
+  have hn : 0 < Fintype.card Validator := by unfold majority at hcard; omega
+  obtain ⟨b, hb, hRb, h⟩ :=
+    (Properties.voteSupport (NemoProperties.nemoRule (Validator := Validator)
+      (BlockId := BlockId) (Payload := Payload))).decidedBelow_of_fairRun
+      (Properties.voteSupport_ofCoverage _) (NemoProperties.voteSupport_commits hn) hc
+      (NemoProperties.descends hc hspan) (T := T)
+      ⟨Finset.subset_univ _, by
+        change Fintype.card Validator - (Fintype.card Validator - majority Validator) ≤ T.card
+        omega⟩ fair R s
+  refine ⟨b, hb, hRb, fun U N V hpop hs hN hcov i hi => ?_⟩
+  obtain ⟨v, hv⟩ := h V N hs (fun r _ h2 => PopulatedOn.mono hT (hpop r h2)) hcov hN i hi
+  exact ⟨v, hv.2.1⟩
+
+/-- **Liveness at `T := Live`** — the whole live class, which the tight
+committee `n = 2f + 1` requires exactly. -/
+theorem all_decided_below_of_fairRun_live {c : ℕ} (hc : 0 < c)
+    (hspan : SpansEligible Validator c)
+    (fair : FairRunOn (Live Validator) c) (R : ℕ) (s : ℕ) :
+    ∃ b, s ≤ b ∧ R ≤ S.slotRound b ∧
+      ∀ (U : Universe Validator BlockId Payload) (N : ℕ)
+        (V : View Validator BlockId Payload U),
+        (∀ r ≤ N, Populated U r) → Synchronised U R →
+        S.slotRound (b + c - 1) + 1 ≤ N → V.CoversUpto N →
+        ∀ i, i < b → ∃ v, Decided U V i v :=
+  all_decided_below_of_fairRun hc Finset.Subset.rfl majority_le_card_live hspan fair R s
+
+end Nemo
+
 
 end LeanDag

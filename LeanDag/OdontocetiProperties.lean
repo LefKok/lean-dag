@@ -11,6 +11,8 @@ import LeanDag.Properties.Support
 import LeanDag.Properties.Derived.Bounded
 import LeanDag.Adaptive.Odontoceti
 
+import LeanDag.Properties.Arcs.Liveness
+
 /-!
 # Odontoceti conforms to the target properties
 
@@ -510,5 +512,60 @@ theorem descends {S : Slots Validator} {c : ℕ} (hc : 0 < c)
 end Bounded
 
 end OdontocetiProperties
+
+namespace Odontoceti
+
+/-! ## O10 — liveness, composed
+
+`Support.decidedBelow_of_fairRun` at Odontoceti's vote support: the run
+commits by `voteSupport_commits`, and `descends` clears what is under
+it. The direct proof this replaced ran O7 at each slot of the run and
+then O9. -/
+
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
+variable [F : Faults5 Validator]
+variable {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
+variable [S : Slots Validator] {T : Finset Validator}
+
+/-- **O10 (thesis Theorem 12).** Under production and post-`R`
+synchrony, a recurring run of `c` correct-led slots decides
+every slot below it, on any view caught up to the horizon — with the
+run placed past both the target and `R` by fairness. Note the horizon:
+the run's last slot needs rounds up to its `slotRound + 1` only. -/
+theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
+    (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : quorumCard Validator ≤ T.card)
+    (hspan : SpansEligible Validator c)
+    (fair : FairRunOn T c) (R : ℕ) (k : ℕ) :
+    ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ)
+        (V : View Validator BlockId Payload U),
+        (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → SynchronisedOn U T R →
+        S.slotRound (b + c - 1) + 1 ≤ N → V.CoversUpto N →
+        ∀ i, i < b → ∃ v, Decided U V i v := by
+  obtain ⟨b, hb, hRb, h⟩ :=
+    (Properties.voteSupport (OdontocetiProperties.odontocetiRule (Validator := Validator)
+      (BlockId := BlockId) (Payload := Payload))).decidedBelow_of_fairRun
+      (Properties.voteSupport_ofCoverage _) OdontocetiProperties.voteSupport_commits hc
+      (OdontocetiProperties.descends hc hspan) (T := T)
+      ⟨hT, by change Fintype.card Validator - Faults.f Validator ≤ T.card; exact hcard⟩ fair R k
+  refine ⟨b, hb, hRb, fun U N V hpop hs hN hcov i hi => ?_⟩
+  obtain ⟨v, hv⟩ := h V N hs hpop hcov hN i hi
+  exact ⟨v, hv.2.1⟩
+
+/-- **O10 at `T := Correct`.** -/
+theorem all_decided_below_of_fairRun_correct {c : ℕ} (hc : 0 < c)
+    (hspan : SpansEligible Validator c)
+    (fair : FairRunOn (Correct : Finset Validator) c) (R : ℕ) (k : ℕ) :
+    ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ)
+        (V : View Validator BlockId Payload U),
+        (∀ r, R ≤ r → r ≤ N → Populated U r) → Synchronised U R →
+        S.slotRound (b + c - 1) + 1 ≤ N → V.CoversUpto N →
+        ∀ i, i < b → ∃ v, Decided U V i v :=
+  all_decided_below_of_fairRun hc Finset.Subset.rfl card_correct hspan fair R k
+
+end Odontoceti
+
 
 end LeanDag

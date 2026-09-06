@@ -274,57 +274,11 @@ theorem spansEligible_two (hid : ∀ s, S.slotRound s = s) :
   rw [eligible_iff, hid, hid]
   omega
 
-/-! ## The descent -/
+/-! ## The two all-of-`Live` cases
 
-/-- **Everything below a committed run is decided.** Given a block of
-consecutive committed slots `b … n` whose top is eligible for everything
-below `b`, every slot below `b` resolves — commit or skip — by anchoring on
-the nearest eligible committed slot.
-
-The core's proof, verbatim: the crash `indirectCommit` carries no canonicity
-premise (`isLeaderBlock_unique` leaves no twins), so the commit branch is a
-plain constructor application and no minimum-selection tie-break appears. -/
-theorem decided_below_of_committed_run {V : View Validator BlockId Payload U} {b n : ℕ}
-    (hbn : b ≤ n)
-    (hspan : ∀ i, i < b → Eligible Validator i n)
-    (hrun : ∀ j, b ≤ j → j ≤ n → ∃ B, Decided U V j (some B)) :
-    ∀ i, i < b → ∃ v, Decided U V i v := by
-  classical
-  have key : ∀ d i, i < b → b - i ≤ d → ∃ v, Decided U V i v := by
-    intro d
-    induction d with
-    | zero => intro i hi hd; omega
-    | succ d ih =>
-      intro i hi hd
-      -- The nearest slot above `i` that is both eligible for it and committed.
-      have hex : ∃ j, Eligible Validator i j ∧ ∃ B, Decided U V j (some B) :=
-        ⟨n, hspan i hi, hrun n hbn (le_refl n)⟩
-      have hle : Nat.find hex ≤ n :=
-        Nat.find_le ⟨hspan i hi, hrun n hbn (le_refl n)⟩
-      obtain ⟨helig, B, hB⟩ := Nat.find_spec hex
-      have hmid : ∀ i', i < i' → i' < Nat.find hex → Eligible Validator i i' →
-          Decided U V i' none := by
-        intro i' h1 h2 h3
-        -- Minimality: an eligible slot below the anchor is not committed ...
-        have hnc : ¬ ∃ C, Decided U V i' (some C) := fun hc => Nat.find_min hex h2 ⟨h3, hc⟩
-        -- ... so it cannot lie in the run, so it lies below `b`, so the
-        -- induction hypothesis reaches it.
-        have hi'b : i' < b := by
-          by_contra hge
-          exact hnc (hrun i' (by omega) (by omega))
-        obtain ⟨v, hv⟩ := ih i' hi'b (by omega)
-        cases v with
-        | none => exact hv
-        | some C => exact absurd ⟨C, hv⟩ hnc
-      by_cases hc : ∃ L, IsLeaderBlock U i L ∧ CertifiedIn U B L (S.slotRound i)
-      · obtain ⟨L, hL, hcert⟩ := hc
-        exact ⟨some L, Decided.indirectCommit (lt_of_eligible helig) helig hB hmid hL hcert⟩
-      · push Not at hc
-        exact ⟨none, Decided.indirectSkip (lt_of_eligible helig) helig hB hmid hc⟩
-  intro i hi
-  exact key (b - i) i hi (le_refl _)
-
-/-! ## Composition: a fair schedule decides everything -/
+The composition itself — a fair schedule decides everything — is
+`Nemo.all_decided_below_of_fairRun` in `NemoProperties.lean`, from the
+vote support. -/
 
 section Composed
 
@@ -337,72 +291,6 @@ abbrev Populated (U : Universe Validator BlockId Payload) (r : ℕ) : Prop :=
 /-- The all-of-`Live` coverage case. -/
 abbrev Synchronised (U : Universe Validator BlockId Payload) (R : ℕ) : Prop :=
   SynchronisedOn U (Live Validator) R
-
-/-- The commit half against a horizon: two rounds read off it. `T ⊆ Live` is
-consumed here and only here, converting `Populated` into `PopulatedOn T`. -/
-theorem decided_of_leader_of_populated (hT : T ⊆ Live Validator)
-    (hcard : majority Validator ≤ T.card)
-    (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound s)
-    (hpop : ∀ r ≤ N, Populated U r) (hN : S.slotRound s + 1 ≤ N)
-    (V : View Validator BlockId Payload U) (hcov : V.CoversUpto N)
-    (hlead : S.leader s ∈ T) :
-    ∃ L, IsLeaderBlock U s L ∧ Decided U V s (some L) :=
-  decided_of_leader_mem hcard hs hR
-    (PopulatedOn.mono hT (hpop _ (by omega)))
-    (PopulatedOn.mono hT (hpop _ (by omega))) V (hcov.mono hN) hlead
-
-/-- **Liveness.** Under post-`R` coverage, growth to the horizon, and a
-recurring run of `c` reliable-led slots, every slot below the run is
-decided — the run placed past both the target and `R` by fairness.
-
-The quantifier order is the content: the slot `b` is fixed by the *schedule*
-alone, before any universe is named, so "eventually" means "any DAG grown
-past this schedule-fixed slot". Crashed-leader slots are settled here and
-only here: they descend onto the run via `indirectSkip`. -/
-theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
-    (hT : T ⊆ Live Validator)
-    (hcard : majority Validator ≤ T.card)
-    (hspan : SpansEligible Validator c)
-    (fair : FairRunOn T c) (R : ℕ) (s : ℕ) :
-    ∃ b, s ≤ b ∧ R ≤ S.slotRound b ∧
-      ∀ (U : Universe Validator BlockId Payload) (N : ℕ)
-        (V : View Validator BlockId Payload U),
-        (∀ r ≤ N, Populated U r) → SynchronisedOn U T R →
-        S.slotRound (b + c - 1) + 1 ≤ N → V.CoversUpto N →
-        ∀ i, i < b → ∃ v, Decided U V i v := by
-  obtain ⟨k₀, hk₀⟩ := S.unbounded R
-  obtain ⟨b, hb, hrunT⟩ := fair (max s k₀)
-  have hRb : R ≤ S.slotRound b :=
-    le_trans hk₀ (S.mono (le_trans (le_max_right s k₀) hb))
-  refine ⟨b, le_trans (le_max_left _ _) hb, hRb, ?_⟩
-  intro U N V hpop hs hN hcov
-  have hrun : ∀ j, b ≤ j → j ≤ b + c - 1 →
-      ∃ B, Decided U V j (some B) := by
-    intro j hj1 hj2
-    have hlead : S.leader j ∈ T := by
-      have := hrunT (j - b) (by omega)
-      rwa [Nat.add_sub_cancel' hj1] at this
-    have hRj : R ≤ S.slotRound j := le_trans hRb (S.mono hj1)
-    have hjr : S.slotRound j ≤ S.slotRound (b + c - 1) := S.mono (by omega)
-    obtain ⟨L, _, hdec⟩ :=
-      decided_of_leader_of_populated hT hcard hs hRj hpop (by omega) V hcov hlead
-    exact ⟨L, hdec⟩
-  exact decided_below_of_committed_run (by omega)
-    (fun i hi => hspan b i hi) hrun
-
-/-- **Liveness at `T := Live`** — the whole live class, which the tight
-committee `n = 2f + 1` requires exactly. -/
-theorem all_decided_below_of_fairRun_live {c : ℕ} (hc : 0 < c)
-    (hspan : SpansEligible Validator c)
-    (fair : FairRunOn (Live Validator) c) (R : ℕ) (s : ℕ) :
-    ∃ b, s ≤ b ∧ R ≤ S.slotRound b ∧
-      ∀ (U : Universe Validator BlockId Payload) (N : ℕ)
-        (V : View Validator BlockId Payload U),
-        (∀ r ≤ N, Populated U r) → Synchronised U R →
-        S.slotRound (b + c - 1) + 1 ≤ N → V.CoversUpto N →
-        ∀ i, i < b → ∃ v, Decided U V i v :=
-  all_decided_below_of_fairRun hc Finset.Subset.rfl majority_le_card_live hspan
-    fair R s
 
 end Composed
 

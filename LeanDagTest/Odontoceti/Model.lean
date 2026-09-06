@@ -1,3 +1,4 @@
+import LeanDag.OdontocetiProperties
 import LeanDag.Odontoceti.Liveness
 import LeanDag.Schedule
 import LeanDag.DoS.Exclusion

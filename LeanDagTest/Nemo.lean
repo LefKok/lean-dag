@@ -1,3 +1,4 @@
+import LeanDag.NemoProperties
 import LeanDag.Nemo.Liveness
 import LeanDag.Schedule
 import Mathlib.Tactic.IntervalCases

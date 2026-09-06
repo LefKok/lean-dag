@@ -1,3 +1,4 @@
+import LeanDag.MysticetiProperties
 import LeanDag.Schedule
 import LeanDag.Liveness
 import LeanDag.Network.Quorum

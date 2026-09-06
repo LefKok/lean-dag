@@ -6,6 +6,7 @@ import LeanDag.Properties.Optional.Direct
 import LeanDag.Properties.Optional.Quorate
 import LeanDag.Properties.Commit
 import LeanDag.Properties.Derived.LeaderCommits
+import LeanDag.Properties.Arcs.Liveness
 import LeanDag.Properties.Support
 import LeanDag.Properties.Derived.Bounded
 import LeanDag.Properties.Derived.Descent
@@ -1285,5 +1286,77 @@ theorem descends {S : Slots Validator} {c : ℕ} (hc : 0 < c)
 end Bounded
 
 end MysticetiProperties
+
+/-! ## L10 — the ledger does not stall
+
+The last step of P7′, and the first theorem of the core's liveness
+story to be stated *after* the properties rather than before them.
+`FairRunOn T c` gives `c` consecutive `T`-led slots arbitrarily far out,
+and `SpansEligible c` says the run reaches far enough for every slot
+below it to anchor on its last member. What used to follow was a proof
+of its own — L4 at each slot of the run, then the committed-run
+descent — and is now `Support.decidedBelow_of_fairRun` at the core's
+support: `coreSupport_commits` commits the run, `descends` settles what
+is under it.
+
+The quantifier order is L6's and for L6's reason: the run is named by
+the **schedule** alone, before any DAG is mentioned, and any DAG grown
+past it decides everything below. Reversing the order would let the
+horizon cap how far fairness may reach.
+
+At the two schedules of interest this reads: `c = 1` under the old
+three-round spacing, so a single correct leader clears everything below
+it; `c = 3` under pipelining, so three consecutive correct leaders do —
+and round-robin over `3f+1` supplies three for every `f ≥ 1`. -/
+
+section Ledger
+
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
+variable [F : Faults Validator]
+variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
+variable [S : Slots Validator] {T : Finset Validator}
+
+/-- **L10.** For every slot `k` there is a `b ≥ k` such that every slot below
+`b` is decided, in any sufficiently grown synchronous DAG.
+
+This is what "the ledger does not stall" means operationally: `commitSeq` reads
+verdicts in slot order and halts at the first undecided slot, so a prefix of
+decided slots growing without bound is exactly the ledger advancing. Contrast
+L6, which gives infinitely many *commits* while saying nothing about the gaps
+between them. -/
+theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
+    (hT : T ⊆ (Correct : Finset Validator)) (hcard : quorumCard Validator ≤ T.card)
+    (hspan : SpansEligible (Validator := Validator) c)
+    (fair : FairRunOn T c) (R : ℕ) (k : ℕ) :
+    ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
+        (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → SynchronisedOn U T R →
+        S.slotRound (b + c - 1) + 2 ≤ N →
+        ∀ i, i < b → ∃ v, Decided U (View.full U) i v := by
+  obtain ⟨b, hb, hRb, h⟩ :=
+    (MysticetiProperties.coreSupport (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)).decidedBelow_of_fairRun
+      MysticetiProperties.coreSupport_ofCoverage MysticetiProperties.coreSupport_commits hc
+      (MysticetiProperties.descends hc hspan) (T := T)
+      ⟨hT, by change Fintype.card Validator - Faults.f Validator ≤ T.card; exact hcard⟩ fair R k
+  refine ⟨b, hb, hRb, fun U N hpop hs hN i hi => ?_⟩
+  obtain ⟨v, hv⟩ := h (View.full U) N (MysticetiProperties.synchronisedOn_eq.mpr hs)
+    (fun r h1 h2 => MysticetiProperties.populatedOn_ofCore (hpop r h1 h2))
+    (MysticetiProperties.coversUpto_eq.mpr (View.coversUpto_full U N)) hN i hi
+  exact ⟨v, hv.2.1⟩
+
+/-- **L10 at `T := Correct`.** -/
+theorem all_decided_below_of_fairRun_correct {c : ℕ} (hc : 0 < c)
+    (hspan : SpansEligible (Validator := Validator) c)
+    (fair : FairRunOn (Correct : Finset Validator) c) (R : ℕ) (k : ℕ) :
+    ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
+        (∀ r, R ≤ r → r ≤ N → Populated U r) → Synchronised U R →
+        S.slotRound (b + c - 1) + 2 ≤ N →
+        ∀ i, i < b → ∃ v, Decided U (View.full U) i v :=
+  all_decided_below_of_fairRun hc Finset.Subset.rfl card_correct hspan fair R k
+
+end Ledger
+
 
 end LeanDag

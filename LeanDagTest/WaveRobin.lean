@@ -1,4 +1,5 @@
 import LeanDag.WaveRobin
+import LeanDag.MysticetiProperties
 import LeanDag.Network.Quorum
 
 /-!

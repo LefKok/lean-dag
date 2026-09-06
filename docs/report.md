@@ -10405,7 +10405,7 @@ result in full.
 | L8c | a slot resolves through its first eligible commit | `decided_of_first_eligible_commit` *(Liveness)* |
 | L8d | a committed slot above decides everything below (spaced schedules) | `decided_of_committed_above`, `all_decided_below_of_spacing` *(Liveness)* |
 | L8e | a committed run of eligible span clears everything below | `decided_below_of_committed_run` *(Liveness)* |
-| L10 | every slot below a fair run is decided (pipelined) | `all_decided_below_of_fairRun` *(Liveness)* |
+| L10 | every slot below a fair run is decided (pipelined) | `all_decided_below_of_fairRun` *(MysticetiProperties, from `Support.decidedBelow_of_fairRun`)* |
 | L12 | a schedule satisfying L10's fairness and shape hypotheses exists at every committee: the wave-aligned rotation, with no premise beyond the fault model | `waveRobin`, `waveRobin_fairRun`, `waveRobin_spansEligible`, `waveRobin_fairSchedule` *(WaveRobin)* |
 | L7 | coverage from view convergence, drift-free | `ViewPace.synchronisedOn_of_converges`; the drift-parametric engine `ViewPace.synchronisedOn_of_driftOn` *(ViewPace)* |
 | V1 | the referencing clause, unfused from the network's | `ViewPace.covers_of_converges` *(ViewPace)* |
@@ -10490,7 +10490,7 @@ reused.
 | O7 | a correct leader commits in one step | `Odontoceti.decided_of_leader_mem` *(Odontoceti/Liveness)* |
 | O8 | a run of two spans eligibility | `Odontoceti.spansEligible_two` *(Odontoceti/Liveness)* |
 | O9 | a committed run clears everything below | `Odontoceti.decided_below_of_committed_run` *(Odontoceti/Liveness)* |
-| O10 | liveness | `Odontoceti.all_decided_below_of_fairRun` *(Odontoceti/Liveness)* |
+| O10 | liveness | `Odontoceti.all_decided_below_of_fairRun` *(OdontocetiProperties, from `Support.decidedBelow_of_fairRun`)* |
 | O11 | the thesis gap, on data | `utwin6_both_pass` *(LeanDagTest/Odontoceti/Model)* |
 
 **The reactive schedule** (§11):
@@ -10563,7 +10563,7 @@ reused.
 | NN5 | agreement, with no side conditions | `Nemo.decided_unique`, `Nemo.decided_agree` *(Nemo/Decision)* |
 | NN6 | the ledger is agreed and never retracted | `Nemo.commitSeq_agree`, `Nemo.outputAt_agree` *(Nemo/Decision)* |
 | NN7 | a reliable-led slot commits directly | `Nemo.decided_of_leader_mem` *(Nemo/Liveness)* |
-| NN8 | every slot below a recurring adjacent pair is decided | `Nemo.all_decided_below_of_fairRun` *(Nemo/Liveness)* |
+| NN8 | every slot below a recurring adjacent pair is decided | `Nemo.all_decided_below_of_fairRun` *(NemoProperties, from `Support.decidedBelow_of_fairRun`)* |
 | NN9 | one crash at three validators; the crashed slot settled indirectly | `Unemo` witnesses *(LeanDagTest/Nemo)* |
 
 **Mahi-Mahi** (§17):
@@ -28242,26 +28242,6 @@ Two changes from L8 make it work. The anchor is the nearest **eligible** committ
 
 That second step is the whole content. It is why three consecutive commits suffice and why a *single* commit does not: the slots just below `b` have no eligible intermediates at all (their eligible range starts inside the run), so they resolve outright, and everything lower descends onto them.
 
-#### `all_decided_below_of_fairRun`
-
-*theorem, `Liveness.lean`*
-
-```lean
-theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
-    (hT : T ⊆ (Correct : Finset Validator)) (hcard : quorumCard Validator ≤ T.card)
-    (hspan : SpansEligible (Validator := Validator) c)
-    (fair : FairRunOn T c) (R : ℕ) (k : ℕ) :
-    ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
-        (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → SynchronisedOn U T R →
-        S.slotRound (b + c - 1) + 2 ≤ N →
-        ∀ i, i < b → ∃ v, Decided U (View.full U) i v
-```
-
-**L10.** For every slot `k` there is a `b ≥ k` such that every slot below `b` is decided, in any sufficiently grown synchronous DAG.
-
-This is what "the ledger does not stall" means operationally: `commitSeq` reads verdicts in slot order and halts at the first undecided slot, so a prefix of decided slots growing without bound is exactly the ledger advancing. Contrast L6, which gives infinitely many *commits* while saying nothing about the gaps between them.
-
 ### Time: GST, and the rated bounds
 
 #### `backoff_ge_of_rate`
@@ -30056,26 +30036,6 @@ theorem decided_below_of_committed_run
 
 **O9 (thesis Lemma 11).** Every slot below a committed run of eligible span is decided: walk down from the run, anchoring each slot on the nearest eligible committed slot above it — whose intermediate premise the induction supplies — and commit the **least** candidate passing the indirect test, exactly what the canonicity premise asks for.
 
-#### `all_decided_below_of_fairRun`
-
-*theorem, `Odontoceti.Liveness.lean`*
-
-```lean
-theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
-    (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : quorumCard Validator ≤ T.card)
-    (hspan : SpansEligible Validator c)
-    (fair : FairRunOn T c) (R : ℕ) (k : ℕ) :
-    ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ)
-        (V : View Validator BlockId Payload U),
-        (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → SynchronisedOn U T R →
-        S.slotRound (b + c - 1) + 1 ≤ N → V.CoversUpto N →
-        ∀ i, i < b → ∃ v, Decided U V i v
-```
-
-**O10 (thesis Theorem 12).** Under production and post-`R` synchrony, a recurring run of `c` correct-led slots decides every slot below it, on any view caught up to the horizon — with the run placed past both the target and `R` by fairness. Note the horizon: the run's last slot needs rounds up to its `slotRound + 1` only.
-
 ### The reactive schedule
 
 #### `le_built`
@@ -31712,16 +31672,6 @@ theorem eligible_iff {k j : ℕ} :
 
 Eligibility, unfolded: two rounds.
 
-#### `lt_of_eligible`
-
-*theorem, `Nemo.Decision.lean`*
-
-```lean
-theorem lt_of_eligible {k j : ℕ} (h : Eligible Validator k j) : k < j
-```
-
-An eligible anchor is a later slot.
-
 #### `isLeaderBlock_unique`
 
 *theorem, `Nemo.Decision.lean`*
@@ -31859,6 +31809,16 @@ theorem outputAt_agree {V₁ V₂ : View Validator BlockId Payload U} {n : ℕ}
 
 **And validators agree on which slot that is.**
 
+#### `majority_le_card_live`
+
+*theorem, `Nemo.Liveness.lean`*
+
+```lean
+theorem majority_le_card_live : majority Validator ≤ (Live Validator).card
+```
+
+**The bridge** — the arc's only consumer of the fault bound: the live class carries the majority quorum, since `n − f ≥ n/2 + 1` whenever `2f + 1 ≤ n`.
+
 #### `View.coversUpto_full`
 
 *theorem, `Nemo.Liveness.lean`*
@@ -31949,44 +31909,6 @@ theorem spansEligible_two (hid : ∀ s, S.slotRound s = s) :
 ```
 
 Under a pipelined identity-round schedule, `c = 2` spans — two consecutive reliable leaders suffice at wavelength two.
-
-#### `decided_below_of_committed_run`
-
-*theorem, `Nemo.Liveness.lean`*
-
-```lean
-theorem decided_below_of_committed_run {V : View Validator BlockId Payload U} {b n : ℕ}
-    (hbn : b ≤ n)
-    (hspan : ∀ i, i < b → Eligible Validator i n)
-    (hrun : ∀ j, b ≤ j → j ≤ n → ∃ B, Decided U V j (some B)) :
-    ∀ i, i < b → ∃ v, Decided U V i v
-```
-
-**Everything below a committed run is decided.** Given a block of consecutive committed slots `b … n` whose top is eligible for everything below `b`, every slot below `b` resolves — commit or skip — by anchoring on the nearest eligible committed slot.
-
-The core's proof, verbatim: the crash `indirectCommit` carries no canonicity premise (`isLeaderBlock_unique` leaves no twins), so the commit branch is a plain constructor application and no minimum-selection tie-break appears.
-
-#### `all_decided_below_of_fairRun`
-
-*theorem, `Nemo.Liveness.lean`*
-
-```lean
-theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
-    (hT : T ⊆ Live Validator)
-    (hcard : majority Validator ≤ T.card)
-    (hspan : SpansEligible Validator c)
-    (fair : FairRunOn T c) (R : ℕ) (s : ℕ) :
-    ∃ b, s ≤ b ∧ R ≤ S.slotRound b ∧
-      ∀ (U : Universe Validator BlockId Payload) (N : ℕ)
-        (V : View Validator BlockId Payload U),
-        (∀ r ≤ N, Populated U r) → SynchronisedOn U T R →
-        S.slotRound (b + c - 1) + 1 ≤ N → V.CoversUpto N →
-        ∀ i, i < b → ∃ v, Decided U V i v
-```
-
-**Liveness.** Under post-`R` coverage, growth to the horizon, and a recurring run of `c` reliable-led slots, every slot below the run is decided — the run placed past both the target and `R` by fairness.
-
-The quantifier order is the content: the slot `b` is fixed by the *schedule* alone, before any universe is named, so "eventually" means "any DAG grown past this schedule-fixed slot". Crashed-leader slots are settled here and only here: they descend onto the run via `indirectSkip`.
 
 ### Mahi-Mahi: the asynchronous rule at wave w
 
@@ -39093,6 +39015,26 @@ theorem descends {S : Slots Validator} {c : ℕ} (hc : 0 < c)
 
 **The descent as a property**, under the spanning hypothesis on the round structure. What stood here was a downward induction carrying the bound by hand; it is now `Descends.of_indirect`, and the only Mysticeti-specific step is reading `Eligible` as the round inequality the property is stated with.
 
+#### `all_decided_below_of_fairRun`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
+    (hT : T ⊆ (Correct : Finset Validator)) (hcard : quorumCard Validator ≤ T.card)
+    (hspan : SpansEligible (Validator := Validator) c)
+    (fair : FairRunOn T c) (R : ℕ) (k : ℕ) :
+    ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
+        (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → SynchronisedOn U T R →
+        S.slotRound (b + c - 1) + 2 ≤ N →
+        ∀ i, i < b → ∃ v, Decided U (View.full U) i v
+```
+
+**L10.** For every slot `k` there is a `b ≥ k` such that every slot below `b` is decided, in any sufficiently grown synchronous DAG.
+
+This is what "the ledger does not stall" means operationally: `commitSeq` reads verdicts in slot order and halts at the first undecided slot, so a prefix of decided slots growing without bound is exactly the ledger advancing. Contrast L6, which gives infinitely many *commits* while saying nothing about the gaps between them.
+
 #### `quorate`
 
 *theorem, `Nemo.Carrier.lean`*
@@ -39184,6 +39126,28 @@ theorem indirect :
 ```
 
 **A3 as a property.** The two indirect constructors, by cases on a certified candidate at the slot — which is the whole proof, and is why the verdict survives a reassignment of leaders elsewhere: the case split reads slot `i`'s candidate and the anchor's history, and neither moves.
+
+#### `all_decided_below_of_fairRun`
+
+*theorem, `NemoProperties.lean`*
+
+```lean
+theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
+    (hT : T ⊆ Live Validator)
+    (hcard : majority Validator ≤ T.card)
+    (hspan : SpansEligible Validator c)
+    (fair : FairRunOn T c) (R : ℕ) (s : ℕ) :
+    ∃ b, s ≤ b ∧ R ≤ S.slotRound b ∧
+      ∀ (U : Universe Validator BlockId Payload) (N : ℕ)
+        (V : View Validator BlockId Payload U),
+        (∀ r ≤ N, Populated U r) → SynchronisedOn U T R →
+        S.slotRound (b + c - 1) + 1 ≤ N → V.CoversUpto N →
+        ∀ i, i < b → ∃ v, Decided U V i v
+```
+
+**Liveness.** Under post-`R` coverage, growth to the horizon, and a recurring run of `c` reliable-led slots, every slot below the run is decided — the run placed past both the target and `R` by fairness.
+
+The quantifier order is the content: the slot `b` is fixed by the *schedule* alone, before any universe is named, so "eventually" means "any DAG grown past this schedule-fixed slot". Crashed-leader slots are settled here and only here: they descend onto the run via `indirectSkip`.
 
 #### `causal`
 
@@ -39277,6 +39241,26 @@ theorem indirect :
 **O-A3 as a property.** The two indirect constructors, by cases on a thick-linked candidate at the slot, committing the least one. The whole proof is that case split, which is why the verdict survives a reassignment of leaders elsewhere: it reads slot `i`'s candidates and the anchor's history, and a schedule naming the same leader at `i` and the same rounds changes neither. The minimality clause transports for the same reason.
 
 This is `odontoceti_descent.indirect` and the case split that stood inside the committed-run descent, stated once.
+
+#### `all_decided_below_of_fairRun`
+
+*theorem, `OdontocetiProperties.lean`*
+
+```lean
+theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
+    (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : quorumCard Validator ≤ T.card)
+    (hspan : SpansEligible Validator c)
+    (fair : FairRunOn T c) (R : ℕ) (k : ℕ) :
+    ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ)
+        (V : View Validator BlockId Payload U),
+        (∀ r, R ≤ r → r ≤ N → PopulatedOn U T r) → SynchronisedOn U T R →
+        S.slotRound (b + c - 1) + 1 ≤ N → V.CoversUpto N →
+        ∀ i, i < b → ∃ v, Decided U V i v
+```
+
+**O10 (thesis Theorem 12).** Under production and post-`R` synchrony, a recurring run of `c` correct-led slots decides every slot below it, on any view caught up to the horizon — with the run placed past both the target and `R` by fairness. Note the horizon: the run's last slot needs rounds up to its `slotRound + 1` only.
 
 #### `causal`
 
@@ -39545,6 +39529,25 @@ theorem exists_decided_of_coverage {rel : Reliability Validator}
 ```
 
 **A reliably-led slot commits on a covered, populated DAG** — for any rule with Laws 2 and 3, at any quorum of the fault model.
+
+#### `decidedBelow_of_fairRun`
+
+*theorem, `Properties.Arcs.Liveness.lean`*
+
+```lean
+theorem decidedBelow_of_fairRun {rel : Reliability Validator}
+    (hcov : sp.OfCoverage rel) (hlc : sp.Commits rel)
+    {S : Slots Validator} {c : ℕ} (hc : 0 < c) (hd : Descends R S c)
+    {T : Finset Validator} (hq : rel.IsQuorum T)
+    (fair : ∀ k, ∃ k', k ≤ k' ∧ ∀ i, i < c → S.leader (k' + i) ∈ T) (Rnd k : ℕ) :
+    ∃ b, k ≤ b ∧ Rnd ≤ S.slotRound b ∧
+      ∀ {U : R.Universe} (V : R.View U) (N : ℕ),
+        SynchronisedOn R U T Rnd → (∀ r, Rnd ≤ r → r ≤ N → PopulatedOn R U T r) →
+        CoversUpto R V N → S.slotRound (b + c - 1) + sp.wave ≤ N →
+        ∀ i, i < b → ∃ v, DecidedBelow R S (b + c) V i v
+```
+
+**Everything below a fair run is decided**, for any rule with a support and `Descends`. The run is named by the schedule alone — past `k`, and past a slot already at `Rnd` — and any DAG the reliable set has covered and populated past it decides every slot below the run. The protocols' "ledger does not stall" theorems are this, at their supports.
 
 #### `certifiesAt_of_rebased`
 
@@ -40509,7 +40512,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 1035 lemmas used only within the file that proves
+The 1033 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -40623,7 +40626,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `PopulatedFrom.mono` | Population is antitone: a smaller set is easier to populate. |
 | `SynchronisedFrom.mono` | Coverage is antitone too: mutual coverage among a larger set implies it among any subset. |
 
-### `Liveness.lean` (22)
+### `Liveness.lean` (21)
 
 | Lemma | Role |
 |:---|:---|
@@ -40632,7 +40635,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `PopulatedOn.mono` | Population is antitone: a smaller set is easier to populate. This is what lets L1 keep concluding about … |
 | `SynchronisedOn.mono` | Coverage is antitone too: mutual coverage among a larger set implies it among any subset. So existing … |
 | `View.CoversUpto.mono` | Caught up to `N` is caught up to every lower horizon. |
-| `all_decided_below_of_fairRun_correct` | L10 at `T := Correct`. |
 | `card_authorsAt_of_populated` | A populated round carries a quorum of authors — the step that feeds a production induction back into its … |
 | `card_authorsAt_of_succ` | One step of L0: a block at round `n+1` forces a quorum of authors at round `n`. |
 | `certificatesIn_full` | — |
@@ -40924,13 +40926,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `thickLink_of_directCommitIn` | O3, from a view: a view-level direct commit passes the indirect test at every block two rounds up. |
 | `thickLink_of_directCommitIn_at_anchor` | Visibility from an anchor. A slot committed directly carries a thick link at any eligible anchor above it … |
 
-### `Odontoceti/Liveness.lean` (2)
-
-| Lemma | Role |
-|:---|:---|
-| `all_decided_below_of_fairRun_correct` | O10 at `T := Correct`. |
-| `decided_of_leader_of_populated` | O7 against a horizon, the two-round counterpart of `decided_of_leader_of_populated`: the rule needs the … |
-
 ### `Reactive/Basic.lean` (1)
 
 | Lemma | Role |
@@ -41141,27 +41136,25 @@ subsection per module, in the layer order of Appendices B and C.
 | `certifiedIn_of_reaches` | Cone monotonicity: whatever an anchor certifies, everything above the anchor certifies too. |
 | `exists_vote_ref_of_directCommit` | The base case. A directly committed leader has a vote among the references of every round-`(r+2)` block: … |
 
-### `Nemo/Decision.lean` (5)
+### `Nemo/Decision.lean` (6)
 
 | Lemma | Role |
 |:---|:---|
 | `anchor_round_le` | The anchor's round clears the slot's decision round by one — exactly the `r + 2` clearance that link … |
 | `certifiedIn_of_directCommitIn_at_anchor` | The visibility lemma. A view-level direct commit is certified at any committed anchor of any eligible slot … |
 | `directCommit_of_directCommitIn` | A view can only under-report: its direct commit is genuine. |
+| `lt_of_eligible` | An eligible anchor is a later slot. |
 | `slot_eq_of_decided_commit` | A committed block belongs to one slot. The ledger reads verdicts off in slot order, so without this a … |
 | `slot_eq_of_isLeaderBlock` | A block is the candidate of at most one slot — what `Slots.keyed` yields: two slots sharing a round are … |
 
-### `Nemo/Liveness.lean` (8)
+### `Nemo/Liveness.lean` (5)
 
 | Lemma | Role |
 |:---|:---|
 | `PopulatedOn.mono` | Population is antitone: a smaller set is easier to populate. |
 | `SynchronisedOn.mono` | Coverage is antitone too. |
 | `View.CoversUpto.mono` | Caught up to `N` is caught up to every lower horizon. |
-| `all_decided_below_of_fairRun_live` | Liveness at `T := Live` — the whole live class, which the tight committee `n = 2f + 1` requires exactly. |
-| `decided_of_leader_of_populated` | The commit half against a horizon: two rounds read off it. `T ⊆ Live` is consumed here and only here, … |
 | `directCommitIn_mono` | A larger view can only see more supporters. |
-| `majority_le_card_live` | The bridge — the arc's only consumer of the fault bound: the live class carries the majority quorum, since … |
 | `mem_live` | — |
 
 ### `MahiMahi/Helpers/Rules.lean` (9)
@@ -42332,10 +42325,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `toCore` | The two carriers project identically, so a band for one is a band for the other. |
 | `votes_band` | A vote is the vote it was. Both clauses read the same cone, and `candidatesAt_band` settles it as an … |
 
-### `MysticetiProperties.lean` (32)
+### `MysticetiProperties.lean` (33)
 
 | Lemma | Role |
 |:---|:---|
+| `all_decided_below_of_fairRun_correct` | L10 at `T := Correct`. |
 | `band_block'` | — |
 | `banded_aux` | Every verdict of the core reads a band of rounds, from the slot's own round up to a top the derivation … |
 | `blocksAt_subset` | — |
@@ -42377,10 +42371,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `nemoRule_ids` | — |
 | `nemoRule_viewIds` | — |
 
-### `NemoProperties.lean` (11)
+### `NemoProperties.lean` (12)
 
 | Lemma | Role |
 |:---|:---|
+| `all_decided_below_of_fairRun_live` | Liveness at `T := Live` — the whole live class, which the tight committee `n = 2f + 1` requires exactly. |
 | `banded_aux` | Every verdict of Nemo reads a band of rounds. One induction, three cases. The direct case reads one round … |
 | `blockB` | — |
 | `blockB'` | — |
@@ -42393,10 +42388,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `refsB` | — |
 | `supportersIn_band` | The supporters a view holds transport. A voting-round block the view held is a block of the shifted … |
 
-### `OdontocetiProperties.lean` (11)
+### `OdontocetiProperties.lean` (12)
 
 | Lemma | Role |
 |:---|:---|
+| `all_decided_below_of_fairRun_correct` | O10 at `T := Correct`. |
 | `banded_aux` | Every verdict of Odontoceti reads a band of rounds. One induction, four cases. The direct cases read one … |
 | `coneSupports_band` | The anchor's cone of supporters is the cone it was. Both inclusions at once: a supporter inside an old … |
 | `decidedBelow_of_decidedWithin` | Odontoceti's bounded relation lands in the derived one. |
