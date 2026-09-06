@@ -86,7 +86,7 @@ theorem no_indirectCommit_of_fastCommit {A : BlockId} {r : ℕ} {b b' : BlockId}
     (hb : b ∈ D.ids) (hb' : b' ∈ D.ids) (hbslot : b ∈ slotBlocks S D r)
     (hconf : Conflicting D b b') (hfast : FastCommit D b) :
     ¬ IndirectCommit S D A r b' := by
-  have hbround : (D.block b).round = S.round r := by
+  have hbround : (D.block b).round = S.slotRound r := by
     simp only [slotBlocks, blocksAt, Finset.mem_filter] at hbslot; exact hbslot.1.2
   rintro ⟨-, hroute⟩
   rcases hroute with ⟨c, hc, -, hcert⟩ | ⟨ev, hev, hevb⟩
@@ -114,7 +114,7 @@ theorem no_indirectCommit_of_directSkip {A : BlockId} {r : ℕ} {b : BlockId}
     (hskip : DirectSkip S D r) : ¬ IndirectCommit S D A r b := by
   obtain ⟨hsp, nonev, hnon, hnonb⟩ := hskip
   rintro ⟨hbslot, hroute⟩
-  have hbround : (D.block b).round = S.round r := by
+  have hbround : (D.block b).round = S.slotRound r := by
     simp only [slotBlocks, blocksAt, Finset.mem_filter] at hbslot; exact hbslot.1.2
   rcases hroute with ⟨c, hc, -, hcert⟩ | ⟨ev, hev, hevb⟩
   · simp only [blocksAt, Finset.mem_filter] at hc
@@ -138,7 +138,7 @@ trail that any block at round `r + 3` or above reaches — a quorum of
 FP-evidence blocks under the fast path, an SP-certificate under the slow
 one. So the anchor's rule always has a candidate to name. -/
 theorem indirectCommit_of_directCommit {A : BlockId} {r : ℕ} {l : BlockId}
-    (hA : A ∈ D.ids) (hAround : S.round r + 3 ≤ (D.block A).round)
+    (hA : A ∈ D.ids) (hAround : S.slotRound r + 3 ≤ (D.block A).round)
     (hl : l ∈ slotBlocks S D r) (hcom : DirectCommit D l) :
     IndirectCommit S D A r l := by
   have hl' := hl
@@ -171,7 +171,7 @@ theorem no_indirectCommit_of_spCommit {A : BlockId} {r : ℕ} {b b' : BlockId}
     (hb : b ∈ D.ids) (hb' : b' ∈ D.ids) (hbslot : b ∈ slotBlocks S D r)
     (hconf : Conflicting D b b') (hsp : SPCommit D b) :
     ¬ IndirectCommit S D A r b' := by
-  have hbround : (D.block b).round = S.round r := by
+  have hbround : (D.block b).round = S.slotRound r := by
     simp only [slotBlocks, blocksAt, Finset.mem_filter] at hbslot; exact hbslot.1.2
   obtain ⟨certs, hcerts, hcertb⟩ := hsp
   rintro ⟨-, hroute⟩

@@ -2,6 +2,7 @@ import LeanDag.FinWhale.Model.Params
 import LeanDag.Causality
 import LeanDag.BlockRecord
 import LeanDag.Support
+import LeanDag.Slots
 
 /-!
 # FinWhale — the fast path, as the paper defines it
@@ -152,23 +153,18 @@ abbrev Dag (Validator BlockId Payload : Type*) [Fintype Validator]
 
 variable {D : Dag Validator BlockId Payload}
 
-/-- **A schedule**: which round a slot proposes at, and who leads it.
-
-FinWhale runs one slot per round, so `round` is the identity in every
-execution here. It is a *parameter* rather than an identity because the
-properties index by slot and supply the map (`Properties.Slots`), and a
+/-- **A schedule** is the shared `Slots`: which round a slot proposes at
+and who leads it. FinWhale runs one slot per round, so `slotRound` is
+the identity in every execution here; it is a parameter rather than an
+identity because the properties index by slot and supply the map, and a
 rule that reads absolute rounds cannot carry an offset band
-(`docs/target-properties.md` §3.4c). Keeping it abstract is what lets
-FinWhale's carrier take the schedule it is given instead of pinning one.
+(`docs/target-properties.md` §3.4c). -/
+abbrev Sched (Validator : Type*) := Slots Validator
 
-It is FinWhale's own record rather than `LeanDag.Slots` so that the
-model stays independent of Mysticeti's; the carrier maps one to the
-other. -/
-structure Sched (Validator : Type*) where
-  /-- The round a slot's candidate proposes at. -/
-  round : ℕ → ℕ
-  /-- Who leads the slot. -/
-  leader : ℕ → Validator
+/-- The identity schedule with a given leader map: one slot per round.
+The three laws are immediate. -/
+def Sched.identity (leader : ℕ → Validator) : Sched Validator :=
+  ⟨id, leader, fun _ _ h => h, fun n => ⟨n, le_rfl⟩, fun _ _ h => congrArg Prod.fst h⟩
 
 /-- **Which slots may anchor which.** The reverse pass reads an earlier
 slot's verdict off a later one, and the rules that let it do so live two
@@ -179,9 +175,10 @@ which is the shape the protocol's runs meet it in.
 The pass is stated over an arbitrary eligibility and this is the one
 FinWhale supplies. Keeping it here, rather than at the conformance
 file, is what lets the protocol and the carrier run the same pass. -/
-def Sched.Elig (S : Sched Validator) (r a : ℕ) : Prop := S.round r + 3 ≤ S.round a
+def _root_.LeanDag.Slots.Elig (S : Slots Validator) (r a : ℕ) : Prop :=
+  S.slotRound r + 3 ≤ S.slotRound a
 
-instance (S : Sched Validator) : DecidableRel S.Elig :=
+instance (S : Slots Validator) : DecidableRel S.Elig :=
   fun _ _ => inferInstanceAs (Decidable (_ ≤ _))
 
 /-- The validators whose round-`(r+1)` block references `l`: `l`'s voters. -/

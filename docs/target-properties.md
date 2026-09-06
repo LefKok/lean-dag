@@ -3879,7 +3879,10 @@ resolution: files in the Optimal namespace that once saw a single
 **One schedule.** `Slots` moves from `Mysticeti.lean` to
 `LeanDag/Slots.lean`, below every protocol, and `Hydrozoan.Slots`,
 `ofCoreSlots` and `toCoreSlots` are deleted; Hydrozoan's rules take the
-shared class. FinWhale's `Sched` is the next candidate.
+shared class. FinWhale's `Sched` is the shared class too: `Sched` is an
+abbreviation of `Slots`, its `round` is `slotRound`, `schedOf` is
+deleted, its eligibility is `Slots.Elig` at the shared class, and the
+identity schedule its witnesses run on is `Sched.identity`.
 
 ### 11.5 Next steps, in order
 

@@ -125,7 +125,7 @@ omit [LinearOrder BlockId] in
 /-- A slot with a direct skip lies two rounds below the horizon: the skip
 exhibits round-`(r+2)` blocks. -/
 theorem round_le_of_directSkip {N r : ℕ} (hN : ∀ b ∈ D.ids, (D.block b).round ≤ N)
-    (h : DirectSkip S D r) : S.round r + 2 ≤ N := by
+    (h : DirectSkip S D r) : S.slotRound r + 2 ≤ N := by
   obtain ⟨-, nonev, hnon, hnonb⟩ := h
   have := params_arith (Validator := Validator)
   have hpos : 0 < nonev.card := by simp only [spQuorum] at hnon; omega
@@ -185,13 +185,13 @@ own, and `choose` is whatever deterministic rule the validator applies.
 `hN` is the horizon: no block of the view sits above it. -/
 theorem wellFormed_decOf {N M : ℕ} (hN : ∀ b ∈ D.ids, (D.block b).round ≤ N)
     (hlt : ∀ r a, Elig r a → r < a)
-    (hrle : ∀ r, S.round r ≤ N → r ≤ M)
+    (hrle : ∀ r, S.slotRound r ≤ N → r ≤ M)
     (choose : BlockId → ℕ → Option BlockId) :
     WellFormed Elig (fun r l => l ∈ slotBlocks S D r ∧ DirectCommit D l)
       (fun r => DirectSkip S D r) choose (decOf S Elig D choose M) where
   direct_commit r l := by
     rintro ⟨hslot, hcom⟩
-    have hru : (D.block l).round = S.round r ∧ l ∈ D.ids := by
+    have hru : (D.block l).round = S.slotRound r ∧ l ∈ D.ids := by
       simp only [slotBlocks, blocksAt, Finset.mem_filter] at hslot
       exact ⟨hslot.1.2, hslot.1.1⟩
     have hr : r ≤ M := hrle r (by have := hN l hru.2; omega)
@@ -306,8 +306,8 @@ theorem safety_of_pass {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsView D
     {k k' : ℕ}
     (hk : ∀ s, s < k → decOf S Elig (restrict D V hV) choose M s ≠ Verdict.undecided)
     (hk' : ∀ s, s < k' → decOf S Elig (restrict D V' hV') choose M s ≠ Verdict.undecided)
-    (hlt : ∀ r a, Elig r a → r < a) (hrle : ∀ r, S.round r ≤ N → r ≤ M)
-    (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ k, S.round k = k)
+    (hlt : ∀ r a, Elig r a → r < a) (hrle : ∀ r, S.slotRound r ≤ N → r ≤ M)
+    (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ k, S.slotRound k = k)
     (hist : BlockId → List BlockId) :
     linearise hist (commitSeq (decOf S Elig (restrict D V hV) choose M) k) <+:
         linearise hist (commitSeq (decOf S Elig (restrict D V' hV') choose M) k') ∨

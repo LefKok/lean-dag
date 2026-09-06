@@ -35,7 +35,7 @@ references; it may hold *more*. So the rules split three ways.
   quorum of them, by validity — are all non-voters for it. The skip
   survives the new candidate rather than being repaired to ignore it.
 
-Nothing here mentions a schedule beyond `Sched.round` and `Sched.leader`
+Nothing here mentions a schedule beyond `Sched.slotRound` and `Sched.leader`
 at the slot in hand, and nothing mentions a view. `Banded` itself is
 assembled in `Carrier.lean`.
 -/
@@ -59,20 +59,20 @@ quantifier of `Properties.Indirect` both ask for exactly this. -/
 
 /-- **A slot's blocks read the schedule only at that slot.** -/
 theorem slotBlocks_congr {S S' : Sched Validator} {D : Dag Validator BlockId Payload} {k : ℕ}
-    (hr : S.round k = S'.round k) (hl : S.leader k = S'.leader k) :
+    (hr : S.slotRound k = S'.slotRound k) (hl : S.leader k = S'.leader k) :
     slotBlocks S D k = slotBlocks S' D k := by
   unfold slotBlocks; rw [hr, hl]
 
 /-- **And so does the direct skip rule.** -/
 theorem directSkip_congr {S S' : Sched Validator} {D : Dag Validator BlockId Payload} {k : ℕ}
-    (hr : S.round k = S'.round k) (hl : S.leader k = S'.leader k) :
+    (hr : S.slotRound k = S'.slotRound k) (hl : S.leader k = S'.leader k) :
     DirectSkip S D k ↔ DirectSkip S' D k := by
   unfold DirectSkip; rw [slotBlocks_congr hr hl, hr]
 
 /-- **The indirect rule reads the schedule only at the slot it decides.** -/
 theorem indirectCommit_congr {S S' : Sched Validator} {D : Dag Validator BlockId Payload}
     {A : BlockId} {k : ℕ} {b : BlockId}
-    (hr : S.round k = S'.round k) (hl : S.leader k = S'.leader k) :
+    (hr : S.slotRound k = S'.slotRound k) (hl : S.leader k = S'.leader k) :
     IndirectCommit S D A k b ↔ IndirectCommit S' D A k b := by
   unfold IndirectCommit; rw [slotBlocks_congr hr hl, hr]
 
@@ -82,7 +82,7 @@ slot, and both the candidates and the rule that certifies them read the
 schedule at that slot alone. -/
 theorem chooseLeast_congr [LinearOrder BlockId] {S S' : Sched Validator}
     {D : Dag Validator BlockId Payload} {A : BlockId} {r : ℕ}
-    (hr : S.round r = S'.round r) (hl : S.leader r = S'.leader r) :
+    (hr : S.slotRound r = S'.slotRound r) (hl : S.leader r = S'.leader r) :
     chooseLeast S D A r = chooseLeast S' D A r := by
   have hset : (slotBlocks S D r).filter (fun b => IndirectCommit S D A r b) =
       (slotBlocks S' D r).filter (fun b => IndirectCommit S' D A r b) := by
@@ -96,14 +96,14 @@ theorem chooseLeast_congr [LinearOrder BlockId] {S S' : Sched Validator}
 decide**, since the rules they restrict do. -/
 theorem viewCommit_congr {S S' : Sched Validator} {D : Dag Validator BlockId Payload}
     {V : Finset BlockId} {hV : IsView D V} {r : ℕ} {l : BlockId}
-    (hr : S.round r = S'.round r) (hl : S.leader r = S'.leader r) :
+    (hr : S.slotRound r = S'.slotRound r) (hl : S.leader r = S'.leader r) :
     viewCommit S D V hV r l ↔ viewCommit S' D V hV r l := by
   unfold viewCommit; rw [slotBlocks_congr hr hl]
 
 /-- The skip half. -/
 theorem viewSkip_congr {S S' : Sched Validator} {D : Dag Validator BlockId Payload}
     {V : Finset BlockId} {hV : IsView D V} {r : ℕ}
-    (hr : S.round r = S'.round r) (hl : S.leader r = S'.leader r) :
+    (hr : S.slotRound r = S'.slotRound r) (hl : S.leader r = S'.leader r) :
     viewSkip S D V hV r ↔ viewSkip S' D V hV r := by
   unfold viewSkip; exact directSkip_congr hr hl
 
@@ -446,8 +446,8 @@ variable {S S' : Sched Validator} {k k' : ℕ}
 
 /-- An old candidate of the slot is a candidate of the corresponding
 slot. -/
-theorem slotBlocks_subset (hrk : S.round k + g = S'.round k' + g')
-    (hlk : S.leader k = S'.leader k') (h1 : lo ≤ S.round k + g) (h2 : S.round k + g ≤ hi) :
+theorem slotBlocks_subset (hrk : S.slotRound k + g = S'.slotRound k' + g')
+    (hlk : S.leader k = S'.leader k') (h1 : lo ≤ S.slotRound k + g) (h2 : S.slotRound k + g ≤ hi) :
     slotBlocks S D k ⊆ slotBlocks S' D' k' := by
   intro l hl
   simp only [slotBlocks, Finset.mem_filter, blocksAt] at hl ⊢
@@ -456,8 +456,8 @@ theorem slotBlocks_subset (hrk : S.round k + g = S'.round k' + g')
   exact ⟨⟨hb.mem l hlD (by omega) (by omega), by omega⟩, by rw [hlb.2, hlc, hlk]⟩
 
 /-- And an old candidate of the corresponding slot came from this one. -/
-theorem mem_slotBlocks_of_old (hrk : S.round k + g = S'.round k' + g')
-    (hlk : S.leader k = S'.leader k') (h1 : lo ≤ S.round k + g) (h2 : S.round k + g ≤ hi)
+theorem mem_slotBlocks_of_old (hrk : S.slotRound k + g = S'.slotRound k' + g')
+    (hlk : S.leader k = S'.leader k') (h1 : lo ≤ S.slotRound k + g) (h2 : S.slotRound k + g ≤ hi)
     {l : BlockId} (hlD : l ∈ D.ids) (hl : l ∈ slotBlocks S' D' k') : l ∈ slotBlocks S D k := by
   simp only [slotBlocks, Finset.mem_filter, blocksAt] at hl ⊢
   obtain ⟨⟨hlD', hlr⟩, hlc⟩ := hl
@@ -467,9 +467,9 @@ theorem mem_slotBlocks_of_old (hrk : S.round k + g = S'.round k' + g')
 /-- **A blame stays a blame.** For the old candidates because FP-evidence
 is the same evidence; for a candidate the band added because nothing old
 is evidence for it at all. -/
-theorem nonFPEvidence (hrk : S.round k + g = S'.round k' + g')
-    (hlk : S.leader k = S'.leader k') (h1 : lo ≤ S.round k + g) (h2 : S.round k + g + 2 ≤ hi)
-    {c : BlockId} (hcD : c ∈ D.ids) (hcr : (D.block c).round = S.round k + 2)
+theorem nonFPEvidence (hrk : S.slotRound k + g = S'.slotRound k' + g')
+    (hlk : S.leader k = S'.leader k') (h1 : lo ≤ S.slotRound k + g) (h2 : S.slotRound k + g + 2 ≤ hi)
+    {c : BlockId} (hcD : c ∈ D.ids) (hcr : (D.block c).round = S.slotRound k + 2)
     (h : NonFPEvidence D c (slotBlocks S D k)) :
     NonFPEvidence D' c (slotBlocks S' D' k') := by
   intro l hl hfp
@@ -481,8 +481,8 @@ theorem nonFPEvidence (hrk : S.round k + g = S'.round k' + g')
         parentsVoting_eq_empty hcD hlD]) hfp
 
 /-- **The direct skip survives the band**, new candidates and all. -/
-theorem directSkip (hrk : S.round k + g = S'.round k' + g')
-    (hlk : S.leader k = S'.leader k') (h1 : lo ≤ S.round k + g) (h2 : S.round k + g + 2 ≤ hi)
+theorem directSkip (hrk : S.slotRound k + g = S'.slotRound k' + g')
+    (hlk : S.leader k = S'.leader k') (h1 : lo ≤ S.slotRound k + g) (h2 : S.slotRound k + g + 2 ≤ hi)
     (h : DirectSkip S D k) : DirectSkip S' D' k' := by
   classical
   obtain ⟨hsp, nonev, hcard, hnon⟩ := h
@@ -496,10 +496,10 @@ theorem directSkip (hrk : S.round k + g = S'.round k' + g')
   refine ⟨fun l hl => ?_, nonev, hcard, fun v hv => ?_⟩
   · by_cases hlD : l ∈ D.ids
     · have hlS := mem_slotBlocks_of_old hb hrk hlk h1 (by omega) hlD hl
-      have hlr : (D.block l).round = S.round k := by
+      have hlr : (D.block l).round = S.slotRound k := by
         simp only [slotBlocks, Finset.mem_filter, blocksAt] at hlS; exact hlS.1.2
       exact spSkip hb hlD (by omega) (by omega) (hsp l hlS)
-    · have hlr : (D'.block l).round = S'.round k' := by
+    · have hlr : (D'.block l).round = S'.slotRound k' := by
         simp only [slotBlocks, Finset.mem_filter, blocksAt] at hl
         exact hl.1.2
       exact spSkip_new hb hc₀.1 hc₀.2 hrk h1 (by omega) hlD hlr
@@ -568,28 +568,28 @@ reached from the anchor, and the candidate is voted for by that block's
 parents — so the band settles all of them, new blocks included: a new
 block is in no old block's history, so it is neither certified nor
 evidenced, and neither DAG indirectly commits it. -/
-theorem indirectCommit_iff (hrk : S.round k + g = S'.round k' + g')
-    (hlk : S.leader k = S'.leader k') (h1 : lo ≤ S.round k + g) (h2 : S.round k + g + 2 ≤ hi)
+theorem indirectCommit_iff (hrk : S.slotRound k + g = S'.slotRound k' + g')
+    (hlk : S.leader k = S'.leader k') (h1 : lo ≤ S.slotRound k + g) (h2 : S.slotRound k + g + 2 ≤ hi)
     {A : BlockId} (hAD : A ∈ D.ids) (hAlo : lo ≤ (D.block A).round + g)
     (hAhi : (D.block A).round + g ≤ hi) (b : BlockId) :
     IndirectCommit S' D' A k' b ↔ IndirectCommit S D A k b := by
   have hA' : A ∈ D'.ids := hb.mem A hAD hAlo hAhi
-  have hlayer : ∀ {c : BlockId}, c ∈ blocksAt D' (S'.round k' + 2) →
+  have hlayer : ∀ {c : BlockId}, c ∈ blocksAt D' (S'.slotRound k' + 2) →
       ReachesFrom D'.block A c →
-      c ∈ blocksAt D (S.round k + 2) ∧ ReachesFrom D.block A c := by
+      c ∈ blocksAt D (S.slotRound k + 2) ∧ ReachesFrom D.block A c := by
     intro c hc hre
-    have hcr : (D'.block c).round = S'.round k' + 2 := by
+    have hcr : (D'.block c).round = S'.slotRound k' + 2 := by
       simp only [blocksAt, Finset.mem_filter] at hc; exact hc.2
     obtain ⟨hcD, hcre, hceq⟩ := reaches_old hb hAD hA' hAlo hAhi hre (by omega)
     exact ⟨by simp only [blocksAt, Finset.mem_filter]; exact ⟨hcD, by omega⟩, hcre⟩
-  have hlayer' : ∀ {c : BlockId}, c ∈ blocksAt D (S.round k + 2) → ReachesFrom D.block A c →
-      c ∈ blocksAt D' (S'.round k' + 2) ∧ ReachesFrom D'.block A c := by
+  have hlayer' : ∀ {c : BlockId}, c ∈ blocksAt D (S.slotRound k + 2) → ReachesFrom D.block A c →
+      c ∈ blocksAt D' (S'.slotRound k' + 2) ∧ ReachesFrom D'.block A c := by
     intro c hc hre
-    have hcr : (D.block c).round = S.round k + 2 := by
+    have hcr : (D.block c).round = S.slotRound k + 2 := by
       simp only [blocksAt, Finset.mem_filter] at hc; exact hc.2
     exact ⟨blocksAt_subset hb (by omega) (by omega) (by omega) hc,
       reaches_of hb hAD hAhi hre (by omega)⟩
-  have hold : ∀ {c : BlockId}, c ∈ blocksAt D (S.round k + 2) →
+  have hold : ∀ {c : BlockId}, c ∈ blocksAt D (S.slotRound k + 2) →
       (parentsVoting D c b).Nonempty → b ∈ D.ids := by
     intro c hc hne
     have hcD : c ∈ D.ids := by simp only [blocksAt, Finset.mem_filter] at hc; exact hc.1
@@ -624,20 +624,20 @@ theorem indirectCommit_iff (hrk : S.round k + g = S'.round k' + g')
     · refine Or.inr ⟨ev, hcard, fun v hv => ?_⟩
       obtain ⟨c, hc, hre, hcc, hfp⟩ := hev v hv
       obtain ⟨hcD, hcre⟩ := hlayer hc hre
-      have hcD' : c ∈ D.ids ∧ (D.block c).round = S.round k + 2 := by
+      have hcD' : c ∈ D.ids ∧ (D.block c).round = S.slotRound k + 2 := by
         simp only [blocksAt, Finset.mem_filter] at hcD; exact hcD
       refine ⟨c, hcD, hcre, ?_, (fpEvidence_iff hb hcD'.1 (by omega) (by omega) b).1 hfp⟩
       rw [← (hb.block c hcD'.1 (by omega) (by omega)).2]; exact hcc
   · rintro ⟨hslot, hbranch⟩
     refine ⟨slotBlocks_subset hb hrk hlk h1 (by omega) hslot, ?_⟩
     rcases hbranch with ⟨c, hc, hre, hcert⟩ | ⟨ev, hcard, hev⟩
-    · have hcD : c ∈ D.ids ∧ (D.block c).round = S.round k + 2 := by
+    · have hcD : c ∈ D.ids ∧ (D.block c).round = S.slotRound k + 2 := by
         simp only [blocksAt, Finset.mem_filter] at hc; exact hc
       obtain ⟨hc', hre'⟩ := hlayer' hc hre
       exact Or.inl ⟨c, hc', hre', (spCertificate_iff hb hcD.1 (by omega) (by omega)).2 hcert⟩
     · refine Or.inr ⟨ev, hcard, fun v hv => ?_⟩
       obtain ⟨c, hc, hre, hcc, hfp⟩ := hev v hv
-      have hcD : c ∈ D.ids ∧ (D.block c).round = S.round k + 2 := by
+      have hcD : c ∈ D.ids ∧ (D.block c).round = S.slotRound k + 2 := by
         simp only [blocksAt, Finset.mem_filter] at hc; exact hc
       obtain ⟨hc', hre'⟩ := hlayer' hc hre
       refine ⟨c, hc', hre', ?_, (fpEvidence_iff hb hcD.1 (by omega) (by omega) b).2 hfp⟩
@@ -650,8 +650,8 @@ the rule are settled by the band, so the two sides filter the same set
 and take the same minimum. This is what lets the reverse pass be
 compared across a band at all: `choose` is shared between validators by
 construction, and here it is shared between DAGs. -/
-theorem chooseLeast_band [LinearOrder BlockId] (hrk : S.round k + g = S'.round k' + g')
-    (hlk : S.leader k = S'.leader k') (h1 : lo ≤ S.round k + g) (h2 : S.round k + g + 2 ≤ hi)
+theorem chooseLeast_band [LinearOrder BlockId] (hrk : S.slotRound k + g = S'.slotRound k' + g')
+    (hlk : S.leader k = S'.leader k') (h1 : lo ≤ S.slotRound k + g) (h2 : S.slotRound k + g + 2 ≤ hi)
     {A : BlockId} (hAD : A ∈ D.ids) (hAlo : lo ≤ (D.block A).round + g)
     (hAhi : (D.block A).round + g ≤ hi) :
     chooseLeast S' D' A k' = chooseLeast S D A k := by

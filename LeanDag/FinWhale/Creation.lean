@@ -295,7 +295,7 @@ certificate clauses derived from C1, C2 and C3 rather than assumed. -/
 theorem commits_of_creation (cr : Creation U T N S.leader)
     (hids : D.ids = U.ids) (hblk : D.block = U.block)
     (hTeq : T = (Correct : Finset Validator)) {R : ℕ}
-    (hid : ∀ k, S.round k = k)
+    (hid : ∀ k, S.slotRound k = k)
     (hgst : cr.gst ≤ R) (hto : ∀ m, R ≤ m → 2 * cr.delay + cr.proc ≤ cr.timeout m) :
     CommitsCorrectLeaders S D R N := by
   subst hTeq

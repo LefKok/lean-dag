@@ -121,7 +121,7 @@ variable {Payload : Type} {D : Dag Validator BlockId Payload} {S : Sched Validat
 
 /-- The commit the interface carries. -/
 theorem directCommit_of_commits {R N : ℕ} (h : CommitsCorrectLeaders S D R N) {s : ℕ}
-    (hR : R ≤ S.round s) (hN : S.round s + 2 ≤ N)
+    (hR : R ≤ S.slotRound s) (hN : S.slotRound s + 2 ≤ N)
     (hlead : S.leader s ∈ (Correct : Finset Validator)) :
     ∃ l ∈ slotBlocks S D s, DirectCommit D l := by
   obtain ⟨l, hslot, hby⟩ := h s hR hN hlead
@@ -139,7 +139,7 @@ theorem committed_triple {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
     (hwf : WellFormed Elig dc ds choose dec) {R N t : ℕ}
     (hsees : SeesCommits S D dc R N)
-    (hrr : RoundRobin S.leader) (hid : ∀ s, S.round s = s)
+    (hrr : RoundRobin S.leader) (hid : ∀ s, S.slotRound s = s)
     (hR : R ≤ t) (hN : t + (3 * F.f + 5) ≤ N) :
     ∃ a, t < a ∧ a + 4 ≤ N ∧
       ∀ s, a ≤ s → s ≤ a + 2 →
@@ -162,7 +162,7 @@ theorem all_decided {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
     (hwf : WellFormed Elig dc ds choose dec) {R N r : ℕ}
     (hsees : SeesCommits S D dc R N)
-    (hrr : RoundRobin S.leader) (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ s, S.round s = s)
+    (hrr : RoundRobin S.leader) (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ s, S.slotRound s = s)
     (hN : max r R + (3 * F.f + 5) ≤ N) :
     dec r ≠ Verdict.undecided := by
   obtain ⟨a, hlo, -, htri⟩ :=
@@ -296,13 +296,13 @@ theorem agreement_of_commits {R N : ℕ}
     (hslot : ∀ r A, dec r = Verdict.commit A → A ∈ slotBlocks S D r)
     (hslot' : ∀ r A, dec' r = Verdict.commit A → A ∈ slotBlocks S D r)
     {M : ℕ} (hbound : ∀ s, M ≤ s → dec s = Verdict.undecided ∧ dec' s = Verdict.undecided)
-    (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ s, S.round s = s)
+    (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ s, S.slotRound s = s)
     {k : ℕ} (hkN : max k R + (3 * F.f + 5) ≤ N)
     (hist : BlockId → List BlockId) :
     linearise hist (commitSeq dec k) = linearise hist (commitSeq dec' k) := by
   have habove : ∀ (dq : ℕ → Verdict BlockId),
       (∀ r A, dq r = Verdict.commit A → A ∈ slotBlocks S D r) →
-      ∀ r a A, Elig r a → dq a = Verdict.commit A → A ∈ D.ids ∧ S.round r + 3 ≤ (D.block A).round := by
+      ∀ r a A, Elig r a → dq a = Verdict.commit A → A ∈ D.ids ∧ S.slotRound r + 3 ≤ (D.block A).round := by
     intro dq hq r a A hra' hcom
     have hra := (hEl r a).mp hra'
     have hA := hq a A hcom

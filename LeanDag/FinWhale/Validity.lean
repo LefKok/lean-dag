@@ -81,7 +81,7 @@ theorem theorem26_of_selfParent (hself : SelfParented D)
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
     (hwf : WellFormed Elig dc ds choose dec) {R N : ℕ}
     (hsees : SeesCommits S D dc R N)
-    (hrr : RoundRobin S.leader) (hid : ∀ s, S.round s = s) [LinearOrder BlockId]
+    (hrr : RoundRobin S.leader) (hid : ∀ s, S.slotRound s = s) [LinearOrder BlockId]
     {b : BlockId} {k : ℕ} (hb : b ∈ D.ids)
     (hbc : (D.block b).creator ∈ (Correct : Finset Validator))
     (hbound : max ((D.block b).round) R + Fintype.card Validator + 2 ≤ N)

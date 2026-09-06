@@ -45,7 +45,7 @@ wait clauses, and `commits_of_creation`, from the block-creation
 conditions themselves — and nothing below cares which. -/
 def CommitsCorrectLeaders (S : Sched Validator) (D : Dag Validator BlockId Payload)
     (R N : ℕ) : Prop :=
-  ∀ s, R ≤ S.round s → S.round s + 2 ≤ N → S.leader s ∈ (Correct : Finset Validator) →
+  ∀ s, R ≤ S.slotRound s → S.slotRound s + 2 ≤ N → S.leader s ∈ (Correct : Finset Validator) →
     ∃ l ∈ slotBlocks S D s, SPCommitBy D l (Correct : Finset Validator)
 
 /-- **What Lemma 23 consumes**: the deciding validator *sees* a direct
@@ -55,7 +55,7 @@ because the second is where a view's holdings enter and the first is
 where the schedule does. -/
 def SeesCommits (S : Sched Validator) (D : Dag Validator BlockId Payload)
     (dc : ℕ → BlockId → Prop) (R N : ℕ) : Prop :=
-  ∀ s, R ≤ S.round s → S.round s + 2 ≤ N → S.leader s ∈ (Correct : Finset Validator) →
+  ∀ s, R ≤ S.slotRound s → S.slotRound s + 2 ≤ N → S.leader s ∈ (Correct : Finset Validator) →
     ∃ l, l ∈ slotBlocks S D s ∧ dc s l
 
 /-- The instant by which every reliable block of every round up to `M`

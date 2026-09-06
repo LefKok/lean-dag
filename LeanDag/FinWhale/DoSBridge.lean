@@ -137,14 +137,14 @@ def Run.ofDoSValid [LinearOrder BlockId] (U : BlockUniverse Validator BlockId Pa
     (paceHorizon : ℕ) (pace : PaceCore U (Correct : Finset Validator) paceHorizon)
     (rounds_advance : ∀ u ∈ (Correct : Finset Validator), ∀ n ≤ pace.top u, n ≤ pace.built u n)
     (stable : ℕ) (gst_le : pace.gst ≤ stable) (liveHorizon : ℕ)
-    (commits : CommitsCorrectLeaders ⟨id, leader⟩ (Dag.ofDoSValid U leader hdos)
+    (commits : CommitsCorrectLeaders (Sched.identity leader) (Dag.ofDoSValid U leader hdos)
       stable liveHorizon)
     (live_le : liveHorizon ≤ paceHorizon) (roundRobin : RoundRobin leader)
     (choose : BlockId → ℕ → Option BlockId)
-    (chooseSound : ChooseSound ⟨id, leader⟩ (Dag.ofDoSValid U leader hdos) choose) :
+    (chooseSound : ChooseSound (Sched.identity leader) (Dag.ofDoSValid U leader hdos) choose) :
     Run Validator BlockId Payload where
   dag := Dag.ofDoSValid U leader hdos
-  sched := ⟨id, leader⟩
+  sched := (Sched.identity leader)
   roundId := fun _ => rfl
   paced := U
   ids_eq := rfl

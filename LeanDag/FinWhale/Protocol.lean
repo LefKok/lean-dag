@@ -65,7 +65,7 @@ theorem view_rounds_le (hv : v ∈ (Correct : Finset Validator)) :
 /-- A run's schedule is the identity, so eligibility is the pass's
 `r + 2 < a` — three rounds up is three slots up. -/
 theorem elig_iff {r a : ℕ} : run.sched.Elig r a ↔ r + 2 < a := by
-  unfold Sched.Elig
+  unfold Slots.Elig
   rw [run.roundId, run.roundId]
   omega
 
@@ -75,7 +75,7 @@ theorem lt_of_elig {r a : ℕ} (h : run.sched.Elig r a) : r < a := by
 
 /-- The pass's slot horizon is its round horizon, because the two agree
 under the identity schedule. -/
-theorem slot_le : ∀ r, run.sched.round r ≤ run.horizon → r ≤ run.horizon := by
+theorem slot_le : ∀ r, run.sched.slotRound r ≤ run.horizon → r ≤ run.horizon := by
   intro r h; rwa [run.roundId] at h
 
 /-- Its verdicts follow the reverse pass. -/

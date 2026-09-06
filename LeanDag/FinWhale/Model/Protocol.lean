@@ -60,7 +60,7 @@ structure Run (Validator BlockId Payload : Type) [Fintype Validator] [DecidableE
   sched : Sched Validator
   /-- FinWhale runs one slot per round, which is what the reverse pass
   enumerates. -/
-  roundId : ∀ k, sched.round k = k
+  roundId : ∀ k, sched.slotRound k = k
   /-- The network has stabilised by this round. -/
   stable : ℕ
   /-- Which is past GST. -/

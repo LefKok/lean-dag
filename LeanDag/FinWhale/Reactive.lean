@@ -170,7 +170,7 @@ schedule's two wait clauses in place of coverage.
 slot per round, and the same leader. -/
 theorem commits_of_reactive (rm : ReactiveM U T N)
     (hids : D.ids = U.ids) (hblk : D.block = U.block)
-    (hround : ∀ k, S.slotRound k = k) (hfr : ∀ k, FS.round k = k)
+    (hround : ∀ k, S.slotRound k = k) (hfr : ∀ k, FS.slotRound k = k)
     (hleader : ∀ k, FS.leader k = S.leader k)
     (hTeq : T = (Correct : Finset Validator))
     (hgst : rm.gst ≤ R) (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n) :

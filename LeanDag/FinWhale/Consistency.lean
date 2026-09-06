@@ -252,7 +252,7 @@ theorem exclusions_of_dag {choose : BlockId → ℕ → Option BlockId}
     (hdc : ∀ r l, dc r l → l ∈ slotBlocks S D r ∧ DirectCommit D l)
     (hdc' : ∀ r l, dc' r l → l ∈ slotBlocks S D r ∧ DirectCommit D l)
     (hds : ∀ r, ds r → DirectSkip S D r) (hds' : ∀ r, ds' r → DirectSkip S D r) :
-    Exclusions dc dc' ds ds' choose (fun r A => A ∈ D.ids ∧ S.round r + 3 ≤ (D.block A).round) := by
+    Exclusions dc dc' ds ds' choose (fun r A => A ∈ D.ids ∧ S.slotRound r + 3 ≤ (D.block A).round) := by
   -- a slot's blocks share the leader and the round, so two of them conflict
   have hconf : ∀ (r : ℕ) (l b : BlockId), l ∈ slotBlocks S D r → b ∈ slotBlocks S D r → l ≠ b →
       Conflicting D l b ∧ l ∈ D.ids ∧ b ∈ D.ids := by

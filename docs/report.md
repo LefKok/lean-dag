@@ -13767,7 +13767,7 @@ def SPSkip (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
 ```lean
 def slotBlocks (S : Sched Validator) (D : Dag Validator BlockId Payload) (k : ℕ) :
     Finset BlockId :=
-  (blocksAt D (S.round k)).filter (fun b => (D.block b).creator = S.leader k)
+  (blocksAt D (S.slotRound k)).filter (fun b => (D.block b).creator = S.leader k)
 ```
 
 The blocks of the leader slot of round `r`. There may be several, if the leader equivocates.
@@ -13791,9 +13791,9 @@ def DirectCommit (D : Dag Validator BlockId Payload) (l : BlockId) : Prop :=
 def IndirectCommit (S : Sched Validator) (D : Dag Validator BlockId Payload) (A : BlockId)
     (k : ℕ) (b : BlockId) : Prop :=
   b ∈ slotBlocks S D k ∧
-    ((∃ c ∈ blocksAt D (S.round k + 2), ReachesFrom D.block A c ∧ SPCertificate D c b) ∨
+    ((∃ c ∈ blocksAt D (S.slotRound k + 2), ReachesFrom D.block A c ∧ SPCertificate D c b) ∨
       (∃ ev : Finset Validator, spQuorum Validator ≤ ev.card ∧
-        ∀ v ∈ ev, ∃ c ∈ blocksAt D (S.round k + 2), ReachesFrom D.block A c ∧
+        ∀ v ∈ ev, ∃ c ∈ blocksAt D (S.slotRound k + 2), ReachesFrom D.block A c ∧
           (D.block c).creator = v ∧ FPEvidence D c b))
 ```
 
@@ -14050,7 +14050,7 @@ structure Creation (U : BlockUniverse Validator BlockId Payload)
 ```lean
 def CommitsCorrectLeaders (S : Sched Validator) (D : Dag Validator BlockId Payload)
     (R N : ℕ) : Prop :=
-  ∀ s, R ≤ S.round s → S.round s + 2 ≤ N → S.leader s ∈ (Correct : Finset Validator) →
+  ∀ s, R ≤ S.slotRound s → S.slotRound s + 2 ≤ N → S.leader s ∈ (Correct : Finset Validator) →
     ∃ l ∈ slotBlocks S D s, SPCommitBy D l (Correct : Finset Validator)
 ```
 
@@ -14098,7 +14098,7 @@ structure Run (Validator BlockId Payload : Type) [Fintype Validator] [DecidableE
   sched : Sched Validator
   /-- FinWhale runs one slot per round, which is what the reverse pass
   enumerates. -/
-  roundId : ∀ k, sched.round k = k
+  roundId : ∀ k, sched.slotRound k = k
   /-- The network has stabilised by this round. -/
   stable : ℕ
   /-- Which is past GST. -/
@@ -14153,14 +14153,14 @@ def Run.ofDoSValid [LinearOrder BlockId] (U : BlockUniverse Validator BlockId Pa
     (paceHorizon : ℕ) (pace : PaceCore U (Correct : Finset Validator) paceHorizon)
     (rounds_advance : ∀ u ∈ (Correct : Finset Validator), ∀ n ≤ pace.top u, n ≤ pace.built u n)
     (stable : ℕ) (gst_le : pace.gst ≤ stable) (liveHorizon : ℕ)
-    (commits : CommitsCorrectLeaders ⟨id, leader⟩ (Dag.ofDoSValid U leader hdos)
+    (commits : CommitsCorrectLeaders (Sched.identity leader) (Dag.ofDoSValid U leader hdos)
       stable liveHorizon)
     (live_le : liveHorizon ≤ paceHorizon) (roundRobin : RoundRobin leader)
     (choose : BlockId → ℕ → Option BlockId)
-    (chooseSound : ChooseSound ⟨id, leader⟩ (Dag.ofDoSValid U leader hdos) choose) :
+    (chooseSound : ChooseSound (Sched.identity leader) (Dag.ofDoSValid U leader hdos) choose) :
     Run Validator BlockId Payload where
   dag := Dag.ofDoSValid U leader hdos
-  sched := ⟨id, leader⟩
+  sched := (Sched.identity leader)
   roundId := fun _ => rfl
   paced := U
   ids_eq := rfl
@@ -21236,7 +21236,7 @@ theorem no_indirectCommit_of_directSkip {A : BlockId} {r : ℕ} {b : BlockId}
 
 ```lean
 theorem indirectCommit_of_directCommit {A : BlockId} {r : ℕ} {l : BlockId}
-    (hA : A ∈ D.ids) (hAround : S.round r + 3 ≤ (D.block A).round)
+    (hA : A ∈ D.ids) (hAround : S.slotRound r + 3 ≤ (D.block A).round)
     (hl : l ∈ slotBlocks S D r) (hcom : DirectCommit D l) :
     IndirectCommit S D A r l
 ```
@@ -21320,7 +21320,7 @@ theorem exclusions_of_dag {choose : BlockId → ℕ → Option BlockId}
     (hdc : ∀ r l, dc r l → l ∈ slotBlocks S D r ∧ DirectCommit D l)
     (hdc' : ∀ r l, dc' r l → l ∈ slotBlocks S D r ∧ DirectCommit D l)
     (hds : ∀ r, ds r → DirectSkip S D r) (hds' : ∀ r, ds' r → DirectSkip S D r) :
-    Exclusions dc dc' ds ds' choose (fun r A => A ∈ D.ids ∧ S.round r + 3 ≤ (D.block A).round)
+    Exclusions dc dc' ds ds' choose (fun r A => A ∈ D.ids ∧ S.slotRound r + 3 ≤ (D.block A).round)
 ```
 
 **Lemma 12's side conditions, discharged on the DAG.** Each validator's direct verdicts are direct verdicts of the universe, because a view is a sub-DAG and the rules are existential in it. Under that reading every field is one of the theorems above: Lemma 8 for the two commit fields, Lemmas 6 and 7 for the skip fields, and Lemmas 3 and 5 for the two that say the anchor can always see a direct commit.
@@ -21375,7 +21375,7 @@ Above the horizon the pass decides nothing.
 ```lean
 theorem wellFormed_decOf {N M : ℕ} (hN : ∀ b ∈ D.ids, (D.block b).round ≤ N)
     (hlt : ∀ r a, Elig r a → r < a)
-    (hrle : ∀ r, S.round r ≤ N → r ≤ M)
+    (hrle : ∀ r, S.slotRound r ≤ N → r ≤ M)
     (choose : BlockId → ℕ → Option BlockId) :
     WellFormed Elig (fun r l => l ∈ slotBlocks S D r ∧ DirectCommit D l)
       (fun r => DirectSkip S D r) choose (decOf S Elig D choose M) where
@@ -21410,8 +21410,8 @@ theorem safety_of_pass {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsView D
     {k k' : ℕ}
     (hk : ∀ s, s < k → decOf S Elig (restrict D V hV) choose M s ≠ Verdict.undecided)
     (hk' : ∀ s, s < k' → decOf S Elig (restrict D V' hV') choose M s ≠ Verdict.undecided)
-    (hlt : ∀ r a, Elig r a → r < a) (hrle : ∀ r, S.round r ≤ N → r ≤ M)
-    (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ k, S.round k = k)
+    (hlt : ∀ r a, Elig r a → r < a) (hrle : ∀ r, S.slotRound r ≤ N → r ≤ M)
+    (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ k, S.slotRound k = k)
     (hist : BlockId → List BlockId) :
     linearise hist (commitSeq (decOf S Elig (restrict D V hV) choose M) k) <+:
         linearise hist (commitSeq (decOf S Elig (restrict D V' hV') choose M) k') ∨
@@ -21477,7 +21477,7 @@ theorem no_indirectCommit_of_directSkip_view {A : BlockId} {r : ℕ} {b : BlockI
 theorem exclusions_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsView D V')
     {choose : BlockId → ℕ → Option BlockId} (hch : ChooseSound S D choose) :
     Exclusions (viewCommit S D V hV) (viewCommit S D V' hV') (viewSkip S D V hV) (viewSkip S D V' hV')
-      choose (fun r A => A ∈ D.ids ∧ S.round r + 3 ≤ (D.block A).round)
+      choose (fun r A => A ∈ D.ids ∧ S.slotRound r + 3 ≤ (D.block A).round)
 ```
 
 **Lemma 12's side conditions, on two views of one DAG.** Nothing is assumed about how the views relate to the universe beyond their being views: the direct rules are evaluated on them, and every field is a theorem about that.
@@ -21497,7 +21497,7 @@ theorem safety_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsView 
     {N : ℕ} (hbound : ∀ s, N ≤ s → dec s = Verdict.undecided ∧ dec' s = Verdict.undecided)
     {k k' : ℕ} (hk : ∀ s, s < k → dec s ≠ Verdict.undecided)
     (hk' : ∀ s, s < k' → dec' s ≠ Verdict.undecided)
-    (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ s, S.round s = s)
+    (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ s, S.slotRound s = s)
     (hist : BlockId → List BlockId) :
     linearise hist (commitSeq dec k) <+: linearise hist (commitSeq dec' k') ∨
       linearise hist (commitSeq dec' k') <+: linearise hist (commitSeq dec k)
@@ -21533,7 +21533,7 @@ theorem committed_triple {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
     (hwf : WellFormed Elig dc ds choose dec) {R N t : ℕ}
     (hsees : SeesCommits S D dc R N)
-    (hrr : RoundRobin S.leader) (hid : ∀ s, S.round s = s)
+    (hrr : RoundRobin S.leader) (hid : ∀ s, S.slotRound s = s)
     (hR : R ≤ t) (hN : t + (3 * F.f + 5) ≤ N) :
     ∃ a, t < a ∧ a + 4 ≤ N ∧
       ∀ s, a ≤ s → s ≤ a + 2 →
@@ -21551,7 +21551,7 @@ theorem all_decided {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
     (hwf : WellFormed Elig dc ds choose dec) {R N r : ℕ}
     (hsees : SeesCommits S D dc R N)
-    (hrr : RoundRobin S.leader) (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ s, S.round s = s)
+    (hrr : RoundRobin S.leader) (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ s, S.slotRound s = s)
     (hN : max r R + (3 * F.f + 5) ≤ N) :
     dec r ≠ Verdict.undecided
 ```
@@ -21618,7 +21618,7 @@ theorem theorem26_of_selfParent (hself : SelfParented D)
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
     (hwf : WellFormed Elig dc ds choose dec) {R N : ℕ}
     (hsees : SeesCommits S D dc R N)
-    (hrr : RoundRobin S.leader) (hid : ∀ s, S.round s = s) [LinearOrder BlockId]
+    (hrr : RoundRobin S.leader) (hid : ∀ s, S.slotRound s = s) [LinearOrder BlockId]
     {b : BlockId} {k : ℕ} (hb : b ∈ D.ids)
     (hbc : (D.block b).creator ∈ (Correct : Finset Validator))
     (hbound : max ((D.block b).round) R + Fintype.card Validator + 2 ≤ N)
@@ -21780,7 +21780,7 @@ theorem no_timeout_of_fast (rc : ReactivePace U T N)
 ```lean
 theorem commits_of_reactive (rm : ReactiveM U T N)
     (hids : D.ids = U.ids) (hblk : D.block = U.block)
-    (hround : ∀ k, S.slotRound k = k) (hfr : ∀ k, FS.round k = k)
+    (hround : ∀ k, S.slotRound k = k) (hfr : ∀ k, FS.slotRound k = k)
     (hleader : ∀ k, FS.leader k = S.leader k)
     (hTeq : T = (Correct : Finset Validator))
     (hgst : rm.gst ≤ R) (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n) :
@@ -21889,7 +21889,7 @@ theorem Creation.lemma20 (cr : Creation U T N S.leader)
 theorem commits_of_creation (cr : Creation U T N S.leader)
     (hids : D.ids = U.ids) (hblk : D.block = U.block)
     (hTeq : T = (Correct : Finset Validator)) {R : ℕ}
-    (hid : ∀ k, S.round k = k)
+    (hid : ∀ k, S.slotRound k = k)
     (hgst : cr.gst ≤ R) (hto : ∀ m, R ≤ m → 2 * cr.delay + cr.proc ≤ cr.timeout m) :
     CommitsCorrectLeaders S D R N
 ```
@@ -21952,7 +21952,7 @@ theorem all_decided_of_pass (pc : PaceCore U (Correct : Finset Validator) M)
     {choose : BlockId → ℕ → Option BlockId} {Np N r : ℕ}
     (hhorizon : ∀ b ∈ pc.holds v (settled pc), (D.block b).round ≤ Np)
     (hcommits : CommitsCorrectLeaders S D R N) (hrr : RoundRobin S.leader)
-    (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ k, S.round k = k) (hNM : N ≤ M)
+    (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ k, S.slotRound k = k) (hNM : N ≤ M)
     (hN : max r R + (3 * F.f + 5) ≤ N) :
     decOf S Elig (restrict D (pc.holds v (settled pc)) (isView_holds pc hids hblk hv (settled pc)))
       choose Np r ≠ Verdict.undecided
@@ -22909,8 +22909,8 @@ theorem holds : Statement
 *theorem, `FinWhale.Band.lean`*
 
 ```lean
-theorem directSkip (hrk : S.round k + g = S'.round k' + g')
-    (hlk : S.leader k = S'.leader k') (h1 : lo ≤ S.round k + g) (h2 : S.round k + g + 2 ≤ hi)
+theorem directSkip (hrk : S.slotRound k + g = S'.slotRound k' + g')
+    (hlk : S.leader k = S'.leader k') (h1 : lo ≤ S.slotRound k + g) (h2 : S.slotRound k + g + 2 ≤ hi)
     (h : DirectSkip S D k) : DirectSkip S' D' k'
 ```
 

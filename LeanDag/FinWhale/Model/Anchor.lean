@@ -33,9 +33,9 @@ the anchor's causal history is a function of the anchor. -/
 def IndirectCommit (S : Sched Validator) (D : Dag Validator BlockId Payload) (A : BlockId)
     (k : ℕ) (b : BlockId) : Prop :=
   b ∈ slotBlocks S D k ∧
-    ((∃ c ∈ blocksAt D (S.round k + 2), ReachesFrom D.block A c ∧ SPCertificate D c b) ∨
+    ((∃ c ∈ blocksAt D (S.slotRound k + 2), ReachesFrom D.block A c ∧ SPCertificate D c b) ∨
       (∃ ev : Finset Validator, spQuorum Validator ≤ ev.card ∧
-        ∀ v ∈ ev, ∃ c ∈ blocksAt D (S.round k + 2), ReachesFrom D.block A c ∧
+        ∀ v ∈ ev, ∃ c ∈ blocksAt D (S.slotRound k + 2), ReachesFrom D.block A c ∧
           (D.block c).creator = v ∧ FPEvidence D c b))
 
 /-- **The same condition, decidably.** `ReachesFrom` is a reflexive
@@ -47,9 +47,9 @@ check. -/
 def IndirectCommitOn (S : Sched Validator) (D : Dag Validator BlockId Payload) (A : BlockId)
     (k : ℕ) (b : BlockId) : Prop :=
   b ∈ slotBlocks S D k ∧
-    ((∃ c ∈ blocksAt D (S.round k + 2), c ∈ historyFrom D.block A ∧ SPCertificate D c b) ∨
+    ((∃ c ∈ blocksAt D (S.slotRound k + 2), c ∈ historyFrom D.block A ∧ SPCertificate D c b) ∨
       (∃ ev : Finset Validator, spQuorum Validator ≤ ev.card ∧
-        ∀ v ∈ ev, ∃ c ∈ blocksAt D (S.round k + 2), c ∈ historyFrom D.block A ∧
+        ∀ v ∈ ev, ∃ c ∈ blocksAt D (S.slotRound k + 2), c ∈ historyFrom D.block A ∧
           (D.block c).creator = v ∧ FPEvidence D c b))
 
 instance (S : Sched Validator) (D : Dag Validator BlockId Payload) (A : BlockId) (k : ℕ)

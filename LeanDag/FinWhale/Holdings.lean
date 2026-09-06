@@ -82,12 +82,12 @@ theorem all_decided_of_pass (pc : PaceCore U (Correct : Finset Validator) M)
     {choose : BlockId → ℕ → Option BlockId} {Np N r : ℕ}
     (hhorizon : ∀ b ∈ pc.holds v (settled pc), (D.block b).round ≤ Np)
     (hcommits : CommitsCorrectLeaders S D R N) (hrr : RoundRobin S.leader)
-    (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ k, S.round k = k) (hNM : N ≤ M)
+    (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ k, S.slotRound k = k) (hNM : N ≤ M)
     (hN : max r R + (3 * F.f + 5) ≤ N) :
     decOf S Elig (restrict D (pc.holds v (settled pc)) (isView_holds pc hids hblk hv (settled pc)))
       choose Np r ≠ Verdict.undecided := by
   have hlt : ∀ r a, Elig r a → r < a := fun r a h => by have := (hEl r a).1 h; omega
-  have hrle : ∀ r, S.round r ≤ Np → r ≤ Np := fun r h => by rwa [hid] at h
+  have hrle : ∀ r, S.slotRound r ≤ Np → r ≤ Np := fun r h => by rwa [hid] at h
   exact all_decided_of_view (isView_holds pc hids hblk hv (settled pc))
     (wellFormed_decOf hhorizon hlt hrle choose)
     (fun n hRn hnN b hb hbc =>
