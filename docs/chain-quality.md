@@ -130,7 +130,7 @@ cone — and the results are packaging, exactly as planned:
   capstone `chain_quality` states both halves together under
   enforceable or standard conditions only.
 
-What the change costs and buys. The old statement put a correct block
+What the change costs and gives. The old statement put a correct block
 in *every* correct commit after `R`; the new one puts it in its author's
 commits, at any time. The old one needed full coverage over every round
 from `R` to the commit; the new one needs the author to keep building
