@@ -25392,6 +25392,221 @@ def liftViewNemo (V : Nemo.View Validator BlockId Payload U) :
 
 The pre-crash view, read in the repaired universe: the same ids, and every one of them old.
 
+#### `addGenesisHybrid`
+
+*def, `Integration.ReGenesisRules.lean`*
+
+```lean
+def addGenesisHybrid (U : (HybridProperties.hybridRule (Validator := Validator) (BlockId := B)
+    (Payload := Payload) kt).Universe) (v : Validator) (g : B) (p : Payload)
+    (hg : g ∉ U.val.ids) (hsev : ∀ b ∈ U.val.ids, (U.val.block b).creator ≠ v) :
+    (HybridProperties.hybridRule (Validator := Validator) (BlockId := B)
+      (Payload := Payload) kt).Universe :=
+  ⟨addGenesis U.val v g p hg hsev, honestNoEquiv_addGenesis U.property⟩
+```
+
+**Re-genesis, at Hybrid's carrier.**
+
+#### `addGenesisNemo`
+
+*def, `Integration.ReGenesisRules.lean`*
+
+```lean
+def addGenesisNemo (U : Nemo.Universe Validator BlockId Payload) (v : Validator)
+    (g : BlockId) (p : Payload) (hg : g ∉ U.ids)
+    (hsev : ∀ b ∈ U.ids, (U.block b).creator ≠ v) :
+    Nemo.Universe Validator BlockId Payload where
+  ids := insert g U.ids
+  block b := if b ∈ U.ids then U.block b else ⟨0, v, ∅, p⟩
+  complete := by
+    intro i hi j hj
+    rcases Finset.mem_insert.mp hi with rfl | ho
+    · rw [if_neg hg] at hj
+      exact absurd hj (Finset.notMem_empty j)
+    · rw [if_pos ho] at hj
+      exact Finset.mem_insert_of_mem (U.complete i ho j hj)
+  valid := by
+    intro i hi
+    rcases Finset.mem_insert.mp hi with rfl | ho
+    · rw [if_neg hg]
+      refine ⟨?_, ?_⟩
+      · intro j hj; exact absurd hj (Finset.notMem_empty j)
+      · intro hr; exact absurd hr (by simp)
+    · rw [if_pos ho]
+      have hv := U.valid i ho
+      refine ⟨?_, ?_⟩
+      · intro j hj
+        rw [if_pos (U.complete i ho j hj)]
+        exact hv.predecessor j hj
+      · intro hr
+        refine le_trans (hv.quorum hr) (Finset.card_le_card ?_)
+        intro c hc
+        unfold creators creatorsOf at hc ⊢
+        obtain ⟨j, hj, hjc⟩ := Finset.mem_image.mp hc
+        refine Finset.mem_image.mpr ⟨j, hj, ?_⟩
+        simp only
+        rw [if_pos (U.complete i ho j hj)]
+        exact hjc
+  no_equivocation := by
+    intro i hi j hj hcc hrr
+    rcases Finset.mem_insert.mp hi with rfl | ho <;>
+      rcases Finset.mem_insert.mp hj with rfl | ho'
+    · rfl
+    · rw [if_neg hg, if_pos ho'] at hcc
+      exact absurd hcc.symm (hsev j ho')
+    · rw [if_pos ho, if_neg hg] at hcc
+      exact absurd hcc (hsev i ho)
+    · rw [if_pos ho, if_pos ho'] at hcc hrr
+      exact U.no_equivocation i ho j ho' hcc hrr
+```
+
+**Re-genesis, at Nemo's universe.** One reference-free block at round zero: the majority quorum is owed only above round zero, and universal non-equivocation is kept because the author has no other block.
+
+#### `addGenesisFinWhale`
+
+*def, `Integration.ReGenesisRules.lean`*
+
+```lean
+def addGenesisFinWhale (D : Dag Validator B Payload) (v : Validator) (g : B) (p : Payload)
+    (hg : g ∉ D.ids) (hsev : ∀ b ∈ D.ids, (D.block b).creator ≠ v) :
+    Dag Validator B Payload where
+  ids := insert g D.ids
+  block b := if b ∈ D.ids then D.block b else ⟨0, v, ∅, p⟩
+  complete := by
+    intro i hi j hj
+    rcases Finset.mem_insert.mp hi with rfl | ho
+    · rw [if_neg hg] at hj
+      exact absurd hj (Finset.notMem_empty j)
+    · rw [if_pos ho] at hj
+      exact Finset.mem_insert_of_mem (D.complete i ho j hj)
+  valid := by
+    intro i hi
+    rcases Finset.mem_insert.mp hi with rfl | ho
+    · rw [if_neg hg]
+      refine ⟨?_, ?_, ?_, ?_⟩
+      · intro j hj; exact absurd hj (Finset.notMem_empty j)
+      · intro a ha; exact absurd ha (Finset.notMem_empty a)
+      · intro hr; exact absurd hr (by simp)
+      · intro _; exact Or.inr (fun a ha => absurd ha (Finset.notMem_empty a))
+    · rw [if_pos ho]
+      have hv := D.valid i ho
+      refine ⟨?_, ?_, ?_, ?_⟩
+      · intro j hj
+        rw [if_pos (D.complete i ho j hj)]
+        exact hv.predecessor j hj
+      · intro a ha b hb hab
+        rw [if_pos (D.complete i ho a ha), if_pos (D.complete i ho b hb)] at hab
+        exact hv.distinct_creators a ha b hb hab
+      · intro hr
+        refine le_trans (hv.quorum hr) (Finset.card_le_card ?_)
+        intro c hc
+        unfold creators creatorsOf at hc ⊢
+        obtain ⟨j, hj, hjc⟩ := Finset.mem_image.mp hc
+        refine Finset.mem_image.mpr ⟨j, hj, ?_⟩
+        simp only
+        rw [if_pos (D.complete i ho j hj)]
+        exact hjc
+      · intro u
+        rcases hv.leader_clause u with hl | hr
+        · refine Or.inl ?_
+          intro a ha b hb x hx y hy hxv hyv
+          rw [if_pos (D.complete i ho a ha)] at hx
+          rw [if_pos (D.complete i ho b hb)] at hy
+          rw [if_pos (D.complete _ (D.complete i ho a ha) x hx)] at hxv
+          rw [if_pos (D.complete _ (D.complete i ho b hb) y hy)] at hyv
+          exact hl a ha b hb x hx y hy hxv hyv
+        · refine Or.inr ?_
+          intro a ha
+          rw [if_pos (D.complete i ho a ha)]
+          exact hr a ha
+  correct_single := by
+    intro i hi j hj _ hcc hrr
+    rcases Finset.mem_insert.mp hi with rfl | ho <;>
+      rcases Finset.mem_insert.mp hj with rfl | ho'
+    · rfl
+    · rw [if_neg hg, if_pos ho'] at hcc
+      exact absurd hcc.symm (hsev j ho')
+    · rw [if_pos ho, if_neg hg] at hcc
+      exact absurd hcc (hsev i ho)
+    · rw [if_pos ho, if_pos ho'] at hcc hrr
+      exact D.correct_single i ho j ho' (by rwa [if_pos ho] at *) hcc hrr
+```
+
+**Re-genesis, at FinWhale's DAG.** Every validity clause of a block with no parents is vacuous — the leader clause by its second disjunct — and non-equivocation is kept because the author has no other block.
+
+#### `addGenesisHZ`
+
+*def, `Integration.ReGenesisRules.lean`*
+
+```lean
+def addGenesisHZ (U : LeanDag.Hydrozoan.BlockUniverse Replica B) (v : Replica) (g : B)
+    (hg : g ∉ U.ids) (hsev : ∀ b ∈ U.ids, (U.block b).author ≠ v) :
+    LeanDag.Hydrozoan.BlockUniverse Replica B where
+  ids := insert g U.ids
+  block b := if b ∈ U.ids then U.block b else ⟨0, v, ∅⟩
+  complete := by
+    intro i hi j hj
+    rcases Finset.mem_insert.mp hi with rfl | ho
+    · rw [if_neg hg] at hj
+      exact absurd hj (Finset.notMem_empty j)
+    · rw [if_pos ho] at hj
+      exact Finset.mem_insert_of_mem (U.complete i ho j hj)
+  valid := by
+    intro i hi
+    rcases Finset.mem_insert.mp hi with rfl | ho
+    · rw [if_neg hg]
+      refine ⟨?_, ?_, ?_⟩
+      · intro j hj; exact absurd hj (Finset.notMem_empty j)
+      · intro a ha; exact absurd ha (Finset.notMem_empty a)
+      · intro hr; exact absurd hr (by simp)
+    · rw [if_pos ho]
+      have hv := U.valid i ho
+      refine ⟨?_, ?_, ?_⟩
+      · intro j hj
+        rw [if_pos (U.complete i ho j hj)]
+        exact hv.predecessor j hj
+      · intro a ha b hb hab
+        rw [if_pos (U.complete i ho a ha), if_pos (U.complete i ho b hb)] at hab
+        exact hv.distinct_authors a ha b hb hab
+      · intro hr
+        refine le_trans (hv.quorum hr) (Finset.card_le_card ?_)
+        intro c hc
+        unfold LeanDag.Hydrozoan.authors LeanDag.Hydrozoan.authorsOf at hc ⊢
+        obtain ⟨j, hj, hjc⟩ := Finset.mem_image.mp hc
+        refine Finset.mem_image.mpr ⟨j, hj, ?_⟩
+        simp only
+        rw [if_pos (U.complete i ho j hj)]
+        exact hjc
+  no_equivocation := by
+    intro i hi j hj hib hcc hrr
+    rcases Finset.mem_insert.mp hi with rfl | ho <;>
+      rcases Finset.mem_insert.mp hj with rfl | ho'
+    · rfl
+    · rw [if_neg hg, if_pos ho'] at hcc
+      exact absurd hcc.symm (hsev j ho')
+    · rw [if_pos ho, if_neg hg] at hcc
+      exact absurd hcc (hsev i ho)
+    · rw [if_pos ho, if_pos ho'] at hcc hrr
+      rw [if_pos ho] at hib
+      exact U.no_equivocation i ho j ho' hib hcc hrr
+```
+
+**Re-genesis, at Hydrozoan's universe.**
+
+#### `addGenesisOpt`
+
+*def, `Integration.ReGenesisRules.lean`*
+
+```lean
+def addGenesisOpt (U : (OptimalHydrozoanProperties.optimalRule (Replica := Replica)
+    (BlockId := B)).Universe) (v : Replica) (g : B)
+    (hg : g ∉ U.val.ids) (hsev : ∀ b ∈ U.val.ids, (U.val.block b).author ≠ v) :
+    (OptimalHydrozoanProperties.optimalRule (Replica := Replica) (BlockId := B)).Universe :=
+  ⟨addGenesisHZ U.val v g hg hsev, leaderExcludedAll_addGenesisHZ U.property⟩
+```
+
+**Re-genesis, at Optimal-Hydrozoan's carrier.**
+
 #### `SoundOn`
 
 *structure, `Integration.Sound.lean`*
@@ -26408,7 +26623,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 1098 theorems that either another module of the
+The 1105 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -30636,6 +30851,16 @@ theorem outage_bounded_by_lag (sk : SkipMsg U) {Λ : ℕ}
 
 So the two mechanisms are coupled by one inequality: *garbage collection at lag `Λ` supports Safe Skip recovery from outages of up to `Λ` rounds, and no more.* Beyond it the validator's last block has been pruned and it must bootstrap by report §9.5's attested base — which is why the two routes exist, and where the boundary between them falls.
 
+#### `addGenesis_block_old`
+
+*theorem, `Integration.ReGenesis.lean`*
+
+```lean
+@[simp] theorem addGenesis_block_old {hg : g ∉ V.ids}
+    {hsev : ∀ b ∈ V.ids, (V.block b).creator ≠ v} {b : BlockId} (hb : b ∈ V.ids) :
+    (addGenesis V v g p hg hsev).block b = V.block b
+```
+
 #### `addGenesis_block_new`
 
 *theorem, `Integration.ReGenesis.lean`*
@@ -30645,6 +30870,19 @@ So the two mechanisms are coupled by one inequality: *garbage collection at lag 
     {hsev : ∀ b ∈ V.ids, (V.block b).creator ≠ v} :
     (addGenesis V v g p hg hsev).block g = ⟨0, v, ∅, p⟩
 ```
+
+#### `extends_addGenesis`
+
+*theorem, `Integration.ReGenesis.lean`*
+
+```lean
+theorem extends_addGenesis :
+    Properties.Extends (MysticetiProperties.mysticetiRule (Payload := Payload))
+      V (addGenesis V v g p hg hsev) where
+  subset
+```
+
+**Re-genesis is an extension.** It adds one block and touches no other, which is the whole of the safety side.
 
 #### `sustains_addGenesis`
 
@@ -39525,6 +39763,18 @@ theorem directCommit_of_certLive_sustains [S : Slots Validator]
 
 **The commit survives any sustaining mechanism, from either execution model.** `certLive` is stated in references and counts, and `Sustains` preserves both, so the mechanism consumes it directly. This is what coverage could not give: a coverage-shaped precondition transports only for a model that has coverage, and a reactive execution does not.
 
+#### `coreSupport_local`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem coreSupport_local :
+    Support.Local (R := mysticetiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) coreSupport
+```
+
+**Law 1.** A certifier two rounds above the settling round reads references strictly above it, which `RebasedAbove` preserves.
+
 #### `coreSupport_ofCoverage`
 
 *theorem, `MysticetiProperties.lean`*
@@ -40083,6 +40333,55 @@ theorem exists_decided_of_coverage {rel : Reliability Validator}
 ```
 
 **A reliably-led slot commits on a covered, populated DAG** — for any rule with Laws 2 and 3, at any quorum of the fault model.
+
+#### `live_of_sustains`
+
+*theorem, `Properties.Arcs.Liveness.lean`*
+
+```lean
+theorem live_of_sustains {rel : Reliability Validator} (hloc : sp.Local)
+    {U U' : R.Universe} {R₀ : ℕ} (h : Sustains R U U' 0 R₀)
+    {S : Slots Validator} {V : R.View U} {V' : R.View U'} {T : Finset Validator} {lo K : ℕ}
+    (hlive : sp.live rel S V T lo K) (hR₀ : R₀ ≤ S.slotRound lo)
+    (hV' : ∀ N, CoversUpto R V N → CoversUpto R V' N) :
+    sp.live rel S V' T lo K
+```
+
+**`live` survives a sustaining mechanism**, at the same schedule: production and certification carry across, and the candidates are the same blocks.
+
+#### `live_of_truncates`
+
+*theorem, `Properties.Arcs.Liveness.lean`*
+
+```lean
+theorem live_of_truncates {rel : Reliability Validator} (hloc : sp.Local)
+    {U U' : R.Universe} {S S' : Slots Validator} {G d : ℕ}
+    (h : Truncates R U U' S S' G d) {V : R.View U} {V' : R.View U'}
+    {T : Finset Validator} {lo K : ℕ}
+    (hlive : sp.live rel S V T lo K) (hlo : d ≤ lo) (hK : lo < K)
+    (hV' : ∀ N, G ≤ N → CoversUpto R V N → CoversUpto R V' (N - G)) :
+    sp.live rel S' V' T (lo - d) (K - d)
+```
+
+**`live` survives the cut**, at the re-indexed schedule: slot `k` of the truncation is slot `d + k` of the original, a round `G` lower, and the window moves with it.
+
+#### `decidedBelow_of_run_truncates`
+
+*theorem, `Properties.Arcs.Liveness.lean`*
+
+```lean
+theorem decidedBelow_of_run_truncates {rel : Reliability Validator}
+    (hloc : sp.Local) (hlc : sp.Commits rel) {S S' : Slots Validator} {c : ℕ}
+    (hc : 0 < c) (hd : Descends R S' c) {U U' : R.Universe} {G d : ℕ}
+    (h : Truncates R U U' S S' G d) {V : R.View U} (V' : R.View U')
+    {T : Finset Validator} {b : ℕ}
+    (hlive : sp.live rel S V T (d + b) (d + b + c))
+    (hV' : ∀ N, G ≤ N → CoversUpto R V N → CoversUpto R V' (N - G))
+    (hlead : ∀ i, i < c → S'.leader (b + i) ∈ T) :
+    ∀ i, i < b → ∃ v, DecidedBelow R S' (b + c) V' i v
+```
+
+**Anchored liveness after the cut**, at the re-indexed schedule.
 
 #### `mem_coveredAt`
 
@@ -40787,6 +41086,20 @@ theorem refs_of (h : Truncates R U U' S S' G d) {b : BlockId} (hb : b ∈ R.ids 
 
 And references survive strictly above the horizon.
 
+#### `coreSupport_live_of_reactiveLive`
+
+*theorem, `Reactive.MysticetiProperties.lean`*
+
+```lean
+theorem coreSupport_live_of_reactiveLive {S : Slots Validator}
+    {U : BlockUniverse Validator BlockId Payload} {V : View Validator BlockId Payload U}
+    {T : Finset Validator} {lo K : ℕ} (h : reactiveLive S (U := U) V T lo K) :
+    (coreSupport (Validator := Validator) (BlockId := BlockId) (Payload := Payload)).live
+      (coreReliability Validator) S (U := U) V T lo K
+```
+
+**The reactive discipline reaches the core's support precondition** (`Properties/Support.lean`): a reactive execution past GST is a quorum certifying every candidate of every reliably-led slot in the window, which is `Support.live` and the socket every mechanism reads.
+
 #### `leaderCommits_reactive`
 
 *theorem, `Reactive.MysticetiProperties.lean`*
@@ -40859,7 +41172,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 1100 lemmas used only within the file that proves
+The 1137 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -41365,16 +41678,14 @@ subsection per module, in the layer order of Appendices B and C.
 | `chopMsg_r0` | The rebased crash round: the truncation sees the gap starting `G` lower, as it sees every round. |
 | `chopMsg_v1` | The induced message keeps the anchor and the recovering validator, and its gap is the original's shifted — … |
 
-### `Integration/ReGenesis.lean` (13)
+### `Integration/ReGenesis.lean` (11)
 
 | Lemma | Role |
 |:---|:---|
-| `addGenesis_block_old` | — |
 | `addGenesis_sub_stack` | Re-genesis adds nothing the truncated fill lacks. Every block of the re-genesis universe over `chop U G` … |
 | `decided_addGenesis` | Verdicts survive re-genesis. The result this arc did not have: before the witnesses it said nothing about … |
 | `directCommit_addGenesis` | And the reactive commit survives it, from the rebase. |
 | `directCommit_rejoinChop` | And the reactive commit crosses the pair. A validator that restarted at the cut and then pruned again … |
-| `extends_addGenesis` | Re-genesis is an extension. It adds one block and touches no other, which is the whole of the safety side. |
 | `genesis_forced` | A restart is a genesis block, necessarily. If a validator has any block at all in a universe, it has one … |
 | `history_addGenesis` | Cones are unchanged, so every cone-based condition reads the same. |
 | `mem_addGenesis` | — |
@@ -42597,7 +42908,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `truncates_chop_finwhale` | The cut is a truncation of FinWhale's carrier. |
 | `viewAgreeAbove_chop_finwhale` | The chopped view agrees with the original above the cut. |
 
-### `Integration/HybridMechanisms.lean` (6)
+### `Integration/HybridMechanisms.lean` (7)
 
 | Lemma | Role |
 |:---|:---|
@@ -42606,6 +42917,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `decided_chop_iff_hybrid` | Verdict transport across the cut, for Hybrid. A validator that has pruned below the horizon reaches … |
 | `decided_skipFill_hybrid` | Verdicts survive the recovery, for Hybrid. The replica that recovered reaches every verdict it reached before. |
 | `extends_skipFill_hybrid` | The fill is an extension of Hybrid's carrier. |
+| `sustains_skipFill_hybrid` | What the fill sustains, for Hybrid — the core's witness, projected field by field. |
 | `truncates_chop_hybrid` | The cut is a truncation of Hybrid's carrier. The core's witness, projected: the subtype's `ids` and … |
 
 ### `Integration/Hydrozoan/ChopDecided.lean` (7)
@@ -42765,13 +43077,57 @@ subsection per module, in the layer order of Appendices B and C.
 | `truncates_chop_nemo` | The cut is a truncation of Nemo's carrier. |
 | `viewAgreeAbove_chop_nemo` | The chopped view agrees with the original above the cut. |
 
-### `Integration/ReactiveMechanisms.lean` (3)
+### `Integration/ReGenesisRules.lean` (34)
 
 | Lemma | Role |
 |:---|:---|
+| `addGenesisFinWhale_block_new` | — |
+| `addGenesisFinWhale_block_old` | — |
+| `addGenesisHZ_block_new` | — |
+| `addGenesisHZ_block_old` | — |
+| `addGenesisNemo_block_new` | — |
+| `addGenesisNemo_block_old` | — |
+| `decided_addGenesisHZ` | Verdicts survive re-genesis, for Hydrozoan. |
+| `decided_addGenesis_finwhale` | Verdicts survive re-genesis, for FinWhale. |
+| `decided_addGenesis_hybrid` | Verdicts survive re-genesis, for Hybrid. |
+| `decided_addGenesis_mahimahi` | Verdicts survive re-genesis, for Mahi-Mahi. |
+| `decided_addGenesis_nemo` | Verdicts survive re-genesis, for Nemo. |
+| `decided_addGenesis_odontoceti` | Verdicts survive re-genesis, for Odontoceti. |
+| `decided_addGenesis_opt` | Verdicts survive re-genesis, for Optimal-Hydrozoan — the cell the fill could not have, because re-genesis … |
+| `decided_agree_addGenesisHZ` | And agreement across it. |
+| `decided_agree_addGenesis_finwhale` | And agreement across it. |
+| `decided_agree_addGenesis_mahimahi` | And agreement across it. |
+| `decided_agree_addGenesis_nemo` | And agreement across it. |
+| `decided_agree_addGenesis_odontoceti` | And agreement across it. |
+| `extends_addGenesisHZ` | — |
+| `extends_addGenesis_finwhale` | — |
+| `extends_addGenesis_hybrid` | — |
+| `extends_addGenesis_mahimahi` | Re-genesis extends Mahi-Mahi's carrier. |
+| `extends_addGenesis_nemo` | — |
+| `extends_addGenesis_odontoceti` | Re-genesis extends Odontoceti's carrier — the core's witness, projected. |
+| `extends_addGenesis_opt` | — |
+| `honestNoEquiv_addGenesis` | Re-genesis cannot make an honest validator equivocate: the new block's author has no other block. |
+| `leaderExcludedAll_addGenesisHZ` | Leader exclusion survives re-genesis. The new block is at round zero, so it is bound by no exclusion; and … |
+| `sustains_addGenesisHZ` | — |
+| `sustains_addGenesis_finwhale` | — |
+| `sustains_addGenesis_hybrid` | — |
+| `sustains_addGenesis_mahimahi` | And sustains it from round one. |
+| `sustains_addGenesis_nemo` | — |
+| `sustains_addGenesis_odontoceti` | And sustains it from round one. |
+| `sustains_addGenesis_opt` | — |
+
+### `Integration/ReactiveMechanisms.lean` (8)
+
+| Lemma | Role |
+|:---|:---|
+| `coversUpto_chop` | The chopped view covers the rebased horizon. |
+| `decidedBelow_of_run_chop_reactive` | Anchored liveness after the cut, for a reactive execution: a run of `c` reliably-led slots in the … |
 | `directCommit_addGenesis_reactive` | And re-genesis. A validator that rejoined with a fresh chain holds every reactive commit it held before. |
 | `directCommit_chop_reactive` | The reactive commit survives the cut. A validator that committed reactively still holds the commit in the … |
 | `directCommit_skipFill_reactive` | And the fill. A validator recovering by Safe Skip does not lose a commit the reactive discipline reached. |
+| `live_addGenesis_reactive` | And re-genesis. |
+| `live_chop_reactive` | The reactive precondition survives the cut, as the support's, at the re-indexed schedule. |
+| `live_skipFill_reactive` | And the fill, on any view of it caught up as far as the old one. |
 
 ### `Integration/Sound.lean` (4)
 
@@ -42810,7 +43166,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `toCore` | The two carriers project identically, so a band for one is a band for the other. |
 | `votes_band` | A vote is the vote it was. Both clauses read the same cone, and `candidatesAt_band` settles it as an … |
 
-### `MysticetiProperties.lean` (32)
+### `MysticetiProperties.lean` (31)
 
 | Lemma | Role |
 |:---|:---|
@@ -42824,7 +43180,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `certifies_band` | — |
 | `certifies_of_sustains` | The core's certificate predicate transports. |
 | `certifies_old` | — |
-| `coreSupport_local` | Law 1. A certifier two rounds above the settling round reads references strictly above it, which … |
 | `coversUpto_eq` | The carrier's coverage predicate is the core's, on the nose. |
 | `creatorsOf_old` | — |
 | `directCommitIn_band` | — |
@@ -42932,11 +43287,12 @@ subsection per module, in the layer order of Appendices B and C.
 | `truncates_chop_mahimahi` | The cut is a truncation of Mahi-Mahi's carrier too. |
 | `truncates_chop_odontoceti` | The cut is a truncation of Odontoceti's carrier too. |
 
-### `Properties/Arcs/Liveness.lean` (2)
+### `Properties/Arcs/Liveness.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
 | `certifiesAt_of_rebased` | Certification survives every mechanism, from Law 1. |
+| `decidedBelow_of_run_sustains` | Anchored liveness after a sustaining mechanism. A run of `c` reliably-led slots above `b` in the … |
 | `exists_decided_of_sustains` | A commit survives a sustaining mechanism, at the same schedule. |
 
 ### `Properties/Arcs/Quality.lean` (1)
@@ -43065,12 +43421,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `deliversOn_viewAt` | The witness. A paced validator delivers the reliable set from any round it has settled past — the … |
 | `le_settleBy` | — |
 
-### `Reactive/MysticetiProperties.lean` (2)
+### `Reactive/MysticetiProperties.lean` (1)
 
 | Lemma | Role |
 |:---|:---|
 | `certLive_of_reactiveLive` | The reactive discipline is the other bridge. `cert_or_wait` certifies every candidate of a reliably-led … |
-| `coreSupport_live_of_reactiveLive` | The reactive discipline reaches the core's support precondition (`Properties/Support.lean`): a reactive … |
 
 ### `WaveRobin.lean` (3)
 

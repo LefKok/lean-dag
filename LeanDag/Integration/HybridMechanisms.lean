@@ -109,6 +109,14 @@ theorem extends_skipFill_hybrid (sk : SkipMsg U.val) :
         (Payload := Payload) kt) U (skipFillHybrid U sk) :=
   extends_of_skipFill _ sk rfl rfl rfl rfl
 
+/-- **What the fill sustains, for Hybrid** — the core's witness,
+projected field by field. -/
+theorem sustains_skipFill_hybrid (sk : SkipMsg U.val) :
+    Sustains (HybridProperties.hybridRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) kt) U (skipFillHybrid U sk) 0 (sk.r + 1) :=
+  let h := sustains_skipFill (Payload := Payload) sk
+  { mem := h.mem, round := h.round, creator := h.creator, refs := h.refs }
+
 /-- **Verdicts survive the recovery, for Hybrid.** The replica that
 recovered reaches every verdict it reached before. -/
 theorem decided_skipFill_hybrid (hpos : 0 < kt) (sk : SkipMsg U.val)

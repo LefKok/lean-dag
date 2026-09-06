@@ -62,11 +62,16 @@ MECHANISMS = [
       "LeanDag.Properties.Arcs.decided_fill_of_persist",
       "LeanDag.Properties.Arcs.decided_fill_agree_of_properties"],
      ["Banded", "Agree"]),
+    ("re-genesis", {},
+     ["LeanDag.Integration.addGenesis", "LeanDag.Integration.addGenesisNemo",
+      "LeanDag.Integration.addGenesisFinWhale", "LeanDag.Integration.addGenesisHZ",
+      "LeanDag.Integration.addGenesisHybrid", "LeanDag.Integration.addGenesisOpt"],
+     ["Banded", "Agree"]),
     ("adaptive leaders",
      {"FinWhale": "no `BaseRule` instance",
       "Mahi-Mahi": "no `BaseRule` instance"},
-     ["LeanDag.Barnacle.descent_of_properties"],
-     ["LeaderCommits", "Indirect"]),
+     ["LeanDag.Barnacle.descent_of_support"],
+     ["Support", "Indirect"]),
     ("chain quality", {},
      ["LeanDag.Properties.Arcs.card_coveredAt_ge_of_decided",
       "LeanDag.Properties.Arcs.card_correct_le_two_mul_coveredAt_of_decided",
@@ -76,6 +81,20 @@ MECHANISMS = [
       "LeanDag.Properties.Arcs.chain_quality"],
      ["Causal", "Quorate", "CommitsCandidate"]),
 ]
+
+
+# Barnacle reaches a rule through its `LiveRule`, which extends the
+# carrier: a descent theorem names `mysticetiLive`, not `mysticetiRule`.
+# For the leaders column those names count as the rule's.
+LIVE_RULES = {
+    "core Mysticeti": ["Barnacle.mysticetiLive"],
+    "reactive Mysticeti": ["Barnacle.mysticetiLive"],
+    "Hydrozoan": ["Barnacle.hydrozoanLive"],
+    "Optimal-Hydrozoan": ["Barnacle.optimalHydrozoanLive"],
+    "Odontoceti": ["Barnacle.odontocetiLive"],
+    "Nemo": ["Barnacle.nemoLive"],
+    "Hybrid / Orcaella": ["Barnacle.orcaellaLive"],
+}
 
 
 def graph():
@@ -108,17 +127,39 @@ def main():
             for carrier in {c for _, cs, _ in conformance.RULES for c in cs}:
                 if "LeanDag." + carrier in used:
                     applied[name].add(carrier)
+            for rule, lives in LIVE_RULES.items():
+                for lv in lives:
+                    if "LeanDag." + lv in used:
+                        applied[name].update(
+                            cs for r, cs, _ in conformance.RULES if r == rule)
 
     width = max(len(name) for name, _, _ in conformance.RULES) + 1
     cols = [name for name, _, _, _ in MECHANISMS]
-    head = {"garbage collection": "cut", "extension": "extend",
+    head = {"garbage collection": "cut", "extension": "extend", "re-genesis": "regen",
             "adaptive leaders": "leaders", "chain quality": "quality"}
+    # Liveness across the DAG-transforming mechanisms is one generic theorem
+    # per shape (`Support.live_of_sustains`, `Support.live_of_truncates`), fed
+    # by the witness the mechanism already has. A rule with a support and a
+    # witness therefore has it with nothing written per cell, which the
+    # column scores as `der`; `yes` records an instance somebody did write.
+    LIVE_ENTRIES = ["LeanDag.Properties.Support.live_of_sustains",
+                    "LeanDag.Properties.Support.live_of_truncates",
+                    "LeanDag.Properties.Support.decidedBelow_of_run_sustains",
+                    "LeanDag.Properties.Support.decidedBelow_of_run_truncates"]
+    live_applied = set()
+    for d, used in uses.items():
+        if not any(e in used for e in LIVE_ENTRIES):
+            continue
+        for carrier in {c for _, cs, _ in conformance.RULES for c in cs}:
+            if "LeanDag." + carrier in used:
+                live_applied.add(carrier)
     print("mechanisms applied, by rule (`open` = the properties are there "
           "and nobody collected)\n")
-    print(" " * width + "  ".join(head[c].ljust(8) for c in cols))
+    print(" " * width + "  ".join(head[c].ljust(8) for c in cols) + "  live    ")
     gaps = []
     for rule, carriers, _ in conformance.RULES:
         cells = []
+        transformed = False
         for name, skip, _, needs in MECHANISMS:
             if not carriers or rule in skip:
                 cells.append("--      ")
@@ -127,11 +168,20 @@ def main():
             got = any(c in applied[name] for c in carriers)
             if got:
                 cells.append("yes     ")
+                if name in ("garbage collection", "extension", "re-genesis"):
+                    transformed = True
             elif has:
                 cells.append("open    ")
                 gaps.append((rule, name, needs))
             else:
                 cells.append("--      ")
+        has_supp = any(c in shown.get("Support", ()) for c in carriers)
+        if any(c in live_applied for c in carriers):
+            cells.append("yes     ")
+        elif has_supp and transformed:
+            cells.append("der     ")
+        else:
+            cells.append("--      ")
         print(rule.ljust(width) + "  ".join(cells))
 
     print()
@@ -143,6 +193,9 @@ def main():
             print(f"  {rule:20s} {name:20s} (has {', '.join(needs)})")
     else:
         print("no open cells.")
+    print("`live`: liveness across every DAG-transforming mechanism the rule has a witness\n"
+          "  for — `der` from the rule's support and the witness alone (`Arcs/Liveness.lean`),\n"
+          "  `yes` where an instance is written.")
     print("\n`--`: the rule has no carrier, does not show what the mechanism asks "
           "(which is\n`audit-conformance.py`'s business), or is out of scope for it:")
     for name, skip, _, _ in MECHANISMS:

@@ -2852,6 +2852,53 @@ how the heads argument names a good stretch of rounds, and a mechanism
 may keep its own vocabulary as long as it reaches the protocol through
 the properties.
 
+### 11.9 Liveness through the properties, closed
+
+§11.7 gave every rule a support and proved liveness on a covered DAG
+once. What it did not do was carry the precondition across a
+mechanism: `exists_decided_of_sustains` moved one slot's commit, and
+nothing moved `Support.live`, which is what every consumer downstream
+reads. `Arcs/Liveness.lean` now does, and the liveness half of part 2
+has the same shape as the safety half.
+
+| theorem | what it carries | fed by |
+|---|---|---|
+| `Support.live_of_sustains` | the whole window, at the same schedule | any `Sustains` — fill, re-genesis |
+| `Support.live_of_truncates` | the whole window, at the re-indexed schedule | any `Truncates` — the cut |
+| `decidedBelow_of_run_sustains`, `_truncates` | anchored liveness after the mechanism | the two above and `Descends` |
+
+Both take the transformed view as a hypothesis, because what a view of
+the transformed universe covers is the mechanism's business: a fill's
+blocks were never in the old view, and the chopped view is the old one
+cut down (`coversUpto_chop`). After `live` is carried, `LeaderCommits`,
+`decidedBelow_of_run`, chain quality and Barnacle all apply in the
+transformed universe with no further argument, for every rule with a
+support and every mechanism with a witness.
+
+**Measured as derivable.** `audit-mechanisms.py`'s `live` column reads
+`der` where the rule has a support and a `Sustains` or `Truncates`
+witness for at least one DAG-transforming mechanism, and `yes` where an
+instance is written. `der` is the honest score: the cell's content is
+the two theorems above, and writing twenty-seven one-line instances
+would only add code the audit already accounts for. The instances that
+are written are reactive Mysticeti's (`Integration/ReactiveMechanisms.lean`):
+the precondition of a reactive execution, carried across the cut, the
+fill and re-genesis at verdict level, and anchored liveness after the
+cut — the case §11.6a said had no route.
+
+**Re-genesis has its column.** The extension column had hidden it:
+`addGenesis` had a witness at the core only. `Integration/ReGenesisRules.lean`
+gives every rule one. Odontoceti and Mahi-Mahi take the core's
+construction, their universes being the core's; Hybrid takes it with
+`honestNoEquiv_addGenesis`; Nemo, FinWhale and Hydrozoan build their
+own on the same data, every clause of a reference-free round-zero block
+being vacuous or the identity. Optimal-Hydrozoan is the one with
+content, and it is the cell its fill could not have:
+`leaderExcludedAll_addGenesisHZ` — the new block is bound by no
+exclusion, being at round zero, and can be no second candidate of a
+witnessed equivocation, being its author's only block. Re-genesis adds
+no edge, which is exactly what leader exclusion cared about.
+
 ### 11.5 Next steps, in order
 
 1. **~~`Compose.lean`~~** (**done**, §11.3). The three composition
