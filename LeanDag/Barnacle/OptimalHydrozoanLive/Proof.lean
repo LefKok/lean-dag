@@ -8,10 +8,10 @@ import LeanDag.OptimalHydrozoan.Carrier
 
 Unaudited, and the mirror of `Barnacle/HydrozoanLive/Proof.lean`.
 `goodLeaders` was OH5 and `indirect` was OH6, each applied without
-adaptation; both are properties now — `LeaderCommits` and `Indirect` —
-and `descent_of_properties` assembles them, so what is left is the
-bridge from Optimal's good DAG to its own liveness precondition, which
-mentions no verdict. Round-robin liveness is `liveOn_roundRobin` at
+adaptation; both come from the properties now — OH5 from the support's
+`OfCoverage` and `Commits`, OH6 from `Indirect` — and
+`descent_of_support` assembles them, so what is left is the one-line
+fact that Optimal's good DAG is `GoodOf` at its own quorum. Round-robin liveness is `liveOn_roundRobin` at
 slack `f + c` and wave length three.
 -/
 

@@ -9,11 +9,11 @@ Not part of the audit surface. The descent laws for Mysticeti, and they
 are no longer proved here.
 
 `goodLeaders` was L4 applied and `indirect` was a case split on a
-certified candidate. Both are properties now — `LeaderCommits` and
-`Indirect` — and `descent_of_properties` assembles them. What is left in
-this file is the bridge: Mysticeti's notion of a good DAG is a
-synchronised, populated quorum, and that is `coreLive`'s precondition
-with the horizon read off the same numbers. It mentions no verdict.
+certified candidate. Both come from the properties now — L4 from
+`coreSupport`'s `OfCoverage` and `Commits`, the case split from
+`Indirect` — and `descent_of_support` assembles them. What is left in
+this file is the one-line fact that Mysticeti's good DAG — a
+synchronised, populated quorum — is `GoodOf` at the core's fault model.
 -/
 
 namespace LeanDag

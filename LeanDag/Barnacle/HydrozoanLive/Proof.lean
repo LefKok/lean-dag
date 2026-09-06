@@ -7,10 +7,10 @@ import LeanDag.Hydrozoan.Helpers.Commit
 # Barnacle over Hydrozoan — the live rule, proof
 
 Unaudited. `goodLeaders` was HZ5 and `indirect` was HZ6, each applied
-without adaptation. Both are properties now — `LeaderCommits` and
-`Indirect` — and `descent_of_properties` assembles them, so what is
-left is the bridge from Hydrozoan's good DAG to its own liveness
-precondition, which mentions no verdict. Round-robin liveness is
+without adaptation. Both come from the properties now — HZ5 from the
+support's `OfCoverage` and `Commits`, HZ6 from `Indirect` — and
+`descent_of_support` assembles them, so what is left is the one-line
+fact that Hydrozoan's good DAG is `GoodOf` at its own quorum. Round-robin liveness is
 `liveOn_roundRobin` at
 slack `f + c` and wave length three, whose bound `3·(f + c) + 1 ≤ n`
 is the committee bound, taken as a hypothesis rather than derived

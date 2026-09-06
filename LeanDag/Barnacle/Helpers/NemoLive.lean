@@ -8,14 +8,14 @@ import LeanDag.NemoProperties
 
 Not part of the audit surface. Every law here is a **property**: `Agree`,
 `CommitsDirect` and `CommitsCandidate` for the base laws, and
-`LeaderCommits` with `Indirect` for the descent, assembled by
-`descent_of_properties`. `Nemo/Carrier.lean` and `NemoProperties.lean`
+`voteSupport`'s `Commits` with `Indirect` for the descent, assembled by
+`descent_of_support`. `Nemo/Carrier.lean` and `NemoProperties.lean`
 are where `Nemo.decided_agree`, the direct constructor,
 `isLeaderBlock_of_decided` and `decided_of_leader_mem` are read; this
 file does not reach past them (`docs/porting-plan.md` step 1).
 
-What is left of the descent is the bridge from Nemo's notion of a good
-DAG to its own liveness precondition, which mentions no verdict. Nemo's
+What is left of the descent is the one-line fact that Nemo's good DAG
+is `GoodOf` at its fault model, where the reliable set is everyone. Nemo's
 slack is `n − majority`, not `f`: the strength is in the weaker `Good`,
 and that is unchanged.
 -/
