@@ -454,9 +454,9 @@ collection, crash recovery, re-genesis. A verdict reached
 before the change must be reachable after it, and that is an induction
 over derivations. These want §3's properties.
 
-`hydrozoan-integration.md` §9 argues that no record of *uses* can
-carry such a result, because `BaseRule.Decided` is a field with no
-constructors while the transport proof inducts over derivations.
+No record of *uses* can carry such a result by itself, because
+`BaseRule.Decided` is a field with no constructors while a transport
+proof inducts over derivations.
 **That argument holds and does not obstruct this arc**, because nothing
 here inducts on the interface's relation: locality and persistence are
 *hypotheses*, discharged by each protocol over its own relation where
@@ -882,8 +882,8 @@ unsupporting `T`-block is a blame, so the blamers in view include all of
 `T`, and the direct skip fires once `T` is large enough. A quorum of
 correct replicas has `q = n − f − c` members against `qFast = n − p`, so
 **a correct quorum skips an unsupported slot exactly when `f + c ≤ p`**
-— the condition `hydrozoan-integration.md` §5.1 found by hand,
-recovered here as the grade of a property rather than as a remark.
+— the condition `hydrozoan-integration.md` §2 records, here the grade
+of a property rather than a remark.
 **The core's grade is `quorumCard ≤ |T|` — a correct quorum**
 (`MysticetiProperties.skipsUnsupported`). Its skip counts, per
 candidate, the voting-round blocks that do *not* reference it; if every
@@ -1799,14 +1799,14 @@ constructors would not be.
 **Black Marlin and Minnow are out of scope**, being unsafe.
 
 That FinWhale's rule is not inductive is a second reason to prefer
-semantic properties over the generic inductive relation that
-`transformer-interface.md` §2 proposed.
+semantic properties over a generic inductive relation, which an
+earlier interface proposal (since removed) suggested.
 
 ---
 
 ## 7. What this supersedes, and why
 
-`transformer-interface.md` §2 proposed a generic inductive `Decided`
+An earlier interface proposal, since removed, suggested a generic inductive `Decided`
 with a `RuleSpec` of parameters, each protocol proving an equivalence
 to it. A partial build — since removed — showed the schema is
 expressible in **four** constructors for all nine inductive relations,
@@ -3400,8 +3400,8 @@ rule. §11.13 records their removal.
 ### 11.13 The bespoke integrations retired
 
 The decision §11.12 deferred is taken: the two integration chapters
-(`docs/integration.md`, `docs/hydrozoan-integration.md`) are retired,
-and the code they described is deleted.
+(`docs/integration.md`, `docs/hydrozoan-integration.md`) are rewritten
+to the current code, and the code they first described is deleted.
 
 **Hydrozoan.** `Integration/Hydrozoan/` — thirteen files carrying
 Hydrozoan universes into the core's and back under a self-parent

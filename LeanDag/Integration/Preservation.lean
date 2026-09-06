@@ -5,8 +5,7 @@ import LeanDag.Hybrid.Faults
 /-!
 # Preservation: the transformer × invariant table, layer U
 
-The integration arc's core move (`integration.md` report §3.1). Each lemma
-here has the shape
+Each lemma here has the shape
 
     I U  →  I (F U)
 

@@ -8,14 +8,12 @@ import LeanDag.Hydrozoan.Helpers.Carrier
 
 The dual-path commit rule under hybrid faults (`LeanDag/Hydrozoan/`;
 `docs/hydrozoan.md`) as a base rule with its laws, so that the adaptive
-leader count of `LeanDag/Barnacle/` runs over it. The liveness half —
-`LiveRule`, `Good` and the descent laws — is P2
-(`docs/hydrozoan-integration.md` §13).
+leader count of `LeanDag/Barnacle/` runs over it. The liveness half — `LiveRule`, `Good` and the descent laws — is `Barnacle/HydrozoanLive/` (`docs/hydrozoan-integration.md` §3).
 
 **What this instantiation needs, and what it does not.** It reads
 Hydrozoan's arc through the block adapter of `Helpers/Hydrozoan.lean`
 and nothing else. In particular it needs **neither** the committee
-condition `c ≤ k` of `docs/hydrozoan-integration.md` §2 **nor** the
+condition `c ≤ k` **nor** the
 self-parent clause of its §3: `BaseRule.Universe` is an arbitrary type,
 so the interface never asks a Hydrozoan universe to be a core one, and
 the history layer it does ask for comes from `CausalStructure`, whose

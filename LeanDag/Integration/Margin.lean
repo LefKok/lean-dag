@@ -3,7 +3,7 @@ import LeanDag.Integration.DeliveryFill
 /-!
 # I17, I18 — the two remaining readings, made theorems
 
-Two claims this arc stated but did not prove (`integration.md` §4.3).
+Two readings of the storage account, as theorems (`integration.md` §3.5).
 
 **I17 — a severed validator counts against the fault budget.** A
 validator whose history fell below a horizon can read after bootstrap

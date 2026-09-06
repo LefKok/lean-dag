@@ -26,10 +26,7 @@ every clause the interface states over `refs` reads Hydrozoan's
 and id-set through `CausalStructure`, whose two fields are completeness
 and the predecessor condition — no quorum, no fault model, no validity
 beyond that. A Hydrozoan universe supplies both from its own fields, so
-the history layer applies to it with **no side condition**: neither the
-self-parent clause of `docs/hydrozoan-integration.md` §3 nor the
-committee condition of its §2 is consumed here, which is why this file
-imports no bridge.
+the history layer applies to it with **no side condition**: neither a self-parent clause nor a committee condition is consumed here (`docs/hydrozoan-integration.md` §3), which is why this file imports no bridge.
 
 **The history view.** The interface's `historyView_ids` law demands a
 view whose ids are exactly `historyFrom`, so the view is *defined* with

@@ -19,7 +19,7 @@ mirror of `Barnacle/Hydrozoan/`, with three differences.
   `LeaderExcludedAll`, the same clause stated over a `(round, leader)`
   pair rather than a slot, from which `optUniverseOf` builds an
   `OptUniverse` at whatever schedule the interface hands
-  (`docs/hydrozoan-integration.md` §4.1).
+  (`docs/hydrozoan-integration.md` §3).
 * **No order on identifiers.** Optimal's evidence rung needs no
   tie-break (`optimal-hydrozoan.md` §7), so `DecidableEq` suffices
   where Hydrozoan's instantiation takes a `LinearOrder`.

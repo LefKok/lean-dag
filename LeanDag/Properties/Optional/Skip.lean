@@ -51,8 +51,7 @@ none, and nothing in the setting says a rule must.
 Promptness, and a deployment condition. Hydrozoan needs `qFast ≤ |T|`,
 because its skip is `qFast` blames at the slot. A quorum of correct
 replicas has `q = n − f − c` and `qFast = n − p`, so a correct quorum
-suffices exactly when `f + c ≤ p` — which is
-`hydrozoan-integration.md` §5.1's condition, recovered here as a grade.
+suffices exactly when `f + c ≤ p` — which is the condition `hydrozoan-integration.md` §2 records, as a grade.
 The core reaches it at a correct quorum. Optimal-Hydrozoan's skip wants
 `qCert` blames and a no-evidence quorum at the decision round, two
 rounds of presence where this supplies one, so its instance would

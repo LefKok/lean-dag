@@ -30,8 +30,7 @@ What is pinned:
 Every Hydrozoan name is written out. The witness universe's own
 `Slots (Fin 7)` instance is in scope, and so is the rule's namespace;
 each statement below fixes the schedule explicitly as `S7`, so nothing
-depends on which instance resolution would otherwise pick — the
-discipline `docs/hydrozoan-integration.md` §12 records for this arc.
+depends on which instance resolution would otherwise pick — the discipline `docs/hydrozoan-integration.md` §5 records for this arc.
 -/
 
 namespace LeanDagTest

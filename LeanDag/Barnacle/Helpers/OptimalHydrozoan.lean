@@ -4,8 +4,7 @@ import LeanDag.OptimalHydrozoan.Model.Decided
 /-!
 # Optimal-Hydrozoan instance helpers — the schedule-free exclusion rule
 
-Not part of the audit surface. What `docs/hydrozoan-integration.md`
-§4.1's obstacle needs, in the form that resolves it.
+Not part of the audit surface. The leader-exclusion clause in the form the interface can carry (`docs/hydrozoan-integration.md` §3).
 
 **The obstacle.** `OptUniverse` is indexed by a `Slots` instance,
 because its `leader_excluded` field names `S.leader k` and

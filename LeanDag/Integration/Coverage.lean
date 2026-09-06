@@ -6,9 +6,7 @@ import LeanDag.Timed.Coverage
 /-!
 # I5 — the fill does not restore coverage, and why that is correct
 
-`integration.md` predicted this cell would come out negative and
-proposed exhibiting a counterexample on data. It is in fact refutable
-*in general*, which is a better outcome: `not_synchronisedOn_skipFill`
+Coverage is refutable under the fill *in general* (`integration.md` §3.1): `not_synchronisedOn_skipFill`
 shows coverage fails at every gap round of every fill, on no
 hypotheses beyond the ones that make the fill worth doing.
 

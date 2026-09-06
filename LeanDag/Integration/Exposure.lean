@@ -4,9 +4,7 @@ import LeanDag.SafeSkip.Invariance
 /-!
 # I1 — the fill enlarges cones, and what that costs
 
-`integration.md` §5.6 predicted that `DoSValid` fails under the Safe
-Skip fill. This file establishes the mechanism, which is the part worth
-having: **the fill's blocks reach strictly more than the donor's do.**
+`DoSValid` is not preserved by the Safe Skip fill as it stands (`integration.md` §3.4). This file establishes the mechanism: **the fill's blocks reach strictly more than the donor's do.**
 
 `fillBlock` is the donor's references *plus* a self reference to `v1`'s
 chain (P3′ forces it, report §12.1). So a filled block's cone is the

@@ -35,7 +35,7 @@ on the cut, so this is a genuine interaction rather than a detail: a
 re-genesis convention needs the *lagging* validators — those retaining
 more history — to accept a block their own rules reject. That is the
 one thing the construction below cannot supply, and it is recorded in
-`integration.md` report §5.7 rather than papered over.
+`integration.md` §3.3 rather than papered over.
 -/
 
 namespace LeanDag

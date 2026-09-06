@@ -31,8 +31,7 @@ listed.
 **The last grade is the finding.** A quorum of correct replicas has
 `q = n − f − c` members and Hydrozoan's skip needs `qFast = n − p`, so a
 correct quorum skips an unsupported slot exactly when `f + c ≤ p` — the
-condition `docs/hydrozoan-integration.md` §5.1 found by hand, recovered
-here as the grade of a property. Optimal-Hydrozoan's skip is at
+condition `docs/hydrozoan-integration.md` §2 records, the grade of a property. Optimal-Hydrozoan's skip is at
 `qCert ≤ q` and needs no such condition.
 
 What conformance is worth: any mechanism stated against these

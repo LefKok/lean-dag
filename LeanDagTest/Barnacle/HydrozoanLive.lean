@@ -76,9 +76,7 @@ example : ∃ T : Finset (Fin 4),
 /-! ## The committee condition is a real restriction
 
 `RoundRobinLive` consumes `c ≤ k` exactly once, at
-`liveOn_roundRobin`'s bound `3·(f + c) + 1 ≤ n`. It holds at the
-configurations above and fails at the five-replica one that
-`docs/hydrozoan-integration.md` §11 records. -/
+`liveOn_roundRobin`'s bound `3·(f + c) + 1 ≤ n`. It holds at the configurations above and fails at the five-replica one below. -/
 
 example : LeanDagTest.Hydrozoan.fourReplicas.c
     ≤ LeanDagTest.Hydrozoan.fourReplicas.k := by decide
