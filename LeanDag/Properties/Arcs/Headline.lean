@@ -1,5 +1,6 @@
 import LeanDag.Properties.Arcs.Stack
 import LeanDag.Properties.Arcs.Quality
+import LeanDag.Properties.Derived.FromBand
 
 /-!
 # The headline theorems: safety and liveness, from the properties
@@ -10,12 +11,16 @@ consensus paper expects.
 
 **Safety** (`Safe`, from `Banded`, `Agree`, `CommitsCandidate`) is
 stated across a `Stack`: any composition of cuts, fills and re-genesis,
-in any order, the empty stack included. Four clauses: verdicts above the
-settling round transport to the composite's numbering; any view of the
-composite agrees with any view of the source; a commit names a real
-block of its slot; and no block is committed at two slots. The ledger
-reading — two validators that have decided prefixes agree on the common
-prefix — is `Safe.prefix_agree`.
+in any order, the empty stack included. Four clauses there: verdicts
+above the settling round transport to the composite's numbering; any
+view of the composite agrees with any view of the source; a commit
+names a real block of its slot; and no block is committed at two slots.
+A fifth clause reads an extension step on its own: across an
+`Extends`, verdicts agree at *every* slot, with no settling round —
+which is what a fill's gap slots need, since the stack abstracts a fill
+to a `Sustains` that settles only above the gap. The ledger reading —
+two validators that have decided prefixes agree on the common prefix —
+is `Safe.prefix_agree`.
 
 **Liveness** (`Lives`, from a support's `Commits`, `CommitsCandidate`,
 `SelfParent` and `NoEquiv`) has one antecedent, `Support.live`:
@@ -53,9 +58,10 @@ theorem DagRule.IsCandidate.slot_unique {S : Slots Validator} {U : R.Universe} {
   S.keyed (a₁ := k) (a₂ := k')
     (Prod.ext (h.2.1.symm.trans h'.2.1) (h.2.2.symm.trans h'.2.2))
 
-/-- **Safety, across any stack of mechanisms.** -/
+/-- **Safety, across any stack of mechanisms**, and at every slot across
+an extension. -/
 def Safe (R : DagRule Validator BlockId Payload) : Prop :=
-  ∀ {U U' : R.Universe} {S S' : Slots Validator} {G R₀ d : ℕ}, Stack R U S U' S' G R₀ d →
+  (∀ {U U' : R.Universe} {S S' : Slots Validator} {G R₀ d : ℕ}, Stack R U S U' S' G R₀ d →
     ∀ {V : R.View U} {V' : R.View U'}, ViewAgreeAbove R V V' R₀ →
       (∀ (k : ℕ) (v : Option BlockId), R₀ ≤ S.slotRound (d + k) →
           (R.Decided S V (d + k) v ↔ R.Decided S' V' k v)) ∧
@@ -64,17 +70,25 @@ def Safe (R : DagRule Validator BlockId Payload) : Prop :=
       (∀ (W : R.View U') (k : ℕ) (L : BlockId), R.Decided S' W k (some L) →
           R.IsCandidate S' U' k L) ∧
       (∀ (W : R.View U') (k k' : ℕ) (L : BlockId), R.Decided S' W k (some L) →
-          R.Decided S' W k' (some L) → k = k')
+          R.Decided S' W k' (some L) → k = k')) ∧
+  (∀ {U U' : R.Universe}, Extends R U U' → ∀ (S : Slots Validator)
+    {V : R.View U} {V' W : R.View U'}, R.viewIds V ⊆ R.viewIds V' →
+      ∀ (k : ℕ) (v w : Option BlockId), R.Decided S V k v → R.Decided S W k w → v = w)
 
 /-- **The safety headline.** Transport and agreement are
 `Stack.safe_and_live`'s first two clauses; integrity is
-`CommitsCandidate`; uniqueness is the keyed schedule. -/
+`CommitsCandidate`; uniqueness is the keyed schedule; agreement across
+an extension at every slot is `Persist` (the band at no offset) and
+`Agree`. -/
 theorem safety (hb : Banded R) (ha : Agree R) (hcc : CommitsCandidate R) : Safe R := by
-  intro U U' S S' G R₀ d st V V' hv
-  exact ⟨fun k v hk => decided_of_rebased hb st.rebased hv k hk v,
-    fun _ k _ _ hk hW hV => decided_agree_rebased ha hb st.rebased hv hk hW hV,
-    fun W k L h => hcc S' U' W k L h,
-    fun W k k' L h h' => (hcc S' U' W k L h).slot_unique (hcc S' U' W k' L h')⟩
+  refine ⟨?_, ?_⟩
+  · intro U U' S S' G R₀ d st V V' hv
+    exact ⟨fun k v hk => decided_of_rebased hb st.rebased hv k hk v,
+      fun _ k _ _ hk hW hV => decided_agree_rebased ha hb st.rebased hv hk hW hV,
+      fun W k L h => hcc _ _ W k L h,
+      fun W k k' L h h' => (hcc _ _ W k L h).slot_unique (hcc _ _ W k' L h')⟩
+  · intro U U' he S V V' W hsub k v w hV hW
+    exact ha S V' W k v w (Persist.of_banded hb S _ _ he V V' hsub k v hV) hW
 
 /-- **The ledger reading.** Two validators' verdict functions agree on
 every slot both have decided above the settling round — the common
@@ -86,7 +100,7 @@ theorem Safe.prefix_agree (hs : Safe R) {U U' : R.Universe} {S S' : Slots Valida
     (hg : ∀ k, k < n → R.Decided S V (d + k) (g k))
     (hg' : ∀ k, k < n → R.Decided S' W k (g' k)) :
     ∀ k, k < n → g' k = g k :=
-  fun k hk => (hs st hv).2.1 W k (g' k) (g k) (hn k hk) (hg' k hk) (hg k hk)
+  fun k hk => (hs.1 st hv).2.1 W k (g' k) (g k) (hn k hk) (hg' k hk) (hg k hk)
 
 /-! ## Liveness -/
 

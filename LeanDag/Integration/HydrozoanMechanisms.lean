@@ -435,6 +435,22 @@ theorem decided_none_fresh_hz (S : Slots Replica) {V : LeanDag.Hydrozoan.View U}
     (fun L hL => candidates_fresh_hz S hlead hk1 hk2 hL)
     (fun c hcV _ _ => V.subset_ids hcV)
 
+/-- **And it conflicts with no verdict.** -/
+theorem decided_none_fresh_agree_hz (S : Slots Replica) {V : LeanDag.Hydrozoan.View U}
+    {T : Finset Replica} {k : ℕ} (hq : LeanDag.Hydrozoan.qFast Replica ≤ T.card)
+    (hlead : S.leader k = sk.v1) (hk1 : sk.r0 < S.slotRound k) (hk2 : S.slotRound k ≤ sk.r)
+    (hpres : PresentAt (LeanDag.Hydrozoan.rule (Replica := Replica) (BlockId := BlockId)) V T
+      (S.slotRound k + 1))
+    {U'' : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
+    (he' : Extends (LeanDag.Hydrozoan.rule (Replica := Replica) (BlockId := BlockId))
+      (copyFillHZ U sk) U'')
+    {V'' W : LeanDag.Hydrozoan.View U''} (hsub : (liftViewHZ sk V).ids ⊆ V''.ids)
+    {v : Option BlockId}
+    (hW : (LeanDag.Hydrozoan.rule (Replica := Replica) (BlockId := BlockId)).Decided S
+      (U := U'') W k v) : v = none :=
+  (decided_agree_extends LeanDag.Hydrozoan.agree (Persist.of_banded LeanDag.Hydrozoan.banded)
+    he' (V := liftViewHZ sk V) (V' := V'') hsub (decided_none_fresh_hz S hq hlead hk1 hk2 hpres) hW).symm
+
 end Integration
 
 end LeanDag

@@ -163,6 +163,27 @@ theorem decided_none_fresh_hybrid {U : (HybridProperties.hybridRule (Validator :
     (fun L hL => candidates_fresh (S := S) sk hlead hk1 hk2 hL)
     (fun c hcV _ _ => V.subset_ids hcV)
 
+/-- **And it conflicts with no verdict**, at an admissible threshold. -/
+theorem decided_none_fresh_agree_hybrid {U : (HybridProperties.hybridRule (Validator := Validator)
+    (BlockId := BlockId) (Payload := Payload) kt).Universe} (sk : SkipMsg U.val)
+    (hpos : 0 < kt) (hk : Hybrid.Admissible Validator kt)
+    {V : View Validator BlockId Payload U.val} {T : Finset Validator} {k : ℕ}
+    (hq : Hybrid.q Validator ≤ T.card)
+    (hlead : S.leader k = sk.v1) (hk1 : sk.r0 < S.slotRound k) (hk2 : S.slotRound k ≤ sk.r)
+    (hpres : PresentAt (HybridProperties.hybridRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) kt) V T (S.slotRound k + 1))
+    {U'' : (HybridProperties.hybridRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) kt).Universe}
+    (he' : Extends (HybridProperties.hybridRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) kt) (skipFillHybrid U sk) U'')
+    {V'' W : View Validator BlockId Payload U''.val} (hsub : (sk.liftView V).ids ⊆ V''.ids)
+    {v : Option BlockId}
+    (hW : (HybridProperties.hybridRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) kt).Decided S (U := U'') W k v) : v = none :=
+  (decided_agree_extends (HybridProperties.agree hk)
+    (Persist.of_banded (HybridProperties.banded hpos)) he' (V := sk.liftView V) (V' := V'') hsub
+    (decided_none_fresh_hybrid sk hq hlead hk1 hk2 hpres) hW).symm
+
 end Integration
 
 end LeanDag

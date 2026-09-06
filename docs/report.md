@@ -3404,8 +3404,8 @@ theorem decided_unique (h₁ : Decided U V₁ k v₁) :
 Safety proper is the headline (`Properties/Arcs/Headline.lean`) at
 Odontoceti's rule, `OdontocetiProperties.safety : Properties.Safe
 odontocetiRule`: across any stack of mechanisms, verdicts transport,
-any two views agree, a commit is the slot's candidate and no block is
-committed twice. The rule-level statement that two committed blocks for
+any two views agree, a commit is the slot's candidate, no block is
+committed twice, and across an extension every slot agrees. The rule-level statement that two committed blocks for
 one slot coincide was its second clause at the empty stack, and is
 retired.
 
@@ -25685,7 +25685,7 @@ A truncation asks exactly this of its views, so there is one definition where th
 
 ```lean
 def Safe (R : DagRule Validator BlockId Payload) : Prop :=
-  ∀ {U U' : R.Universe} {S S' : Slots Validator} {G R₀ d : ℕ}, Stack R U S U' S' G R₀ d →
+  (∀ {U U' : R.Universe} {S S' : Slots Validator} {G R₀ d : ℕ}, Stack R U S U' S' G R₀ d →
     ∀ {V : R.View U} {V' : R.View U'}, ViewAgreeAbove R V V' R₀ →
       (∀ (k : ℕ) (v : Option BlockId), R₀ ≤ S.slotRound (d + k) →
           (R.Decided S V (d + k) v ↔ R.Decided S' V' k v)) ∧
@@ -25694,10 +25694,13 @@ def Safe (R : DagRule Validator BlockId Payload) : Prop :=
       (∀ (W : R.View U') (k : ℕ) (L : BlockId), R.Decided S' W k (some L) →
           R.IsCandidate S' U' k L) ∧
       (∀ (W : R.View U') (k k' : ℕ) (L : BlockId), R.Decided S' W k (some L) →
-          R.Decided S' W k' (some L) → k = k')
+          R.Decided S' W k' (some L) → k = k')) ∧
+  (∀ {U U' : R.Universe}, Extends R U U' → ∀ (S : Slots Validator)
+    {V : R.View U} {V' W : R.View U'}, R.viewIds V ⊆ R.viewIds V' →
+      ∀ (k : ℕ) (v w : Option BlockId), R.Decided S V k v → R.Decided S W k w → v = w)
 ```
 
-**Safety, across any stack of mechanisms.**
+**Safety, across any stack of mechanisms**, and at every slot across an extension.
 
 #### `Progresses`
 
@@ -39506,7 +39509,7 @@ theorem decided_agree_chop (hd : G ≤ S.slotRound d)
 theorem safety (hb : Banded R) (ha : Agree R) (hcc : CommitsCandidate R) : Safe R
 ```
 
-**The safety headline.** Transport and agreement are `Stack.safe_and_live`'s first two clauses; integrity is `CommitsCandidate`; uniqueness is the keyed schedule.
+**The safety headline.** Transport and agreement are `Stack.safe_and_live`'s first two clauses; integrity is `CommitsCandidate`; uniqueness is the keyed schedule; agreement across an extension at every slot is `Persist` (the band at no offset) and `Agree`.
 
 #### `progress`
 
@@ -40621,7 +40624,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 1036 lemmas used only within the file that proves
+The 1041 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -42296,20 +42299,21 @@ subsection per module, in the layer order of Appendices B and C.
 | `skipFillFinWhale_block_old` | — |
 | `viewAgreeAbove_chop_finwhale` | The chopped view agrees with the original above the cut. |
 
-### `Integration/HybridMechanisms.lean` (8)
+### `Integration/HybridMechanisms.lean` (9)
 
 | Lemma | Role |
 |:---|:---|
 | `decided_agree_chop_hybrid` | And cross-cut agreement, from an arbitrary view of the truncation: a validator that joined from the cut … |
 | `decided_agree_skipFill_hybrid` | And agreement across it: a validator that recovered agrees with one that did not, from any view of the fill. |
 | `decided_chop_iff_hybrid` | Verdict transport across the cut, for Hybrid. A validator that has pruned below the horizon reaches … |
+| `decided_none_fresh_agree_hybrid` | And it conflicts with no verdict, at an admissible threshold. |
 | `decided_none_fresh_hybrid` | SS3 for Hybrid, from its `SkipsUnsupported`: the slot the recovering replica leads at a gap round is … |
 | `decided_skipFill_hybrid` | Verdicts survive the recovery, for Hybrid. The replica that recovered reaches every verdict it reached before. |
 | `extends_skipFill_hybrid` | The fill is an extension of Hybrid's carrier. |
 | `sustains_skipFill_hybrid` | What the fill sustains, for Hybrid — the core's witness, projected field by field. |
 | `truncates_chop_hybrid` | The cut is a truncation of Hybrid's carrier. The core's witness, projected: the subtype's `ids` and … |
 
-### `Integration/HydrozoanMechanisms.lean` (9)
+### `Integration/HydrozoanMechanisms.lean` (10)
 
 | Lemma | Role |
 |:---|:---|
@@ -42319,6 +42323,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `copyFillHZ_parents_old` | An old block's parents are old. |
 | `decided_agree_chop_hz` | And cross-cut agreement. |
 | `decided_copyFillHZ` | Verdicts survive the recovery, for Hydrozoan. |
+| `decided_none_fresh_agree_hz` | And it conflicts with no verdict. |
 | `decided_none_fresh_hz` | SS3 for Hydrozoan, from its `SkipsUnsupported`: the slot the recovering replica leads at a gap round is … |
 | `extends_copyFillHZ` | The fill is an extension of Hydrozoan's carrier. |
 | `sustains_copyFillHZ` | What the fill sustains: from the top of its gap. |
@@ -42571,7 +42576,7 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `card_correct_le_two_mul_coveredAt` | CQ2 (the half, where the committee gives it). Every cone carries, at every round below it, blocks from at … |
 
-### `Properties/Arcs/SafeSkip.lean` (7)
+### `Properties/Arcs/SafeSkip.lean` (10)
 
 | Lemma | Role |
 |:---|:---|
@@ -42579,7 +42584,10 @@ subsection per module, in the layer order of Appendices B and C.
 | `decided_fill_agree_odontoceti` | And agreement across it. |
 | `decided_fill_mahimahi` | Verdicts survive the fill, for Mahi-Mahi. |
 | `decided_fill_odontoceti` | Verdicts survive the fill, for Odontoceti. |
+| `decided_none_fresh_agree` | And the skip conflicts with no verdict: any view of the fill, or of any extension of it a caught-up view … |
+| `decided_none_fresh_agree_odontoceti` | And it conflicts with no verdict. |
 | `decided_none_fresh_odontoceti` | SS3 for Odontoceti: the slot the recovering replica leads at a gap round is skipped at once, from its … |
+| `decided_none_of_novel_agree` | The prompt skip conflicts with no verdict. On any view of the extension, and on any view of any further … |
 | `decided_skipFill` | Verdicts survive the recovery, for any protocol that has proved persistence. The replica that recovered … |
 | `presentAt_liftView` | Presence in the pre-crash view is presence in the lifted one: the ids are the same and old blocks are … |
 

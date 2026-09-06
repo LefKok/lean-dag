@@ -108,6 +108,25 @@ theorem decided_agree_extends {R : DagRule Validator BlockId Payload}
     (hV : R.Decided S V k v) (hW : R.Decided S W k w) : v = w :=
   ha S V' W k v w (hp S U U' he V V' hsub k v hV) hW
 
+omit [Faults Validator] in
+/-- **The prompt skip conflicts with no verdict.** On any view of the
+extension, and on any view of any further extension a caught-up view
+reaches, a verdict at the skipped slot is `none`: `Agree` at the
+extension, `Persist` past it. -/
+theorem decided_none_of_novel_agree {R : DagRule Validator BlockId Payload}
+    (ha : Agree R) (hb : Banded R) {Ok : Finset Validator → Prop} (hsk : SkipsUnsupported R Ok)
+    {U U' : R.Universe} (he : Extends R U U') (S : Slots Validator)
+    {V' : R.View U'} {T : Finset Validator} {k : ℕ} (hok : Ok T)
+    (hpres : PresentAt R V' T (S.slotRound k + 1))
+    (hnov : ∀ L, R.IsCandidate S U' k L → L ∉ R.ids U)
+    (hold : ∀ c, c ∈ R.viewIds V' → (R.block U' c).creator ∈ T →
+      (R.block U' c).round = S.slotRound k + 1 → c ∈ R.ids U)
+    {U'' : R.Universe} (he' : Extends R U' U'') {V'' W : R.View U''}
+    (hsub : R.viewIds V' ⊆ R.viewIds V'') {v : Option BlockId} (hW : R.Decided S W k v) :
+    v = none :=
+  (decided_agree_extends ha (Persist.of_banded hb) he' hsub
+    (decided_none_of_novel hsk he S hok hpres hnov hold) hW).symm
+
 /-! ## For the core: the grade the fill meets, and the bespoke theorem re-derived
 
 The consumer test for `MysticetiProperties.persist`. The bespoke
@@ -245,6 +264,21 @@ theorem decided_none_fresh [S : Slots Validator] (sk : SkipMsg U)
     (presentAt_liftView sk hpres) (fun L hL => candidates_fresh sk hlead hk1 hk2 hL)
     (fun c hcV _ _ => V.subset_ids hcV)
 
+/-- **And the skip conflicts with no verdict**: any view of the fill, or
+of any extension of it a caught-up view reaches, decides the slot
+`none` if at all. -/
+theorem decided_none_fresh_agree [S : Slots Validator] (sk : SkipMsg U)
+    {V : View Validator BlockId Payload U} {T : Finset Validator} {k : ℕ}
+    (hcard : quorumCard Validator ≤ T.card)
+    (hlead : S.leader k = sk.v1) (hk1 : sk.r0 < S.slotRound k) (hk2 : S.slotRound k ≤ sk.r)
+    (hpres : PresentAt MysticetiProperties.mysticetiRule V T (S.slotRound k + 1))
+    {U'' : BlockUniverse Validator BlockId Payload}
+    (he' : Extends MysticetiProperties.mysticetiRule sk.skipFill U'')
+    {V'' W : View Validator BlockId Payload U''} (hsub : (sk.liftView V).ids ⊆ V''.ids)
+    {v : Option BlockId} (hW : Decided U'' W k v) : v = none :=
+  (decided_agree_extends MysticetiProperties.agree (Persist.of_banded MysticetiProperties.banded)
+    he' (V := sk.liftView V) (V' := V'') hsub (decided_none_fresh sk hcard hlead hk1 hk2 hpres) hW).symm
+
 end Core
 
 end Faults
@@ -306,6 +340,21 @@ theorem decided_none_fresh_odontoceti [S : Slots Validator] (sk : SkipMsg W)
         rw [sk.skipFill_block_old hcU]; exact hcr)
     (fun L hL => candidates_fresh sk hlead hk1 hk2 hL)
     (fun c hcV _ _ => V.subset_ids hcV)
+
+/-- **And it conflicts with no verdict.** -/
+theorem decided_none_fresh_agree_odontoceti [S : Slots Validator] (sk : SkipMsg W)
+    {V : View Validator B Payload W} {T : Finset Validator} {k : ℕ}
+    (hcard : quorumCard Validator ≤ T.card)
+    (hlead : S.leader k = sk.v1) (hk1 : sk.r0 < S.slotRound k) (hk2 : S.slotRound k ≤ sk.r)
+    (hpres : PresentAt (OdontocetiProperties.odontocetiRule (Payload := Payload)) V T
+      (S.slotRound k + 1))
+    {U'' : BlockUniverse Validator B Payload}
+    (he' : Extends (OdontocetiProperties.odontocetiRule (Payload := Payload)) sk.skipFill U'')
+    {V'' Y : View Validator B Payload U''} (hsub : (sk.liftView V).ids ⊆ V''.ids)
+    {v : Option B} (hY : Odontoceti.Decided U'' Y k v) : v = none :=
+  (decided_agree_extends OdontocetiProperties.agree
+    (Persist.of_banded OdontocetiProperties.banded) he' (V := sk.liftView V) (V' := V'') hsub
+    (decided_none_fresh_odontoceti sk hcard hlead hk1 hk2 hpres) hY).symm
 
 end Odontoceti
 

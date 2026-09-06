@@ -3223,9 +3223,10 @@ re-genesis, in any order, the empty stack included. Four clauses:
 verdicts above the settling round transport to the composite's
 numbering; any view of the composite agrees with any view of the
 source; a commit is a real block of its slot; and no block is committed
-at two slots (`IsCandidate.slot_unique`, from `Slots.keyed`). The
-ledger reading, that two validators with decided prefixes agree on the
-common prefix, is `Safe.prefix_agree`.
+at two slots (`IsCandidate.slot_unique`, from `Slots.keyed`); and a
+fifth, across an `Extends` at every slot (§11.20). The ledger reading,
+that two validators with decided prefixes agree on the common prefix,
+is `Safe.prefix_agree`.
 
 **Liveness** — `Lives sp rel`, from the support's `Commits`,
 `CommitsCandidate`, `SelfParent` and `NoEquiv`, as `Progresses ∧
@@ -3299,6 +3300,20 @@ them in a `prompt` column, owed exactly by the rules that show the
 property; Nemo, Mahi-Mahi, FinWhale and Optimal-Hydrozoan read `--`,
 which is the honest reading: their slots are settled by an anchor, not
 at once.
+
+**A fifth clause, and the skip's finality.** `Safe` has a fifth clause
+since the prompt skip was added: across an `Extends`, read on its own,
+verdicts agree at *every* slot, with no settling round — `Persist` and
+`Agree`. The stack clauses could not say it, because the stack
+abstracts a fill to a `Sustains` that settles only above the gap, and
+the skipped slot sits inside the gap. With it, the question "can the
+prompt skip conflict with a decision?" has one answer in the headline:
+no view of the fill, and no view of any extension a caught-up view
+reaches, decides that slot other than `none`. That answer is stated
+directly as `decided_none_of_novel_agree` in `Arcs/SafeSkip.lean`,
+with instances `decided_none_fresh_agree` (core),
+`decided_none_fresh_agree_odontoceti`, `decided_none_fresh_agree_hybrid`
+and `decided_none_fresh_agree_hz`.
 
 **What the audits show.** `audit-mechanisms.py` reads the same matrix
 as before — every cell for Hydrozoan and Optimal-Hydrozoan `yes`, live
