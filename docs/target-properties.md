@@ -1,21 +1,394 @@
 # Target properties: mechanisms that apply to any conforming protocol
 
-A design record for an arc in progress. The aim is to state a small
-number of properties of a DAG consensus rule such that **a protocol
-proving them inherits the mechanisms** — garbage collection, crash
-recovery, adaptive leader counts, adaptive leader schedules, reactive
-scheduling, chain quality — instead of each mechanism being redeveloped
+The design record of the properties arc, in two parts. **§0 is the
+arc as it stands**: what a DAG consensus rule shows, what it gets for
+showing it, and where everything lives. It is the part to read. §1 to
+§11 are the record of how it got here — written while the properties
+were being found, each section revised as the next instantiation
+changed it — and §11.13 onward the last passes; they are kept because
+the reasons for the shape are in them, but they describe earlier
+states and say so.
+
+The aim, unchanged since the first line of the record: a small number
+of properties of a DAG consensus rule such that **a protocol proving
+them inherits the mechanisms** — garbage collection, crash recovery,
+re-genesis, adaptive leader counts, adaptive leader schedules, prompt
+skipping, chain quality — instead of each mechanism being redeveloped
 against each rule, and such that **the mechanisms compose** through the
 same properties.
 
-This supersedes §2 and §3 of `transformer-interface.md`, which posed the
-same question in a narrower and, in one respect, wrong way. That
-document's §1 remains the record of what is built.
+---
 
-Sections 3 and 4 were written before the properties they describe were
-built and revised as each was instantiated; each says which checks have
-been made. **§11 is the summary**: where the arc stands against the
-goal, what it does not cover, and the next steps in order.
+## 0. The arc, as it stands
+
+### 0.1 The carrier
+
+A mechanism reads a protocol through `Properties.DagRule`
+(`Properties/Carrier.lean`): a universe type, a view type over it,
+projections `block` and `ids` into the shared `Block` vocabulary
+(round, creator, references), the ids a view holds, and the decision
+relation `Decided : Slots → View U → ℕ → Option BlockId → Prop`. Three
+laws come with the record rather than being properties, because every
+universe type in the development carries them in its validity record:
+a view holds only universe blocks (`viewSound`), a view is closed under
+references (`viewComplete`), and a universe is a block DAG — references
+present and one round below (`causal`). A slot's candidate is defined
+from the carrier alone: `R.IsCandidate S U k L` is `L` present, at the
+slot's round, by the slot's leader.
+
+Barnacle's `BaseRule` extends `DagRule`, and each of its eight
+instantiations names the protocol's carrier for the parent, so there is
+**one carrier per rule** and what a protocol proves at it is what every
+mechanism reads.
+
+### 0.2 The four properties
+
+**`Banded`** — every verdict reads a finite band of rounds. Given a
+verdict at slot `k`, there is a top such that any universe carrying the
+blocks of `[slotRound k, top]` up to a shift of rounds and slots, any
+view holding those blocks, and any schedule matching on that band,
+reaches the same verdict.
+
+```lean
+def Banded (R : DagRule Validator BlockId Payload) : Prop :=
+  ∀ (S : Slots Validator) (U : R.Universe) (V : R.View U) (k : ℕ) (v : Option BlockId),
+    R.Decided S V k v →
+      ∃ top : ℕ, ∀ (g g' d d' : ℕ) (S' : Slots Validator) (U' : R.Universe)
+        (V' : R.View U') (k' : ℕ),
+        k + d' = k' + d →
+        (∀ m m', m + d' = m' + d → S.slotRound m + g = S'.slotRound m' + g') →
+        (∀ m m', m + d' = m' + d → S.slotRound m ≤ top → S.leader m = S'.leader m') →
+        AgreeBand R U U' (S.slotRound k + g) (top + g) g g' →
+        (∀ b, b ∈ R.viewIds V → S.slotRound k ≤ (R.block U b).round →
+          (R.block U b).round ≤ top → b ∈ R.viewIds V') →
+        R.Decided S' V' k' v
+```
+
+**`Agree`** — under one schedule, over one universe, two views cannot
+decide a slot differently. Skips included.
+
+```lean
+def Agree (R : DagRule Validator BlockId Payload) : Prop :=
+  ∀ (S : Slots Validator) {U : R.Universe} (V₁ V₂ : R.View U) (k : ℕ)
+    (v₁ v₂ : Option BlockId), R.Decided S V₁ k v₁ → R.Decided S V₂ k v₂ → v₁ = v₂
+```
+
+**`CommitsCandidate`** — a commit names the slot's candidate.
+
+```lean
+def CommitsCandidate (R : DagRule Validator BlockId Payload) : Prop :=
+  ∀ (S : Slots Validator) (U : R.Universe) (V : R.View U) (k : ℕ) (L : BlockId),
+    R.Decided S V k (some L) → R.IsCandidate S U k L
+```
+
+**`Indirect`** — an eligible committed anchor, with every eligible slot
+between skipped, decides the slot, and the verdict survives any
+reassignment of the other leaders. `Elig` reads the round structure
+alone.
+
+```lean
+def Indirect (R : DagRule Validator BlockId Payload)
+    (Elig : (ℕ → ℕ) → ℕ → ℕ → Prop) : Prop :=
+  ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (i j : ℕ) (A : BlockId),
+    Elig S.slotRound i j → R.Decided S V j (some A) →
+    (∀ i', i < i' → i' < j → Elig S.slotRound i i' → R.Decided S V i' none) →
+    ∃ v, ∀ S' : Slots Validator, S'.slotRound = S.slotRound → S'.leader i = S.leader i →
+      R.Decided S' V j (some A) →
+      (∀ i', i < i' → i' < j → Elig S.slotRound i i' → R.Decided S' V i' none) →
+      R.Decided S' V i v
+```
+
+`Banded` is the one proof per protocol with real work in it; the other
+three are one `cases` on the rule's `Decided` each.
+
+### 0.3 The support
+
+A rule's liveness interface is a `Support`: how far above a candidate
+its certifiers sit, and what certifying is.
+
+```lean
+structure Support (R : DagRule Validator BlockId Payload) where
+  /-- The wavelength: certifiers sit `wave` rounds above the candidate. -/
+  wave : ℕ
+  /-- `Certifies U c L`: block `c` certifies candidate `L`. -/
+  Certifies : R.Universe → BlockId → BlockId → Prop
+```
+
+Two laws. **Law 1, `Local`**: certification of an old candidate by an
+old certifier is unchanged across any `RebasedAbove` (§0.6), which is
+`Banded` for the support relation.
+
+```lean
+def Local : Prop :=
+  ∀ {U U' : R.Universe} {G R₀ : ℕ}, RebasedAbove R U U' G R₀ →
+    ∀ c L, c ∈ R.ids U → R₀ + sp.wave ≤ (R.block U c).round →
+      L ∈ R.ids U → (R.block U L).round + sp.wave = (R.block U c).round →
+      (sp.Certifies U' c L ↔ sp.Certifies U c L)
+```
+
+**Law 2, `Commits`**: a reliably-led slot whose every candidate the
+reliable set certifies, on a populated wave and a view covering it,
+commits — as a `DecidedBelow`, a verdict stable under reassignment of
+the leaders at or above `k + 1`.
+
+```lean
+def Commits (rel : Reliability Validator) : Prop :=
+  ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (T : Finset Validator) (k : ℕ),
+    rel.IsQuorum T →
+    (∀ n, S.slotRound k ≤ n → n ≤ S.slotRound k + sp.wave → PopulatedOn R U T n) →
+    (∀ L, R.IsCandidate S U k L → sp.certifiesAt U T (S.slotRound k) L) →
+    CoversUpto R V (S.slotRound k + sp.wave) →
+    S.leader k ∈ T →
+    ∃ L, DecidedBelow R S (k + 1) V k (some L)
+```
+
+`voteSupport` (wave one, certifying is referencing) has Law 1 for any
+rule, so Odontoceti, Nemo and Hybrid owe Law 2 alone. The core,
+Mahi-Mahi, FinWhale, Hydrozoan and Optimal-Hydrozoan have their own
+supports; the last three a second, fast-path one at a stronger fault
+model.
+
+The precondition every liveness theorem reads is `Support.live rel S V
+T lo K`: `T` is a quorum of the fault model, the view is caught up to a
+horizon `N` that clears the window's waves, and for every `T`-led slot
+in `[lo, K)`, the reliable set has built across the wave and certifies
+every candidate. Nothing in it says how the certifiers came to
+reference what they reference.
+
+### 0.4 Optional and derived
+
+Five properties are owed only when a mechanism reads them
+(`Properties/Optional/`):
+
+| property | says | read by |
+|---|---|---|
+| `CommitsDirect R Direct` | a direct commit, in the rule's own predicate, is a verdict | Barnacle's health count |
+| `SkipsUnsupported R Ok` | a slot no `T`-block one round up supports is skipped, at grade `Ok T` | the prompt skip (§0.6) |
+| `Quorate R rel` | a non-genesis block references `n − slack` distinct authors | chain quality's coverage half |
+| `SelfParent R` | every non-genesis block references its author's previous block | chain quality's inclusion half |
+| `NoEquiv R rel` | one block per reliable author per round | the same |
+
+Four are derived and no protocol proves them: `Persist` (verdicts
+survive any `Extends` onto a larger view) and `LocalTruncate` (verdicts
+transport across any `Truncates`, both ways) from `Banded`;
+`LeaderCommits` at `Support.live` from Law 2; `Descends` (a committed
+run of `c` slots decides everything below it) from `Indirect`.
+
+### 0.5 Synchrony is not a property
+
+Nothing under `Properties/` names synchrony. `SynchronisedOn`,
+`CoversToward`, `OfCoverage` and the theorems that consume them live in
+`LeanDag/Timed/Coverage.lean`, and `scripts/check-arc-holes.py` fails
+the build if one is named under `Properties/` again. The timed model
+enters through one bridge:
+
+```lean
+theorem live_of_coverage (sp : Support R) {rel : Reliability Validator}
+    (hcov : OfCoverage sp rel) {U : R.Universe} {T : Finset Validator}
+    (hq : rel.IsQuorum T) {Rnd N : ℕ} (hs : SynchronisedOn R U T Rnd)
+    (hpop : ∀ r, Rnd ≤ r → r ≤ N → PopulatedOn R U T r)
+    (S : Slots Validator) (V : R.View U) {lo K : ℕ} (hV : CoversUpto R V N)
+    (hRnd : Rnd ≤ S.slotRound lo) (hN : ∀ k, k < K → S.slotRound k + sp.wave ≤ N) :
+    sp.live rel S V T lo K
+```
+
+A rule with a synchronous story proves `OfCoverage` for its support
+and reaches `live` this way; reactive Mysticeti reaches `live` from its
+wait clauses and never touches it. Every theorem after `live` is the
+same for both. The reason is recorded in the Timed file's header:
+coverage is the strongest fact statable without a rule's vocabulary,
+and the wrong antecedent for an execution that omits what has not
+arrived.
+
+### 0.6 The mechanisms
+
+Each DAG-transforming mechanism delivers one relation between the
+universe it reads and the one it writes.
+
+```lean
+structure RebasedAbove (R : DagRule Validator BlockId Payload)
+    (U U' : R.Universe) (G R₀ : ℕ) : Prop where
+  /-- The same blocks at and above `R₀`. -/
+  mem : ∀ b, (b ∈ R.ids U ∧ R₀ ≤ (R.block U b).round) ↔
+    (b ∈ R.ids U' ∧ R₀ ≤ (R.block U' b).round + G)
+  /-- At rounds `G` apart. Additive, so truncated subtraction never
+  appears. -/
+  round : ∀ b, b ∈ R.ids U → R₀ ≤ (R.block U b).round →
+    (R.block U' b).round + G = (R.block U b).round
+  /-- With the same author. -/
+  creator : ∀ b, b ∈ R.ids U → R₀ ≤ (R.block U b).round →
+    (R.block U' b).creator = (R.block U b).creator
+  /-- And, strictly above, the same references. -/
+  refs : ∀ b, b ∈ R.ids U → R₀ < (R.block U b).round →
+    (R.block U' b).refs = (R.block U b).refs
+```
+
+A truncation is a `Truncates`, this relation at `R₀ = G` together with
+`Rebases` on the schedule; a fill or a re-genesis is a `Sustains`, this
+relation at `G = 0` settling at the top of its gap; an extension proper
+is the stronger `Extends`, every old block present and denoted the
+same. `Rebased` pairs the universe relation with the schedule one, and
+a `Stack` is a finite sequence of them:
+
+```lean
+inductive Stack (R : DagRule Validator BlockId Payload) :
+    R.Universe → Slots Validator → R.Universe → Slots Validator → ℕ → ℕ → ℕ → Prop
+  | nil {U : R.Universe} {S : Slots Validator} : Stack R U S U S 0 0 0
+  | step {U U' U'' : R.Universe} {S S' S'' : Slots Validator} {G R₀ d G' R₀' d' : ℕ} :
+      Rebased R U U' S S' G R₀ d → Stack R U' S' U'' S'' G' R₀' d' →
+      Stack R U S U'' S'' (G + G') (max R₀ (R₀' + G)) (d + d')
+```
+
+What a mechanism owes is the witness; what it gets is the generic
+theorem, once per mechanism:
+
+| mechanism | witness | safety | liveness |
+|---|---|---|---|
+| garbage collection | `Truncates` | `LocalTruncate.of_banded`, `decided_agree_truncate` | `Support.live_of_truncates` |
+| crash recovery, re-genesis | `Extends`, `Sustains` | `Persist.of_banded`, `decided_agree_extends` | `Support.live_of_sustains` |
+| any stack of them | `Stack` | `Stack.safe_and_live` | the same |
+| adaptive leader schedule | — | `Adaptive.run_agree` | `Adaptive.run_exists` |
+| adaptive leader count | — | Barnacle's `Laws` | `descent_of_support` |
+| prompt skip | `Extends` + `SkipsUnsupported` | `decided_none_of_novel` | — |
+| chain quality | — | `card_coveredAt_ge` | `committed_of_correct_block` |
+
+```lean
+theorem Stack.safe_and_live (hb : Banded R) (ha : Agree R) (sp : Support R) (hloc : sp.Local)
+    (st : Stack R U S U' S' G R₀ d) {V : R.View U} {V' : R.View U'}
+    (hv : ViewAgreeAbove R V V' R₀) :
+    (∀ (k : ℕ) (v : Option BlockId), R₀ ≤ S.slotRound (d + k) →
+        (R.Decided S V (d + k) v ↔ R.Decided S' V' k v)) ∧
+    (∀ (W : R.View U') (k : ℕ) (w v : Option BlockId), R₀ ≤ S.slotRound (d + k) →
+        R.Decided S' W k w → R.Decided S V (d + k) v → w = v) ∧
+    (∀ {rel : Reliability Validator} {T : Finset Validator} {lo K : ℕ},
+        sp.live rel S V T lo K → R₀ ≤ S.slotRound lo → d ≤ lo → lo < K →
+        (∀ N, G ≤ N → CoversUpto R V N → CoversUpto R V' (N - G)) →
+        sp.live rel S' V' T (lo - d) (K - d))
+```
+
+The prompt skip is the fill's SS3 for every rule that skips: any slot
+whose candidates are all novel is decided `none` at once, and
+`decided_none_of_novel_agree` says no view of the fill or of a later
+extension decides it otherwise.
+
+```lean
+theorem decided_none_of_novel {R : DagRule Validator BlockId Payload}
+    {Ok : Finset Validator → Prop} (hsk : SkipsUnsupported R Ok)
+    {U U' : R.Universe} (he : Extends R U U') (S : Slots Validator)
+    {V' : R.View U'} {T : Finset Validator} {k : ℕ} (hok : Ok T)
+    (hpres : PresentAt R V' T (S.slotRound k + 1))
+    (hnov : ∀ L, R.IsCandidate S U' k L → L ∉ R.ids U)
+    (hold : ∀ c, c ∈ R.viewIds V' → (R.block U' c).creator ∈ T →
+      (R.block U' c).round = S.slotRound k + 1 → c ∈ R.ids U) :
+    R.Decided S V' k none
+```
+
+### 0.7 The headlines
+
+`Properties/Arcs/Headline.lean` states what a rule gets, in the shape a
+reader of a consensus paper expects, and every rule instantiates each
+in one line.
+
+**Safety**, from `Banded`, `Agree` and `CommitsCandidate`: across any
+stack of mechanisms, verdicts above the settling round transport, any
+view of the composite agrees with any view of the source, a commit is
+the slot's candidate, and no block is committed at two slots; and
+across an extension read on its own, verdicts agree at every slot.
+
+```lean
+def Safe (R : DagRule Validator BlockId Payload) : Prop :=
+  (∀ {U U' : R.Universe} {S S' : Slots Validator} {G R₀ d : ℕ}, Stack R U S U' S' G R₀ d →
+    ∀ {V : R.View U} {V' : R.View U'}, ViewAgreeAbove R V V' R₀ →
+      (∀ (k : ℕ) (v : Option BlockId), R₀ ≤ S.slotRound (d + k) →
+          (R.Decided S V (d + k) v ↔ R.Decided S' V' k v)) ∧
+      (∀ (W : R.View U') (k : ℕ) (w v : Option BlockId), R₀ ≤ S.slotRound (d + k) →
+          R.Decided S' W k w → R.Decided S V (d + k) v → w = v) ∧
+      (∀ (W : R.View U') (k : ℕ) (L : BlockId), R.Decided S' W k (some L) →
+          R.IsCandidate S' U' k L) ∧
+      (∀ (W : R.View U') (k k' : ℕ) (L : BlockId), R.Decided S' W k (some L) →
+          R.Decided S' W k' (some L) → k = k')) ∧
+  (∀ {U U' : R.Universe}, Extends R U U' → ∀ (S : Slots Validator)
+    {V : R.View U} {V' W : R.View U'}, R.viewIds V ⊆ R.viewIds V' →
+      ∀ (k : ℕ) (v w : Option BlockId), R.Decided S V k v → R.Decided S W k w → v = w)
+```
+
+`Safe.prefix_agree` is the ledger reading: two validators' verdict
+functions agree wherever both have decided.
+
+**Liveness**, from Law 2, `CommitsCandidate`, `SelfParent` and
+`NoEquiv`, as `Lives sp rel := sp.Progresses rel ∧ sp.Includes rel`.
+One antecedent, `live`; the schedule quantified before the execution.
+
+```lean
+def Progresses : Prop :=
+  ∀ (S : Slots Validator) (c : ℕ), 0 < c → Descends R S c → ∀ (T : Finset Validator),
+    (∀ k, ∃ k', k ≤ k' ∧ ∀ i, i < c → S.leader (k' + i) ∈ T) →
+    (∀ k, ∃ b, k ≤ b ∧ ∀ (U : R.Universe) (V : R.View U), sp.live rel S V T b (b + c) →
+        ∀ i, i < b → ∃ v, DecidedBelow R S (b + c) V i v) ∧
+    (∀ k, ∃ k', k ≤ k' ∧ S.leader k' ∈ T ∧
+        ∀ (U : R.Universe) (V : R.View U), sp.live rel S V T k' (k' + 1) →
+          ∃ L, DecidedBelow R S (k' + 1) V k' (some L))
+```
+
+```lean
+def Includes : Prop :=
+  ∀ (S : Slots Validator) (T : Finset Validator), T ⊆ rel.correct →
+    (∀ v ∈ T, ∀ n, ∃ k, n ≤ k ∧ S.leader k = v) →
+    ∀ (m : ℕ), ∀ v ∈ T, ∃ k', m ≤ S.slotRound k' ∧ S.leader k' = v ∧
+      ∀ (U : R.Universe) (V : R.View U), sp.live rel S V T k' (k' + 1) →
+        ∃ L, R.Decided S V k' (some L) ∧
+          ∀ b ∈ R.ids U, (R.block U b).creator = v → (R.block U b).round = m →
+            b ∈ historyFrom (R.block U) L ∧
+              ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
+                b ∈ Arcs.ledgerSetOf R U g n
+```
+
+Rules whose model has no self-parent clause show `Progresses` alone.
+
+### 0.8 The rules
+
+Nine carriers over nine rules show the four properties and a support,
+and every mechanism cell is an instance or derived
+(`scripts/audit-conformance.py`, `scripts/audit-mechanisms.py`):
+
+| rule | support | optional shown | headline |
+|---|---|---|---|
+| core Mysticeti, and its reactive execution | `coreSupport`, wave 2 | direct, skip, quorate, self-parent, no-equiv | `safety`, `liveness` |
+| Odontoceti | `voteSupport` | direct, skip, quorate, self-parent, no-equiv | `safety`, `liveness` |
+| Hybrid / Orcaella | `voteSupport`, per threshold | direct, skip, quorate, self-parent, no-equiv | `safety`, `liveness` |
+| Mahi-Mahi | `mmSupport w` | direct, quorate, self-parent, no-equiv | `safety`, `liveness` |
+| Nemo | `voteSupport` | direct, quorate, no-equiv | `safety`, `progress` |
+| FinWhale | `fwSupport`, and a fast path | direct, quorate, no-equiv | `safety`, `progress` |
+| Hydrozoan | `hzSupport`, and a fast path | direct, skip, quorate | `safety`, `progress` |
+| Optimal-Hydrozoan | `optSupport`, and a fast path | direct, quorate | `safety`, `progress` |
+| Black Marlin | no carrier: commits by round, no slot-indexed relation | | |
+
+Nemo's model drops the self-parent clause by design and Hydrozoan's
+never had one, which is why those rules show progress and not
+inclusion. Black Marlin is out of scope by decision.
+
+### 0.9 Where things live, and what checks them
+
+`Properties/` — `Carrier`, the four properties (`Band`, `Agree`,
+`Candidate`, `Commit`), `Support`, `Optional/`, `Derived/`, the
+mechanism relations (`Extends`, `Sustain`, `Truncate`, `Compose`), and
+`Arcs/` (`GC`, `SafeSkip`, `Liveness`, `Quality`, `Stack`, `Headline`).
+`Timed/Coverage.lean` — the timed model. Each rule's conformance in
+its `*Properties.lean` or `Carrier.lean`; each rule's mechanism cells
+in `Integration/*Mechanisms.lean`, `Integration/ReGenesisRules.lean`
+and `Properties/Arcs/`.
+
+Six scripts keep it honest and run in CI: `audit-conformance.py` (what
+each rule shows, and the headlines), `audit-mechanisms.py` (which
+mechanism cells exist), `audit-bespoke.py` (no mechanism reaches a
+protocol's verdicts except through its properties),
+`check-arc-holes.py` (no proof holes, no synchrony under
+`Properties/`), `audit-rounds.py` and `audit-report.py`.
+
+What the headlines leave out, on purpose: the linearisation of each
+commit's cone, which is per protocol; and the reader's own view being
+caught up to a horizon, which is inside `live` and is the delivery
+assumption each execution model owes.
 
 ---
 

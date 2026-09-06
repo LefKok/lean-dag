@@ -286,25 +286,21 @@ proof effort with no corresponding proof content.
    and progress requires committed leaders at *adjacent* rounds — which
    round-robin over `2f + 1` supplies by counting.
 
-16. **Integration** (§16): the arcs are shown to compose, by naming the
-   invariants each consumes and proving preservation for the two
-   universe transformers rather than settling a quadratic matrix — with
-   a capstone in which a validator recovered by Safe Skip, then
-   truncated, read in the hybrid model under an adaptive schedule still
-   cannot disagree about a verdict (I7; since retired in favour of
-   the safety headline `MysticetiProperties.safety`, proved through the properties). Four
-   kinds of result are visible only here. Coverage is refuted under the
-   fill, with an exact boundary and for the same reason the fill is
-   safe (I4). Three conditions constrain where a horizon may fall
-   (I5, I6). A **re-genesis** provision restores a validator whose
-   history was pruned entirely — needing no exemption from P3′, since
-   truncation makes the retained layer genesis, and no agreement on the
-   cut, since each validator derives its own (I10, I11) — after which
-   bootstrap, re-genesis and Safe Skip compose into a full recovery
-   (I12). And the storage account is sharpened: the reference
-   discipline of §8.4 is stated more tightly than its own bound
-   requires (I17), while a fill drawn against a common-core target
-   carries no material its recipients lack (I19).
+16. **Integration, through the properties** (§16): the arcs compose
+   because every mechanism is proved once against a small set of
+   properties of the commit rule — a band, agreement, candidacy, the
+   indirect rule, and a support with two laws — and every rule shows
+   them (§16.9). Two headline theorems state what a rule gets:
+   `Properties.Safe`, across any stack of cuts, fills and re-genesis,
+   and `Support.Lives`, progress and inclusion at the rule's support
+   with certification as the only antecedent, so a timed and a reactive
+   execution share it. What the composition found on its way remains:
+   coverage is refuted under the fill, with an exact boundary and for
+   the same reason the fill is safe (I4); three conditions constrain
+   where a horizon may fall (I5, I6); a **re-genesis** provision
+   restores a validator whose history was pruned entirely — needing no
+   exemption from P3′, since truncation makes the retained layer
+   genesis, and no agreement on the cut (I10–I12).
 
 17. **Mahi-Mahi** (§17): the asynchronous protocol's rule — the core's
    at a wave of `w` rounds, votes through the cone — proved safe at every
@@ -508,9 +504,9 @@ Odontoceti (`Odontoceti.decided_unique`,
 fault tolerance (`Hybrid.decided_unique` (H6),
 `hybrid_bound_necessary` (H10)); and crash-fault consensus
 (`Nemo.decided_unique` (NN5), `Nemo.all_decided_below_of_fairRun`
-(NN8)). §16 composes the first seven
-(`MysticetiProperties.safety` (I7)) and collects the deployment conditions
-their composition reveals.
+(NN8)). §16 composes all of them through the properties
+(`MysticetiProperties.safety`, `MysticetiProperties.liveness` (I7)) and
+collects the deployment conditions their composition reveals.
 
 §§17–23 analyse seven protocols of the family against this development:
 Mahi-Mahi's asynchronous rule at wave `w` (`MahiMahi.Safety.holds`
@@ -4873,58 +4869,44 @@ implementation computes the same five verdicts on it.
 
 ---
 
-## 16. Integration: composing the arcs
+## 16. Integration: composing the arcs through the properties
 
-> **Retired (2026-09-06).** The bespoke composition this section
-> records — the `stack` universe, its chain of per-invariant
-> preservation lemmas, the lifecycle theorem and the capstone that
-> read verdicts through the hybrid model — has been removed from the
-> code. What replaces it is the properties arc (`target-properties.md`):
-> every mechanism is proved once against `Banded`, `Agree`,
-> `CommitsCandidate`, `Indirect` and a `Support`, and the composition
-> is `Stack.safe_and_live` (`Properties/Arcs/Stack.lean`), and the headline
-> `MysticetiProperties.safety` (`Properties/Arcs/Headline.lean`) at the core.
-> What survives of this section in code is §16.2's preservation lemmas,
-> §16.3's coverage results, §16.4's retention and §16.6's re-genesis.
-> The rest is kept as the record of how the composition was first
-> reached and why the direct route was retired.
+*(modules `LeanDag/Properties/`, `LeanDag/Timed/`, `LeanDag/Integration/`;
+the design record is `target-properties.md`, whose opening part is the
+current statement; `integration.md` is the record of the first route)*
 
-*(modules `LeanDag/Integration/`; the design record is `integration.md`)*
-
-Each arc of §§7–14 was built additively, consuming the core read-only
+Each arc of §§7–15 was built additively, consuming the core read-only
 and modifying no other. That discipline secured independence and left a
-question unanswered: **do the arcs compose with each other?** A
-validator that garbage-collects below a horizon, recovers from a crash
-by Safe Skip, runs an adaptive leader schedule and tolerates hybrid
-faults is running four mechanisms at once, and nothing above says the
-four are jointly consistent.
+question: **do the arcs compose with each other?** A validator that
+garbage-collects below a horizon, recovers from a crash by Safe Skip,
+runs an adaptive leader schedule and tolerates hybrid faults is running
+four mechanisms at once, and nothing above says the four are jointly
+consistent.
 
-The composition matrix must not be settled cell by cell — eight arcs
-pair into twenty-eight combinations, and triples into far more. This
-section takes the other route: name the invariants each arc consumes,
-prove that each transformer preserves them, and let composition follow.
-The cost is then linear in the arcs rather than quadratic, and the
-capstone (I8) confirms that the ingredients do compose.
+The answer has two parts, and the chapter is organised by them. §16.9
+is the method as it stands: a small set of **properties of a commit
+rule** — a band the verdicts read, agreement, candidacy, the indirect
+rule, and a *support* saying what a commit counts — against which every
+mechanism is proved once, so that a rule showing them inherits every
+mechanism and the mechanisms compose through the same properties. Two
+headline theorems say what a rule gets: safety across any stack of
+mechanisms, and liveness with certification as the only antecedent.
+§16.10 is the matrix: nine rules, every mechanism, and what the
+generic route retired.
 
-The section is organised by what composition produced. §16.1 and §16.2
-are the method — the invariant interface, and the preservation lemmas
-that make composition linear. §16.3 to §16.6 are what the method
-found: a refutation with an exact boundary, the conditions on where a
-horizon may fall, the capstone, and a recovery route for a validator
-pruned past its own history. §16.7 and §16.8 settle the interaction
-with §8's storage account.
-
-What came out are results no single arc could state. Coverage is
-**refuted** under the Safe Skip fill, with an exact boundary and for
-the same reason the fill is safe (I4). *Placement conditions* say where
-a garbage-collection horizon may be put (I5, I6). A composition that
-did not fit exposed a hypothesis stated more strongly than its use
-(I9). A validator pruned past its own history can be restored, by a
-provision costing no exemption from P3′ and no agreement on the cut
-(I10–I12). And §8's storage account is sharpened twice over: its
-reference discipline is stated more tightly than its own bound needs
-(I17), and a fill drawn against a common-core target carries no
-material its recipients lack (I19).
+§16.1 to §16.8 are the record of the first route and what it found.
+That route named the invariants each arc consumes and proved
+preservation for each transformer, and its capstone read verdicts
+through the hybrid model under an adaptive schedule; the capstone, the
+lifecycle theorem and the hand-composed stack are gone, replaced by the
+headline at the core. What survives is what the properties do not
+state and the route found on its way: coverage is **refuted** under the
+Safe Skip fill, with an exact boundary and for the same reason the fill
+is safe (I4); *placement conditions* say where a garbage-collection
+horizon may be put (I5, I6); a validator pruned past its own history
+can be restored by a provision costing no exemption from P3′ and no
+agreement on the cut (I10–I12); and §8's storage account is sharpened
+twice over (I17, I19).
 
 ### 16.1 Three layers, and what can break them
 
@@ -5434,6 +5416,244 @@ This is a restriction on how a message picks its target, not on the
 executions the protocol admits: T3c is a counting theorem with no
 synchrony and no progress hypothesis, so a common target exists at
 every round of every universe.
+
+### 16.9 The properties: one interface for every rule and every mechanism
+
+**The carrier.** A mechanism reads a protocol through
+`Properties.DagRule`: a universe type, a view type over it, projections
+`block` and `ids` into the shared `Block` vocabulary, the ids a view
+holds, and the decision relation. Three laws come with the record —
+views hold universe blocks, views are closed under references, and a
+universe is a block DAG (`causal`) — because every universe type in the
+development carries them already. Barnacle's `BaseRule` extends it and
+each instantiation names the protocol's carrier, so there is one
+carrier per rule.
+
+**Four properties.** `Banded`: every verdict reads a finite band of
+rounds, so any universe carrying the band up to a shift, any view
+holding it, and any schedule matching on it reaches the same verdict.
+
+```lean
+def Banded (R : DagRule Validator BlockId Payload) : Prop :=
+  ∀ (S : Slots Validator) (U : R.Universe) (V : R.View U) (k : ℕ) (v : Option BlockId),
+    R.Decided S V k v →
+      ∃ top : ℕ, ∀ (g g' d d' : ℕ) (S' : Slots Validator) (U' : R.Universe)
+        (V' : R.View U') (k' : ℕ),
+        k + d' = k' + d →
+        (∀ m m', m + d' = m' + d → S.slotRound m + g = S'.slotRound m' + g') →
+        (∀ m m', m + d' = m' + d → S.slotRound m ≤ top → S.leader m = S'.leader m') →
+        AgreeBand R U U' (S.slotRound k + g) (top + g) g g' →
+        (∀ b, b ∈ R.viewIds V → S.slotRound k ≤ (R.block U b).round →
+          (R.block U b).round ≤ top → b ∈ R.viewIds V') →
+        R.Decided S' V' k' v
+```
+
+`Agree`: two views of one universe under one schedule do not disagree,
+skips included. `CommitsCandidate`: a commit names the slot's candidate.
+`Indirect`: an eligible committed anchor with every eligible slot
+between skipped decides the slot, and the verdict survives reassignment
+of the other leaders.
+
+```lean
+def Agree (R : DagRule Validator BlockId Payload) : Prop :=
+  ∀ (S : Slots Validator) {U : R.Universe} (V₁ V₂ : R.View U) (k : ℕ)
+    (v₁ v₂ : Option BlockId), R.Decided S V₁ k v₁ → R.Decided S V₂ k v₂ → v₁ = v₂
+```
+
+```lean
+def CommitsCandidate (R : DagRule Validator BlockId Payload) : Prop :=
+  ∀ (S : Slots Validator) (U : R.Universe) (V : R.View U) (k : ℕ) (L : BlockId),
+    R.Decided S V k (some L) → R.IsCandidate S U k L
+```
+
+```lean
+def Indirect (R : DagRule Validator BlockId Payload)
+    (Elig : (ℕ → ℕ) → ℕ → ℕ → Prop) : Prop :=
+  ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (i j : ℕ) (A : BlockId),
+    Elig S.slotRound i j → R.Decided S V j (some A) →
+    (∀ i', i < i' → i' < j → Elig S.slotRound i i' → R.Decided S V i' none) →
+    ∃ v, ∀ S' : Slots Validator, S'.slotRound = S.slotRound → S'.leader i = S.leader i →
+      R.Decided S' V j (some A) →
+      (∀ i', i < i' → i' < j → Elig S.slotRound i i' → R.Decided S' V i' none) →
+      R.Decided S' V i v
+```
+
+**The support.** A rule's liveness interface is a `Support` — the
+wavelength and what certifying is — with two laws: `Local`,
+certification is unchanged across any rebase above its window, and
+`Commits`, a reliably-led slot whose every candidate the reliable set
+certifies commits on a covered view.
+
+```lean
+structure Support (R : DagRule Validator BlockId Payload) where
+  /-- The wavelength: certifiers sit `wave` rounds above the candidate. -/
+  wave : ℕ
+  /-- `Certifies U c L`: block `c` certifies candidate `L`. -/
+  Certifies : R.Universe → BlockId → BlockId → Prop
+```
+
+```lean
+def Commits (rel : Reliability Validator) : Prop :=
+  ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (T : Finset Validator) (k : ℕ),
+    rel.IsQuorum T →
+    (∀ n, S.slotRound k ≤ n → n ≤ S.slotRound k + sp.wave → PopulatedOn R U T n) →
+    (∀ L, R.IsCandidate S U k L → sp.certifiesAt U T (S.slotRound k) L) →
+    CoversUpto R V (S.slotRound k + sp.wave) →
+    S.leader k ∈ T →
+    ∃ L, DecidedBelow R S (k + 1) V k (some L)
+```
+
+The precondition every liveness theorem reads is `Support.live`: a
+quorum, a view caught up to a horizon, production across each wave and
+**certification of every candidate** of every reliably-led slot in the
+window. Synchrony is not in it and not among the properties:
+`LeanDag/Timed/Coverage.lean` holds `SynchronisedOn`, `CoversToward` and
+the coverage law `OfCoverage`, and one bridge turns a covered, populated
+window into `live` for a rule that has a synchronous story.
+
+```lean
+theorem live_of_coverage (sp : Support R) {rel : Reliability Validator}
+    (hcov : OfCoverage sp rel) {U : R.Universe} {T : Finset Validator}
+    (hq : rel.IsQuorum T) {Rnd N : ℕ} (hs : SynchronisedOn R U T Rnd)
+    (hpop : ∀ r, Rnd ≤ r → r ≤ N → PopulatedOn R U T r)
+    (S : Slots Validator) (V : R.View U) {lo K : ℕ} (hV : CoversUpto R V N)
+    (hRnd : Rnd ≤ S.slotRound lo) (hN : ∀ k, k < K → S.slotRound k + sp.wave ≤ N) :
+    sp.live rel S V T lo K
+```
+
+Reactive Mysticeti (§11) reaches `live` from its wait clauses and never
+touches the bridge; every theorem after `live` is the same for both
+executions, and `scripts/check-arc-holes.py` fails the build if
+synchrony is named under `Properties/` again.
+
+**Optional and derived.** Five properties are owed only when a
+mechanism reads them: `CommitsDirect` (Barnacle's health count),
+`SkipsUnsupported` (the prompt skip), `Quorate` (chain quality's
+coverage half), `SelfParent` and `NoEquiv` (its inclusion half). Four
+are derived and no protocol proves them: `Persist` and `LocalTruncate`
+from `Banded`, `LeaderCommits` from `Commits`, `Descends` from
+`Indirect`.
+
+**The mechanisms.** Each DAG-transforming mechanism delivers one
+relation between the universe it reads and the one it writes — the
+same blocks at and above a settling round, at rounds `G` apart, with
+the same authors and, strictly above, the same references. A cut is it
+at `R₀ = G` with a rebase of the schedule (`Truncates`); a fill or a
+re-genesis is it at `G = 0` settling at the top of the gap
+(`Sustains`); an extension proper is the stronger `Extends`. A `Stack`
+is a finite sequence, and the composition theorem reads it as one
+mechanism:
+
+```lean
+theorem Stack.safe_and_live (hb : Banded R) (ha : Agree R) (sp : Support R) (hloc : sp.Local)
+    (st : Stack R U S U' S' G R₀ d) {V : R.View U} {V' : R.View U'}
+    (hv : ViewAgreeAbove R V V' R₀) :
+    (∀ (k : ℕ) (v : Option BlockId), R₀ ≤ S.slotRound (d + k) →
+        (R.Decided S V (d + k) v ↔ R.Decided S' V' k v)) ∧
+    (∀ (W : R.View U') (k : ℕ) (w v : Option BlockId), R₀ ≤ S.slotRound (d + k) →
+        R.Decided S' W k w → R.Decided S V (d + k) v → w = v) ∧
+    (∀ {rel : Reliability Validator} {T : Finset Validator} {lo K : ℕ},
+        sp.live rel S V T lo K → R₀ ≤ S.slotRound lo → d ≤ lo → lo < K →
+        (∀ N, G ≤ N → CoversUpto R V N → CoversUpto R V' (N - G)) →
+        sp.live rel S' V' T (lo - d) (K - d))
+```
+
+Verdict transport across a cut is `LocalTruncate.of_banded` at the
+`Truncates` witness; across a fill, `Persist.of_banded` at the `Extends`
+witness; liveness across either, `Support.live_of_truncates` and
+`Support.live_of_sustains` from Law 1. The prompt skip is SS3 for every
+rule that skips — a slot whose candidates are all novel is decided
+`none` at once, and no view of the fill or of a later extension decides
+it otherwise (`decided_none_of_novel`, `decided_none_of_novel_agree`).
+Chain quality's coverage half is `Quorate` with the carrier's causal
+law; its inclusion half is the self-parent chain: a reliable block
+reaches its author's next committed leader block, so a schedule fair to
+each validator commits every reliable block, with no synchrony
+(`committed_of_correct_block`).
+
+**The headlines.** `Properties/Arcs/Headline.lean` states what a rule
+gets. Safety, from `Banded`, `Agree` and `CommitsCandidate`, across any
+stack: verdicts above the settling round transport, any view of the
+composite agrees with any view of the source, a commit is the slot's
+candidate, no block is committed at two slots; and across an extension
+read on its own, verdicts agree at every slot.
+
+```lean
+def Safe (R : DagRule Validator BlockId Payload) : Prop :=
+  (∀ {U U' : R.Universe} {S S' : Slots Validator} {G R₀ d : ℕ}, Stack R U S U' S' G R₀ d →
+    ∀ {V : R.View U} {V' : R.View U'}, ViewAgreeAbove R V V' R₀ →
+      (∀ (k : ℕ) (v : Option BlockId), R₀ ≤ S.slotRound (d + k) →
+          (R.Decided S V (d + k) v ↔ R.Decided S' V' k v)) ∧
+      (∀ (W : R.View U') (k : ℕ) (w v : Option BlockId), R₀ ≤ S.slotRound (d + k) →
+          R.Decided S' W k w → R.Decided S V (d + k) v → w = v) ∧
+      (∀ (W : R.View U') (k : ℕ) (L : BlockId), R.Decided S' W k (some L) →
+          R.IsCandidate S' U' k L) ∧
+      (∀ (W : R.View U') (k k' : ℕ) (L : BlockId), R.Decided S' W k (some L) →
+          R.Decided S' W k' (some L) → k = k')) ∧
+  (∀ {U U' : R.Universe}, Extends R U U' → ∀ (S : Slots Validator)
+    {V : R.View U} {V' W : R.View U'}, R.viewIds V ⊆ R.viewIds V' →
+      ∀ (k : ℕ) (v w : Option BlockId), R.Decided S V k v → R.Decided S W k w → v = w)
+```
+
+Liveness, from Law 2, `CommitsCandidate`, `SelfParent` and `NoEquiv`,
+is `Lives := Progresses ∧ Includes`, one antecedent and the schedule
+quantified before the execution: every slot below a fair run is
+decided, a reliably-led slot the execution commits lies past every
+point, and every block by a reliable author enters the ledger through
+a slot its author leads.
+
+```lean
+def Progresses : Prop :=
+  ∀ (S : Slots Validator) (c : ℕ), 0 < c → Descends R S c → ∀ (T : Finset Validator),
+    (∀ k, ∃ k', k ≤ k' ∧ ∀ i, i < c → S.leader (k' + i) ∈ T) →
+    (∀ k, ∃ b, k ≤ b ∧ ∀ (U : R.Universe) (V : R.View U), sp.live rel S V T b (b + c) →
+        ∀ i, i < b → ∃ v, DecidedBelow R S (b + c) V i v) ∧
+    (∀ k, ∃ k', k ≤ k' ∧ S.leader k' ∈ T ∧
+        ∀ (U : R.Universe) (V : R.View U), sp.live rel S V T k' (k' + 1) →
+          ∃ L, DecidedBelow R S (k' + 1) V k' (some L))
+```
+
+```lean
+def Includes : Prop :=
+  ∀ (S : Slots Validator) (T : Finset Validator), T ⊆ rel.correct →
+    (∀ v ∈ T, ∀ n, ∃ k, n ≤ k ∧ S.leader k = v) →
+    ∀ (m : ℕ), ∀ v ∈ T, ∃ k', m ≤ S.slotRound k' ∧ S.leader k' = v ∧
+      ∀ (U : R.Universe) (V : R.View U), sp.live rel S V T k' (k' + 1) →
+        ∃ L, R.Decided S V k' (some L) ∧
+          ∀ b ∈ R.ids U, (R.block U b).creator = v → (R.block U b).round = m →
+            b ∈ historyFrom (R.block U) L ∧
+              ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
+                b ∈ Arcs.ledgerSetOf R U g n
+```
+
+Every rule instantiates both in one line — `MysticetiProperties.safety`
+and `MysticetiProperties.liveness` for the core and its reactive
+execution, and likewise for Odontoceti, Hybrid and Mahi-Mahi; Nemo,
+FinWhale, Hydrozoan and Optimal-Hydrozoan, whose models carry no
+self-parent clause at the carrier, show `safety` and `progress`.
+
+### 16.10 Every rule, every mechanism
+
+`scripts/audit-conformance.py` and `scripts/audit-mechanisms.py` read
+the dependency graph and print what each rule shows and which mechanism
+cells exist. As of this writing: nine carriers over nine rules show the
+four properties and a support; every cell of cut, fill, re-genesis,
+adaptive leaders, prompt skip (where the rule skips) and chain quality
+is an instance, and liveness across each mechanism and across any stack
+is derived from the rule's support and its witnesses. `audit-bespoke.py`
+checks the other direction — no mechanism reaches a protocol's verdicts
+except through the properties — and reports no bespoke links. Black
+Marlin has no carrier, commits by round with no slot-indexed relation,
+and is out of scope by decision.
+
+What the generic route retired, in the order it happened: the
+per-protocol integration layer for Hydrozoan and Optimal-Hydrozoan
+(§24), the core's hand-composed stack and lifecycle theorems (§16.5),
+the per-rule cut transfer lemmas of §9, the rule-level SS3 of §12, the
+direct `LeaderCommits` and the copies of L10 in Odontoceti and Nemo,
+the coverage-based inclusion of §7, and the bespoke per-rule safety
+statements of §10 and §14. Each was a theorem the properties reach in
+one line, and each is now that line.
 
 ---
 
@@ -9346,51 +9566,29 @@ committee of five or more.
 
 ## 24. Composing the Hydrozoan arcs: what a deployment gets
 
-> **Retired (2026-09-06).** The integration layer this section records
-> — the `toCore`/`ofCore` transport under a self-parent clause, the
-> schedule and fault projections, the simulation lemmas and the
-> transported cut and fill — has been removed from the code. Hydrozoan
-> and Optimal-Hydrozoan now reach the same cells as every other rule:
-> a native cut `chopHZ` and a copy fill `copyFillHZ` on Hydrozoan's own
-> universe (`Integration/HydrozoanMechanisms.lean`), the Optimal
-> versions with leader exclusion carried across both
-> (`Integration/OptimalMechanisms.lean`), and verdict transport,
-> agreement, liveness and composition from the generic theorems
-> through `LeanDag.Hydrozoan.banded`, `agree` and `hzSupport`. The
-> section is kept as the record of the design, and of the obstruction
-> at §24.4 that the copy fill removed.
+*(modules `LeanDag/Integration/HydrozoanMechanisms.lean`,
+`LeanDag/Integration/OptimalMechanisms.lean`, `LeanDag/Barnacle/Hydrozoan*/`;
+the design record of the first route is `hydrozoan-integration.md`)*
 
-*(modules `LeanDag/Integration/Hydrozoan/` and `LeanDag/Barnacle/Hydrozoan*/`;
-the design record is `hydrozoan-integration.md`; the arcs composed are
-Hydrozoan (§22), Optimal-Hydrozoan (§23), Barnacle (§21), garbage
-collection (§9), Safe Skip (§12) and the hybrid fault model (§14))*
+Hydrozoan (§22) and Optimal-Hydrozoan (§23) were developed against
+Mathlib alone, and nothing composed with them. They now reach every
+mechanism cell the way every other rule does (§16.9): a native cut
+`chopHZ` and a copy fill `copyFillHZ` on Hydrozoan's own universe, the
+Optimal versions with leader exclusion carried across both, and verdict
+transport, agreement, liveness and composition from the generic
+theorems at `LeanDag.Hydrozoan.banded`, `agree` and `hzSupport`. Their
+headlines are `Hydrozoan.Properties.safety` and `progress`, and
+`OptimalHydrozoanProperties.safety` and `progress`; the inclusion half
+of liveness is absent because neither model carries a self-parent
+clause. Barnacle's `hydrozoan` and `optimalHydrozoan` rules name these
+carriers.
 
-Hydrozoan and Optimal-Hydrozoan were developed against Mathlib alone.
-They import nothing from the rest of this development and nothing
-imports them, so none of the composition results of §16 reached them:
-a replica running Hydrozoan had no theorem that its verdicts survive
-garbage collection, no theorem that they survive a crash recovery, and
-no leader schedule but the one its own arc fixes. This chapter connects
-them. Its results carry **HI**-labels.
-
-The connection is not a port. Both arcs are frozen, and every result
-below is additive — a new module, never an edit to an existing one —
-which is the discipline §16 adopted and the reason the two protocols'
-own statements are unchanged. What the chapter has to supply is
-**bridges**: a fault-model coercion, a schedule coercion, a universe
-coercion, and the per-rule inductions that no coercion can avoid.
-
-Three things shape the work. First, **the causal-history layer needs no
-bridge at all**: Hydrozoan's universe already satisfies the interface
-the rest of the development reads causality through, and the proof is
-two field projections. Second, **the deployed protocol has a validity
-clause the model does not record** — every block carries its author's
-previous block — and it has to be added beside the frozen definition
-rather than inside it. Third, and the finding the chapter is built
-around, **the two protocols do not survive a crash recovery alike**:
-Hydrozoan's verdicts do, Optimal-Hydrozoan's validity rule does not,
-and the second is a refutation with a witness rather than an
-unfinished proof.
+The first route — a coercion of Hydrozoan universes into the core's and
+back under a self-parent clause, schedule and fault projections, a
+simulation interface and per-rule transports — is retired, and this
+chapter is kept as its record. Its results carry **HI**-labels; §24.4
+records the one obstruction it met and how the copy fill removed it,
+and §24.7 lists what it found.
 
 ### 24.1 Three layers, and where each one binds
 
@@ -10666,6 +10864,23 @@ reused.
 | BMT4 | and one Byzantine anchor below suffices to order two reliable authors' blocks oppositely, refuting Total order | `deliverSeq` and `commitSeq` witnesses *(LeanDagTest/BlackMarlin/Divergence)* |
 | BMP14 | both repairs on the execution of §18.11, what they cost, a view that misses the support, and a counting rule that reads it wrongly at `f = 1` | `descendSupp`, `descendS`, `coneView`, `Ucnt` witnesses *(LeanDagTest/BlackMarlin)* |
 
+**The properties** (§16.9):
+
+| Label | Statement | Lean |
+|:---|:---|:---|
+| TP1 | the carrier a mechanism reads, with its three laws | `Properties.DagRule` *(Properties/Carrier)* |
+| TP2 | the four properties a rule shows | `Banded`, `Agree`, `CommitsCandidate`, `Indirect` *(Properties/Band, Agree, Candidate, Commit)* |
+| TP3 | the support and its two laws; the precondition every liveness theorem reads | `Support`, `Support.Local`, `Support.Commits`, `Support.live` *(Properties/Support, Derived/LeaderCommits)* |
+| TP4 | what is derived: persistence, truncation invariance, leader commits, descent | `Persist.of_banded`, `LocalTruncate.of_banded`, `Support.leaderCommits`, `Descends.of_indirect` *(Properties/Derived)* |
+| TP5 | synchrony is the timed model's, not a property: the one bridge into `live` | `Timed.live_of_coverage` *(Timed/Coverage)* |
+| TP6 | verdicts across a cut, a fill, and any stack of mechanisms | `decided_of_truncate`, `decided_skipFill`, `decided_of_rebased`, `Stack.safe_and_live` *(Properties/Arcs)* |
+| TP7 | liveness across a cut, a fill, and any stack | `Support.live_of_truncates`, `Support.live_of_sustains`, `Support.live_of_rebased` *(Properties/Arcs/Liveness, Stack)* |
+| TP8 | every slot below a fair run is decided, at `live` | `Support.decidedBelow_of_fairRun` *(Properties/Arcs/Liveness)* |
+| TP9 | the prompt skip: a novel slot is skipped, and conflicts with no verdict | `decided_none_of_novel`, `decided_none_of_novel_agree` *(Properties/Arcs/SafeSkip)* |
+| TP10 | inclusion from self-reference: a reliable block reaches its author's next commit | `SelfParent.reaches_of_creator`, `committed_of_correct_block` *(Properties/Optional/SelfParent, Arcs/Quality)* |
+| TP11 | the safety headline: across any stack, and at every slot across an extension | `Properties.Safe`, `Properties.safety`, `Safe.prefix_agree` *(Properties/Arcs/Headline)* |
+| TP12 | the liveness headline: progress and inclusion at the rule's support | `Support.Lives`, `Support.liveness`, `Support.progress` *(Properties/Arcs/Headline)* |
+
 **Integration** (§16):
 
 | Label | Statement | Lean |
@@ -10765,7 +10980,7 @@ reused.
 | HI7 | verdicts survive the cut, for both rules, on the base-slot premise alone | `decided_chop_iff_hz`, `decided_chop_iff_opt` *(Integration/HydrozoanMechanisms, OptimalMechanisms)* |
 | HI8 | retired: the self-parent clause was owed only by the transport (§24.4) | — |
 | HI9 | verdicts survive the copy fill for both rules, with no quorum hypothesis; leader exclusion survives it | `decided_agree_copyFillHZ`, `decided_copyFill_opt`, `leaderExcludedAll_copyFillHZ` *(Integration/HydrozoanMechanisms, OptimalMechanisms)* |
-| HI10 | what a deployment gets: safety and liveness through a recovery and a horizon, for both rules, from the support and the two witnesses | `Stack.safe_and_live`, `hzSupport`, `optSupport` *(Properties/Arcs/Stack, Hydrozoan/Helpers/Commit, OptimalHydrozoan/Carrier)* |
+| HI10 | what a deployment gets: the headlines at both rules | `Hydrozoan.Properties.safety`, `Hydrozoan.Properties.progress`, `OptimalHydrozoanProperties.safety`, `OptimalHydrozoanProperties.progress` *(Hydrozoan/Properties/Proof, OptimalHydrozoan/Carrier)* |
 
 ---
 
