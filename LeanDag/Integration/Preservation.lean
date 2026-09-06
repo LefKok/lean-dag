@@ -16,7 +16,7 @@ universe with no further proof. The table this file fills:
 | Invariant | `chop U G` | `skipFill` |
 |:---|:---|:---|
 | `HonestNoEquiv` | I2 | I3 |
-| `SynchronisedOn` | `Properties.Arcs.synchronisedOn_chop`, from `Sustains` | I5 — *refuted*, see `Integration/Coverage.lean` |
+| `SynchronisedOn` | I2, `Integration.synchronisedOn_chop`, from `Sustains` | I4 — *refuted* for a set holding the recovering validator, `Integration/Coverage.lean` |
 
 `Populated`, `DoSValid` and the verdict facts already had their cells
 filled by the arcs themselves (`populated_chop`, `dosValid_chop`,
