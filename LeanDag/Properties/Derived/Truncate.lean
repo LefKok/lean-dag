@@ -1,4 +1,5 @@
 import LeanDag.Properties.Truncate
+import LeanDag.Properties.Compose
 import LeanDag.Properties.Band
 
 /-!
@@ -39,72 +40,12 @@ def LocalTruncate (R : DagRule Validator BlockId Payload) : Prop :=
     ∀ (V : R.View U) (V' : R.View U'), ViewAgreeAbove R V V' G →
     ∀ (k : ℕ) (v : Option BlockId), R.Decided S V (d + k) v ↔ R.Decided S' V' k v
 
-/-- **Truncation invariance falls out of the band.** -/
-theorem LocalTruncate.of_banded (h : Banded R) : LocalTruncate R := by
-  intro S S' U U' G d ht V V' hv k v
-  have hbase : G ≤ S.slotRound d := ht.base
-  have hdk : G ≤ S.slotRound (d + k) := le_trans hbase (S.mono (Nat.le_add_right d k))
-  constructor
-  · intro hdec
-    obtain ⟨top, htop⟩ := h S U V (d + k) v hdec
-    refine htop 0 G d 0 S' U' V' k (by omega) ?_ ?_ ?_ ?_
-    · intro m m' hm
-      have hmm : m = m' + d := by omega
-      subst hmm
-      have := ht.slotRound m'
-      have hc : d + m' = m' + d := by omega
-      rw [hc] at this
-      omega
-    · intro m m' hm _
-      have hmm : m = m' + d := by omega
-      subst hmm
-      have hc : m' + d = d + m' := by omega
-      rw [hc]
-      exact (ht.leader m').symm
-    · refine ⟨?_, ?_, ?_⟩
-      · intro b hb h1 h2
-        exact (ht.mem_iff b).mpr ⟨hb, by omega⟩
-      · intro b hb hband
-        have hbU' : b ∈ R.ids U' := by
-          rcases hband with ⟨h1, h2⟩ | ⟨hm, -, -⟩
-          · exact (ht.mem_iff b).mpr ⟨hb, by omega⟩
-          · exact hm
-        exact ⟨by have := ht.round_of hbU'; omega, ht.creator_of hbU'⟩
-      · intro b hb h1 h2
-        have hbU' : b ∈ R.ids U' := (ht.mem_iff b).mpr ⟨hb, by omega⟩
-        exact ht.refs_of hbU' (by omega)
-    · intro b hbV h1 h2
-      exact (hv b (R.viewSound V hbV) (by omega)).mp hbV
-  · intro hdec
-    obtain ⟨top, htop⟩ := h S' U' V' k v hdec
-    refine htop G 0 0 d S U V (d + k) (by omega) ?_ ?_ ?_ ?_
-    · intro m m' hm
-      have hmm : m' = m + d := by omega
-      subst hmm
-      have := ht.slotRound m
-      have hc : d + m = m + d := by omega
-      rw [hc] at this
-      omega
-    · intro m m' hm _
-      have hmm : m' = m + d := by omega
-      subst hmm
-      have hc : m + d = d + m := by omega
-      rw [hc]
-      exact ht.leader m
-    · refine ⟨?_, ?_, ?_⟩
-      · intro b hb h1 h2
-        exact ((ht.mem_iff b).mp hb).1
-      · intro b hb hband
-        have := ht.round_of hb
-        exact ⟨by omega, (ht.creator_of hb).symm⟩
-      · intro b hb h1 h2
-        have hmem := (ht.mem_iff b).mp hb
-        have hr := ht.round_of hb
-        exact (ht.refs_of hb (by omega)).symm
-    · intro b hbV h1 h2
-      have hbU' : b ∈ R.ids U' := R.viewSound V' hbV
-      have hmem := (ht.mem_iff b).mp hbU'
-      exact (hv b hmem.1 hmem.2).mpr hbV
+/-- **Truncation invariance falls out of the band** — `decided_of_rebased`
+at a cut, whose settling round is its horizon. -/
+theorem LocalTruncate.of_banded (h : Banded R) : LocalTruncate R :=
+  fun S S' U U' G d ht V V' hv k v =>
+    decided_of_rebased h (Rebased.of_truncates ht) hv k
+      (le_trans ht.base (S.mono (Nat.le_add_right d k))) v
 
 end Properties
 

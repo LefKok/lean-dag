@@ -1089,24 +1089,6 @@ theorem leaderCommits :
       (Payload := Payload)) (fun S {U} V T lo K => coreLive S (U := U) V T lo K) :=
   fun S _ V T lo K hlive => leaderCommits_cert S V T lo K (certLive_of_coreLive hlive)
 
-/-- **The commit survives any sustaining mechanism, from either
-execution model.** `certLive` is stated in references and counts, and
-`Sustains` preserves both, so the mechanism consumes it directly. This
-is what coverage could not give: a coverage-shaped precondition
-transports only for a model that has coverage, and a reactive execution
-does not. -/
-theorem directCommit_of_certLive_sustains [S : Slots Validator]
-    {U U' : BlockUniverse Validator BlockId Payload} {G R₀ : ℕ}
-    (hsus : Sustains (mysticetiRule (Payload := Payload)) U U' G R₀)
-    {V : View Validator BlockId Payload U} {T : Finset Validator} {lo K k : ℕ}
-    (hlive : certLive S (U := U) V T lo K) (hlo : lo ≤ k) (hK : k < K)
-    (hlead : S.leader k ∈ T) (hR₀ : R₀ ≤ S.slotRound k) (hG : G ≤ S.slotRound k) :
-    ∃ L, IsLeaderBlock (S := S) U k L ∧ DirectCommit U' L (S.slotRound k - G) := by
-  obtain ⟨hcard, N, -, -, hslot⟩ := hlive
-  obtain ⟨hpop0, hpop2, hcert⟩ := hslot k hlo hK hlead
-  obtain ⟨L, hLmem, hLc, hLr⟩ := hpop0 (S.leader k) hlead
-  exact ⟨L, ⟨hLmem, hLr, hLc⟩,
-    directCommit_of_sustains hsus hR₀ hG hcard hpop2 (hcert L ⟨hLmem, hLr, hLc⟩)⟩
 
 /-! ## The core's support shape
 

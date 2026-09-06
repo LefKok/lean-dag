@@ -93,47 +93,6 @@ theorem leaderCommits_reactive :
       (Payload := Payload)) (fun S {U} V T lo K => reactiveLive S (U := U) V T lo K) :=
   fun S _ V T lo K hlive => leaderCommits_cert S V T lo K (certLive_of_reactiveLive hlive)
 
-/-! ## What a mechanism needs from a reactive execution
-
-`Support.OfCoverage` asks a rule's precondition to follow from coverage, and
-a reactive execution does not have coverage — `SynchronisedOn` is false
-in one by design. That antecedent is the strongest fact statable in
-`ids`, `block` and `refs` alone, which is why the properties use it; it
-is not what a *mechanism* needs.
-
-What a mechanism needs is weaker and is already named: `CertifiesAt`,
-the certificates the commit rule counts. The reactive discipline
-delivers it — that is what `cert_or_wait` is for — and
-`MysticetiProperties.directCommit_of_sustains` consumes it, carrying the
-commit to the transformed DAG with no pacing structure transported.
-Certificates are made of references, and `Sustains` preserves
-references.
--/
-
-/-- **The reactive commit survives any sustaining mechanism.** Now a
-corollary of `directCommit_of_certLive_sustains`, which is stated for
-either execution model: the reactive discipline contributes only its
-bridge to `certLive`, and the mechanism never learns which model
-produced the certificates. -/
-theorem directCommit_of_reactive_sustains [S : Slots Validator]
-    {U U' : BlockUniverse Validator BlockId Payload} {T : Finset Validator} {N : ℕ}
-    {G R₀ : ℕ} (hsus : Sustains (mysticetiRule (Payload := Payload)) U U' G R₀)
-    {V : View Validator BlockId Payload U}
-    (rm : ReactiveM (S := S) U T N) {R k : ℕ}
-    (hT : T ⊆ (Correct : Finset Validator)) (hcard : quorumCard Validator ≤ T.card)
-    (hgst : rm.gst ≤ R)
-    (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n)
-    (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N) (hcov : V.CoversUpto N)
-    (hR₀ : R₀ ≤ S.slotRound k) (hG : G ≤ S.slotRound k)
-    (hlead : S.leader k ∈ T) :
-    ∃ L, IsLeaderBlock (S := S) U k L ∧ DirectCommit U' L (S.slotRound k - G) :=
-  MysticetiProperties.directCommit_of_certLive_sustains hsus
-    (certLive_of_reactiveLive
-      (show reactiveLive S (U := U) V T k (k + 1) from
-        ⟨hT, hcard, N, R, rm, hgst, hto, hR, hcov, fun j hj => by
-          have := S.mono (Nat.lt_succ_iff.mp hj); omega⟩))
-    (Nat.le_refl k) (Nat.lt_succ_self k) hlead hR₀ hG
-
 end MysticetiProperties
 
 end LeanDag

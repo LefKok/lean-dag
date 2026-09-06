@@ -50,59 +50,18 @@ variable [S : Slots Validator]
 variable {U : BlockUniverse Validator BlockId Payload}
 variable {T : Finset Validator} {N R k : ℕ} {L : BlockId}
 
-/-- **The reactive commit survives the cut.** A validator that committed
-reactively still holds the commit in the truncation, at the rebased
-round. -/
-theorem directCommit_chop_reactive {G : ℕ} {V : View Validator BlockId Payload U}
-    (rm : ReactiveM (S := S) U T N)
-    (hT : T ⊆ (Correct : Finset Validator)) (hcard : quorumCard Validator ≤ T.card)
-    (hgst : rm.gst ≤ R)
-    (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n)
-    (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N) (hcov : V.CoversUpto N)
-    (hG : G ≤ S.slotRound k) (hlead : S.leader k ∈ T) :
-    ∃ L, IsLeaderBlock (S := S) U k L ∧
-      DirectCommit (chop U G) L (S.slotRound k - G) :=
-  MysticetiProperties.directCommit_of_reactive_sustains sustains_chop rm hT hcard
-    hgst hto hR hN hcov hG hG hlead
 
-/-- **And the fill.** A validator recovering by Safe Skip does not lose
-a commit the reactive discipline reached. -/
-theorem directCommit_skipFill_reactive (sk : SkipMsg U)
-    {V : View Validator BlockId Payload U} (rm : ReactiveM (S := S) U T N)
-    (hT : T ⊆ (Correct : Finset Validator)) (hcard : quorumCard Validator ≤ T.card)
-    (hgst : rm.gst ≤ R)
-    (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n)
-    (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N) (hcov : V.CoversUpto N)
-    (hr : sk.r + 1 ≤ S.slotRound k) (hlead : S.leader k ∈ T) :
-    ∃ L, IsLeaderBlock (S := S) U k L ∧
-      DirectCommit sk.skipFill L (S.slotRound k - 0) :=
-  MysticetiProperties.directCommit_of_reactive_sustains (sustains_skipFill sk) rm hT
-    hcard hgst hto hR hN hcov hr (Nat.zero_le _) hlead
 
-/-- **And re-genesis.** A validator that rejoined with a fresh chain
-holds every reactive commit it held before. -/
-theorem directCommit_addGenesis_reactive {v : Validator} {g : BlockId} {p : Payload}
-    {hg : g ∉ U.ids}
-    {hsev : ∀ b ∈ U.ids, (U.block b).creator ≠ v}
-    {V : View Validator BlockId Payload U} (rm : ReactiveM (S := S) U T N)
-    (hT : T ⊆ (Correct : Finset Validator)) (hcard : quorumCard Validator ≤ T.card)
-    (hgst : rm.gst ≤ R)
-    (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n)
-    (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N) (hcov : V.CoversUpto N)
-    (hone : 1 ≤ S.slotRound k) (hlead : S.leader k ∈ T) :
-    ∃ L, IsLeaderBlock (S := S) U k L ∧
-      DirectCommit (addGenesis U v g p hg hsev) L (S.slotRound k - 0) :=
-  MysticetiProperties.directCommit_of_reactive_sustains sustains_addGenesis rm hT
-    hcard hgst hto hR hN hcov hone (Nat.zero_le _) hlead
 
-/-! ## The precondition itself, across the three mechanisms
+/-! ## The precondition, across the three mechanisms
 
-The direct-commit results above are the slot-level half. With
-`Support.live_of_sustains` and `Support.live_of_truncates` the whole
-window carries, and everything downstream — `LeaderCommits`,
+With `Support.live_of_sustains` and `Support.live_of_truncates` the
+whole window carries, and everything downstream — `LeaderCommits`,
 `decidedBelow_of_run`, chain quality — applies in the transformed
 universe with no further argument. Reactive Mysticeti reaches
-`Support.live` by its own bridge and needs nothing else. -/
+`Support.live` by its own bridge and needs nothing else. A slot-level
+version of these, at the direct commit, stood here first and was
+deleted when the window-level one arrived. -/
 
 /-- The chopped view covers the rebased horizon. -/
 theorem coversUpto_chop {U : BlockUniverse Validator BlockId Payload}

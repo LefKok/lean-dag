@@ -1,5 +1,7 @@
 import LeanDag.Properties.Truncate
 import LeanDag.Properties.Sustain
+import LeanDag.Properties.Agreement
+import LeanDag.Properties.Band
 
 /-!
 # Transport composes
@@ -154,6 +156,130 @@ theorem Truncates.trans {U U' U'' : R.Universe} {S S' S'' : Slots Validator}
   { (h.toRebasedAbove.trans h'.toRebasedAbove).mono
       (by omega : max G₁ (G₂ + G₁) ≤ G₁ + G₂),
     h.toRebases.trans h'.toRebases with }
+
+
+/-! ## One relation per mechanism, and safety across it -/
+
+/-- **What one mechanism delivers, universe and schedule together.** -/
+structure Rebased (R : DagRule Validator BlockId Payload) (U U' : R.Universe)
+    (S S' : Slots Validator) (G R₀ d : ℕ) : Prop
+    extends RebasedAbove R U U' G R₀, Rebases S S' G d
+
+/-- The schedule is a rebase of itself. -/
+theorem Rebases.refl {S : Slots Validator} : Rebases S S 0 0 where
+  slotRound := fun k => by simp
+  leader := fun k => by simp
+  base := Nat.zero_le _
+
+namespace Rebased
+
+variable {U U' U'' : R.Universe} {S S' S'' : Slots Validator}
+
+/-- A cut is a rebase at its horizon. -/
+theorem of_truncates {G d : ℕ} (h : Truncates R U U' S S' G d) : Rebased R U U' S S' G G d :=
+  { h.toRebasedAbove, h.toRebases with }
+
+/-- A fill or a re-genesis is a rebase at no offset, on the same schedule. -/
+theorem of_sustains {R₀ : ℕ} (h : Sustains R U U' 0 R₀) : Rebased R U U' S S 0 R₀ 0 :=
+  { h, Rebases.refl with }
+
+/-- Doing nothing is a rebase. -/
+theorem refl : Rebased R U U S S 0 0 0 := { RebasedAbove.refl, Rebases.refl with }
+
+/-- **Two rebases are one.** -/
+theorem trans {G₁ R₁ d₁ G₂ R₂ d₂ : ℕ} (h : Rebased R U U' S S' G₁ R₁ d₁)
+    (h' : Rebased R U' U'' S' S'' G₂ R₂ d₂) :
+    Rebased R U U'' S S'' (G₁ + G₂) (max R₁ (R₂ + G₁)) (d₁ + d₂) :=
+  { h.toRebasedAbove.trans h'.toRebasedAbove, h.toRebases.trans h'.toRebases with }
+
+end Rebased
+
+/-! ## Safety across a rebase
+
+`LocalTruncate.of_banded` is this at a cut, where the settling round is
+the horizon. A fill settles higher than it shifts, so the general form
+carries the settling round separately and asks the slot to sit above it. -/
+
+variable {U U' : R.Universe} {S S' : Slots Validator} {G R₀ d : ℕ}
+
+/-- **A verdict above the settling round transports across any rebase**,
+to the rebased numbering, on views that agree above the settling round.
+An `↔`, as `LocalTruncate` is. -/
+theorem decided_of_rebased (h : Banded R) (hr : Rebased R U U' S S' G R₀ d)
+    {V : R.View U} {V' : R.View U'} (hv : ViewAgreeAbove R V V' R₀)
+    (k : ℕ) (hk : R₀ ≤ S.slotRound (d + k)) (v : Option BlockId) :
+    R.Decided S V (d + k) v ↔ R.Decided S' V' k v := by
+  have hsk := hr.slotRound k
+  constructor
+  · intro hdec
+    obtain ⟨top, htop⟩ := h S U V (d + k) v hdec
+    refine htop 0 G d 0 S' U' V' k (by omega) ?_ ?_ ?_ ?_
+    · intro m m' hm
+      have hmm : m = m' + d := by omega
+      subst hmm
+      have := hr.slotRound m'
+      have hc : d + m' = m' + d := by omega
+      rw [hc] at this
+      omega
+    · intro m m' hm _
+      have hmm : m = m' + d := by omega
+      subst hmm
+      have hc : m' + d = d + m' := by omega
+      rw [hc]
+      exact (hr.leader m').symm
+    · refine ⟨?_, ?_, ?_⟩
+      · intro b hb h1 h2
+        exact ((hr.mem b).mp ⟨hb, by omega⟩).1
+      · intro b hb hband
+        have hR : R₀ ≤ (R.block U b).round := by
+          rcases hband with ⟨h1, _⟩ | ⟨hm, h1, _⟩
+          · omega
+          · have := (hr.of_mem' hm (by omega)).2; omega
+        exact ⟨by have := hr.round b hb hR; omega, hr.creator b hb hR⟩
+      · intro b hb h1 h2
+        exact hr.refs b hb (by omega)
+    · intro b hbV h1 h2
+      exact (hv b (R.viewSound V hbV) (by omega)).mp hbV
+  · intro hdec
+    obtain ⟨top, htop⟩ := h S' U' V' k v hdec
+    refine htop G 0 0 d S U V (d + k) (by omega) ?_ ?_ ?_ ?_
+    · intro m m' hm
+      have hmm : m' = m + d := by omega
+      subst hmm
+      have := hr.slotRound m
+      have hc : d + m = m + d := by omega
+      rw [hc] at this
+      omega
+    · intro m m' hm _
+      have hmm : m' = m + d := by omega
+      subst hmm
+      have hc : m + d = d + m := by omega
+      rw [hc]
+      exact hr.leader m
+    · refine ⟨?_, ?_, ?_⟩
+      · intro b hb h1 h2
+        exact (hr.of_mem' hb (by omega)).1
+      · intro b hb hband
+        have hR : R₀ ≤ (R.block U' b).round + G := by
+          rcases hband with ⟨h1, _⟩ | ⟨hm, h1, _⟩
+          · omega
+          · have := hr.round b hm (by omega); omega
+        obtain ⟨hbU, hround⟩ := hr.of_mem' hb hR
+        exact ⟨by omega, (hr.creator b hbU (by omega)).symm⟩
+      · intro b hb h1 h2
+        obtain ⟨hbU, hround⟩ := hr.of_mem' hb (by omega)
+        exact (hr.refs b hbU (by omega)).symm
+    · intro b hbV h1 h2
+      have hbU' : b ∈ R.ids U' := R.viewSound V' hbV
+      obtain ⟨hbU, hround⟩ := hr.of_mem' hbU' (by omega)
+      exact (hv b hbU (by omega)).mpr hbV
+
+/-- **Cross-rebase agreement**, from any view of the rebased universe. -/
+theorem decided_agree_rebased (ha : Agree R) (hb : Banded R)
+    (hr : Rebased R U U' S S' G R₀ d) {V : R.View U} {V' : R.View U'}
+    (hv : ViewAgreeAbove R V V' R₀) {W : R.View U'} {k : ℕ} (hk : R₀ ≤ S.slotRound (d + k))
+    {w v : Option BlockId} (hW : R.Decided S' W k w) (hV : R.Decided S V (d + k) v) : w = v :=
+  ha S' W V' k w v hW ((decided_of_rebased hb hr hv k hk v).mp hV)
 
 end Properties
 

@@ -2990,6 +2990,42 @@ contribution is the three properties it already showed. The audit's
 `stack` column reads `der` where a rule has a support and witnesses for
 two mechanisms, and `yes` where a stack is assembled.
 
+### 11.12 What the generic layer made redundant
+
+With safety, liveness and composition each proved once, a number of
+direct theorems said nothing the generic ones do not. Deleted in this
+pass, each with no consumer outside its own file:
+
+| deleted | subsumed by |
+|---|---|
+| `Integration/Stack.lean`: `sustains_stack`, `directCommit_stack`, `populated_stack`, `schedule_stack` | `stack_core` and `Stack.safe_and_live` |
+| `Integration/ReGenesis.lean`: `directCommit_addGenesis`, `sustains_rejoinChop`, `directCommit_rejoinChop` | `live_addGenesis_reactive`; a re-genesis-then-cut is a `Stack` |
+| `Integration/ReactiveMechanisms.lean`: the three `directCommit_*_reactive`, with `directCommit_of_reactive_sustains` and `directCommit_of_certLive_sustains` | the three `live_*_reactive`, at verdict level |
+| `SafeSkip/Invariance.lean`: thirteen rule-by-rule transfer lemmas and `QuorateOverGap` | `decided_fill_of_persist`; the file keeps `liftView` and `reaches_fill_old`, which other arcs read |
+
+And one proof replaced: `LocalTruncate.of_banded` was sixty lines and is
+now `decided_of_rebased` at a cut, whose settling round is its horizon.
+`Rebased`, `Rebases.refl` and the two safety-across-a-rebase theorems
+moved to `Compose.lean`, beside the composition they generalise, so
+that `Derived/` depends on nothing in `Arcs/`.
+
+**What was not touched, and is the larger opportunity.** The Hydrozoan
+integration layer — `Integration/Hydrozoan/ChopDecided.lean`,
+`FillDecided.lean`, `OptimalChopDecided.lean`, `Simulation.lean`,
+`Stack.lean` — is some hundred and twenty declarations carrying
+Hydrozoan's and Optimal's rules across the cut and the fill one
+predicate at a time, feeding a bespoke `Simulates` transport and a
+hand-composed stack. Every consequence they reach is now reached by
+`hzSupport`, `optSupport`, the `Truncates`/`Sustains` witnesses in
+`ViaProperties.lean` and `OptimalFill.lean`, and the generic theorems;
+`OptimalChopDecided.lean` has no external consumer at all. The same
+holds of the core's integration capstones `Sound.lean`, `Lifecycle.lean`
+and most of `Retention.lean`, which restate for the core what
+`Stack.safe_and_live` states for every rule. They are the deliverables
+of `docs/hydrozoan-integration.md` and `docs/integration.md`, so
+deleting them retires those documents' claims in favour of the
+properties', and that is a decision rather than a tidy-up.
+
 ### 11.5 Next steps, in order
 
 1. **~~`Compose.lean`~~** (**done**, §11.3). The three composition

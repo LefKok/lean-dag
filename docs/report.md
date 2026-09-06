@@ -3938,11 +3938,14 @@ view's blocks, all of them old, whose references the fill preserves; and
 a fresh identifier can appear in none of those references, so even for a
 *fresh* candidate the vote and certificate sets are empty on both sides
 of the fill. The certificate and blame sets a view holds are therefore
-equal across the fill for every candidate (SS4,
-`certificatesIn_fill` and `blameSetIn_fill`), and reachability from an
-old block never leaves the old identifiers (`reaches_fill_old`), so
+equal across the fill for every candidate (SS4), and reachability from
+an old block never leaves the old identifiers (`reaches_fill_old`), so
 certification transports both ways for old anchors and fails outright
-for fresh candidates (`not_certifiedIn_fresh`).
+for fresh candidates. SS4 was once a dozen rule-by-rule transfer lemmas
+and is now a consequence of `Banded`: the fill is an extension, and
+`Persist` carries every verdict across an extension, so the per-rule
+transfers were deleted with the induction they served
+(`docs/target-properties.md` §11.12).
 
 The direct skip needs no obligation at all, and an earlier form of this
 theorem thought otherwise. When `Decided.directSkip` quantified over the
@@ -3955,7 +3958,7 @@ A skip is now a quorum of blockers, blocks whose references name no
 candidate of the slot, and a fill cannot turn a blocker into a
 supporter: an old block's references are old, and a filled candidate is
 fresh. So the blocker sets agree across the fill
-(`slotBlamersIn_fill`) and the case transports like the others:
+and the case transports like the others:
 
 **SS5.**
 ```lean
@@ -10542,7 +10545,7 @@ reused.
 | SS1 | the fill is a universe; old blocks read unchanged | `SkipMsg.skipFill`, `SkipMsg.skipFill_block_old` *(SafeSkip/Basic)* |
 | SS2 | the gap is populated: production restored | `SkipMsg.skipFill_populatedOn` *(SafeSkip/Basic)* |
 | SS3 | the fill cannot conjure a commit | `SkipMsg.directSkip_fresh` *(SafeSkip/Basic)* |
-| SS4 | the rule-level sets are unchanged, for every candidate | `SkipMsg.certificatesIn_fill`, `SkipMsg.blameSetIn_fill` *(SafeSkip/Invariance)* |
+| SS4 | the rule-level sets are unchanged, for every candidate | retired: a consequence of `Banded` through `Persist.of_banded` *(Properties/Derived/FromBand)* |
 | SS5 | verdict invariance across the fill | `decided_fill_of_persist` *(Properties/Arcs/SafeSkip)* |
 | SS6 | agreement across a recovery | `decided_fill_agree_of_properties` *(Properties/Arcs/SafeSkip)* |
 | SS7 | the crash, the message and the fill, on data | `Ucrash` witnesses *(LeanDagTest/SafeSkip)* |
@@ -13318,21 +13321,6 @@ def liftView (V : View Validator BlockId Payload U) :
 ```
 
 A view of `U` is a view of the extension, unchanged: its blocks are old, and old references are preserved.
-
-#### `QuorateOverGap`
-
-*def, `SafeSkip.Invariance.lean`*
-
-```lean
-def QuorateOverGap (V : View Validator BlockId Payload U) : Prop :=
-  ∀ n, sk.r0 < n → n ≤ sk.r →
-    quorumCard Validator ≤
-      (creatorsOf U.block ((blocksAt U (n + 1)) ∩ V.ids)).card
-```
-
-**The view is quorate over the gap**: at every gap round it holds blocks from a quorum of distinct authors at the round above.
-
-No longer consumed by the verdict transport, which needs no condition once a skip is a count of blockers. Kept because it is the condition under which a *pre-crash* view could have skipped a gap slot at all, and so the honest precondition for a recovering validator having decided anything there.
 
 #### `selfParent`
 
@@ -26278,18 +26266,6 @@ def ledgerSetOf (R : DagRule Validator BlockId Payload) (U : R.Universe)
 
 **The ledger a verdict assignment names**: everything in the causal history of a committed leader of a slot below `n`. The core's `ledgerSet` at the carrier.
 
-#### `Rebased`
-
-*structure, `Properties.Arcs.Stack.lean`*
-
-```lean
-structure Rebased (R : DagRule Validator BlockId Payload) (U U' : R.Universe)
-    (S S' : Slots Validator) (G R₀ d : ℕ) : Prop
-    extends RebasedAbove R U U' G R₀, Rebases S S' G d
-```
-
-**What one mechanism delivers, universe and schedule together.**
-
 #### `Stack`
 
 *inductive, `Properties.Arcs.Stack.lean`*
@@ -26510,6 +26486,18 @@ def Indirect (R : DagRule Validator BlockId Payload)
 **The second quantifier is what makes this carry a bound.** A protocol that proves the indirect rule by cases on the evidence at slot `i` — which is how all of them prove it — proves this stronger form without extra work: the case split reads slot `i`'s own candidate and the anchor's history, and a schedule that renames leaders elsewhere changes neither. `Descends` is the payoff, derived in `Derived/Descent.lean` where it was three protocol-specific inductions.
 
 Taking `S' := S` gives the plain rule, which is what a mechanism that does not track bounds consumes.
+
+#### `Rebased`
+
+*structure, `Properties.Compose.lean`*
+
+```lean
+structure Rebased (R : DagRule Validator BlockId Payload) (U U' : R.Universe)
+    (S S' : Slots Validator) (G R₀ d : ℕ) : Prop
+    extends RebasedAbove R U U' G R₀, Rebases S S' G d
+```
+
+**What one mechanism delivers, universe and schedule together.**
 
 #### `CoversUpto`
 
@@ -26961,7 +26949,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 1125 theorems that either another module of the
+The 1123 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -30882,32 +30870,6 @@ theorem directSkip_fresh {T : Finset Validator} {k : ℕ}
 ```
 
 **The fill cannot conjure a commit.** A filled block landing on a leader slot is directly skipped: no old block references a fresh id, so every reliable validator's block at the round above blames it. The mechanism restores production without touching the slots the network already passed.
-
-#### `certificatesIn_fill`
-
-*theorem, `SafeSkip.Invariance.lean`*
-
-```lean
-theorem certificatesIn_fill (V : View Validator BlockId Payload U)
-    {L : BlockId} {r : ℕ} :
-    certificatesIn sk.skipFill (sk.liftView V) L r = certificatesIn U V L r
-```
-
-Certificates a view holds read identically — again for every candidate.
-
-#### `blameSetIn_fill`
-
-*theorem, `SafeSkip.Invariance.lean`*
-
-```lean
-theorem blameSetIn_fill (V : View Validator BlockId Payload U)
-    {L : BlockId} {r : ℕ} :
-    ((blocksAt sk.skipFill (r + 1)).filter
-        (fun q => L ∉ (sk.skipFill.block q).refs)) ∩ (sk.liftView V).ids =
-      ((blocksAt U (r + 1)).filter (fun q => L ∉ (U.block q).refs)) ∩ V.ids
-```
-
-The blocks a view holds that blame a candidate read identically — for every candidate, a fresh id lying in no old reference set.
 
 #### `reaches_fill_old`
 
@@ -40265,22 +40227,6 @@ theorem leaderCommits :
 
 **The timed theorem, as a corollary.** Its statement is unchanged; its proof is now the bridge composed with the one `LeaderCommits`.
 
-#### `directCommit_of_certLive_sustains`
-
-*theorem, `MysticetiProperties.lean`*
-
-```lean
-theorem directCommit_of_certLive_sustains [S : Slots Validator]
-    {U U' : BlockUniverse Validator BlockId Payload} {G R₀ : ℕ}
-    (hsus : Sustains (mysticetiRule (Payload := Payload)) U U' G R₀)
-    {V : View Validator BlockId Payload U} {T : Finset Validator} {lo K k : ℕ}
-    (hlive : certLive S (U := U) V T lo K) (hlo : lo ≤ k) (hK : k < K)
-    (hlead : S.leader k ∈ T) (hR₀ : R₀ ≤ S.slotRound k) (hG : G ≤ S.slotRound k) :
-    ∃ L, IsLeaderBlock (S := S) U k L ∧ DirectCommit U' L (S.slotRound k - G)
-```
-
-**The commit survives any sustaining mechanism, from either execution model.** `certLive` is stated in references and counts, and `Sustains` preserves both, so the mechanism consumes it directly. This is what coverage could not give: a coverage-shaped precondition transports only for a model that has coverage, and a reactive execution does not.
-
 #### `coreSupport_local`
 
 *theorem, `MysticetiProperties.lean`*
@@ -40746,18 +40692,6 @@ theorem decided_agree_horizons (ha : Agree R) (hlt : LocalTruncate R)
 
 **And across two horizons.** Validators cut at different depths agree on every shared slot, matched through the absolute slot index. Horizons need never be negotiated.
 
-#### `sustains_chop`
-
-*theorem, `Properties.Arcs.GC.lean`*
-
-```lean
-theorem sustains_chop :
-    Sustains (MysticetiProperties.mysticetiRule (Payload := Payload)) U (chop U G) G G where
-  mem
-```
-
-**The cut sustains the core from its horizon.**
-
 #### `directCommit_chop`
 
 *theorem, `Properties.Arcs.GC.lean`*
@@ -41153,26 +41087,6 @@ theorem sustains_skipFill (sk : SkipMsg U) :
 
 **A fill sustains from the top of its gap.** Above `sk.r` the fill added nothing, so every block there is old and unchanged. Below it the claim would be false, and deliberately: the blocks a fill adds stand in for blocks that voted, and need not vote as they did.
 
-#### `of_truncates`
-
-*theorem, `Properties.Arcs.Stack.lean`*
-
-```lean
-theorem of_truncates {G d : ℕ} (h : Truncates R U U' S S' G d) : Rebased R U U' S S' G G d
-```
-
-A cut is a rebase at its horizon.
-
-#### `of_sustains`
-
-*theorem, `Properties.Arcs.Stack.lean`*
-
-```lean
-theorem of_sustains {R₀ : ℕ} (h : Sustains R U U' 0 R₀) : Rebased R U U' S S 0 R₀ 0
-```
-
-A fill or a re-genesis is a rebase at no offset, on the same schedule.
-
 #### `refl`
 
 *theorem, `Properties.Band.lean`*
@@ -41365,6 +41279,74 @@ theorem trans (h : Rebases S S' G₁ d₁) (h' : Rebases S' S'' G₂ d₂) :
 ```
 
 **And two schedule rebases are one.** Offsets and base slots both add, which is what makes a stack of truncations a truncation.
+
+#### `of_truncates`
+
+*theorem, `Properties.Compose.lean`*
+
+```lean
+theorem of_truncates {G d : ℕ} (h : Truncates R U U' S S' G d) : Rebased R U U' S S' G G d
+```
+
+A cut is a rebase at its horizon.
+
+#### `of_sustains`
+
+*theorem, `Properties.Compose.lean`*
+
+```lean
+theorem of_sustains {R₀ : ℕ} (h : Sustains R U U' 0 R₀) : Rebased R U U' S S 0 R₀ 0
+```
+
+A fill or a re-genesis is a rebase at no offset, on the same schedule.
+
+#### `refl`
+
+*theorem, `Properties.Compose.lean`*
+
+```lean
+theorem refl : Rebased R U U S S 0 0 0
+```
+
+Doing nothing is a rebase.
+
+#### `trans`
+
+*theorem, `Properties.Compose.lean`*
+
+```lean
+theorem trans {G₁ R₁ d₁ G₂ R₂ d₂ : ℕ} (h : Rebased R U U' S S' G₁ R₁ d₁)
+    (h' : Rebased R U' U'' S' S'' G₂ R₂ d₂) :
+    Rebased R U U'' S S'' (G₁ + G₂) (max R₁ (R₂ + G₁)) (d₁ + d₂)
+```
+
+**Two rebases are one.**
+
+#### `decided_of_rebased`
+
+*theorem, `Properties.Compose.lean`*
+
+```lean
+theorem decided_of_rebased (h : Banded R) (hr : Rebased R U U' S S' G R₀ d)
+    {V : R.View U} {V' : R.View U'} (hv : ViewAgreeAbove R V V' R₀)
+    (k : ℕ) (hk : R₀ ≤ S.slotRound (d + k)) (v : Option BlockId) :
+    R.Decided S V (d + k) v ↔ R.Decided S' V' k v
+```
+
+**A verdict above the settling round transports across any rebase**, to the rebased numbering, on views that agree above the settling round. An `↔`, as `LocalTruncate` is.
+
+#### `decided_agree_rebased`
+
+*theorem, `Properties.Compose.lean`*
+
+```lean
+theorem decided_agree_rebased (ha : Agree R) (hb : Banded R)
+    (hr : Rebased R U U' S S' G R₀ d) {V : R.View U} {V' : R.View U'}
+    (hv : ViewAgreeAbove R V V' R₀) {W : R.View U'} {k : ℕ} (hk : R₀ ≤ S.slotRound (d + k))
+    {w v : Option BlockId} (hW : R.Decided S' W k w) (hV : R.Decided S V (d + k) v) : w = v
+```
+
+**Cross-rebase agreement**, from any view of the rebased universe.
 
 #### `exists_coversUpto_decides`
 
@@ -41647,18 +41629,6 @@ theorem creator_of (h : Truncates R U U' S S' G d) {b : BlockId} (hb : b ∈ R.i
 
 Authors are untouched, read from the truncation.
 
-#### `refs_of`
-
-*theorem, `Properties.Truncate.lean`*
-
-```lean
-theorem refs_of (h : Truncates R U U' S S' G d) {b : BlockId} (hb : b ∈ R.ids U')
-    (hgt : G < (R.block U b).round) :
-    (R.block U' b).refs = (R.block U b).refs
-```
-
-And references survive strictly above the horizon.
-
 #### `coreSupport_live_of_reactiveLive`
 
 *theorem, `Reactive.MysticetiProperties.lean`*
@@ -41684,27 +41654,6 @@ theorem leaderCommits_reactive :
 ```
 
 **Reactive Mysticeti commits its reliable leaders.** The statement is unchanged; the proof is now the bridge composed with the core's single `LeaderCommits`, where it was a second proof of the same shape.
-
-#### `directCommit_of_reactive_sustains`
-
-*theorem, `Reactive.MysticetiProperties.lean`*
-
-```lean
-theorem directCommit_of_reactive_sustains [S : Slots Validator]
-    {U U' : BlockUniverse Validator BlockId Payload} {T : Finset Validator} {N : ℕ}
-    {G R₀ : ℕ} (hsus : Sustains (mysticetiRule (Payload := Payload)) U U' G R₀)
-    {V : View Validator BlockId Payload U}
-    (rm : ReactiveM (S := S) U T N) {R k : ℕ}
-    (hT : T ⊆ (Correct : Finset Validator)) (hcard : quorumCard Validator ≤ T.card)
-    (hgst : rm.gst ≤ R)
-    (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n)
-    (hR : R ≤ S.slotRound k) (hN : S.slotRound k + 2 ≤ N) (hcov : V.CoversUpto N)
-    (hR₀ : R₀ ≤ S.slotRound k) (hG : G ≤ S.slotRound k)
-    (hlead : S.leader k ∈ T) :
-    ∃ L, IsLeaderBlock (S := S) U k L ∧ DirectCommit U' L (S.slotRound k - G)
-```
-
-**The reactive commit survives any sustaining mechanism.** Now a corollary of `directCommit_of_certLive_sustains`, which is stated for either execution model: the reactive discipline contributes only its bridge to `certLive`, and the mechanism never learns which model produced the certificates.
 
 #### `waveRobin_fairRun`
 
@@ -41745,7 +41694,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 1151 lemmas used only within the file that proves
+The 1128 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -42186,22 +42135,11 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `committed_of_correct_block_of_run` | No reliable validator's block is censored (RS5, execution first). In a reactive run past GST whose timeout … |
 
-### `SafeSkip/Invariance.lean` (12)
+### `SafeSkip/Invariance.lean` (1)
 
 | Lemma | Role |
 |:---|:---|
-| `certificatesIn_subset_ids` | — |
-| `certifiedIn_fill` | Certification transports both ways for an old anchor: any witness certificate reached from it is itself … |
-| `certifies_fill` | — |
-| `creatorsOf_fill` | Creators read identically on old blocks. |
-| `inter_view_subset_ids` | — |
-| `isLeaderBlock_fill` | A leader block of `U` remains one of the extension. |
-| `isLeaderBlock_fill_cases` | A leader block of the extension is an old one, or a filled block on a slot of the recovering validator. |
 | `liftView_ids` | — |
-| `not_certifiedIn_fresh` | No old anchor certifies a fresh candidate: everything it reaches is old, and no old reference contains a … |
-| `slotBlamersIn_fill` | The blockers of a slot read identically across the fill. An old block's references are old, and a filled … |
-| `votesIn_fill` | Votes read identically on old certificates — for *every* candidate: an old block's references are … |
-| `votesIn_subset_ids` | — |
 
 ### `SafeSkip/Jump.lean` (16)
 
@@ -42251,30 +42189,18 @@ subsection per module, in the layer order of Appendices B and C.
 | `chopMsg_r0` | The rebased crash round: the truncation sees the gap starting `G` lower, as it sees every round. |
 | `chopMsg_v1` | The induced message keeps the anchor and the recovering validator, and its gap is the original's shifted — … |
 
-### `Integration/ReGenesis.lean` (11)
+### `Integration/ReGenesis.lean` (8)
 
 | Lemma | Role |
 |:---|:---|
 | `addGenesis_sub_stack` | Re-genesis adds nothing the truncated fill lacks. Every block of the re-genesis universe over `chop U G` … |
 | `decided_addGenesis` | Verdicts survive re-genesis. The result this arc did not have: before the witnesses it said nothing about … |
-| `directCommit_addGenesis` | And the reactive commit survives it, from the rebase. |
-| `directCommit_rejoinChop` | And the reactive commit crosses the pair. A validator that restarted at the cut and then pruned again … |
 | `genesis_forced` | A restart is a genesis block, necessarily. If a validator has any block at all in a universe, it has one … |
 | `history_addGenesis` | Cones are unchanged, so every cone-based condition reads the same. |
 | `mem_addGenesis` | — |
 | `reaches_addGenesis` | Reachability is unchanged among old blocks: the new block references nothing, and nothing references it. |
 | `rejoin_populated` | — |
 | `stack_block_fresh_horizon` | The cut turns the boundary fill block into a genesis block. At a horizon inside the gap, `v1`'s filled … |
-| `sustains_rejoinChop` | Rejoin, then prune. The two mechanisms compose without either knowing about the other: … |
-
-### `Integration/Stack.lean` (4)
-
-| Lemma | Role |
-|:---|:---|
-| `directCommit_stack` | The reactive commit survives the whole stack. A validator that filled a crash gap and then pruned below a … |
-| `populated_stack` | I16c. Production survives the stack — SS2 then the truncation's own rebasing. The reliable set gains the … |
-| `schedule_stack` | I16e. A validator running the stack still has a fair, spanning schedule inside its truncation, for any … |
-| `sustains_stack` | The stack rebases. The fill settles above its gap at no offset, the cut settles at its horizon and shifts … |
 
 ### `Integration/Lifecycle.lean` (2)
 
@@ -43711,15 +43637,12 @@ subsection per module, in the layer order of Appendices B and C.
 | `sustains_addGenesis_odontoceti` | And sustains it from round one. |
 | `sustains_addGenesis_opt` | — |
 
-### `Integration/ReactiveMechanisms.lean` (8)
+### `Integration/ReactiveMechanisms.lean` (5)
 
 | Lemma | Role |
 |:---|:---|
 | `coversUpto_chop` | The chopped view covers the rebased horizon. |
 | `decidedBelow_of_run_chop_reactive` | Anchored liveness after the cut, for a reactive execution: a run of `c` reliably-led slots in the … |
-| `directCommit_addGenesis_reactive` | And re-genesis. A validator that rejoined with a fresh chain holds every reactive commit it held before. |
-| `directCommit_chop_reactive` | The reactive commit survives the cut. A validator that committed reactively still holds the commit in the … |
-| `directCommit_skipFill_reactive` | And the fill. A validator recovering by Safe Skip does not lose a commit the reactive discipline reached. |
 | `live_addGenesis_reactive` | And re-genesis. |
 | `live_chop_reactive` | The reactive precondition survives the cut, as the support's, at the re-indexed schedule. |
 | `live_skipFill_reactive` | And the fill, on any view of it caught up as far as the old one. |
@@ -43869,7 +43792,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `witnessesEquivocation_bnd` | Witnessing an equivocation is the same event. Both directions: a witness on the larger side is voted for … |
 | `witnessesEquivocation_sched` | — |
 
-### `Properties/Arcs/GC.lean` (10)
+### `Properties/Arcs/GC.lean` (11)
 
 | Lemma | Role |
 |:---|:---|
@@ -43881,6 +43804,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `decided_of_truncate` | A verdict survives the cut, at the replica's own numbering. |
 | `decided_of_truncated` | And a verdict of the truncation is a verdict of the whole DAG, which is what lets a pruned replica be … |
 | `noEquivOn_chop` | And so does non-equivocation, from the truncation. |
+| `sustains_chop` | The cut sustains the core from its horizon. |
 | `truncates_chop_mahimahi` | The cut is a truncation of Mahi-Mahi's carrier too. |
 | `truncates_chop_odontoceti` | The cut is a truncation of Odontoceti's carrier too. |
 
@@ -43910,18 +43834,13 @@ subsection per module, in the layer order of Appendices B and C.
 | `decided_skipFill` | Verdicts survive the recovery, for any protocol that has proved persistence. The replica that recovered … |
 | `presentAt_liftView` | Presence in the pre-crash view is presence in the lifted one: the ids are the same and old blocks are … |
 
-### `Properties/Arcs/Stack.lean` (8)
+### `Properties/Arcs/Stack.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
-| `Rebases.refl` | The schedule is a rebase of itself. |
 | `Stack.rebased` | A stack is one mechanism. |
 | `Stack.safe_and_live` | Every stack of mechanisms keeps safety and liveness, for any rule with `Banded`, `Agree` and a support. … |
-| `decided_agree_rebased` | Cross-rebase agreement, from any view of the rebased universe. |
-| `decided_of_rebased` | A verdict above the settling round transports across any rebase, to the rebased numbering, on views that … |
 | `live_of_rebased` | `live` survives any rebase, at the rebased numbering, for a window above the settling round. … |
-| `refl` | Doing nothing is a rebase. |
-| `trans` | Two rebases are one. |
 
 ### `Properties/Band.lean` (3)
 
@@ -43945,10 +43864,11 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `Causal.refs_above` | What a block above the cut references is itself above the cut — a fact about causal structure alone, and … |
 
-### `Properties/Compose.lean` (3)
+### `Properties/Compose.lean` (4)
 
 | Lemma | Role |
 |:---|:---|
+| `Rebases.refl` | The schedule is a rebase of itself. |
 | `Truncates.trans` | A stack of truncations is a truncation. Both halves compose, and the settling round of the composite is … |
 | `mono` | A mechanism that rebases from a round rebases from any later one, which is what lets two settling rounds … |
 | `unique` | A rebase determines the schedule it produces. Both fields are pinned — rounds by the offset, leaders by … |
@@ -43990,7 +43910,7 @@ subsection per module, in the layer order of Appendices B and C.
 
 | Lemma | Role |
 |:---|:---|
-| `LocalTruncate.of_banded` | Truncation invariance falls out of the band. |
+| `LocalTruncate.of_banded` | Truncation invariance falls out of the band — `decided_of_rebased` at a cut, whose settling round is its … |
 
 ### `Properties/Extends.lean` (5)
 
@@ -44014,6 +43934,12 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `SynchronisedOn.mono` | Synchrony from a round is synchrony from any later one. |
 | `votesAt_of` | Votes survive. A `T`-block one round above `r` is old, keeps its author and its references, so a vote it … |
+
+### `Properties/Truncate.lean` (1)
+
+| Lemma | Role |
+|:---|:---|
+| `refs_of` | And references survive strictly above the horizon. |
 
 ### `Reactive/Delivers.lean` (3)
 

@@ -198,42 +198,7 @@ theorem decided_addGenesis [S : Slots Validator]
     Decided (addGenesis V v g p hg hsev) W' k u :=
   MysticetiProperties.persist S V _ extends_addGenesis W W' hsub k u h
 
-/-- **And the reactive commit survives it**, from the rebase. -/
-theorem directCommit_addGenesis {T : Finset Validator} {r : ℕ} {L : BlockId}
-    (hr : 1 ≤ r) (hcard : quorumCard Validator ≤ T.card)
-    (hpop : PopulatedOn V T (r + 2)) (hc : CertifiesAt V T r L) :
-    DirectCommit (addGenesis V v g p hg hsev) L r := by
-  have h := MysticetiProperties.directCommit_of_sustains
-    (sustains_addGenesis (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev))
-    hr (by omega) hcard hpop hc
-  simpa using h
 
-/-- **Rejoin, then prune.** The two mechanisms compose without either
-knowing about the other: `RebasedAbove.trans` on the re-genesis rebase
-and the cut's. The composite settles at the later of round one and the
-horizon, and shifts by the horizon alone, since re-genesis shifts
-nothing.
-
-`chop_addGenesis` below proves a related fact by hand, as an equality of
-universes. This is the transportable form, and it is what a consumer of
-the *pair* needs. -/
-theorem sustains_rejoinChop {G : ℕ} :
-    Properties.Sustains (MysticetiProperties.mysticetiRule (Payload := Payload))
-      V (chop (addGenesis V v g p hg hsev) G) G (max 1 G) := by
-  have h := (sustains_addGenesis (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev)).trans
-    (Properties.Arcs.sustains_chop (U := addGenesis V v g p hg hsev) (G := G))
-  simpa using h
-
-/-- **And the reactive commit crosses the pair.** A validator that
-restarted at the cut and then pruned again still direct-commits what a
-quorum certified. -/
-theorem directCommit_rejoinChop {G : ℕ} {T : Finset Validator} {r : ℕ} {L : BlockId}
-    (hr : 1 ≤ r) (hG : G ≤ r) (hcard : quorumCard Validator ≤ T.card)
-    (hpop : PopulatedOn V T (r + 2)) (hc : CertifiesAt V T r L) :
-    DirectCommit (chop (addGenesis V v g p hg hsev) G) L (r - G) :=
-  MysticetiProperties.directCommit_of_sustains
-    (sustains_rejoinChop (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev) (G := G))
-    (by omega) hG hcard hpop hc
 
 end Properties
 

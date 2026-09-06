@@ -65,18 +65,6 @@ theorem synchronisedOn_stack (sk : SkipMsg U) {T : Finset Validator} {R R' R'' :
     SynchronisedOn (stack sk G) T R'' :=
   synchronisedOn_chop (synchronisedOn_skipFill_above sk hs hR hfill) hcut
 
-/-- **I16c.** Production survives the stack — SS2 then the truncation's
-own rebasing. The reliable set gains the recovered validator at the
-fill; the horizon renumbers the round. A gap round `G + m` of the
-original is round `m` of the stack. -/
-theorem populated_stack (sk : SkipMsg U) {T : Finset Validator} {m : ℕ}
-    (hpop : PopulatedOn U T (G + m)) (hk1 : sk.r0 < G + m) (hk2 : G + m ≤ sk.r) :
-    PopulatedOn (stack sk G) (insert sk.v1 T) m := by
-  intro v hv
-  obtain ⟨b, hb, hbc, hbr⟩ := sk.skipFill_populatedOn hpop hk1 hk2 v hv
-  refine ⟨b, mem_chop_ids.mpr ⟨hb, by omega⟩, ?_, ?_⟩
-  · rw [chop_block_eq, chopBlock_creator]; exact hbc
-  · rw [chop_block_eq, chopBlock_round]; omega
 
 /-- **I16d — the payoff.** Hybrid agreement holds in the stacked
 universe: a validator that recovered from a crash by Safe Skip and then
@@ -121,27 +109,6 @@ variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 variable [H : HybridFaults Validator]
 variable {U : BlockUniverse Validator BlockId Payload} {G : ℕ}
 
-/-- **The stack rebases.** The fill settles above its gap at no offset,
-the cut settles at its horizon and shifts by it, and the composite
-settles at the later of the two and shifts by the cut alone. -/
-theorem sustains_stack (sk : SkipMsg U) :
-    Properties.Sustains (MysticetiProperties.mysticetiRule (Payload := Payload))
-      U (stack sk G) G (max (sk.r + 1) G) := by
-  have h := (Properties.Arcs.sustains_skipFill (Payload := Payload) sk).trans
-    (Properties.Arcs.sustains_chop (U := sk.skipFill) (G := G))
-  simpa using h
-
-/-- **The reactive commit survives the whole stack.** A validator that
-filled a crash gap and then pruned below a horizon still direct-commits
-what a quorum certified, at the stack's own numbering. No induction, and
-no lemma about either mechanism: the certificate travels because the
-blocks do. -/
-theorem directCommit_stack (sk : SkipMsg U) {T : Finset Validator} {r : ℕ} {L : BlockId}
-    (hr : sk.r < r) (hG : G ≤ r) (hcard : quorumCard Validator ≤ T.card)
-    (hpop : PopulatedOn U T (r + 2)) (hc : CertifiesAt U T r L) :
-    DirectCommit (stack sk G) L (r - G) :=
-  MysticetiProperties.directCommit_of_sustains (sustains_stack sk)
-    (by omega) hG hcard hpop hc
 
 end Composed
 
@@ -164,15 +131,6 @@ section Schedule
 variable [F : Faults Validator] [S : Slots Validator] {G d c : ℕ}
 variable {T : Finset Validator}
 
-/-- **I16e.** A validator running the stack still has a fair, spanning
-schedule inside its truncation, for any universe transformers applied
-beneath — the schedule layer is independent of them. -/
-theorem schedule_stack (hd : G ≤ S.slotRound d)
-    (hfair : FairRunOn (S := S) T c)
-    (hspan : SpansEligible (Validator := Validator) (S := S) c) :
-    FairRunOn (S := S.chop G d hd) T c ∧
-      SpansEligible (Validator := Validator) (S := S.chop G d hd) c :=
-  ⟨fairRunOn_chop S hd hfair, spansEligible_chop S hd hspan⟩
 
 end Schedule
 
