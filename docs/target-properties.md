@@ -1651,15 +1651,27 @@ The goal, restated in three parts:
 3. the mechanisms compose with one another through the same
    properties, automatically.
 
-**Where it stands.** Part 1 is nine obligations (§11.1). Part 2 holds
-for two protocols and every mechanism in the development, in both
-directions (§11.2). Part 3 holds on both axes — the DAG's, through
-`RebasedAbove.trans`, and the schedule's, through `Rebases` (§11.3) —
-and the last interaction proved by hand, the joiner, is closed.
+**Where it stands** (2026-09-06; the sections below are the record of
+how it got here, and §11.13–§11.20 the last passes). Part 1 is four
+properties — `Banded`, `Agree`, `CommitsCandidate`, `Indirect` — and a
+`Support` with two laws, `Local` and `Commits` (§11.15, §11.16); the
+carrier carries the causal law itself, and synchrony is not a property
+but the timed model's bridge into `Support.live`, with an audit that
+keeps it out. Five optional properties (`CommitsDirect`,
+`SkipsUnsupported`, `Quorate`, `SelfParent`, `NoEquiv`) are owed only
+when a mechanism reads them. Part 2 holds for every rule with a carrier
+— nine, with one carrier per rule (§11.19) — and every mechanism cell:
+cut, fill, re-genesis, adaptive leaders, prompt skip, chain quality,
+liveness across each (`audit-mechanisms.py`). Part 3 is
+`Stack.safe_and_live`, and the two headlines of `Arcs/Headline.lean`
+state what a rule gets: `Safe`, across any stack of mechanisms and at
+every slot across an extension, and `Lives`, progress and inclusion at
+the rule's support, one antecedent, no synchrony (§11.18). Every rule
+instantiates both in one line; the bespoke capstones they subsumed are
+deleted. Black Marlin has no carrier and is out of scope by decision.
 
-What is not settled is whether nine is the right nine, and that is an
-instance question rather than a design one: seven rules have none
-(§11.4).
+The rest of §11, from §11.1 on, is the record: what was owed at each
+stage and why it changed.
 
 ### 11.1 Against part 1: what is owed, and what follows
 
