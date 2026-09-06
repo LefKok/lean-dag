@@ -297,7 +297,7 @@ proof effort with no corresponding proof content.
    because every mechanism is proved once against a small set of
    properties of the commit rule — a band, agreement, candidacy, the
    indirect rule, and a support with two laws — and every rule shows
-   them (§16.9). Two headline theorems state what a rule gets:
+   them (§16.1). Two headline theorems state what a rule gets:
    `Properties.Safe`, across any stack of cuts, fills and re-genesis,
    and `Support.Lives`, progress and inclusion at the rule's support
    with certification as the only antecedent, so a timed and a reactive
@@ -876,7 +876,7 @@ quorum, which is exactly the reference implementation's `enough_leader_blame`,
 and which two of the protocols below — Hydrozoan (§18) and Mahi-Mahi (§21) —
 already modelled that way. The gain is that a skip cannot be overturned by a
 block that arrives afterwards: its blockers are blocks that exist, and a
-later candidate is referenced by none of them. Persistence (`Persist.of_banded`, §16.9) becomes
+later candidate is referenced by none of them. Persistence (`Persist.of_banded`, §16.1) becomes
 unconditional for the core as a result, and the crash-recovery arc's SS5
 sheds its counting hypothesis (§12.3).
 
@@ -1444,13 +1444,10 @@ are stated over any authored block, so non-equivocation identifies
 nothing there, and its one liveness consumer is likewise RS5, whose
 self-parent chain lands by T1 on the block it claims.
 
-Two absences in the integration column are worth reading. **I3 appears
-in no row**: it is the schedule layer, which §16.1 calls universe-
-independent, and a clause table over universe conditions is exactly
-where a universe-independent result should fail to appear. **I18 is
-likewise absent** from every row, being a statement about production
-rather than about validity. Neither is an omission; both are the
-layering showing through. §16.7 locates the clause's cost as
+One absence in the integration column is worth reading. **I18 appears
+in no row**, being a statement about production rather than about
+validity; a clause table over universe conditions is exactly where it
+should fail to appear. §16.6 locates the clause's cost as
 well as its uses: it is what makes a cone a complete record of its
 author's acceptances in §8, and what obliges the fill of §12 to enlarge
 a cone past what the donor vouched for. And **P4 and P5 appear almost everywhere**, which is the honest
@@ -3829,7 +3826,7 @@ model: the hybrid model of §14 splits `Correct` into honest and
 available, and a *crash-prone* validator — the one Safe Skip exists to
 serve — is honest but outside `Correct`. Stating the fact the boundary
 argument actually uses is what lets the same structure describe both
-(§14's crash-prone case, §16.5).
+(§14's crash-prone case).
 
 The filled block at gap round `k` is the donor's references plus the
 forced self reference:
@@ -4041,7 +4038,7 @@ holds what it cites, rather than pointing at history it cannot serve.
 **Check the fill before accepting it.** The self reference P3′ obliges
 enlarges a filled block's cone past the donor's, so the exposure
 condition of §8.2 must be re-established rather than inherited. The
-check is local to the fill and needs no identity oracle (§16.7), and
+check is local to the fill and needs no identity oracle (§16.6), and
 against a covered donor line it reduces to reachability.
 
 ### 12.6 When the fill is not available
@@ -4049,17 +4046,17 @@ against a covered donor line it reduces to reachability.
 A validator down longer than the lag is in a worse position than unable
 to fill: P3′ requires every non-genesis block to cite a block by its own
 creator, so a validator with nothing in the retained layer can produce
-nothing at all (§16.6). Bootstrapping by §9.5's attested base makes it a
+nothing at all (§16.5). Bootstrapping by §9.5's attested base makes it a
 correct *reader* — its verdicts agree with everyone's — and not a
 producer.
 
 Recovery is then three steps rather than one: bootstrap to read,
 **re-genesis** to write, and a fill to catch up, the last anchored on
-the re-genesis block and spanning the retained window (§16.6). The
+the re-genesis block and spanning the retained window (§16.5). The
 middle step needs no exemption from P3′, the retained layer being
 genesis after truncation. Until it completes, the validator counts
 against the fault budget however well caught up it is, which prices the
-recovery window (§16.6).
+recovery window (§16.5).
 
 ### 12.7 Round jumping: the fill is derived, not transmitted
 
@@ -4880,515 +4877,38 @@ implementation computes the same five verdicts on it.
 
 *(modules `LeanDag/Properties/`, `LeanDag/Timed/`, `LeanDag/Integration/`;
 the design record is `target-properties.md`, whose opening part is the
-current statement; `integration.md` is the record of the first route)*
+current statement)*
 
-Each arc of §§7–15 was built additively, consuming the core read-only
-and modifying no other. That discipline secured independence and left a
-question: **do the arcs compose with each other?** A validator that
+Each arc of §§7–15 is built additively, consuming the core read-only
+and modifying no other. That discipline secures independence and leaves
+a question: **do the arcs compose with each other?** A validator that
 garbage-collects below a horizon, recovers from a crash by Safe Skip,
 runs an adaptive leader schedule and tolerates hybrid faults is running
 four mechanisms at once, and nothing above says the four are jointly
 consistent.
 
-The answer has two parts, and the chapter is organised by them. §16.9
-is the method as it stands: a small set of **properties of a commit
-rule** — a band the verdicts read, agreement, candidacy, the indirect
-rule, and a *support* saying what a commit counts — against which every
-mechanism is proved once, so that a rule showing them inherits every
-mechanism and the mechanisms compose through the same properties. Two
-headline theorems say what a rule gets: safety across any stack of
-mechanisms, and liveness with certification as the only antecedent.
-§16.10 is the matrix: nine rules, every mechanism, and what the
-generic route retired.
-
-§16.1, §16.2 and the capstone of §16.5 are the record of the first
-route: it named the invariants each arc consumes and proved
-preservation for each transformer, and its capstone read verdicts
-through the hybrid model under an adaptive schedule. The capstone, the
-lifecycle theorem and the hand-composed stack are gone, subsumed by the
-headline at the core, and those subsections say why. §16.3, §16.4 and
-§16.6 to §16.8 are not the first route and are not subsumed: they are
-facts about the mechanisms that no property states, because they are
-not about verdicts. Coverage is **refuted** under the Safe Skip fill,
-with an exact boundary and for the same reason the fill is safe (I4);
-*placement conditions* say where a garbage-collection horizon may be
-put (I5, I6); a validator pruned past its own history can be restored
-by a provision costing no exemption from P3′ and no agreement on the
-cut (I10–I12); and §8's storage account is sharpened twice over (I17,
-I19).
-
-### 16.1 Three layers, and what can break them
-
-*(the record of the first route; the method as it stands is §16.9)*
-
-The first route named the invariants each arc consumes and asked which
-mechanism can disturb them. They live at three levels: the universe
-(`BlockUniverse`, disturbed by `chop` and `skipFill`), the delivery
-structure indexed by it (`Delivery U`, disturbed by `chopD`), and the
-schedule (`Slots`, disturbed by `Slots.chop` and `slotsOf`). Two facts
-from that analysis still matter. Layer D is *universe-indexed*, so a
-universe transformer needs a delivery transformer of its own before
-layer-D invariants can be stated for it at all, which `chop` has and
-`skipFill` does not (§16.8). And the schedule layer does not interact
-with the other two: `Slots.chop` and `slotsOf` read a `Slots` instance
-and nothing else, which is why composition on that axis needs no lemma.
-
-### 16.2 Preservation
-
-*(the record of the first route)*
-
-Each cell of the route's table was one lemma of the shape
-`I U → I (F U)`, after which every property stated against named
-invariants transferred to `F U`. The properties made most of the table
-redundant: verdicts transfer by `LocalTruncate.of_banded` and
-`Persist.of_banded`, production and coverage by the `Sustains`
-witness, and the schedule's fairness by the `Truncates` witness, with
-no lemma per invariant. Two cells survive because they are not
-properties. `HonestNoEquiv`, the hybrid model's carrier invariant,
-survives the cut and the fill (I1, `honestNoEquiv_chop` and
-`honestNoEquiv_skipFill`, `Integration/Preservation.lean`), which is
-what lets Orcaella's carrier be transformed at all; the fill's half
-consumes `hgap`, the crash itself. And coverage survives the cut at a
-horizon offset (I2, `synchronisedOn_chop`, now in
-`Integration/Coverage.lean`) and is **refuted** under the fill (I4,
-§16.3), which is a fact about the timed model rather than about any
-rule.
-
-### 16.3 Coverage under the fill
-
-Coverage behaves in three ways under the Safe Skip fill, and the
-division is the result.
-
-**It fails for a reliable set containing the recovering validator, at
-the rounds that validator slept through.**
-
-**I4.**
-```lean
-theorem not_synchronisedOn_skipFill (sk : SkipMsg U) {T : Finset Validator}
-    {R k : ℕ} (hv1 : sk.v1 ∈ T) (hk1 : sk.r0 < k) (hk2 : k ≤ sk.r) (hk : R ≤ k)
-    {b : BlockId} (hb : b ∈ U.ids) (hbround : (U.block b).round = k + 1)
-    (hbc : (U.block b).creator ∈ T) :
-    ¬ SynchronisedOn sk.skipFill T R
-```
-
-The failure needs no hypotheses beyond the ones SS2 itself creates, and
-its reason is the fact that makes Safe Skip **safe**. SS3 concludes
-that a filled candidate is always directly skipped *because no old
-block references a fresh identifier*; coverage asks the opposite, that
-every reliable block at round `n+1` reference every reliable block at
-round `n`. One fact, two consequences: the fill can manufacture neither
-a commit nor coverage. The hypotheses are exhibited satisfiable on
-`Ucrash` (§24), so the refutation is not vacuous.
-
-**It is preserved for any reliable set that excludes the recovering
-validator** (`synchronisedOn_skipFill_of_notMem`). The filled blocks
-are that validator's alone, so a clause quantified over the others
-never encounters them.
-
-**It returns strictly above the fill**
-(`synchronisedOn_skipFill_above`), for any set. The strictness is not
-slack: at the target round the lower block may still be the last filled
-one, and the refutation reaches there too.
-
-So the fill composes with the liveness account of §6, and what it
-cannot support is the claim that a validator was covered at rounds
-during which it was absent — which §12 does not make. §12's claim is
-that the fill restores *production*, which is the hypothesis liveness
-consumes and which SS2 supplies. The reading for a deployment is that
-a recovering validator is outside the covered set for the duration of
-its gap, consistent with §16.6's account of what it costs to be absent,
-and an ordinary participant from the round above the fill onward.
-
-### 16.4 Where a horizon may be put
-
-Three conditions constrain the placement of a garbage-collection
-horizon relative to the mechanisms running above it. None is visible
-from a single arc.
-
-**I5 — the joiner's two obligations.** §13's adaptive schedule is a
-function of the committed verdicts, and §9 prunes verdicts below a
-horizon; a validator joining from the truncation may not hold what the
-policy reads. The schedule half of the question is settled by
-computation: truncating an adaptive schedule and adapting a truncated
-one give the same rounds and the same leaders, `slotsChop_slotsOf`
-closing by `rfl` provided the assignment used inside the truncation is
-the original one shifted past the base slot. All the content lies in
-whether a joiner can *produce* that shifted assignment, which is
-
-```lean
-def HorizonStable (P : AdaptivePolicy Validator BlockId Payload) (d G : ℕ)
-    (pick' : (U' : BlockUniverse Validator BlockId Payload) →
-      View Validator BlockId Payload U' → (ℕ → Option BlockId) → ℕ → Validator) : Prop :=
-  ∀ (U : BlockUniverse Validator BlockId Payload) (V : View Validator BlockId Payload U)
-    (V' : View Validator BlockId Payload (chop U G)) (v : ℕ → Option BlockId)
-    (k : ℕ), pick' (chop U G) V' (fun m => v (d + m)) k = P.pick U V v (d + k)
-```
-
-Under it a joiner computes exactly the leaders the network is using
-(`joiner_assign_agree`), so the two run one schedule seen from two
-origins. The obligation is stated on the policy's *rule* rather than on
-an `AdaptivePolicy`, because a policy is indexed by its `Slots`
-instance and a joiner's inhabits a different type; the rule is the part
-that survives re-indexing.
-
-A second obligation is independent of the policy. Horizon-stability
-aligns leaders, not *epochs*: a joiner's slot `k` is the network's
-`d + k`, so the numberings correspond only when the base slot is a
-whole number of epochs (`epochOf_add_of_dvd`), and the example beneath
-it shows the correspondence failing otherwise. **A
-garbage-collection base slot must be a multiple of the adaptive epoch
-width** — without it two validators can agree on who leads every slot
-and still disagree about which verdicts the policy was entitled to
-read.
-
-**I6 — the lag bounds the recoverable outage.** A `SkipMsg` requires
-its anchor in the universe, and `chop` retains the anchor exactly when
-the horizon has not passed the round at which the validator crashed.
-`anchor_pruned` states the constraint and `chopMsg` shows it is the
-only one: with the anchor retained the whole message rebases, every
-field shifted by `−G`. Composed with §9's lag envelope:
-
-```lean
-theorem outage_bounded_by_lag (sk : SkipMsg U) {Λ : ℕ}
-    (hlag : G + Λ = sk.r) (hr : sk.r0 ≤ sk.r) :
-    G ≤ sk.r0 ↔ sk.r - sk.r0 ≤ Λ
-```
-
-> Garbage collection at lag `Λ` supports Safe Skip recovery from
-> outages of up to `Λ` rounds, and no more.
-
-Beyond it the validator's last block is gone, and §16.6 says what
-happens then.
-
-### 16.5 Composition, and a hypothesis that did not fit
-
-**I7 — the capstone.** A validator running the whole stack — recovered
-by Safe Skip, then truncated — still cannot disagree with anyone about
-a verdict, and still decides. The theorem that first said so read the
-verdicts through the hybrid model under an adaptive schedule, and
-discharged every invariant its arcs required by chains of the lemmas of
-§16.2. It is retired: the statement now in the code is
-`MysticetiProperties.safety : Properties.Safe mysticetiRule`, which is
-`Properties.safety banded agree commitsCandidate`,
-
-`MysticetiProperties.safety`, the safety headline
-(`Properties/Arcs/Headline.lean`) at the core's rule: it quantifies over
-every stack of mechanisms, so the fill-then-cut stack `stack_core`
-(`Integration/StackRules`) is one instance, and it needs no
-preservation chain because the properties are stated once against the
-rule and carried by the witnesses.
-
-The order is asymmetric, and the order deployments take is the
-unconstrained one. Filling then truncating is well formed at every
-horizon, because the fill has already happened when the cut is made;
-truncating then filling needs the anchor retained, which is I6's
-condition. The schedule layer composes with no compatibility lemma at
-all, since `Slots.chop` and `slotsOf` read a `Slots` instance and
-nothing else, which is what the layering of §16.1 was drawn for: one of
-its three layers does not interact with the others at all.
-
-**I9 — the composition that did not fit.** §14 splits `Correct` into
-honest and available, and a crash-prone validator — precisely the one
-Safe Skip serves — is honest but not correct. `SkipMsg` carried
-`v1 ∈ Correct`, so the structure could not describe its own motivating
-case. The hypothesis was stronger than its use: it appeared once,
-pinning `v1`'s round-`r0` block to the anchor at the fill's boundary.
-§12.1 carries that fact directly as `hB1uniq`, with `hB1uniq_of_correct`
-recovering the base model's route. The lifecycle theorem that was built
-on it is retired with the direct composition; what it said — a halted
-validator's slot is skipped by L5, whose hypothesis does not say *why*
-the leader is absent, and after recovery SS2 restores production with
-the validator back in the reliable set — is now read off the headline
-at Orcaella's carrier, since the crash class is invisible in verdicts.
-
-### 16.6 Re-genesis, and the long outage
-
-A validator whose whole history falls below a horizon is worse off than
-unable to fill. P3′ requires every non-genesis block to reference a
-block by its own creator, so `no_blocks_of_no_genesis` shows that a
-validator with no block in a universe's genesis layer can produce
-nothing in it at all — the self-parent chain walks every block down to
-genesis, and a severed chain cannot restart. `severed_of_pruned_anchor`
-applies this to the truncation: **any** attempt to resume is blocked,
-not merely Safe Skip.
-
-The repair is to start a fresh chain *at the cut*, and it needs no
-exemption from P3′. Truncation rebases the retained layer to round `0`,
-where P1, P3 and P3′ are guarded by `0 < round` and P2 is vacuous for
-an empty reference set — which is how `chop`'s own validity proof
-discharges that layer. A re-genesis block is therefore indistinguishable,
-to the validity rules, from a block the cut flattened.
-
-**I10.**
-```lean
-def addGenesis (V : BlockUniverse Validator BlockId Payload) (v : Validator)
-    (g : BlockId) (p : Payload) (hg : g ∉ V.ids)
-    (hsev : ∀ b ∈ V.ids, (V.block b).creator ≠ v) :
-    BlockUniverse Validator BlockId Payload where
-  ids := insert g V.ids
-  block b := if b ∈ V.ids then V.block b else ⟨0, v, ∅, p⟩
-  …
-```
-
-The non-equivocation obligation needs no further hypothesis: adding a
-genesis block
-would normally risk a twin at round `0`, and the absence that stranded
-the validator is what makes the new block unambiguous.
-`populatedOn_addGenesis` puts it back in the genesis layer, which is
-P8's hypothesis at round `0`.
-
-**I11 — heterogeneous horizons need no agreement.** A re-genesis block
-is valid in the truncation and not in the universe it came from: at a
-positive round of the original, a reference-free block violates P3. It
-would therefore be acceptable only to validators that have pruned at
-least as far — which §9 cannot promise, since its horizons are
-per-validator by design. The resolution is to **derive** the block
-rather than transmit it: each validator synthesises a genesis for any
-validator absent from its own retained layer, so nothing is sent and
-nothing can be rejected. What that needs is that the derivations
-converge, and they do. A validator's own derived genesis sits at round
-`0` and is pruned by any further cut, leaving exactly the base a
-more-truncated validator holds:
-
-```lean
-theorem regenesis_converges {U : BlockUniverse Validator BlockId Payload}
-    {G₁ G₂ : ℕ} (hG : G₁ < G₂) … :
-    (chop (addGenesis (chop U G₁) v g p hg hsev) (G₂ - G₁)).ids
-        = (chop U G₂).ids
-      ∧ ∀ b ∈ (chop U G₂).ids,
-          (chop (addGenesis (chop U G₁) v g p hg hsev) (G₂ - G₁)).block b
-            = (chop U G₂).block b
-```
-
-Both then derive the same genesis from the same base, so §9's central
-claim — no agreement on the cut anywhere — survives the provision
-intact. The statements are observational: identifier sets equal, and
-blocks equal at those identifiers, the two universes differing only on
-material outside their identifier sets that nothing reads.
-
-**I12 — the three mechanisms are complementary.** A long outage uses
-all of them, in order: **bootstrap** to read, since §9.5's attested
-base yields a view whose verdicts agree with everyone's
-(`bootstrap_agree`) but no ability to produce; **re-genesis** to write,
-restoring the validator to the genesis layer, which is what P3′ was
-blocking; and **Safe Skip** to catch up, one message denoting every
-block from the cut to the current round — §12's mechanism doing the job
-it was built for, at a gap that now begins at the horizon rather than
-at the crash.
-
-The third step needs an anchor and the re-genesis block is one
-(`recoveryMsg`). The closure is exact: `hsev`, the total absence that
-licensed re-genesis, is what discharges the anchor's uniqueness
-clause — a validator with no other block anywhere cannot have a second
-at that round — and the same absence discharges `hgap`. Nothing extra
-is assumed. What every party needs for the fill to denote anything is
-the retained history including the donor's line up to the target, which
-is `SkipMsg`'s standing requirement and, after garbage collection,
-exactly the window everyone keeps.
-
-So the earlier reading — that Safe Skip's fast path *avoids* bootstrap
-and re-genesis — holds only while the anchor survives (§16.4's lag
-bound). Past that the three compose, and Safe Skip's contribution is
-undiminished: it remains the succinct encoding of the many blocks
-missing inside the retained window.
-
-**I18 — and the interval between the phases is priced.** A severed
-validator can read once bootstrapped but cannot produce, and the
-reliable sets liveness quantifies over are defined by production, so it
-belongs to none of them (`notMem_of_no_blocks`). Since liveness needs a
-reliable set of quorum size, at most `f` validators may be severed at
-once (`card_severed_le`). **The horizon lag is therefore a
-liveness-margin parameter and not only a storage one**: a shorter lag
-saves storage and lengthens the window in which a returning validator,
-however honest and however well caught up on the ledger, counts against
-the fault budget.
-
-### 16.7 The exposure condition under both mechanisms
-
-The two recovery mechanisms part company at the exposure condition, and
-the reason is structural.
-
-**I13.**
-```lean
-theorem dosValid_addGenesis (hdos : DoSValid V) :
-    DoSValid (addGenesis V v g p hg hsev)
-```
-
-Re-genesis adds a block with **no references**. It cannot cite an
-exposed author — the clause is vacuous for it — and it enters no other
-block's cone, since nothing reaches what nothing references. §8's
-per-cone bound therefore applies to a re-genesised universe unchanged,
-and the concern that re-genesis severs the chain §8 relies on does not reach
-the condition: what §8 forbids is *citing* an
-exposed author.
-
-The fill does the reverse. P3′ obliges `fillBlock` to insert a self
-reference, so the first filled block reaches the anchor and with it the
-whole of `v1`'s pre-crash history (`history_B1_subset_fill`). Its
-citations are inherited unchanged from the donor while its cone is
-strictly larger, and `DoSValid` forbids citing an author exposed *in
-one's own cone* — so a citation innocuous in the donor's smaller cone
-can be a violation in the filled block's larger one.
-
-So the clause §2.2 records as consumed by neither safety nor liveness
-is doubly implicated: the self-parent chain is what makes a cone a
-complete record of its author's acceptances in §8, and the self
-reference §12 must add is what pushes a cone past what the donor
-vouched for.
-
-The disturbance is nonetheless **local**, which is what makes it
-addressable. A fill copies a donor block's references, and `DoSValid U`
-already vouches for those citations in the donor's cone; what the fill
-adds affects no other block, because an old block's cone contains no
-filled block — SS3's observation once more. Exposure at an old block is
-therefore unchanged in both directions
-(`exposedIn_skipFill_old`), and the condition decomposes:
-
-**I14.**
-```lean
-theorem dosValid_skipFill (hdos : DoSValid U)
-    (hnew : ∀ k, sk.r0 < k → k ≤ sk.r →
-      ∀ i ∈ (sk.skipFill.block (sk.fresh k)).refs,
-        ¬ ExposedIn sk.skipFill (sk.fresh k) (sk.skipFill.block i).creator) :
-    DoSValid sk.skipFill
-```
-
-The extension satisfies the exposure condition as soon as its own
-blocks do. That second half is a property of the fill alone, so a
-recipient establishes it by computing the fill and inspecting it,
-consulting no identity oracle and nothing beyond the message and its
-own DAG — enforceable in the sense §4.7 requires, and admissible as a
-clause of the mechanism rather than an assumption about the network. A
-fill whose enlarged cone exposes one of the donor's citations fails the
-check and is refused, rather than accepted and unsound.
-
-The check itself reduces to **reachability** in the ordinary case.
-
-**I15.**
-```lean
-theorem dosValid_skipFill_of_covered (hdos : DoSValid U)
-    (hcov : ∀ k, sk.r0 < k → k ≤ sk.r → sk.B1 ∈ history U (sk.line k))
-    (hv1ne : ∀ p ∈ U.ids, ∀ q ∈ U.ids, (U.block p).creator = sk.v1 →
-      (U.block q).creator = sk.v1 → (U.block p).round = (U.block q).round → p = q) :
-    DoSValid sk.skipFill
-```
-
-If each donor block already reaches the anchor, the fill's cone adds
-nothing but `v1`'s own new blocks (`fill_cone_subset`) — and those
-cannot form an equivocating pair, since they sit at distinct rounds,
-`hgap` excludes an old `v1` block at any of them, and `hB1uniq` pins
-the anchor's round. What is left is the donor's own cone, for which
-`DoSValid U` already vouches. So a recipient verifies one reachability
-query per gap round against its own DAG, and needs no exposure
-computation over the extension at all.
-
-The covering hypothesis is what a donor line satisfies whenever it
-referenced `v1`'s last block, which is the ordinary case: `v1` was
-producing at `r0`. The second hypothesis is forced rather than chosen —
-`SkipMsg` records only that the anchor is `v1`'s unique block *at its
-own round*, leaving open that `v1` equivocated before crashing, and the
-fill's self reference would then cite an exposed author. It is what the
-base model's correctness and §14's honesty each supply.
-
-### 16.8 Storage: the delivery layer, and what settles it
-
-§8.4's budgets range over a `Delivery U` rather than over `U`, so they
-cannot be *stated* for the fill until it has a delivery structure of
-its own — the dependency §16.1 records for layer D, which garbage
-collection satisfies with `chopD`.
-
-The transformer is smaller than it appears. A `Delivery` records what
-validators held and accepted **when they built their blocks**, and
-nobody received the fill at the time: the filled blocks reconstruct
-what the recovering validator would have produced. `skipFillD`
-therefore changes nothing, and the one obligation with content is
-`includes`, which now quantifies over filled blocks and asks that they
-reference what `v1` accepted below. The hypothesis that discharges it
-is that `v1` accepted nothing while down — the acceptance-side
-counterpart of `hgap`, which says as much of production.
-
-**I16.** The author-blind budget then transfers at the same constant
-(`uniformBudget_skipFillD`), with no arithmetic: every accepted block
-is old, so views and novelty are literally the same finite sets
-(`viewUpto_skipFillD`).
-
-The reference discipline does **not** transfer, and the failure
-describes the mechanism rather than the transformer
-(`not_refsAccepted_skipFillD`). `RefsAccepted` is `includes`'
-converse — a correct validator cites *only* what it accepted — and a
-filled block cites the donor's blocks, which the recovering validator
-did not accept, having been down. A retroactive reconstruction cannot
-satisfy both under a delivery structure that records what actually
-arrived.
-
-The alternative is to model recovery as acceptance *at recovery time*:
-`v1` obtains the donor's blocks when it rejoins and accepts exactly
-what its filled blocks cite, whereupon both clauses hold by
-construction, `accepted_inj` following from the P2 clause `skipFill`
-already establishes for `fillBlock`. What that model does not concede
-is the budget — the novelty of the newly accepted blocks becomes a
-property of the fill, to be checked as in §16.7 rather than inherited.
-
-**I17 — and the choice does not affect the budget.** §8.4's
-`RefsAccepted` attributes a block's cone to *its own author's* view, and the pool argument does not need that. Its component lemmas are
-already stated at the right generality: novelty is bounded by the gap
-toward whichever validator's acceptances contain the references
-(`card_novelty_le_viewGap_add_one`), and that gap is bounded as soon as
-the validator **has a block at the round**
-(`card_viewGap_succ_le`) — which a donor line does at every gap round.
-Composing them at a `w` other than the author gives
-
-```lean
-theorem card_novelty_le_of_donor {κ R : ℕ} (hbyz : ByzBudget D κ)
-    (hED : EventuallyDelivers D R) (hn : R ≤ n + 1)
-    (hv : v ∈ (Correct : Finset Validator))
-    (hw : w ∈ (Correct : Finset Validator)) (hb : b ∈ U.ids)
-    (hrefs : (U.block b).refs ⊆ D.accepted w (n + 1))
-    {c : BlockId} (hc : c ∈ U.ids) (hcc : (U.block c).creator = w)
-    (hcr : (U.block c).round = n + 1) :
-    (novelty U (viewUpto D v (n + 1)) b).card ≤ F.f * κ + 1
-```
-
-So a filled block respects the budget with the **donor** in the role
-the author would ordinarily play, whether or not the recovering
-validator ever accepted the material. The modelling question is
-therefore about which clause of §8.4 one wishes to state, not about
-whether the storage bound holds: it holds either way. The discipline is
-stated more tightly than the bound requires, and the fill is the case
-that shows the difference.
-
-**I19 — and choosing the target from the common core settles the rest.**
-What the storage argument does not address is *availability*: a
-validator citing blocks it does not hold cannot serve them. Selecting
-the fill's donor line from the **common core** removes that at its
-source. §5.2's T3c produces, at every round and under no assumption
-whatever, a correct-authored block that every block two rounds later
-reaches (`exists_commonAt`) — so cones nest and its references lie in
-the causal past of every validator holding a block two rounds up:
-
-```lean
-theorem fill_refs_available (sk : SkipMsg U)
-    (hcom : ∀ k, sk.r0 < k → k ≤ sk.r → CommonAt U (sk.line k) k)
-    {k : ℕ} (hk1 : sk.r0 < k) (hk2 : k ≤ sk.r)
-    {c : BlockId} (hc : c ∈ U.ids) (hcr : (U.block c).round = k + 2)
-    {i : BlockId} (hi : i ∈ (U.block (sk.line k)).refs) :
-    i ∈ history U c
-```
-
-Three things follow. **Nothing needs transmitting**: the message names
-the target and every recipient reconstructs the filled blocks from its
-own DAG. **The recovering validator holds what it cites**, having the
-common core like everyone else once bootstrapped, so the tight
-author-attributed discipline is satisfiable rather than something to
-weaken. And the choice above stops mattering in practice, both clauses
-being met.
-
-This is a restriction on how a message picks its target, not on the
-executions the protocol admits: T3c is a counting theorem with no
-synchrony and no progress hypothesis, so a common target exists at
-every round of every universe.
-
-### 16.9 The properties: one interface for every rule and every mechanism
+The answer is one interface. §16.1 states a small set of **properties
+of a commit rule** — a band the verdicts read, agreement, candidacy,
+the indirect rule, and a *support* saying what a commit counts —
+against which every mechanism is proved once, so that a rule showing
+them inherits every mechanism and the mechanisms compose through the
+same properties; two headline theorems say what a rule gets, safety
+across any stack of mechanisms and liveness with certification as the
+only antecedent. §16.2 is the matrix: nine rules, every mechanism.
+
+The remaining sections are facts about the mechanisms themselves that
+no property states, because they are not about verdicts. Coverage is
+**refuted** under the Safe Skip fill, with an exact boundary and for
+the same reason the fill is safe (I4, §16.3). *Placement conditions*
+say where a garbage-collection horizon may be put (I5, I6, §16.4). A
+validator pruned past its own history can be restored by a provision
+costing no exemption from P3′ and no agreement on the cut (I10–I12,
+§16.5). And §8's storage account is sharpened twice over: its reference
+discipline is stated more tightly than its own bound needs (I17), and a
+fill drawn against a common-core target carries no material its
+recipients lack (I19, §16.6–§16.7).
+
+### 16.1 The properties: one interface for every rule and every mechanism
 
 **The carrier.** A mechanism reads a protocol through
 `Properties.DagRule`: a universe type, a view type over it, projections
@@ -5603,7 +5123,7 @@ execution, and likewise for Odontoceti, Hybrid and Mahi-Mahi; Nemo,
 FinWhale, Hydrozoan and Optimal-Hydrozoan, whose models carry no
 self-parent clause at the carrier, show `safety` and `progress`.
 
-### 16.10 Every rule, every mechanism
+### 16.2 Every rule, every mechanism
 
 `scripts/audit-conformance.py` and `scripts/audit-mechanisms.py` read
 the dependency graph and print what each rule shows and which mechanism
@@ -5617,14 +5137,415 @@ except through the properties — and reports no bespoke links. Black
 Marlin has no carrier, commits by round with no slot-indexed relation,
 and is out of scope by decision.
 
-What the generic route retired, in the order it happened: the
-per-protocol integration layer for Hydrozoan and Optimal-Hydrozoan
-(§22.7, §23.7), the core's hand-composed stack and lifecycle theorems (§16.5),
-the per-rule cut transfer lemmas of §9, the rule-level SS3 of §12, the
-direct `LeaderCommits` and the copies of L10 in Odontoceti and Nemo,
-the coverage-based inclusion of §7, and the bespoke per-rule safety
-statements of §10 and §14. Each was a theorem the properties reach in
-one line, and each is now that line.
+Two facts about the mechanisms sit beside the properties rather than
+inside them. Orcaella's carrier is a universe with `HonestNoEquiv`, and
+that invariant survives the cut and the fill (I1, `honestNoEquiv_chop`
+and `honestNoEquiv_skipFill`, `Integration/Preservation.lean`), which is
+what lets Orcaella's carrier be transformed at all; the fill's half
+consumes `hgap`, the crash itself. And the crash-prone validator §14
+serves is honest but not correct, so `SkipMsg` pins its anchor by the
+uniqueness fact `hB1uniq` rather than by `v1 ∈ Correct`, the base model
+recovering the latter route by `hB1uniq_of_correct` (I9). A halted
+validator's slot is skipped by L5, whose hypothesis does not say why the
+leader is absent, and after recovery SS2 restores production with the
+validator back in the reliable set; no lemma relates the adaptive
+policy to the hybrid fault model, because the crash class is invisible
+in verdicts, which is all a policy reads.
+
+### 16.3 Coverage under the fill
+
+Coverage behaves in three ways under the Safe Skip fill, and the
+division is the result.
+
+**It fails for a reliable set containing the recovering validator, at
+the rounds that validator slept through.**
+
+**I4.**
+```lean
+theorem not_synchronisedOn_skipFill (sk : SkipMsg U) {T : Finset Validator}
+    {R k : ℕ} (hv1 : sk.v1 ∈ T) (hk1 : sk.r0 < k) (hk2 : k ≤ sk.r) (hk : R ≤ k)
+    {b : BlockId} (hb : b ∈ U.ids) (hbround : (U.block b).round = k + 1)
+    (hbc : (U.block b).creator ∈ T) :
+    ¬ SynchronisedOn sk.skipFill T R
+```
+
+The failure needs no hypotheses beyond the ones SS2 itself creates, and
+its reason is the fact that makes Safe Skip **safe**. SS3 concludes
+that a filled candidate is always directly skipped *because no old
+block references a fresh identifier*; coverage asks the opposite, that
+every reliable block at round `n+1` reference every reliable block at
+round `n`. One fact, two consequences: the fill can manufacture neither
+a commit nor coverage. The hypotheses are exhibited satisfiable on
+`Ucrash` (§24), so the refutation is not vacuous.
+
+**It is preserved for any reliable set that excludes the recovering
+validator** (`synchronisedOn_skipFill_of_notMem`). The filled blocks
+are that validator's alone, so a clause quantified over the others
+never encounters them.
+
+**It returns strictly above the fill**
+(`synchronisedOn_skipFill_above`), for any set, and it survives the cut
+at a horizon offset (`synchronisedOn_chop`, I2), both from the fill's
+and the cut's `Sustains` witnesses. The strictness is not
+slack: at the target round the lower block may still be the last filled
+one, and the refutation reaches there too.
+
+So the fill composes with the liveness account of §6, and what it
+cannot support is the claim that a validator was covered at rounds
+during which it was absent — which §12 does not make. §12's claim is
+that the fill restores *production*, which is the hypothesis liveness
+consumes and which SS2 supplies. The reading for a deployment is that
+a recovering validator is outside the covered set for the duration of
+its gap, consistent with §16.5's account of what it costs to be absent,
+and an ordinary participant from the round above the fill onward.
+
+### 16.4 Where a horizon may be put
+
+Three conditions constrain the placement of a garbage-collection
+horizon relative to the mechanisms running above it. None is visible
+from a single arc.
+
+**I5 — the joiner's two obligations.** §13's adaptive schedule is a
+function of the committed verdicts, and §9 prunes verdicts below a
+horizon; a validator joining from the truncation may not hold what the
+policy reads. The schedule half of the question is settled by
+computation: truncating an adaptive schedule and adapting a truncated
+one give the same rounds and the same leaders, `slotsChop_slotsOf`
+closing by `rfl` provided the assignment used inside the truncation is
+the original one shifted past the base slot. All the content lies in
+whether a joiner can *produce* that shifted assignment, which is
+
+```lean
+def HorizonStable (P : AdaptivePolicy Validator BlockId Payload) (d G : ℕ)
+    (pick' : (U' : BlockUniverse Validator BlockId Payload) →
+      View Validator BlockId Payload U' → (ℕ → Option BlockId) → ℕ → Validator) : Prop :=
+  ∀ (U : BlockUniverse Validator BlockId Payload) (V : View Validator BlockId Payload U)
+    (V' : View Validator BlockId Payload (chop U G)) (v : ℕ → Option BlockId)
+    (k : ℕ), pick' (chop U G) V' (fun m => v (d + m)) k = P.pick U V v (d + k)
+```
+
+Under it a joiner computes exactly the leaders the network is using
+(`joiner_assign_agree`), so the two run one schedule seen from two
+origins. The obligation is stated on the policy's *rule* rather than on
+an `AdaptivePolicy`, because a policy is indexed by its `Slots`
+instance and a joiner's inhabits a different type; the rule is the part
+that survives re-indexing.
+
+A second obligation is independent of the policy. Horizon-stability
+aligns leaders, not *epochs*: a joiner's slot `k` is the network's
+`d + k`, so the numberings correspond only when the base slot is a
+whole number of epochs (`epochOf_add_of_dvd`), and the example beneath
+it shows the correspondence failing otherwise. **A
+garbage-collection base slot must be a multiple of the adaptive epoch
+width** — without it two validators can agree on who leads every slot
+and still disagree about which verdicts the policy was entitled to
+read.
+
+**I6 — the lag bounds the recoverable outage.** A `SkipMsg` requires
+its anchor in the universe, and `chop` retains the anchor exactly when
+the horizon has not passed the round at which the validator crashed.
+`anchor_pruned` states the constraint and `chopMsg` shows it is the
+only one: with the anchor retained the whole message rebases, every
+field shifted by `−G`. Composed with §9's lag envelope:
+
+```lean
+theorem outage_bounded_by_lag (sk : SkipMsg U) {Λ : ℕ}
+    (hlag : G + Λ = sk.r) (hr : sk.r0 ≤ sk.r) :
+    G ≤ sk.r0 ↔ sk.r - sk.r0 ≤ Λ
+```
+
+> Garbage collection at lag `Λ` supports Safe Skip recovery from
+> outages of up to `Λ` rounds, and no more.
+
+Beyond it the validator's last block is gone, and §16.5 says what
+happens then.
+
+### 16.5 Re-genesis, and the long outage
+
+A validator whose whole history falls below a horizon is worse off than
+unable to fill. P3′ requires every non-genesis block to reference a
+block by its own creator, so `no_blocks_of_no_genesis` shows that a
+validator with no block in a universe's genesis layer can produce
+nothing in it at all — the self-parent chain walks every block down to
+genesis, and a severed chain cannot restart. `severed_of_pruned_anchor`
+applies this to the truncation: **any** attempt to resume is blocked,
+not merely Safe Skip.
+
+The repair is to start a fresh chain *at the cut*, and it needs no
+exemption from P3′. Truncation rebases the retained layer to round `0`,
+where P1, P3 and P3′ are guarded by `0 < round` and P2 is vacuous for
+an empty reference set — which is how `chop`'s own validity proof
+discharges that layer. A re-genesis block is therefore indistinguishable,
+to the validity rules, from a block the cut flattened.
+
+**I10.**
+```lean
+def addGenesis (V : BlockUniverse Validator BlockId Payload) (v : Validator)
+    (g : BlockId) (p : Payload) (hg : g ∉ V.ids)
+    (hsev : ∀ b ∈ V.ids, (V.block b).creator ≠ v) :
+    BlockUniverse Validator BlockId Payload where
+  ids := insert g V.ids
+  block b := if b ∈ V.ids then V.block b else ⟨0, v, ∅, p⟩
+  …
+```
+
+The non-equivocation obligation needs no further hypothesis: adding a
+genesis block
+would normally risk a twin at round `0`, and the absence that stranded
+the validator is what makes the new block unambiguous.
+`populatedOn_addGenesis` puts it back in the genesis layer, which is
+P8's hypothesis at round `0`.
+
+**I11 — heterogeneous horizons need no agreement.** A re-genesis block
+is valid in the truncation and not in the universe it came from: at a
+positive round of the original, a reference-free block violates P3. It
+would therefore be acceptable only to validators that have pruned at
+least as far — which §9 cannot promise, since its horizons are
+per-validator by design. The resolution is to **derive** the block
+rather than transmit it: each validator synthesises a genesis for any
+validator absent from its own retained layer, so nothing is sent and
+nothing can be rejected. What that needs is that the derivations
+converge, and they do. A validator's own derived genesis sits at round
+`0` and is pruned by any further cut, leaving exactly the base a
+more-truncated validator holds:
+
+```lean
+theorem regenesis_converges {U : BlockUniverse Validator BlockId Payload}
+    {G₁ G₂ : ℕ} (hG : G₁ < G₂) … :
+    (chop (addGenesis (chop U G₁) v g p hg hsev) (G₂ - G₁)).ids
+        = (chop U G₂).ids
+      ∧ ∀ b ∈ (chop U G₂).ids,
+          (chop (addGenesis (chop U G₁) v g p hg hsev) (G₂ - G₁)).block b
+            = (chop U G₂).block b
+```
+
+Both then derive the same genesis from the same base, so §9's central
+claim — no agreement on the cut anywhere — survives the provision
+intact. The statements are observational: identifier sets equal, and
+blocks equal at those identifiers, the two universes differing only on
+material outside their identifier sets that nothing reads.
+
+**I12 — the three mechanisms are complementary.** A long outage uses
+all of them, in order: **bootstrap** to read, since §9.5's attested
+base yields a view whose verdicts agree with everyone's
+(`bootstrap_agree`) but no ability to produce; **re-genesis** to write,
+restoring the validator to the genesis layer, which is what P3′ was
+blocking; and **Safe Skip** to catch up, one message denoting every
+block from the cut to the current round — §12's mechanism doing the job
+it was built for, at a gap that now begins at the horizon rather than
+at the crash.
+
+The third step needs an anchor and the re-genesis block is one
+(`recoveryMsg`). The closure is exact: `hsev`, the total absence that
+licensed re-genesis, is what discharges the anchor's uniqueness
+clause — a validator with no other block anywhere cannot have a second
+at that round — and the same absence discharges `hgap`. Nothing extra
+is assumed. What every party needs for the fill to denote anything is
+the retained history including the donor's line up to the target, which
+is `SkipMsg`'s standing requirement and, after garbage collection,
+exactly the window everyone keeps.
+
+Safe Skip's fast path stands alone only while the anchor survives
+(§16.4's lag bound). Past that the three compose, and Safe Skip's contribution is
+undiminished: it remains the succinct encoding of the many blocks
+missing inside the retained window.
+
+**I18 — and the interval between the phases is priced.** A severed
+validator can read once bootstrapped but cannot produce, and the
+reliable sets liveness quantifies over are defined by production, so it
+belongs to none of them (`notMem_of_no_blocks`). Since liveness needs a
+reliable set of quorum size, at most `f` validators may be severed at
+once (`card_severed_le`). **The horizon lag is therefore a
+liveness-margin parameter and not only a storage one**: a shorter lag
+saves storage and lengthens the window in which a returning validator,
+however honest and however well caught up on the ledger, counts against
+the fault budget.
+
+### 16.6 The exposure condition under both mechanisms
+
+The two recovery mechanisms part company at the exposure condition, and
+the reason is structural.
+
+**I13.**
+```lean
+theorem dosValid_addGenesis (hdos : DoSValid V) :
+    DoSValid (addGenesis V v g p hg hsev)
+```
+
+Re-genesis adds a block with **no references**. It cannot cite an
+exposed author — the clause is vacuous for it — and it enters no other
+block's cone, since nothing reaches what nothing references. §8's
+per-cone bound therefore applies to a re-genesised universe unchanged,
+and the concern that re-genesis severs the chain §8 relies on does not reach
+the condition: what §8 forbids is *citing* an
+exposed author.
+
+The fill does the reverse. P3′ obliges `fillBlock` to insert a self
+reference, so the first filled block reaches the anchor and with it the
+whole of `v1`'s pre-crash history (`history_B1_subset_fill`). Its
+citations are inherited unchanged from the donor while its cone is
+strictly larger, and `DoSValid` forbids citing an author exposed *in
+one's own cone* — so a citation innocuous in the donor's smaller cone
+can be a violation in the filled block's larger one.
+
+So the clause §2.2 records as consumed by neither safety nor liveness
+is doubly implicated: the self-parent chain is what makes a cone a
+complete record of its author's acceptances in §8, and the self
+reference §12 must add is what pushes a cone past what the donor
+vouched for.
+
+The disturbance is nonetheless **local**, which is what makes it
+addressable. A fill copies a donor block's references, and `DoSValid U`
+already vouches for those citations in the donor's cone; what the fill
+adds affects no other block, because an old block's cone contains no
+filled block — SS3's observation once more. Exposure at an old block is
+therefore unchanged in both directions
+(`exposedIn_skipFill_old`), and the condition decomposes:
+
+**I14.**
+```lean
+theorem dosValid_skipFill (hdos : DoSValid U)
+    (hnew : ∀ k, sk.r0 < k → k ≤ sk.r →
+      ∀ i ∈ (sk.skipFill.block (sk.fresh k)).refs,
+        ¬ ExposedIn sk.skipFill (sk.fresh k) (sk.skipFill.block i).creator) :
+    DoSValid sk.skipFill
+```
+
+The extension satisfies the exposure condition as soon as its own
+blocks do. That second half is a property of the fill alone, so a
+recipient establishes it by computing the fill and inspecting it,
+consulting no identity oracle and nothing beyond the message and its
+own DAG — enforceable in the sense §4.7 requires, and admissible as a
+clause of the mechanism rather than an assumption about the network. A
+fill whose enlarged cone exposes one of the donor's citations fails the
+check and is refused, rather than accepted and unsound.
+
+The check itself reduces to **reachability** in the ordinary case.
+
+**I15.**
+```lean
+theorem dosValid_skipFill_of_covered (hdos : DoSValid U)
+    (hcov : ∀ k, sk.r0 < k → k ≤ sk.r → sk.B1 ∈ history U (sk.line k))
+    (hv1ne : ∀ p ∈ U.ids, ∀ q ∈ U.ids, (U.block p).creator = sk.v1 →
+      (U.block q).creator = sk.v1 → (U.block p).round = (U.block q).round → p = q) :
+    DoSValid sk.skipFill
+```
+
+If each donor block already reaches the anchor, the fill's cone adds
+nothing but `v1`'s own new blocks (`fill_cone_subset`) — and those
+cannot form an equivocating pair, since they sit at distinct rounds,
+`hgap` excludes an old `v1` block at any of them, and `hB1uniq` pins
+the anchor's round. What is left is the donor's own cone, for which
+`DoSValid U` already vouches. So a recipient verifies one reachability
+query per gap round against its own DAG, and needs no exposure
+computation over the extension at all.
+
+The covering hypothesis is what a donor line satisfies whenever it
+referenced `v1`'s last block, which is the ordinary case: `v1` was
+producing at `r0`. The second hypothesis is forced rather than chosen —
+`SkipMsg` records only that the anchor is `v1`'s unique block *at its
+own round*, leaving open that `v1` equivocated before crashing, and the
+fill's self reference would then cite an exposed author. It is what the
+base model's correctness and §14's honesty each supply.
+
+### 16.7 Storage: the delivery layer, and what settles it
+
+§8.4's budgets range over a `Delivery U` rather than over `U`, so they
+cannot be *stated* for the fill until it has a delivery structure of
+its own: a delivery structure is indexed by its universe, and a universe
+transformer needs a delivery transformer beside it, which garbage
+collection has in `chopD`.
+
+The transformer is smaller than it appears. A `Delivery` records what
+validators held and accepted **when they built their blocks**, and
+nobody received the fill at the time: the filled blocks reconstruct
+what the recovering validator would have produced. `skipFillD`
+therefore changes nothing, and the one obligation with content is
+`includes`, which now quantifies over filled blocks and asks that they
+reference what `v1` accepted below. The hypothesis that discharges it
+is that `v1` accepted nothing while down — the acceptance-side
+counterpart of `hgap`, which says as much of production.
+
+**I16.** The author-blind budget then transfers at the same constant
+(`uniformBudget_skipFillD`), with no arithmetic: every accepted block
+is old, so views and novelty are literally the same finite sets
+(`viewUpto_skipFillD`).
+
+The reference discipline does **not** transfer, and the failure
+describes the mechanism rather than the transformer
+(`not_refsAccepted_skipFillD`). `RefsAccepted` is `includes`'
+converse — a correct validator cites *only* what it accepted — and a
+filled block cites the donor's blocks, which the recovering validator
+did not accept, having been down. A retroactive reconstruction cannot
+satisfy both under a delivery structure that records what actually
+arrived.
+
+The alternative is to model recovery as acceptance *at recovery time*:
+`v1` obtains the donor's blocks when it rejoins and accepts exactly
+what its filled blocks cite, whereupon both clauses hold by
+construction, `accepted_inj` following from the P2 clause `skipFill`
+already establishes for `fillBlock`. What that model does not concede
+is the budget — the novelty of the newly accepted blocks becomes a
+property of the fill, to be checked as in §16.6 rather than inherited.
+
+**I17 — and the choice does not affect the budget.** §8.4's
+`RefsAccepted` attributes a block's cone to *its own author's* view, and the pool argument does not need that. Its component lemmas are
+already stated at the right generality: novelty is bounded by the gap
+toward whichever validator's acceptances contain the references
+(`card_novelty_le_viewGap_add_one`), and that gap is bounded as soon as
+the validator **has a block at the round**
+(`card_viewGap_succ_le`) — which a donor line does at every gap round.
+Composing them at a `w` other than the author gives
+
+```lean
+theorem card_novelty_le_of_donor {κ R : ℕ} (hbyz : ByzBudget D κ)
+    (hED : EventuallyDelivers D R) (hn : R ≤ n + 1)
+    (hv : v ∈ (Correct : Finset Validator))
+    (hw : w ∈ (Correct : Finset Validator)) (hb : b ∈ U.ids)
+    (hrefs : (U.block b).refs ⊆ D.accepted w (n + 1))
+    {c : BlockId} (hc : c ∈ U.ids) (hcc : (U.block c).creator = w)
+    (hcr : (U.block c).round = n + 1) :
+    (novelty U (viewUpto D v (n + 1)) b).card ≤ F.f * κ + 1
+```
+
+So a filled block respects the budget with the **donor** in the role
+the author would ordinarily play, whether or not the recovering
+validator ever accepted the material. The modelling question is
+therefore about which clause of §8.4 one wishes to state, not about
+whether the storage bound holds: it holds either way. The discipline is
+stated more tightly than the bound requires, and the fill is the case
+that shows the difference.
+
+**I19 — and choosing the target from the common core settles the rest.**
+What the storage argument does not address is *availability*: a
+validator citing blocks it does not hold cannot serve them. Selecting
+the fill's donor line from the **common core** removes that at its
+source. §5.2's T3c produces, at every round and under no assumption
+whatever, a correct-authored block that every block two rounds later
+reaches (`exists_commonAt`) — so cones nest and its references lie in
+the causal past of every validator holding a block two rounds up:
+
+```lean
+theorem fill_refs_available (sk : SkipMsg U)
+    (hcom : ∀ k, sk.r0 < k → k ≤ sk.r → CommonAt U (sk.line k) k)
+    {k : ℕ} (hk1 : sk.r0 < k) (hk2 : k ≤ sk.r)
+    {c : BlockId} (hc : c ∈ U.ids) (hcr : (U.block c).round = k + 2)
+    {i : BlockId} (hi : i ∈ (U.block (sk.line k)).refs) :
+    i ∈ history U c
+```
+
+Three things follow. **Nothing needs transmitting**: the message names
+the target and every recipient reconstructs the filled blocks from its
+own DAG. **The recovering validator holds what it cites**, having the
+common core like everyone else once bootstrapped, so the tight
+author-attributed discipline is satisfiable rather than something to
+weaken. And the choice above stops mattering in practice, both clauses
+being met.
+
+This is a restriction on how a message picks its target, not on the
+executions the protocol admits: T3c is a counting theorem with no
+synchrony and no progress hypothesis, so a common target exists at
+every round of every universe.
 
 ---
 
@@ -9240,7 +9161,7 @@ Hydrozoan was developed against Mathlib alone, and until it had a
 carrier nothing composed with it: a replica running it had no theorem
 that its verdicts survive garbage collection or a crash recovery, and
 no leader schedule but the one its own arc fixes. It has all of that
-now the way every other rule does (§16.9): a carrier
+now the way every other rule does (§16.1): a carrier
 `LeanDag.Hydrozoan.rule`, the four properties and a support at it
 (`hzSupport`, whose `Commits` law is the slow path, and a fast-path
 support at the stronger fault model), and every mechanism cell an
@@ -9326,7 +9247,7 @@ when no old block references a fresh identifier. In the properties'
 vocabulary that is `LeanDag.Hydrozoan.banded`, and the fill cell is
 `Persist.of_banded` at the `Extends` witness `extends_copyFillHZ` (HI9).
 Hydrozoan's prompt skip at the fill is
-`decided_none_fresh_hz` (§16.9), at the grade `qFast ≤ |T|` its
+`decided_none_fresh_hz` (§16.1), at the grade `qFast ≤ |T|` its
 `SkipsUnsupported` carries.
 
 Liveness across both is the generic `Support.live_of_truncates` and
@@ -9336,7 +9257,7 @@ Liveness across both is the generic `Support.live_of_truncates` and
 **What a deployment gets.** What a reader wants is a statement about one replica's situation: the
 DAG the network built, a recovery performed by one message, a horizon
 below which nothing is retained, and the slot its numbering restarts
-at. That is the headline (§16.9) at Hydrozoan's rule: the stack
+at. That is the headline (§16.1) at Hydrozoan's rule: the stack
 `Stack.sustains sustains_copyFillHZ` then `Stack.truncates
 (truncates_chop_hz hd)` is a `Rebased`, so `Hydrozoan.Properties.safety`
 says verdicts transport in both directions, any view of what the
@@ -9361,7 +9282,7 @@ against the core (HI9).
 The witnesses of the first route went with it; the Barnacle
 instantiation is still pinned by `#guard_msgs` on the arc's own
 seven-replica configuration, and the cut and fill above are checked by
-the build and the audits of §16.10 alone.
+the build and the audits of §16.2 alone.
 
 ## 23. Optimal-Hydrozoan: the fast path at Hydrangea's bound
 
@@ -9680,7 +9601,7 @@ Optimal-Hydrozoan has a carrier of its own,
 `OptimalHydrozoanProperties.optimalRule`: Hydrozoan's universe with
 leader exclusion, the four properties and a support (`optSupport`, and
 a fast-path support at the optimised threshold), and every mechanism
-cell an instance of the generic theorem (§16.9). What is specific to it
+cell an instance of the generic theorem (§16.1). What is specific to it
 is the invariant carried across each mechanism.
 
 **As a Barnacle rule** (HI6). Mirroring Hydrozoan's instantiation
@@ -9815,7 +9736,7 @@ and severed by a horizon at round `1`. `Ucut` is the truncation and
 it at all; `Uregen` adds the derived genesis, with its uniqueness
 clause and `dosValid_addGenesis` checked over it; and `urecover` builds
 the catch-up message anchored on that block, so the composite recovery
-of §16.6 is exhibited end to end rather than assumed composable. The
+of §16.5 is exhibited end to end rather than assumed composable. The
 refutation of §16.3 is witnessed on the same family
 (`ucrash_not_synchronisedOn`), which is what makes it a refutation
 rather than an unsatisfiable hypothesis.
@@ -10159,7 +10080,7 @@ parameterised by. When an abstraction is placed correctly, new
 developments read like instantiations; when it is misplaced, they read
 like refactors. The rule-parameterised treatment that §3.5 and §10.3
 first seemed to call for arrived the same way, additively: the
-properties of §16.9 are stated over a carrier that every rule
+properties of §16.1 are stated over a carrier that every rule
 instantiates, the rules' own decision relations are untouched, and
 what had been mirrored proofs became one proof per property and one
 line per rule.
@@ -10254,7 +10175,7 @@ theorem.
 explicit, is outside the scope of the present development.
 
 **The properties' reach.** Black Marlin (§18) commits by round with no
-slot-indexed relation and has no carrier, so none of §16.9 applies to
+slot-indexed relation and has no carrier, so none of §16.1 applies to
 it. The linearisation of a commit's cone is outside the properties by
 design. And the liveness headline's antecedent contains the reader's own
 view being caught up to a horizon, a delivery assumption each execution
@@ -10394,7 +10315,7 @@ unchanged — which is the strongest evidence the abstraction is placed
 correctly — and the developments in turn were carried by a second
 abstraction placed above them: four properties of a commit rule and a
 support, against which each mechanism is proved once and which nine
-rules show (§16.9). The denial-of-service account reused the delivery layer and
+rules show (§16.1). The denial-of-service account reused the delivery layer and
 the self-parent clause; garbage collection reused every theorem verbatim on
 the truncated universe, because truncation was arranged to be a universe; and
 Odontoceti reused the entire DAG layer because its quorums are
@@ -10763,7 +10684,7 @@ reused.
 | BMT4 | and one Byzantine anchor below suffices to order two reliable authors' blocks oppositely, refuting Total order | `deliverSeq` and `commitSeq` witnesses *(LeanDagTest/BlackMarlin/Divergence)* |
 | BMP14 | both repairs on the execution of §18.11, what they cost, a view that misses the support, and a counting rule that reads it wrongly at `f = 1` | `descendSupp`, `descendS`, `coneView`, `Ucnt` witnesses *(LeanDagTest/BlackMarlin)* |
 
-**The properties** (§16.9):
+**The properties** (§16.1):
 
 | Label | Statement | Lean |
 |:---|:---|:---|
@@ -10785,12 +10706,11 @@ reused.
 | Label | Statement | Lean |
 |:---|:---|:---|
 | I1 | honest non-equivocation survives truncation and the fill | `honestNoEquiv_chop`, `honestNoEquiv_skipFill` *(Integration/Preservation)* |
-| I2 | coverage survives truncation, at a horizon offset | `synchronisedOn_chop` *(Integration/Preservation)* |
-| I3 | retired: the schedule rides in the `Truncates` witness | `truncates_chop` *(Properties/Arcs/GC)* |
+| I2 | coverage survives truncation, at a horizon offset | `synchronisedOn_chop` *(Integration/Coverage)* |
 | I4 | coverage under the fill: refuted for a set including the recovering validator, preserved otherwise, restored above the fill | `not_synchronisedOn_skipFill`, `synchronisedOn_skipFill_of_notMem`, `synchronisedOn_skipFill_above` *(Integration/Coverage)* |
 | I5 | the joiner: horizon-stability, and epoch alignment | `HorizonStable`, `joiner_assign_agree`, `epochOf_add_of_dvd` *(Integration/Joiner)* |
 | I6 | anchor retention, and the lag bounds the outage | `anchor_pruned`, `chopMsg`, `outage_bounded_by_lag` *(Integration/Retention)* |
-| I7 | the composition capstone, through the properties: the headlines at the core | `MysticetiProperties.safety`, `MysticetiProperties.liveness`, `stack_core` *(MysticetiProperties, Integration/StackRules)* |
+| I7 | the headlines at the core: safety across any stack, liveness at the support | `MysticetiProperties.safety`, `MysticetiProperties.liveness`, `stack_core` *(MysticetiProperties, Integration/StackRules)* |
 | I8 | a severed chain cannot restart | `no_blocks_of_no_genesis`, `severed_of_pruned_anchor` *(Integration/Retention)* |
 | I9 | the hypothesis the crash-prone lifecycle forced; the lifecycle theorem is retired (§16.5) | `hB1uniq`, `hB1uniq_of_correct` *(SafeSkip/Basic)* |
 | I10 | re-genesis at the cut | `addGenesis`, `populatedOn_addGenesis` *(Integration/ReGenesis)* |
@@ -30804,7 +30724,7 @@ theorem not_refsAccepted_skipFillD (hne : sk.r0 < sk.r)
 
 This is not a defect of the transformer but a description of what Safe Skip does. The fill asserts references on `v1`'s behalf for rounds it slept through; `RefsAccepted` says a validator cites only what reached it. The two cannot both hold of a retroactive reconstruction under the delivery structure that records what actually arrived.
 
-The alternative is to model recovery as *acceptance at recovery time* — `v1` obtains the donor's blocks when it rejoins, and accepts exactly what its filled blocks cite. Both `includes` and `RefsAccepted` then hold by construction, `accepted_inj` following from the P2 clause `skipFill` already proves for `fillBlock`. What that model does not give away is the budget: the novelty of the newly accepted blocks is then a property of the fill, to be checked as in report §16.7 rather than inherited. Which model is right is a specification question about what a `Delivery` is meant to record, and it is recorded here rather than settled.
+The alternative is to model recovery as *acceptance at recovery time* — `v1` obtains the donor's blocks when it rejoins, and accepts exactly what its filled blocks cite. Both `includes` and `RefsAccepted` then hold by construction, `accepted_inj` following from the P2 clause `skipFill` already proves for `fillBlock`. What that model does not give away is the budget: the novelty of the newly accepted blocks is then a property of the fill, to be checked as in report §16.6 rather than inherited. Which model is right is a specification question about what a `Delivery` is meant to record, and it is recorded here rather than settled.
 
 #### `notMem_of_no_blocks`
 
