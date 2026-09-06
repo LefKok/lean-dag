@@ -35,31 +35,27 @@ theorem orcaella_laws [HybridFaults Validator] {k : ℕ} (hk : Hybrid.Admissible
     HybridProperties.commitsDirect k S U V s L hL hdc
   candidates := fun S {U} V s L h => HybridProperties.commitsCandidate k S U V s L h
 
-/-- **A good DAG meets Hybrid's precondition.** `Good` and `hybridLive`
-name the same three facts about the same quorum, at Hybrid's own
-wavelength — the horizon sits one round above the slot. -/
-theorem orcaellaLive_goodGives [H : HybridFaults Validator] {k : ℕ} :
-    (orcaellaLive (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload) k).GoodGives (H.fb + H.fc)
-      (fun S {U} V T lo K => HybridProperties.hybridLive S (U := U) V T lo K) := by
-  intro U Rnd N hgood
-  obtain ⟨T, -, hcard, hsync, hpop⟩ := hgood
-  have hcard' : Fintype.card Validator - (H.fb + H.fc) ≤ T.card := hcard
-  refine ⟨T, by omega, ?_⟩
-  intro S V κ hcov hRnd hN hlead
-  change S.slotRound κ + 2 ≤ N at hN
-  refine ⟨hcard, Rnd, N, hsync, hRnd, hpop, hcov, ?_⟩
-  intro m hm
-  have := S.mono (Nat.lt_succ_iff.mp hm)
-  omega
 
-/-- **The descent laws, for Orcaella at slack `fb + fc`** — from the
-properties, with no argument about `Decided` here. -/
+/-- **A good DAG is good in the properties' terms.** -/
+theorem orcaellaLive_goodOf [H : HybridFaults Validator] {k : ℕ} :
+    ∀ U Rnd N, (orcaellaLive (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) k).Good U Rnd N →
+      GoodOf (orcaellaLive (Validator := Validator) (BlockId := BlockId)
+        (Payload := Payload) k).toBaseRule.toDagRule (coreReliability Validator) U Rnd N := by
+  rintro U Rnd N ⟨T, hT, hcard, hs, hpop⟩
+  refine ⟨T, ⟨hT, ?_⟩, hs, hpop⟩
+  change Fintype.card Validator - Faults.f Validator ≤ T.card
+  rw [hybrid_f]; exact hcard
+
+/-- **The descent laws, for Orcaella at slack `fb + fc`** — from its
+support. -/
 theorem orcaellaLive_descent [H : HybridFaults Validator] {k : ℕ} :
     (orcaellaLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload) k).Descent
       (H.fb + H.fc) :=
-  descent_of_properties _ (HybridProperties.leaderCommits k) (HybridProperties.indirect k)
-    orcaellaLive_goodGives
+  descent_of_support (orcaellaLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload) k)
+    (Properties.voteSupport _) (Properties.voteSupport_ofCoverage _)
+    (HybridProperties.voteSupport_commits k) (HybridProperties.indirect k) (by change 1 ≤ 2; omega)
+    orcaellaLive_goodOf
 
 end Barnacle
 

@@ -1,8 +1,8 @@
 import LeanDag.Barnacle.Model.Heads
 import LeanDag.Barnacle.Helpers.DagRule
 import LeanDag.Properties.Commit
-import LeanDag.Properties.Derived.LeaderCommits
 import LeanDag.Properties.Derived.Descent
+import LeanDag.Properties.Arcs.Liveness
 
 /-!
 # The descent laws, from the target properties
@@ -46,37 +46,36 @@ the development uses this and differs only in the wave. -/
 def LiveRule.elig (R : LiveRule Validator BlockId Payload) : (ℕ → ℕ) → ℕ → ℕ → Prop :=
   fun sr i j => sr i + R.waveLength ≤ sr j
 
-/-- **What a good DAG must give the protocol.** The rule-specific half
-of the bridge: on a DAG the rule calls good from `Rnd` to `N` there is a
-set `T` missing at most `slack` validators, and for a `T`-led slot whose
-wave fits under the horizon the protocol's own liveness precondition
-holds over that one slot. -/
-def LiveRule.GoodGives (R : LiveRule Validator BlockId Payload) (slack : ℕ)
-    (Live : Slots Validator → ∀ {U : R.Universe}, R.View U → Finset Validator → ℕ → ℕ → Prop) :
-    Prop :=
-  ∀ (U : R.Universe) (Rnd N : ℕ), R.Good U Rnd N →
-    ∃ T : Finset Validator, Fintype.card Validator ≤ T.card + slack ∧
-      ∀ (S : Slots Validator) (V : R.View U) (κ : ℕ), R.toBaseRule.CoversUpto U V N →
-        Rnd ≤ S.slotRound κ → S.slotRound κ + R.waveLength ≤ N → S.leader κ ∈ T →
-        Live S V T κ (κ + 1)
+/-- **A good DAG, in the properties' terms**: some quorum of the fault
+model has covered it from `Rnd` and populated it to `N`. Every rule's
+`Good` is this at its own quorum, and the bridge each rule supplies is
+the identity up to how its quorum is spelled. -/
+def GoodOf (R : Properties.DagRule Validator BlockId Payload) (rel : Reliability Validator)
+    (U : R.Universe) (Rnd N : ℕ) : Prop :=
+  ∃ T, rel.IsQuorum T ∧ Properties.SynchronisedOn R U T Rnd ∧
+    ∀ r, Rnd ≤ r → r ≤ N → Properties.PopulatedOn R U T r
 
-/-- **The descent laws, from the properties.** A rule that shows
-`LeaderCommits` and `Indirect`, and whose good DAGs meet its own
-liveness precondition, has Barnacle's liveness interface — and so, by
-`Heads/Proof.lean`, `LiveOn` under round-robin at every leader count,
-with no further argument about its decision relation. -/
-theorem descent_of_properties (R : LiveRule Validator BlockId Payload) {slack : ℕ}
-    {Live : Slots Validator → ∀ {U : R.Universe}, R.View U → Finset Validator → ℕ → ℕ → Prop}
-    (hlc : Properties.LeaderCommits R.toBaseRule.toDagRule Live)
+/-- **The descent laws, from a support.** A rule with `OfCoverage` and
+`Commits` at a fault model, `Indirect` at its eligibility, a wave no
+longer than the rule's, and good DAGs that are good in the properties'
+sense has Barnacle's liveness interface at the model's slack — and so,
+by `Heads/Proof.lean`, `LiveOn` under round-robin at every leader count.
+No `LeaderCommits` and no precondition of the rule's own appear: A4 is
+`exists_decided_of_coverage` at the quorum a good DAG names. -/
+theorem descent_of_support (R : LiveRule Validator BlockId Payload)
+    (sp : Properties.Support R.toBaseRule.toDagRule) {rel : Reliability Validator}
+    (hcov : sp.OfCoverage rel) (hlc : sp.Commits rel)
     (hind : Properties.Indirect R.toBaseRule.toDagRule R.elig)
-    (hgood : R.GoodGives slack Live) : R.Descent slack where
+    (hwave : sp.wave ≤ R.waveLength)
+    (hgood : ∀ U Rnd N, R.Good U Rnd N → GoodOf R.toBaseRule.toDagRule rel U Rnd N) :
+    R.Descent rel.slack where
   goodLeaders := by
     intro U Rnd N hg
-    obtain ⟨T, hcard, hT⟩ := hgood U Rnd N hg
-    refine ⟨T, hcard, ?_⟩
-    intro S V κ hcov hRnd hN hlead
-    obtain ⟨L, hL⟩ := hlc S V T κ (κ + 1) (hT S V κ hcov hRnd hN hlead) κ le_rfl
-      (Nat.lt_succ_self κ) hlead
+    obtain ⟨T, hq, hs, hpop⟩ := hgood U Rnd N hg
+    refine ⟨T, by have := hq.2; omega, ?_⟩
+    intro S V κ hcovV hRnd hN hlead
+    obtain ⟨L, hL⟩ := sp.exists_decided_of_coverage hcov hlc hq hs hpop S V κ
+      (fun b hb hr => hcovV b hb hr) hRnd (by omega) hlead
     exact ⟨L, hL.2.1⟩
   indirect := by
     intro S U V i j A hij hj hmid

@@ -22832,22 +22832,18 @@ def LiveRule.elig (R : LiveRule Validator BlockId Payload) : (ℕ → ℕ) → �
 
 **A Barnacle rule's eligibility**, as the properties read it: an anchor decides a slot when it sits a full wave above it. Every rule of the development uses this and differs only in the wave.
 
-#### `LiveRule.GoodGives`
+#### `GoodOf`
 
 *def, `Barnacle.Helpers.Descent.lean`*
 
 ```lean
-def LiveRule.GoodGives (R : LiveRule Validator BlockId Payload) (slack : ℕ)
-    (Live : Slots Validator → ∀ {U : R.Universe}, R.View U → Finset Validator → ℕ → ℕ → Prop) :
-    Prop :=
-  ∀ (U : R.Universe) (Rnd N : ℕ), R.Good U Rnd N →
-    ∃ T : Finset Validator, Fintype.card Validator ≤ T.card + slack ∧
-      ∀ (S : Slots Validator) (V : R.View U) (κ : ℕ), R.toBaseRule.CoversUpto U V N →
-        Rnd ≤ S.slotRound κ → S.slotRound κ + R.waveLength ≤ N → S.leader κ ∈ T →
-        Live S V T κ (κ + 1)
+def GoodOf (R : Properties.DagRule Validator BlockId Payload) (rel : Reliability Validator)
+    (U : R.Universe) (Rnd N : ℕ) : Prop :=
+  ∃ T, rel.IsQuorum T ∧ Properties.SynchronisedOn R U T Rnd ∧
+    ∀ r, Rnd ≤ r → r ≤ N → Properties.PopulatedOn R U T r
 ```
 
-**What a good DAG must give the protocol.** The rule-specific half of the bridge: on a DAG the rule calls good from `Rnd` to `N` there is a set `T` missing at most `slack` validators, and for a `T`-led slot whose wave fits under the horizon the protocol's own liveness precondition holds over that one slot.
+**A good DAG, in the properties' terms**: some quorum of the fault model has covered it from `Rnd` and populated it to `N`. Every rule's `Good` is this at its own quorum, and the bridge each rule supplies is the identity up to how its quorum is spelled.
 
 #### `adapt`
 
@@ -26412,7 +26408,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 1092 theorems that either another module of the
+The 1098 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -35026,7 +35022,7 @@ theorem mysticetiLive_descent [F : Faults Validator] :
       F.f
 ```
 
-**Mysticeti has the descent laws at slack `f`** — from the properties, with no argument about `Decided` in this file.
+**Mysticeti has the descent laws at slack `f`** — from its support, with no `LeaderCommits` and no precondition of its own in this file.
 
 #### `odontoceti_laws`
 
@@ -35050,7 +35046,7 @@ theorem odontocetiLive_descent [F : Faults5 Validator] :
       F.f
 ```
 
-**The descent laws, for Odontoceti at slack `f`** — from the properties, with no argument about `Decided` here.
+**The descent laws, for Odontoceti at slack `f`** — from its support.
 
 #### `nemo_laws`
 
@@ -35074,7 +35070,7 @@ theorem nemoLive_descent [Nemo.CrashFaults Validator] :
       (Fintype.card Validator - Nemo.majority Validator)
 ```
 
-**The descent laws, for Nemo at the slack a majority may miss** — from the properties, with no argument about `Decided` here.
+**The descent laws, for Nemo at the slack a majority may miss** — from its support.
 
 #### `majority_bound`
 
@@ -37350,20 +37346,22 @@ theorem odontocetiLive_delivers {Validator : Type} [Fintype Validator] [Decidabl
 
 **Odontoceti delivers**, at slack `f`; the argument is the same, its `Good` being the same predicate. Its block identifiers carry an order, so the binders are restated rather than taken from the section.
 
-#### `descent_of_properties`
+#### `descent_of_support`
 
 *theorem, `Barnacle.Helpers.Descent.lean`*
 
 ```lean
-theorem descent_of_properties (R : LiveRule Validator BlockId Payload) {slack : ℕ}
-    {Live : Slots Validator → ∀ {U : R.Universe}, R.View U → Finset Validator → ℕ → ℕ → Prop}
-    (hlc : Properties.LeaderCommits R.toBaseRule.toDagRule Live)
+theorem descent_of_support (R : LiveRule Validator BlockId Payload)
+    (sp : Properties.Support R.toBaseRule.toDagRule) {rel : Reliability Validator}
+    (hcov : sp.OfCoverage rel) (hlc : sp.Commits rel)
     (hind : Properties.Indirect R.toBaseRule.toDagRule R.elig)
-    (hgood : R.GoodGives slack Live) : R.Descent slack where
+    (hwave : sp.wave ≤ R.waveLength)
+    (hgood : ∀ U Rnd N, R.Good U Rnd N → GoodOf R.toBaseRule.toDagRule rel U Rnd N) :
+    R.Descent rel.slack where
   goodLeaders
 ```
 
-**The descent laws, from the properties.** A rule that shows `LeaderCommits` and `Indirect`, and whose good DAGs meet its own liveness precondition, has Barnacle's liveness interface — and so, by `Heads/Proof.lean`, `LiveOn` under round-robin at every leader count, with no further argument about its decision relation.
+**The descent laws, from a support.** A rule with `OfCoverage` and `Commits` at a fault model, `Indirect` at its eligibility, a wave no longer than the rule's, and good DAGs that are good in the properties' sense has Barnacle's liveness interface at the model's slack — and so, by `Heads/Proof.lean`, `LiveOn` under round-robin at every leader count. No `LeaderCommits` and no precondition of the rule's own appear: A4 is `exists_decided_of_coverage` at the quorum a good DAG names.
 
 #### `causalStructure`
 
@@ -37413,7 +37411,7 @@ theorem orcaellaLive_descent [H : HybridFaults Validator] {k : ℕ} :
       (H.fb + H.fc)
 ```
 
-**The descent laws, for Orcaella at slack `fb + fc`** — from the properties, with no argument about `Decided` here.
+**The descent laws, for Orcaella at slack `fb + fc`** — from its support.
 
 #### `holds`
 
@@ -37486,16 +37484,6 @@ theorem holds : Statement
 ```lean
 theorem holds : Statement
 ```
-
-#### `isQuorum_correct`
-
-*theorem, `Density.lean`*
-
-```lean
-theorem isQuorum_correct : rel.IsQuorum rel.correct
-```
-
-The reliable set is a quorum of itself.
 
 #### `exists_correct_memRefs`
 
@@ -37895,17 +37883,17 @@ theorem banded {kt : ℕ} (hpos : 0 < kt) :
 
 **Hybrid reads a band**, at every threshold the committee admits.
 
-#### `leaderCommits`
+#### `voteSupport_commits`
 
 *theorem, `HybridProperties.lean`*
 
 ```lean
-theorem leaderCommits (kt : ℕ) :
-    LeaderCommits (hybridRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload) kt) (fun S {U} V T lo K => hybridLive S (U := U) V T lo K)
+theorem voteSupport_commits (kt : ℕ) :
+    (voteSupport (hybridRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) kt)).Commits (coreReliability Validator)
 ```
 
-**A reliably-led slot commits**, at a bound one above the slot.
+**Law 3 of `voteSupport`, for Hybrid** (`Properties/Support.lean`): the hybrid quorum referencing the candidate one round up is its direct commit.
 
 #### `indirect`
 
@@ -38185,6 +38173,30 @@ theorem hzSupport_local :
 ```
 
 **Law 1.** A certifier two rounds above the settling round keeps its parents, and each parent keeps its parents and its author.
+
+#### `hzSupport_ofCoverage`
+
+*theorem, `Hydrozoan.Helpers.Commit.lean`*
+
+```lean
+theorem hzSupport_ofCoverage :
+    Support.OfCoverage (R := rule (Replica := Replica) (BlockId := BlockId)) hzSupport
+      (hzReliability Replica)
+```
+
+**Law 2.** Coverage toward the candidate over two layers makes every quorum block two rounds up a certificate: `isCertificate_of_synchronised` with its antecedent cut to what it reads.
+
+#### `hzSupport_commits`
+
+*theorem, `Hydrozoan.Helpers.Commit.lean`*
+
+```lean
+theorem hzSupport_commits :
+    Support.Commits (R := rule (Replica := Replica) (BlockId := BlockId)) hzSupport
+      (hzReliability Replica)
+```
+
+**Law 3.** A quorum's certificates at the slot's candidate are a slow commit, which a view caught up to the decision round sees.
 
 #### `leaderCommits`
 
@@ -39513,6 +39525,30 @@ theorem directCommit_of_certLive_sustains [S : Slots Validator]
 
 **The commit survives any sustaining mechanism, from either execution model.** `certLive` is stated in references and counts, and `Sustains` preserves both, so the mechanism consumes it directly. This is what coverage could not give: a coverage-shaped precondition transports only for a model that has coverage, and a reactive execution does not.
 
+#### `coreSupport_ofCoverage`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem coreSupport_ofCoverage :
+    Support.OfCoverage (R := mysticetiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) coreSupport (coreReliability Validator)
+```
+
+**Law 2.** Coverage toward the candidate over two layers: every quorum block one round up references it, and every quorum block two rounds up references each of those, so the certifier's voting parents are the whole quorum.
+
+#### `coreSupport_commits`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem coreSupport_commits :
+    Support.Commits (R := mysticetiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) coreSupport (coreReliability Validator)
+```
+
+**Law 3**, as a corollary of `leaderCommits_cert`: the support's precondition at one slot is `certLive` at that slot, and `certLive` asks less — any quorum by count, not one inside the correct set — so the direct proof is the one that stays and this is derived.
+
 #### `indirect`
 
 *theorem, `MysticetiProperties.lean`*
@@ -39540,7 +39576,7 @@ theorem decided_of_leader_of_populated_of_properties [S : Slots Validator]
 
 **L4's capstone form, from the properties.** The shape every consumer of direct liveness uses — synchrony from `R`, production to a horizon `N`, a `T`-led slot two rounds under it — reached from `LeaderCommits` and `CommitsCandidate` rather than from `decided_of_leader_of_populated`.
 
-The work is entirely in packaging: `LeaderCommits` takes its precondition as `coreLive` over a slot window, and the window here is the single slot. This is the same bridge `LiveRule.GoodGives` is for Barnacle (`docs/target-properties.md` §11.2b), and it is the reason the capstones do not need their own route into the protocol.
+The work is entirely in packaging: `LeaderCommits` takes its precondition as `coreLive` over a slot window, and the window here is the single slot. This is the same bridge `Barnacle.GoodOf` is for Barnacle (`docs/target-properties.md` §11.2b), and it is the reason the capstones do not need their own route into the protocol.
 
 #### `commits_recur_on_of_properties`
 
@@ -39651,17 +39687,17 @@ theorem banded : Banded (nemoRule (Validator := Validator) (BlockId := BlockId)
 
 **Nemo is banded.**
 
-#### `leaderCommits`
+#### `voteSupport_commits`
 
 *theorem, `NemoProperties.lean`*
 
 ```lean
-theorem leaderCommits :
-    LeaderCommits (nemoRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload)) (fun S {U} V T lo K => nemoLive S (U := U) V T lo K)
+theorem voteSupport_commits (hn : 0 < Fintype.card Validator) :
+    (voteSupport (nemoRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload))).Commits (nemoReliability Validator hn)
 ```
 
-**A reliably-led slot commits**, at a bound one above the slot: a direct commit reads that slot's leader and no other.
+**Law 3 of `voteSupport`, for Nemo** (`Properties/Support.lean`): a majority referencing the candidate one round up is its direct commit. Laws 1 and 2 are the generic ones for the one-round shape.
 
 #### `indirect`
 
@@ -39742,17 +39778,17 @@ theorem banded : Banded
 
 **Odontoceti reads a band.**
 
-#### `leaderCommits`
+#### `voteSupport_commits`
 
 *theorem, `OdontocetiProperties.lean`*
 
 ```lean
-theorem leaderCommits :
-    LeaderCommits (odontocetiRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload)) (fun S {U} V T lo K => odontocetiLive S (U := U) V T lo K)
+theorem voteSupport_commits :
+    (voteSupport (odontocetiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload))).Commits (coreReliability Validator)
 ```
 
-**A reliably-led slot commits**, at a bound one above the slot: a direct commit reads that slot's leader and no other.
+**Law 3 of `voteSupport`, for Odontoceti** (`Properties/Support.lean`): a quorum referencing the candidate one round up is its direct commit, which is `directCommit_of_votesAt`.
 
 #### `indirect`
 
@@ -39834,17 +39870,29 @@ theorem banded [LinearOrder BlockId] :
 
 **Optimal-Hydrozoan reads a band.**
 
-#### `leaderCommits`
+#### `optSupport_ofCoverage`
 
 *theorem, `OptimalHydrozoan.Carrier.lean`*
 
 ```lean
-theorem leaderCommits :
-    LeaderCommits (optimalRule (Replica := Replica) (BlockId := BlockId))
-      (fun S {U} V T lo K => optLive S (U := U) V T lo K)
+theorem optSupport_ofCoverage :
+    Support.OfCoverage (R := optimalRule (Replica := Replica) (BlockId := BlockId)) optSupport
+      (LeanDag.Hydrozoan.hzReliability Replica)
 ```
 
-**A reliably-led slot commits**, now a corollary of the support.
+**Law 2**, Hydrozoan's at the underlying universe.
+
+#### `optSupport_commits`
+
+*theorem, `OptimalHydrozoan.Carrier.lean`*
+
+```lean
+theorem optSupport_commits :
+    Support.Commits (R := optimalRule (Replica := Replica) (BlockId := BlockId)) optSupport
+      (LeanDag.Hydrozoan.hzReliability Replica)
+```
+
+**Law 3**: the slow commit, in `DecidedOpt`.
 
 #### `indirect`
 
@@ -40017,6 +40065,24 @@ theorem synchronisedOn_chop {T : Finset Validator} {Rs R' : ℕ}
 ```
 
 **Synchrony survives the cut, from the rebase.** `Integration/Preservation.synchronisedOn_chop` proves this directly; it is `Sustains` applied, as votes and production already were.
+
+#### `exists_decided_of_coverage`
+
+*theorem, `Properties.Arcs.Liveness.lean`*
+
+```lean
+theorem exists_decided_of_coverage {rel : Reliability Validator}
+    (hcov : sp.OfCoverage rel) (hlc : sp.Commits rel)
+    {U : R.Universe} {T : Finset Validator} (hq : rel.IsQuorum T) {Rnd N : ℕ}
+    (hs : SynchronisedOn R U T Rnd)
+    (hpop : ∀ r, Rnd ≤ r → r ≤ N → PopulatedOn R U T r)
+    (S : Slots Validator) (V : R.View U) (k : ℕ) (hV : CoversUpto R V N)
+    (hRnd : Rnd ≤ S.slotRound k) (hN : S.slotRound k + sp.wave ≤ N)
+    (hlead : S.leader k ∈ T) :
+    ∃ L, DecidedBelow R S (k + 1) V k (some L)
+```
+
+**A reliably-led slot commits on a covered, populated DAG** — for any rule with Laws 2 and 3, at any quorum of the fault model.
 
 #### `mem_coveredAt`
 
@@ -40613,6 +40679,17 @@ theorem agreeBand_of_rebasedAbove {U U' : R.Universe} {G R₀ : ℕ}
 
 **A `RebasedAbove` is a band from its settling round up to any ceiling**, at offsets `0` and `G`. What lets a rule discharge `Local` with the band lemmas it already has for `Banded`.
 
+#### `voteSupport_ofCoverage`
+
+*theorem, `Properties.Support.lean`*
+
+```lean
+theorem voteSupport_ofCoverage (rel : Reliability Validator) :
+    (voteSupport R).OfCoverage rel
+```
+
+**Law 2 for vote support.** Coverage toward the candidate at its own round is the vote.
+
 #### `populatedOn_insert_of_extends`
 
 *theorem, `Properties.Sustain.lean`*
@@ -40782,7 +40859,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 1105 lemmas used only within the file that proves
+The 1100 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -41906,19 +41983,20 @@ subsection per module, in the layer order of Appendices B and C.
 
 | Lemma | Role |
 |:---|:---|
-| `mysticetiLive_goodGives` | A good DAG meets the timed core's precondition. `Good` and `coreLive` name the same three facts about the … |
+| `mysticetiLive_goodOf` | A good DAG is good in the properties' terms: the same quorum, the same coverage, the same production. |
 
 ### `Barnacle/Helpers/Odontoceti.lean` (1)
 
 | Lemma | Role |
 |:---|:---|
-| `odontocetiLive_goodGives` | A good DAG meets Odontoceti's precondition. `Good` and `OdontocetiProperties.odontocetiLive` name the same … |
+| `odontocetiLive_goodOf` | A good DAG is good in the properties' terms. |
 
-### `Barnacle/Helpers/NemoLive.lean` (1)
+### `Barnacle/Helpers/NemoLive.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
-| `nemoLive_goodGives` | A good DAG meets Nemo's precondition. `Good` and `nemoLive` name the same three facts about the same set; … |
+| `nemoLive_goodOf` | A good DAG is good in the properties' terms: the reliable set is everyone, so any majority is a quorum of it. |
+| `nemo_card_pos` | Nemo's committee is non-empty: at least `2f + 1` validators. |
 
 ### `Network/Quorum.lean` (2)
 
@@ -42281,14 +42359,14 @@ subsection per module, in the layer order of Appendices B and C.
 
 | Lemma | Role |
 |:---|:---|
-| `orcaellaLive_goodGives` | A good DAG meets Hybrid's precondition. `Good` and `hybridLive` name the same three facts about the same … |
+| `orcaellaLive_goodOf` | A good DAG is good in the properties' terms. |
 
 ### `Barnacle/HydrozoanLive/Proof.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
 | `descent` | — |
-| `goodGives` | A good DAG meets Hydrozoan's precondition. `Good` and `hzLive` name the same facts about the same quorum; … |
+| `goodOf` | A good DAG is good in the properties' terms. |
 | `roundRobinLive` | — |
 
 ### `Barnacle/OptimalHydrozoanLive/Proof.lean` (3)
@@ -42296,10 +42374,10 @@ subsection per module, in the layer order of Appendices B and C.
 | Lemma | Role |
 |:---|:---|
 | `descent` | — |
-| `goodGives` | A good DAG meets Optimal-Hydrozoan's precondition. `Good` and `optLive` name the same facts about the same … |
+| `goodOf` | A good DAG is good in the properties' terms. |
 | `roundRobinLive` | — |
 
-### `Density.lean` (4)
+### `Density.lean` (5)
 
 | Lemma | Role |
 |:---|:---|
@@ -42307,6 +42385,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `card_missingAtFrom_le_aux` | — |
 | `card_missingAtFrom_le_base` | The one-round case: the references themselves witness all but at most `f` of the correct authors of the … |
 | `exists_correct_of_card` | A set clearing the quorum threshold meets the reliable set. |
+| `isQuorum_correct` | The reliable set is a quorum of itself. |
 
 ### `DoS/Delivers.lean` (4)
 
@@ -42420,12 +42499,12 @@ subsection per module, in the layer order of Appendices B and C.
 | `descends` | And a committed run decides everything below it. |
 | `directCommitIn_band` | And so does the direct commit. |
 | `directSkipSlotIn_band` | And the slot-level skip transports, which is what the repair was for. Blockers stay blockers: a … |
+| `leaderCommits` | A reliably-led slot commits, at a bound one above the slot. |
 | `not_thickLink_band_novel` | A candidate the band did not carry passes the indirect test from no old anchor. Its supporters would sit … |
 | `skipsUnsupported` | Hybrid skips an unsupported slot from a hybrid quorum. |
 | `supportersIn_band` | Supporters survive the band. |
 | `thickLink_band` | So the indirect test reads the same. |
 | `toCore` | The band at Hybrid's carrier is the band at the core's, the universe being the core's under a predicate. |
-| `voteSupport_commits` | Law 3 of `voteSupport`, for Hybrid (`Properties/Support.lean`): the hybrid quorum referencing the … |
 
 ### `Hydrozoan/Helpers/Banded.lean` (13)
 
@@ -42455,16 +42534,14 @@ subsection per module, in the layer order of Appendices B and C.
 | `rule_ids` | — |
 | `rule_viewIds` | — |
 
-### `Hydrozoan/Helpers/Commit.lean` (7)
+### `Hydrozoan/Helpers/Commit.lean` (5)
 
 | Lemma | Role |
 |:---|:---|
 | `coversUpto_eq` | The carrier's coverage predicate is Hydrozoan's. |
 | `exists_coversUpto_decides` | A caught-up replica reaches every verdict, at the band's own ceiling rather than a rule-specific round. … |
 | `fastCommitInView_of_coversUpto` | A view caught up to the voting round holds every vote, so a fast commit in the universe is a fast commit … |
-| `hzSupport_commits` | Law 3. A quorum's certificates at the slot's candidate are a slow commit, which a view caught up to the … |
 | `hzSupport_live_of_hzLive` | Hydrozoan's precondition is the support's. Coverage from `R₀` is coverage toward every candidate, and the … |
-| `hzSupport_ofCoverage` | Law 2. Coverage toward the candidate over two layers makes every quorum block two rounds up a certificate: … |
 | `voteSupport_fast_commits` | Law 3 of `voteSupport`, for Hydrozoan's fast path, under the fast fault model: `q_fast` votes one round up … |
 
 ### `Hydrozoan/Helpers/Skippability.lean` (1)
@@ -42733,7 +42810,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `toCore` | The two carriers project identically, so a band for one is a band for the other. |
 | `votes_band` | A vote is the vote it was. Both clauses read the same cone, and `candidatesAt_band` settles it as an … |
 
-### `MysticetiProperties.lean` (34)
+### `MysticetiProperties.lean` (32)
 
 | Lemma | Role |
 |:---|:---|
@@ -42747,9 +42824,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `certifies_band` | — |
 | `certifies_of_sustains` | The core's certificate predicate transports. |
 | `certifies_old` | — |
-| `coreSupport_commits` | Law 3, as a corollary of `leaderCommits_cert`: the support's precondition at one slot is `certLive` at … |
 | `coreSupport_local` | Law 1. A certifier two rounds above the settling round reads references strictly above it, which … |
-| `coreSupport_ofCoverage` | Law 2. Coverage toward the candidate over two layers: every quorum block one round up references it, and … |
 | `coversUpto_eq` | The carrier's coverage predicate is the core's, on the nose. |
 | `creatorsOf_old` | — |
 | `directCommitIn_band` | — |
@@ -42791,11 +42866,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `descends` | And a committed run decides everything below it, from `Indirect` with no induction of its own. |
 | `directCommitIn_band` | And so does the direct commit. |
 | `isLeaderBlock_band` | A candidate of a slot is a candidate of the slot the shift names. |
+| `leaderCommits` | A reliably-led slot commits, at a bound one above the slot: a direct commit reads that slot's leader and … |
 | `memB` | — |
 | `not_certifiedIn_band_novel` | A candidate the band did not carry is certified from no old anchor. Its certificate would have to lie in … |
 | `refsB` | — |
 | `supportersIn_band` | The supporters a view holds transport. A voting-round block the view held is a block of the shifted … |
-| `voteSupport_commits` | Law 3 of `voteSupport`, for Nemo (`Properties/Support.lean`): a majority referencing the candidate one … |
 
 ### `OdontocetiProperties.lean` (12)
 
@@ -42806,23 +42881,22 @@ subsection per module, in the layer order of Appendices B and C.
 | `decidedBelow_of_decidedWithin` | Odontoceti's bounded relation lands in the derived one. |
 | `descends` | And a committed run decides everything below it. Was a downward induction carrying the bound by hand; it … |
 | `directCommitIn_band` | And so does the direct commit. |
+| `leaderCommits` | A reliably-led slot commits, at a bound one above the slot: a direct commit reads that slot's leader and … |
 | `not_thickLink_band_novel` | A candidate the band did not carry is thick-linked from no old anchor. Its supporters would have to sit in … |
 | `skipsUnsupported` | Odontoceti skips an unsupported slot from a correct quorum. |
 | `supportersIn_band` | Supporters survive the band. A block one round above the slot that referenced the candidate references it … |
 | `thickLink_band` | So the indirect test reads the same. |
 | `thickLink_threshold_pos` | The thick-link threshold is positive: `Faults5` asks for `5f + 1` validators, so `card − 3f ≥ 2f + 1`. |
 | `toCore` | The two carriers project identically, so a band for one is a band for the other. |
-| `voteSupport_commits` | Law 3 of `voteSupport`, for Odontoceti (`Properties/Support.lean`): a quorum referencing the candidate one … |
 
-### `OptimalHydrozoan/Carrier.lean` (6)
+### `OptimalHydrozoan/Carrier.lean` (5)
 
 | Lemma | Role |
 |:---|:---|
 | `band_of` | A band at this carrier is a band at Hydrozoan's. The subtype's projections are the underlying universe's, … |
-| `optSupport_commits` | Law 3: the slow commit, in `DecidedOpt`. |
+| `leaderCommits` | A reliably-led slot commits, now a corollary of the support. |
 | `optSupport_live_of_optLive` | Optimal-Hydrozoan's precondition is the support's. |
 | `optSupport_local` | Law 1, Hydrozoan's at the underlying universe. |
-| `optSupport_ofCoverage` | Law 2, Hydrozoan's at the underlying universe. |
 | `voteSupport_fast_commits` | Law 3 of `voteSupport`, for Optimal-Hydrozoan's fast path. |
 
 ### `OptimalHydrozoan/Helpers/Banded.lean` (13)
@@ -42858,12 +42932,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `truncates_chop_mahimahi` | The cut is a truncation of Mahi-Mahi's carrier too. |
 | `truncates_chop_odontoceti` | The cut is a truncation of Odontoceti's carrier too. |
 
-### `Properties/Arcs/Liveness.lean` (3)
+### `Properties/Arcs/Liveness.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
 | `certifiesAt_of_rebased` | Certification survives every mechanism, from Law 1. |
-| `exists_decided_of_coverage` | A reliably-led slot commits on a covered, populated DAG — for any rule with Laws 2 and 3. |
 | `exists_decided_of_sustains` | A commit survives a sustaining mechanism, at the same schedule. |
 
 ### `Properties/Arcs/Quality.lean` (1)
@@ -42971,12 +43044,11 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `mono` | A protocol skipping under a weaker condition skips under a stronger one, so the grades compare. |
 
-### `Properties/Support.lean` (2)
+### `Properties/Support.lean` (1)
 
 | Lemma | Role |
 |:---|:---|
 | `voteSupport_local` | Law 1 for vote support. A block strictly above the settling round keeps its references. |
-| `voteSupport_ofCoverage` | Law 2 for vote support. Coverage toward the candidate at its own round is the vote. |
 
 ### `Properties/Sustain.lean` (2)
 

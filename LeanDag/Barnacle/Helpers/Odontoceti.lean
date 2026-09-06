@@ -30,32 +30,24 @@ theorem odontoceti_laws [Faults5 Validator] :
     OdontocetiProperties.commitsDirect S _ V k L hL hdc
   candidates := fun S {_} V k L h => OdontocetiProperties.commitsCandidate S _ V k L h
 
-/-- **A good DAG meets Odontoceti's precondition.** `Good` and
-`OdontocetiProperties.odontocetiLive` name the same three facts about
-the same quorum, at Odontoceti's own wavelength — the horizon sits one
-round above the slot, where the core's sits two. -/
-theorem odontocetiLive_goodGives [F : Faults5 Validator] :
-    (odontocetiLive (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload)).GoodGives F.f
-      (fun S {U} V T lo K => OdontocetiProperties.odontocetiLive S (U := U) V T lo K) := by
-  intro U Rnd N hgood
-  obtain ⟨T, -, hcard, hsync, hpop⟩ := hgood
-  refine ⟨T, by omega, ?_⟩
-  intro S V κ hcov hRnd hN hlead
-  change S.slotRound κ + 2 ≤ N at hN
-  refine ⟨hcard, Rnd, N, hsync, hRnd, hpop, hcov, ?_⟩
-  intro k hk
-  have := S.mono (Nat.lt_succ_iff.mp hk)
-  omega
 
-/-- **The descent laws, for Odontoceti at slack `f`** — from the
-properties, with no argument about `Decided` here. -/
+/-- **A good DAG is good in the properties' terms.** -/
+theorem odontocetiLive_goodOf [F : Faults5 Validator] :
+    ∀ U Rnd N, (odontocetiLive (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)).Good U Rnd N →
+      GoodOf (odontocetiLive (Validator := Validator) (BlockId := BlockId)
+        (Payload := Payload)).toBaseRule.toDagRule (coreReliability Validator) U Rnd N :=
+  fun _ _ _ ⟨T, hT, hcard, hs, hpop⟩ => ⟨T, ⟨hT, hcard⟩, hs, hpop⟩
+
+/-- **The descent laws, for Odontoceti at slack `f`** — from its
+support. -/
 theorem odontocetiLive_descent [F : Faults5 Validator] :
     (odontocetiLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload)).Descent
       F.f :=
-  descent_of_properties _ OdontocetiProperties.leaderCommits OdontocetiProperties.indirect
-    odontocetiLive_goodGives
-
+  descent_of_support (odontocetiLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+    (Properties.voteSupport _) (Properties.voteSupport_ofCoverage _)
+    OdontocetiProperties.voteSupport_commits OdontocetiProperties.indirect (by change 1 ≤ 2; omega)
+    odontocetiLive_goodOf
 
 end Barnacle
 

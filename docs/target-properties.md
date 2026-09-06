@@ -2834,13 +2834,23 @@ different reason: its precondition asks only that `spQuorum`
 certifiers exist, where the support asks that every quorum member
 certifies, so the direct theorem is the weaker-hypothesis one.
 
-**Still duplicated, and not touched here.** Barnacle's `LiveRule` layer
-— `Good`, `GoodGives`, `descent_of_properties` — restates `OfCoverage`
-and `Commits` per rule for the one mechanism that reads them. It has
-seven consumers inside Barnacle and is that mechanism's interface, not
-a property; retiring it means routing Barnacle's liveness through
-`Support.live`, which is a change to the mechanism rather than to the
-set.
+**Barnacle reads the support directly.** Its `LiveRule` layer restated
+`OfCoverage` and `Commits` per rule as `GoodGives`, and assembled the
+descent laws from `LeaderCommits`, `Indirect` and `GoodGives` in
+`descent_of_properties`. Both are gone. `Barnacle.GoodOf` is a good DAG
+in the properties' terms — some quorum of the fault model has covered
+it and populated it — and `descent_of_support` builds `Descent` from a
+support's `OfCoverage` and `Commits`, `Indirect`, a wave no longer than
+the rule's, and the one-line fact that the rule's `Good` is `GoodOf` at
+its quorum. A4 is `exists_decided_of_coverage` at the quorum a good DAG
+names; no `LeaderCommits` and no precondition of the rule's own appear.
+Every rule's `Good` was already that conjunction, so the six bridges
+are the identity up to how each spells its quorum — Hydrozoan's `q`
+against `n − (f + c)`, Nemo's majority against everyone's complement —
+and the six `goodGives` proofs are deleted. `LiveRule.Good` stays: it is
+how the heads argument names a good stretch of rounds, and a mechanism
+may keep its own vocabulary as long as it reaches the protocol through
+the properties.
 
 ### 11.5 Next steps, in order
 

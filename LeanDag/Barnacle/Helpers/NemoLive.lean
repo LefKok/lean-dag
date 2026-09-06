@@ -37,32 +37,36 @@ theorem nemo_laws :
     NemoProperties.commitsDirect S _ V k L hL hdc
   candidates := fun S {_} V k L h => NemoProperties.commitsCandidate S _ V k L h
 
-/-- **A good DAG meets Nemo's precondition.** `Good` and `nemoLive` name
-the same three facts about the same set; the window is the single slot,
-and its rounds fit because the wave does. -/
-theorem nemoLive_goodGives [Nemo.CrashFaults Validator] :
-    (nemoLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload)).GoodGives
-      (Fintype.card Validator - Nemo.majority Validator)
-      (fun S {U} V T lo K => NemoProperties.nemoLive S (U := U) V T lo K) := by
-  intro U Rnd N hgood
-  obtain ⟨T, -, hcard, hsync, hpop⟩ := hgood
-  refine ⟨T, ?_, ?_⟩
-  · have := Nat.sub_le (Fintype.card Validator) (Nemo.majority Validator)
-    omega
-  intro S V κ hcov hRnd hN hlead
-  change S.slotRound κ + 2 ≤ N at hN
-  refine ⟨hcard, Rnd, N, hsync, hRnd, hpop, hcov, ?_⟩
-  intro k hk
-  have := S.mono (Nat.lt_succ_iff.mp hk)
+
+/-- Nemo's committee is non-empty: at least `2f + 1` validators. -/
+theorem nemo_card_pos [C : Nemo.CrashFaults Validator] : 0 < Fintype.card Validator := by
+  have := C.card_validators; omega
+
+/-- **A good DAG is good in the properties' terms**: the reliable set is
+everyone, so any majority is a quorum of it. -/
+theorem nemoLive_goodOf [Nemo.CrashFaults Validator] :
+    ∀ U Rnd N, (nemoLive (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)).Good U Rnd N →
+      GoodOf (nemoLive (Validator := Validator) (BlockId := BlockId)
+        (Payload := Payload)).toBaseRule.toDagRule (NemoProperties.nemoReliability Validator nemo_card_pos)
+        U Rnd N := by
+  rintro U Rnd N ⟨T, -, hcard, hs, hpop⟩
+  refine ⟨T, ⟨Finset.subset_univ _, ?_⟩, hs, hpop⟩
+  change Fintype.card Validator - (Fintype.card Validator - Nemo.majority Validator) ≤ T.card
+  have hpos := nemo_card_pos (Validator := Validator)
+  have : Nemo.majority Validator ≤ Fintype.card Validator := by
+    unfold Nemo.majority; omega
   omega
 
 /-- **The descent laws, for Nemo at the slack a majority may miss** —
-from the properties, with no argument about `Decided` here. -/
+from its support. -/
 theorem nemoLive_descent [Nemo.CrashFaults Validator] :
     (nemoLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload)).Descent
       (Fintype.card Validator - Nemo.majority Validator) :=
-  descent_of_properties _ NemoProperties.leaderCommits NemoProperties.indirect
-    nemoLive_goodGives
+  descent_of_support (nemoLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+    (Properties.voteSupport _) (Properties.voteSupport_ofCoverage _)
+    (NemoProperties.voteSupport_commits nemo_card_pos) NemoProperties.indirect (by change 1 ≤ 2; omega)
+    nemoLive_goodOf
 
 /-- The pigeonhole's committee bound holds for the majority slack at
 every `n`: `2 · (n − majority) + 1 ≤ n`. -/

@@ -32,20 +32,19 @@ variable {R : DagRule Validator BlockId Payload}
 variable (sp : Support R)
 
 /-- **A reliably-led slot commits on a covered, populated DAG** — for any
-rule with Laws 2 and 3. -/
+rule with Laws 2 and 3, at any quorum of the fault model. -/
 theorem exists_decided_of_coverage {rel : Reliability Validator}
     (hcov : sp.OfCoverage rel) (hlc : sp.Commits rel)
-    {U : R.Universe} {Rnd N : ℕ} (hs : SynchronisedOn R U rel.correct Rnd)
-    (hpop : ∀ r, Rnd ≤ r → r ≤ N → PopulatedOn R U rel.correct r)
+    {U : R.Universe} {T : Finset Validator} (hq : rel.IsQuorum T) {Rnd N : ℕ}
+    (hs : SynchronisedOn R U T Rnd)
+    (hpop : ∀ r, Rnd ≤ r → r ≤ N → PopulatedOn R U T r)
     (S : Slots Validator) (V : R.View U) (k : ℕ) (hV : CoversUpto R V N)
     (hRnd : Rnd ≤ S.slotRound k) (hN : S.slotRound k + sp.wave ≤ N)
-    (hlead : S.leader k ∈ rel.correct) :
+    (hlead : S.leader k ∈ T) :
     ∃ L, DecidedBelow R S (k + 1) V k (some L) := by
-  refine hlc S V rel.correct k rel.isQuorum_correct
-    (fun n h1 h2 => hpop n (by omega) (by omega)) ?_ (hV.mono hN) hlead
+  refine hlc S V T k hq (fun n h1 h2 => hpop n (by omega) (by omega)) ?_ (hV.mono hN) hlead
   intro L hL v hv c hc hcc hcr
-  exact hcov U rel.correct rel.isQuorum_correct _ L
-    (fun n h1 h2 => hpop n (by omega) (by omega))
+  exact hcov U T hq _ L (fun n h1 h2 => hpop n (by omega) (by omega))
     (coversToward_of_synchronisedOn hs hRnd) hL.1 hL.2.1 (by rw [hL.2.2]; exact hlead)
     c hc (by rw [hcc]; exact hv) hcr
 

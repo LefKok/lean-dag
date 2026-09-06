@@ -23,29 +23,25 @@ namespace Barnacle
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 
-/-- **A good DAG meets the timed core's precondition.** `Good` and
-`coreLive` name the same three facts about the same quorum; the window
-is the single slot, and its rounds fit because the wave does. -/
-theorem mysticetiLive_goodGives [F : Faults Validator] :
-    (mysticetiLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload)).GoodGives
-      F.f (fun S {U} V T lo K => MysticetiProperties.coreLive S (U := U) V T lo K) := by
-  intro U Rnd N hgood
-  obtain ⟨T, -, hcard, hsync, hpop⟩ := hgood
-  refine ⟨T, by omega, ?_⟩
-  intro S V κ hcov hRnd hN hlead
-  change S.slotRound κ + 3 ≤ N at hN
-  refine ⟨hcard, Rnd, N, hsync, hRnd, hpop, hcov, ?_⟩
-  intro k hk
-  have := S.mono (Nat.lt_succ_iff.mp hk)
-  omega
 
-/-- **Mysticeti has the descent laws at slack `f`** — from the
-properties, with no argument about `Decided` in this file. -/
+/-- **A good DAG is good in the properties' terms**: the same quorum,
+the same coverage, the same production. -/
+theorem mysticetiLive_goodOf [F : Faults Validator] :
+    ∀ U Rnd N, (mysticetiLive (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)).Good U Rnd N →
+      GoodOf (mysticetiLive (Validator := Validator) (BlockId := BlockId)
+        (Payload := Payload)).toBaseRule.toDagRule (coreReliability Validator) U Rnd N :=
+  fun _ _ _ ⟨T, hT, hcard, hs, hpop⟩ => ⟨T, ⟨hT, hcard⟩, hs, hpop⟩
+
+/-- **Mysticeti has the descent laws at slack `f`** — from its support,
+with no `LeaderCommits` and no precondition of its own in this file. -/
 theorem mysticetiLive_descent [F : Faults Validator] :
     (mysticetiLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload)).Descent
       F.f :=
-  descent_of_properties _ MysticetiProperties.leaderCommits MysticetiProperties.indirect
-    mysticetiLive_goodGives
+  descent_of_support (mysticetiLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+    MysticetiProperties.coreSupport MysticetiProperties.coreSupport_ofCoverage
+    MysticetiProperties.coreSupport_commits MysticetiProperties.indirect (by change 2 ≤ 3; omega)
+    mysticetiLive_goodOf
 
 #print axioms mysticetiLive_descent
 

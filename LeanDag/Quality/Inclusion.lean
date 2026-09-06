@@ -28,7 +28,7 @@ but not attempted in this arc.
 them for any rule with `Causal`, `Quorate`, `CommitsCandidate` and
 `LeaderCommits`; what is left here is the bridge from the core's
 populated-and-synchronous hypotheses to its own `coreLive`, which is the
-same shape `LiveRule.GoodGives` has for Barnacle and mentions no
+same shape `Barnacle.GoodOf` has for Barnacle and mentions no
 verdict.
 -/
 

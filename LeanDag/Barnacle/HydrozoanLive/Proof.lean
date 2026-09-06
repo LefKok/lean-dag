@@ -23,32 +23,28 @@ namespace Barnacle
 
 namespace HydrozoanLive
 
-/-- **A good DAG meets Hydrozoan's precondition.** `Good` and `hzLive`
-name the same facts about the same quorum; the window is the single
-slot, and its rounds fit because the wave does. -/
-theorem goodGives (Replica BlockId : Type) [Fintype Replica] [DecidableEq Replica]
-    [LinearOrder BlockId] [F : LeanDag.Hydrozoan.Faults Replica] :
-    (hydrozoanLive (Replica := Replica) (BlockId := BlockId)).GoodGives (F.f + F.c)
-      (fun S {U} V T lo K => LeanDag.Hydrozoan.hzLive S (U := U) V T lo K) := by
-  intro U Rnd N hGood
-  obtain ⟨T, hTC, hTq, hsync, hpop⟩ := hGood
-  refine ⟨T, ?_, ?_⟩
-  · have hcard := F.card_replicas
-    simp only [LeanDag.Hydrozoan.q] at hTq
-    omega
-  · intro S V κ hcov hRnd hwave hlead
-    have hw3 : (hydrozoanLive (Replica := Replica)
-        (BlockId := BlockId)).waveLength = 3 := rfl
-    rw [hw3] at hwave
-    refine ⟨hTC, hTq, Rnd, N, hsync, hRnd, hpop, hcov, ?_⟩
-    intro k hk
-    have := S.mono (Nat.lt_succ_iff.mp hk)
-    omega
+
+/-- **A good DAG is good in the properties' terms.** -/
+theorem goodOf (Replica BlockId : Type) [Fintype Replica] [DecidableEq Replica]
+    [LinearOrder BlockId] [LeanDag.Hydrozoan.Faults Replica] :
+    ∀ U Rnd N, (hydrozoanLive (Replica := Replica) (BlockId := BlockId)).Good U Rnd N →
+      GoodOf (hydrozoanLive (Replica := Replica) (BlockId := BlockId)).toBaseRule.toDagRule
+        (LeanDag.Hydrozoan.hzReliability Replica) U Rnd N := by
+  rintro U Rnd N ⟨T, hT, hcard, hs, hpop⟩
+  refine ⟨T, ⟨hT, ?_⟩, hs, ?_⟩
+  · change Fintype.card Replica -
+      (LeanDag.Hydrozoan.Faults.f Replica + LeanDag.Hydrozoan.Faults.c Replica) ≤ T.card
+    unfold LeanDag.Hydrozoan.q at hcard; omega
+  · intro r h1 h2 v hv
+    obtain ⟨b, hb, hbr, hba⟩ := hpop r h1 h2 v hv
+    exact ⟨b, hb, hba, hbr⟩
 
 theorem descent : Descent := by
   intro Replica BlockId _ _ _ F
-  exact descent_of_properties _ LeanDag.Hydrozoan.leaderCommits LeanDag.Hydrozoan.indirect
-    (goodGives Replica BlockId)
+  exact descent_of_support (hydrozoanLive (Replica := Replica) (BlockId := BlockId))
+    LeanDag.Hydrozoan.hzSupport LeanDag.Hydrozoan.hzSupport_ofCoverage
+    LeanDag.Hydrozoan.hzSupport_commits LeanDag.Hydrozoan.indirect (by change 2 ≤ 3; omega)
+    (goodOf Replica BlockId)
 
 theorem roundRobinLive : RoundRobinLive := by
   intro n hn BlockId _ F hck w hk m hm hmax
