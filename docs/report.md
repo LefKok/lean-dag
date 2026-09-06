@@ -869,7 +869,7 @@ quorum, which is exactly the reference implementation's `enough_leader_blame`,
 and which two of the protocols below — Hydrozoan (§18) and Mahi-Mahi (§21) —
 already modelled that way. The gain is that a skip cannot be overturned by a
 block that arrives afterwards: its blockers are blocks that exist, and a
-later candidate is referenced by none of them. Persistence (§24) becomes
+later candidate is referenced by none of them. Persistence (`Persist.of_banded`, §16.9) becomes
 unconditional for the core as a result, and the crash-recovery arc's SS5
 sheds its counting hypothesis (§12.3).
 
@@ -9564,135 +9564,80 @@ pinned by `#guard_msgs` in `Axioms.lean`. The witness headers record
 what a four-replica committee cannot exercise and defer it to a
 committee of five or more.
 
-## 24. Composing the Hydrozoan arcs: what a deployment gets
+## 24. Hydrozoan and Optimal-Hydrozoan through the properties
 
 *(modules `LeanDag/Integration/HydrozoanMechanisms.lean`,
-`LeanDag/Integration/OptimalMechanisms.lean`, `LeanDag/Barnacle/Hydrozoan*/`;
-the design record of the first route is `hydrozoan-integration.md`)*
+`LeanDag/Integration/OptimalMechanisms.lean`, `LeanDag/Barnacle/Hydrozoan*/`,
+`LeanDag/Barnacle/OptimalHydrozoan*/`; the first route's record is
+`hydrozoan-integration.md`)*
 
 Hydrozoan (§22) and Optimal-Hydrozoan (§23) were developed against
-Mathlib alone, and nothing composed with them. They now reach every
-mechanism cell the way every other rule does (§16.9): a native cut
-`chopHZ` and a copy fill `copyFillHZ` on Hydrozoan's own universe, the
-Optimal versions with leader exclusion carried across both, and verdict
-transport, agreement, liveness and composition from the generic
-theorems at `LeanDag.Hydrozoan.banded`, `agree` and `hzSupport`. Their
-headlines are `Hydrozoan.Properties.safety` and `progress`, and
-`OptimalHydrozoanProperties.safety` and `progress`; the inclusion half
-of liveness is absent because neither model carries a self-parent
-clause. Barnacle's `hydrozoan` and `optimalHydrozoan` rules name these
-carriers.
+Mathlib alone: they import nothing from the rest of the development,
+and until they had carriers nothing composed with them. A replica
+running either had no theorem that its verdicts survive garbage
+collection or a crash recovery, and no leader schedule but the one its
+own arc fixes. This chapter is what they have now, and it is short
+because they have it the way every other rule does (§16.9): a carrier,
+the four properties and a support at it, and every mechanism cell an
+instance of the generic theorem. Its results carry **HI**-labels.
 
-The first route — a coercion of Hydrozoan universes into the core's and
-back under a self-parent clause, schedule and fault projections, a
-simulation interface and per-rule transports — is retired, and this
-chapter is kept as its record. Its results carry **HI**-labels; §24.4
-records the one obstruction it met and how the copy fill removed it,
-and §24.7 lists what it found.
+A first route reached some of the same cells by carrying Hydrozoan
+universes into the core's and back under a self-parent clause, with
+schedule and fault projections, a simulation interface and per-rule
+transports — thirteen files whose only consumers were their own
+witnesses. It is retired, and §24.4 keeps the two things it found that
+still hold.
 
-### 24.1 Three layers, and where each one binds
+### 24.1 As Barnacle rules
 
-The composition splits by what a result reads.
+Barnacle (§21) abstracts a commit rule as a record and proves the
+adaptive leader count against the record. Instantiating it is
+additive, and the instantiation is where Hydrozoan acquires
+multi-leader schedules it never had.
 
-**The schedule alone.** Fairness and the anchor runway are properties
-of a `Slots` instance and mention no DAG and no fault model. Hydrozoan
-defines its own `Slots`, and a coercion to the core's carries them:
-every agreement holds by reflexivity, the two records having the
-same fields (HI1).
-
-**The DAG, without the fault model.** Reachability, causal histories
-and the block adapter. Here the finding is that there is nothing to
-build:
+The carrier is Hydrozoan's own (`LeanDag.Hydrozoan.rule`), with no
+subtype: `BaseRule` extends `DagRule` and the Barnacle rule names the
+carrier for it. The causal-structure law needs no bridge, since
+Hydrozoan's universe satisfies it by two field projections:
 
 ```lean
 theorem causalStructure (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) :
     CausalStructure (adaptBlk U) U.ids
 ```
 
-is proved by handing over the universe's own `complete` field and the
-`predecessor` half of its validity field (HI3). The interface the
-development reads causal structure through was stated abstractly
-enough that Hydrozoan already satisfies it.
-
-**The DAG with the fault model.** Everything else, and where the real
-conditions appear.
-
-### 24.2 The committee condition, and a hypothesis withdrawn
-
-The hybrid arc of §14 is stated for a committee of at least
-`3(f_b + f_c) + 1`; Hydrozoan's own bound is `n ≥ 3f + 2c + k + 1`,
-which does not imply it. The projection that sends Hydrozoan's three
-classes to the hybrid arc's two therefore carries a condition, and the
-design record first stated it as `c ≤ k`.
-
-**That was wrong, and the correction is a finding rather than a
-detail.** At `n = 20`, `f = 1`, `c = 2`, `k = 0` both committee bounds
-hold while `c ≤ k` fails, so the condition excluded configurations the
-composition serves. What the projection actually needs is the bound
-itself,
-
-```lean
-abbrev HybridCommittee (Replica : Type*) [Fintype Replica] [DecidableEq Replica]
-    [LeanDag.Hydrozoan.Faults Replica] : Prop :=
-  3 * (LeanDag.Hydrozoan.Faults.f Replica + LeanDag.Hydrozoan.Faults.c Replica) + 1
-    ≤ Fintype.card Replica
-```
-
-carried as a `Fact`, with `c ≤ k` retained only as a convenient
-sufficient condition (HI2). The reason the bound is needed is not slack
-in either fault class: two quorums of `q = n − f − c` overlap in at
-least `n − 2f − 2c`, and Hydrozoan's uniqueness arguments need one
-member of that overlap outside `byzantine`.
-
-### 24.3 Hydrozoan as a Barnacle rule
-
-Barnacle (§21) abstracts a commit rule as a record and proves the
-adaptive leader count against the record. Instantiating it is additive,
-and the instantiation is where Hydrozoan acquires multi-leader
-schedules it never had.
-
-The carrier is Hydrozoan's universe itself, with no subtype: the wave
-length is three, and the interface's direct-commit field is the
-disjunction of the two commit paths. The laws are read off the decision
-relation, `agree` being HZ3 (HI4). The live rule takes Hydrozoan's own
-liveness package as its notion of a good DAG, at slack `f + c` — the
-fully-correct class is what liveness counts — and its descent laws are
-HZ5 and HZ6 applied without adaptation, since at wave length three the
-interface's spacing condition *is* Hydrozoan's anchor eligibility (HI5).
-
-Round-robin liveness is the one place a committee condition appears,
-and it is `3(f + c) + 1 ≤ n` — the same inequality as §24.2, reached by
-a route that mentions neither Hydrozoan's quorum nor its intersection
-argument. It is a hypothesis of that result and of nothing above it.
+(HI3). The wave length is three, and the interface's direct-commit
+field is the disjunction of the two commit paths. The laws are read off
+the decision relation, `agree` being HZ3 (HI4). The live rule takes
+Hydrozoan's own liveness package as its notion of a good DAG, at slack
+`f + c` — the fully-correct class is what liveness counts — and its
+descent laws come from the support: `hzSupport` with its `Commits` law
+and `Indirect` through `descent_of_support`, since at wave length three
+the interface's spacing condition *is* Hydrozoan's anchor eligibility
+(HI5). Round-robin liveness is the one place a committee condition
+appears, `3(f + c) + 1 ≤ n`, reached by a route that mentions neither
+Hydrozoan's quorum nor its intersection argument.
 
 Optimal-Hydrozoan is mirrored in the same shape (HI6), and mirroring it
 forced a small piece of design. Its universe is indexed by a schedule,
 because the leader-exclusion clause names `S.leader k`, while the
 interface fixes the carrier before the schedule arrives. The clause
-depends on a slot only through its `(round, leader)` pair, so it can be
-stated over the pair with no schedule anywhere, and an `OptUniverse`
-built at *any* schedule. **The obstacle dissolved rather than being
-worked around**, and the schedule-free form is what later lets the cut
-be stated at the truncation's own schedule.
+depends on a slot only through its `(round, leader)` pair, so it is
+stated over the pair with no schedule anywhere (`LeaderExcludedAll`),
+and an `OptUniverse` is built at *any* schedule. The obstacle dissolved
+rather than being worked around, and the schedule-free form is what
+lets the cut be stated at the truncation's own schedule.
 
-### 24.4 The transformers
+### 24.2 The cut and the fill
 
 A deployed replica does not hold the DAG the network built. It prunes
 below a horizon, and it may have recovered from a crash by one message.
-Both are universe transformers, and neither arc had any theorem that
-its verdicts survive them.
-
-**The route that was taken first, and retired.** The first
-integration carried Hydrozoan universes into the core's and back under
-a self-parent clause `SelfParenting` (HI8), applied the core's
-transformers there, and transported every rule predicate across them
-one lemma at a time. The clause held for every transformer by one
-lemma, because the core's validity rule already contains it. The cost
-was a closed cluster of thirteen files whose only consumers were its
-own tests, and a fill inherited from the core whose self reference
-broke Optimal's validity clause. Both are gone: Hydrozoan builds its
-own cut and fill on the shared data, and the verdict results are the
-generic theorems applied.
+Both are universe transformers, and Hydrozoan builds its own on the
+shared data, as Nemo and FinWhale do: the cut `chopHZ` — `chopBlkHZ`
+rebases the round and drops the parents at or below the horizon, and
+the three universe invariants are discharged on the block record — and
+the copy fill `copyFillHZ`, `SkipData.copyBlock` at Hydrozoan's block
+type, one block per gap round by the recovering replica carrying the
+donor's parents.
 
 **The cut.** Verdicts survive garbage collection, in both directions
 and for both protocols:
@@ -9708,14 +9653,13 @@ theorem decided_chop_iff_hz (hd : G ≤ S.slotRound d) {V : LeanDag.Hydrozoan.Vi
 The base-slot premise `G ≤ S.slotRound d` is the only condition: no
 synchrony, no fairness, no liveness (HI7). The proof is
 `LocalTruncate.of_banded` at `LeanDag.Hydrozoan.banded`, given that
-`chopHZ` is a `Truncates` witness — three clauses on the block record.
-The Optimal mirror `decided_chop_iff_opt` needs one lemma more,
-`leaderExcludedAll_chopHZ`: a block bound by exclusion sits two rounds
-above the horizon, so it keeps its parents and its candidates are old
-blocks at a rebased round.
+`chopHZ` is a `Truncates` witness. The Optimal mirror
+`decided_chop_iff_opt` needs one lemma more, `leaderExcludedAll_chopHZ`:
+a block bound by exclusion sits two rounds above the horizon, so it
+keeps its parents and its candidates are old blocks at a rebased round.
 
-**The fill, for Hydrozoan.** A replica that recovers by one message
-reaches the same verdicts as one that never crashed:
+**The fill.** A replica that recovers by one message reaches the same
+verdicts as one that never crashed:
 
 ```lean
 theorem decided_agree_copyFillHZ {sk : SkipData U.ids (hzBlk U)} (S : Slots Replica)
@@ -9731,123 +9675,67 @@ with **no quorum hypothesis**, where the core's corresponding result
 than a strengthening: the core's skip is stated per candidate, so a
 filled slot that gains a candidate demands a fresh justification, while
 Hydrozoan's skip counts blames at the slot and the count does not move
-when no old block references a fresh identifier. In the properties
+when no old block references a fresh identifier. In the properties'
 vocabulary that is `LeanDag.Hydrozoan.banded`, and the fill cell is
-`Persist.of_banded` at the `Extends` witness `extends_copyFillHZ`.
+`Persist.of_banded` at the `Extends` witness `extends_copyFillHZ` (HI9).
+The copy fill adds no edge — a filled block's parents are the donor's —
+so leader exclusion survives it (`leaderExcludedAll_copyFillHZ`), and
+Optimal's fill cell is `decided_copyFill_opt` with
+`decided_agree_copyFill_opt`. Hydrozoan's prompt skip at the fill is
+`decided_none_fresh_hz` (§16.9), at the grade `qFast ≤ |T|` its
+`SkipsUnsupported` carries.
 
-**The fill, for Optimal-Hydrozoan.** The first fill did not reach
-Optimal at all, and the obstruction was the validity rule rather than
-the decision relation: the core's `skipFill` grafts the recovering
-replica's anchor onto the donor's references, and on a four-replica
-universe where the clause holds before the recovery the filled block
-witnesses an equivocation neither source did while referencing a block
-the equivocator authored (HI9). The refutation was a fact about that
-construction. The copy fill `copyFillHZ` adds no edge — a filled block's
-parents are the donor's — so exclusion survives it
-(`leaderExcludedAll_copyFillHZ`), and Optimal's fill cell is
-`decided_copyFill_opt` with `decided_agree_copyFill_opt`.
+Liveness across both is the generic `Support.live_of_truncates` and
+`Support.live_of_sustains` at `hzSupport` and `optSupport`, and
+re-genesis at both rules is `addGenesisHZ` and `addGenesisOpt`
+(`Integration/ReGenesisRules.lean`).
 
-### 24.5 One interface under three inductions
+### 24.3 What a deployment gets
 
-Carrying a decision relation across a transformer is a six-constructor
-induction, and the arc wrote it three times before observing that the
-three differ only in arithmetic. `Simulates` lists the predicates the
-relation inspects — candidacy, anchor eligibility, the three direct
-rules in view, the two rung tests — and asserts that there are no
-others; `Simulates.decided` is the induction, once, and all three
-directions are instances that carry none of their own.
+What a reader wants is a statement about one replica's situation: the
+DAG the network built, a recovery performed by one message, a horizon
+below which nothing is retained, and the slot its numbering restarts
+at. That is the headline (§16.9) at Hydrozoan's rule: the stack
+`Stack.sustains sustains_copyFillHZ` then `Stack.truncates
+(truncates_chop_hz hd)` is a `Rebased`, so `Hydrozoan.Properties.safety`
+says verdicts transport in both directions, any view of what the
+replica holds agrees with any view of the network, a commit is the
+slot's candidate and no block is committed twice; and
+`Hydrozoan.Properties.progress` says every slot below a fair run is
+decided and commits recur, on any execution meeting `hzSupport`'s
+`live` — certification of the candidates, which is Hydrozoan's slow
+path (HI10). The inclusion half of liveness is absent for both rules,
+because neither model carries a self-parent clause; a replica running
+Optimal-Hydrozoan gets the same two headlines at `optSupport`, the
+recovery included.
 
-Slots correspond by a *relation* rather than a function. The cut
-forwards relates `d + k` to `k` and the cut backwards relates `n` to
-`d + n`, which is the same correspondence read either way — statable
-of a relation, and not of a function, whose converse `k − d` is
-partial. The arithmetic that a function forces through every field
-disappears with it.
+The threshold the protocol's `CommitLiveness` asserts and the headline
+does not is evidence in the DAG; it has no property, and what a
+recovered replica's liveness is about is the verdict
+(`docs/bespoke-links.md` D).
 
-The interface is Hydrozoan's: its field types name Hydrozoan's
-predicates, so the Optimal cut needs a copy. That is the honest limit,
-and `transformer-interface.md` records what a protocol-generic version
-would take — a survey finds **nine inductive decision relations in this
-development and, before this chapter, exactly one with any transformer
-invariance**.
+### 24.4 What the first route found, and what remains of it
 
-### 24.6 What a deployment gets
+Two findings of the retired route survive it. **A leader-exclusion
+clause can be stated without a schedule**, over the slot's
+`(round, leader)` pair, which is both what a DAG-building layer can
+enforce and what lets the rule be carried to a re-indexed schedule
+(HI6). And **Hydrozoan's fill needs no quorum hypothesis** where the
+core's does, because its skip counts at the slot rather than per
+candidate — the same distinction Mahi-Mahi reports as a finding
+against the core (HI9).
 
-The results above were machinery. What a reader wants is a statement
-about one replica's situation: the DAG the network built, a recovery
-performed by one message, a horizon below which nothing is retained,
-and the slot its numbering restarts at. What the replica *holds* is
-that DAG recovered and then pruned, in the order a deployment does them
-and the only order that is unconditional.
-
-The `Deployment` object that packaged this, with its four claims
-`safe`, `preserves`, `agrees` and `commits` each an application of the
-transport, is retired with the transport. The four claims are now the
-four conjuncts of `Stack.safe_and_live` (`Properties/Arcs/Stack.lean`)
-at Hydrozoan's rule: the stack `Stack.sustains sustains_copyFillHZ`
-then `Stack.truncates (truncates_chop_hz hd)` is a `Rebased`, so
-verdicts transport in both directions, any view of what the replica
-holds agrees with any view of the network, and `hzSupport` — the
-support whose `Commits` law is Hydrozoan's slow path — makes the
-composed universe live above the settling round. The threshold the
-protocol's `CommitLiveness` asserts and this does not is evidence in
-the DAG; it has no property, and what a recovered replica's liveness is
-about is the verdict (`docs/bespoke-links.md` D).
-
-A replica running Optimal-Hydrozoan now gets the same object, with the
-recovery included: the copy fill carries leader exclusion
-(`leaderExcludedAll_copyFillHZ`), so `optSupport` and the two Optimal
-witnesses give the same four conjuncts. The absent recovery field that
-was the finding of this chapter's first version was a fact about the
-core's fill, not about Optimal.
-
-### 24.7 Findings for the paper
-
-- **The causal-history layer needs no bridge.** Hydrozoan's universe
-  satisfies the development's causal-structure interface by two field
-  projections, which says the interface was stated at the right level
-  (HI3).
-- **`c ≤ k` was too strong and is withdrawn.** The projection needs the
-  hybrid committee bound, and `n = 20`, `f = 1`, `c = 2`, `k = 0`
-  separates the two (HI2).
-- **The self-parent clause costs one lemma for every transformer**, not
-  one per transformer, because the core's validity rule already
-  contains it (HI8).
-- **Hydrozoan's fill needs no quorum hypothesis** where the core's
-  does, because its skip counts at the slot rather than per candidate —
-  the same distinction Mahi-Mahi reports as a finding against the core
-  (HI9).
-- **Optimal-Hydrozoan does not survive a crash recovery**, and this is
-  a witnessed refutation rather than an open proof obligation. The
-  recovery composes an anchor and a donor's references, and the pair
-  can witness an equivocation neither source witnessed (HI9).
-- **A leader-exclusion clause can be stated without a schedule**, over
-  the slot's `(round, leader)` pair, which is both what a DAG-building
-  layer can enforce and what lets the rule be carried to a
-  re-indexed schedule (HI6).
-- **Nine decision relations, one transformer invariance.** Before this
-  chapter the core's was the only one; the count is the argument for a
-  protocol-generic interface, which is recorded and not built.
-
-### 24.8 Witnesses
-
-Every bridge is exercised before anything is proved from it. The
-schedule and fault coercions are checked on the arcs' own four- and
-seven-replica configurations; the Barnacle instantiations are pinned by
-`#guard_msgs` like the other rules. The transformers are exercised on a
-purpose-built universe, since neither arc's witnesses can host a
-recovery — the seven-replica model's crashed replica authors nothing at
-all, so there is no anchor to fill from. A three-round DAG over four
-replicas in which one replica authors its genesis block and stops
-supplies one, and on it a slot commits and a slot is skipped before the
-recovery, the fill gives the skipped slot a candidate it did not have,
-and the skip survives anyway — §24.4's finding on data. The refutation
-of §24.4 runs on a second four-replica universe with a Byzantine
-equivocator, where the clause is proved to hold before the recovery and
-proved to fail after it. Identifiers there are natural numbers, which
-the recovery message's decoder forces, and the absence of a witness in
-the original universe is proved rather than computed, since witnessing
-is not decidable over an infinite identifier type.
+One finding was about the route rather than the protocol. Under the
+core's `skipFill`, whose self reference grafts the recovering replica's
+anchor onto the donor's references, Optimal-Hydrozoan's validity clause
+did not survive a recovery: on a four-replica universe with a Byzantine
+equivocator the filled block witnessed an equivocation neither source
+did while referencing a block the equivocator authored, and that was
+refuted on data. The copy fill adds no edge, and the refutation does
+not apply to it. The witness went with the route; the Barnacle
+instantiations are still pinned by `#guard_msgs` on the arcs' own
+four- and seven-replica configurations, and the cut and fill of §24.2
+are checked by the build and the audits of §16.10 alone.
 
 ## 25. Satisfiability
 
@@ -10971,14 +10859,11 @@ reused.
 
 | Label | Statement | Lean |
 |:---|:---|:---|
-| HI1 | retired: the schedule projection went with the transport layer (§24) | — |
-| HI2 | retired: the fault projection went with the transport layer (§24) | — |
 | HI3 | Hydrozoan's universe satisfies the causal-structure interface, by its own fields | `causalStructure` *(Barnacle/Helpers/Hydrozoan)* |
 | HI4 | Hydrozoan as a Barnacle base rule, with its laws | `Barnacle.Hydrozoan.holds` *(Barnacle/Hydrozoan/Proof)* |
 | HI5 | as a live rule: the descent laws at slack `f + c`, and round-robin liveness at `3(f + c) + 1 ≤ n` | `Barnacle.HydrozoanLive.holds` *(Barnacle/HydrozoanLive/Proof)* |
 | HI6 | the same two for Optimal-Hydrozoan, its validity clause restated without a schedule | `Barnacle.OptimalHydrozoan.holds`, `LeaderExcludedAll` *(Barnacle/OptimalHydrozoan/Proof, Barnacle/Helpers/OptimalHydrozoan)* |
-| HI7 | verdicts survive the cut, for both rules, on the base-slot premise alone | `decided_chop_iff_hz`, `decided_chop_iff_opt` *(Integration/HydrozoanMechanisms, OptimalMechanisms)* |
-| HI8 | retired: the self-parent clause was owed only by the transport (§24.4) | — |
+| HI7 | verdicts survive the cut, for both rules, on the base-slot premise alone | `decided_chop_iff_hz`, `decided_chop_iff_opt`, `leaderExcludedAll_chopHZ` *(Integration/HydrozoanMechanisms, OptimalMechanisms)* |
 | HI9 | verdicts survive the copy fill for both rules, with no quorum hypothesis; leader exclusion survives it | `decided_agree_copyFillHZ`, `decided_copyFill_opt`, `leaderExcludedAll_copyFillHZ` *(Integration/HydrozoanMechanisms, OptimalMechanisms)* |
 | HI10 | what a deployment gets: the headlines at both rules | `Hydrozoan.Properties.safety`, `Hydrozoan.Properties.progress`, `OptimalHydrozoanProperties.safety`, `OptimalHydrozoanProperties.progress` *(Hydrozoan/Properties/Proof, OptimalHydrozoan/Carrier)* |
 
