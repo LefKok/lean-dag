@@ -10,9 +10,10 @@ import LeanDag.Properties.Truncate
 any rule with a `Support` and its laws, none of them per rule and none
 per mechanism.
 
-* `exists_decided_of_coverage` — a reliably-led slot commits on any
-  DAG the reliable set has covered and populated. Laws 2 and 3
-  composed; no precondition of the rule's own appears.
+* `decidedBelow_of_fairRun` — every slot below a fair run is decided,
+  on any execution meeting `live` on the run. Law 2 and `Descends`;
+  no precondition of the rule's own, and no synchrony: the timed
+  reading is `Timed.decidedBelow_of_fairRun`.
 * `certifiesAt_of_rebased` — certification survives every
   `RebasedAbove`, from Law 1.
 * `exists_decided_of_sustains` — a commit survives any `Sustains` at the
@@ -48,56 +49,22 @@ variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 variable {R : DagRule Validator BlockId Payload}
 variable (sp : Support R)
 
-/-- **A reliably-led slot commits on a covered, populated DAG** — for any
-rule with Laws 2 and 3, at any quorum of the fault model. -/
-theorem exists_decided_of_coverage {rel : Reliability Validator}
-    (hcov : sp.OfCoverage rel) (hlc : sp.Commits rel)
-    {U : R.Universe} {T : Finset Validator} (hq : rel.IsQuorum T) {Rnd N : ℕ}
-    (hs : SynchronisedOn R U T Rnd)
-    (hpop : ∀ r, Rnd ≤ r → r ≤ N → PopulatedOn R U T r)
-    (S : Slots Validator) (V : R.View U) (k : ℕ) (hV : CoversUpto R V N)
-    (hRnd : Rnd ≤ S.slotRound k) (hN : S.slotRound k + sp.wave ≤ N)
-    (hlead : S.leader k ∈ T) :
-    ∃ L, DecidedBelow R S (k + 1) V k (some L) := by
-  refine hlc S V T k hq (fun n h1 h2 => hpop n (by omega) (by omega)) ?_ (hV.mono hN) hlead
-  intro L hL v hv c hc hcc hcr
-  exact hcov U T hq _ L (fun n h1 h2 => hpop n (by omega) (by omega))
-    (coversToward_of_synchronisedOn hs hRnd) hL.1 hL.2.1 (by rw [hL.2.2]; exact hlead)
-    c hc (by rw [hcc]; exact hv) hcr
-
 /-- **Everything below a fair run is decided**, for any rule with a
-support and `Descends`. The run is named by the schedule alone — past
-`k`, and past a slot already at `Rnd` — and any DAG the reliable set has
-covered and populated past it decides every slot below the run. The
-protocols' "ledger does not stall" theorems are this, at their supports. -/
-theorem decidedBelow_of_fairRun {rel : Reliability Validator}
-    (hcov : sp.OfCoverage rel) (hlc : sp.Commits rel)
-    {S : Slots Validator} {c : ℕ} (hc : 0 < c) (hd : Descends R S c)
-    {T : Finset Validator} (hq : rel.IsQuorum T)
-    (fair : ∀ k, ∃ k', k ≤ k' ∧ ∀ i, i < c → S.leader (k' + i) ∈ T) (Rnd k : ℕ) :
-    ∃ b, k ≤ b ∧ Rnd ≤ S.slotRound b ∧
-      ∀ {U : R.Universe} (V : R.View U) (N : ℕ),
-        SynchronisedOn R U T Rnd → (∀ r, Rnd ≤ r → r ≤ N → PopulatedOn R U T r) →
-        CoversUpto R V N → S.slotRound (b + c - 1) + sp.wave ≤ N →
-        ∀ i, i < b → ∃ v, DecidedBelow R S (b + c) V i v := by
-  obtain ⟨k₀, hk₀⟩ := S.unbounded Rnd
-  obtain ⟨b, hb, hrunT⟩ := fair (max k k₀)
-  have hRb : Rnd ≤ S.slotRound b :=
-    le_trans hk₀ (S.mono (le_trans (le_max_right k k₀) hb))
-  refine ⟨b, le_trans (le_max_left _ _) hb, hRb, ?_⟩
-  intro U V N hs hpop hV hN
-  refine decidedBelow_of_run (sp.leaderCommits hlc) hd V T b ?_ hrunT
-  have hslot : ∀ j, j < b + c → S.slotRound j + sp.wave ≤ N := fun j hj =>
-    le_trans (Nat.add_le_add_right (S.mono (by omega)) _) hN
-  refine ⟨hq, N, hV, hslot, ?_⟩
-  intro j hj1 hj2 hlead
-  have hRj : Rnd ≤ S.slotRound j := le_trans hRb (S.mono hj1)
-  have hjN := hslot j hj2
-  refine ⟨fun n h1 h2 => hpop n (by omega) (by omega), ?_⟩
-  intro L hL v hv c' hc' hcc hcr
-  exact hcov U T hq _ L (fun n h1 h2 => hpop n (by omega) (by omega))
-    (coversToward_of_synchronisedOn hs hRj) hL.1 hL.2.1 (by rw [hL.2.2]; exact hlead)
-    c' hc' (by rw [hcc]; exact hv) hcr
+support and `Descends`. The run is named by the schedule alone, past
+`k`; any execution meeting `live` on the run's window decides every slot
+below it. What is asked of the DAG is certification of the run's
+candidates and production across its waves — nothing about how the
+certifiers came to reference what they reference. The timed reading,
+with synchrony and production to a horizon in place of `live`, is
+`Timed.decidedBelow_of_fairRun`. -/
+theorem decidedBelow_of_fairRun {rel : Reliability Validator} (hlc : sp.Commits rel)
+    {S : Slots Validator} {c : ℕ} (hd : Descends R S c)
+    {T : Finset Validator}
+    (fair : ∀ k, ∃ k', k ≤ k' ∧ ∀ i, i < c → S.leader (k' + i) ∈ T) (k : ℕ) :
+    ∃ b, k ≤ b ∧ ∀ {U : R.Universe} (V : R.View U), sp.live rel S V T b (b + c) →
+      ∀ i, i < b → ∃ v, DecidedBelow R S (b + c) V i v := by
+  obtain ⟨b, hb, hrunT⟩ := fair k
+  exact ⟨b, hb, fun V hlive => decidedBelow_of_run (sp.leaderCommits hlc) hd V T b hlive hrunT⟩
 
 /-- **Certification survives every mechanism, from Law 1.** -/
 theorem certifiesAt_of_rebased (hloc : sp.Local) {U U' : R.Universe} {G R₀ : ℕ}

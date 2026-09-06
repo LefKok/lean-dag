@@ -10,6 +10,8 @@ import LeanDag.Properties.Support
 
 import LeanDag.Properties.Arcs.Liveness
 
+import LeanDag.Timed.Coverage
+
 /-!
 # Nemo conforms to the target properties
 
@@ -31,6 +33,7 @@ namespace LeanDag
 namespace NemoProperties
 
 open LeanDag.Properties
+open LeanDag.Timed (SynchronisedOn CoversToward OfCoverage coversToward_of_synchronisedOn)
 
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
@@ -397,7 +400,7 @@ namespace Nemo
 
 /-! ## Liveness, composed
 
-`Support.decidedBelow_of_fairRun` at Nemo's vote support, under the
+`Timed.decidedBelow_of_fairRun` at Nemo's vote support, under the
 majority fault model `nemoReliability`. The direct proof this replaced
 committed each slot of the run and ran the crash descent; both are the
 generic theorems now. -/
@@ -428,9 +431,9 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
   have hTn := Finset.card_le_univ T
   have hn : 0 < Fintype.card Validator := by unfold majority at hcard; omega
   obtain ⟨b, hb, hRb, h⟩ :=
-    (Properties.voteSupport (NemoProperties.nemoRule (Validator := Validator)
-      (BlockId := BlockId) (Payload := Payload))).decidedBelow_of_fairRun
-      (Properties.voteSupport_ofCoverage _) (NemoProperties.voteSupport_commits hn) hc
+    Timed.decidedBelow_of_fairRun (Properties.voteSupport (NemoProperties.nemoRule
+      (Validator := Validator) (BlockId := BlockId) (Payload := Payload)))
+      (Timed.voteSupport_ofCoverage _) (NemoProperties.voteSupport_commits hn)
       (NemoProperties.descends hc hspan) (T := T)
       ⟨Finset.subset_univ _, by
         change Fintype.card Validator - (Fintype.card Validator - majority Validator) ≤ T.card

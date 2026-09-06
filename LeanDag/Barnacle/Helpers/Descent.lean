@@ -3,6 +3,7 @@ import LeanDag.Barnacle.Helpers.DagRule
 import LeanDag.Properties.Commit
 import LeanDag.Properties.Derived.Descent
 import LeanDag.Properties.Arcs.Liveness
+import LeanDag.Timed.Coverage
 
 /-!
 # The descent laws, from the target properties
@@ -52,7 +53,7 @@ model has covered it from `Rnd` and populated it to `N`. Every rule's
 the identity up to how its quorum is spelled. -/
 def GoodOf (R : Properties.DagRule Validator BlockId Payload) (rel : Reliability Validator)
     (U : R.Universe) (Rnd N : ℕ) : Prop :=
-  ∃ T, rel.IsQuorum T ∧ Properties.SynchronisedOn R U T Rnd ∧
+  ∃ T, rel.IsQuorum T ∧ Timed.SynchronisedOn R U T Rnd ∧
     ∀ r, Rnd ≤ r → r ≤ N → Properties.PopulatedOn R U T r
 
 /-- **The descent laws, from a support.** A rule with `OfCoverage` and
@@ -61,10 +62,10 @@ longer than the rule's, and good DAGs that are good in the properties'
 sense has Barnacle's liveness interface at the model's slack — and so,
 by `Heads/Proof.lean`, `LiveOn` under round-robin at every leader count.
 No `LeaderCommits` and no precondition of the rule's own appear: A4 is
-`exists_decided_of_coverage` at the quorum a good DAG names. -/
+`Timed.exists_decided_of_coverage` at the quorum a good DAG names. -/
 theorem descent_of_support (R : LiveRule Validator BlockId Payload)
     (sp : Properties.Support R.toBaseRule.toDagRule) {rel : Reliability Validator}
-    (hcov : sp.OfCoverage rel) (hlc : sp.Commits rel)
+    (hcov : Timed.OfCoverage sp rel) (hlc : sp.Commits rel)
     (hind : Properties.Indirect R.toBaseRule.toDagRule R.elig)
     (hwave : sp.wave ≤ R.waveLength)
     (hgood : ∀ U Rnd N, R.Good U Rnd N → GoodOf R.toBaseRule.toDagRule rel U Rnd N) :
@@ -74,7 +75,7 @@ theorem descent_of_support (R : LiveRule Validator BlockId Payload)
     obtain ⟨T, hq, hs, hpop⟩ := hgood U Rnd N hg
     refine ⟨T, by have := hq.2; omega, ?_⟩
     intro S V κ hcovV hRnd hN hlead
-    obtain ⟨L, hL⟩ := sp.exists_decided_of_coverage hcov hlc hq hs hpop S V κ
+    obtain ⟨L, hL⟩ := Timed.exists_decided_of_coverage sp hcov hlc hq hs hpop S V κ
       (fun b hb hr => hcovV b hb hr) hRnd (by omega) hlead
     exact ⟨L, hL.2.1⟩
   indirect := by

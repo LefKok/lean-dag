@@ -101,6 +101,8 @@ import LeanDag.Properties.Derived.Truncate
 import LeanDag.Properties.Derived.Descent
 import LeanDag.Properties.Derived.LeaderCommits
 import LeanDag.Properties.Arcs.Liveness
+import LeanDag.Properties.Optional.SelfParent
+import LeanDag.Timed.Coverage
 import LeanDag.Properties.Compose
 import LeanDag.Properties.Deliver
 import LeanDag.MysticetiProperties

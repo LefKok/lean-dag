@@ -132,41 +132,51 @@ example : ∃ S : Finset (Fin 4), S ⊆ (Correct : Finset (Fin 4)) ∧
       (Ucens.block i).creator = v ∧ (Ucens.block i).round = 1 :=
   ledger_coverage ucens_slot1 rfl (by omega) (by decide)
 
-/-! ## CQ5/CQ6 on data — inclusion, with synchrony -/
+/-! ## CQ5/CQ6 on data — inclusion, from self-reference -/
 
 theorem uexcl_slot1_commit : Decided Uexcl (View.full Uexcl) 1 (some 11) :=
   Decided.directCommit (by decide) (by decide)
 
--- CQ5 applied: the correct round-1 block 5 is in the slot-1 commit's
--- cone — and the membership is confirmed independently on the data.
-example : (5 : Fin 20) ∈ history Uexcl 11 :=
-  mem_history_of_decided_commit
-    (SynchronisedOn.mono (by decide) uexcl_synchronised)
-    uexcl_slot1_commit (by decide) (by decide) (by decide)
-    (by omega) (by decide)
+-- CQ5 applied: every block by the slot-1 leader's author at or below its
+-- round is in the commit's cone — and the same fact confirmed on the data.
+example : ∀ b ∈ Uexcl.ids, (Uexcl.block b).creator = (Uexcl.block 11).creator →
+    (Uexcl.block b).round ≤ (Uexcl.block 11).round → b ∈ history Uexcl 11 :=
+  fun b hb hbc hle => mem_history_of_decided_commit uexcl_slot1_commit (by decide) hb hbc hle
 
-example : (5 : Fin 20) ∈ history Uexcl 11 := by decide
+example : ∀ b ∈ Uexcl.ids, (Uexcl.block b).creator = (Uexcl.block 11).creator →
+    (Uexcl.block b).round ≤ (Uexcl.block 11).round → b ∈ history Uexcl 11 := by
+  decide
 
--- CQ6's schedule side, instantiated: `fairSlots` is fair over
--- `Correct`, and the theorem produces a committed slot above round 1.
-example : ∃ k', 1 < fairSlots.slotRound k' := by
-  obtain ⟨k', hk', -⟩ :=
-    committed_of_correct_block_correct (S := fairSlots) (BlockId := Fin 20)
-      (Payload := Unit) (fun k => ⟨k, le_refl k, by rw [fairSlots_leader]; decide⟩) 0 1
-      (by omega)
-  exact ⟨k', hk'⟩
+-- CQ6's schedule side, instantiated: `fairSlots` returns to validator
+-- `1` at every slot, and the theorem produces a slot `1` leads at or
+-- above round 1.
+example : ∃ k', 1 ≤ fairSlots.slotRound k' ∧ fairSlots.leader k' = 1 := by
+  obtain ⟨k', hk', hlead, -⟩ :=
+    committed_of_correct_block (S := fairSlots) (BlockId := Fin 20) (Payload := Unit)
+      (T := {1}) (by decide)
+      (fun v hv k => ⟨k, le_refl k, by rw [fairSlots_leader]; exact (Finset.mem_singleton.mp hv).symm⟩)
+      1 (Finset.mem_singleton_self 1)
+  exact ⟨k', hk', hlead⟩
 
 /-! ## CQ7 on data — the windowed bound instantiated -/
 
--- Under the round-robin schedule (windowed-fair at `w = 2`, spacing 3),
--- the committing slot for round-`m` blocks is pinned to a two-slot
--- window, and its round to within `3·2 = 6` rounds.
-example : ∃ k', slotAt (Fin 4) (S := rrSlots) 2 ≤ k' ∧
-    k' < slotAt (Fin 4) (S := rrSlots) 2 + 2 := by
+/-- Round-robin over four validators is windowed-fair to each at `w = 4`. -/
+theorem rrSlots_fairToEachWithin :
+    FairToEachWithin (S := rrSlots) ({1, 2, 3} : Finset (Fin 4)) 4 := by
+  intro v _ k
+  have hv := v.isLt
+  refine ⟨k + (v.val + 4 - k % 4) % 4, by omega, by omega, ?_⟩
+  apply Fin.ext
+  rw [rrSlots_leader_val]
+  omega
+
+-- Under the round-robin schedule, the committing slot for validator
+-- `1`'s round-`1` blocks is pinned to a four-slot window.
+example : ∃ k', slotAt (Fin 4) (S := rrSlots) 1 ≤ k' ∧
+    k' < slotAt (Fin 4) (S := rrSlots) 1 + 4 := by
   obtain ⟨k', h1, h2, -⟩ :=
     committed_of_correct_block_within (S := rrSlots) (BlockId := Fin 20)
-      (Payload := Unit) (by decide) (by decide) rrSlots_fairWithin 0 1
-      (by omega)
+      (Payload := Unit) (by decide) rrSlots_fairToEachWithin 1 (v := 1) (by decide)
   exact ⟨k', h1, h2⟩
 
 #print axioms chain_quality

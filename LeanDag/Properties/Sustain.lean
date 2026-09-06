@@ -78,20 +78,6 @@ def PopulatedOn (R : DagRule Validator BlockId Payload) (U : R.Universe)
     (T : Finset Validator) (r : ℕ) : Prop :=
   PopulatedFrom (R.block U) (R.ids U) T r
 
-/-- **What the liveness route needs of delivery**: from round `r` on,
-every `T`-block one round up holds every `T`-block below it as a
-reference. `LeanDag.SynchronisedFrom`, read at the carrier.
-
-Third of the three predicates a liveness precondition is built from, and
-the one that was missing: `votesAt_of` and `populatedOn_of` were stated
-here and this was transported by hand, once per mechanism
-(`Integration/Preservation.lean`, `Integration/Coverage.lean`,
-`Integration/Stack.lean`). It is computed from rounds, authors and
-references like the other two, so it travels for the same reason. -/
-def SynchronisedOn (R : DagRule Validator BlockId Payload) (U : R.Universe)
-    (T : Finset Validator) (r : ℕ) : Prop :=
-  SynchronisedFrom (R.block U) (R.ids U) T r
-
 /-! ## The additive half
 
 `Sustains` is a **negative** promise: above the settling round the
@@ -151,12 +137,6 @@ theorem noEquivOn_of_truncates {R : DagRule Validator BlockId Payload}
     have h2 := h.round_of hj
     omega
 
-/-- Synchrony from a round is synchrony from any later one. -/
-theorem SynchronisedOn.mono {R : DagRule Validator BlockId Payload}
-    {U : R.Universe} {T : Finset Validator} {r r' : ℕ}
-    (h : SynchronisedOn R U T r) (hr : r ≤ r') : SynchronisedOn R U T r' :=
-  fun n hn => h n (le_trans hr hn)
-
 namespace RebasedAbove
 
 variable {R : DagRule Validator BlockId Payload} {U U' : R.Universe} {G R₀ : ℕ}
@@ -171,23 +151,6 @@ theorem votesAt_of (h : Sustains R U U' G R₀) {T : Finset Validator} {r : ℕ}
   have hcc' : (R.block U c).creator = v := by rw [← h.creator c hcU (by omega)]; exact hcc
   rw [h.refs c hcU (by omega)]
   exact hv v hvT c hcU hcc' hUr
-
-/-- **Synchrony survives**, for the same reason votes do: it is read
-from rounds, authors and references, and above the settling round the
-mechanism changed none of them. The references clause is guarded
-strictly above `R₀`, and a synchronised pair sits at `n` and `n + 1`, so
-the block that must carry the reference is above the floor whenever the
-pair is. -/
-theorem synchronisedOn_of (h : Sustains R U U' G R₀) {T : Finset Validator} {r : ℕ}
-    (hr : R₀ ≤ r) (hG : G ≤ r) (hs : SynchronisedOn R U T r) :
-    SynchronisedOn R U' T (r - G) := by
-  intro n hn b hb hbr hbc a ha har hac
-  obtain ⟨hbU, hbround⟩ := h.of_mem' hb (by omega)
-  obtain ⟨haU, haround⟩ := h.of_mem' ha (by omega)
-  have hbc' : (R.block U b).creator ∈ T := by rwa [← h.creator b hbU (by omega)]
-  have hac' : (R.block U a).creator ∈ T := by rwa [← h.creator a haU (by omega)]
-  rw [h.refs b hbU (by omega)]
-  exact hs (n + G) (by omega) b hbU (by omega) hbc' a haU (by omega) hac'
 
 /-- **Production survives.** -/
 theorem populatedOn_of (h : Sustains R U U' G R₀) {T : Finset Validator} {r : ℕ}

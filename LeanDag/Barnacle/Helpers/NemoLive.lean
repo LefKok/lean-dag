@@ -64,7 +64,7 @@ theorem nemoLive_descent [Nemo.CrashFaults Validator] :
     (nemoLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload)).Descent
       (Fintype.card Validator - Nemo.majority Validator) :=
   descent_of_support (nemoLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
-    (Properties.voteSupport _) (Properties.voteSupport_ofCoverage _)
+    (Properties.voteSupport _) (Timed.voteSupport_ofCoverage _)
     (NemoProperties.voteSupport_commits nemo_card_pos) NemoProperties.indirect (by change 1 ≤ 2; omega)
     nemoLive_goodOf
 

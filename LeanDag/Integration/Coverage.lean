@@ -1,5 +1,7 @@
 import LeanDag.Integration.Preservation
 import LeanDag.Properties.Arcs.SafeSkip
+import LeanDag.Properties.Arcs.GC
+import LeanDag.Timed.Coverage
 
 /-!
 # I5 — the fill does not restore coverage, and why that is correct
@@ -111,15 +113,26 @@ The strictness is not slack in the proof. At `n = sk.r` the lower
 block may still be the last filled one, and
 `not_synchronisedOn_skipFill` refutes coverage there; `sk.r < R'` is
 exactly the first round at which every block in play is old. The proof
-is `RebasedAbove.synchronisedOn_of` at the fill's `Sustains` witness:
+is `Timed.synchronisedOn_of_rebased` at the fill's `Sustains` witness:
 what was a direct argument about old blocks is the generic one. -/
 theorem synchronisedOn_skipFill_above (sk : SkipMsg U) {T : Finset Validator}
     {R R' : ℕ} (hs : SynchronisedOn U T R) (hR : R ≤ R') (hR' : sk.r < R') :
     SynchronisedOn sk.skipFill T R' := by
-  have h := Properties.RebasedAbove.synchronisedOn_of
+  have h := Timed.synchronisedOn_of_rebased
     (R := MysticetiProperties.mysticetiRule) (Properties.Arcs.sustains_skipFill sk)
     (T := T) (r := R') (Nat.succ_le_of_lt hR') (Nat.zero_le _)
-    (Properties.SynchronisedOn.mono (MysticetiProperties.synchronisedOn_eq.mpr hs) hR)
+    (Timed.SynchronisedOn.mono (MysticetiProperties.synchronisedOn_eq.mpr hs) hR)
+  exact MysticetiProperties.synchronisedOn_eq.mp (by simpa using h)
+
+/-- **Synchrony survives the cut, from the rebase.**
+`Sustains` applied, as votes and production already were; stated here
+because synchrony is the timed model's and not the properties'. -/
+theorem synchronisedOn_chop {T : Finset Validator} {Rs R' : ℕ}
+    (hs : LeanDag.SynchronisedOn U T Rs) (hGR : Rs ≤ G + R') :
+    LeanDag.SynchronisedOn (chop U G) T R' := by
+  have h := Timed.synchronisedOn_of_rebased (R := MysticetiProperties.mysticetiRule)
+    (Properties.Arcs.sustains_chop (U := U) (G := G)) (T := T) (r := G + R') (by omega) (by omega)
+    (Timed.SynchronisedOn.mono ((MysticetiProperties.synchronisedOn_eq).mpr hs) hGR)
   exact MysticetiProperties.synchronisedOn_eq.mp (by simpa using h)
 
 end Integration

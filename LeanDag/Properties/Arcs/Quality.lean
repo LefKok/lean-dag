@@ -3,7 +3,7 @@ import LeanDag.Properties.Candidate
 import LeanDag.Properties.Commit
 import LeanDag.Properties.Derived.LeaderCommits
 import LeanDag.Properties.Derived.Descent
-import LeanDag.Properties.Sustain
+import LeanDag.Properties.Optional.SelfParent
 
 /-!
 # Chain quality, for any protocol with a quorum law
@@ -17,8 +17,8 @@ over `Properties.DagRule`, and the core's is now an instance of it
 **What the arc needs of a rule, in full.** Three things, and only the
 last is about verdicts:
 
-* `Causal` — references are present and one round down. Already one of
-  the six.
+* the carrier's `causal` law — references are present and one round
+  down.
 * `Quorate` — a non-genesis block references a quorum of distinct
   authors (`Properties/Optional/Quorate.lean`). This is the carrier law
   §11.4 predicted, arriving as a property.
@@ -27,7 +27,10 @@ last is about verdicts:
   decision rule.
 
 The inclusion half adds `LeaderCommits` for the committing slot, and
-synchrony as a hypothesis, exactly as the core's did.
+`SelfParent` with `NoEquiv` (`Optional/SelfParent.lean`) for the
+author's chain. No synchrony: a reliable block reaches its author's next
+committed leader block along the self-parent chain, and a schedule that
+returns to every reliable author commits every reliable block.
 
 **What it does not need.** No band, no agreement, no view monotonicity.
 Chain quality is a statement about what a *single* commit carries, so
@@ -162,109 +165,125 @@ theorem ledger_coverage (hq : Quorate R rel) (hcc : CommitsCandidate R)
   obtain ⟨-, i, hi, hic, hir⟩ := mem_coveredAt.mp hv
   exact ⟨i, mem_ledgerSetOf_of_mem_history hg hk (hcc.mem hdec) hi, hic, hir⟩
 
-/-! ## Inclusion, at the price of synchrony
+/-! ## Inclusion, from self-reference
 
 The aggregate coverage above upgrades to an *individual* guarantee —
-every reliable block enters the ledger — once synchrony has settled, and
-only then: the core's witness file carries a model in which commits
-recur for ever while the same correct validator is missing from every
-flushed layer. The engine is the backbone, which is `LeanDag.Density`'s
-and asks nothing of the rule. -/
+every reliable block enters the ledger — with no synchrony in the
+argument. A reliable author's blocks form a chain: each references the
+one before (`SelfParent`), and there is one per round (`NoEquiv`), so
+any later block by the author reaches every earlier one. The next leader
+block the author commits is such a block, and a schedule that returns
+to every reliable author supplies it. Synchrony used to stand here, and
+it stood for something weaker: a correct block would be in *every*
+correct commit after the synchrony round, where this puts it in its
+author's own commits at any time. -/
 
-/-- **CQ5.** Post-`R₀`, every reliable block is in the cone of **every**
-committed leader block with a reliable author at a later round — any
-commit route, any view. -/
-theorem mem_history_of_decided_commit (hq : Quorate R rel)
-    (hcc : CommitsCandidate R) {R₀ : ℕ} (hs : SynchronisedOn R U rel.correct R₀)
+/-- **CQ5.** A reliable block is in the cone of every committed leader
+block by the same author at or above its round — any commit route, any
+view, no synchrony. -/
+theorem mem_history_of_decided_commit (hsp : SelfParent R) (hne : NoEquiv R rel)
+    (hcc : CommitsCandidate R)
     (hdec : R.Decided S V k (some L))
     (hLc : (R.block U L).creator ∈ rel.correct)
-    (hb : b ∈ R.ids U) (hbc : (R.block U b).creator ∈ rel.correct)
-    (hR : R₀ ≤ (R.block U b).round)
-    (hlt : (R.block U b).round < (R.block U L).round) :
+    (hb : b ∈ R.ids U) (hbc : (R.block U b).creator = (R.block U L).creator)
+    (hle : (R.block U b).round ≤ (R.block U L).round) :
     b ∈ historyFrom (R.block U) L :=
-  mem_historyFrom_of_correct (R.causal U) (hq U) hs
-    ((R.block U L).round - (R.block U b).round - 1)
-    L (hcc.mem hdec) b hb hLc hbc hR (by omega)
+  ((R.causal U).mem_history_iff (hcc.mem hdec)).mpr
+    (hsp.reaches_of_creator hne hb (hcc.mem hdec) (by rw [hbc]; exact hLc) hbc.symm hle)
 
 /-! ## Inclusion liveness
 
 The slot is produced *before* the universe is quantified: the schedule
 fixes it, and any execution meeting the rule's own liveness precondition
-then commits it. That order is what makes the statement a guarantee
-rather than an observation, and it is the core's `IncludesAt` shape with
-`Live` where the core wrote its own three conjuncts. -/
+then commits it. -/
 
-/-- **CQ6 (inclusion liveness).** Under a schedule that keeps returning
-to reliable leaders and post-`R₀` synchrony, for every round `m ≥ R₀`
-there is a slot — above `m`, reliably led — that any execution meeting
-the rule's liveness precondition commits, and whose flush contains
-**every** reliable round-`m` block; hence every such block is in the
-ledger of any verdict assignment covering that slot.
-
-Fairness is taken as a hypothesis rather than through
-`LeanDag.FairScheduleOn`, which lives in the core's liveness file: the
-property layer names no protocol, and the statement is one line. -/
-theorem committed_of_correct_block
+/-- **What a reliably-led slot includes.** Any execution meeting the
+rule's precondition at slot `k'` commits a leader block whose history
+holds every block by that leader at any round up to the slot's; hence
+every such block is in the ledger of any verdict assignment covering
+the slot. -/
+theorem includes_of_leads
     {Live : Slots Validator → ∀ {U : R.Universe}, R.View U → Finset Validator →
       ℕ → ℕ → Prop}
-    (hq : Quorate R rel) (hcc : CommitsCandidate R)
+    (hsp : SelfParent R) (hne : NoEquiv R rel) (hcc : CommitsCandidate R)
     (hlc : LeaderCommits R Live) (S : Slots Validator) {T : Finset Validator}
-    (hT : T ⊆ rel.correct) (fair : ∀ n, ∃ k, n ≤ k ∧ S.leader k ∈ T) (R₀ m : ℕ)
-    (hR₀m : R₀ ≤ m) :
-    ∃ k', m < S.slotRound k' ∧ R₀ ≤ S.slotRound k' ∧
-      ∀ (U : R.Universe) (V : R.View U), Live S V T k' (k' + 1) →
-        SynchronisedOn R U rel.correct R₀ →
-        ∃ L, R.Decided S V k' (some L) ∧
-          ∀ b ∈ R.ids U, (R.block U b).creator ∈ rel.correct →
-            (R.block U b).round = m →
-            b ∈ historyFrom (R.block U) L ∧
-              ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
-                b ∈ ledgerSetOf R U g n := by
-  obtain ⟨k₀, hk₀⟩ := S.unbounded (m + 1)
-  obtain ⟨k₁, hk₁⟩ := S.unbounded R₀
-  obtain ⟨k', hk', hlead⟩ := fair (max k₀ k₁)
-  have hm : m < S.slotRound k' :=
-    lt_of_lt_of_le (by omega) (le_trans hk₀ (S.mono (le_trans (le_max_left _ _) hk')))
-  have hR : R₀ ≤ S.slotRound k' :=
-    le_trans hk₁ (S.mono (le_trans (le_max_right _ _) hk'))
-  refine ⟨k', hm, hR, fun U V hlive hs => ?_⟩
+    (hT : T ⊆ rel.correct) {k' m : ℕ} (hlead : S.leader k' ∈ T) (hm : m ≤ S.slotRound k')
+    (U : R.Universe) (V : R.View U) (hlive : Live S V T k' (k' + 1)) :
+    ∃ L, R.Decided S V k' (some L) ∧
+      ∀ b ∈ R.ids U, (R.block U b).creator = S.leader k' → (R.block U b).round = m →
+        b ∈ historyFrom (R.block U) L ∧
+          ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
+            b ∈ ledgerSetOf R U g n := by
   obtain ⟨L, -, hdec, -⟩ := hlc S V T k' (k' + 1) hlive k' le_rfl (Nat.lt_succ_self k') hlead
   refine ⟨L, hdec, fun b hb hbc hbr => ?_⟩
   obtain ⟨-, hLr, hLc⟩ := hcc S U V k' L hdec
   have hmem : b ∈ historyFrom (R.block U) L :=
-    mem_history_of_decided_commit hq hcc hs hdec (by rw [hLc]; exact hT hlead) hb hbc
-      (by omega) (by omega)
+    mem_history_of_decided_commit hsp hne hcc hdec (by rw [hLc]; exact hT hlead) hb
+      (by rw [hbc, hLc]) (by rw [hbr, hLr]; exact hm)
   exact ⟨hmem, fun g n hg hn => mem_ledgerSetOf_of_mem_history hg hn (hcc.mem hdec) hmem⟩
+
+/-- **CQ6 (inclusion liveness).** Under a schedule that keeps returning
+to every reliable validator, for every round `m` and every reliable
+`v` there is a slot at or above `m` that `v` leads, which any execution
+meeting the rule's liveness precondition commits, and whose flush holds
+**every** round-`m` block by `v`; hence every reliable block is in the
+ledger of any verdict assignment covering its author's next committed
+slot.
+
+Fairness is per validator — the schedule returns to each member of `T`
+— because the argument runs along one author's chain. A schedule fair
+to the set but starving one of its members would leave that member's
+blocks to synchrony, which is what this arc no longer assumes. -/
+theorem committed_of_correct_block
+    {Live : Slots Validator → ∀ {U : R.Universe}, R.View U → Finset Validator →
+      ℕ → ℕ → Prop}
+    (hsp : SelfParent R) (hne : NoEquiv R rel) (hcc : CommitsCandidate R)
+    (hlc : LeaderCommits R Live) (S : Slots Validator) {T : Finset Validator}
+    (hT : T ⊆ rel.correct) (fair : ∀ v ∈ T, ∀ n, ∃ k, n ≤ k ∧ S.leader k = v)
+    (m : ℕ) {v : Validator} (hv : v ∈ T) :
+    ∃ k', m ≤ S.slotRound k' ∧ S.leader k' = v ∧
+      ∀ (U : R.Universe) (V : R.View U), Live S V T k' (k' + 1) →
+        ∃ L, R.Decided S V k' (some L) ∧
+          ∀ b ∈ R.ids U, (R.block U b).creator = v → (R.block U b).round = m →
+            b ∈ historyFrom (R.block U) L ∧
+              ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
+                b ∈ ledgerSetOf R U g n := by
+  obtain ⟨k₀, hk₀⟩ := S.unbounded m
+  obtain ⟨k', hk', hlead⟩ := fair v hv k₀
+  have hm : m ≤ S.slotRound k' := le_trans hk₀ (S.mono hk')
+  refine ⟨k', hm, hlead, fun U V hlive => ?_⟩
+  have h := includes_of_leads hsp hne hcc hlc S hT (by rw [hlead]; exact hv) hm U V hlive
+  rw [hlead] at h
+  exact h
 
 /-! ## The capstone -/
 
 /-- **CQ7 (the capstone).** Chain quality in one statement, for any rule
-with a quorum law. Unconditionally: every commit's flush covers at least
-half the reliable validators at every round below it. Post-`R₀`, under a
-schedule that keeps returning to reliable leaders: every reliable block
-is in the flush of a slot the schedule fixes in advance. -/
+with a quorum law, self-reference and one block per reliable author per
+round. Unconditionally: every commit's flush covers at least half the
+reliable validators at every round below it. Under a schedule that keeps
+returning to every reliable validator: every reliable block is in the
+flush of a slot its author leads, fixed in advance by the schedule. -/
 theorem chain_quality
     {Live : Slots Validator → ∀ {U : R.Universe}, R.View U → Finset Validator →
       ℕ → ℕ → Prop}
-    (hq : Quorate R rel) (hcc : CommitsCandidate R)
+    (hq : Quorate R rel) (hsp : SelfParent R) (hne : NoEquiv R rel) (hcc : CommitsCandidate R)
     (hlc : LeaderCommits R Live) (hhalf : 2 * rel.slack ≤ rel.correct.card)
     (S : Slots Validator) {T : Finset Validator} (hT : T ⊆ rel.correct)
-    (fair : ∀ n, ∃ k, n ≤ k ∧ S.leader k ∈ T) (R₀ m : ℕ) (hR₀m : R₀ ≤ m) :
+    (fair : ∀ v ∈ T, ∀ n, ∃ k, n ≤ k ∧ S.leader k = v) (m : ℕ) :
     (∀ (U : R.Universe) (V : R.View U) (k : ℕ) (L : BlockId) (δ : ℕ),
         R.Decided S V k (some L) → δ < (R.block U L).round →
         rel.correct.card ≤ 2 * (coveredAt R rel U L δ).card) ∧
-    ∃ k', m < S.slotRound k' ∧ R₀ ≤ S.slotRound k' ∧
+    ∀ v ∈ T, ∃ k', m ≤ S.slotRound k' ∧ S.leader k' = v ∧
       ∀ (U : R.Universe) (V : R.View U), Live S V T k' (k' + 1) →
-        SynchronisedOn R U rel.correct R₀ →
         ∃ L, R.Decided S V k' (some L) ∧
-          ∀ b ∈ R.ids U, (R.block U b).creator ∈ rel.correct →
-            (R.block U b).round = m →
+          ∀ b ∈ R.ids U, (R.block U b).creator = v → (R.block U b).round = m →
             b ∈ historyFrom (R.block U) L ∧
               ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
                 b ∈ ledgerSetOf R U g n :=
   ⟨fun _ _ _ _ _ hdec hδ =>
     card_correct_le_two_mul_coveredAt_of_decided hq hcc hhalf hdec hδ,
-   committed_of_correct_block hq hcc hlc S hT fair R₀ m hR₀m⟩
+   fun v hv => committed_of_correct_block hsp hne hcc hlc S hT fair m hv⟩
 
 end Decided
 

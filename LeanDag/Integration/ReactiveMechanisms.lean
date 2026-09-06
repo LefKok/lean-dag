@@ -7,13 +7,13 @@ import LeanDag.Properties.Arcs.Liveness
 /-!
 # The mechanisms over a reactive execution
 
-The cell `Properties/Support.lean` could not reach. `Support.OfCoverage` asks a
+The cell `Properties/Support.lean` could not reach. `Timed.OfCoverage` asks a
 rule's liveness precondition to follow from coverage and production, and
 a reactive execution has production but not coverage: a reactive builder
 omits whatever had not arrived when its exit condition fired, so
 `SynchronisedOn` is false in one by design (`Reactive/Basic.lean`). So
 reactive Mysticeti's own precondition is guarded by a witness rather
-than by `Support.OfCoverage`, and the question left open was whether its
+than by `Timed.OfCoverage`, and the question left open was whether its
 commits survive a mechanism.
 
 **They do, and coverage was never what the mechanism needed.** The
@@ -28,7 +28,7 @@ built for the truncation or the fill, and none is needed.
 Three cells follow, one per DAG-transforming mechanism, each the same
 two theorems composed at a different `Sustains` witness.
 
-The reason this reaches further than `Support.OfCoverage` does is worth
+The reason this reaches further than `Timed.OfCoverage` does is worth
 stating. `CertifiesAt` counts in the *rule's* vocabulary, and
 `DagRule` has none — a carrier knows `ids`, `block` and `refs`, and
 every rule's certificate is a different threshold over them. Coverage is

@@ -17,6 +17,12 @@ words:
       (those are consequences of the band, so naming one where a protocol
        declares what it owes invents an obligation — target-properties
        §11.4b);
+  no synchrony under Properties/       (SynchronisedOn, CoversToward, OfCoverage
+                                        and the Timed namespace are the timed
+                                        model's, `LeanDag/Timed/Coverage.lean`;
+                                        certification is the properties' only
+                                        liveness antecedent — target-properties
+                                        §11.16 — and this keeps it so);
   View.full appears in no Statement.lean and no Model/ file
                                        (a liveness statement concludes on a
                                         view a validator can hold — issue #12;
@@ -47,6 +53,8 @@ ROOT = Path(__file__).resolve().parent.parent
 ARCS = ["MahiMahi", "BlackMarlin", "FinWhale", "Barnacle", "Hydrozoan", "OptimalHydrozoan"]
 SOURCES = [f"{top}/{arc}" for arc in ARCS for top in ("LeanDag", "LeanDagTest")]
 DERIVED = ROOT / "LeanDag/Properties/Derived"
+PROPERTIES = ROOT / "LeanDag/Properties"
+SYNCHRONY = re.compile(r"\b(SynchronisedOn|SynchronisedFrom|Synchronised|CoversToward|OfCoverage|Timed)\b")
 DECL = re.compile(r"^\s*(?:@\[[^\]]*\]\s*)?(?:noncomputable\s+)?"
                   r"(?:def|abbrev|structure|class|inductive)\s+([A-Za-z_][\w'.]*)")
 
@@ -122,12 +130,20 @@ def main():
                     and FULLVIEW.search(code) and not FULLVIEW_FIELD.search(code) \
                     and not FULLVIEW_DEF.search(code):
                 holes.append(f"{rel}:{lineno}: View.full (a liveness statement concludes on a view)")
+    for path in sorted(PROPERTIES.rglob("*.lean")):
+        rel = path.relative_to(ROOT)
+        for lineno, code in strip_comments(path.read_text(encoding="utf-8").splitlines()):
+            match = SYNCHRONY.search(code)
+            if match:
+                holes.append(f"{rel}:{lineno}: {match.group(1)} (synchrony named under Properties/; "
+                             "certification is the interface — see LeanDag/Timed/Coverage.lean)")
     if holes:
         print("Partitioned-arc discipline violations:")
         for hole in holes:
             print(f"  {hole}")
         return 1
-    print(f"Partitioned arcs ({', '.join(ARCS)}): no holes, discipline intact.")
+    print(f"Partitioned arcs ({', '.join(ARCS)}): no holes, discipline intact; "
+          "no synchrony under Properties/.")
     return 0
 
 

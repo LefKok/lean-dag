@@ -8,6 +8,8 @@ import LeanDag.MahiMahi.Helpers.Synchrony
 import LeanDag.Properties.Derived.LeaderCommits
 import LeanDag.Properties.Support
 
+import LeanDag.Timed.Coverage
+
 /-!
 # Mahi-Mahi's band, and the two liveness properties
 
@@ -37,6 +39,7 @@ namespace LeanDag
 namespace MahiMahiProperties
 
 open LeanDag.Properties
+open LeanDag.Timed (SynchronisedOn CoversToward OfCoverage coversToward_of_synchronisedOn)
 
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator]
@@ -521,7 +524,7 @@ theorem mmSupport_local {w : ℕ} (hw : 2 ≤ w) :
 coverage toward it at the first layer, quorum intersection after — so
 every quorum block at the decision round certifies. -/
 theorem mmSupport_ofCoverage {w : ℕ} (hw : 4 ≤ w) :
-    Support.OfCoverage (R := mahiMahiRule (Validator := Validator) (BlockId := BlockId)
+    Timed.OfCoverage (R := mahiMahiRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload) w) (mmSupport w) (coreReliability Validator) := by
   intro U T hq r L hpop hct hL hLr hLc C hC hCc hCr
   have hcard : quorumCard Validator ≤ T.card := by

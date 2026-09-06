@@ -4,6 +4,7 @@ import LeanDag.Properties.Derived.Persist
 import LeanDag.Properties.Optional.Skip
 import LeanDag.Properties.Optional.Direct
 import LeanDag.Properties.Optional.Quorate
+import LeanDag.Properties.Optional.SelfParent
 import LeanDag.Properties.Commit
 import LeanDag.Properties.Derived.LeaderCommits
 import LeanDag.Properties.Arcs.Liveness
@@ -16,6 +17,8 @@ import LeanDag.Properties.Derived.FromBand
 import Mathlib.Order.Interval.Finset.Nat
 import Mathlib.Data.Finset.Lattice.Fold
 import LeanDag.Liveness
+
+import LeanDag.Timed.Coverage
 
 /-!
 # The core rule as a carrier, and what it makes of a sustaining mechanism
@@ -96,6 +99,7 @@ end ScheduleCongruence
 namespace MysticetiProperties
 
 open LeanDag.Properties
+open LeanDag.Timed (SynchronisedOn CoversToward OfCoverage coversToward_of_synchronisedOn)
 
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
@@ -127,7 +131,7 @@ theorem populatedOn_toCore {T : Finset Validator} {r : ℕ}
 
 /-- The carrier's synchrony predicate is the core's, on the nose. -/
 theorem synchronisedOn_eq {T : Finset Validator} {r : ℕ} :
-    Properties.SynchronisedOn mysticetiRule U T r ↔ LeanDag.SynchronisedOn U T r :=
+    Timed.SynchronisedOn mysticetiRule U T r ↔ LeanDag.SynchronisedOn U T r :=
   Iff.rfl
 
 /-- The votes an old decision-round block counts are the votes it
@@ -216,6 +220,18 @@ because `ValidWrt` already says it. -/
 theorem quorate : Quorate (mysticetiRule (Validator := Validator) (BlockId := BlockId)
     (Payload := Payload)) (coreReliability Validator) :=
   fun U => U.quorateOn
+
+/-- **P3′ at the carrier**: every non-genesis block references its
+author's previous block. -/
+theorem selfParent : SelfParent (mysticetiRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)) :=
+  fun U b hb hr => (U.valid b hb).self_parent hr
+
+/-- **One block per correct author per round**, from the universe's
+non-equivocation clause. -/
+theorem noEquiv : NoEquiv (mysticetiRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)) (coreReliability Validator) :=
+  fun U b c hb hc hbc heq hr => U.no_equivocation b hb c hc hbc heq hr
 
 /-- Two quorums share a correct validator, so a quorum is not empty. -/
 theorem quorumCard_pos : 0 < quorumCard Validator := by
@@ -1112,7 +1128,7 @@ quorum block one round up references it, and every quorum block two
 rounds up references each of those, so the certifier's voting parents
 are the whole quorum. -/
 theorem coreSupport_ofCoverage :
-    Support.OfCoverage (R := mysticetiRule (Validator := Validator) (BlockId := BlockId)
+    Timed.OfCoverage (R := mysticetiRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload)) coreSupport (coreReliability Validator) := by
   intro U T hq r L hpop hct hL hLr hLc c hc hcc hcr
   have hcard : quorumCard Validator ≤ T.card := by
@@ -1286,7 +1302,7 @@ story to be stated *after* the properties rather than before them.
 and `SpansEligible c` says the run reaches far enough for every slot
 below it to anchor on its last member. What used to follow was a proof
 of its own — L4 at each slot of the run, then the committed-run
-descent — and is now `Support.decidedBelow_of_fairRun` at the core's
+descent — and is now `Timed.decidedBelow_of_fairRun` at the core's
 support: `coreSupport_commits` commits the run, `descends` settles what
 is under it.
 
@@ -1325,9 +1341,9 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
         S.slotRound (b + c - 1) + 2 ≤ N →
         ∀ i, i < b → ∃ v, Decided U (View.full U) i v := by
   obtain ⟨b, hb, hRb, h⟩ :=
-    (MysticetiProperties.coreSupport (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload)).decidedBelow_of_fairRun
-      MysticetiProperties.coreSupport_ofCoverage MysticetiProperties.coreSupport_commits hc
+    Timed.decidedBelow_of_fairRun (MysticetiProperties.coreSupport (Validator := Validator)
+      (BlockId := BlockId) (Payload := Payload))
+      MysticetiProperties.coreSupport_ofCoverage MysticetiProperties.coreSupport_commits
       (MysticetiProperties.descends hc hspan) (T := T)
       ⟨hT, by change Fintype.card Validator - Faults.f Validator ≤ T.card; exact hcard⟩ fair R k
   refine ⟨b, hb, hRb, fun U N hpop hs hN i hi => ?_⟩

@@ -11,6 +11,8 @@ import LeanDag.Properties.Derived.Descent
 import LeanDag.Properties.Candidate
 import LeanDag.Properties.Deliver
 
+import LeanDag.Timed.Coverage
+
 /-!
 # Hydrozoan's liveness obligations
 
@@ -33,6 +35,7 @@ namespace LeanDag
 namespace Hydrozoan
 
 open LeanDag.Properties
+open LeanDag.Timed (SynchronisedOn CoversToward OfCoverage coversToward_of_synchronisedOn)
 
 variable {Replica : Type} [Fintype Replica] [DecidableEq Replica]
 variable {BlockId : Type} [DecidableEq BlockId] [LinearOrder BlockId]
@@ -111,7 +114,7 @@ theorem hzSupport_local :
 quorum block two rounds up a certificate: `isCertificate_of_synchronised`
 with its antecedent cut to what it reads. -/
 theorem hzSupport_ofCoverage :
-    Support.OfCoverage (R := rule (Replica := Replica) (BlockId := BlockId)) hzSupport
+    Timed.OfCoverage (R := rule (Replica := Replica) (BlockId := BlockId)) hzSupport
       (hzReliability Replica) := by
   intro U T hq r L hpop hct hL hLr hLc C hC hCc hCr
   have hcard : LeanDag.Hydrozoan.q Replica ≤ T.card := by
@@ -177,7 +180,7 @@ theorem hzSupport_live_of_hzLive {S : LeanDag.Slots Replica}
   rintro L ⟨hLmem, hLr, hLc⟩ v hv c hc hcc hcr
   exact hzSupport_ofCoverage U T hq (S.slotRound k) L
     (fun n h1 h2 => hpop' n (by omega) (by change n ≤ S.slotRound k + 2 at h2; omega))
-    (coversToward_of_synchronisedOn hs hRk) hLmem hLr (by rw [hLc]; exact hlead)
+    (Timed.coversToward_of_synchronisedOn hs hRk) hLmem hLr (by rw [hLc]; exact hlead)
     c hc (by rw [hcc]; exact hv) hcr
 
 /-- **Direct liveness as a property**, now a corollary: the bridge

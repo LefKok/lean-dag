@@ -13,6 +13,8 @@ import LeanDag.Adaptive.Odontoceti
 
 import LeanDag.Properties.Arcs.Liveness
 
+import LeanDag.Timed.Coverage
+
 /-!
 # Odontoceti conforms to the target properties
 
@@ -54,6 +56,7 @@ namespace LeanDag
 namespace OdontocetiProperties
 
 open LeanDag.Properties
+open LeanDag.Timed (SynchronisedOn CoversToward OfCoverage coversToward_of_synchronisedOn)
 
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults5 Validator]
@@ -517,7 +520,7 @@ namespace Odontoceti
 
 /-! ## O10 — liveness, composed
 
-`Support.decidedBelow_of_fairRun` at Odontoceti's vote support: the run
+`Timed.decidedBelow_of_fairRun` at Odontoceti's vote support: the run
 commits by `voteSupport_commits`, and `descends` clears what is under
 it. The direct proof this replaced ran O7 at each slot of the run and
 then O9. -/
@@ -544,9 +547,9 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
         S.slotRound (b + c - 1) + 1 ≤ N → V.CoversUpto N →
         ∀ i, i < b → ∃ v, Decided U V i v := by
   obtain ⟨b, hb, hRb, h⟩ :=
-    (Properties.voteSupport (OdontocetiProperties.odontocetiRule (Validator := Validator)
-      (BlockId := BlockId) (Payload := Payload))).decidedBelow_of_fairRun
-      (Properties.voteSupport_ofCoverage _) OdontocetiProperties.voteSupport_commits hc
+    Timed.decidedBelow_of_fairRun (Properties.voteSupport (OdontocetiProperties.odontocetiRule
+      (Validator := Validator) (BlockId := BlockId) (Payload := Payload)))
+      (Timed.voteSupport_ofCoverage _) OdontocetiProperties.voteSupport_commits
       (OdontocetiProperties.descends hc hspan) (T := T)
       ⟨hT, by change Fintype.card Validator - Faults.f Validator ≤ T.card; exact hcard⟩ fair R k
   refine ⟨b, hb, hRb, fun U N V hpop hs hN hcov i hi => ?_⟩

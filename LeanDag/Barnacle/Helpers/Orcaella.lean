@@ -53,7 +53,7 @@ theorem orcaellaLive_descent [H : HybridFaults Validator] {k : ℕ} :
     (orcaellaLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload) k).Descent
       (H.fb + H.fc) :=
   descent_of_support (orcaellaLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload) k)
-    (Properties.voteSupport _) (Properties.voteSupport_ofCoverage _)
+    (Properties.voteSupport _) (Timed.voteSupport_ofCoverage _)
     (HybridProperties.voteSupport_commits k) (HybridProperties.indirect k) (by change 1 ≤ 2; omega)
     orcaellaLive_goodOf
 

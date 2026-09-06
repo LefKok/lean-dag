@@ -3,6 +3,7 @@ import LeanDag.Properties.Agree
 import LeanDag.Properties.Candidate
 import LeanDag.Properties.Optional.Direct
 import LeanDag.Properties.Optional.Quorate
+import LeanDag.Properties.Optional.SelfParent
 
 /-!
 # Mahi-Mahi as a carrier, and the properties its rules give
@@ -59,6 +60,16 @@ counting clause read at the carrier, which is what chain quality reads
 theorem quorate (w : ℕ) : Quorate (mahiMahiRule (Validator := Validator) (BlockId := BlockId)
     (Payload := Payload) w) (coreReliability Validator) :=
   fun U => U.quorateOn
+
+/-- **P3′ at the carrier.** -/
+theorem selfParent (w : ℕ) : SelfParent (mahiMahiRule (Validator := Validator)
+    (BlockId := BlockId) (Payload := Payload) w) :=
+  fun U b hb hr => (U.valid b hb).self_parent hr
+
+/-- **One block per correct author per round.** -/
+theorem noEquiv (w : ℕ) : NoEquiv (mahiMahiRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload) w) (coreReliability Validator) :=
+  fun U b c hb hc hbc heq hr => U.no_equivocation b hb c hc hbc heq hr
 
 /-- **Two views decide alike.** MM2 under the property's name, at the
 widths its safety arc covers. -/

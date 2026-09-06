@@ -12,6 +12,8 @@ import LeanDag.Properties.Candidate
 import LeanDag.Properties.Optional.Direct
 import LeanDag.Properties.Optional.Quorate
 
+import LeanDag.Timed.Coverage
+
 /-!
 # Optimal-Hydrozoan as a carrier, and the three properties its rules give
 
@@ -42,6 +44,7 @@ namespace LeanDag
 namespace OptimalHydrozoanProperties
 
 open LeanDag.Properties
+open LeanDag.Timed (SynchronisedOn CoversToward OfCoverage coversToward_of_synchronisedOn)
 
 variable {Replica : Type} [Fintype Replica] [DecidableEq Replica]
 variable {BlockId : Type} [DecidableEq BlockId]
@@ -183,7 +186,7 @@ theorem optSupport_local [LinearOrder BlockId] :
 
 /-- **Law 2**, Hydrozoan's at the underlying universe. -/
 theorem optSupport_ofCoverage :
-    Support.OfCoverage (R := optimalRule (Replica := Replica) (BlockId := BlockId)) optSupport
+    Timed.OfCoverage (R := optimalRule (Replica := Replica) (BlockId := BlockId)) optSupport
       (LeanDag.Hydrozoan.hzReliability Replica) := by
   intro U T hq r L hpop hct hL hLr hLc c hc hcc hcr
   have hcard : LeanDag.Hydrozoan.q Replica ≤ T.card := by
@@ -249,7 +252,7 @@ theorem optSupport_live_of_optLive {S : LeanDag.Slots Replica}
   rintro L ⟨hLmem, hLr, hLc⟩ v hv c hc hcc hcr
   exact optSupport_ofCoverage U T hq (S.slotRound k) L
     (fun n h1 h2 => hpop' n (by omega) (by change n ≤ S.slotRound k + 2 at h2; omega))
-    (coversToward_of_synchronisedOn hs hRk) hLmem hLr (by rw [hLc]; exact hlead)
+    (Timed.coversToward_of_synchronisedOn hs hRk) hLmem hLr (by rw [hLc]; exact hlead)
     c hc (by rw [hcc]; exact hv) hcr
 
 /-- **A reliably-led slot commits**, now a corollary of the support. -/

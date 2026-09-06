@@ -3,6 +3,7 @@ import LeanDag.Properties.Agree
 import LeanDag.Properties.Candidate
 import LeanDag.Properties.Optional.Direct
 import LeanDag.Properties.Optional.Quorate
+import LeanDag.Properties.Optional.SelfParent
 
 /-!
 # Nemo as a carrier, and the three properties its own rules give
@@ -85,6 +86,13 @@ theorem quorate (hn : 0 < Fintype.card Validator) :
     unfold Nemo.majority; omega
   rw [hq] at h
   exact h
+
+/-- **One block per author per round**: the crash model's universal
+non-equivocation, at any of its reliability records. -/
+theorem noEquiv (hn : 0 < Fintype.card Validator) :
+    NoEquiv (nemoRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+      (nemoReliability Validator hn) :=
+  fun U b c hb hc _ heq hr => U.no_equivocation b hb c hc heq hr
 
 /-- **Two views decide alike.** Nemo's `decided_unique` under the
 property's name. -/

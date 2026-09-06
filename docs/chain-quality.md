@@ -95,38 +95,48 @@ cone — and the results are packaging, exactly as planned:
   bridging lemma `mem_ledgerSet_of_mem_history` is the one unfolding
   CQ3 and CQ6 share; view-independence is `ledgerSet_agree`.
 
-## 4. Post-synchrony inclusion (CQ5–CQ7)
+## 4. Inclusion from self-reference (CQ5–CQ7)
 
-- **CQ5** (`mem_history_of_decided_commit`): post-`R`, every correct
-  block is in the cone of every committed leader block with a correct
-  author at a later round — the backbone
-  (`mem_history_of_correct`, `DoS/Exclusion.lean`) applied through
-  `isLeaderBlock_of_decided`, no new counting.
+> **Restated (2026-09-06).** This section first read "post-synchrony
+> inclusion": after a synchrony round `R`, every correct block was in the
+> cone of every correct commit, by the density backbone. Synchrony is no
+> longer part of the properties (`target-properties.md` §11.16), and the
+> inclusion half is now proved with none: a correct block reaches its
+> author's next committed leader block along the author's own
+> self-parent chain. The theorem names are unchanged; their hypotheses
+> are not.
+
+- **CQ5** (`mem_history_of_decided_commit`): a correct block is in the
+  cone of every committed leader block by the same author at or above
+  its round — the self-parent chain (`SelfParent`, P3′ at the carrier)
+  walked down to the block's round, where non-equivocation (`NoEquiv`)
+  says it has arrived. Generic in `Properties/Arcs/Quality.lean`, from
+  `Optional/SelfParent.lean`.
 - **CQ6** (`committed_of_correct_block`, and `…_correct` at
-  `T := Correct`): under a fair schedule over reliable validators, for
-  every round `m ≥ R` there is a committed slot — above `m`, led by a
-  correct validator, **fixed by the schedule before the universe is
-  quantified**, in the L6 style — whose flush contains every correct
-  round-`m` block; ledger membership follows for any covering verdict
-  assignment. One discovery from the proof: `commits_recur_on` does
-  not expose that the committed leader lies in `T`, which the backbone
-  needs, so CQ6 composes from the fair schedule, L4
-  (`decided_of_leader_mem`) and `no_stall` directly, mirroring L6's
-  own proof rather than consuming its statement.
+  `T := Correct`): under a schedule fair to each member of `T`
+  (`FairToEach`), for every round `m` and every `v ∈ T` there is a slot
+  at or above `m` that `v` leads — **fixed by the schedule before the
+  universe is quantified** — which any execution meeting the
+  certification precondition `certLive` commits, and whose flush
+  contains every round-`m` block by `v`; ledger membership follows for
+  any covering verdict assignment. Fairness is per validator because the
+  argument runs along one author's chain.
 - **CQ7** (`Capstone.lean`): the quantitative and packaged forms.
-  Under a windowed-fair schedule the committing slot lies within `w`
-  slots of `slotAt (m+1)` (`committed_of_correct_block_within`);
-  bounded spacing converts to rounds, `s·w`
-  (`committed_of_correct_block_by_round`) — *a correct block is
-  committed within a schedule-window of its creation, once the DAG is
-  synchronous*. The capstone `chain_quality` states both halves
-  together under enforceable or standard conditions only, in the
-  `dos_resistance` style.
+  Under a schedule windowed-fair to each validator (`FairToEachWithin`)
+  the committing slot lies within `w` slots of `slotAt m`
+  (`committed_of_correct_block_within`); bounded spacing converts to
+  rounds, `s·w` (`committed_of_correct_block_by_round`) — *a correct
+  block is committed within a schedule-window of its creation*. The
+  capstone `chain_quality` states both halves together under
+  enforceable or standard conditions only.
 
-A scoping note that held: the schedule side is `T ⊆ Correct`-relative,
-the backbone side is Correct-wide (`Synchronised U R`); a fully
-`T`-relative variant would need a `T`-relative backbone lemma, possible
-but not attempted.
+What the change costs and buys. The old statement put a correct block
+in *every* correct commit after `R`; the new one puts it in its author's
+commits, at any time. The old one needed full coverage over every round
+from `R` to the commit; the new one needs the author to keep building
+(which P3′ already asks) and the schedule to return to the author.
+Rules whose model has no self-parent clause — Nemo by design,
+Hydrozoan — keep the coverage half (CQ1–CQ3) and do not show CQ5–CQ7.
 
 ## 5. Witnesses (`LeanDagTest/Quality/Model.lean`)
 

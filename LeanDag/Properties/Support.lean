@@ -28,16 +28,14 @@ the work at. `Local` is the third law, and it is `Banded` for the
 support relation: certification reads a bounded window above the
 candidate, so any `RebasedAbove` above that window preserves it.
 
-**Why `CoversToward` rather than `SynchronisedOn`.** Full coverage says
-every reliable block references every reliable block one round below.
-A reactive execution does not have it and is not meant to: a reactive
-builder omits whatever had not arrived when its exit fired. What it does
-have is coverage *toward the candidate* — every reliable block in the
-window references every reliable block below it that reaches the
-candidate — because that is exactly what its wait clauses guarantee.
-`CoversToward` is that restriction; full coverage implies it in one
-line; and it is the weakest antecedent under which every rule here
-certifies, which is what makes the three theorems at the end generic.
+**Certification, not coverage.** The precondition `Support.live` asks
+that every candidate of a reliably-led slot be certified by the reliable
+set a wave up, and nothing about how the certifiers came to reference
+what they reference. A reactive execution supplies that from its wait
+clauses; a timed one supplies it from coverage, through
+`Timed.live_of_coverage` (`LeanDag/Timed/Coverage.lean`). No synchrony
+predicate is stated under `Properties/`, and `scripts/check-arc-holes.py`
+keeps it that way — see that file for why.
 
 **What becomes generic** lives downstream. `Derived/LeaderCommits.lean`:
 `LeaderCommits` at `Support.live`, from Law 3, so everything a schedule
@@ -75,24 +73,6 @@ def certifiesAt (U : R.Universe) (T : Finset Validator) (r : ℕ) (L : BlockId) 
 
 end Support
 
-/-- **Coverage toward a candidate** over a window: every `T`-block at
-each level of the window references every `T`-block one level below it
-that reaches the candidate. Full coverage restricted to the candidate's
-support, and what a reactive wait clause delivers. -/
-def CoversToward (R : DagRule Validator BlockId Payload) (U : R.Universe)
-    (T : Finset Validator) (r wave : ℕ) (L : BlockId) : Prop :=
-  ∀ n, r ≤ n → n < r + wave →
-    ∀ b, b ∈ R.ids U → (R.block U b).creator ∈ T → (R.block U b).round = n + 1 →
-    ∀ a, a ∈ R.ids U → (R.block U a).creator ∈ T → (R.block U a).round = n →
-      ReachesFrom (R.block U) a L → a ∈ (R.block U b).refs
-
-/-- Full coverage from `Rnd` is coverage toward anything, over any window
-at or above `Rnd`. -/
-theorem coversToward_of_synchronisedOn {U : R.Universe} {T : Finset Validator}
-    {Rnd r wave : ℕ} {L : BlockId} (hs : SynchronisedOn R U T Rnd) (hr : Rnd ≤ r) :
-    CoversToward R U T r wave L :=
-  fun n hn _ b hb hbc hbr a ha hac har _ => hs n (by omega) b hb hbr hbc a ha har hac
-
 /-- **A `RebasedAbove` is a band from its settling round up to any
 ceiling**, at offsets `0` and `G`. What lets a rule discharge `Local`
 with the band lemmas it already has for `Banded`. -/
@@ -123,19 +103,7 @@ def Local : Prop :=
       L ∈ R.ids U → (R.block U L).round + sp.wave = (R.block U c).round →
       (sp.Certifies U' c L ↔ sp.Certifies U c L)
 
-/-- **Law 2 — coverage certifies.** On a window the reliable set has
-populated, with coverage toward a reliable candidate at its base, every
-reliable block at the top certifies it. The lower bound on `Certifies`. -/
-def OfCoverage (rel : Reliability Validator) : Prop :=
-  ∀ (U : R.Universe) (T : Finset Validator), rel.IsQuorum T →
-    ∀ (r : ℕ) (L : BlockId),
-    (∀ n, r ≤ n → n ≤ r + sp.wave → PopulatedOn R U T n) →
-    CoversToward R U T r sp.wave L →
-    L ∈ R.ids U → (R.block U L).round = r → (R.block U L).creator ∈ T →
-    ∀ c, c ∈ R.ids U → (R.block U c).creator ∈ T → (R.block U c).round = r + sp.wave →
-      sp.Certifies U c L
-
-/-- **Law 3 — certification commits.** A slot whose every candidate a
+/-- **Law 2 — certification commits.** A slot whose every candidate a
 reliable quorum certifies, on a populated window a view is caught up
 to, is committed within a bound one above it when a quorum member leads
 it. `LeaderCommits` with the precondition made explicit; the upper
@@ -171,15 +139,6 @@ theorem voteSupport_local : (voteSupport R).Local := by
   change R₀ + 1 ≤ (R.block U c).round at hcr
   change L ∈ (R.block U' c).refs ↔ L ∈ (R.block U c).refs
   rw [h.refs c hc (by omega)]
-
-/-- **Law 2 for vote support.** Coverage toward the candidate at its own
-round is the vote. -/
-theorem voteSupport_ofCoverage (rel : Reliability Validator) :
-    (voteSupport R).OfCoverage rel := by
-  intro U T _ r L _ hct hL hLr hLc c hc hcc hcr
-  change (R.block U c).round = r + 1 at hcr
-  exact hct r le_rfl (by change r < r + 1; omega) c hc hcc hcr L hL hLc hLr
-    Relation.ReflTransGen.refl
 
 end Properties
 

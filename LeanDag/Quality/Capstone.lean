@@ -42,108 +42,87 @@ theorem slotAt_le_slotAt {a b : ℕ} (h : a ≤ b) :
     slotAt Validator a ≤ slotAt Validator b :=
   Nat.find_min' _ (le_trans h (le_slotRound_slotAt (Validator := Validator) b))
 
-/-- **CQ7, windowed.** Under a windowed-fair schedule, the committing
-slot for round-`m` blocks lies within `w` slots of the first slot above
-round `m`. -/
+/-- **Windowed fairness to each validator**: within any `w` consecutive
+slots every member of `T` leads once. Round-robin over `n` validators
+has it at `w = n`. -/
+def FairToEachWithin (T : Finset Validator) (w : ℕ) : Prop :=
+  ∀ v ∈ T, ∀ k, ∃ k', k ≤ k' ∧ k' < k + w ∧ S.leader k' = v
+
+/-- **CQ7, windowed.** Under a schedule windowed-fair to each validator,
+the committing slot for `v`'s round-`m` blocks lies within `w` slots of
+the first slot at or above round `m`. -/
 theorem committed_of_correct_block_within
     (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : quorumCard Validator ≤ T.card)
-    (fair : FairWithin T w) (R m : ℕ) (hRm : R ≤ m) :
-    ∃ k', slotAt Validator (m + 1) ≤ k' ∧
-      k' < slotAt Validator (m + 1) + w ∧
-      m < S.slotRound k' ∧ R ≤ S.slotRound k' ∧
-      IncludesAt (Validator := Validator) BlockId Payload R m k' := by
-  obtain ⟨k', hk₁, hk₂, hlead⟩ := fair (slotAt Validator (m + 1))
-  have hm : m < S.slotRound k' := by
-    have h1 := le_slotRound_slotAt (Validator := Validator) (m + 1)
-    have h2 := S.mono hk₁
-    omega
-  have hRk' : R ≤ S.slotRound k' := by omega
-  refine ⟨k', hk₁, hk₂, hm, hRk', ?_⟩
-  intro U N hpop hs hN
-  obtain ⟨L, hLb, hdec⟩ :=
-    MysticetiProperties.decided_of_leader_of_populated_of_properties hcard (hs.mono hT) hRk'
-      (fun r _ hr => PopulatedOn.mono hT (hpop r hr)) (by omega) hlead
-  refine ⟨L, hdec, ?_⟩
-  intro b hb hbc hbr
-  have hLc : (U.block L).creator ∈ (Correct : Finset Validator) := by
-    rw [hLb.2.2]
-    exact hT hlead
-  have hmem : b ∈ history U L :=
-    mem_history_of_decided_commit hs hdec hLc hb hbc (by omega)
-      (by rw [hLb.2.1]; omega)
-  exact ⟨hmem, fun g n hg hn =>
-    mem_ledgerSet_of_mem_history hg hn (mem_ids_of_decided hdec) hmem⟩
+    (fair : FairToEachWithin T w) (m : ℕ) {v : Validator} (hv : v ∈ T) :
+    ∃ k', slotAt Validator m ≤ k' ∧ k' < slotAt Validator m + w ∧
+      m ≤ S.slotRound k' ∧ S.leader k' = v ∧
+      IncludesAt (Validator := Validator) BlockId Payload T m k' := by
+  obtain ⟨k', hk₁, hk₂, hlead⟩ := fair v hv (slotAt Validator m)
+  have hm : m ≤ S.slotRound k' :=
+    le_trans (le_slotRound_slotAt (Validator := Validator) m) (S.mono hk₁)
+  exact ⟨k', hk₁, hk₂, hm, hlead, includesAt_of_leads hT (by rw [hlead]; exact hv) hm⟩
 
 /-- **CQ7, by round.** With bounded slot spacing, the committing slot's
-round is within `s·w` rounds of the first slot above `m`: a correct
-block is committed within a schedule-window of rounds of its creation,
-once the DAG is synchronous. -/
+round is within `s·w` rounds of the first slot at or above `m`: a
+correct block is committed within a schedule-window of rounds of its
+creation. -/
 theorem committed_of_correct_block_by_round
     (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : quorumCard Validator ≤ T.card)
-    (fair : FairWithin T w) (hs : BoundedSpacing (Validator := Validator) s)
-    (R m : ℕ) (hRm : R ≤ m) :
-    ∃ k', m < S.slotRound k' ∧
-      S.slotRound k' ≤ S.slotRound (slotAt Validator (m + 1)) + s * w ∧
-      R ≤ S.slotRound k' ∧
-      IncludesAt (Validator := Validator) BlockId Payload R m k' := by
-  obtain ⟨k', hk₁, hk₂, hm, hRk', hrest⟩ :=
-    committed_of_correct_block_within (BlockId := BlockId) (Payload := Payload)
-      hT hcard fair R m hRm
-  refine ⟨k', hm, ?_, hRk', hrest⟩
-  have := slotRound_le_of_boundedSpacing hs (slotAt Validator (m + 1))
-    (k' - slotAt Validator (m + 1))
-  have hle : k' = slotAt Validator (m + 1) + (k' - slotAt Validator (m + 1)) := by
-    omega
-  have hd : k' - slotAt Validator (m + 1) ≤ w := by omega
-  rw [← hle] at this
+    (fair : FairToEachWithin T w) (hs : BoundedSpacing (Validator := Validator) s)
+    (m : ℕ) {v : Validator} (hv : v ∈ T) :
+    ∃ k', m ≤ S.slotRound k' ∧
+      S.slotRound k' ≤ S.slotRound (slotAt Validator m) + s * w ∧
+      S.leader k' = v ∧
+      IncludesAt (Validator := Validator) BlockId Payload T m k' := by
+  obtain ⟨k', hk₁, hk₂, hm, hlead, hinc⟩ :=
+    committed_of_correct_block_within (BlockId := BlockId) (Payload := Payload) hT fair m hv
+  refine ⟨k', hm, ?_, hlead, hinc⟩
+  have hd : k' - slotAt Validator m ≤ w := by omega
+  have := slotRound_le_of_boundedSpacing hs (slotAt Validator m) (k' - slotAt Validator m)
+  rw [Nat.add_sub_cancel' hk₁] at this
   calc S.slotRound k'
-      ≤ S.slotRound (slotAt Validator (m + 1)) +
-        s * (k' - slotAt Validator (m + 1)) := this
-    _ ≤ S.slotRound (slotAt Validator (m + 1)) + s * w :=
+      ≤ S.slotRound (slotAt Validator m) + s * (k' - slotAt Validator m) := this
+    _ ≤ S.slotRound (slotAt Validator m) + s * w :=
         Nat.add_le_add_left (Nat.mul_le_mul_left s hd) _
 
 /-- **CQ7 (the capstone).** Chain quality in one statement, enforceable
 or standard conditions only. Unconditionally: every commit's flush
 covers at least half of the correct validators at every round below
-it. Post-`R`, under a fair schedule: every correct block is in the
-flush of a committed slot fixed in advance by the schedule. -/
+it. Under a schedule fair to each member of `T`: every block by a member
+of `T` is in the flush of a slot its author leads, fixed in advance by
+the schedule. -/
 theorem chain_quality (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : quorumCard Validator ≤ T.card)
-    (fair : FairScheduleOn T) (R m : ℕ) (hRm : R ≤ m) :
+    (fair : FairToEach T) (m : ℕ) :
     (∀ (U : BlockUniverse Validator BlockId Payload)
         (V : View Validator BlockId Payload U) (k : ℕ) (L : BlockId)
         (δ : ℕ), Decided U V k (some L) → δ < (U.block L).round →
         (Correct : Finset Validator).card ≤ 2 * (coveredAt U L δ).card) ∧
-    ∃ k', m < S.slotRound k' ∧ R ≤ S.slotRound k' ∧
-      IncludesAt (Validator := Validator) BlockId Payload R m k' :=
+    ∀ v ∈ T, ∃ k', m ≤ S.slotRound k' ∧ S.leader k' = v ∧
+      IncludesAt (Validator := Validator) BlockId Payload T m k' :=
   ⟨fun _ _ _ _ _ hdec hδ =>
     card_correct_le_two_mul_coveredAt_of_decided hdec hδ,
-   committed_of_correct_block hT hcard fair R m hRm⟩
+   fun v hv => committed_of_correct_block (BlockId := BlockId) (Payload := Payload) hT fair m hv⟩
 
 /-- **The inclusion half, in a given execution** (CQ4′). `chain_quality`
 conjoins the unconditional coverage bound with an inclusion statement whose
-slot is fixed by the schedule ahead of any execution. The coverage bound is
-`card_correct_le_two_mul_coveredAt_of_decided` on its own, and this is the
-other half read in a fixed universe: production and coverage hold, and the
-schedule then supplies a slot whose commit carries every correct round-`m`
-block into the ledger. -/
+slot is fixed by the schedule ahead of any execution. This is the other
+half read in a fixed universe: the certification precondition holds at
+the slots `v` leads from round `m`, and the schedule supplies one whose
+commit carries every round-`m` block by `v` into the ledger. -/
 theorem chain_quality_of_run (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : quorumCard Validator ≤ T.card)
-    (fair : FairScheduleOn T) (R m : ℕ) (hRm : R ≤ m)
-    (U : BlockUniverse Validator BlockId Payload) (N : ℕ)
-    (hpop : ∀ r ≤ N, Populated U r) (hs : Synchronised U R) :
-    ∃ k', m < S.slotRound k' ∧ R ≤ S.slotRound k' ∧
-      (S.slotRound k' + 2 ≤ N →
-        ∃ L : BlockId, Decided U (View.full U) k' (some L) ∧
-          ∀ b ∈ U.ids, (U.block b).creator ∈ (Correct : Finset Validator) →
-            (U.block b).round = m →
-            b ∈ history U L ∧
-            ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
-              b ∈ ledgerSet U g n) := by
-  obtain ⟨k', hm, hR, hinc⟩ :=
-    (chain_quality (BlockId := BlockId) (Payload := Payload) hT hcard fair R m hRm).2
-  exact ⟨k', hm, hR, fun hN => hinc U N hpop hs hN⟩
+    (fair : FairToEach T) (m : ℕ) {v : Validator} (hv : v ∈ T)
+    (U : BlockUniverse Validator BlockId Payload)
+    (hcert : ∀ k, S.leader k = v → m ≤ S.slotRound k →
+      MysticetiProperties.certLive S (View.full U) T k (k + 1)) :
+    ∃ k', m ≤ S.slotRound k' ∧ S.leader k' = v ∧
+      ∃ L : BlockId, Decided U (View.full U) k' (some L) ∧
+        ∀ b ∈ U.ids, (U.block b).creator = v → (U.block b).round = m →
+          b ∈ history U L ∧
+          ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
+            b ∈ ledgerSet U g n := by
+  obtain ⟨k', hm, hlead, hinc⟩ :=
+    committed_of_correct_block (BlockId := BlockId) (Payload := Payload) hT fair m hv
+  obtain ⟨L, hdec, hb⟩ := hinc U (View.full U) (hcert k' hlead hm)
+  exact ⟨k', hm, hlead, L, hdec, fun b hb' hbc hbr => hb b hb' (by rw [hlead]; exact hbc) hbr⟩
 
 end LeanDag

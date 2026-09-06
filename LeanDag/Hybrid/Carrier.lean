@@ -3,6 +3,7 @@ import LeanDag.Properties.Agree
 import LeanDag.Properties.Candidate
 import LeanDag.Properties.Optional.Direct
 import LeanDag.Properties.Optional.Quorate
+import LeanDag.Properties.Optional.SelfParent
 
 /-!
 # Hybrid as a carrier, and the three properties its own rules give
@@ -54,6 +55,16 @@ validity already asks for. -/
 theorem quorate (k : ℕ) : Quorate (hybridRule (Validator := Validator) (BlockId := BlockId)
     (Payload := Payload) k) (coreReliability Validator) :=
   fun U => U.val.quorateOn
+
+/-- **P3′ at the carrier.** -/
+theorem selfParent (k : ℕ) : SelfParent (hybridRule (Validator := Validator)
+    (BlockId := BlockId) (Payload := Payload) k) :=
+  fun U b hb hr => (U.val.valid b hb).self_parent hr
+
+/-- **One block per correct author per round.** -/
+theorem noEquiv (k : ℕ) : NoEquiv (hybridRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload) k) (coreReliability Validator) :=
+  fun U b c hb hc hbc heq hr => U.val.no_equivocation b hb c hc hbc heq hr
 
 /-- **Two views decide alike.** H6 under the property's name, and
 unconditional because non-equivocation is now a field of the universe

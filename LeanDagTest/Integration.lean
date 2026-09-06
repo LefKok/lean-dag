@@ -175,7 +175,7 @@ example : urecover.r = 1 := by
 #print axioms LeanDag.Integration.epochOf_add_of_dvd
 #print axioms LeanDag.Integration.honestNoEquiv_chop
 #print axioms LeanDag.Integration.honestNoEquiv_skipFill
-#print axioms LeanDag.Properties.Arcs.synchronisedOn_chop
+#print axioms LeanDag.Integration.synchronisedOn_chop
 #print axioms LeanDag.Integration.not_synchronisedOn_skipFill
 #print axioms LeanDag.Integration.synchronisedOn_skipFill_above
 #print axioms ucrash_not_synchronisedOn

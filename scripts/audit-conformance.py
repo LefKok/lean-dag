@@ -64,7 +64,8 @@ RULES = [
 # a rule is scored as having a support when a `.Commits` law is stated at
 # its carrier. `LeaderCommits` is derived from it (§11.8).
 OBLIGATIONS = ["Banded", "Agree", "CommitsCandidate", "Indirect", "Support",
-               "CommitsDirect", "SkipsUnsupported", "Quorate"]
+               "CommitsDirect", "SkipsUnsupported", "Quorate", "SelfParent", "NoEquiv",
+               "OfCoverage"]
 REQUIRED = 5
 DERIVED = ["LeaderCommits", "Persist", "LocalTruncate", "Descends"]
 # What each derived property follows from. `Descends` used to be an
@@ -107,6 +108,8 @@ def conclusions(decls):
         for prop in OBLIGATIONS + DERIVED:
             if prop == "Support":
                 hit = re.search(r"\)\.Commits\s*\(", flat) or re.search(r"\.Commits\s+\(", flat)
+            elif prop == "OfCoverage":
+                hit = re.search(r":\s*(LeanDag\.)?(Timed\.)?OfCoverage\b", flat)
             else:
                 hit = (re.search(r":\s*(LeanDag\.)?(Properties\.)?" + prop + r"\b", flat)
                        or (is_stmt and re.search(r"Properties\." + prop + r"\b", flat)))
@@ -136,7 +139,8 @@ def main():
     short = {"Causal": "caus", "Banded": "band", "Agree": "agre",
              "CommitsCandidate": "cand", "LeaderCommits": "lead",
              "Indirect": "indr", "Support": "supp",
-             "CommitsDirect": "drct*",
+             "CommitsDirect": "drct*", "SelfParent": "self*", "NoEquiv": "nequ*",
+             "OfCoverage": "cov†",
              "Descends": "desc",
              "SkipsUnsupported": "skip*", "Quorate": "quor*",
              "Persist": "pers", "LocalTruncate": "trnc",
@@ -176,10 +180,14 @@ def main():
         print("  and `Banded` is the induction each rule owes. Those three are per-rule.")
     if without:
         print(f"{len(without)} with no carrier: " + ", ".join(without) + ".")
-    print("* CommitsDirect, SkipsUnsupported and Quorate are optional "
+    print("* CommitsDirect, SkipsUnsupported, Quorate, SelfParent and NoEquiv are optional "
           "(`Properties/Optional/`): owed\n  only when a mechanism reads the "
           "rule's direct predicate, when the rule skips\n  without waiting for an "
-          "anchor, or when a deployment quotes chain quality.")
+          "anchor, or when a deployment quotes chain quality (the coverage\n  half needs "
+          "Quorate; the inclusion half needs SelfParent and NoEquiv).")
+    print("† OfCoverage is not a property: it is the timed model's bridge into `Support.live`\n"
+          "  (`LeanDag/Timed/Coverage.lean`), owed only by a rule with a synchronous story.\n"
+          "  A reactive rule reaches `live` from its wait clauses and shows `--` here.")
     print("`supp`: the rule has a `Support` with its `Commits` law (`Properties/Support.lean`),\n"
           "  so `LeaderCommits`, liveness on a covered DAG and liveness across every\n"
           "  `Sustains` are the generic theorems applied (`Arcs/Liveness.lean`).")

@@ -3143,6 +3143,74 @@ as trivial per rule as `Causal` was — one `cases` on the rule's
 `Decided` — but it is a fact about the decision relation, which the
 carrier deliberately leaves opaque, so it stays a property.
 
+### 11.16 Synchrony is not a property
+
+**The rule.** Nothing under `Properties/` names synchrony: not
+`SynchronisedOn`, not `CoversToward`, not the coverage law
+`OfCoverage`. The liveness interface a protocol shows is a `Support` —
+`wave`, `Certifies`, Law 1 `Local`, Law 2 `Commits` — and the
+precondition `Support.live` those laws read: a quorum, a view caught up
+to a horizon, production across the wave, and **certification of every
+candidate** of every reliably-led slot in the window. Every generic
+liveness theorem is stated at `live`: `LeaderCommits`,
+`decidedBelow_of_run`, `Support.decidedBelow_of_fairRun`, liveness
+across every cut, fill and stack, Barnacle's descent.
+
+**Why.** Coverage is the strongest fact statable without a rule's
+vocabulary, and the wrong antecedent for an execution that omits what
+has not arrived. Reactive Mysticeti reaches `live` from its wait
+clauses with no coverage anywhere (§11.6b); a timed execution reaches
+it from coverage. Stating coverage as a property would have made the
+reactive rules a special case, which is what the support was
+introduced to avoid. So the two execution models meet at `live` and
+nothing after that point knows which one it came from.
+
+**Where synchrony went.** `LeanDag/Timed/Coverage.lean`, namespace
+`LeanDag.Timed`: `SynchronisedOn` at the carrier, its transport across
+a `RebasedAbove`, `CoversToward`, `OfCoverage` and
+`voteSupport_ofCoverage`, and one bridge, `live_of_coverage` — a
+covered, populated window is a live one. The timed readings of the
+generic theorems are corollaries there (`exists_decided_of_coverage`,
+`decidedBelow_of_fairRun`), and L10, O10 and NN8 are those corollaries
+at their supports. The per-protocol `*_ofCoverage` proofs stay in the
+protocol files, typed at `Timed.OfCoverage`; `audit-conformance.py`
+shows them in a `cov†` column that is explicitly not an obligation.
+
+**It must not come back.** `scripts/check-arc-holes.py` fails if any
+file under `Properties/`, comments stripped, names `SynchronisedOn`,
+`SynchronisedFrom`, `Synchronised`, `CoversToward`, `OfCoverage` or the
+`Timed` namespace. A future liveness theorem that wants coverage
+belongs in `Timed/`, stated as a corollary of one at `live`; if it
+cannot be, the support is missing a law, and that is the thing to fix.
+
+### 11.17 Chain quality without synchrony
+
+The inclusion half of chain quality (CQ5–CQ7) was the last generic
+theorem with `SynchronisedOn` in its hypotheses, and it needed it for a
+different reason than liveness did: not to certify a candidate but to
+carry one specific correct block upward into a later commit's cone.
+
+It is now proved from two optional properties
+(`Properties/Optional/SelfParent.lean`): `SelfParent`, every non-genesis
+block references a block of its own author (the core's P3′ at the
+carrier), and `NoEquiv rel`, one block per reliable author per round.
+Together they give `SelfParent.reaches_of_creator`: a reliable author's
+block reaches every earlier block of the same author, by walking the
+chain down. CQ5 (`mem_history_of_decided_commit`) is that at a commit;
+CQ6 (`committed_of_correct_block`) picks the slot with fairness to each
+validator and commits it with `LeaderCommits` at `live`; CQ7 packages
+both halves. The statement changed shape: a correct block is in its
+*author's* commits at any time, where before it was in *every* correct
+commit after a synchrony round. That is the honest statement for a
+reactive execution, and `ReactiveM.committed_of_correct_block` had
+already proved it that way for reactive Mysticeti by hand.
+
+The core, Odontoceti, Hybrid and Mahi-Mahi show both properties from
+`ValidWrt.self_parent` and the universe's non-equivocation; Nemo and
+FinWhale show `NoEquiv` only, Nemo's model having dropped the
+self-parent clause on purpose; Hydrozoan and Optimal show neither.
+Those rules keep the coverage half, which needs only `Quorate`.
+
 **What the audits show.** `audit-mechanisms.py` reads the same matrix
 as before — every cell for Hydrozoan and Optimal-Hydrozoan `yes`, live
 and stack `der` — now from the native witnesses. `audit-bespoke.py`

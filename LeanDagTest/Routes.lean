@@ -89,26 +89,33 @@ example {c : ℕ} (hc : 0 < c) (hspan : SpansEligible (Validator := Validator) c
     hrest U N (fun r _ hr => populated_of_viewPace vp r hr)
       (synchronised_of_viewPace vp hgst hbackoff) hN⟩
 
-/-- **Chain quality CQ6**, from the same `ViewPace`: every correct
-round-`m` block enters the ledger of a slot the schedule fixes in advance. -/
+/-- **Chain quality CQ6**, from the same `ViewPace`: every round-`m` block
+by a correct validator enters the ledger of a slot that validator leads,
+fixed in advance by the schedule. The pace supplies the timed
+precondition, `certLive_of_coreLive` turns it into certification, and
+the inclusion theorem never sees the synchrony. -/
 example (m : ℕ) (hRm : R ≤ m)
-    (fair : FairScheduleOn (Correct : Finset Validator))
+    (fair : FairToEach (Correct : Finset Validator)) {v : Validator}
+    (hv : v ∈ (Correct : Finset Validator))
     (vp : ViewPace U (Correct : Finset Validator) N)
     (hgst : vp.gst ≤ R)
     (hbackoff : ∀ n, R ≤ n → 2 * vp.delay + vp.proc ≤ vp.timeout n) :
-    ∃ k', m < S.slotRound k' ∧ R ≤ S.slotRound k' ∧
+    ∃ k', m ≤ S.slotRound k' ∧ S.leader k' = v ∧
       (S.slotRound k' + 2 ≤ N →
         ∃ L, Decided U (View.full U) k' (some L) ∧
-          ∀ b ∈ U.ids, (U.block b).creator ∈ (Correct : Finset Validator) →
+          ∀ b ∈ U.ids, (U.block b).creator = v →
             (U.block b).round = m → b ∈ history U L ∧
             ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
               b ∈ ledgerSet U g n) := by
-  obtain ⟨k', hm, hR, hrest⟩ :=
-    committed_of_correct_block (BlockId := BlockId) (Payload := Payload)
-      Finset.Subset.rfl card_correct fair R m hRm
-  exact ⟨k', hm, hR, fun hN =>
-    hrest U N (populated_of_viewPace vp)
-      (synchronised_of_viewPace vp hgst hbackoff) hN⟩
+  obtain ⟨k', hm, hlead, hinc⟩ :=
+    committed_of_correct_block_correct (BlockId := BlockId) (Payload := Payload) fair m hv
+  refine ⟨k', hm, hlead, fun hN => ?_⟩
+  obtain ⟨L, hdec, hb⟩ := hinc U (View.full U)
+    (MysticetiProperties.certLive_of_coreLive
+      ⟨card_correct, R, N, synchronised_of_viewPace vp hgst hbackoff, le_trans hRm hm,
+        fun r _ hr => populated_of_viewPace vp r hr, View.coversUpto_full U N,
+        fun k hk => by have := S.mono (Nat.lt_succ_iff.mp hk); omega⟩)
+  exact ⟨L, hdec, fun b hb' hbc hbr => hb b hb' (by rw [hlead]; exact hbc) hbr⟩
 
 end Arcs
 

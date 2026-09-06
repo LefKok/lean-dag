@@ -237,17 +237,6 @@ theorem decided_agree_horizons_chop {G₁ G₂ d₁ d₂ : ℕ}
     (truncates_chop hd₁) (truncates_chop hd₂)
     viewAgreeAbove_chop viewAgreeAbove_chop halign hW₁ hW₂ hV
 
-/-- **Synchrony survives the cut, from the rebase.**
-`Integration/Preservation.synchronisedOn_chop` proves this directly; it
-is `Sustains` applied, as votes and production already were. -/
-theorem synchronisedOn_chop {T : Finset Validator} {Rs R' : ℕ}
-    (hs : LeanDag.SynchronisedOn U T Rs) (hGR : Rs ≤ G + R') :
-    LeanDag.SynchronisedOn (chop U G) T R' := by
-  have h := RebasedAbove.synchronisedOn_of (R := MysticetiProperties.mysticetiRule)
-    (sustains_chop (U := U) (G := G)) (T := T) (r := G + R') (by omega) (by omega)
-    (SynchronisedOn.mono ((MysticetiProperties.synchronisedOn_eq).mpr hs) hGR)
-  exact MysticetiProperties.synchronisedOn_eq.mp (by simpa using h)
-
 /-- **And so does non-equivocation**, from the truncation. -/
 theorem noEquivOn_chop (hd : G ≤ S.slotRound d) {T : Finset Validator}
     (hne : NoEquivOn (MysticetiProperties.mysticetiRule (Payload := Payload)) U T) :

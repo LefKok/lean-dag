@@ -45,7 +45,7 @@ theorem odontocetiLive_descent [F : Faults5 Validator] :
     (odontocetiLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload)).Descent
       F.f :=
   descent_of_support (odontocetiLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
-    (Properties.voteSupport _) (Properties.voteSupport_ofCoverage _)
+    (Properties.voteSupport _) (Timed.voteSupport_ofCoverage _)
     OdontocetiProperties.voteSupport_commits OdontocetiProperties.indirect (by change 1 ≤ 2; omega)
     odontocetiLive_goodOf
 

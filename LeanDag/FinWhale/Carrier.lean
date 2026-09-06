@@ -5,8 +5,11 @@ import LeanDag.Properties.Agree
 import LeanDag.Properties.Candidate
 import LeanDag.Properties.Optional.Direct
 import LeanDag.Properties.Optional.Quorate
+import LeanDag.Properties.Optional.SelfParent
 import LeanDag.Properties.Derived.LeaderCommits
 import LeanDag.Properties.Support
+
+import LeanDag.Timed.Coverage
 
 /-!
 # FinWhale as a carrier
@@ -59,6 +62,7 @@ namespace LeanDag
 namespace FinWhaleProperties
 
 open LeanDag.Properties
+open LeanDag.Timed (SynchronisedOn CoversToward OfCoverage coversToward_of_synchronisedOn)
 open LeanDag.FinWhale
 
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
@@ -120,6 +124,12 @@ def finWhaleRule : DagRule Validator BlockId Payload where
 theorem quorate : Quorate (finWhaleRule (Validator := Validator) (BlockId := BlockId)
     (Payload := Payload)) (coreReliability Validator) :=
   fun D b hb hr => (D.valid b hb).quorum hr
+
+/-- **One block per correct author per round**, from the DAG's
+`correct_single`. -/
+theorem noEquiv : NoEquiv (finWhaleRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)) (coreReliability Validator) :=
+  fun D b c hb hc hbc heq hr => D.correct_single b hb c hc hbc heq hr
 
 /-- **Two views decide alike.** Lemma 12 under the property's name: the
 exclusions come from the DAG, the deterministic rule is the least
@@ -632,7 +642,7 @@ theorem fwSupport_local :
 quorum block one round up votes, every quorum block two rounds up
 references each voter, and the quorum carries `spQuorum`. -/
 theorem fwSupport_ofCoverage :
-    Support.OfCoverage (R := finWhaleRule (Validator := Validator) (BlockId := BlockId)
+    Timed.OfCoverage (R := finWhaleRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload)) fwSupport (coreReliability Validator) := by
   intro D T hq r L hpop hct hL hLr hLc c hc hcc hcr
   have hcard : quorumCard Validator ≤ T.card := by
