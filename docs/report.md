@@ -23627,6 +23627,17 @@ structure Reliability (Validator : Type*) [Fintype Validator] [DecidableEq Valid
 
 `minority` is the standing committee condition read at the right strength — `n = 3f + 1` gives it, and so does every other committee bound here. It is what lets a quorum of references always contain a reliable one, which is the step density's induction takes.
 
+#### `IsQuorum`
+
+*def, `Density.lean`*
+
+```lean
+def IsQuorum (T : Finset Validator) : Prop :=
+  T ⊆ rel.correct ∧ Fintype.card Validator - rel.slack ≤ T.card
+```
+
+**A quorum of the reliable set**: inside it, and at least `n − slack` strong — which is each rule's own quorum read off its fault model, the core's `n − f`, Nemo's majority, Hydrozoan's `n − f − c`.
+
 #### `QuorateOn`
 
 *def, `Density.lean`*
@@ -25444,6 +25455,19 @@ def certLive (S : Slots Validator) {U : BlockUniverse Validator BlockId Payload}
 
 **The core's precondition, in what its commit rule counts.** A quorum `T`, a horizon `N` the view is caught up to with every slot of the window two rounds under it, production at the slot's round and its certificate round, and `T` certifying every candidate of every `T`-led slot in the window.
 
+#### `coreSupport`
+
+*def, `MysticetiProperties.lean`*
+
+```lean
+def coreSupport : Support (mysticetiRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)) where
+  wave := 2
+  Certifies := fun U c L => Certifies U c L
+```
+
+**The core's support**: wavelength two, certification the rule's own.
+
 #### `nemoRule`
 
 *def, `Nemo.Carrier.lean`*
@@ -26035,6 +26059,122 @@ def SkipsUnsupported (R : DagRule Validator BlockId Payload)
 
 **Skippability, graded.** A slot whose candidates `T` does not support is skipped, provided `T` meets the protocol's condition.
 
+#### `Support`
+
+*structure, `Properties.Support.lean`*
+
+```lean
+structure Support (R : DagRule Validator BlockId Payload) where
+  /-- The wavelength: certifiers sit `wave` rounds above the candidate. -/
+  wave : ℕ
+  /-- `Certifies U c L`: block `c` certifies candidate `L`. -/
+  Certifies : R.Universe → BlockId → BlockId → Prop
+```
+
+**A rule's support shape**: how far above a candidate its certifiers sit, and what it means for one of them to certify it.
+
+#### `certifiesAt`
+
+*def, `Properties.Support.lean`*
+
+```lean
+def certifiesAt (U : R.Universe) (T : Finset Validator) (r : ℕ) (L : BlockId) : Prop :=
+  ∀ v ∈ T, ∀ c, c ∈ R.ids U → (R.block U c).creator = v →
+    (R.block U c).round = r + sp.wave → sp.Certifies U c L
+```
+
+**The reliable set certifies `L` from round `r`**: every `T`-block a wave above `r` certifies it.
+
+#### `CoversToward`
+
+*def, `Properties.Support.lean`*
+
+```lean
+def CoversToward (R : DagRule Validator BlockId Payload) (U : R.Universe)
+    (T : Finset Validator) (r wave : ℕ) (L : BlockId) : Prop :=
+  ∀ n, r ≤ n → n < r + wave →
+    ∀ b, b ∈ R.ids U → (R.block U b).creator ∈ T → (R.block U b).round = n + 1 →
+    ∀ a, a ∈ R.ids U → (R.block U a).creator ∈ T → (R.block U a).round = n →
+      ReachesFrom (R.block U) a L → a ∈ (R.block U b).refs
+```
+
+**Coverage toward a candidate** over a window: every `T`-block at each level of the window references every `T`-block one level below it that reaches the candidate. Full coverage restricted to the candidate's support, and what a reactive wait clause delivers.
+
+#### `Local`
+
+*def, `Properties.Support.lean`*
+
+```lean
+def Local : Prop :=
+  ∀ {U U' : R.Universe} {G R₀ : ℕ}, RebasedAbove R U U' G R₀ →
+    ∀ c L, c ∈ R.ids U → R₀ + sp.wave ≤ (R.block U c).round →
+      (sp.Certifies U' c L ↔ sp.Certifies U c L)
+```
+
+**Law 1 — certification is local.** `Banded` for the support relation: across any `RebasedAbove`, a certifier whose whole window sits at or above the settling round certifies the same candidates.
+
+#### `OfCoverage`
+
+*def, `Properties.Support.lean`*
+
+```lean
+def OfCoverage (rel : Reliability Validator) : Prop :=
+  ∀ (U : R.Universe) (T : Finset Validator), rel.IsQuorum T →
+    ∀ (r : ℕ) (L : BlockId),
+    (∀ n, r ≤ n → n ≤ r + sp.wave → PopulatedOn R U T n) →
+    CoversToward R U T r sp.wave L →
+    L ∈ R.ids U → (R.block U L).round = r → (R.block U L).creator ∈ T →
+    ∀ c, c ∈ R.ids U → (R.block U c).creator ∈ T → (R.block U c).round = r + sp.wave →
+      sp.Certifies U c L
+```
+
+**Law 2 — coverage certifies.** On a window the reliable set has populated, with coverage toward a reliable candidate at its base, every reliable block at the top certifies it. The lower bound on `Certifies`.
+
+#### `Commits`
+
+*def, `Properties.Support.lean`*
+
+```lean
+def Commits (rel : Reliability Validator) : Prop :=
+  ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (T : Finset Validator) (k : ℕ),
+    rel.IsQuorum T →
+    (∀ n, S.slotRound k ≤ n → n ≤ S.slotRound k + sp.wave → PopulatedOn R U T n) →
+    (∀ L, R.IsCandidate S U k L → sp.certifiesAt U T (S.slotRound k) L) →
+    CoversUpto R V (S.slotRound k + sp.wave) →
+    S.leader k ∈ T →
+    ∃ L, DecidedBelow R S (k + 1) V k (some L)
+```
+
+**Law 3 — certification commits.** A slot whose every candidate a reliable quorum certifies, on a populated window a view is caught up to, is committed within a bound one above it when a quorum member leads it. `LeaderCommits` with the precondition made explicit; the upper bound on `Certifies`.
+
+#### `live`
+
+*def, `Properties.Support.lean`*
+
+```lean
+def live (rel : Reliability Validator) (S : Slots Validator) {U : R.Universe}
+    (V : R.View U) (T : Finset Validator) (lo K : ℕ) : Prop :=
+  rel.IsQuorum T ∧
+    ∃ N, CoversUpto R V N ∧ (∀ k, k < K → S.slotRound k + sp.wave ≤ N) ∧
+      ∀ k, lo ≤ k → k < K → S.leader k ∈ T →
+        (∀ n, S.slotRound k ≤ n → n ≤ S.slotRound k + sp.wave → PopulatedOn R U T n) ∧
+        ∀ L, R.IsCandidate S U k L → sp.certifiesAt U T (S.slotRound k) L
+```
+
+**The liveness precondition, in support terms.** A quorum, a horizon the view is caught up to with the window a wave under it, and at every quorum-led slot of the window production and certification. The `Live` every rule with a `Support` has, and the one `LeaderCommits` is proved against.
+
+#### `voteSupport`
+
+*def, `Properties.Support.lean`*
+
+```lean
+def voteSupport (R : DagRule Validator BlockId Payload) : Support R where
+  wave := 1
+  Certifies := fun U c L => L ∈ (R.block U c).refs
+```
+
+**Vote support**: wavelength one, certification is reference.
+
 #### `VotesAt`
 
 *def, `Properties.Sustain.lean`*
@@ -26177,7 +26317,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 1082 theorems that either another module of the
+The 1085 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -30761,6 +30901,15 @@ theorem fill_refs_available (sk : SkipMsg U)
 So the recipients need no blocks they lack: naming the target suffices, and each reconstructs the filled blocks from its own DAG. The `prev` reference is the recovering validator's own chain, supplied by the fill itself, so the copied references are the whole of what would otherwise have to be sent.
 
 ### Hybrid fault tolerance: Byzantine and crash faults apart
+
+#### `hybrid_f`
+
+*theorem, `Hybrid.Faults.lean`*
+
+```lean
+@[simp] theorem hybrid_f : (HybridFaults.toFaults (Validator := Validator)).f =
+    H.fb + H.fc
+```
 
 #### `hybrid_byzantine`
 
@@ -37193,6 +37342,16 @@ theorem holds : Statement
 theorem holds : Statement
 ```
 
+#### `isQuorum_correct`
+
+*theorem, `Density.lean`*
+
+```lean
+theorem isQuorum_correct : rel.IsQuorum rel.correct
+```
+
+The reliable set is a quorum of itself.
+
 #### `exists_correct_memRefs`
 
 *theorem, `Density.lean`*
@@ -40231,6 +40390,24 @@ theorem reaches_iff (hc : Causal R) (he : Extends R U U')
 
 And so reachability from an old block is the same relation in both universes.
 
+#### `exists_decided_of_reachable`
+
+*theorem, `Properties.Live.lean`*
+
+```lean
+theorem exists_decided_of_reachable {rel : Reliability Validator} {wave : ℕ}
+    {Live : Slots Validator → ∀ {U : R.Universe}, R.View U → Finset Validator → ℕ → ℕ → Prop}
+    (hlc : LeaderCommits R Live) (hlr : LiveReachable R rel wave Live)
+    {U : R.Universe} {Rnd N : ℕ} (hs : SynchronisedOn R U rel.correct Rnd)
+    (hpop : ∀ r, Rnd ≤ r → r ≤ N → PopulatedOn R U rel.correct r)
+    (S : Slots Validator) (V : R.View U) (k : ℕ) (hcov : CoversUpto R V N)
+    (hRnd : Rnd ≤ S.slotRound k) (hN : S.slotRound k + wave ≤ N)
+    (hlead : S.leader k ∈ rel.correct) :
+    ∃ L, DecidedBelow R S (k + 1) V k (some L)
+```
+
+**A reliably-led slot commits on a DAG the reliable set produced.** The consumer test for the pair, and the statement the vacuity guard exists to make believable: the rule's precondition does not appear, so the conclusion cannot be true by the precondition being empty.
+
 #### `unsupported_of_novel`
 
 *theorem, `Properties.Optional.Skip.lean`*
@@ -40415,7 +40592,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 1086 lemmas used only within the file that proves
+The 1099 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -40976,12 +41153,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `mem_history_of_commonAt` | Everyone holds a common block. Any validator with a block two rounds above has it in its own causal past. |
 | `refs_mem_history_of_commonAt` | And everything it cites. Cones nest, so a common block's references — the very blocks a fill would copy — … |
 
-### `Hybrid/Faults.lean` (2)
+### `Hybrid/Faults.lean` (1)
 
 | Lemma | Role |
 |:---|:---|
 | `correct_subset_honest` | The fully-correct class is honest: `Correct`, read through the derived instance, excludes the crash-prone … |
-| `hybrid_f` | — |
 
 ### `Hybrid/Rules.lean` (9)
 
@@ -42042,7 +42218,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `mem_recoveryCorrect` | Recovery-correct membership excludes all three fault classes. |
 | `mem_reliableSigner` | Reliable signing excludes precisely the two classes allowed to equivocate. |
 
-### `HybridProperties.lean` (11)
+### `HybridProperties.lean` (12)
 
 | Lemma | Role |
 |:---|:---|
@@ -42057,6 +42233,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `supportersIn_band` | Supporters survive the band. |
 | `thickLink_band` | So the indirect test reads the same. |
 | `toCore` | The band at Hybrid's carrier is the band at the core's, the universe being the core's under a predicate. |
+| `voteSupport_commits` | Law 3 of `voteSupport`, for Hybrid (`Properties/Support.lean`): the hybrid quorum referencing the … |
 
 ### `Hydrozoan/Helpers/Banded.lean` (13)
 
@@ -42358,7 +42535,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `toCore` | The two carriers project identically, so a band for one is a band for the other. |
 | `votes_band` | A vote is the vote it was. Both clauses read the same cone, and `candidatesAt_band` settles it as an … |
 
-### `MysticetiProperties.lean` (32)
+### `MysticetiProperties.lean` (35)
 
 | Lemma | Role |
 |:---|:---|
@@ -42372,6 +42549,9 @@ subsection per module, in the layer order of Appendices B and C.
 | `certifies_band` | — |
 | `certifies_of_sustains` | The core's certificate predicate transports. |
 | `certifies_old` | — |
+| `coreSupport_commits` | Law 3. A quorum's certificates at the slot's candidate are a direct commit; a view caught up to the … |
+| `coreSupport_local` | Law 1. A certifier two rounds above the settling round reads references strictly above it, which … |
+| `coreSupport_ofCoverage` | Law 2. Coverage toward the candidate over two layers: every quorum block one round up references it, and … |
 | `coversUpto_eq` | The carrier's coverage predicate is the core's, on the nose. |
 | `creatorsOf_old` | — |
 | `directCommitIn_band` | — |
@@ -42403,7 +42583,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `nemoRule_ids` | — |
 | `nemoRule_viewIds` | — |
 
-### `NemoProperties.lean` (12)
+### `NemoProperties.lean` (13)
 
 | Lemma | Role |
 |:---|:---|
@@ -42419,8 +42599,9 @@ subsection per module, in the layer order of Appendices B and C.
 | `not_certifiedIn_band_novel` | A candidate the band did not carry is certified from no old anchor. Its certificate would have to lie in … |
 | `refsB` | — |
 | `supportersIn_band` | The supporters a view holds transport. A voting-round block the view held is a block of the shifted … |
+| `voteSupport_commits` | Law 3 of `voteSupport`, for Nemo (`Properties/Support.lean`): a majority referencing the candidate one … |
 
-### `OdontocetiProperties.lean` (12)
+### `OdontocetiProperties.lean` (13)
 
 | Lemma | Role |
 |:---|:---|
@@ -42436,6 +42617,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `thickLink_band` | So the indirect test reads the same. |
 | `thickLink_threshold_pos` | The thick-link threshold is positive: `Faults5` asks for `5f + 1` validators, so `card − 3f ≥ 2f + 1`. |
 | `toCore` | The two carriers project identically, so a band for one is a band for the other. |
+| `voteSupport_commits` | Law 3 of `voteSupport`, for Odontoceti (`Properties/Support.lean`): a quorum referencing the candidate one … |
 
 ### `OptimalHydrozoan/Carrier.lean` (2)
 
@@ -42576,17 +42758,24 @@ subsection per module, in the layer order of Appendices B and C.
 | `round` | An old block keeps its round. |
 | `trans` | And transitive, so a sequence of extensions is one. |
 
-### `Properties/Live.lean` (1)
-
-| Lemma | Role |
-|:---|:---|
-| `exists_decided_of_reachable` | A reliably-led slot commits on a DAG the reliable set produced. The consumer test for the pair, and the … |
-
 ### `Properties/Optional/Skip.lean` (1)
 
 | Lemma | Role |
 |:---|:---|
 | `mono` | A protocol skipping under a weaker condition skips under a stronger one, so the grades compare. |
+
+### `Properties/Support.lean` (8)
+
+| Lemma | Role |
+|:---|:---|
+| `certifiesAt_of_rebased` | Certification survives every mechanism, from Law 1. The certifiers a wave above `r` sit above the settling … |
+| `coversToward_of_synchronisedOn` | Full coverage from `Rnd` is coverage toward anything, over any window at or above `Rnd`. |
+| `exists_decided_of_coverage` | A reliably-led slot commits on a covered, populated DAG — for any rule with Laws 2 and 3, with no … |
+| `exists_decided_of_sustains` | A commit survives a sustaining mechanism, at the same schedule: the candidates are the same blocks, their … |
+| `leaderCommits` | `LeaderCommits`, from Law 3. |
+| `liveReachable` | The precondition is reachable, from Law 2. Coverage is coverage toward every candidate, so every candidate … |
+| `voteSupport_local` | Law 1 for vote support. A block strictly above the settling round keeps its references. |
+| `voteSupport_ofCoverage` | Law 2 for vote support. Coverage toward the candidate at its own round is the vote. |
 
 ### `Properties/Sustain.lean` (2)
 
@@ -42603,11 +42792,12 @@ subsection per module, in the layer order of Appendices B and C.
 | `deliversOn_viewAt` | The witness. A paced validator delivers the reliable set from any round it has settled past — the … |
 | `le_settleBy` | — |
 
-### `Reactive/MysticetiProperties.lean` (1)
+### `Reactive/MysticetiProperties.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
 | `certLive_of_reactiveLive` | The reactive discipline is the other bridge. `cert_or_wait` certifies every candidate of a reliably-led … |
+| `coreSupport_live_of_reactiveLive` | The reactive discipline reaches the core's support precondition (`Properties/Support.lean`): a reactive … |
 
 ### `WaveRobin.lean` (3)
 

@@ -7,6 +7,7 @@ import LeanDag.Properties.Candidate
 import LeanDag.Properties.Optional.Direct
 import LeanDag.Properties.Commit
 import LeanDag.Properties.Live
+import LeanDag.Properties.Support
 import LeanDag.Properties.Derived.Bounded
 import LeanDag.Adaptive.Odontoceti
 
@@ -414,6 +415,32 @@ def odontocetiLive (S : Slots Validator) {U : BlockUniverse Validator BlockId Pa
     ∃ R₀ N, SynchronisedOn U T R₀ ∧ R₀ ≤ S.slotRound lo ∧
       (∀ r, R₀ ≤ r → r ≤ N → PopulatedOn U T r) ∧ V.CoversUpto N ∧
       ∀ k, k < K → S.slotRound k + 1 ≤ N
+
+/-- **Law 3 of `voteSupport`, for Odontoceti** (`Properties/Support.lean`):
+a quorum referencing the candidate one round up is its direct commit,
+which is `directCommit_of_votesAt`. -/
+theorem voteSupport_commits :
+    (voteSupport (odontocetiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload))).Commits (coreReliability Validator) := by
+  intro S U V T k hq hpop hcert hcov hlead
+  have hcard : quorumCard Validator ≤ T.card := by
+    have h2 := hq.2
+    change Fintype.card Validator - Faults.f Validator ≤ T.card at h2
+    exact h2
+  obtain ⟨L, hLmem, hLc, hLr⟩ := hpop (S.slotRound k) le_rfl
+    (by change S.slotRound k ≤ S.slotRound k + 1; omega) (S.leader k) hlead
+  have hdc : Odontoceti.DirectCommit U L (S.slotRound k) :=
+    Odontoceti.directCommit_of_votesAt hcard
+      (hpop (S.slotRound k + 1) (by omega)
+        (by change S.slotRound k + 1 ≤ S.slotRound k + 1; omega))
+      (hcert L ⟨hLmem, hLr, hLc⟩)
+  have hin : Odontoceti.DirectCommitIn U V L (S.slotRound k) :=
+    Odontoceti.directCommitIn_of_coversUpto hdc hcov
+  refine ⟨L, by omega, Odontoceti.Decided.directCommit ⟨hLmem, hLr, hLc⟩ hin, ?_⟩
+  intro S' hround hlead'
+  refine Odontoceti.Decided.directCommit (S := S') ⟨hLmem, by rw [hround]; exact hLr,
+    by rw [hlead' k (by omega)]; exact hLc⟩ ?_
+  rw [hround]; exact hin
 
 /-- **Odontoceti's precondition is reachable** (`Properties/Live.lean`),
 at its own wavelength: the horizon sits one round above the slot. -/

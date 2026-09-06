@@ -2655,6 +2655,87 @@ block assignment, as `SynchronisedOn` already was, so
 `MysticetiProperties.populatedOn_ofCore` and its converse are the
 identity.
 
+### 11.7 Support: what a rule's commit counts
+
+§11.6b unified two execution models of one rule by stating its
+precondition in what its commit counts. §11.7 makes that shape the
+generic one. Safety is generic because `Banded` names the one thing
+every decision relation reads — a bounded window of references.
+Liveness was not, because nothing named the one thing every *commit*
+counts. `Properties/Support.lean` names it.
+
+```lean
+structure Support (R : DagRule …) where
+  wave      : ℕ
+  Certifies : R.Universe → BlockId → BlockId → Prop
+```
+
+**A parameter, not a field.** `Live` and `Elig` are parameters pinned by
+the properties that consume them, and `Support` follows them, for a
+reason fields cannot meet: a rule may have more than one — a fast-path
+shape and a slow-path shape — and each earns its own bound. What stops a
+parameter from being chosen vacuously is a pair of laws that squeeze it
+from both sides.
+
+| law | what it says | which way it pins |
+|---|---|---|
+| `Local` | across any `RebasedAbove`, a certifier whose window sits above the settling round certifies the same candidates | `Banded` for the support relation |
+| `OfCoverage rel` | on a populated window with coverage toward a reliable candidate, every reliable block at the top certifies it | lower bound: a `Certifies` nothing satisfies is inadmissible |
+| `Commits rel` | a quorum certifying every candidate of a slot commits it, on a caught-up view, within a bound one above | upper bound: a `Certifies` everything satisfies is inadmissible |
+
+**`CoversToward`, not `SynchronisedOn`.** Full coverage says every
+reliable block references every reliable block one round below. A
+reactive execution does not have it and is not meant to. What it has is
+coverage *toward the candidate* — every reliable block in the window
+references every reliable block below it that reaches the candidate —
+because that is what its wait clauses guarantee. `CoversToward` is that
+restriction, full coverage implies it in one line, and it is the weakest
+antecedent under which every rule here certifies. It is the predicate
+§11.6a said could not be stated without a wavelength; with `wave` in the
+structure, it can.
+
+**What is now proved once.**
+
+| theorem | what it replaces |
+|---|---|
+| `Support.leaderCommits` | `LeaderCommits` at `Support.live`, from Law 3 — no per-rule precondition |
+| `Support.liveReachable` | the eight per-rule `liveReachable`s, from Law 2 |
+| `Support.exists_decided_of_coverage` | a reliably-led slot commits on any covered, populated DAG |
+| `Support.certifiesAt_of_rebased` | certification survives every mechanism, from Law 1 |
+| `Support.exists_decided_of_sustains` | **the liveness column**: a commit survives any `Sustains`, for every rule with the laws, with no per-mechanism argument |
+
+**What each rule supplies.** The one-round rules — Odontoceti, Nemo,
+Hybrid — share `voteSupport`: wavelength one, certifying is referencing.
+Its `Local` and `OfCoverage` are facts about references alone and are
+proved once in `Properties/`; each rule owes `Commits`, one proof, which
+is its old `directCommit_of_leader_mem` with the coverage hypothesis
+replaced by the votes. The core supplies `coreSupport` — wavelength
+two, certification the rule's own — and its three laws are
+`certifies_of_sustains`, `certifies_of_synchronisedOn` cut down to the
+two layers it reads, and `leaderCommits_cert` unpacked.
+
+**Reactive rules enter the same socket.**
+`coreSupport_live_of_reactiveLive` takes a reactive execution past GST
+to `Support.live` directly — `cert_or_wait` delivers the certificates,
+the trunk's production delivers the blocks — and from there every
+theorem above applies unchanged, including liveness across every
+mechanism. No pacing structure is transported, and the mechanism never
+learns which execution model produced the certificates. That is what
+"reactive rules are not a special case" means structurally: they differ
+from coverage in which bridge they take to `Support.live`, and in
+nothing after it.
+
+**Not yet done.** Hydrozoan, Optimal-Hydrozoan, FinWhale and Mahi-Mahi
+have no `Support` yet. The first three are two-layer shapes at their own
+thresholds and their three laws exist under other names — FinWhale's
+Law 2 is `spCommitBy_of_synchronisedOn` (§11.6) with its antecedent cut
+down. Mahi-Mahi is the one that will test `CoversToward`: its certifier
+sits `w − 1` rounds up and must *reach* the candidate, which is why the
+predicate quantifies over the window with `ReachesFrom` rather than two
+fixed layers. Until then those four rules keep `LeaderCommits` and
+`LiveReachable` proved by hand, which the conformance table shows as
+`lead yes`, `live yes`, `supp --`.
+
 ### 11.5 Next steps, in order
 
 1. **~~`Compose.lean`~~** (**done**, §11.3). The three composition

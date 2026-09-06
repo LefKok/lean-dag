@@ -67,9 +67,15 @@ RULES = [
 # Mysticeti, whose `reactiveLive` deliberately does not assume coverage
 # — reads `yes` here on the strength of the first. Its own guard is a
 # witness (`LeanDagTest/Reactive.lean`).
+#
+# `Support` is the shape a rule's commit counts in (`Properties/Support.lean`),
+# pinned by three laws. `Local` and `OfCoverage` are generic for the
+# one-round shape and per rule otherwise; `Commits` is per rule always, so
+# a rule is scored as having a support when a `.Commits` law is stated at
+# its carrier.
 OBLIGATIONS = ["Causal", "Banded", "Agree", "CommitsCandidate",
-               "LeaderCommits", "Indirect", "LiveReachable", "CommitsDirect",
-               "SkipsUnsupported", "Quorate"]
+               "LeaderCommits", "Indirect", "LiveReachable", "Support",
+               "CommitsDirect", "SkipsUnsupported", "Quorate"]
 REQUIRED = 6
 DERIVED = ["Persist", "LocalTruncate", "Descends"]
 # What each derived property follows from. `Descends` used to be an
@@ -110,8 +116,11 @@ def conclusions(decls):
         if d["kind"] != "theorem" and not is_stmt:
             continue
         for prop in OBLIGATIONS + DERIVED:
-            hit = (re.search(r":\s*(LeanDag\.)?(Properties\.)?" + prop + r"\b", flat)
-                   or (is_stmt and re.search(r"Properties\." + prop + r"\b", flat)))
+            if prop == "Support":
+                hit = re.search(r"\)\.Commits\s*\(", flat) or re.search(r"\.Commits\s+\(", flat)
+            else:
+                hit = (re.search(r":\s*(LeanDag\.)?(Properties\.)?" + prop + r"\b", flat)
+                       or (is_stmt and re.search(r"Properties\." + prop + r"\b", flat)))
             if not hit:
                 continue
             owners = {owner(c) for _, cs, _ in RULES for c in cs}
@@ -137,7 +146,7 @@ def main():
     cols = OBLIGATIONS + ["|"] + DERIVED
     short = {"Causal": "caus", "Banded": "band", "Agree": "agre",
              "CommitsCandidate": "cand", "LeaderCommits": "lead",
-             "Indirect": "indr", "LiveReachable": "live",
+             "Indirect": "indr", "LiveReachable": "live", "Support": "supp",
              "CommitsDirect": "drct*",
              "Descends": "desc",
              "SkipsUnsupported": "skip*", "Quorate": "quor*",
@@ -183,6 +192,10 @@ def main():
           "(`Properties/Optional/`): owed\n  only when a mechanism reads the "
           "rule's direct predicate, when the rule skips\n  without waiting for an "
           "anchor, or when a deployment quotes chain quality.")
+    print("`supp`: the rule has a `Support` with its `Commits` law (`Properties/Support.lean`),\n"
+          "  so `LeaderCommits`, `LiveReachable` and liveness across every `Sustains` are\n"
+          "  the generic theorems applied. Where it is `--`, `lead` and `live` were proved\n"
+          "  by hand against the rule's own precondition.")
     print("`live` is the guard on `lead`, not a seventh obligation: without it "
           "`LeaderCommits`\n  is true of a rule whose precondition nothing "
           "satisfies. It is scored per carrier,\n  so a second precondition on a "

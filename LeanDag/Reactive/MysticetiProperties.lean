@@ -66,6 +66,25 @@ theorem certLive_of_reactiveLive {S : Slots Validator}
     rm.toPaceCore.populatedOn hcard _ (by omega),
     fun L hL => rm.certifies hT hcard hgst hto hRk hNk hlead hL⟩
 
+/-- **The reactive discipline reaches the core's support precondition**
+(`Properties/Support.lean`): a reactive execution past GST is a quorum
+certifying every candidate of every reliably-led slot in the window,
+which is `Support.live` and the socket every mechanism reads. -/
+theorem coreSupport_live_of_reactiveLive {S : Slots Validator}
+    {U : BlockUniverse Validator BlockId Payload} {V : View Validator BlockId Payload U}
+    {T : Finset Validator} {lo K : ℕ} (h : reactiveLive S (U := U) V T lo K) :
+    (coreSupport (Validator := Validator) (BlockId := BlockId) (Payload := Payload)).live
+      (coreReliability Validator) S (U := U) V T lo K := by
+  obtain ⟨hT, hcard, N, R₀, rm, hgst, hto, hR, hcov, hN⟩ := h
+  refine ⟨⟨hT, hcard⟩, N, hcov, hN, ?_⟩
+  intro k hlo hK hlead
+  have hRk : R₀ ≤ S.slotRound k := le_trans hR (S.mono hlo)
+  have hNk : S.slotRound k + 2 ≤ N := hN k hK
+  refine ⟨fun n _ h2 => rm.toPaceCore.populatedOn hcard n
+    (by change n ≤ S.slotRound k + 2 at h2; omega), ?_⟩
+  rintro L ⟨hLmem, hLr, hLc⟩
+  exact rm.certifies hT hcard hgst hto hRk hNk hlead ⟨hLmem, hLr, hLc⟩
+
 /-- **Reactive Mysticeti commits its reliable leaders.** The statement is
 unchanged; the proof is now the bridge composed with the core's single
 `LeaderCommits`, where it was a second proof of the same shape. -/

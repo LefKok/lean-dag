@@ -6,6 +6,7 @@ import LeanDag.Properties.Optional.Direct
 import LeanDag.Properties.Optional.Quorate
 import LeanDag.Properties.Commit
 import LeanDag.Properties.Live
+import LeanDag.Properties.Support
 import LeanDag.Properties.Derived.Bounded
 import LeanDag.Properties.Derived.Descent
 import LeanDag.Properties.Band
@@ -1106,6 +1107,87 @@ theorem directCommit_of_certLive_sustains [S : Slots Validator]
   obtain ⟨L, hLmem, hLc, hLr⟩ := hpop0 (S.leader k) hlead
   exact ⟨L, ⟨hLmem, hLr, hLc⟩,
     directCommit_of_sustains hsus hR₀ hG hcard hpop2 (hcert L ⟨hLmem, hLr, hLc⟩)⟩
+
+/-! ## The core's support shape
+
+`Properties/Support.lean`. What the core's commit counts: certificates
+two rounds above the candidate, each a block whose parents voting for
+the candidate form a quorum. The three laws are three existing lemmas
+restated — locality is `certifies_of_sustains`, coverage is
+`certifies_of_synchronisedOn` with its antecedent cut down to the two
+layers it reads, and commitment is `leaderCommits_cert` with the
+precondition unpacked. -/
+
+/-- **The core's support**: wavelength two, certification the rule's own. -/
+def coreSupport : Support (mysticetiRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)) where
+  wave := 2
+  Certifies := fun U c L => Certifies U c L
+
+/-- **Law 1.** A certifier two rounds above the settling round reads
+references strictly above it, which `RebasedAbove` preserves. -/
+theorem coreSupport_local :
+    Support.Local (R := mysticetiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) coreSupport := by
+  intro U U' G R₀ h c L hc hcr
+  exact certifies_of_sustains h hc (by change R₀ + 2 ≤ (U.block c).round at hcr; omega)
+
+/-- **Law 2.** Coverage toward the candidate over two layers: every
+quorum block one round up references it, and every quorum block two
+rounds up references each of those, so the certifier's voting parents
+are the whole quorum. -/
+theorem coreSupport_ofCoverage :
+    Support.OfCoverage (R := mysticetiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) coreSupport (coreReliability Validator) := by
+  intro U T hq r L hpop hct hL hLr hLc c hc hcc hcr
+  have hcard : quorumCard Validator ≤ T.card := by
+    have h2 := hq.2
+    change Fintype.card Validator - Faults.f Validator ≤ T.card at h2
+    exact h2
+  have hcr' : (BlockUniverse.block U c).round = r + 2 := hcr
+  have hcc' : (BlockUniverse.block U c).creator ∈ T := hcc
+  have hLr' : (BlockUniverse.block U L).round = r := hLr
+  have hLc' : (BlockUniverse.block U L).creator ∈ T := hLc
+  change quorumCard Validator ≤ (creatorsOf U.block (votesIn U c L)).card
+  refine le_trans hcard (Finset.card_le_card ?_)
+  intro v hv
+  obtain ⟨q, hq', hqc, hqr⟩ := hpop (r + 1) (by omega) (by change r + 1 ≤ r + 2; omega) v hv
+  have hqc' : (BlockUniverse.block U q).creator = v := hqc
+  have hqr' : (BlockUniverse.block U q).round = r + 1 := hqr
+  have hqT : (BlockUniverse.block U q).creator ∈ T := by rw [hqc']; exact hv
+  have hvote : L ∈ (BlockUniverse.block U q).refs :=
+    hct r le_rfl (by change r < r + 2; omega) q hq' hqT hqr' L hL hLc' hLr'
+      Relation.ReflTransGen.refl
+  have hpar : q ∈ (BlockUniverse.block U c).refs :=
+    hct (r + 1) (by omega) (by change r + 1 < r + 2; omega) c hc hcc'
+      (by change (BlockUniverse.block U c).round = r + 1 + 1; rw [hcr']) q hq' hqT hqr'
+      (Relation.ReflTransGen.single hvote)
+  rw [mem_creatorsOf]
+  exact ⟨q, Finset.mem_filter.mpr ⟨hpar, hvote⟩, hqc'⟩
+
+/-- **Law 3.** A quorum's certificates at the slot's candidate are a
+direct commit; a view caught up to the certificate round sees it. -/
+theorem coreSupport_commits :
+    Support.Commits (R := mysticetiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) coreSupport (coreReliability Validator) := by
+  intro S U V T k hq hpop hcert hcov hlead
+  have hcard : quorumCard Validator ≤ T.card := by
+    have h2 := hq.2
+    change Fintype.card Validator - Faults.f Validator ≤ T.card at h2
+    exact h2
+  obtain ⟨L, hLmem, hLc, hLr⟩ := hpop (S.slotRound k) le_rfl
+    (by change S.slotRound k ≤ S.slotRound k + 2; omega) (S.leader k) hlead
+  have hL : IsLeaderBlock (S := S) U k L := ⟨hLmem, hLr, hLc⟩
+  have hdc : DirectCommit U L (S.slotRound k) :=
+    directCommit_of_certifiesAt hcard
+      (hpop (S.slotRound k + 2) (by omega) (by change S.slotRound k + 2 ≤ S.slotRound k + 2; omega))
+      (hcert L ⟨hLmem, hLr, hLc⟩)
+  have hin : DirectCommitIn U V L (S.slotRound k) := directCommitIn_of_coversUpto hdc hcov
+  refine ⟨L, by omega, Decided.directCommit hL hin, ?_⟩
+  intro S' hround hlead'
+  refine Decided.directCommit (S := S') ⟨hLmem, by rw [hround]; exact hLr,
+    by rw [hlead' k (by omega)]; exact hLc⟩ ?_
+  rw [hround]; exact hin
 
 /-- **The core's precondition is reachable** (`Properties/Live.lean`):
 `coreLive` is the conjunction of the three carrier-level facts and the

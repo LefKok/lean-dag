@@ -82,6 +82,16 @@ theorem card_correct : Fintype.card Validator ≤ rel.correct.card + rel.slack :
   have := rel.covers
   omega
 
+/-- **A quorum of the reliable set**: inside it, and at least `n − slack`
+strong — which is each rule's own quorum read off its fault model, the
+core's `n − f`, Nemo's majority, Hydrozoan's `n − f − c`. -/
+def IsQuorum (T : Finset Validator) : Prop :=
+  T ⊆ rel.correct ∧ Fintype.card Validator - rel.slack ≤ T.card
+
+/-- The reliable set is a quorum of itself. -/
+theorem isQuorum_correct : rel.IsQuorum rel.correct :=
+  ⟨Finset.Subset.rfl, by have := rel.card_correct; omega⟩
+
 /-- A set clearing the quorum threshold meets the reliable set. -/
 theorem exists_correct_of_card {S : Finset Validator}
     (h : Fintype.card Validator - rel.slack ≤ S.card) :

@@ -1,5 +1,6 @@
 import Mathlib.Order.Interval.Finset.Nat
 import LeanDag.Properties.Live
+import LeanDag.Properties.Support
 import Mathlib.Data.Finset.Lattice.Fold
 import LeanDag.Hybrid.Carrier
 import LeanDag.Hybrid.Liveness
@@ -385,6 +386,34 @@ def hybridLive (S : Slots Validator)
     ∃ R₀ N, SynchronisedOn U.val T R₀ ∧ R₀ ≤ S.slotRound lo ∧
       (∀ r, R₀ ≤ r → r ≤ N → PopulatedOn U.val T r) ∧ V.CoversUpto N ∧
       ∀ k, k < K → S.slotRound k + 1 ≤ N
+
+/-- **Law 3 of `voteSupport`, for Hybrid** (`Properties/Support.lean`):
+the hybrid quorum referencing the candidate one round up is its direct
+commit. -/
+theorem voteSupport_commits (kt : ℕ) :
+    (voteSupport (hybridRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) kt)).Commits (coreReliability Validator) := by
+  intro S U V T k hq hpop hcert hcov hlead
+  have hcard : Hybrid.q Validator ≤ T.card := by
+    have h2 := hq.2
+    change Fintype.card Validator - Faults.f Validator ≤ T.card at h2
+    rw [hybrid_f] at h2
+    exact h2
+  obtain ⟨L, hLmem, hLc, hLr⟩ := hpop (S.slotRound k) le_rfl
+    (by change S.slotRound k ≤ S.slotRound k + 1; omega) (S.leader k) hlead
+  have hdc : Hybrid.DirectCommit U.val L (S.slotRound k) := by
+    refine le_trans hcard (Finset.card_le_card ?_)
+    intro w hw
+    obtain ⟨b, hb, hbc, hbr⟩ := hpop (S.slotRound k + 1) (by omega)
+      (by change S.slotRound k + 1 ≤ S.slotRound k + 1; omega) w hw
+    exact mem_supporters.mpr ⟨b, hb, hbr, hcert L ⟨hLmem, hLr, hLc⟩ w hw b hb hbc hbr, hbc⟩
+  have hin : Hybrid.DirectCommitIn U.val V L (S.slotRound k) :=
+    Hybrid.directCommitIn_of_coversUpto hdc hcov
+  refine ⟨L, by omega, Hybrid.Decided.directCommit ⟨hLmem, hLr, hLc⟩ hin, ?_⟩
+  intro S' hround hlead'
+  refine Hybrid.Decided.directCommit (S := S') ⟨hLmem, by rw [hround]; exact hLr,
+    by rw [hlead' k (by omega)]; exact hLc⟩ ?_
+  rw [hround]; exact hin
 
 /-- **Hybrid's precondition is reachable** (`Properties/Live.lean`).
 The reliable set is the fully-correct class, which carries the hybrid
