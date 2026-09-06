@@ -4901,19 +4901,21 @@ mechanisms, and liveness with certification as the only antecedent.
 §16.10 is the matrix: nine rules, every mechanism, and what the
 generic route retired.
 
-§16.1 to §16.8 are the record of the first route and what it found.
-That route named the invariants each arc consumes and proved
+§16.1, §16.2 and the capstone of §16.5 are the record of the first
+route: it named the invariants each arc consumes and proved
 preservation for each transformer, and its capstone read verdicts
-through the hybrid model under an adaptive schedule; the capstone, the
-lifecycle theorem and the hand-composed stack are gone, replaced by the
-headline at the core. What survives is what the properties do not
-state and the route found on its way: coverage is **refuted** under the
-Safe Skip fill, with an exact boundary and for the same reason the fill
-is safe (I4); *placement conditions* say where a garbage-collection
-horizon may be put (I5, I6); a validator pruned past its own history
-can be restored by a provision costing no exemption from P3′ and no
-agreement on the cut (I10–I12); and §8's storage account is sharpened
-twice over (I17, I19).
+through the hybrid model under an adaptive schedule. The capstone, the
+lifecycle theorem and the hand-composed stack are gone, subsumed by the
+headline at the core, and those subsections say why. §16.3, §16.4 and
+§16.6 to §16.8 are not the first route and are not subsumed: they are
+facts about the mechanisms that no property states, because they are
+not about verdicts. Coverage is **refuted** under the Safe Skip fill,
+with an exact boundary and for the same reason the fill is safe (I4);
+*placement conditions* say where a garbage-collection horizon may be
+put (I5, I6); a validator pruned past its own history can be restored
+by a provision costing no exemption from P3′ and no agreement on the
+cut (I10–I12); and §8's storage account is sharpened twice over (I17,
+I19).
 
 ### 16.1 Three layers, and what can break them
 
