@@ -7,6 +7,18 @@
 > and whether the surrounding prose is faithful to what is proved, has
 > only human-plus-LLM review behind it. Read critically.
 
+> **Retired (2026-09-06).** The bespoke composition this chapter
+> records — the `stack` universe, its chain of per-invariant
+> preservation lemmas, the lifecycle theorem and the hybrid-model
+> capstone — has been removed from the code. Every mechanism is now
+> proved once against the properties of `target-properties.md`, and the
+> composition is `Stack.safe_and_live` (`Properties/Arcs/Stack.lean`),
+> instantiated for the core as `stack_core_safe_and_live`
+> (`Integration/StackRules.lean`). What survives in code is
+> `Integration/Preservation.lean`, `Coverage.lean`, `Retention.lean` and
+> the re-genesis files. The chapter is kept as the record of how the
+> composition was first reached.
+
 Every arc of this development was built additively: each consumes the
 core read-only, and none modifies another. That discipline kept the
 arcs independent, and it left a question unanswered — **do the arcs

@@ -7,6 +7,21 @@
 > and whether the surrounding prose is faithful to what is proved, has
 > only human-plus-LLM review behind it. Read critically.
 
+> **Retired (2026-09-06).** The integration layer this chapter records —
+> `Integration/Hydrozoan/` with its `toCore`/`ofCore` transport, the
+> self-parent clause, the schedule and fault projections, the
+> simulation lemmas and the transported cut and fill — has been removed
+> from the code. Hydrozoan and Optimal-Hydrozoan now reach every
+> mechanism cell as the other rules do: a native cut `chopHZ` and copy
+> fill `copyFillHZ` on Hydrozoan's own universe
+> (`Integration/HydrozoanMechanisms.lean`), the Optimal versions with
+> leader exclusion carried across both
+> (`Integration/OptimalMechanisms.lean`), and verdict transport,
+> agreement, liveness and composition from the generic theorems of
+> `target-properties.md` through `LeanDag.Hydrozoan.banded`, `agree` and
+> `hzSupport`. The chapter is kept as the record of the design, and of
+> the skip-fill obstruction the copy fill removed.
+
 This document is the design record for connecting the **Hydrozoan** and
 **Optimal-Hydrozoan** arcs (`hydrozoan.md`, `optimal-hydrozoan.md`) to
 the rest of the development. Both arcs consume nothing from the core:

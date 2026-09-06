@@ -291,7 +291,8 @@ proof effort with no corresponding proof content.
    universe transformers rather than settling a quadratic matrix — with
    a capstone in which a validator recovered by Safe Skip, then
    truncated, read in the hybrid model under an adaptive schedule still
-   cannot disagree about a verdict (`hybrid_agree_stack` (I7)). Four
+   cannot disagree about a verdict (I7; since retired in favour of
+   `stack_core_safe_and_live`, proved through the properties). Four
    kinds of result are visible only here. Coverage is refuted under the
    fill, with an exact boundary and for the same reason the fill is
    safe (I4). Three conditions constrain where a horizon may fall
@@ -508,7 +509,7 @@ fault tolerance (`Hybrid.decided_unique` (H6),
 `hybrid_bound_necessary` (H10)); and crash-fault consensus
 (`Nemo.decided_unique` (NN5), `Nemo.all_decided_below_of_fairRun`
 (NN8)). §16 composes the first seven
-(`hybrid_agree_stack` (I7)) and collects the deployment conditions
+(`stack_core_safe_and_live` (I7)) and collects the deployment conditions
 their composition reveals.
 
 §§17–23 analyse seven protocols of the family against this development:
@@ -3819,7 +3820,7 @@ model: the hybrid model of §14 splits `Correct` into honest and
 available, and a *crash-prone* validator — the one Safe Skip exists to
 serve — is honest but outside `Correct`. Stating the fact the boundary
 argument actually uses is what lets the same structure describe both
-(§14's `hB1uniq_of_crash`).
+(§14's crash-prone case, §16.5).
 
 The filled block at gap round `k` is the donor's references plus the
 forced self reference:
@@ -4863,6 +4864,20 @@ implementation computes the same five verdicts on it.
 
 ## 16. Integration: composing the arcs
 
+> **Retired (2026-09-06).** The bespoke composition this section
+> records — the `stack` universe, its chain of per-invariant
+> preservation lemmas, the lifecycle theorem and the capstone that
+> read verdicts through the hybrid model — has been removed from the
+> code. What replaces it is the properties arc (`target-properties.md`):
+> every mechanism is proved once against `Causal`, `Banded`, `Agree`,
+> `CommitsCandidate`, `Indirect` and a `Support`, and the composition
+> is `Stack.safe_and_live` (`Properties/Arcs/Stack.lean`), instantiated
+> for the core as `stack_core_safe_and_live` (`Integration/StackRules`).
+> What survives of this section in code is §16.2's preservation lemmas,
+> §16.3's coverage results, §16.4's retention and §16.6's re-genesis.
+> The rest is kept as the record of how the composition was first
+> reached and why the direct route was retired.
+
 *(modules `LeanDag/Integration/`; the design record is `integration.md`)*
 
 Each arc of §§7–14 was built additively, consuming the core read-only
@@ -5075,24 +5090,24 @@ happens then.
 ### 16.5 Composition, and a hypothesis that did not fit
 
 **I7 — the capstone.** A validator running the whole stack — recovered
-by Safe Skip, then truncated, read in the hybrid fault model under an
-adaptive schedule — satisfies every invariant its arcs require, by
-chains of the lemmas of §16.2 with no new argument. The end-to-end
-statement:
+by Safe Skip, then truncated — still cannot disagree with anyone about
+a verdict, and still decides. The theorem that first said so read the
+verdicts through the hybrid model under an adaptive schedule, and
+discharged every invariant its arcs required by chains of the lemmas of
+§16.2. It is retired: the statement now in the code is
 
 ```lean
-theorem hybrid_agree_stack [LinearOrder BlockId] [S : Slots Validator]
-    (sk : SkipMsg U) (hne : HonestNoEquiv U) {k : ℕ}
-    (hk : Hybrid.Admissible Validator k)
+theorem stack_core_safe_and_live (sk : SkipMsg U) (hd : G ≤ S.slotRound d)
+    {V : View Validator BlockId Payload U} {V' : View Validator BlockId Payload (chop sk.skipFill G)}
+    (hv : ViewAgreeAbove (MysticetiProperties.mysticetiRule (Payload := Payload)) V V'
+      (max (sk.r + 1) G)) :
     …
-    (h₁ : Hybrid.Decided k (stack sk G) V₁ s v₁)
-    (h₂ : Hybrid.Decided k (stack sk G) V₂ s v₂) : v₁ = v₂
 ```
 
-A validator that recovered from a crash and then pruned still cannot
-disagree with anyone about a verdict. Its proof is §14's agreement
-theorem applied to a different universe, with the one hypothesis
-discharged by the chained preservation lemma.
+which is `Stack.safe_and_live` (`Properties/Arcs/Stack.lean`) applied to
+the two witnesses `sustains_skipFill` and `truncates_chop`, and needs no
+preservation chain because the properties are stated once against the
+rule and carried by the witnesses.
 
 The order is asymmetric, and the order deployments take is the
 unconstrained one. Filling then truncating is well formed at every
@@ -5110,10 +5125,10 @@ Safe Skip serves — is honest but not correct. `SkipMsg` carried
 case. The hypothesis was stronger than its use: it appeared once,
 pinning `v1`'s round-`r0` block to the anchor at the fill's boundary.
 §12.1 now carries that fact directly as `hB1uniq`, with
-`hB1uniq_of_correct` recovering the base model's route and
-`hB1uniq_of_crash` supplying §14's from `HonestNoEquiv`. Neither arc
-was mistaken; one stated a hypothesis in terms of a class the other
-splits.
+`hB1uniq_of_correct` recovering the base model's route; the lemma that
+supplied §14's from `HonestNoEquiv`, and the lifecycle theorem built on
+it, were retired with the direct composition. Neither arc was mistaken;
+one stated a hypothesis in terms of a class the other splits.
 
 The lifecycle then composes without further work. A halted validator's
 slot is skipped by L5 — whose hypothesis says nothing about *why* the
@@ -9322,6 +9337,20 @@ committee of five or more.
 
 ## 24. Composing the Hydrozoan arcs: what a deployment gets
 
+> **Retired (2026-09-06).** The integration layer this section records
+> — the `toCore`/`ofCore` transport under a self-parent clause, the
+> schedule and fault projections, the simulation lemmas and the
+> transported cut and fill — has been removed from the code. Hydrozoan
+> and Optimal-Hydrozoan now reach the same cells as every other rule:
+> a native cut `chopHZ` and a copy fill `copyFillHZ` on Hydrozoan's own
+> universe (`Integration/HydrozoanMechanisms.lean`), the Optimal
+> versions with leader exclusion carried across both
+> (`Integration/OptimalMechanisms.lean`), and verdict transport,
+> agreement, liveness and composition from the generic theorems
+> through `LeanDag.Hydrozoan.banded`, `agree` and `hzSupport`. The
+> section is kept as the record of the design, and of the obstruction
+> at §24.4 that the copy fill removed.
+
 *(modules `LeanDag/Integration/Hydrozoan/` and `LeanDag/Barnacle/Hydrozoan*/`;
 the design record is `hydrozoan-integration.md`; the arcs composed are
 Hydrozoan (§22), Optimal-Hydrozoan (§23), Barnacle (§21), garbage
@@ -9446,53 +9475,48 @@ below a horizon, and it may have recovered from a crash by one message.
 Both are universe transformers, and neither arc had any theorem that
 its verdicts survive them.
 
-**The missing validity clause.** The deployed protocol has every block
-carry its author's previous block; Hydrozoan's model does not record
-it, because no theorem of that arc consumes it. It is stated beside the
-frozen definition as `SelfParenting` (HI8), and the finding is that
-**one lemma discharges it for every transformer**:
-
-```lean
-theorem selfParenting_ofCore {Payload : Type}
-    (U : LeanDag.BlockUniverse Replica BlockId Payload) (hne : HonestNoEquiv U) :
-    SelfParenting (ofCore U hne)
-```
-
-Any transformer routed through the core and back preserves the clause,
-because the core's validity rule already contains it. No transformer
-owes a proof of its own.
+**The route that was taken first, and retired.** The first
+integration carried Hydrozoan universes into the core's and back under
+a self-parent clause `SelfParenting` (HI8), applied the core's
+transformers there, and transported every rule predicate across them
+one lemma at a time. The clause held for every transformer by one
+lemma, because the core's validity rule already contains it. The cost
+was a closed cluster of thirteen files whose only consumers were its
+own tests, and a fill inherited from the core whose self reference
+broke Optimal's validity clause. Both are gone: Hydrozoan builds its
+own cut and fill on the shared data, and the verdict results are the
+generic theorems applied.
 
 **The cut.** Verdicts survive garbage collection, in both directions
 and for both protocols:
 
 ```lean
-theorem decided_chopHZ (hd : G ≤ S.slotRound d)
-    {V : LeanDag.Hydrozoan.View U} {k : ℕ} {v : Option BlockId} :
-    LeanDag.Hydrozoan.Decided (S := slotsChopHZ hd) (chopHZ U hsp G)
-        (View.chopHZ V hsp G) k v
-      ↔ LeanDag.Hydrozoan.Decided U V (d + k) v
+theorem decided_chop_iff_hz (hd : G ≤ S.slotRound d) {V : LeanDag.Hydrozoan.View U}
+    {k : ℕ} {v : Option BlockId} :
+    (LeanDag.Hydrozoan.rule (Replica := Replica) (BlockId := BlockId)).Decided S V (d + k) v ↔
+      (LeanDag.Hydrozoan.rule (Replica := Replica) (BlockId := BlockId)).Decided
+        (S.chop G d hd) (chopViewHZ V G) k v
 ```
 
 The base-slot premise `G ≤ S.slotRound d` is the only condition: no
-synchrony, no fairness, no liveness (HI7). The Optimal mirror needs
-one lemma more, that the truncation preserves leader exclusion, and
-then reads identically. Because Optimal applies every rule predicate to
-the underlying block universe, the shared rules — candidacy, anchor
-eligibility, the slow path, the certificate rung — are carried by the
-lemmas the Hydrozoan cut already proves, and only three rules are new.
-One guard deserves a note: the round condition is `G + 1 < round`, not
-`G < round`, because a vote is read from a *parent* and the cut empties
-the references of the layer it retains at the bottom.
+synchrony, no fairness, no liveness (HI7). The proof is
+`LocalTruncate.of_banded` at `LeanDag.Hydrozoan.banded`, given that
+`chopHZ` is a `Truncates` witness — three clauses on the block record.
+The Optimal mirror `decided_chop_iff_opt` needs one lemma more,
+`leaderExcludedAll_chopHZ`: a block bound by exclusion sits two rounds
+above the horizon, so it keeps its parents and its candidates are old
+blocks at a rebased round.
 
 **The fill, for Hydrozoan.** A replica that recovers by one message
 reaches the same verdicts as one that never crashed:
 
 ```lean
-theorem decided_fill_agreeHZ {k : ℕ} {v w : Option BlockId}
-    {W : LeanDag.Hydrozoan.View (skipFillHZ U hsp sk)}
-    (hV : LeanDag.Hydrozoan.Decided U V k v)
-    (hW : LeanDag.Hydrozoan.Decided (skipFillHZ U hsp sk) W k w) :
-    v = w
+theorem decided_agree_copyFillHZ {sk : SkipData U.ids (hzBlk U)} (S : Slots Replica)
+    {V : LeanDag.Hydrozoan.View U} {V' V'' : LeanDag.Hydrozoan.View (copyFillHZ U sk)}
+    (hsub : V.ids ⊆ V'.ids) {k : ℕ} {u u' : Option BlockId}
+    (h : (LeanDag.Hydrozoan.rule (Replica := Replica) (BlockId := BlockId)).Decided S V k u)
+    (h' : (LeanDag.Hydrozoan.rule (Replica := Replica) (BlockId := BlockId)).Decided S V'' k u') :
+    u = u'
 ```
 
 with **no quorum hypothesis**, where the core's corresponding result
@@ -9500,34 +9524,21 @@ with **no quorum hypothesis**, where the core's corresponding result
 than a strengthening: the core's skip is stated per candidate, so a
 filled slot that gains a candidate demands a fresh justification, while
 Hydrozoan's skip counts blames at the slot and the count does not move
-when no old block references a fresh identifier. Safe Skip's SS3 does
-*not* transfer to Hydrozoan for the mirrored reason — its direct skip
-asks for `qFast` blames, more than a quorum of correct replicas
-supplies.
+when no old block references a fresh identifier. In the properties
+vocabulary that is `LeanDag.Hydrozoan.banded`, and the fill cell is
+`Persist.of_banded` at the `Extends` witness `extends_copyFillHZ`.
 
-**The fill, for Optimal-Hydrozoan: a refutation.** Optimal obtains SS3,
-by the no-evidence half of its skip. But it does not obtain the fill at
-all, and the obstruction is the validity rule rather than the decision
-relation. A filled block references the recovering replica's anchor
-*and* the donor's references at that round, and neither need have seen
-what the other saw:
-
-```lean
-theorem not_leaderExcludedAll_Ufill : ¬ LeaderExcludedAll Ufill
-```
-
-on a four-replica universe where the clause holds before the recovery.
-One replica equivocates; the anchor is the only block in the universe
-that references one twin, and the donor's line references the other.
-Nothing witnesses the equivocation — that no block references the
-anchor is the crash itself — until the recovery puts anchor and donor
-side by side, and the filled block then witnesses what neither of its
-sources did while referencing a block the equivocator authored (HI9).
-
-`skipFill` is not at fault: it proves the four validity rules of a
-block universe and never claimed the Optimal clause. The repair belongs
-to the fill — a recovering replica applying the Optimal rule drops the
-references the rule excludes — and that is a different construction.
+**The fill, for Optimal-Hydrozoan.** The first fill did not reach
+Optimal at all, and the obstruction was the validity rule rather than
+the decision relation: the core's `skipFill` grafts the recovering
+replica's anchor onto the donor's references, and on a four-replica
+universe where the clause holds before the recovery the filled block
+witnesses an equivocation neither source did while referencing a block
+the equivocator authored (HI9). The refutation was a fact about that
+construction. The copy fill `copyFillHZ` adds no edge — a filled block's
+parents are the donor's — so exclusion survives it
+(`leaderExcludedAll_copyFillHZ`), and Optimal's fill cell is
+`decided_copyFill_opt` with `decided_agree_copyFill_opt`.
 
 ### 24.5 One interface under three inductions
 
@@ -9555,72 +9566,33 @@ invariance**.
 
 ### 24.6 What a deployment gets
 
-The results above are machinery. What a reader wants is a statement
-about one replica's situation, and `Deployment` is that object: the DAG
-the network built, a recovery performed by one message, a horizon below
-which nothing is retained, and the slot its numbering restarts at. What
-the replica *holds* is that DAG recovered and then pruned, in the order
-a deployment does them and the only order that is unconditional.
+The results above were machinery. What a reader wants is a statement
+about one replica's situation: the DAG the network built, a recovery
+performed by one message, a horizon below which nothing is retained,
+and the slot its numbering restarts at. What the replica *holds* is
+that DAG recovered and then pruned, in the order a deployment does them
+and the only order that is unconditional.
 
-Four claims hold of it, none proved there — each is an application of
-the transport above.
+The `Deployment` object that packaged this, with its four claims
+`safe`, `preserves`, `agrees` and `commits` each an application of the
+transport, is retired with the transport. The four claims are now the
+four conjuncts of `Stack.safe_and_live` (`Properties/Arcs/Stack.lean`)
+at Hydrozoan's rule: the stack `Stack.sustains sustains_copyFillHZ`
+then `Stack.truncates (truncates_chop_hz hd)` is a `Rebased`, so
+verdicts transport in both directions, any view of what the replica
+holds agrees with any view of the network, and `hzSupport` — the
+support whose `Commits` law is Hydrozoan's slow path — makes the
+composed universe live above the settling round. The threshold the
+protocol's `CommitLiveness` asserts and this does not is evidence in
+the DAG; it has no property, and what a recovered replica's liveness is
+about is the verdict (`docs/bespoke-links.md` D).
 
-```lean
-theorem safe :
-    @LeanDag.Hydrozoan.SlotAgreement.DecidedUnique Replica BlockId _ _ _ _ _
-      D.numbering D.held
-```
-
-No two views of what the replica holds decide a slot differently.
-
-```lean
-theorem preserves {V : LeanDag.Hydrozoan.View D.network} {k : ℕ} {v : Option BlockId}
-    (h : LeanDag.Hydrozoan.Decided D.network V (D.base + k) v) :
-    LeanDag.Hydrozoan.Decided (S := D.numbering) D.held (D.carry V) k v
-```
-
-Every verdict the network reached, the replica reaches, at its own
-numbering.
-
-```lean
-theorem agrees {V : LeanDag.Hydrozoan.View D.network}
-    {W : LeanDag.Hydrozoan.View D.held} {k : ℕ} {v w : Option BlockId}
-    (hnet : LeanDag.Hydrozoan.Decided D.network V (D.base + k) v)
-    (hloc : LeanDag.Hydrozoan.Decided (S := D.numbering) D.held W k w) :
-    v = w
-```
-
-And it agrees with the rest of the network, on an arbitrary view of
-what it holds rather than a carried one — a joiner's view is never of
-the latter form.
-
-```lean
-theorem commits {W : LeanDag.Hydrozoan.View D.held} {T : Finset Replica} {lo K k : ℕ}
-    (hlive : LeanDag.Hydrozoan.hzLive (LeanDag.Hydrozoan.toCoreSlots D.numbering)
-      (U := D.held) W T lo K)
-    (hlo : lo ≤ k) (hK : k < K) (hlead : D.numbering.leader k ∈ T) :
-    ∃ L, LeanDag.Hydrozoan.Decided (S := D.numbering) D.held W k (some L)
-```
-
-This is `Properties.LeaderCommits`, where it was `CommitLiveness`. The
-difference is the slow threshold, which the protocol's statement asserts
-and this does not: that is evidence in the DAG, it has no property, and
-what a recovered replica's liveness is about is the verdict
-(`docs/bespoke-links.md` D).
-
-A replica running Optimal-Hydrozoan gets the same object with one
-field missing. `PrunedOpt` carries a horizon and no recovery, and
-its `decides` says pruning is invisible to its decision rule —
-but there is no Optimal counterpart to the recovery, because §24.4
-refutes it. **The absent field is the finding**: a structure with a
-`recovery` field would promise what no theorem can supply.
-
-Hydrozoan's liveness theorems apply to what the replica retains, their
-hypotheses surviving both the recovery and the horizon (HI10). The
-conditions are the structure's fields and two instance arguments: the
-committee bound of §24.2, blocks that carry their author's previous
-block, and a horizon at or below the base slot. Nothing else is
-assumed.
+A replica running Optimal-Hydrozoan now gets the same object, with the
+recovery included: the copy fill carries leader exclusion
+(`leaderExcludedAll_copyFillHZ`), so `optSupport` and the two Optimal
+witnesses give the same four conjuncts. The absent recovery field that
+was the finding of this chapter's first version was a fact about the
+core's fill, not about Optimal.
 
 ### 24.7 Findings for the paper
 
@@ -9789,7 +9761,7 @@ and `JumpMsg.denote_eq_of_core` (SS10), `adaptiveRun_agree` (AL3) and
 `Hybrid.safety`, `hybrid_bound_necessary` (H10), `Nemo.decided_unique`
 (NN5), `Nemo.outputAt_agree` (NN6) and
 `Nemo.all_decided_below_of_fairRun` (NN8), and
-`hybrid_agree_stack` (I7) — depends on exactly `propext`,
+`stack_core_safe_and_live` (I7) — depends on exactly `propext`,
 `Classical.choice` and `Quot.sound`, which constitute the whole axiom set of
 Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 `native_decide` and the extended trusted base it entails.
@@ -10695,9 +10667,9 @@ reused.
 | I4 | coverage under the fill: refuted for a set including the recovering validator, preserved otherwise, restored above the fill | `not_synchronisedOn_skipFill`, `synchronisedOn_skipFill_of_notMem`, `synchronisedOn_skipFill_above` *(Integration/Coverage)* |
 | I5 | the joiner: horizon-stability, and epoch alignment | `HorizonStable`, `joiner_assign_agree`, `epochOf_add_of_dvd` *(Integration/Joiner)* |
 | I6 | anchor retention, and the lag bounds the outage | `anchor_pruned`, `chopMsg`, `outage_bounded_by_lag` *(Integration/Retention)* |
-| I7 | the composition capstone | `honestNoEquiv_stack`, `hybrid_agree_stack` *(Integration/Stack)* |
+| I7 | the composition capstone, through the properties | `stack_core`, `stack_core_safe_and_live` *(Integration/StackRules)* |
 | I8 | a severed chain cannot restart | `no_blocks_of_no_genesis`, `severed_of_pruned_anchor` *(Integration/Retention)* |
-| I9 | the crash-prone lifecycle, and the hypothesis it forced | `hB1uniq_of_crash`, `lifecycle` *(Integration/Lifecycle)* |
+| I9 | the hypothesis the crash-prone lifecycle forced; the lifecycle theorem is retired (§16.5) | `hB1uniq`, `hB1uniq_of_correct` *(SafeSkip/Basic)* |
 | I10 | re-genesis at the cut | `addGenesis`, `populatedOn_addGenesis` *(Integration/ReGenesis)* |
 | I11 | local derivation converges; no agreement on the cut | `chop_addGenesis`, `regenesis_converges` *(Integration/ReGenesis)* |
 | I12 | bootstrap, re-genesis and Safe Skip compose into full recovery | `hB1uniq_of_addGenesis`, `recoveryMsg` *(Integration/ReGenesis)* |
@@ -10775,16 +10747,16 @@ reused.
 
 | Label | Statement | Lean |
 |:---|:---|:---|
-| HI1 | Hydrozoan's schedule is the core's: fairness and the anchor runway agree | `fairRunOn_eq`, `spansEligible_eq` *(Integration/Hydrozoan/Schedule)* |
-| HI2 | the fault projection, under the hybrid committee bound rather than `c ≤ k` | `toHybrid`, `hybridCommittee_of_slack` *(Integration/Hydrozoan/Faults)* |
+| HI1 | retired: the schedule projection went with the transport layer (§24) | — |
+| HI2 | retired: the fault projection went with the transport layer (§24) | — |
 | HI3 | Hydrozoan's universe satisfies the causal-structure interface, by its own fields | `causalStructure` *(Barnacle/Helpers/Hydrozoan)* |
 | HI4 | Hydrozoan as a Barnacle base rule, with its laws | `Barnacle.Hydrozoan.holds` *(Barnacle/Hydrozoan/Proof)* |
 | HI5 | as a live rule: the descent laws at slack `f + c`, and round-robin liveness at `3(f + c) + 1 ≤ n` | `Barnacle.HydrozoanLive.holds` *(Barnacle/HydrozoanLive/Proof)* |
 | HI6 | the same two for Optimal-Hydrozoan, its validity clause restated without a schedule | `Barnacle.OptimalHydrozoan.holds`, `LeaderExcludedAll` *(Barnacle/OptimalHydrozoan/Proof, Barnacle/Helpers/OptimalHydrozoan)* |
-| HI7 | verdicts survive the cut, for `Decided` and for `DecidedOpt`, on the base-slot premise alone | `decided_chopHZ_of_localTruncate`, `decidedOpt_chopHZ` *(Integration/Hydrozoan/ViaProperties, OptimalChopDecided)* |
-| HI8 | the self-parent clause, and its preservation by every transformer in one lemma | `SelfParenting`, `selfParenting_ofCore` *(Integration/Hydrozoan/Universe, Transport)* |
-| HI9 | verdicts survive the fill for `Decided` with no quorum hypothesis; for `DecidedOpt` the validity clause is refuted | `decided_fill_agreeHZ_of_properties`, `not_leaderExcludedAll_Ufill` *(Integration/Hydrozoan/ViaProperties, Test/Integration/HydrozoanOptimal)* |
-| HI10 | what a deployment gets: safety, agreement with the network, verdict preservation and liveness through a recovery and a horizon; and, for Optimal-Hydrozoan, through a horizon alone | `safe`, `agrees`, `preserves`, `commits`, `decides` *(Integration/Hydrozoan/Deployment, OptimalChopDecided)* |
+| HI7 | verdicts survive the cut, for both rules, on the base-slot premise alone | `decided_chop_iff_hz`, `decided_chop_iff_opt` *(Integration/HydrozoanMechanisms, OptimalMechanisms)* |
+| HI8 | retired: the self-parent clause was owed only by the transport (§24.4) | — |
+| HI9 | verdicts survive the copy fill for both rules, with no quorum hypothesis; leader exclusion survives it | `decided_agree_copyFillHZ`, `decided_copyFill_opt`, `leaderExcludedAll_copyFillHZ` *(Integration/HydrozoanMechanisms, OptimalMechanisms)* |
+| HI10 | what a deployment gets: safety and liveness through a recovery and a horizon, for both rules, from the support and the two witnesses | `Stack.safe_and_live`, `hzSupport`, `optSupport` *(Properties/Arcs/Stack, Hydrozoan/Helpers/Commit, OptimalHydrozoan/Carrier)* |
 
 ---
 
@@ -13660,17 +13632,6 @@ def recoveryMsg (r : ℕ) (line fresh : ℕ → BlockId) (idx : BlockId → ℕ)
 **The catch-up fill.** After re-genesis the returning validator rejoins production with one message: a `SkipMsg` anchored on its new genesis block, filling every round from the cut to the target.
 
 The donor data is the ordinary requirement — a line of `v2` blocks from the anchor's round to the target, each citing the one below, all of them in the retained window that every validator holds. The two clauses peculiar to recovery come at no cost: `hB1uniq` from `hB1uniq_of_addGenesis`, and `hgap` from the absence itself, since a validator with no blocks authored none during the gap either.
-
-#### `stack`
-
-*abbrev, `Integration.Stack.lean`*
-
-```lean
-abbrev stack (sk : SkipMsg U) (G : ℕ) : BlockUniverse Validator BlockId Payload :=
-  chop sk.skipFill G
-```
-
-**The stacked universe**: filled, then truncated.
 
 #### `skipFillD`
 
@@ -24955,13 +24916,86 @@ def skipFillHybrid (U : (HybridProperties.hybridRule (Validator := Validator)
 
 **The fill, at Hybrid's carrier.**
 
-#### `View.chopHZ`
+#### `chopBlkHZ`
 
-*def, `Integration.Hydrozoan.ChopDecided.lean`*
+*def, `Integration.HydrozoanMechanisms.lean`*
 
 ```lean
-def View.chopHZ (V : LeanDag.Hydrozoan.View U) (hsp : SelfParenting U) (G : ℕ) :
-    LeanDag.Hydrozoan.View (chopHZ U hsp G) where
+def chopBlkHZ (blk : BlockId → LeanDag.Hydrozoan.Block Replica BlockId) (G : ℕ) (i : BlockId) :
+    LeanDag.Hydrozoan.Block Replica BlockId :=
+  if (blk i).round ≤ G then ⟨(blk i).round - G, (blk i).author, ∅⟩
+  else ⟨(blk i).round - G, (blk i).author, (blk i).parents⟩
+```
+
+One block of the truncation, at Hydrozoan's block type: the round rebased by `−G`, and at or below the cut the parents dropped.
+
+#### `chopHZ`
+
+*def, `Integration.HydrozoanMechanisms.lean`*
+
+```lean
+def chopHZ (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) (G : ℕ) :
+    LeanDag.Hydrozoan.BlockUniverse Replica BlockId where
+  ids := U.ids.filter fun i => G ≤ (U.block i).round
+  block := chopBlkHZ U.block G
+  complete := by
+    intro i hi j hj
+    rw [Finset.mem_filter] at hi
+    rcases Nat.lt_or_ge G (U.block i).round with h | h
+    · rw [chopBlkHZ_parents_of_lt h] at hj
+      have := (U.valid i hi.1).predecessor j hj
+      exact Finset.mem_filter.mpr ⟨U.complete i hi.1 j hj, by omega⟩
+    · rw [chopBlkHZ_parents_of_le h] at hj
+      exact absurd hj (Finset.notMem_empty j)
+  valid := by
+    intro i hi
+    rw [Finset.mem_filter] at hi
+    have hv := U.valid i hi.1
+    rcases Nat.lt_or_ge G (U.block i).round with h | h
+    · refine ⟨?_, ?_, ?_⟩
+      · intro j hj
+        rw [chopBlkHZ_parents_of_lt h] at hj
+        have := hv.predecessor j hj
+        rw [chopBlkHZ_round, chopBlkHZ_round]
+        omega
+      · intro a ha b hb hab
+        rw [chopBlkHZ_parents_of_lt h] at ha hb
+        rw [chopBlkHZ_author, chopBlkHZ_author] at hab
+        exact hv.distinct_authors a ha b hb hab
+      · intro _
+        have hcr : LeanDag.Hydrozoan.authors (chopBlkHZ U.block G) (chopBlkHZ U.block G i) =
+            LeanDag.Hydrozoan.authors U.block (U.block i) := by
+          unfold LeanDag.Hydrozoan.authors
+          rw [chopBlkHZ_parents_of_lt h, authorsOf_chopBlkHZ]
+        rw [hcr]
+        exact hv.quorum (by omega)
+    · refine ⟨?_, ?_, ?_⟩
+      · intro j hj
+        rw [chopBlkHZ_parents_of_le h] at hj
+        exact absurd hj (Finset.notMem_empty j)
+      · intro a ha
+        rw [chopBlkHZ_parents_of_le h] at ha
+        exact absurd ha (Finset.notMem_empty a)
+      · intro hr
+        rw [chopBlkHZ_round] at hr
+        omega
+  no_equivocation := by
+    intro i hi j hj hib hcc hrr
+    rw [Finset.mem_filter] at hi hj
+    rw [chopBlkHZ_author] at hib hcc
+    rw [chopBlkHZ_author] at hcc
+    rw [chopBlkHZ_round, chopBlkHZ_round] at hrr
+    exact U.no_equivocation i hi.1 j hj.1 hib hcc (by omega)
+```
+
+**The cut, at Hydrozoan's universe.**
+
+#### `chopViewHZ`
+
+*def, `Integration.HydrozoanMechanisms.lean`*
+
+```lean
+def chopViewHZ (V : LeanDag.Hydrozoan.View U) (G : ℕ) : LeanDag.Hydrozoan.View (chopHZ U G) where
   ids := V.ids.filter fun i => G ≤ (U.block i).round
   subset_ids := by
     intro i hi
@@ -24970,408 +25004,129 @@ def View.chopHZ (V : LeanDag.Hydrozoan.View U) (hsp : SelfParenting U) (G : ℕ)
   complete := by
     intro i hi j hj
     rw [Finset.mem_filter] at hi
-    rcases Nat.lt_or_ge G (U.block i).round with hlt | hge
-    · rw [chopHZ_parents_of_lt hlt] at hj
-      have hround := (U.valid i (V.subset_ids hi.1)).predecessor j hj
-      exact Finset.mem_filter.mpr ⟨V.complete i hi.1 j hj, by omega⟩
-    · rw [chopHZ_parents_of_le hge] at hj
-      exact absurd hj (Finset.notMem_empty j)
+    have hj' : j ∈ (chopBlkHZ U.block G i).parents := hj
+    rcases Nat.lt_or_ge G (U.block i).round with h | h
+    · rw [chopBlkHZ_parents_of_lt h] at hj'
+      have := (U.valid i (V.subset_ids hi.1)).predecessor j hj'
+      exact Finset.mem_filter.mpr ⟨V.complete i hi.1 j hj', by omega⟩
+    · rw [chopBlkHZ_parents_of_le h] at hj'
+      exact absurd hj' (Finset.notMem_empty j)
 ```
 
-A replica's view, truncated at the horizon: keep what clears the cut. Closure survives, a retained block's parents sitting one round below it and so at or above the cut — except at the base layer, where they are gone.
+The truncated view: keep what clears the cut.
 
-#### `slotsChopHZ`
+#### `hzBlk`
 
-*def, `Integration.Hydrozoan.ChopDecided.lean`*
+*def, `Integration.HydrozoanMechanisms.lean`*
 
 ```lean
-def slotsChopHZ (hd : G ≤ S.slotRound d) : LeanDag.Hydrozoan.Slots Replica :=
-  ofCoreSlots (LeanDag.Slots.chop (toCoreSlots) G d hd)
+def hzBlk (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) :
+    BlockId → Block Replica BlockId Unit :=
+  fun i => LeanDag.Hydrozoan.adaptBlock (U.block i)
 ```
 
-The schedule re-indexed from the base slot `d` and rebased by the cut — the core's `Slots.chop`, read back through `ofCoreSlots`, so its monotonicity, unboundedness and keying proofs are reused entire.
+A Hydrozoan universe's blocks, read as core blocks with no payload — the shape a Safe Skip message is stated over.
 
-#### `Deployment`
+#### `copyFillHZ`
 
-*structure, `Integration.Hydrozoan.Deployment.lean`*
+*def, `Integration.HydrozoanMechanisms.lean`*
 
 ```lean
-structure Deployment (Replica BlockId : Type) [Fintype Replica] [DecidableEq Replica]
-    [DecidableEq BlockId] [LinearOrder BlockId]
-    [LeanDag.Hydrozoan.Faults Replica] [Fact (HybridCommittee Replica)]
-    [S : LeanDag.Hydrozoan.Slots Replica] where
-  /-- The DAG as the network built it, before this replica recovered or
-  pruned. -/
-  network : LeanDag.Hydrozoan.BlockUniverse Replica BlockId
-  /-- Every block carries its author's previous block. The deployed
-  protocol has this; the Hydrozoan model does not record it, since no
-  theorem of that arc consumes it. -/
-  selfParents : SelfParenting network
-  /-- The one-message recovery this replica performed. -/
-  recovery : SkipMsg (toCore network selfParents)
-  /-- The horizon below which it retains nothing. -/
-  horizon : ℕ
-  /-- The slot its numbering restarts at. -/
-  base : ℕ
-  /-- The horizon does not reach past that slot. -/
-  retains : horizon ≤ S.slotRound base
+def copyFillHZ (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
+    (sk : SkipData U.ids (hzBlk U)) : LeanDag.Hydrozoan.BlockUniverse Replica BlockId where
+  ids := U.ids ∪ sk.freshIds
+  block b := if b ∈ U.ids then U.block b
+    else ⟨sk.idx b, sk.v1, (U.block (sk.line (sk.idx b))).parents⟩
+  complete := by
+    intro i hi j hj
+    rcases Finset.mem_union.mp hi with ho | hf
+    · rw [if_pos ho] at hj
+      exact Finset.mem_union_left _ (U.complete i ho j hj)
+    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
+      have hR0 : sk.r0 = (hzBlk U sk.B1).round := rfl
+      have hB1 := hzBlk_round U sk.B1
+      rw [if_neg (sk.hfresh_new k), sk.hidx] at hj
+      exact Finset.mem_union_left _
+        (U.complete _ (sk.hline_mem k (by omega) hk2) j hj)
+  valid := by
+    intro i hi
+    rcases Finset.mem_union.mp hi with ho | hf
+    · rw [if_pos ho]
+      have hv := U.valid i ho
+      refine ⟨?_, ?_, ?_⟩
+      · intro j hj
+        rw [if_pos (U.complete i ho j hj)]
+        exact hv.predecessor j hj
+      · intro a ha b hb hab
+        rw [if_pos (U.complete i ho a ha), if_pos (U.complete i ho b hb)] at hab
+        exact hv.distinct_authors a ha b hb hab
+      · intro hr
+        refine le_trans (hv.quorum hr) (Finset.card_le_card ?_)
+        intro c hc
+        unfold LeanDag.Hydrozoan.authors LeanDag.Hydrozoan.authorsOf at hc ⊢
+        obtain ⟨j, hj, hjc⟩ := Finset.mem_image.mp hc
+        refine Finset.mem_image.mpr ⟨j, hj, ?_⟩
+        simp only
+        rw [if_pos (U.complete i ho j hj)]
+        exact hjc
+    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
+      have hR0 : sk.r0 = (hzBlk U sk.B1).round := rfl
+      have hB1 := hzBlk_round U sk.B1
+      rw [if_neg (sk.hfresh_new k), sk.hidx]
+      have hlm := sk.hline_mem k (by omega) hk2
+      have hlv := U.valid _ hlm
+      have hlr : (U.block (sk.line k)).round = k := sk.hline_round k (by omega) hk2
+      refine ⟨?_, ?_, ?_⟩
+      · intro j hj
+        simp only at hj ⊢
+        rw [if_pos (U.complete _ hlm j hj)]
+        have := hlv.predecessor j hj
+        omega
+      · intro a ha b hb hab
+        simp only at ha hb
+        rw [if_pos (U.complete _ hlm a ha), if_pos (U.complete _ hlm b hb)] at hab
+        exact hlv.distinct_authors a ha b hb hab
+      · intro _
+        have hq := hlv.quorum (by omega)
+        refine le_trans hq (Finset.card_le_card ?_)
+        intro c hc
+        unfold LeanDag.Hydrozoan.authors LeanDag.Hydrozoan.authorsOf at hc ⊢
+        obtain ⟨j, hj, hjc⟩ := Finset.mem_image.mp hc
+        refine Finset.mem_image.mpr ⟨j, hj, ?_⟩
+        simp only
+        rw [if_pos (U.complete _ hlm j hj)]
+        exact hjc
+  no_equivocation := by
+    intro i hi j hj hib hcc hrr
+    rcases Finset.mem_union.mp hi with ho | hf <;>
+      rcases Finset.mem_union.mp hj with ho' | hf'
+    · rw [if_pos ho] at hib hcc hrr
+      rw [if_pos ho'] at hcc hrr
+      exact U.no_equivocation i ho j ho' hib hcc hrr
+    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf'
+      have hR0 : sk.r0 = (hzBlk U sk.B1).round := rfl
+      have hB1 := hzBlk_round U sk.B1
+      rw [if_pos ho] at hcc hrr
+      rw [if_neg (sk.hfresh_new k), sk.hidx] at hcc hrr
+      have hi := hzBlk_round U i
+      exact (sk.hgap i ho hcc (by simp only at hrr; omega) (by simp only at hrr; omega)).elim
+    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
+      have hR0 : sk.r0 = (hzBlk U sk.B1).round := rfl
+      have hB1 := hzBlk_round U sk.B1
+      rw [if_neg (sk.hfresh_new k), sk.hidx] at hcc hrr
+      rw [if_pos ho'] at hcc hrr
+      have hj := hzBlk_round U j
+      exact (sk.hgap j ho' hcc.symm (by simp only at hrr; omega)
+        (by simp only at hrr; omega)).elim
+    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
+      obtain ⟨l, hl1, hl2, rfl⟩ := sk.mem_freshIds.mp hf'
+      rw [if_neg (sk.hfresh_new k), sk.hidx] at hrr
+      rw [if_neg (sk.hfresh_new l), sk.hidx] at hrr
+      simp only at hrr
+      exact hrr ▸ rfl
 ```
 
-**One replica's situation**: what the network built, what it recovered, and what it has thrown away.
-
-#### `held`
-
-*abbrev, `Integration.Hydrozoan.Deployment.lean`*
-
-```lean
-abbrev held : LeanDag.Hydrozoan.BlockUniverse Replica BlockId :=
-  stackHZ D.network D.selfParents D.recovery D.horizon
-```
-
-**What the replica holds**: recovered, then pruned.
-
-#### `numbering`
-
-*abbrev, `Integration.Hydrozoan.Deployment.lean`*
-
-```lean
-abbrev numbering : LeanDag.Hydrozoan.Slots Replica := slotsChopHZ D.retains
-```
-
-**The slot numbering it uses**, rebased at the horizon. Its slot `k` is the network's slot `base + k`.
-
-#### `carry`
-
-*abbrev, `Integration.Hydrozoan.Deployment.lean`*
-
-```lean
-abbrev carry (V : LeanDag.Hydrozoan.View D.network) :
-    LeanDag.Hydrozoan.View D.held :=
-  stackView D.network D.selfParents D.recovery D.horizon V
-```
-
-A view of the network's DAG, carried to what the replica holds.
-
-#### `HybridCommittee`
-
-*abbrev, `Integration.Hydrozoan.Faults.lean`*
-
-```lean
-abbrev HybridCommittee (Replica : Type*) [Fintype Replica] [DecidableEq Replica]
-    [LeanDag.Hydrozoan.Faults Replica] : Prop :=
-  3 * (LeanDag.Hydrozoan.Faults.f Replica + LeanDag.Hydrozoan.Faults.c Replica) + 1
-    ≤ Fintype.card Replica
-```
-
-**The committee the core's intersection argument needs**: its T0 concludes a fully correct replica from two overlapping quorums, which takes `n ≥ 3(f + c) + 1` where Hydrozoan's own arguments take only `n ≥ 3f + 2c + 1`.
-
-#### `optChopHZ`
-
-*abbrev, `Integration.Hydrozoan.OptimalChopDecided.lean`*
-
-```lean
-abbrev optChopHZ (hd : G ≤ S.slotRound d) (hle : LeaderExcludedAll U) :
-    OptUniverse Replica BlockId (S := slotsChopHZ hd) :=
-  LeanDag.Barnacle.OptimalHydrozoan.optUniverseOf (S := slotsChopHZ hd)
-    (chopHZ U hsp G) (leaderExcludedAll_chopHZ hle)
-```
-
-The Optimal universe the truncation carries, at the truncation's own schedule.
-
-#### `PrunedOpt`
-
-*structure, `Integration.Hydrozoan.OptimalChopDecided.lean`*
-
-```lean
-structure PrunedOpt (Replica BlockId : Type) [Fintype Replica] [DecidableEq Replica]
-    [DecidableEq BlockId] [LeanDag.OptimalHydrozoan.OptimalFaults Replica]
-    [Fact (HybridCommittee Replica)] [S : LeanDag.Hydrozoan.Slots Replica] where
-  /-- The DAG as the network built it, before this replica pruned. -/
-  network : LeanDag.Hydrozoan.BlockUniverse Replica BlockId
-  /-- Every block carries its author's previous block. -/
-  selfParents : SelfParenting network
-  /-- And the DAG-building layer enforced leader exclusion, in the
-  schedule-free form. -/
-  excluded : LeaderExcludedAll network
-  /-- The horizon below which it retains nothing. -/
-  horizon : ℕ
-  /-- The slot its numbering restarts at. -/
-  base : ℕ
-  /-- The horizon does not reach past that slot. -/
-  retains : horizon ≤ S.slotRound base
-```
-
-**One replica's situation, running Optimal-Hydrozoan**: the DAG the network built, and a horizon below which it retains nothing.
-
-#### `held`
-
-*abbrev, `Integration.Hydrozoan.OptimalChopDecided.lean`*
-
-```lean
-abbrev held : OptUniverse Replica BlockId (S := slotsChopHZ D.retains) :=
-  optChopHZ (hsp := D.selfParents) D.retains D.excluded
-```
-
-**What the replica holds**, as an Optimal universe at its own schedule — which is what the schedule-free clause exists to allow.
-
-#### `numbering`
-
-*abbrev, `Integration.Hydrozoan.OptimalChopDecided.lean`*
-
-```lean
-abbrev numbering : LeanDag.Hydrozoan.Slots Replica := slotsChopHZ D.retains
-```
-
-**The slot numbering it uses**, rebased at the horizon: its slot `k` is the network's slot `base + k`.
-
-#### `ofCoreSlots`
-
-*def, `Integration.Hydrozoan.Schedule.lean`*
-
-```lean
-def ofCoreSlots (S : LeanDag.Slots Replica) : LeanDag.Hydrozoan.Slots Replica where
-  slotRound := S.slotRound
-  leader := S.leader
-  mono := S.mono
-  unbounded := S.unbounded
-  keyed := S.keyed
-```
-
-The same identification read the other way, as a function rather than an instance: a schedule the core produces — `Slots.chop`'s, in particular — read back as Hydrozoan's.
-
-#### `Simulates`
-
-*structure, `Integration.Hydrozoan.Simulation.lean`*
-
-```lean
-structure Simulates
-    (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
-    (V : LeanDag.Hydrozoan.View U) (S : LeanDag.Hydrozoan.Slots Replica)
-    (U' : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
-    (V' : LeanDag.Hydrozoan.View U') (S' : LeanDag.Hydrozoan.Slots Replica)
-    (R : ℕ → ℕ → Prop) (Novel : BlockId → Prop) : Prop where
-  /-- An anchor above a corresponding slot has a corresponding slot of
-  its own, above it. -/
-  lift : ∀ n k m, R n k → n < m → ∃ j, R m j ∧ k < j
-  /-- The correspondence respects the order, in both directions. -/
-  ord : ∀ n k m j, R n k → R m j → (n < m ↔ k < j)
-  /-- And a target slot above a corresponding one comes from a source
-  slot — what the intermediate slots of an indirect derivation need. -/
-  drop : ∀ n k j, R n k → k < j → ∃ m, R m j ∧ n < m
-  /-- A candidate of the source is a candidate of the target. -/
-  leader_fwd : ∀ n k L, R n k → @LeanDag.Hydrozoan.IsLeaderBlock _ _ _ _ _ S U n L →
-    @LeanDag.Hydrozoan.IsLeaderBlock _ _ _ _ _ S' U' k L
-  /-- And a candidate of the target is one of the source, or novel. -/
-  leader_bwd : ∀ n k L, R n k → @LeanDag.Hydrozoan.IsLeaderBlock _ _ _ _ _ S' U' k L →
-    @LeanDag.Hydrozoan.IsLeaderBlock _ _ _ _ _ S U n L ∨ Novel L
-  /-- Anchor eligibility agrees, both slots moving together. -/
-  elig : ∀ n k m j, R n k → R m j →
-    (@LeanDag.Hydrozoan.EligibleAsAnchor Replica S n m ↔
-      @LeanDag.Hydrozoan.EligibleAsAnchor Replica S' k j)
-  /-- The three direct rules carry forward. -/
-  fast : ∀ n k L, R n k → LeanDag.Hydrozoan.FastCommitInView U V L (S.slotRound n) →
-    LeanDag.Hydrozoan.FastCommitInView U' V' L (S'.slotRound k)
-  slow : ∀ n k L, R n k → LeanDag.Hydrozoan.SlowCommitInView U V L (S.slotRound n) →
-    LeanDag.Hydrozoan.SlowCommitInView U' V' L (S'.slotRound k)
-  skip : ∀ n k, R n k → @LeanDag.Hydrozoan.SkippedLeaderInView _ _ _ _ _ _ S U V n →
-    @LeanDag.Hydrozoan.SkippedLeaderInView _ _ _ _ _ _ S' U' V' k
-  /-- The two rung tests agree at an anchor of the source. -/
-  cert : ∀ n k A L, R n k → A ∈ U.ids →
-    (LeanDag.Hydrozoan.CertifiedIn U' A L (S'.slotRound k) ↔
-      LeanDag.Hydrozoan.CertifiedIn U A L (S.slotRound n))
-  weak : ∀ n k A L, R n k → A ∈ U.ids →
-    (LeanDag.Hydrozoan.WeakLinked U' A L (S'.slotRound k) ↔
-      LeanDag.Hydrozoan.WeakLinked U A L (S.slotRound n))
-  /-- Neither rung reaches a novel candidate. Vacuous when nothing is
-  novel, which is the case for a cut. -/
-  novel_cert : ∀ n k A L, R n k → A ∈ U.ids → Novel L →
-    ¬ LeanDag.Hydrozoan.CertifiedIn U' A L (S'.slotRound k)
-  novel_weak : ∀ n k A L, R n k → A ∈ U.ids → Novel L →
-    ¬ LeanDag.Hydrozoan.WeakLinked U' A L (S'.slotRound k)
-```
-
-**`U'` simulates `U` along the slot correspondence `R`.** Every field is one of the predicates `Decided` inspects, and there are no others: that is the claim the structure makes and the induction below consumes.
-
-`R n k` reads "slot `n` of the source is slot `k` of the target". `Novel` names the identifiers the target has and the source does not. The rung fields are stated for anchors of the source, which is where every anchor of a derivation over the source lives.
-
-#### `stackHZ`
-
-*abbrev, `Integration.Hydrozoan.Stack.lean`*
-
-```lean
-abbrev stackHZ (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
-    (hsp : SelfParenting U) (sk : SkipMsg (toCore U hsp)) (G : ℕ) :
-    LeanDag.Hydrozoan.BlockUniverse Replica BlockId :=
-  chopHZ (skipFillHZ U hsp sk) (selfParenting_skipFillHZ U hsp sk) G
-```
-
-**The stack**: recovered by Safe Skip, then truncated at a horizon. Well formed at every horizon, the fill having happened before the cut.
-
-#### `stackView`
-
-*abbrev, `Integration.Hydrozoan.Stack.lean`*
-
-```lean
-abbrev stackView (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
-    (hsp : SelfParenting U) (sk : SkipMsg (toCore U hsp)) (G : ℕ)
-    (V : LeanDag.Hydrozoan.View U) :
-    LeanDag.Hydrozoan.View (stackHZ U hsp sk G) :=
-  View.chopHZ (liftViewHZ U hsp sk V) (selfParenting_skipFillHZ U hsp sk) G
-```
-
-A replica's view, carried through both transformers.
-
-#### `transport`
-
-*def, `Integration.Hydrozoan.Transport.lean`*
-
-```lean
-def transport (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
-    (hsp : SelfParenting U)
-    (F : LeanDag.BlockUniverse Replica BlockId Unit →
-         LeanDag.BlockUniverse Replica BlockId Unit)
-    (hF : HonestNoEquiv (F (toCore U hsp))) :
-    LeanDag.Hydrozoan.BlockUniverse Replica BlockId :=
-  ofCore (F (toCore U hsp)) hF
-```
-
-**The transformer bridge.** `F` closes over its own arguments, so one definition serves every core universe transformer; the only obligation is that `F` preserves non-equivocation at the honest class.
-
-#### `chopHZ`
-
-*def, `Integration.Hydrozoan.Transport.lean`*
-
-```lean
-def chopHZ (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
-    (hsp : SelfParenting U) (G : ℕ) :
-    LeanDag.Hydrozoan.BlockUniverse Replica BlockId :=
-  transport U hsp (fun U' => chop U' G) (honestNoEquiv_chop (honestNoEquiv_toCore U hsp))
-```
-
-**Truncation at a horizon**, restricted to Hydrozoan universes. The `HonestNoEquiv` obligation is `integration.md` I1.
-
-#### `skipFillHZ`
-
-*def, `Integration.Hydrozoan.Transport.lean`*
-
-```lean
-def skipFillHZ (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
-    (hsp : SelfParenting U) (sk : SkipMsg (toCore U hsp)) :
-    LeanDag.Hydrozoan.BlockUniverse Replica BlockId :=
-  transport U hsp (fun _ => sk.skipFill)
-    (honestNoEquiv_skipFill sk (honestNoEquiv_toCore U hsp))
-```
-
-**Crash recovery by one message**, restricted to Hydrozoan universes. The `HonestNoEquiv` obligation is again `integration.md` I1.
-
-#### `liftViewHZ`
-
-*def, `Integration.Hydrozoan.Transport.lean`*
-
-```lean
-def liftViewHZ (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
-    (hsp : SelfParenting U) (sk : SkipMsg (toCore U hsp))
-    (V : LeanDag.Hydrozoan.View U) :
-    LeanDag.Hydrozoan.View (skipFillHZ U hsp sk) :=
-  LeanDag.Integration.Hydrozoan.View.ofCore
-    (sk.liftView (LeanDag.Integration.Hydrozoan.View.toCore V hsp))
-    (honestNoEquiv_skipFill sk (honestNoEquiv_toCore U hsp))
-```
-
-The view a replica holds, lifted across the fill — `SafeSkip`'s `liftView`, reached from a Hydrozoan view through the view transport of `Universe.lean`.
-
-#### `SelfParenting`
-
-*def, `Integration.Hydrozoan.Universe.lean`*
-
-```lean
-def SelfParenting [LeanDag.Hydrozoan.Faults Replica]
-    (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) : Prop :=
-  ∀ i ∈ U.ids, 0 < (U.block i).round →
-    ∃ j ∈ (U.block i).parents, (U.block j).author = (U.block i).author
-```
-
-**The self-parent clause**, P3′ of the core's `ValidWrt`, stated on a Hydrozoan universe. The Hydrozoan model omits it because no theorem of that arc consumes it (`docs/hydrozoan-integration.md` §3); the deployed protocol has it, a Mysticeti block carrying its author's previous block.
-
-#### `toCore`
-
-*def, `Integration.Hydrozoan.Universe.lean`*
-
-```lean
-def toCore (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
-    (hsp : SelfParenting U) : LeanDag.BlockUniverse Replica BlockId Unit where
-  ids := U.ids
-  block := adaptBlk U
-  complete := fun i hi j hj => U.complete i hi j hj
-  valid := fun i hi =>
-    { predecessor := fun j hj => (U.valid i hi).predecessor j hj
-      distinct_creators := fun j hj k hk h => (U.valid i hi).distinct_authors j hj k hk h
-      quorum := fun h => by
-        have hq := (U.valid i hi).quorum h
-        rw [quorumCard_eq_q]
-        exact hq
-      self_parent := fun h => hsp i hi h }
-  no_equivocation := fun i hi j hj hc heq hr =>
-    U.no_equivocation i hi j hj (correct_subset_nonByzantine hc) heq hr
-```
-
-**A Hydrozoan universe is a core universe**, given the self-parent clause. Every field is Hydrozoan's own, modulo the adapter and the threshold agreement.
-
-#### `ofCore`
-
-*def, `Integration.Hydrozoan.Universe.lean`*
-
-```lean
-def ofCore {Payload : Type} (U : LeanDag.BlockUniverse Replica BlockId Payload)
-    (hne : HonestNoEquiv U) : LeanDag.Hydrozoan.BlockUniverse Replica BlockId where
-  ids := U.ids
-  block := fun i =>
-    { round := (U.block i).round
-      author := (U.block i).creator
-      parents := (U.block i).refs }
-  complete := fun i hi j hj => U.complete i hi j hj
-  valid := fun i hi =>
-    { predecessor := fun j hj => (U.valid i hi).predecessor j hj
-      distinct_authors := fun j hj k hk h => (U.valid i hi).distinct_creators j hj k hk h
-      quorum := fun h => by
-        have hq := (U.valid i hi).quorum h
-        rw [quorumCard_eq_q] at hq
-        exact hq }
-  no_equivocation := fun i hi j hj hnb heq hr =>
-    hne i hi j hj (Finset.mem_compl.mp hnb) heq hr
-```
-
-**A core universe is a Hydrozoan universe**, given non-equivocation at the wider honest class. The self-parent field is dropped and the payload forgotten.
-
-#### `View.toCore`
-
-*def, `Integration.Hydrozoan.Universe.lean`*
-
-```lean
-def View.toCore {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
-    (V : LeanDag.Hydrozoan.View U) (hsp : SelfParenting U) :
-    LeanDag.View Replica BlockId Unit (Hydrozoan.toCore U hsp) where
-  ids := V.ids
-  subset_ids := V.subset_ids
-  complete := fun i hi j hj => V.complete i hi j hj
-```
-
-A Hydrozoan view of `U` is a core view of `toCore U hsp`.
-
-#### `View.ofCore`
-
-*def, `Integration.Hydrozoan.Universe.lean`*
-
-```lean
-def View.ofCore {Payload : Type} {U' : LeanDag.BlockUniverse Replica BlockId Payload}
-    (W : LeanDag.View Replica BlockId Payload U') (hne : HonestNoEquiv U') :
-    LeanDag.Hydrozoan.View (Hydrozoan.ofCore U' hne) where
-  ids := W.ids
-  subset_ids := W.subset_ids
-  complete := fun i hi j hj => W.complete i hi j hj
-```
-
-And a core view of any universe is a Hydrozoan view of its reading.
+**The copy fill, at Hydrozoan's universe.** One block per gap round, by the recovering replica, carrying the donor's parents at that round.
 
 #### `chopNemo`
 
@@ -25565,122 +25320,22 @@ def liftViewNemo (V : Nemo.View Validator BlockId Payload U) :
 
 The pre-crash view, read in the repaired universe: the same ids, and every one of them old.
 
-#### `hzBlk`
+#### `chopOpt`
 
-*def, `Integration.OptimalFill.lean`*
-
-```lean
-def hzBlk (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) :
-    BlockId → Block Replica BlockId Unit :=
-  fun i => LeanDag.Hydrozoan.adaptBlock (U.block i)
-```
-
-A Hydrozoan universe's blocks, read as core blocks with no payload — the shape a Safe Skip message is stated over.
-
-#### `copyFillHZ`
-
-*def, `Integration.OptimalFill.lean`*
+*def, `Integration.OptimalMechanisms.lean`*
 
 ```lean
-def copyFillHZ (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
-    (sk : SkipData U.ids (hzBlk U)) : LeanDag.Hydrozoan.BlockUniverse Replica BlockId where
-  ids := U.ids ∪ sk.freshIds
-  block b := if b ∈ U.ids then U.block b
-    else ⟨sk.idx b, sk.v1, (U.block (sk.line (sk.idx b))).parents⟩
-  complete := by
-    intro i hi j hj
-    rcases Finset.mem_union.mp hi with ho | hf
-    · rw [if_pos ho] at hj
-      exact Finset.mem_union_left _ (U.complete i ho j hj)
-    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
-      have hR0 : sk.r0 = (hzBlk U sk.B1).round := rfl
-      have hB1 := hzBlk_round U sk.B1
-      rw [if_neg (sk.hfresh_new k), sk.hidx] at hj
-      exact Finset.mem_union_left _
-        (U.complete _ (sk.hline_mem k (by omega) hk2) j hj)
-  valid := by
-    intro i hi
-    rcases Finset.mem_union.mp hi with ho | hf
-    · rw [if_pos ho]
-      have hv := U.valid i ho
-      refine ⟨?_, ?_, ?_⟩
-      · intro j hj
-        rw [if_pos (U.complete i ho j hj)]
-        exact hv.predecessor j hj
-      · intro a ha b hb hab
-        rw [if_pos (U.complete i ho a ha), if_pos (U.complete i ho b hb)] at hab
-        exact hv.distinct_authors a ha b hb hab
-      · intro hr
-        refine le_trans (hv.quorum hr) (Finset.card_le_card ?_)
-        intro c hc
-        unfold LeanDag.Hydrozoan.authors LeanDag.Hydrozoan.authorsOf at hc ⊢
-        obtain ⟨j, hj, hjc⟩ := Finset.mem_image.mp hc
-        refine Finset.mem_image.mpr ⟨j, hj, ?_⟩
-        simp only
-        rw [if_pos (U.complete i ho j hj)]
-        exact hjc
-    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
-      have hR0 : sk.r0 = (hzBlk U sk.B1).round := rfl
-      have hB1 := hzBlk_round U sk.B1
-      rw [if_neg (sk.hfresh_new k), sk.hidx]
-      have hlm := sk.hline_mem k (by omega) hk2
-      have hlv := U.valid _ hlm
-      have hlr : (U.block (sk.line k)).round = k := sk.hline_round k (by omega) hk2
-      refine ⟨?_, ?_, ?_⟩
-      · intro j hj
-        simp only at hj ⊢
-        rw [if_pos (U.complete _ hlm j hj)]
-        have := hlv.predecessor j hj
-        omega
-      · intro a ha b hb hab
-        simp only at ha hb
-        rw [if_pos (U.complete _ hlm a ha), if_pos (U.complete _ hlm b hb)] at hab
-        exact hlv.distinct_authors a ha b hb hab
-      · intro _
-        have hq := hlv.quorum (by omega)
-        refine le_trans hq (Finset.card_le_card ?_)
-        intro c hc
-        unfold LeanDag.Hydrozoan.authors LeanDag.Hydrozoan.authorsOf at hc ⊢
-        obtain ⟨j, hj, hjc⟩ := Finset.mem_image.mp hc
-        refine Finset.mem_image.mpr ⟨j, hj, ?_⟩
-        simp only
-        rw [if_pos (U.complete _ hlm j hj)]
-        exact hjc
-  no_equivocation := by
-    intro i hi j hj hib hcc hrr
-    rcases Finset.mem_union.mp hi with ho | hf <;>
-      rcases Finset.mem_union.mp hj with ho' | hf'
-    · rw [if_pos ho] at hib hcc hrr
-      rw [if_pos ho'] at hcc hrr
-      exact U.no_equivocation i ho j ho' hib hcc hrr
-    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf'
-      have hR0 : sk.r0 = (hzBlk U sk.B1).round := rfl
-      have hB1 := hzBlk_round U sk.B1
-      rw [if_pos ho] at hcc hrr
-      rw [if_neg (sk.hfresh_new k), sk.hidx] at hcc hrr
-      have hi := hzBlk_round U i
-      exact (sk.hgap i ho hcc (by simp only at hrr; omega) (by simp only at hrr; omega)).elim
-    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
-      have hR0 : sk.r0 = (hzBlk U sk.B1).round := rfl
-      have hB1 := hzBlk_round U sk.B1
-      rw [if_neg (sk.hfresh_new k), sk.hidx] at hcc hrr
-      rw [if_pos ho'] at hcc hrr
-      have hj := hzBlk_round U j
-      exact (sk.hgap j ho' hcc.symm (by simp only at hrr; omega)
-        (by simp only at hrr; omega)).elim
-    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
-      obtain ⟨l, hl1, hl2, rfl⟩ := sk.mem_freshIds.mp hf'
-      rw [if_neg (sk.hfresh_new k), sk.hidx] at hrr
-      rw [if_neg (sk.hfresh_new l), sk.hidx] at hrr
-      simp only at hrr
-      exact hrr ▸ rfl
+def chopOpt (W : (OptimalHydrozoanProperties.optimalRule (Replica := Replica)
+    (BlockId := BlockId)).Universe) (G : ℕ) :
+    (OptimalHydrozoanProperties.optimalRule (Replica := Replica) (BlockId := BlockId)).Universe :=
+  ⟨chopHZ W.val G, leaderExcludedAll_chopHZ W.property⟩
 ```
 
-**The copy fill, at Hydrozoan's universe.** One block per gap round, by the recovering replica, carrying the donor's parents at that round.
+**The cut, at Optimal-Hydrozoan's carrier.**
 
 #### `copyFillOpt`
 
-*def, `Integration.OptimalFill.lean`*
+*def, `Integration.OptimalMechanisms.lean`*
 
 ```lean
 def copyFillOpt (W : (OptimalHydrozoanProperties.optimalRule (Replica := Replica)
@@ -25905,22 +25560,6 @@ def addGenesisOpt (U : (OptimalHydrozoanProperties.optimalRule (Replica := Repli
 ```
 
 **Re-genesis, at Optimal-Hydrozoan's carrier.**
-
-#### `SoundOn`
-
-*structure, `Integration.Sound.lean`*
-
-```lean
-structure SoundOn (U : BlockUniverse Validator BlockId Payload)
-    (T : Finset Validator) (R : ℕ) : Prop where
-  /-- No correct validator has two blocks at one round. -/
-  honest : HonestNoEquiv U
-  /-- Every `T`-authored block references every `T`-authored block of the
-  round below, from `R` on. -/
-  covered : SynchronisedOn U T R
-```
-
-**What a universe must still supply after being transformed.** The two conditions every safety result of the hybrid arc consumes: correct validators do not equivocate, and the DAG is covered from round `R` on.
 
 #### `mahiMahiRule`
 
@@ -26949,7 +26588,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 1123 theorems that either another module of the
+The 1064 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -31272,83 +30911,6 @@ theorem hB1uniq_of_addGenesis :
 ```
 
 **The re-genesis block is a lawful Safe Skip anchor.** Uniqueness at its round is immediate from the absence that licensed it.
-
-#### `honestNoEquiv_stack`
-
-*theorem, `Integration.Stack.lean`*
-
-```lean
-theorem honestNoEquiv_stack (sk : SkipMsg U) (hne : HonestNoEquiv U) :
-    HonestNoEquiv (stack sk G)
-```
-
-**I16a.** Honest non-equivocation survives the whole stack — I3 then I2, with no new argument. This is what lets the hybrid safety development be used by a validator that both recovered and pruned.
-
-#### `synchronisedOn_stack`
-
-*theorem, `Integration.Stack.lean`*
-
-```lean
-theorem synchronisedOn_stack (sk : SkipMsg U) {T : Finset Validator} {R R' R'' : ℕ}
-    (hs : SynchronisedOn U T R) (hR : R ≤ R') (hfill : sk.r < R')
-    (hcut : R' ≤ G + R'') :
-    SynchronisedOn (stack sk G) T R''
-```
-
-**I16b.** Coverage survives the stack above the fill and the cut — I5-positive then I4. The two offsets compose exactly as their statements suggest: the fill demands strictly above `sk.r`, the truncation shifts by `G`.
-
-#### `hybrid_agree_stack`
-
-*theorem, `Integration.Stack.lean`*
-
-```lean
-theorem hybrid_agree_stack [LinearOrder BlockId] [S : Slots Validator]
-    (sk : SkipMsg U) (hne : HonestNoEquiv U) {k : ℕ}
-    (hk : Hybrid.Admissible Validator k)
-    {V₁ V₂ : View Validator BlockId Payload (stack sk G)} {s : ℕ}
-    {v₁ v₂ : Option BlockId}
-    (h₁ : Hybrid.Decided k (stack sk G) V₁ s v₁)
-    (h₂ : Hybrid.Decided k (stack sk G) V₂ s v₂) : v₁ = v₂
-```
-
-**I16d — the payoff.** Hybrid agreement holds in the stacked universe: a validator that recovered from a crash by Safe Skip and then pruned below a horizon still cannot disagree with anyone about a slot's verdict, at any admissible threshold.
-
-Every hypothesis is one of report §14's own, discharged for the stack by `honestNoEquiv_stack`; the theorem body is `Hybrid.decided_unique` applied to a different universe. Nothing about the fill or the cut is re-proved, which is the thesis of this document in one statement.
-
-#### `hB1uniq_of_crash`
-
-*theorem, `Integration.Lifecycle.lean`*
-
-```lean
-theorem hB1uniq_of_crash (hne : HonestNoEquiv U) {v1 : Validator} {B1 : BlockId}
-    (hB1 : B1 ∈ U.ids) (hB1c : (U.block B1).creator = v1)
-    (hv1 : v1 ∉ H.byzantine) :
-    ∀ j ∈ U.ids, (U.block j).creator = v1 →
-      (U.block j).round = (U.block B1).round → j = B1
-```
-
-**I10, the enabling lemma.** In the hybrid model a *crash-prone* validator satisfies Safe Skip's boundary condition: it is honest, and `HonestNoEquiv` pins its round-`r0` block to the anchor. The base model's `hB1uniq_of_correct` cannot serve here — `Correct` excludes the crash class by construction — which is precisely why report §12's hypothesis needed to be stated as the fact rather than as membership.
-
-#### `lifecycle`
-
-*theorem, `Integration.Lifecycle.lean`*
-
-```lean
-theorem lifecycle {V : View Validator BlockId Payload U} {k : ℕ}
-    (sk : SkipMsg U) (hne : HonestNoEquiv U) {T : Finset Validator}
-    (hhalt : ∀ b ∈ U.ids, (U.block b).round = S.slotRound k →
-      (U.block b).creator ≠ S.leader k)
-    (hq : quorumCard Validator ≤
-      (creatorsOf U.block (blocksAt U (S.slotRound k + 1) ∩ V.ids)).card)
-    {m : ℕ} (hpop : PopulatedOn U T m) (hm1 : sk.r0 < m) (hm2 : m ≤ sk.r) :
-    Decided U V k none
-      ∧ PopulatedOn sk.skipFill (insert sk.v1 T) m
-      ∧ HonestNoEquiv sk.skipFill
-```
-
-**The lifecycle, in one statement.** A validator that halts has its slot skipped (L5, on a view that saw the round above); after it rejoins by Safe Skip its gap rounds are populated with it back in the reliable set (SS2); and the resulting universe still carries honest non-equivocation (I3), so report §14's safety applies throughout.
-
-Three arcs — the base liveness rules, Safe Skip, and the hybrid fault model — meet here without any of them mentioning another. The first is reached through `SkipsUnsupported` rather than through L5 directly: the reliable set is read off the view, and the skip is unsupported because the halted leader left nothing to support. What connects them is that all three speak about the same universe and the same verdicts, which is what report §2's invariant vocabulary was collected to make possible.
 
 #### `history_B1_subset_fill`
 
@@ -38939,778 +38501,100 @@ theorem sustains_skipFill_finwhale :
 
 **What the fill sustains.** Above `sk.r` the fill added nothing, so every block there is old and unchanged.
 
-#### `chopHZ_round`
+#### `chopBlkHZ_round`
 
-*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+*theorem, `Integration.HydrozoanMechanisms.lean`*
 
 ```lean
-@[simp] theorem chopHZ_round (i : BlockId) :
-    ((chopHZ U hsp G).block i).round = (U.block i).round - G
+@[simp] theorem chopBlkHZ_round : (chopBlkHZ blk G i).round = (blk i).round - G
 ```
 
-#### `chopHZ_author`
+#### `chopBlkHZ_author`
 
-*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+*theorem, `Integration.HydrozoanMechanisms.lean`*
 
 ```lean
-@[simp] theorem chopHZ_author (i : BlockId) :
-    ((chopHZ U hsp G).block i).author = (U.block i).author
+@[simp] theorem chopBlkHZ_author : (chopBlkHZ blk G i).author = (blk i).author
+```
+
+#### `chopBlkHZ_parents_of_lt`
+
+*theorem, `Integration.HydrozoanMechanisms.lean`*
+
+```lean
+theorem chopBlkHZ_parents_of_lt (h : G < (blk i).round) :
+    (chopBlkHZ blk G i).parents = (blk i).parents
 ```
 
 #### `mem_chopHZ_ids`
 
-*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+*theorem, `Integration.HydrozoanMechanisms.lean`*
 
 ```lean
-theorem mem_chopHZ_ids {i : BlockId} :
-    i ∈ (chopHZ U hsp G).ids ↔ i ∈ U.ids ∧ G ≤ (U.block i).round
+@[simp] theorem mem_chopHZ_ids {i : BlockId} :
+    i ∈ (chopHZ U G).ids ↔ i ∈ U.ids ∧ G ≤ (U.block i).round
 ```
 
-#### `chopHZ_parents_of_lt`
+#### `chopHZ_block`
 
-*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+*theorem, `Integration.HydrozoanMechanisms.lean`*
 
 ```lean
-theorem chopHZ_parents_of_lt {i : BlockId} (h : G < (U.block i).round) :
-    ((chopHZ U hsp G).block i).parents = (U.block i).parents
+@[simp] theorem chopHZ_block : (chopHZ U G).block = chopBlkHZ U.block G
 ```
 
-Above the cut the parents are untouched.
+#### `truncates_chop_hz`
 
-#### `chopHZ_parents_of_le`
-
-*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
+*theorem, `Integration.HydrozoanMechanisms.lean`*
 
 ```lean
-theorem chopHZ_parents_of_le {i : BlockId} (h : (U.block i).round ≤ G) :
-    ((chopHZ U hsp G).block i).parents = ∅
-```
-
-At the cut the block becomes a genesis.
-
-#### `slotsChopHZ_leader`
-
-*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
-
-```lean
-@[simp] theorem slotsChopHZ_leader (hd : G ≤ S.slotRound d) (k : ℕ) :
-    (slotsChopHZ hd).leader k = S.leader (d + k)
-```
-
-#### `horizon_le_slotRoundHZ`
-
-*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
-
-```lean
-theorem horizon_le_slotRoundHZ (hd : G ≤ S.slotRound d) (k : ℕ) :
-    G ≤ S.slotRound (d + k)
-```
-
-Every slot from the base slot on clears the horizon.
-
-#### `isLeaderBlockHZ_chop`
-
-*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
-
-```lean
-theorem isLeaderBlockHZ_chop (hd : G ≤ S.slotRound d) {k : ℕ} {L : BlockId} :
-    @LeanDag.Hydrozoan.IsLeaderBlock _ _ _ _ _ (slotsChopHZ hd) (chopHZ U hsp G) k L
-      ↔ LeanDag.Hydrozoan.IsLeaderBlock U (d + k) L
-```
-
-Candidacy is re-indexed: a block is slot `k`'s candidate in the truncation exactly when it is slot `d + k`'s in the original.
-
-#### `eligibleAsAnchorHZ_chop`
-
-*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
-
-```lean
-theorem eligibleAsAnchorHZ_chop (hd : G ≤ S.slotRound d) {k j : ℕ} :
-    @LeanDag.Hydrozoan.EligibleAsAnchor Replica (slotsChopHZ hd) k j
-      ↔ LeanDag.Hydrozoan.EligibleAsAnchor Replica (d + k) (d + j)
-```
-
-Anchor eligibility is re-indexed, both slots moving together.
-
-#### `fairRunOn_slotsChopHZ`
-
-*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
-
-```lean
-theorem fairRunOn_slotsChopHZ (hd : G ≤ S.slotRound d) {T : Finset Replica} {c : ℕ}
-    (h : LeanDag.Hydrozoan.EventualDecision.FairRunOn Replica T c) :
-    @LeanDag.Hydrozoan.EventualDecision.FairRunOn Replica (slotsChopHZ hd) T c
-```
-
-Run fairness survives the cut, the search shifted past the base slot. Proved directly rather than through the core's `fairRunOn_chop`, which is stated over a `Faults` instance: schedule fairness should not depend on a committee condition, and here it does not.
-
-#### `spansEligible_slotsChopHZ`
-
-*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
-
-```lean
-theorem spansEligible_slotsChopHZ (hd : G ≤ S.slotRound d) {c : ℕ}
-    (h : LeanDag.Hydrozoan.IndirectLiveness.SpansEligible Replica c) :
-    @LeanDag.Hydrozoan.IndirectLiveness.SpansEligible Replica (slotsChopHZ hd) c
-```
-
-And the runway a committed run needs, by the same re-indexing that carries anchor eligibility.
-
-#### `authorsOf_chopHZ`
-
-*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
-
-```lean
-@[simp] theorem authorsOf_chopHZ (s : Finset BlockId) :
-    LeanDag.Hydrozoan.authorsOf (chopHZ U hsp G).block s
-      = LeanDag.Hydrozoan.authorsOf U.block s
-```
-
-#### `blocksAt_chopHZ`
-
-*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
-
-```lean
-theorem blocksAt_chopHZ (r : ℕ) :
-    LeanDag.Hydrozoan.blocksAt (chopHZ U hsp G) r
-      = LeanDag.Hydrozoan.blocksAt U (G + r)
-```
-
-The rounds shift by the cut, at every round including the new base layer: `G ≤ round` and `round − G = r` together pin `round = G + r`.
-
-#### `isVote_chopHZ`
-
-*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
-
-```lean
-theorem isVote_chopHZ {b L : BlockId} (h : G < (U.block b).round) :
-    LeanDag.Hydrozoan.IsVote (chopHZ U hsp G) b L
-      ↔ LeanDag.Hydrozoan.IsVote U b L
-```
-
-Above the cut a vote is a vote: the parents are the same set.
-
-#### `mem_viewChopHZ`
-
-*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
-
-```lean
-theorem mem_viewChopHZ {b : BlockId} (h : G ≤ (U.block b).round) :
-    b ∈ (View.chopHZ V hsp G).ids ↔ b ∈ V.ids
-```
-
-A block above the cut is held by the truncated view exactly when the original view holds it.
-
-#### `supportersInView_chopHZ`
-
-*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
-
-```lean
-theorem supportersInView_chopHZ (L : BlockId) (r : ℕ) (hr : 0 < r) :
-    LeanDag.Hydrozoan.supportersInView (chopHZ U hsp G) (View.chopHZ V hsp G) L r
-      = LeanDag.Hydrozoan.supportersInView U V L (G + r)
-```
-
-Supporters at a round above the new base layer are the originals, at the shifted round.
-
-#### `voteBlocks_chopHZ`
-
-*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
-
-```lean
-theorem voteBlocks_chopHZ {C L : BlockId} (hC : C ∈ U.ids)
-    (h : G + 1 < (U.block C).round) :
-    LeanDag.Hydrozoan.voteBlocks (chopHZ U hsp G) C L
-      = LeanDag.Hydrozoan.voteBlocks U C L
-```
-
-Two rounds above the cut a block's votes are the originals: its own parents are untouched, and so are theirs.
-
-#### `fastCommitInView_chopHZ`
-
-*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
-
-```lean
-theorem fastCommitInView_chopHZ (L : BlockId) (r : ℕ) :
-    LeanDag.Hydrozoan.FastCommitInView (chopHZ U hsp G) (View.chopHZ V hsp G) L r
-      ↔ LeanDag.Hydrozoan.FastCommitInView U V L (G + r)
-```
-
-#### `slowCommitInView_chopHZ`
-
-*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
-
-```lean
-theorem slowCommitInView_chopHZ (L : BlockId) (r : ℕ) :
-    LeanDag.Hydrozoan.SlowCommitInView (chopHZ U hsp G) (View.chopHZ V hsp G) L r
-      ↔ LeanDag.Hydrozoan.SlowCommitInView U V L (G + r)
-```
-
-#### `reaches_of_reaches_chopHZ`
-
-*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
-
-```lean
-theorem reaches_of_reaches_chopHZ {A B : BlockId}
-    (h : LeanDag.Hydrozoan.Reaches (chopHZ U hsp G) A B) :
-    LeanDag.Hydrozoan.Reaches U A B
-```
-
-#### `reaches_chopHZ`
-
-*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
-
-```lean
-theorem reaches_chopHZ {A B : BlockId} (hA : A ∈ U.ids)
-    (hB : G < (U.block B).round) :
-    LeanDag.Hydrozoan.Reaches (chopHZ U hsp G) A B
-      ↔ LeanDag.Hydrozoan.Reaches U A B
-```
-
-#### `blamesInView_chopHZ`
-
-*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
-
-```lean
-theorem blamesInView_chopHZ (hd : G ≤ S.slotRound d) (k : ℕ) :
-    LeanDag.Hydrozoan.blamesInView (S := slotsChopHZ hd) (chopHZ U hsp G)
-        (View.chopHZ V hsp G) k
-      = LeanDag.Hydrozoan.blamesInView U V (d + k)
-```
-
-#### `skippedLeaderInView_chopHZ`
-
-*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
-
-```lean
-theorem skippedLeaderInView_chopHZ (hd : G ≤ S.slotRound d) (k : ℕ) :
-    LeanDag.Hydrozoan.SkippedLeaderInView (S := slotsChopHZ hd) (chopHZ U hsp G)
-        (View.chopHZ V hsp G) k
-      ↔ LeanDag.Hydrozoan.SkippedLeaderInView U V (d + k)
-```
-
-#### `certifiedIn_chopHZ`
-
-*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
-
-```lean
-theorem certifiedIn_chopHZ (hd : G ≤ S.slotRound d) {A L : BlockId}
-    (hA : A ∈ U.ids) (k : ℕ) :
-    LeanDag.Hydrozoan.CertifiedIn (chopHZ U hsp G) A L
-        ((slotsChopHZ hd).slotRound k)
-      ↔ LeanDag.Hydrozoan.CertifiedIn U A L (S.slotRound (d + k))
-```
-
-Rung 1's test: the certificate and the anchor both sit above the cut, so both the certificate set and the reachability transport.
-
-#### `weakLinked_chopHZ`
-
-*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
-
-```lean
-theorem weakLinked_chopHZ (hd : G ≤ S.slotRound d) {A L : BlockId}
-    (hA : A ∈ U.ids) (k : ℕ) :
-    LeanDag.Hydrozoan.WeakLinked (chopHZ U hsp G) A L
-        ((slotsChopHZ hd).slotRound k)
-      ↔ LeanDag.Hydrozoan.WeakLinked U A L (S.slotRound (d + k))
-```
-
-Rung 2's test: the witness set is the same set of blocks, each a voting-round block above the cut.
-
-#### `chopRound_add`
-
-*theorem, `Integration.Hydrozoan.ChopDecided.lean`*
-
-```lean
-theorem chopRound_add (hd : G ≤ S.slotRound d) (k : ℕ) :
-    G + (slotsChopHZ hd).slotRound k = S.slotRound (d + k)
-```
-
-The cut and the re-indexing cancel above the base slot.
-
-#### `safe`
-
-*theorem, `Integration.Hydrozoan.Deployment.lean`*
-
-```lean
-theorem safe :
-    @LeanDag.Hydrozoan.SlotAgreement.DecidedUnique Replica BlockId _ _ _ _ _
-      D.numbering D.held
-```
-
-**Safety.** No two views of what the replica holds decide a slot differently, whatever the routes.
-
-#### `preserves`
-
-*theorem, `Integration.Hydrozoan.Deployment.lean`*
-
-```lean
-theorem preserves {V : LeanDag.Hydrozoan.View D.network} {k : ℕ} {v : Option BlockId}
-    (h : LeanDag.Hydrozoan.Decided D.network V (D.base + k) v) :
-    LeanDag.Hydrozoan.Decided (S := D.numbering) D.held (D.carry V) k v
-```
-
-**Every verdict the network reached, the replica reaches** — at its own slot numbering, its slot `k` being the network's `base + k`.
-
-#### `agrees`
-
-*theorem, `Integration.Hydrozoan.Deployment.lean`*
-
-```lean
-theorem agrees {V : LeanDag.Hydrozoan.View D.network}
-    {W : LeanDag.Hydrozoan.View D.held} {k : ℕ} {v w : Option BlockId}
-    (hnet : LeanDag.Hydrozoan.Decided D.network V (D.base + k) v)
-    (hloc : LeanDag.Hydrozoan.Decided (S := D.numbering) D.held W k w) :
-    v = w
-```
-
-**And it agrees with the network.** Whatever any replica decided at a slot from the base on, this one decides the same at the corresponding slot — on an arbitrary view of what it holds, not a carried one.
-
-#### `commits`
-
-*theorem, `Integration.Hydrozoan.Deployment.lean`*
-
-```lean
-theorem commits {W : LeanDag.Hydrozoan.View D.held} {T : Finset Replica} {lo K k : ℕ}
-    (hlive : LeanDag.Hydrozoan.hzLive (LeanDag.Hydrozoan.toCoreSlots D.numbering)
-      (U := D.held) W T lo K)
-    (hlo : lo ≤ k) (hK : k < K) (hlead : D.numbering.leader k ∈ T) :
-    ∃ L, LeanDag.Hydrozoan.Decided (S := D.numbering) D.held W k (some L)
-```
-
-**Liveness.** A reliably-led slot commits on what the replica retains: under Hydrozoan's own liveness precondition, on the replica's own view, the slot has a verdict and it is a commit.
-
-This is `Properties.LeaderCommits`, not `DirectLiveness.CommitLiveness`. The difference is the slow threshold, which the protocol's statement asserts and this does not: it is evidence in the DAG, it has no property, and what a recovered replica's liveness is about is the verdict.
-
-#### `hybridCommittee_of_slack`
-
-*theorem, `Integration.Hydrozoan.Faults.lean`*
-
-```lean
-theorem hybridCommittee_of_slack [F : LeanDag.Hydrozoan.Faults Replica]
-    (h : LeanDag.Hydrozoan.Faults.c Replica ≤ LeanDag.Hydrozoan.Faults.k Replica) :
-    HybridCommittee Replica
-```
-
-**Slack covering the crash bound is enough**, by Hydrozoan's own committee bound — the convenient way to discharge the `Fact` from the parameters, though not the weakest way.
-
-#### `quorumCard_eq_q`
-
-*theorem, `Integration.Hydrozoan.Faults.lean`*
-
-```lean
-@[simp] theorem quorumCard_eq_q :
-    quorumCard Replica = LeanDag.Hydrozoan.q Replica
-```
-
-The two quorums coincide: `n − f − c` is `n − (f + c)`. Not definitional, which is why it is a simp lemma rather than left implicit.
-
-#### `skipFillHZ_block_old`
-
-*theorem, `Integration.Hydrozoan.FillDecided.lean`*
-
-```lean
-theorem skipFillHZ_block_old {b : BlockId} (hb : b ∈ U.ids) :
-    (skipFillHZ U hsp sk).block b = U.block b
-```
-
-#### `isLeaderBlockHZ_fill`
-
-*theorem, `Integration.Hydrozoan.FillDecided.lean`*
-
-```lean
-theorem isLeaderBlockHZ_fill [S : LeanDag.Hydrozoan.Slots Replica] {k : ℕ} {L : BlockId}
-    (h : LeanDag.Hydrozoan.IsLeaderBlock U k L) :
-    LeanDag.Hydrozoan.IsLeaderBlock (skipFillHZ U hsp sk) k L
-```
-
-#### `isLeaderBlockHZ_fill_old`
-
-*theorem, `Integration.Hydrozoan.FillDecided.lean`*
-
-```lean
-theorem isLeaderBlockHZ_fill_old [S : LeanDag.Hydrozoan.Slots Replica] {k : ℕ} {L : BlockId}
-    (hL : L ∈ U.ids) (h : LeanDag.Hydrozoan.IsLeaderBlock (skipFillHZ U hsp sk) k L) :
-    LeanDag.Hydrozoan.IsLeaderBlock U k L
-```
-
-An old candidate of the extension is an old candidate.
-
-#### `fastCommitInView_fill`
-
-*theorem, `Integration.Hydrozoan.FillDecided.lean`*
-
-```lean
-theorem fastCommitInView_fill (L : BlockId) (r : ℕ) :
-    LeanDag.Hydrozoan.FastCommitInView (skipFillHZ U hsp sk)
-        (liftViewHZ U hsp sk V) L r
-      ↔ LeanDag.Hydrozoan.FastCommitInView U V L r
-```
-
-#### `slowCommitInView_fill`
-
-*theorem, `Integration.Hydrozoan.FillDecided.lean`*
-
-```lean
-theorem slowCommitInView_fill (L : BlockId) (r : ℕ) :
-    LeanDag.Hydrozoan.SlowCommitInView (skipFillHZ U hsp sk)
-        (liftViewHZ U hsp sk V) L r
-      ↔ LeanDag.Hydrozoan.SlowCommitInView U V L r
-```
-
-#### `skippedLeaderInView_fill`
-
-*theorem, `Integration.Hydrozoan.FillDecided.lean`*
-
-```lean
-theorem skippedLeaderInView_fill (k : ℕ) :
-    LeanDag.Hydrozoan.SkippedLeaderInView (skipFillHZ U hsp sk)
-        (liftViewHZ U hsp sk V) k
-      ↔ LeanDag.Hydrozoan.SkippedLeaderInView U V k
-```
-
-**The skip survives the fill, with no quorum hypothesis.**
-
-#### `certifiedInHZ_fill`
-
-*theorem, `Integration.Hydrozoan.FillDecided.lean`*
-
-```lean
-theorem certifiedInHZ_fill {A L : BlockId} {r : ℕ} (hA : A ∈ U.ids) :
-    LeanDag.Hydrozoan.CertifiedIn (skipFillHZ U hsp sk) A L r
-      ↔ LeanDag.Hydrozoan.CertifiedIn U A L r
-```
-
-#### `weakLinkedHZ_fill`
-
-*theorem, `Integration.Hydrozoan.FillDecided.lean`*
-
-```lean
-theorem weakLinkedHZ_fill {A L : BlockId} {r : ℕ} (hA : A ∈ U.ids) :
-    LeanDag.Hydrozoan.WeakLinked (skipFillHZ U hsp sk) A L r
-      ↔ LeanDag.Hydrozoan.WeakLinked U A L r
-```
-
-#### `not_certifiedInHZ_fresh`
-
-*theorem, `Integration.Hydrozoan.FillDecided.lean`*
-
-```lean
-theorem not_certifiedInHZ_fresh {A L : BlockId} {r : ℕ} (hA : A ∈ U.ids)
-    (hL : L ∉ U.ids) :
-    ¬ LeanDag.Hydrozoan.CertifiedIn (skipFillHZ U hsp sk) A L r
-```
-
-#### `not_weakLinkedHZ_fresh`
-
-*theorem, `Integration.Hydrozoan.FillDecided.lean`*
-
-```lean
-theorem not_weakLinkedHZ_fresh {A L : BlockId} {r : ℕ} (hA : A ∈ U.ids)
-    (hL : L ∉ U.ids) :
-    ¬ LeanDag.Hydrozoan.WeakLinked (skipFillHZ U hsp sk) A L r
-```
-
-#### `synchronisedOn_stackHZ`
-
-*theorem, `Integration.Hydrozoan.Liveness.lean`*
-
-```lean
-theorem synchronisedOn_stackHZ {R R' R'' G : ℕ}
-    (hs : LeanDag.Hydrozoan.SynchronisedOn U T R) (hR : R ≤ R') (hR' : sk.r < R')
-    (hGR : R' ≤ G + R'') :
-    LeanDag.Hydrozoan.SynchronisedOn (stackHZ U hsp sk G) T R''
-```
-
-**The stack is covered**, from a round above the fill, rebased.
-
-#### `populatedOn_stackHZ`
-
-*theorem, `Integration.Hydrozoan.Liveness.lean`*
-
-```lean
-theorem populatedOn_stackHZ {k G : ℕ}
-    (hpop : LeanDag.Hydrozoan.PopulatedOn U T k) (hk1 : sk.r0 < k) (hk2 : k ≤ sk.r)
-    (hG : G ≤ k) :
-    LeanDag.Hydrozoan.PopulatedOn (stackHZ U hsp sk G) (insert sk.v1 T) (k - G)
-```
-
-**The stack is populated across the gap**, with the recovered replica counted, at the rebased round.
-
-#### `decided_of_leader_stackHZ`
-
-*theorem, `Integration.Hydrozoan.Liveness.lean`*
-
-```lean
-theorem decided_of_leader_stackHZ [LinearOrder BlockId]
-    [S : LeanDag.Hydrozoan.Slots Replica] {G : ℕ}
-    {W : LeanDag.Hydrozoan.View (stackHZ U hsp sk G)} {T : Finset Replica} {lo K k : ℕ}
-    (hlive : LeanDag.Hydrozoan.hzLive (LeanDag.Hydrozoan.toCoreSlots S)
-      (U := stackHZ U hsp sk G) W T lo K)
-    (hlo : lo ≤ k) (hK : k < K) (hlead : S.leader k ∈ T) :
-    ∃ L, LeanDag.Hydrozoan.Decided (stackHZ U hsp sk G) W k (some L)
-```
-
-**A reliably-led slot commits on the stack**, in the properties' vocabulary. `LeaderCommits` is quantified over every universe, so the stack needs nothing beyond the hypotheses the theorems above transport; what this file supplies is that those hypotheses survive the two transformers.
-
-What is deliberately *not* claimed is `CommitLiveness`'s middle conjunct, the slow threshold. That is direct evidence in the DAG, it has no property, and a mechanism asserting it would be reaching into the protocol for something no mechanism needs — the verdict is what a recovered replica's liveness is about.
-
-#### `decided_of_anchor_stackHZ`
-
-*theorem, `Integration.Hydrozoan.Liveness.lean`*
-
-```lean
-theorem decided_of_anchor_stackHZ [LinearOrder BlockId]
-    [S : LeanDag.Hydrozoan.Slots Replica] {G : ℕ}
-    {W : LeanDag.Hydrozoan.View (stackHZ U hsp sk G)} {k j : ℕ} {A : BlockId}
-    (helig : LeanDag.Hydrozoan.EligibleAsAnchor Replica k j)
-    (hj : LeanDag.Hydrozoan.Decided (stackHZ U hsp sk G) W j (some A))
-    (hmid : ∀ i, k < i → i < j → LeanDag.Hydrozoan.EligibleAsAnchor Replica k i →
-      LeanDag.Hydrozoan.Decided (stackHZ U hsp sk G) W i none) :
-    ∃ v, LeanDag.Hydrozoan.Decided (stackHZ U hsp sk G) W k v
-```
-
-**And the indirect rule holds of the stack**, so a committed anchor with the eligible slots below it skipped decides the slot. HZ6's descent through `Properties.Indirect` rather than through `IndirectLiveness.holds`.
-
-#### `decidedOpt_chopHZ`
-
-*theorem, `Integration.Hydrozoan.OptimalChopDecided.lean`*
-
-```lean
-theorem decidedOpt_chopHZ [LinearOrder BlockId] (hd : G ≤ S.slotRound d)
-    {k : ℕ} {v : Option BlockId} :
-    DecidedOpt (S := slotsChopHZ hd) (optChopHZ (hsp := hsp) hd hle)
-        (View.chopHZ V hsp G) k v
-      ↔ DecidedOpt (S := S) (LeanDag.Barnacle.OptimalHydrozoan.optUniverseOf U hle) V (d + k) v
-```
-
-**HI7 for `DecidedOpt`, from OH9.** A replica running Optimal-Hydrozoan that has pruned below the horizon reaches exactly the verdicts it would have reached with its whole history, at the re-indexed slot.
-
-Two inductions over `DecidedOpt`'s six constructors stood here and are gone; what survives above is the *statement* of what the cut preserves, rule by rule, which is the content. `LocalTruncate.of_banded` supplies the rest and knows nothing about Optimal-Hydrozoan.
-
-`LinearOrder BlockId` enters through the band and nowhere else: `Banded` for this rule is proved by reading Optimal's band as Hydrozoan's, and Hydrozoan's carrier carries a tie-break. Every committee this arc instantiates has one.
-
-#### `decides`
-
-*theorem, `Integration.Hydrozoan.OptimalChopDecided.lean`*
-
-```lean
-theorem decides [LinearOrder BlockId] {V : LeanDag.Hydrozoan.View D.network} {k : ℕ}
-    {v : Option BlockId} :
-    DecidedOpt (S := D.numbering) D.held (View.chopHZ V D.selfParents D.horizon) k v
-      ↔ DecidedOpt (S := S)
-          (LeanDag.Barnacle.OptimalHydrozoan.optUniverseOf D.network D.excluded) V
-          (D.base + k) v
-```
-
-**The replica reaches exactly the verdicts it would have reached with its whole history**, at its own numbering. Pruning below the horizon is invisible to the decision rule.
-
-#### `leaderExcludedAll_chopHZ`
-
-*theorem, `Integration.Hydrozoan.OptimalTransport.lean`*
-
-```lean
-theorem leaderExcludedAll_chopHZ (h : LeaderExcludedAll U) :
-    LeaderExcludedAll (chopHZ U hsp G)
-```
-
-**Leader exclusion survives the cut.**
-
-#### `fairRunOn_eq`
-
-*theorem, `Integration.Hydrozoan.Schedule.lean`*
-
-```lean
-@[simp] theorem fairRunOn_eq (T : Finset Replica) (c : ℕ) :
-    LeanDag.FairRunOn T c
-      ↔ LeanDag.Hydrozoan.EventualDecision.FairRunOn Replica T c
-```
-
-Run fairness coincides.
-
-#### `spansEligible_eq`
-
-*theorem, `Integration.Hydrozoan.Schedule.lean`*
-
-```lean
-@[simp] theorem spansEligible_eq (c : ℕ) :
-    LeanDag.SpansEligible (Validator := Replica) c
-      ↔ LeanDag.Hydrozoan.IndirectLiveness.SpansEligible Replica c
-```
-
-The run-shape condition coincides, by `eligible_eq`.
-
-#### `decided`
-
-*theorem, `Integration.Hydrozoan.Simulation.lean`*
-
-```lean
-theorem decided (h : Simulates U V S U' V' S' R Novel) {n : ℕ} {v : Option BlockId}
-    (hd : @LeanDag.Hydrozoan.Decided _ _ _ _ _ _ _ S U V n v) :
-    ∀ k, R n k → @LeanDag.Hydrozoan.Decided _ _ _ _ _ _ _ S' U' V' k v
-```
-
-**Simulation transports verdicts.** The six-constructor induction, once. Every case is a field of the structure applied; nothing about any particular transformer appears.
-
-#### `decided_stackHZ`
-
-*theorem, `Integration.Hydrozoan.Stack.lean`*
-
-```lean
-theorem decided_stackHZ (hd : G ≤ S.slotRound d) {k : ℕ} {v : Option BlockId}
-    (h : LeanDag.Hydrozoan.Decided U V (d + k) v) :
-    LeanDag.Hydrozoan.Decided (S := slotsChopHZ hd) (stackHZ U hsp sk G)
-      (stackView U hsp sk G V) k v
-```
-
-**Verdicts survive the stack.** A verdict reached before the recovery, at a slot at or above the base slot, re-derives on the recovered-and-pruned universe at the re-indexed slot. The composition of P8 and P7, in that order.
-
-#### `agree_stackHZ`
-
-*theorem, `Integration.Hydrozoan.Stack.lean`*
-
-```lean
-theorem agree_stackHZ (hd : G ≤ S.slotRound d) {k : ℕ} {v w : Option BlockId}
-    {W : LeanDag.Hydrozoan.View (stackHZ U hsp sk G)}
-    (hV : LeanDag.Hydrozoan.Decided U V (d + k) v)
-    (hW : LeanDag.Hydrozoan.Decided (S := slotsChopHZ hd) (stackHZ U hsp sk G) W k w) :
-    v = w
-```
-
-**The capstone: a recovered and pruned replica cannot disagree.** Its view `W` is an arbitrary view of the stack — not a transported full-history view — and its verdict at the re-indexed slot is the verdict anyone else reached at the original slot. The proof is `Properties.Agree` applied to a different universe, with `decided_stackHZ` moving the other verdict into it. HZ3 is where that property comes from and is not read here.
-
-#### `decidedUnique_stackHZ`
-
-*theorem, `Integration.Hydrozoan.Stack.lean`*
-
-```lean
-theorem decidedUnique_stackHZ (hd : G ≤ S.slotRound d) :
-    @LeanDag.Hydrozoan.SlotAgreement.DecidedUnique Replica BlockId _ _ _ _ _
-      (slotsChopHZ hd) (stackHZ U hsp sk G)
-```
-
-**Safety across the stack**, in HZ3's own words but by `Agree`: no two views of the recovered-and-pruned universe decide a slot differently, whatever the routes. Nothing about the fill or the cut is re-proved, and nothing about agreement either.
-
-#### `selfParenting_ofCore`
-
-*theorem, `Integration.Hydrozoan.Transport.lean`*
-
-```lean
-theorem selfParenting_ofCore {Payload : Type}
-    (U : LeanDag.BlockUniverse Replica BlockId Payload) (hne : HonestNoEquiv U) :
-    SelfParenting (ofCore U hne)
-```
-
-**Every core universe self-parents**, so the condition `toCore` consumes is re-supplied by `ofCore` without an argument: it is the fourth field of the core's `ValidWrt`, read back.
-
-#### `selfParenting_chopHZ`
-
-*theorem, `Integration.Hydrozoan.Transport.lean`*
-
-```lean
-theorem selfParenting_chopHZ (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
-    (hsp : SelfParenting U) (G : ℕ) : SelfParenting (chopHZ U hsp G)
-```
-
-#### `chopHZ_ids`
-
-*theorem, `Integration.Hydrozoan.Transport.lean`*
-
-```lean
-@[simp] theorem chopHZ_ids (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
-    (hsp : SelfParenting U) (G : ℕ) :
-    (chopHZ U hsp G).ids = U.ids.filter fun i => G ≤ (U.block i).round
-```
-
-#### `selfParenting_skipFillHZ`
-
-*theorem, `Integration.Hydrozoan.Transport.lean`*
-
-```lean
-theorem selfParenting_skipFillHZ (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
-    (hsp : SelfParenting U) (sk : SkipMsg (toCore U hsp)) :
-    SelfParenting (skipFillHZ U hsp sk)
-```
-
-#### `honestNoEquiv_toCore`
-
-*theorem, `Integration.Hydrozoan.Universe.lean`*
-
-```lean
-theorem honestNoEquiv_toCore (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
-    (hsp : SelfParenting U) : HonestNoEquiv (toCore U hsp)
-```
-
-**The transported universe carries the wider non-equivocation**, which is Hydrozoan's own field: the hybrid arc's `creator ∉ byzantine` and Hydrozoan's `author ∈ NonByzantine` are one condition.
-
-#### `decided_fillHZ_of_persist`
-
-*theorem, `Integration.Hydrozoan.ViaProperties.lean`*
-
-```lean
-theorem decided_fillHZ_of_persist (sk : SkipMsg (toCore U hsp))
-    [S : LeanDag.Hydrozoan.Slots Replica] {V : LeanDag.Hydrozoan.View U}
-    {k : ℕ} {v : Option BlockId} (h : LeanDag.Hydrozoan.Decided U V k v) :
-    LeanDag.Hydrozoan.Decided (skipFillHZ U hsp sk) (liftViewHZ U hsp sk V) k v
-```
-
-**HI9's transport, from HZ9.** Verdicts survive the fill, reached without an induction: persistence is proved once for the protocol, and the fill is one extension among others. `FillDecided.lean` proved this by a six-constructor induction until the induction was deleted.
-
-#### `decided_fill_agreeHZ_of_properties`
-
-*theorem, `Integration.Hydrozoan.ViaProperties.lean`*
-
-```lean
-theorem decided_fill_agreeHZ_of_properties (sk : SkipMsg (toCore U hsp))
-    [S : LeanDag.Hydrozoan.Slots Replica] {V : LeanDag.Hydrozoan.View U}
-    {W : LeanDag.Hydrozoan.View (skipFillHZ U hsp sk)} {k : ℕ} {v w : Option BlockId}
-    (hV : LeanDag.Hydrozoan.Decided U V k v)
-    (hW : LeanDag.Hydrozoan.Decided (skipFillHZ U hsp sk) W k w) : v = w
-```
-
-**HI9's cross-fill agreement, from HZ9 and HZ3.** A verdict reached before the recovery and one reached after it agree. The deleted bespoke version composed its induction with slot agreement by hand; this is `Arcs.decided_agree_extends`, which every rule with `Agree` and `Persist` has.
-
-#### `sustains_chopHZ`
-
-*theorem, `Integration.Hydrozoan.ViaProperties.lean`*
-
-```lean
-theorem sustains_chopHZ {G : ℕ} :
-    Sustains LeanDag.Hydrozoan.rule U (chopHZ U hsp G) G G where
+theorem truncates_chop_hz (hd : G ≤ S.slotRound d) :
+    Truncates (LeanDag.Hydrozoan.rule (Replica := Replica) (BlockId := BlockId))
+      U (chopHZ U G) S (S.chop G d hd) G d where
   mem
 ```
 
-**A truncation sustains from its horizon.** At and above the cut a block keeps its author and, strictly above, its references.
+**The cut is a truncation of Hydrozoan's carrier.**
 
-#### `truncates_chopHZ`
+#### `viewAgreeAbove_chop_hz`
 
-*theorem, `Integration.Hydrozoan.ViaProperties.lean`*
-
-```lean
-theorem truncates_chopHZ [S : LeanDag.Hydrozoan.Slots Replica] {G d : ℕ}
-    (hd : G ≤ S.slotRound d) :
-    Properties.Truncates LeanDag.Hydrozoan.rule U (chopHZ U hsp G)
-      (LeanDag.Hydrozoan.toCoreSlots S)
-      (LeanDag.Hydrozoan.toCoreSlots (slotsChopHZ hd)) G d
-```
-
-**The truncation is a truncation**, in the carrier's vocabulary. This is the check the failed re-indexing property never received: a relation with no models proves nothing, and exhibiting a witness before proving anything about it is the discipline that catches it.
-
-The block half is `sustains_chopHZ` below, since `Truncates` is `RebasedAbove` at `R₀ = G` plus the schedule; only the three schedule clauses are proved here.
-
-#### `decided_chopHZ_of_localTruncate`
-
-*theorem, `Integration.Hydrozoan.ViaProperties.lean`*
+*theorem, `Integration.HydrozoanMechanisms.lean`*
 
 ```lean
-theorem decided_chopHZ_of_localTruncate [S : LeanDag.Hydrozoan.Slots Replica] {G d : ℕ}
-    (hd : G ≤ S.slotRound d) {V : LeanDag.Hydrozoan.View U} {k : ℕ} {v : Option BlockId} :
-    LeanDag.Hydrozoan.Decided (S := slotsChopHZ hd) (chopHZ U hsp G)
-        (View.chopHZ V hsp G) k v
-      ↔ LeanDag.Hydrozoan.Decided U V (d + k) v
+theorem viewAgreeAbove_chop_hz {V : LeanDag.Hydrozoan.View U} :
+    ViewAgreeAbove (LeanDag.Hydrozoan.rule (Replica := Replica) (BlockId := BlockId))
+      V (chopViewHZ V G) G
 ```
 
-**HI7's transport, from HZ9.** A replica that has pruned below the horizon reaches exactly the verdicts it would have reached with its whole history, at the re-indexed slot — without an induction, and without a Hydrozoan-specific truncation relation. `ChopDecided.lean` proved this by two inductions until they were deleted.
+**The chopped view agrees with the original above the cut.**
+
+#### `hzBlk_round`
+
+*theorem, `Integration.HydrozoanMechanisms.lean`*
+
+```lean
+theorem hzBlk_round (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) (i : BlockId) :
+    (hzBlk U i).round = (U.block i).round
+```
+
+#### `copyFillHZ_block_old`
+
+*theorem, `Integration.HydrozoanMechanisms.lean`*
+
+```lean
+@[simp] theorem copyFillHZ_block_old {b : BlockId} (hb : b ∈ U.ids) :
+    (copyFillHZ U sk).block b = U.block b
+```
+
+#### `copyFillHZ_block_fresh`
+
+*theorem, `Integration.HydrozoanMechanisms.lean`*
+
+```lean
+@[simp] theorem copyFillHZ_block_fresh {k : ℕ} :
+    (copyFillHZ U sk).block (sk.fresh k) =
+      ⟨k, sk.v1, (U.block (sk.line k)).parents⟩
+```
 
 #### `truncates_chop_nemo`
 
@@ -40126,25 +39010,6 @@ theorem skipsUnsupported :
 ```
 
 **The core skips an unsupported slot from a correct quorum.**
-
-#### `decided_none_of_leader_absent_of_properties`
-
-*theorem, `MysticetiProperties.lean`*
-
-```lean
-theorem decided_none_of_leader_absent_of_properties [S : Slots Validator]
-    {U : BlockUniverse Validator BlockId Payload}
-    {V : View Validator BlockId Payload U} {k : ℕ}
-    (hhalt : ∀ b ∈ U.ids, (U.block b).round = S.slotRound k →
-      (U.block b).creator ≠ S.leader k)
-    (hq : quorumCard Validator ≤
-      (creatorsOf U.block (blocksAt U (S.slotRound k + 1) ∩ V.ids)).card) :
-    Decided U V k none
-```
-
-**L5 from the properties.** A slot whose leader produced nothing at all is skipped, on any view holding a quorum of the round above.
-
-The reliable set is read off the view: it is exactly the creators of the blocks the view holds one round up, so `Ok` is the quorum bound the caller already has and `PresentAt` is what membership of that set means. `Unsupported` is vacuous — with no candidate at the slot there is nothing to support — which is the whole content of "the leader halted".
 
 #### `toDecided`
 
@@ -41407,6 +40272,16 @@ theorem agree (ha : Agree R) {S : Slots Validator} {U : R.Universe} {V₁ V₂ :
 
 Two bounded verdicts agree, at any bounds — `Agree` through the first component.
 
+#### `Persist.of_banded`
+
+*theorem, `Properties.Derived.FromBand.lean`*
+
+```lean
+theorem Persist.of_banded (h : Banded R) : Persist R
+```
+
+**Persistence falls out.** An extension carries every band and adds only blocks; a larger view holds everything the band names.
+
 #### `decided_mono_of_banded`
 
 *theorem, `Properties.Derived.FromBand.lean`*
@@ -41444,6 +40319,16 @@ theorem decidedBelow_of_run
 ```
 
 **Everything below a reliable-led run is decided.** The run's slots commit by `LeaderCommits`, and `Descends` settles the rest.
+
+#### `LocalTruncate.of_banded`
+
+*theorem, `Properties.Derived.Truncate.lean`*
+
+```lean
+theorem LocalTruncate.of_banded (h : Banded R) : LocalTruncate R
+```
+
+**Truncation invariance falls out of the band** — `decided_of_rebased` at a cut, whose settling round is its horizon.
 
 #### `old_refs_old`
 
@@ -41694,7 +40579,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 1128 lemmas used only within the file that proves
+The 1056 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -42201,13 +41086,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `reaches_addGenesis` | Reachability is unchanged among old blocks: the new block references nothing, and nothing references it. |
 | `rejoin_populated` | — |
 | `stack_block_fresh_horizon` | The cut turns the boundary fill block into a genesis block. At a horizon inside the gap, `v1`'s filled … |
-
-### `Integration/Lifecycle.lean` (2)
-
-| Lemma | Role |
-|:---|:---|
-| `crash_recovery_hybrid` | I10. A crash-prone validator rejoins by Safe Skip, and every guarantee of report §12 holds for its fill in … |
-| `notMem_byzantine_of_mem_crash` | Membership in the crash class implies the hypothesis above: the crash-prone are honest. The bridge a … |
 
 ### `Integration/Exposure.lean` (2)
 
@@ -43428,145 +42306,19 @@ subsection per module, in the layer order of Appendices B and C.
 | `sustains_skipFill_hybrid` | What the fill sustains, for Hybrid — the core's witness, projected field by field. |
 | `truncates_chop_hybrid` | The cut is a truncation of Hybrid's carrier. The core's witness, projected: the subtype's `ids` and … |
 
-### `Integration/Hydrozoan/ChopDecided.lean` (7)
+### `Integration/HydrozoanMechanisms.lean` (9)
 
 | Lemma | Role |
 |:---|:---|
-| `View.chopHZ_ids` | — |
-| `certificates_chopHZ` | — |
-| `certifiersInView_chopHZ` | — |
-| `chopHZ_parents_subset` | The truncation only ever drops parents, never adds them. |
-| `isCertificate_chopHZ` | Certification is a count over a block's votes, so it transports where the votes do. |
-| `reaches_chopHZ_of_reaches` | — |
-| `slotsChopHZ_slotRound` | — |
-
-### `Integration/Hydrozoan/Deployment.lean` (5)
-
-| Lemma | Role |
-|:---|:---|
-| `covered` | Coverage carries, from a round above the recovery, rebased by the horizon. |
-| `decidesBelow` | And the indirect rule applies, so a committed anchor with the eligible slots below it skipped decides the … |
-| `fair` | A fair schedule stays fair under the replica's numbering. |
-| `populated` | Production carries across the gap, with the recovered replica counted, at the rebased round. This is what … |
-| `spans` | And a spanning runway stays spanning. |
-
-### `Integration/Hydrozoan/Faults.lean` (2)
-
-| Lemma | Role |
-|:---|:---|
-| `correct_eq` | The correct pools coincide: the derived instance's Byzantine set is the union, so its complement is … |
-| `nonByzantine_eq` | The never-equivocating pools coincide: the hybrid arc's honest class is Hydrozoan's `NonByzantine`. |
-
-### `Integration/Hydrozoan/FillDecided.lean` (13)
-
-| Lemma | Role |
-|:---|:---|
-| `authorHZ_fill_old` | — |
-| `authorsOfHZ_fill` | Author sets read identically on any set of old blocks. |
-| `blamesInView_fill` | — |
-| `certifiersInView_fill` | — |
-| `ids_subset_skipFillHZ` | — |
-| `isCertificateHZ_fill_old` | Certification reads identically on an old block: its parents are unchanged, and so are their votes. |
-| `isVoteHZ_fill_old` | Above the fill an old block's vote is its vote. |
-| `liftViewHZ_ids_eq` | — |
-| `not_isVote_fresh` | An old block never references a fresh identifier. |
-| `parentsHZ_fill_old` | — |
-| `reachesHZ_fill_old` | — |
-| `roundHZ_fill_old` | — |
-| `supportersInView_fill` | — |
-
-### `Integration/Hydrozoan/Liveness.lean` (9)
-
-| Lemma | Role |
-|:---|:---|
-| `populatedOn_chopHZ` | Production survives the cut, at the rebased round. A block retained by the horizon keeps its author, and … |
-| `populatedOn_ofCore` | Production differs only in the order of a conjunction. |
-| `populatedOn_skipFillHZ` | The gap is populated, with the recovering replica back in the set — SS2, which is what liveness consumes … |
-| `populatedOn_toCore` | — |
-| `synchronisedOn_chopHZ` | Coverage survives the cut, needing only the horizon offset — `integration.md` I2, which holds because the … |
-| `synchronisedOn_ofCore` | Coverage is the same proposition either side of the transport: the core's `SynchronisedFrom` is … |
-| `synchronisedOn_skipFillHZ_above` | Coverage returns strictly above the fill — `integration.md` I4's positive case. The strictness is not … |
-| `synchronisedOn_skipFillHZ_of_notMem` | And for a set excluding the recovering replica it survives outright — the filled blocks are that replica's … |
-| `synchronisedOn_toCore` | — |
-
-### `Integration/Hydrozoan/OptimalChopDecided.lean` (13)
-
-| Lemma | Role |
-|:---|:---|
-| `blocksAt_decision_chopHZ` | A decision-round block of the truncation is a decision-round block of the original, and sits far enough … |
-| `decisionRound_chopHZ` | The decision round re-indexes by the horizon, like every other round the rules name. |
-| `decision_block_guards` | What membership at the decision round supplies: presence, and the round guard every lemma above needs. |
-| `evidenceLinked_chopHZ` | Rung 2 is preserved. The witness set is the same set of blocks: each sits at the decision round, is fast … |
-| `fastCommitOptInView_chopHZ` | The fast path is preserved. It counts the same supporters as Hydrozoan's at a lower threshold, so the … |
-| `isFastEvidence_chopHZ` | Fast evidence is preserved. Both branches of the definition read only the witnessing test, the vote count, … |
-| `isNoFastEvidence_chopHZ` | And so is being evidence for nothing. |
-| `noEvidenceQuorumInView_chopHZ` | The skip's no-evidence half is preserved, by the same witness set, with the view's membership carried by … |
-| `skippedLeaderOptInView_chopHZ` | And the skip is, being the blame count and the no-evidence quorum together. |
-| `sustains_opt` | Optimal's carrier reads Hydrozoan's sustaining. The subtype's projections are the underlying universe's, … |
-| `truncates_chopOpt` | The cut is a truncation of Optimal's carrier. The block half is Hydrozoan's `sustains_chopHZ`, read … |
-| `votesFor_chopHZ` | The vote count a block casts is unchanged above the cut. |
-| `witnessesEquivocation_chopHZ` | Witnessing is preserved, at the re-indexed slot. The guard is two rounds above the horizon because a vote … |
-
-### `Integration/Hydrozoan/OptimalTransport.lean` (2)
-
-| Lemma | Role |
-|:---|:---|
-| `isCandidateAt_of_chopHZ` | A candidate of the truncation is a candidate of the original, at the round shifted by the horizon. |
-| `witnessesAt_of_chopHZ` | And a witness in the truncation is a witness in the original. A vote is membership in the voter's … |
-
-### `Integration/Hydrozoan/Schedule.lean` (4)
-
-| Lemma | Role |
-|:---|:---|
-| `decisionRound_eq` | The two decision rounds coincide, both being `slotRound k + 2`. |
-| `eligible_eq` | Anchor eligibility coincides: the core's `Eligible` and Hydrozoan's `EligibleAsAnchor` are one predicate. |
-| `leader_eq` | — |
-| `slotRound_eq` | — |
-
-### `Integration/Hydrozoan/Simulation.lean` (6)
-
-| Lemma | Role |
-|:---|:---|
-| `decided_chop_of_simulates` | Verdicts survive the cut, now as a corollary. |
-| `decided_fill_of_simulates` | Verdicts survive the fill, now as a corollary. |
-| `decided_of_chop_of_simulates` | A verdict of the truncation is a verdict of the universe it came from, now as a corollary. |
-| `simulates_chop` | The cut is a simulation along `d + k ↦ k`, with nothing novel: a truncation adds no identifier. |
-| `simulates_chop_bwd` | And the cut read backwards is a simulation too — the same correspondence, `n ↦ d + n`, taken from the … |
-| `simulates_fill` | The fill is a simulation along the identity on slots, with the fresh identifiers as the novel ones. |
-
-### `Integration/Hydrozoan/Stack.lean` (1)
-
-| Lemma | Role |
-|:---|:---|
-| `selfParenting_stackHZ` | The stack is still transportable. Its side condition holds by `selfParenting_ofCore` at each step, so a … |
-
-### `Integration/Hydrozoan/Transport.lean` (3)
-
-| Lemma | Role |
-|:---|:---|
-| `liftViewHZ_ids` | — |
-| `selfParenting_transport` | Transport preserves the side condition, for every `F`. |
-| `transport_ids` | — |
-
-### `Integration/Hydrozoan/Universe.lean` (7)
-
-| Lemma | Role |
-|:---|:---|
-| `View.ofCore_ids` | — |
-| `View.toCore_ids` | — |
-| `correct_subset_nonByzantine` | Hydrozoan's `Correct` is inside its `NonByzantine`: a crashed replica does not equivocate. What lets the … |
-| `ofCore_ids` | — |
-| `ofCore_toCore` | — |
-| `toCore_block` | — |
-| `toCore_ids` | — |
-
-### `Integration/Hydrozoan/ViaProperties.lean` (3)
-
-| Lemma | Role |
-|:---|:---|
-| `decided_agree_chopHZ_of_properties` | HI8's cross-cut agreement, from HZ9. A replica that has pruned below the horizon and one that has not … |
-| `extends_skipFillHZ` | The fill is an extension. It holds every block the original held and denotes each of them unchanged. |
-| `sustains_skipFillHZ` | A fill sustains from the top of its gap. Above it the fill added nothing, so every block is old and … |
+| `authorsOf_chopBlkHZ` | — |
+| `chopBlkHZ_parents_of_le` | — |
+| `copyFillHZ_parents_old` | An old block's parents are old. |
+| `decided_agree_chop_hz` | And cross-cut agreement. |
+| `decided_agree_copyFillHZ` | And agreement across it. |
+| `decided_chop_iff_hz` | Verdict transport across the cut, for Hydrozoan. |
+| `decided_copyFillHZ` | Verdicts survive the recovery, for Hydrozoan. |
+| `extends_copyFillHZ` | The fill is an extension of Hydrozoan's carrier. |
+| `sustains_copyFillHZ` | What the fill sustains: from the top of its gap. |
 
 ### `Integration/NemoMechanisms.lean` (10)
 
@@ -43583,20 +42335,21 @@ subsection per module, in the layer order of Appendices B and C.
 | `skipFillNemo_block_old` | — |
 | `viewAgreeAbove_chop_nemo` | The chopped view agrees with the original above the cut. |
 
-### `Integration/OptimalFill.lean` (10)
+### `Integration/OptimalMechanisms.lean` (11)
 
 | Lemma | Role |
 |:---|:---|
-| `copyFillHZ_block_fresh` | — |
-| `copyFillHZ_block_old` | — |
-| `copyFillHZ_parents_old` | An old block's parents are old. |
+| `decided_agree_chop_opt` | And cross-cut agreement. |
 | `decided_agree_copyFill_opt` | And agreement across it. |
-| `decided_copyFill_opt` | Verdicts survive the recovery, for Optimal-Hydrozoan — the cell `not_leaderExcludedAll_Ufill` had put out … |
+| `decided_chop_iff_opt` | Verdict transport across the cut, for Optimal-Hydrozoan. |
+| `decided_copyFill_opt` | Verdicts survive the recovery, for Optimal-Hydrozoan — the cell the skip-fill refutation had put out … |
 | `extends_copyFill_opt` | The fill is an extension of Optimal-Hydrozoan's carrier. |
-| `hzBlk_round` | — |
 | `isCandidateAt_of_old` | A candidate voted for by an old block is old, and a candidate in the old universe. |
+| `leaderExcludedAll_chopHZ` | Leader exclusion survives the cut. A block bound by exclusion sits two rounds above the horizon, so it … |
 | `leaderExcludedAll_copyFillHZ` | Leader exclusion survives the copy fill. A filled block's parents are the donor's; old blocks vote only … |
 | `sustains_copyFill_opt` | What the fill sustains: from the top of its gap. |
+| `truncates_chop_opt` | The cut is a truncation of Optimal-Hydrozoan's carrier — Hydrozoan's witness, projected. |
+| `viewAgreeAbove_chop_opt` | — |
 
 ### `Integration/ReGenesisRules.lean` (34)
 
@@ -43647,15 +42400,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `live_chop_reactive` | The reactive precondition survives the cut, as the support's, at the re-indexed schedule. |
 | `live_skipFill_reactive` | And the fill, on any view of it caught up as far as the old one. |
 
-### `Integration/Sound.lean` (4)
-
-| Lemma | Role |
-|:---|:---|
-| `hybrid_agree_of_soundOn` | The capstone, from the bundle. A validator that has recovered from a crash and pruned its history still … |
-| `soundOn_chop` | Truncation preserves it, shifting the synchrony round by the cut. |
-| `soundOn_skipFill` | The fill preserves it, above the gap. The synchrony round must clear the filled round: inside the gap the … |
-| `soundOn_stack` | The stack preserves it, the offsets composing exactly as the two statements above suggest: the fill … |
-
 ### `Integration/StackRules.lean` (6)
 
 | Lemma | Role |
@@ -43686,7 +42430,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `toCore` | The two carriers project identically, so a band for one is a band for the other. |
 | `votes_band` | A vote is the vote it was. Both clauses read the same cone, and `candidatesAt_band` settles it as an … |
 
-### `MysticetiProperties.lean` (31)
+### `MysticetiProperties.lean` (32)
 
 | Lemma | Role |
 |:---|:---|
@@ -43702,6 +42446,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `certifies_old` | — |
 | `coversUpto_eq` | The carrier's coverage predicate is the core's, on the nose. |
 | `creatorsOf_old` | — |
+| `decided_none_of_leader_absent_of_properties` | L5 from the properties. A slot whose leader produced nothing at all is skipped, on any view holding a … |
 | `directCommitIn_band` | — |
 | `directCommitIn_mono` | — |
 | `directSkipIn_mono` | An old candidate blamed before is blamed still. |
@@ -43893,11 +42638,10 @@ subsection per module, in the layer order of Appendices B and C.
 | `Descends.of_indirect` | `Descends` is a consequence, not an obligation. The run is `c` consecutive commits from `b`; its top is `b … |
 | `decidedBelow_of_committed_run` | The committed-run descent. A stretch of slots `[b, n]`, each committed below `n + 1`, decides every slot … |
 
-### `Properties/Derived/FromBand.lean` (2)
+### `Properties/Derived/FromBand.lean` (1)
 
 | Lemma | Role |
 |:---|:---|
-| `Persist.of_banded` | Persistence falls out. An extension carries every band and adds only blocks; a larger view holds … |
 | `exists_decidedBelow` | A bound falls out of the band. The slots sitting at or below a round are finitely many, since the round … |
 
 ### `Properties/Derived/Progress.lean` (1)
@@ -43905,12 +42649,6 @@ subsection per module, in the layer order of Appendices B and C.
 | Lemma | Role |
 |:---|:---|
 | `decidedBelow_run` | And the verdicts of the run itself. |
-
-### `Properties/Derived/Truncate.lean` (1)
-
-| Lemma | Role |
-|:---|:---|
-| `LocalTruncate.of_banded` | Truncation invariance falls out of the band — `decided_of_rebased` at a cut, whose settling round is its … |
 
 ### `Properties/Extends.lean` (5)
 

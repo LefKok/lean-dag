@@ -2,7 +2,7 @@ import LeanDag.Integration.ReGenesis
 import LeanDag.Integration.HybridMechanisms
 import LeanDag.Integration.NemoMechanisms
 import LeanDag.Integration.FinWhaleMechanisms
-import LeanDag.Integration.Hydrozoan.ViaProperties
+import LeanDag.Hydrozoan.Helpers.Commit
 import LeanDag.OdontocetiProperties
 import LeanDag.MahiMahiProperties
 import LeanDag.OptimalHydrozoan.Carrier

@@ -1,8 +1,6 @@
 import LeanDag.Integration.Coverage
 import LeanDag.Integration.ScheduleShape
 import LeanDag.Integration.Joiner
-import LeanDag.Integration.Stack
-import LeanDag.Integration.Lifecycle
 import LeanDag.Integration.Retention
 import LeanDag.Integration.ReGenesis
 import LeanDag.Integration.Exposure
@@ -90,12 +88,6 @@ example (hs : SynchronisedOn (Ucrash 2) (Finset.univ : Finset (Fin 4)) 0) :
 #print axioms LeanDag.Integration.anchor_pruned
 #print axioms LeanDag.Integration.chopMsg
 #print axioms LeanDag.Integration.outage_bounded_by_lag
-#print axioms LeanDag.Integration.hB1uniq_of_crash
-#print axioms LeanDag.Integration.crash_recovery_hybrid
-#print axioms LeanDag.Integration.lifecycle
-#print axioms LeanDag.Integration.honestNoEquiv_stack
-#print axioms LeanDag.Integration.synchronisedOn_stack
-#print axioms LeanDag.Integration.hybrid_agree_stack
 /-! ## The constructions, witnessed
 
 The house rule of report §18 applies with particular force to the

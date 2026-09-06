@@ -29,12 +29,6 @@ import LeanDagTest.Catchup
 import LeanDagTest.Collapse
 import LeanDagTest.Adaptive
 import LeanDagTest.Integration
-import LeanDagTest.Integration.Hydrozoan
-import LeanDagTest.Integration.HydrozoanUniverse
-import LeanDagTest.Integration.HydrozoanTransport
-import LeanDagTest.Integration.HydrozoanChop
-import LeanDagTest.Integration.HydrozoanFill
-import LeanDagTest.Integration.HydrozoanOptimal
 import LeanDagTest.Hybrid
 import LeanDagTest.Integration
 import LeanDagTest.HybridTight

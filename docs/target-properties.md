@@ -3009,22 +3009,61 @@ now `decided_of_rebased` at a cut, whose settling round is its horizon.
 moved to `Compose.lean`, beside the composition they generalise, so
 that `Derived/` depends on nothing in `Arcs/`.
 
-**What was not touched, and is the larger opportunity.** The Hydrozoan
-integration layer — `Integration/Hydrozoan/ChopDecided.lean`,
-`FillDecided.lean`, `OptimalChopDecided.lean`, `Simulation.lean`,
-`Stack.lean` — is some hundred and twenty declarations carrying
-Hydrozoan's and Optimal's rules across the cut and the fill one
-predicate at a time, feeding a bespoke `Simulates` transport and a
-hand-composed stack. Every consequence they reach is now reached by
-`hzSupport`, `optSupport`, the `Truncates`/`Sustains` witnesses in
-`ViaProperties.lean` and `OptimalFill.lean`, and the generic theorems;
-`OptimalChopDecided.lean` has no external consumer at all. The same
-holds of the core's integration capstones `Sound.lean`, `Lifecycle.lean`
-and most of `Retention.lean`, which restate for the core what
-`Stack.safe_and_live` states for every rule. They are the deliverables
-of `docs/hydrozoan-integration.md` and `docs/integration.md`, so
-deleting them retires those documents' claims in favour of the
-properties', and that is a decision rather than a tidy-up.
+**What was not touched, and was the larger opportunity.** The
+Hydrozoan integration layer and the core's integration capstones
+restated for two rules what `Stack.safe_and_live` states for every
+rule. §11.13 records their removal.
+
+### 11.13 The bespoke integrations retired
+
+The decision §11.12 deferred is taken: the two integration chapters
+(`docs/integration.md`, `docs/hydrozoan-integration.md`) are retired,
+and the code they described is deleted.
+
+**Hydrozoan.** `Integration/Hydrozoan/` — thirteen files carrying
+Hydrozoan universes into the core's and back under a self-parent
+clause, transporting every rule predicate across the core's
+transformers, and hand-composing a stack — is replaced by
+`Integration/HydrozoanMechanisms.lean`, which builds the cut and the
+fill on Hydrozoan's own universe, as Nemo and FinWhale do:
+
+| cell | witness | theorem |
+|---|---|---|
+| cut | `chopHZ`, `truncates_chop_hz` | `decided_chop_iff_hz`, `decided_agree_chop_hz` |
+| fill | `copyFillHZ`, `extends_copyFillHZ`, `sustains_copyFillHZ` | `decided_copyFillHZ`, `decided_agree_copyFillHZ` |
+
+The cut is `chopBlkHZ` — the round rebased and the parents dropped at
+or below the horizon — with three invariants discharged on the block
+record; the fill is `SkipData.copyBlock` at Hydrozoan's block type,
+moved here from `OptimalFill.lean`. Both theorems are
+`LocalTruncate.of_banded` and `Persist.of_banded` at
+`LeanDag.Hydrozoan.banded`; the self-parent clause is not needed because
+nothing is transported. Optimal-Hydrozoan takes the same two witnesses
+with leader exclusion carried across each
+(`Integration/OptimalMechanisms.lean`: `chopOpt` from
+`leaderExcludedAll_chopHZ`, the copy fill from
+`leaderExcludedAll_copyFillHZ`), so both of Optimal's cells are native
+too. `leaderExcludedAll_chopHZ` is the one proof written fresh: a block
+bound by exclusion sits two rounds above the horizon, so it keeps its
+parents, they keep theirs, and its candidates are old blocks at a
+rebased round.
+
+**The core.** `Integration/Stack.lean`, `Sound.lean` and
+`Lifecycle.lean` — the `stack` universe with its chain of preservation
+lemmas, the soundness predicate, and the crash-prone lifecycle with
+`hB1uniq_of_crash` — are deleted. Their consequence is
+`stack_core_safe_and_live` (`Integration/StackRules.lean`).
+`Preservation.lean`, `Coverage.lean`, `Retention.lean` and the
+re-genesis files stay: re-genesis reads `severed_of_pruned_anchor`, and
+the coverage results are facts about the mechanisms the properties do
+not state.
+
+**What the audits show.** `audit-mechanisms.py` reads the same matrix
+as before — every cell for Hydrozoan and Optimal-Hydrozoan `yes`, live
+and stack `der` — now from the native witnesses. `audit-bespoke.py`
+still reports no bespoke links. The six Hydrozoan integration test
+files are gone with the cluster; `LeanDagTest/Integration.lean` keeps
+the axiom checks for what survives.
 
 ### 11.5 Next steps, in order
 
