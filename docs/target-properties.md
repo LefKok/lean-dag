@@ -2899,6 +2899,44 @@ exclusion, being at round zero, and can be no second candidate of a
 witnessed equivocation, being its author's only block. Re-genesis adds
 no edge, which is exactly what leader exclusion cared about.
 
+### 11.10 The three cells that were out of scope
+
+Three cells of the mechanism matrix read `--` with a reason: the fill
+for Optimal-Hydrozoan, and adaptive leaders for Mahi-Mahi and FinWhale.
+Each reason was true when written and false after the work that
+followed it, so each is now closed.
+
+**Optimal-Hydrozoan × fill.** The reason named `skipFill`, whose added
+self reference grafts the anchor's parents onto the donor's at the
+boundary round; leader exclusion is a condition on what a block's
+parents jointly witness, and the graft breaks it
+(`not_leaderExcludedAll_Ufill`). §11.2e's `copyBlock` adds no edge.
+`Integration/OptimalFill.lean` builds the copy fill at Hydrozoan's
+universe directly — no self-parent clause is in play, so no transport
+through the core is needed — and proves `leaderExcludedAll_copyFillHZ`:
+a filled block's parents are the donor's, old blocks vote only for old
+blocks, so whatever a block of the fill witnesses the donor witnessed,
+and the donor's parents were already excluded. The witnesses and
+transports are then the generic theorems. The audit entry that said the
+mechanism was out of scope for this rule is deleted; it described one
+fill, and the mechanism has two.
+
+**Mahi-Mahi and FinWhale × adaptive leaders.** The reason was "no
+`BaseRule` instance", and after §11.8a a `LiveRule` is a small thing:
+`Good` is `GoodOf` at the fault model and the descent laws come from
+the support. What was genuinely per rule was the `BaseRule` record —
+the history view, the direct predicate at the view with its
+decidability, the wave length — and `Barnacle/MahiMahi/` and
+`Barnacle/FinWhale/` supply it in the shape the six others have. Every
+law is a property already proved: `Agree`, `CommitsDirect`,
+`CommitsCandidate` for the base laws; the support's `OfCoverage` and
+`Commits` with `Indirect` for the descent. FinWhale's history view is
+the anchor's causal history, closed by construction; Mahi-Mahi carries
+its wave `w` throughout and takes the round-robin committee bound
+`w · f + 1 ≤ n` as a hypothesis, the fault model giving only `3f + 1`.
+
+With these, the only `--` left in the matrix is Black Marlin's row.
+
 ### 11.5 Next steps, in order
 
 1. **~~`Compose.lean`~~** (**done**, §11.3). The three composition

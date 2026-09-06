@@ -53,9 +53,7 @@ MECHANISMS = [
       "LeanDag.Properties.Arcs.decided_agree_truncate",
       "LeanDag.Properties.Arcs.decided_agree_horizons"],
      ["Banded", "Agree"]),
-    ("extension",
-     {"Optimal-Hydrozoan":
-      "`skipFill` breaks leader exclusion — `not_leaderExcludedAll_Ufill`"},
+    ("extension", {},
      ["LeanDag.Properties.Persist.of_banded",
       "LeanDag.Properties.Arcs.decided_skipFill",
       "LeanDag.Properties.Arcs.decided_agree_extends",
@@ -67,9 +65,7 @@ MECHANISMS = [
       "LeanDag.Integration.addGenesisFinWhale", "LeanDag.Integration.addGenesisHZ",
       "LeanDag.Integration.addGenesisHybrid", "LeanDag.Integration.addGenesisOpt"],
      ["Banded", "Agree"]),
-    ("adaptive leaders",
-     {"FinWhale": "no `BaseRule` instance",
-      "Mahi-Mahi": "no `BaseRule` instance"},
+    ("adaptive leaders", {},
      ["LeanDag.Barnacle.descent_of_support"],
      ["Support", "Indirect"]),
     ("chain quality", {},
@@ -94,6 +90,8 @@ LIVE_RULES = {
     "Odontoceti": ["Barnacle.odontocetiLive"],
     "Nemo": ["Barnacle.nemoLive"],
     "Hybrid / Orcaella": ["Barnacle.orcaellaLive"],
+    "Mahi-Mahi": ["Barnacle.mahiMahiLive"],
+    "FinWhale": ["Barnacle.finWhaleLive"],
 }
 
 

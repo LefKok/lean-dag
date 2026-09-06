@@ -67,6 +67,9 @@ import LeanDag.Integration.NemoMechanisms
 import LeanDag.Integration.FinWhaleMechanisms
 import LeanDag.Integration.ReactiveMechanisms
 import LeanDag.Integration.ReGenesisRules
+import LeanDag.Integration.OptimalFill
+import LeanDag.Barnacle.MahiMahi.Proof
+import LeanDag.Barnacle.FinWhale.Proof
 import LeanDag.Integration.Coverage
 import LeanDag.Integration.ScheduleShape
 import LeanDag.Integration.Joiner

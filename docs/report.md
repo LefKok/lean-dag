@@ -22720,6 +22720,102 @@ abbrev optimalHydrozoanRule : Properties.DagRule Replica BlockId Unit :=
 
 **Optimal-Hydrozoan as a `DagRule`**, which it had no way to be: its verdicts are `DecidedOpt` over `OptUniverse`, and Barnacle's instance is what puts them in the shared vocabulary.
 
+#### `finWhale`
+
+*def, `Barnacle.FinWhale.Statement.lean`*
+
+```lean
+def finWhale : BaseRule Validator BlockId Payload where
+  Universe := Dag Validator BlockId Payload
+  View := fun D => {V : Finset BlockId // IsView D V}
+  block := fun D i => D.block i
+  ids := fun D => D.ids
+  viewIds := fun V => V.val
+  viewSound := fun V => V.property.subset
+  viewComplete := fun V => V.property.closed
+  full := fun D => ⟨D.ids, ⟨Finset.Subset.rfl, D.complete⟩⟩
+  historyView := fun D A hA =>
+    ⟨historyFrom D.block A,
+      ⟨fun i hi => (FinWhaleProperties.causal D).mem_ids_of_reaches hA
+          (((FinWhaleProperties.causal D).mem_history_iff hA).mp hi),
+        fun i hi j hj => ((FinWhaleProperties.causal D).mem_history_iff hA).mpr
+          (Relation.ReflTransGen.tail
+            (((FinWhaleProperties.causal D).mem_history_iff hA).mp hi) hj)⟩⟩
+  waveLength := 3
+  DirectCommitIn := fun V L r => FinWhaleProperties.DirectCommitIn V L r
+  decDirect := fun V L _ => inferInstanceAs (Decidable
+    (L ∈ V.val ∧ LeanDag.FinWhale.DirectCommit (LeanDag.FinWhale.restrict _ V.val V.property) L))
+  Decided := fun S {D} V k v =>
+    (FinWhaleProperties.finWhaleRule (Payload := Payload)).Decided S (U := D) V k v
+```
+
+**FinWhale as a base rule** — the data.
+
+#### `finWhaleLive`
+
+*def, `Barnacle.FinWhale.Statement.lean`*
+
+```lean
+def finWhaleLive : LiveRule Validator BlockId Payload :=
+  { finWhale with
+    Good := fun D Rnd N => ∃ T ⊆ (Correct : Finset Validator),
+      quorumCard Validator ≤ T.card ∧ SynchronisedFrom D.block D.ids T Rnd ∧
+      ∀ r, Rnd ≤ r → r ≤ N → PopulatedFrom D.block D.ids T r }
+```
+
+**FinWhale as a live rule**: a DAG is good when a correct quorum is synchronised from `Rnd` and populates the rounds to `N`.
+
+#### `Laws`
+
+*def, `Barnacle.FinWhale.Statement.lean`*
+
+```lean
+def Laws : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] [LeanDag.FinWhale.Params Validator] [LinearOrder BlockId],
+    BaseRule.Laws (finWhale (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+```
+
+**FinWhale satisfies the laws.**
+
+#### `Descent`
+
+*def, `Barnacle.FinWhale.Statement.lean`*
+
+```lean
+def Descent : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [F : Faults Validator] [LeanDag.FinWhale.Params Validator] [LinearOrder BlockId],
+    (finWhaleLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload)).Descent F.f
+```
+
+**FinWhale has the descent laws at slack `f`.**
+
+#### `RoundRobinLive`
+
+*def, `Barnacle.FinWhale.Statement.lean`*
+
+```lean
+def RoundRobinLive : Prop :=
+  ∀ (n : ℕ) (hn : 0 < n) [Faults (Fin n)] [LeanDag.FinWhale.Params (Fin n)]
+    (BlockId Payload : Type) [LinearOrder BlockId]
+    (W : ℕ) (hk : Keyed (roundRobin n hn) W) (m : ℕ) (hm : 0 < m) (hmax : m ≤ W),
+    (finWhaleLive (Validator := Fin n) (BlockId := BlockId) (Payload := Payload)).LiveOn
+      (Sched (roundRobin n hn) hk m hm hmax) (n + 2)
+```
+
+**FinWhale under round-robin is live at every count**, with gap `n + 2`.
+
+#### `Statement`
+
+*def, `Barnacle.FinWhale.Statement.lean`*
+
+```lean
+def Statement : Prop := Laws ∧ Descent ∧ RoundRobinLive
+```
+
+The laws, the descent laws, and liveness under round-robin.
+
 #### `WindowHealthy`
 
 *def, `Barnacle.Healthy.Statement.lean`*
@@ -23139,6 +23235,95 @@ def Statement : Prop := MysticetiRuns ∧ OdontocetiRuns ∧ NemoRuns
 ```
 
 The three protocols, end to end.
+
+#### `mahiMahi`
+
+*def, `Barnacle.MahiMahi.Statement.lean`*
+
+```lean
+def mahiMahi [Faults Validator] (w : ℕ) : BaseRule Validator BlockId Payload where
+  Universe := BlockUniverse Validator BlockId Payload
+  View := fun U => LeanDag.View Validator BlockId Payload U
+  block := fun U => U.block
+  ids := fun U => U.ids
+  viewIds := fun V => V.ids
+  viewSound := fun V => V.subset_ids
+  viewComplete := fun V => V.complete
+  full := fun U => LeanDag.View.full U
+  historyView := fun U A hA => historyViewOf U A hA
+  waveLength := w
+  DirectCommitIn := fun V L r => MahiMahi.DirectCommitIn _ V w L r
+  decDirect := fun _ _ _ => inferInstance
+  Decided := fun S {U} V k v => MahiMahi.Decided (S := S) w U V k v
+```
+
+**Mahi-Mahi as a base rule** — the data, at wave `w`.
+
+#### `mahiMahiLive`
+
+*def, `Barnacle.MahiMahi.Statement.lean`*
+
+```lean
+def mahiMahiLive [Faults Validator] (w : ℕ) : LiveRule Validator BlockId Payload :=
+  { mahiMahi w with
+    Good := fun U Rnd N => ∃ T ⊆ (Correct : Finset Validator),
+      quorumCard Validator ≤ T.card ∧ SynchronisedOn U T Rnd ∧
+      ∀ r, Rnd ≤ r → r ≤ N → PopulatedOn U T r }
+```
+
+**Mahi-Mahi as a live rule**: a DAG is good when a correct quorum is synchronised from `Rnd` and populates the rounds to `N`.
+
+#### `Laws`
+
+*def, `Barnacle.MahiMahi.Statement.lean`*
+
+```lean
+def Laws : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] [LinearOrder BlockId] (w : ℕ), 2 ≤ w →
+    BaseRule.Laws (mahiMahi (Validator := Validator) (BlockId := BlockId) (Payload := Payload) w)
+```
+
+**Mahi-Mahi satisfies the laws** at every wave of length at least two.
+
+#### `Descent`
+
+*def, `Barnacle.MahiMahi.Statement.lean`*
+
+```lean
+def Descent : Prop :=
+  ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
+    [F : Faults Validator] [LinearOrder BlockId] (w : ℕ), 4 ≤ w →
+    (mahiMahiLive (Validator := Validator) (BlockId := BlockId) (Payload := Payload) w).Descent
+      F.f
+```
+
+**Mahi-Mahi has the descent laws at slack `f`**, at every wave of length at least four — the length its support's coverage law needs.
+
+#### `RoundRobinLive`
+
+*def, `Barnacle.MahiMahi.Statement.lean`*
+
+```lean
+def RoundRobinLive : Prop :=
+  ∀ (n : ℕ) (hn : 0 < n) [F : Faults (Fin n)] (BlockId Payload : Type) [LinearOrder BlockId]
+    (w : ℕ), 4 ≤ w → w * F.f + 1 ≤ n →
+    ∀ (W : ℕ) (hk : Keyed (roundRobin n hn) W) (m : ℕ) (hm : 0 < m) (hmax : m ≤ W),
+    (mahiMahiLive (Validator := Fin n) (BlockId := BlockId) (Payload := Payload) w).LiveOn
+      (Sched (roundRobin n hn) hk m hm hmax) (n + w - 1)
+```
+
+**Mahi-Mahi under round-robin is live at every count**, with gap `n + w − 1`, on a committee of at least `w · f + 1`.
+
+#### `Statement`
+
+*def, `Barnacle.MahiMahi.Statement.lean`*
+
+```lean
+def Statement : Prop := Laws ∧ Descent ∧ RoundRobinLive
+```
+
+The laws, the descent laws, and liveness under round-robin.
 
 #### `optimalHydrozoan`
 
@@ -25392,6 +25577,132 @@ def liftViewNemo (V : Nemo.View Validator BlockId Payload U) :
 
 The pre-crash view, read in the repaired universe: the same ids, and every one of them old.
 
+#### `hzBlk`
+
+*def, `Integration.OptimalFill.lean`*
+
+```lean
+def hzBlk (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) :
+    BlockId → Block Replica BlockId Unit :=
+  fun i => LeanDag.Hydrozoan.adaptBlock (U.block i)
+```
+
+A Hydrozoan universe's blocks, read as core blocks with no payload — the shape a Safe Skip message is stated over.
+
+#### `copyFillHZ`
+
+*def, `Integration.OptimalFill.lean`*
+
+```lean
+def copyFillHZ (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
+    (sk : SkipData U.ids (hzBlk U)) : LeanDag.Hydrozoan.BlockUniverse Replica BlockId where
+  ids := U.ids ∪ sk.freshIds
+  block b := if b ∈ U.ids then U.block b
+    else ⟨sk.idx b, sk.v1, (U.block (sk.line (sk.idx b))).parents⟩
+  complete := by
+    intro i hi j hj
+    rcases Finset.mem_union.mp hi with ho | hf
+    · rw [if_pos ho] at hj
+      exact Finset.mem_union_left _ (U.complete i ho j hj)
+    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
+      have hR0 : sk.r0 = (hzBlk U sk.B1).round := rfl
+      have hB1 := hzBlk_round U sk.B1
+      rw [if_neg (sk.hfresh_new k), sk.hidx] at hj
+      exact Finset.mem_union_left _
+        (U.complete _ (sk.hline_mem k (by omega) hk2) j hj)
+  valid := by
+    intro i hi
+    rcases Finset.mem_union.mp hi with ho | hf
+    · rw [if_pos ho]
+      have hv := U.valid i ho
+      refine ⟨?_, ?_, ?_⟩
+      · intro j hj
+        rw [if_pos (U.complete i ho j hj)]
+        exact hv.predecessor j hj
+      · intro a ha b hb hab
+        rw [if_pos (U.complete i ho a ha), if_pos (U.complete i ho b hb)] at hab
+        exact hv.distinct_authors a ha b hb hab
+      · intro hr
+        refine le_trans (hv.quorum hr) (Finset.card_le_card ?_)
+        intro c hc
+        unfold LeanDag.Hydrozoan.authors LeanDag.Hydrozoan.authorsOf at hc ⊢
+        obtain ⟨j, hj, hjc⟩ := Finset.mem_image.mp hc
+        refine Finset.mem_image.mpr ⟨j, hj, ?_⟩
+        simp only
+        rw [if_pos (U.complete i ho j hj)]
+        exact hjc
+    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
+      have hR0 : sk.r0 = (hzBlk U sk.B1).round := rfl
+      have hB1 := hzBlk_round U sk.B1
+      rw [if_neg (sk.hfresh_new k), sk.hidx]
+      have hlm := sk.hline_mem k (by omega) hk2
+      have hlv := U.valid _ hlm
+      have hlr : (U.block (sk.line k)).round = k := sk.hline_round k (by omega) hk2
+      refine ⟨?_, ?_, ?_⟩
+      · intro j hj
+        simp only at hj ⊢
+        rw [if_pos (U.complete _ hlm j hj)]
+        have := hlv.predecessor j hj
+        omega
+      · intro a ha b hb hab
+        simp only at ha hb
+        rw [if_pos (U.complete _ hlm a ha), if_pos (U.complete _ hlm b hb)] at hab
+        exact hlv.distinct_authors a ha b hb hab
+      · intro _
+        have hq := hlv.quorum (by omega)
+        refine le_trans hq (Finset.card_le_card ?_)
+        intro c hc
+        unfold LeanDag.Hydrozoan.authors LeanDag.Hydrozoan.authorsOf at hc ⊢
+        obtain ⟨j, hj, hjc⟩ := Finset.mem_image.mp hc
+        refine Finset.mem_image.mpr ⟨j, hj, ?_⟩
+        simp only
+        rw [if_pos (U.complete _ hlm j hj)]
+        exact hjc
+  no_equivocation := by
+    intro i hi j hj hib hcc hrr
+    rcases Finset.mem_union.mp hi with ho | hf <;>
+      rcases Finset.mem_union.mp hj with ho' | hf'
+    · rw [if_pos ho] at hib hcc hrr
+      rw [if_pos ho'] at hcc hrr
+      exact U.no_equivocation i ho j ho' hib hcc hrr
+    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf'
+      have hR0 : sk.r0 = (hzBlk U sk.B1).round := rfl
+      have hB1 := hzBlk_round U sk.B1
+      rw [if_pos ho] at hcc hrr
+      rw [if_neg (sk.hfresh_new k), sk.hidx] at hcc hrr
+      have hi := hzBlk_round U i
+      exact (sk.hgap i ho hcc (by simp only at hrr; omega) (by simp only at hrr; omega)).elim
+    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
+      have hR0 : sk.r0 = (hzBlk U sk.B1).round := rfl
+      have hB1 := hzBlk_round U sk.B1
+      rw [if_neg (sk.hfresh_new k), sk.hidx] at hcc hrr
+      rw [if_pos ho'] at hcc hrr
+      have hj := hzBlk_round U j
+      exact (sk.hgap j ho' hcc.symm (by simp only at hrr; omega)
+        (by simp only at hrr; omega)).elim
+    · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
+      obtain ⟨l, hl1, hl2, rfl⟩ := sk.mem_freshIds.mp hf'
+      rw [if_neg (sk.hfresh_new k), sk.hidx] at hrr
+      rw [if_neg (sk.hfresh_new l), sk.hidx] at hrr
+      simp only at hrr
+      exact hrr ▸ rfl
+```
+
+**The copy fill, at Hydrozoan's universe.** One block per gap round, by the recovering replica, carrying the donor's parents at that round.
+
+#### `copyFillOpt`
+
+*def, `Integration.OptimalFill.lean`*
+
+```lean
+def copyFillOpt (W : (OptimalHydrozoanProperties.optimalRule (Replica := Replica)
+    (BlockId := BlockId)).Universe) (sk : SkipData W.val.ids (hzBlk W.val)) :
+    (OptimalHydrozoanProperties.optimalRule (Replica := Replica) (BlockId := BlockId)).Universe :=
+  ⟨copyFillHZ W.val sk, leaderExcludedAll_copyFillHZ W.property⟩
+```
+
+**The fill, at Optimal-Hydrozoan's carrier**: the copy fill with leader exclusion carried.
+
 #### `addGenesisHybrid`
 
 *def, `Integration.ReGenesisRules.lean`*
@@ -26623,7 +26934,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 1105 theorems that either another module of the
+The 1115 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -37506,6 +37817,14 @@ theorem adaptiveRun_exists (hT : T ⊆ (Correct : Finset Validator))
 
 #### `holds`
 
+*theorem, `Barnacle.FinWhale.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
 *theorem, `Barnacle.Healthy.Proof.lean`*
 
 ```lean
@@ -37670,6 +37989,14 @@ theorem holds : Statement
 #### `holds`
 
 *theorem, `Barnacle.Live.Proof.lean`*
+
+```lean
+theorem holds : Statement
+```
+
+#### `holds`
+
+*theorem, `Barnacle.MahiMahi.Proof.lean`*
 
 ```lean
 theorem holds : Statement
@@ -37934,6 +38261,54 @@ theorem banded : Banded (finWhaleRule (Validator := Validator) (BlockId := Block
 **FinWhale is banded.** The band runs from the slot's own round to two above the DAG's highest, and the argument is a downward induction on slots with `Band.lean`'s transport at each step.
 
 Three cases, and the third is the one with content. A slot the smaller view decided directly stays decided the same way, because a commit and a skip both survive a band. A slot it decided from an anchor keeps its anchor — the anchor's commit and the skips below it transport by the induction hypothesis — and then the tie-break is the same function of the same anchor. What is left is the larger view deciding *directly* a slot the smaller one decided from an anchor, and that is settled inside `D'` alone: a direct commit pins what the tie-break may name, and a direct skip bars it naming anything.
+
+#### `fwSupport_ofCoverage`
+
+*theorem, `FinWhale.Carrier.lean`*
+
+```lean
+theorem fwSupport_ofCoverage :
+    Support.OfCoverage (R := finWhaleRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) fwSupport (coreReliability Validator)
+```
+
+**Law 2.** Coverage toward the candidate over two layers: every quorum block one round up votes, every quorum block two rounds up references each voter, and the quorum carries `spQuorum`.
+
+#### `fwSupport_commits`
+
+*theorem, `FinWhale.Carrier.lean`*
+
+```lean
+theorem fwSupport_commits :
+    Support.Commits (R := finWhaleRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) fwSupport (coreReliability Validator)
+```
+
+**Law 3.** A quorum's SP-certificates at the slot's candidate, all held by a view caught up to the certificate round, are a direct commit on that view, and the pass commits it.
+
+#### `indirect`
+
+*theorem, `FinWhale.Carrier.lean`*
+
+```lean
+theorem indirect : Indirect
+    (finWhaleRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+    finWhaleElig
+```
+
+**The indirect rule, with its bound.** The anchor is the committed slot `j`; the eligible slots between are skipped, so `j` is the *first* unskipped one and `Anchor` holds of the pass. `pass_indirect` then says the verdict at `i` survives every reassignment of leaders away from `i`, which is the second quantifier.
+
+#### `commitsDirect`
+
+*theorem, `FinWhale.Carrier.lean`*
+
+```lean
+theorem commitsDirect : CommitsDirect
+    (finWhaleRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+    (fun {_} V L r => DirectCommitIn V L r)
+```
+
+**And a direct commit is a verdict**, at every schedule. `IsCandidate` places the block at the slot, `DirectCommitIn` puts it in the view and certifies it, and `decided_of_directCommit` runs the pass that reads the commit off.
 
 #### `quorate`
 
@@ -39354,6 +39729,19 @@ theorem commitsCandidate (w : ℕ) :
 
 **A commit names the slot's candidate.** Both committing constructors carry `IsLeaderBlock`.
 
+#### `commitsDirect`
+
+*theorem, `MahiMahi.Carrier.lean`*
+
+```lean
+theorem commitsDirect (w : ℕ) :
+    CommitsDirect (mahiMahiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) w)
+      (fun {U} V L r => MahiMahi.DirectCommitIn U V w L r)
+```
+
+**And a direct commit is a verdict**, at Mahi-Mahi's own direct predicate.
+
 #### `banded`
 
 *theorem, `MahiMahiProperties.lean`*
@@ -39365,6 +39753,44 @@ theorem banded (hw : 2 ≤ w) :
 ```
 
 **Mahi-Mahi reads a band**, at every width its rules are stated for.
+
+#### `mmSupport_ofCoverage`
+
+*theorem, `MahiMahiProperties.lean`*
+
+```lean
+theorem mmSupport_ofCoverage {w : ℕ} (hw : 4 ≤ w) :
+    Support.OfCoverage (R := mahiMahiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) w) (mmSupport w) (coreReliability Validator)
+```
+
+**Law 2**: every block at the voting round reaches the candidate — coverage toward it at the first layer, quorum intersection after — so every quorum block at the decision round certifies.
+
+#### `mmSupport_commits`
+
+*theorem, `MahiMahiProperties.lean`*
+
+```lean
+theorem mmSupport_commits {w : ℕ} (hw : 2 ≤ w) :
+    Support.Commits (R := mahiMahiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) w) (mmSupport w) (coreReliability Validator)
+```
+
+**Law 3**: a quorum's certificates at the decision round are the direct commit, which a view caught up to that round sees.
+
+#### `indirect`
+
+*theorem, `MahiMahiProperties.lean`*
+
+```lean
+theorem indirect {w : ℕ} (hw : 1 ≤ w) :
+    Indirect (mahiMahiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) w) (fun sr i j => sr i + w ≤ sr j)
+```
+
+**The indirect rule, with its bound.** The anchor is the committed slot `j`; the eligible slots between are skipped, so `j` is the nearest. The case split reads slot `i`'s candidates and the anchor's cone, and a schedule naming the same leader at `i` and the same rounds changes neither — which is the second quantifier.
+
+Shorter than Odontoceti's by a clause: the indirect test is "a certificate in the anchor's cone", and two certificates at one slot name the same candidate, so there is no tie-break to preserve.
 
 #### `isLeaderBlock_congr`
 
@@ -41172,7 +41598,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 1137 lemmas used only within the file that proves
+The 1145 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -42639,6 +43065,14 @@ subsection per module, in the layer order of Appendices B and C.
 | `orcaellaRule_agree` | — |
 | `orcaellaRule_commitsCandidate` | — |
 
+### `Barnacle/FinWhale/Proof.lean` (3)
+
+| Lemma | Role |
+|:---|:---|
+| `finWhaleLive_descent` | The descent laws, for FinWhale at slack `f` — from its support. |
+| `finWhaleLive_goodOf` | A good DAG is good in the properties' terms. |
+| `finWhale_laws` | The laws, for FinWhale. |
+
 ### `Barnacle/Helpers/DagRule.lean` (2)
 
 | Lemma | Role |
@@ -42679,6 +43113,14 @@ subsection per module, in the layer order of Appendices B and C.
 | `descent` | — |
 | `goodOf` | A good DAG is good in the properties' terms. |
 | `roundRobinLive` | — |
+
+### `Barnacle/MahiMahi/Proof.lean` (3)
+
+| Lemma | Role |
+|:---|:---|
+| `mahiMahiLive_descent` | The descent laws, for Mahi-Mahi at slack `f` — from its support. |
+| `mahiMahiLive_goodOf` | A good DAG is good in the properties' terms. |
+| `mahiMahi_laws` | The laws, for Mahi-Mahi. |
 
 ### `Barnacle/OptimalHydrozoanLive/Proof.lean` (3)
 
@@ -42740,18 +43182,14 @@ subsection per module, in the layer order of Appendices B and C.
 | `spSkip_new` | And a candidate the band adds is skipped too. An old block two rounds above the slot carries a quorum of … |
 | `voters_subset` | Votes survive: an old voter is a voter. |
 
-### `FinWhale/Carrier.lean` (24)
+### `FinWhale/Carrier.lean` (20)
 
 | Lemma | Role |
 |:---|:---|
 | `assignment_passOf` | And it is an assignment. Well formed by `wellFormed_decOf`, committing only blocks of the slot by … |
-| `commitsDirect` | And a direct commit is a verdict, at every schedule. `IsCandidate` places the block at the slot, … |
 | `decided_iff` | A verdict of this rule is the pass's verdict. One direction is the pass being an assignment; the other is … |
 | `decided_of_directCommit` | A direct commit in view is a verdict, at any schedule and with no side condition. |
-| `fwSupport_commits` | Law 3. A quorum's SP-certificates at the slot's candidate, all held by a view caught up to the certificate … |
 | `fwSupport_local` | Law 1. A certifier two rounds above the settling round keeps its parents, and each parent keeps its … |
-| `fwSupport_ofCoverage` | Law 2. Coverage toward the candidate over two layers: every quorum block one round up votes, every quorum … |
-| `indirect` | The indirect rule, with its bound. The anchor is the committed slot `j`; the eligible slots between are … |
 | `le_dagHorizon` | An assignment commits only below the horizon: a commit names a block of the slot, so the slot's round is … |
 | `leaderCommits` | A reliably-led slot commits, at a bound one above the slot: the commit is direct, and a direct commit … |
 | `lt_of_elig` | Eligible slots are above: a schedule's rounds are monotone, so three rounds up is at least one slot up. |
@@ -43077,6 +43515,21 @@ subsection per module, in the layer order of Appendices B and C.
 | `truncates_chop_nemo` | The cut is a truncation of Nemo's carrier. |
 | `viewAgreeAbove_chop_nemo` | The chopped view agrees with the original above the cut. |
 
+### `Integration/OptimalFill.lean` (10)
+
+| Lemma | Role |
+|:---|:---|
+| `copyFillHZ_block_fresh` | — |
+| `copyFillHZ_block_old` | — |
+| `copyFillHZ_parents_old` | An old block's parents are old. |
+| `decided_agree_copyFill_opt` | And agreement across it. |
+| `decided_copyFill_opt` | Verdicts survive the recovery, for Optimal-Hydrozoan — the cell `not_leaderExcludedAll_Ufill` had put out … |
+| `extends_copyFill_opt` | The fill is an extension of Optimal-Hydrozoan's carrier. |
+| `hzBlk_round` | — |
+| `isCandidateAt_of_old` | A candidate voted for by an old block is old, and a candidate in the old universe. |
+| `leaderExcludedAll_copyFillHZ` | Leader exclusion survives the copy fill. A filled block's parents are the donor's; old blocks vote only … |
+| `sustains_copyFill_opt` | What the fill sustains: from the top of its gap. |
+
 ### `Integration/ReGenesisRules.lean` (34)
 
 | Lemma | Role |
@@ -43138,13 +43591,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `soundOn_skipFill` | The fill preserves it, above the gap. The synchrony round must clear the filled round: inside the gap the … |
 | `soundOn_stack` | The stack preserves it, the offsets composing exactly as the two statements above suggest: the fill … |
 
-### `MahiMahi/Carrier.lean` (1)
-
-| Lemma | Role |
-|:---|:---|
-| `commitsDirect` | And a direct commit is a verdict, at Mahi-Mahi's own direct predicate. |
-
-### `MahiMahiProperties.lean` (17)
+### `MahiMahiProperties.lean` (14)
 
 | Lemma | Role |
 |:---|:---|
@@ -43157,11 +43604,8 @@ subsection per module, in the layer order of Appendices B and C.
 | `directCommitIn_band` | And so does the direct commit. |
 | `directCommitIn_of_coversUpto` | A view caught up to the decision round holds every certificate, so it commits what the DAG commits. |
 | `directSkipIn_band` | And the direct skip. A blamer stays a blamer, and a candidate the band added changes nothing: the blame … |
-| `indirect` | The indirect rule, with its bound. The anchor is the committed slot `j`; the eligible slots between are … |
 | `leaderCommits` | A good leader's slot commits, at a bound one above the slot: the commit reads that slot's round and leader … |
-| `mmSupport_commits` | Law 3: a quorum's certificates at the decision round are the direct commit, which a view caught up to that … |
 | `mmSupport_local` | Law 1: `certifies_band` at the band a `RebasedAbove` is. |
-| `mmSupport_ofCoverage` | Law 2: every block at the voting round reaches the candidate — coverage toward it at the first layer, … |
 | `not_certifiedIn_band_novel` | — |
 | `toCore` | The two carriers project identically, so a band for one is a band for the other. |
 | `votes_band` | A vote is the vote it was. Both clauses read the same cone, and `candidatesAt_band` settles it as an … |
