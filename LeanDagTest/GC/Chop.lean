@@ -16,8 +16,7 @@ models, all by `decide`:
 **The cut, computed** (`chop Uexcl 2`): the post-exclusion DAG re-based —
 the round-2 layer becomes the genesis layer (references emptied, rounds
 shifted), and the slot-1 commit survives verbatim: `DirectCommit Uexcl 11 3`
-becomes `DirectCommit (chop Uexcl 2) 11 1`, equal by `directCommit_chop`
-and confirmed independently on the data.
+becomes `DirectCommit (chop Uexcl 2) 11 1`, decided on the data.
 
 **The statute of limitations, on data** (`chop Umerge 1`): validator 0's
 equivocation — the two geneses `0` and `4` — falls strictly below the cut,
@@ -60,10 +59,6 @@ example : DoSValid (chop Uexcl 2) := dosValid_chop uexcl_dosValid
 -- at rebased indices.
 example : DirectCommit Uexcl 11 3 := by decide
 example : DirectCommit (chop Uexcl 2) 11 1 := by decide
-example : certificates (chop Uexcl 2) 11 1 = certificates Uexcl 11 3 :=
-  certificates_chop 1
-example : DirectCommit (chop Uexcl 2) 11 1 ↔ DirectCommit Uexcl 11 3 :=
-  directCommit_chop 1
 
 /-! ## The decision relation across the cut (G3/G4) -/
 

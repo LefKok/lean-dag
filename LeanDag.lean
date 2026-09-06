@@ -74,7 +74,6 @@ import LeanDag.Integration.StackRules
 import LeanDag.Barnacle.MahiMahi.Proof
 import LeanDag.Barnacle.FinWhale.Proof
 import LeanDag.Integration.Coverage
-import LeanDag.Integration.ScheduleShape
 import LeanDag.Integration.Joiner
 import LeanDag.Integration.Retention
 import LeanDag.Integration.ReGenesis

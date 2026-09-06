@@ -406,16 +406,6 @@ theorem decidedBelow_of_decidedWithin [S : Slots Validator]
     (Odontoceti.decidedWithin_congr_of_slotRound (S₁ := S) (S₂ := S') hround.symm
       (fun m hm => (hlead m hm).symm) h).toDecided⟩
 
-/-- **What Odontoceti's liveness route asks of a deployment**, at its
-own wavelength: the horizon is one round above the slot, where the
-core's is two. -/
-def odontocetiLive (S : Slots Validator) {U : BlockUniverse Validator BlockId Payload}
-    (V : View Validator BlockId Payload U) (T : Finset Validator) (lo K : ℕ) : Prop :=
-  quorumCard Validator ≤ T.card ∧
-    ∃ R₀ N, SynchronisedOn U T R₀ ∧ R₀ ≤ S.slotRound lo ∧
-      (∀ r, R₀ ≤ r → r ≤ N → PopulatedOn U T r) ∧ V.CoversUpto N ∧
-      ∀ k, k < K → S.slotRound k + 1 ≤ N
-
 /-- **Law 3 of `voteSupport`, for Odontoceti** (`Properties/Support.lean`):
 a quorum referencing the candidate one round up is its direct commit,
 which is `directCommit_of_votesAt`. -/
@@ -440,27 +430,6 @@ theorem voteSupport_commits :
   intro S' hround hlead'
   refine Odontoceti.Decided.directCommit (S := S') ⟨hLmem, by rw [hround]; exact hLr,
     by rw [hlead' k (by omega)]; exact hLc⟩ ?_
-  rw [hround]; exact hin
-
-
-/-- **A reliably-led slot commits**, at a bound one above the slot: a
-direct commit reads that slot's leader and no other. -/
-theorem leaderCommits :
-    LeaderCommits (odontocetiRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload)) (fun S {U} V T lo K => odontocetiLive S (U := U) V T lo K) := by
-  intro S U V T lo K hlive k hlo hK hlead
-  obtain ⟨hcard, R₀, N, hs, hR, hpop, hcov, hN⟩ := hlive
-  have hRk : R₀ ≤ S.slotRound k := le_trans hR (S.mono hlo)
-  have hNk := hN k hK
-  obtain ⟨L, hL, hdc⟩ := Odontoceti.directCommit_of_leader_mem (S := S) (U := U) hcard hs hRk
-    (hpop _ hRk (by omega)) (hpop _ (by omega) (by omega)) hlead
-  have hin : Odontoceti.DirectCommitIn U V L (S.slotRound k) :=
-    Odontoceti.directCommitIn_of_coversUpto hdc (hcov.mono hNk)
-  refine ⟨L, by omega, Odontoceti.Decided.directCommit hL hin, ?_⟩
-  intro S' hround hlead'
-  obtain ⟨hm, hr, hcr⟩ := hL
-  refine Odontoceti.Decided.directCommit (S := S') ⟨hm, by rw [hround]; exact hr,
-    by rw [hlead' k (by omega)]; exact hcr⟩ ?_
   rw [hround]; exact hin
 
 /-- **O-A3 as a property.** The two indirect constructors, by cases on a
@@ -528,7 +497,6 @@ theorem indirect :
     rw [hround]
     exact hnt
 
-
 /-- **And a committed run decides everything below it.** Was a downward
 induction carrying the bound by hand; it is now `Descends.of_indirect`,
 with `Eligible` read as the round inequality. -/
@@ -538,7 +506,6 @@ theorem descends {S : Slots Validator} {c : ℕ} (hc : 0 < c)
       (Payload := Payload)) S c :=
   Descends.of_indirect indirect hc
     (fun b i hi => Odontoceti.eligible_iff.mp (hspans b i hi))
-
 
 end Bounded
 

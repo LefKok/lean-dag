@@ -308,7 +308,6 @@ theorem decided_of_directCommit {D : Dag Validator BlockId Payload} {S : Slots V
   decided_iff (V := ⟨V, hV⟩) |>.2
     ((assignment_passOf hV).wf.direct_commit k L ⟨hslot, hcom⟩)
 
-
 /-- A decided verdict, as the property layer's option. -/
 def optOf (w : Verdict BlockId) : Option BlockId :=
   match w with
@@ -543,30 +542,11 @@ theorem banded : Banded (finWhaleRule (Validator := Validator) (BlockId := Block
 
 /-! ## The liveness property
 
-`LeaderCommits` asks for a commit at a reliably-led slot, at a bound one
-above it. FinWhale's liveness input is `CommitsCorrectLeaders` — every
-correct-led slot past the coverage round and two rounds below the
-horizon carries a slow-path commit whose certificates are reliable
-validators' blocks — and `sees_of_commits_of_held` is what turns that
-into a commit the *view* sees. Both are stated in rounds rather than in
-slot indices, which is what lets them be read at a general schedule at
-all. -/
-
-/-- **FinWhale's liveness precondition**, over a slot window: the
-liveness interface holds from a coverage round `R` to a horizon `N`, the
-window starts at or above `R`, every slot of it sits two rounds under
-`N`, and the view holds the reliable blocks in between.
-
-`T` is `Correct` rather than an arbitrary quorum, because FinWhale's
-certificates are named — a view is shown to hold what reliable
-validators produced, and nothing else. -/
-def finWhaleLive (S : Slots Validator) {D : Dag Validator BlockId Payload}
-    (V : (finWhaleRule (Payload := Payload)).View D) (T : Finset Validator) (lo K : ℕ) : Prop :=
-  T = (Correct : Finset Validator) ∧
-    ∃ R N, LeanDag.FinWhale.CommitsCorrectLeaders (schedOf S) D R N ∧
-      R ≤ S.slotRound lo ∧ (∀ k, k < K → S.slotRound k + 2 ≤ N) ∧
-      ∀ n, R ≤ n → n ≤ N → ∀ b ∈ LeanDag.FinWhale.blocksAt D n,
-        (D.block b).creator ∈ T → b ∈ V.val
+`LeaderCommits` is `Support.leaderCommits` at `fwSupport` below. What
+FinWhale supplies here is the slow-path quorum's place inside the correct
+set, and the reading of its certificate condition from coverage. Both are
+stated in rounds rather than in slot indices, which is what lets them be
+read at a general schedule at all. -/
 
 /-- **The slow-path quorum fits inside the correct set.** `n + 1 = 3f + 2p`
 with `p ≥ 1` gives `2f + p ≤ n − f`. -/
@@ -786,25 +766,6 @@ theorem voteSupport_fast_commits (h : F.byzantine.card ≤ P.p) :
     change S'.slotRound k = S.slotRound k; rw [hround]
   have hvc' := (LeanDag.FinWhale.viewCommit_congr hr (hlead' k (by omega))).2 hvc
   exact decided_iff.2 ((assignment_passOf V.property).wf.direct_commit k L hvc')
-
-
-/-- **A reliably-led slot commits**, at a bound one above the slot: the
-commit is direct, and a direct commit reads that slot's round and leader
-and no others. -/
-theorem leaderCommits : LeaderCommits
-    (finWhaleRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
-    (fun S {D} V T lo K => finWhaleLive S (D := D) V T lo K) := by
-  intro S D V T lo K hlive k hlo hK hlead
-  obtain ⟨rfl, R, N, hcommits, hR, hN, hheld⟩ := hlive
-  have hsees := LeanDag.FinWhale.sees_of_commits_of_held V.property hcommits hheld
-  obtain ⟨L, -, hdc⟩ := hsees k (le_trans hR (S.mono hlo)) (hN k hK) hlead
-  refine ⟨L, by omega,
-    decided_iff.2 ((assignment_passOf V.property).wf.direct_commit k L hdc),
-    fun S' hround hlead' => ?_⟩
-  have hr : (schedOf S').round k = (schedOf S).round k := by
-    change S'.slotRound k = S.slotRound k; rw [hround]
-  have hdc' := (LeanDag.FinWhale.viewCommit_congr hr (hlead' k (by omega))).2 hdc
-  exact decided_iff.2 ((assignment_passOf V.property).wf.direct_commit k L hdc')
 
 /-! ## The indirect rule
 

@@ -190,28 +190,6 @@ theorem ucrash_populated (N r : ℕ) (hr : r ≤ N) {k : ℕ}
   · simp only [ucrash_block, rrBlock_round]
     omega
 
-/-- **No conjured commit, on data**: the filled block at round `1` is
-directly skipped — every running validator's round-`2` block blames it. -/
-theorem ucrash_directSkip (N : ℕ) (hN : 2 ≤ N) :
-    DirectSkip (ucrashMsg N 2 hN).skipFill
-      ((ucrashMsg N 2 hN).fresh 1) 1 := by
-  have hr0 : (ucrashMsg N 2 hN).r0 = 0 := by
-    simp [SkipData.r0, ucrashMsg]
-  refine SkipMsg.directSkip_fresh _ (T := {0, 1, 2}) (by decide)
-    (by change (3 : Fin 4) ∉ _; decide)
-    ?_ (by rw [hr0]; omega) (by change (1 : ℕ) ≤ 2; omega)
-  intro v hv
-  have hv4 := v.isLt
-  have hv3 : (v : ℕ) ≠ 3 := by fin_cases hv <;> decide
-  refine ⟨4 * 2 + (v : ℕ), ?_, ?_, ?_⟩
-  · simp only [ucrash_ids, Finset.mem_filter, Finset.mem_range]
-    omega
-  · apply Fin.ext
-    simp only [ucrash_block, rrBlock_creator_val]
-    omega
-  · simp only [ucrash_block, rrBlock_round]
-    omega
-
 attribute [local instance 2000] rrSlots
 
 /-- The view quorum the invariance theorem consumes, discharged for the
@@ -341,9 +319,7 @@ example : (ucrashJump 2 2 (by omega)).toSkipMsg.line 1 = 5 :=
 #print axioms LeanDag.Properties.Arcs.decided_fill_of_persist
 #print axioms LeanDag.Properties.Arcs.decided_fill_agree_of_properties
 #print axioms ucrash_populated
-#print axioms ucrash_directSkip
 #print axioms LeanDag.SkipMsg.skipFill_populatedOn
-#print axioms LeanDag.SkipMsg.directSkip_fresh
 #print axioms LeanDag.SkipMsg.line_eq_lineOf
 #print axioms LeanDag.SkipMsg.skipFill_eq_of_core
 #print axioms LeanDag.JumpMsg.denote_eq_of_core

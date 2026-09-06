@@ -3058,6 +3058,51 @@ re-genesis files stay: re-genesis reads `severed_of_pruned_anchor`, and
 the coverage results are facts about the mechanisms the properties do
 not state.
 
+### 11.14 Direct proofs the derived properties made redundant
+
+A second pass over what remained, with the rule that a direct proof goes
+when a generic theorem reaches the same statement.
+
+**`LeaderCommits` by hand.** Odontoceti, Nemo, Hybrid, Mahi-Mahi and
+FinWhale each stated `LeaderCommits` against a precondition of their
+own (`odontocetiLive`, `nemoLive`, `hybridLive`, `mahiLive`,
+`finWhaleLive`) and proved it from their direct-commit lemma. Each is
+`Support.leaderCommits` at the rule's support, and nothing consumed the
+direct form, so the five theorems and their five preconditions are
+deleted; `audit-conformance.py`'s `lead` column reads `der` for them, as
+it already did for Hydrozoan and Optimal-Hydrozoan. Hydrozoan's
+`persist_aux`, the direct persistence the retired integration layer
+consumed, goes the same way.
+
+**The cut, rule by rule.** `GC/Chop.lean` carried one transfer lemma per
+commit-rule notion — supporters, blames, votes, certificates, the direct
+commit, the direct skip, the indirect test — each saying that the rule
+reads only rounds above the horizon. `LocalTruncate.of_banded` at the
+core's band says it for the whole decision relation, and the eight
+lemmas are deleted with the two layer lemmas only they used. What stays
+of the file is the operator, its simp lemmas, reachability and the
+statute of limitations, which the DoS arc reads.
+
+**Safe Skip's SS3.** `directSkip_fresh`, the rule-level statement that
+the fill cannot conjure a commit, is retired for `decided_none_fresh`,
+the same fact as a verdict from `SkipsUnsupported` and the fill's
+`Extends` witness.
+
+**Integration.** `ScheduleShape.lean` is deleted: the three schedule
+lemmas were consumed by nothing once the `Truncates` witness carried
+the schedule and `Support.live_of_truncates` needed no fairness lemma.
+`Preservation.lean` loses its coverage lemma, a duplicate of
+`Arcs/GC.lean`'s `synchronisedOn_chop` which is `Sustains` applied; the
+two non-equivocation lemmas stay, because Hybrid's carrier invariant is
+not a property. `Coverage.lean`'s positive lemma
+`synchronisedOn_skipFill_above` keeps its statement and is now
+`RebasedAbove.synchronisedOn_of` at the fill's witness; the refutation
+and the excluded-set form stay direct, being about what `Sustains` does
+not say. One generic lemma was added for this: `coversUpto_of_truncates`
+(`Arcs/Liveness.lean`), coverage across any truncation on a view that
+agrees above the horizon, which replaces the cut-specific
+`coversUpto_chop` the reactive cells used.
+
 **What the audits show.** `audit-mechanisms.py` reads the same matrix
 as before — every cell for Hydrozoan and Optimal-Hydrozoan `yes`, live
 and stack `der` — now from the native witnesses. `audit-bespoke.py`

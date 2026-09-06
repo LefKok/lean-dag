@@ -11,7 +11,7 @@ above the horizon keeps its parents and its parents keep theirs, and
 survives the copy fill because a filled block's parents are the
 donor's and old blocks vote only for old blocks.
 
-The fill cell is the one `not_leaderExcludedAll_Ufill` had put out of
+The fill cell is the one the skip-fill refutation had put out of
 scope. That was a fact about the core's `skipFill`, whose self
 reference grafts the anchor's parents onto the donor's; the copy fill
 adds no edge, and the objection does not apply.
@@ -238,8 +238,8 @@ theorem sustains_copyFill_opt :
     rw [copyFillHZ_block_old hb]
 
 /-- **Verdicts survive the recovery, for Optimal-Hydrozoan** — the cell
-`not_leaderExcludedAll_Ufill` had put out of scope, closed by the fill
-that adds no edge. -/
+the skip-fill refutation had put out of scope, closed by the fill that
+adds no edge. -/
 theorem decided_copyFill_opt (S : Slots Replica) {V : LeanDag.Hydrozoan.View W.val}
     {V' : LeanDag.Hydrozoan.View (copyFillOpt W sk).val} (hsub : V.ids ⊆ V'.ids)
     {k : ℕ} {u : Option BlockId}

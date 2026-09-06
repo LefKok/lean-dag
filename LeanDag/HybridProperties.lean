@@ -348,8 +348,6 @@ theorem banded {kt : ℕ} (hpos : 0 < kt) :
   exact ⟨top, fun g g' d d' S' U' V' k' hkd hsch hlead hab hV =>
     ht g g' d d' S' U' V' k' hkd hsch hlead hab hV⟩
 
-
-
 /-! ## The two liveness properties, and the skip -/
 
 /-- **Hybrid skips an unsupported slot from a hybrid quorum.**
@@ -375,17 +373,6 @@ theorem skipsUnsupported (kt : ℕ) :
   rw [Finset.mem_inter, Hybrid.slotBlamers, Finset.mem_filter]
   exact ⟨⟨mem_blocksAt.mpr ⟨hcU, hcr⟩,
     fun j hj hjL => huns c hcV (by rw [hcc]; exact hv) hcr j hjL hj⟩, hcV⟩
-
-
-/-- **Hybrid's liveness precondition**, over a slot window, at the
-hybrid quorum `q = n − fb − fc` and a wavelength of two. -/
-def hybridLive (S : Slots Validator)
-    {U : {U : BlockUniverse Validator BlockId Payload // HonestNoEquiv U}}
-    (V : View Validator BlockId Payload U.val) (T : Finset Validator) (lo K : ℕ) : Prop :=
-  Hybrid.q Validator ≤ T.card ∧
-    ∃ R₀ N, SynchronisedOn U.val T R₀ ∧ R₀ ≤ S.slotRound lo ∧
-      (∀ r, R₀ ≤ r → r ≤ N → PopulatedOn U.val T r) ∧ V.CoversUpto N ∧
-      ∀ k, k < K → S.slotRound k + 1 ≤ N
 
 /-- **Law 3 of `voteSupport`, for Hybrid** (`Properties/Support.lean`):
 the hybrid quorum referencing the candidate one round up is its direct
@@ -413,26 +400,6 @@ theorem voteSupport_commits (kt : ℕ) :
   intro S' hround hlead'
   refine Hybrid.Decided.directCommit (S := S') ⟨hLmem, by rw [hround]; exact hLr,
     by rw [hlead' k (by omega)]; exact hLc⟩ ?_
-  rw [hround]; exact hin
-
-
-/-- **A reliably-led slot commits**, at a bound one above the slot. -/
-theorem leaderCommits (kt : ℕ) :
-    LeaderCommits (hybridRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload) kt) (fun S {U} V T lo K => hybridLive S (U := U) V T lo K) := by
-  intro S U V T lo K hlive k hlo hK hlead
-  obtain ⟨hcard, R₀, N, hs, hR, hpop, hcov, hN⟩ := hlive
-  have hRk : R₀ ≤ S.slotRound k := le_trans hR (S.mono hlo)
-  have hNk := hN k hK
-  obtain ⟨L, hL, hdc⟩ := Hybrid.directCommit_of_leader_mem (S := S) (U := U.val) hcard hs hRk
-    (hpop _ hRk (by omega)) (hpop _ (by omega) (by omega)) hlead
-  have hin : Hybrid.DirectCommitIn U.val V L (S.slotRound k) :=
-    Hybrid.directCommitIn_of_coversUpto hdc (hcov.mono hNk)
-  refine ⟨L, by omega, Hybrid.Decided.directCommit hL hin, ?_⟩
-  intro S' hround hlead'
-  obtain ⟨hm, hr, hcr⟩ := hL
-  refine Hybrid.Decided.directCommit (S := S') ⟨hm, by rw [hround]; exact hr,
-    by rw [hlead' k (by omega)]; exact hcr⟩ ?_
   rw [hround]; exact hin
 
 /-- **H-A3 as a property.** The two indirect constructors, by cases on a

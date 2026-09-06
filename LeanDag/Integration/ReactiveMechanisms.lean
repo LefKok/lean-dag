@@ -50,9 +50,6 @@ variable [S : Slots Validator]
 variable {U : BlockUniverse Validator BlockId Payload}
 variable {T : Finset Validator} {N R k : ℕ} {L : BlockId}
 
-
-
-
 /-! ## The precondition, across the three mechanisms
 
 With `Support.live_of_sustains` and `Support.live_of_truncates` the
@@ -62,20 +59,6 @@ universe with no further argument. Reactive Mysticeti reaches
 `Support.live` by its own bridge and needs nothing else. A slot-level
 version of these, at the direct commit, stood here first and was
 deleted when the window-level one arrived. -/
-
-/-- The chopped view covers the rebased horizon. -/
-theorem coversUpto_chop {U : BlockUniverse Validator BlockId Payload}
-    {V : View Validator BlockId Payload U} {G N : ℕ} (hGN : G ≤ N)
-    (h : CoversUpto (MysticetiProperties.mysticetiRule (Payload := Payload)) V N) :
-    CoversUpto (MysticetiProperties.mysticetiRule (Payload := Payload)) (V.chop G) (N - G) := by
-  intro b hb hr
-  have hb' : b ∈ (chop U G).ids := hb
-  rw [mem_chop_ids] at hb'
-  have hr' : (chopBlock U G b).round ≤ N - G := hr
-  rw [chopBlock_round] at hr'
-  show b ∈ (V.chop G).ids
-  rw [View.chop_ids, Finset.mem_filter]
-  exact ⟨h b hb'.1 ((Nat.sub_le_sub_iff_right hGN).mp hr'), hb'.2⟩
 
 variable {V : View Validator BlockId Payload U} {lo K : ℕ}
 
@@ -87,7 +70,7 @@ theorem live_chop_reactive {G d : ℕ} (hd : G ≤ S.slotRound d)
       (U := chop U G) (V.chop G) T (lo - d) (K - d) :=
   MysticetiProperties.coreSupport.live_of_truncates MysticetiProperties.coreSupport_local
     (truncates_chop hd) (MysticetiProperties.coreSupport_live_of_reactiveLive h) hlo hK
-    (fun _ hGN hc => coversUpto_chop hGN hc)
+    (fun _ hGN hc => coversUpto_of_truncates (truncates_chop hd) viewAgreeAbove_chop hGN hc)
 
 /-- **And the fill**, on any view of it caught up as far as the old one. -/
 theorem live_skipFill_reactive (sk : SkipMsg U) {V' : View Validator BlockId Payload sk.skipFill}
@@ -122,7 +105,7 @@ theorem decidedBelow_of_run_chop_reactive {G d c b : ℕ} (hd : G ≤ S.slotRoun
     MysticetiProperties.coreSupport_local MysticetiProperties.coreSupport_commits hc
     (MysticetiProperties.descends hc hspans) (truncates_chop hd) (V.chop G)
     (MysticetiProperties.coreSupport_live_of_reactiveLive h)
-    (fun _ hGN hcov => coversUpto_chop hGN hcov) hlead
+    (fun _ hGN hcov => coversUpto_of_truncates (truncates_chop hd) viewAgreeAbove_chop hGN hcov) hlead
 
 end Integration
 

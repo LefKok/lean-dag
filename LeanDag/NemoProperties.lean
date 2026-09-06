@@ -304,24 +304,11 @@ theorem banded : Banded (nemoRule (Validator := Validator) (BlockId := BlockId)
   exact ⟨top, fun g g' d d' S' U' V' k' hkd hsch hlead hab hV =>
     ht g g' d d' S' U' V' k' hkd hsch hlead hab hV⟩
 
+/-! ## The liveness properties
 
-
-/-! ## The two liveness properties
-
-`Descends` is not among them: it follows from `Indirect` by the generic
+`LeaderCommits` is `Support.leaderCommits` at `voteSupport`, and `Descends` is not among them: it follows from `Indirect` by the generic
 induction in `Properties/Derived/Descent.lean` (§11.2b), and what Nemo
 supplies for it is the round-structure hypothesis. -/
-
-/-- **Nemo's liveness precondition**, over a slot window. Its wavelength
-is two, so the horizon sits one round above the slot where the core's
-sits two, and the quorum is a *majority* rather than a Byzantine quorum —
-the model is crash-only. -/
-def nemoLive (S : Slots Validator) {U : Nemo.Universe Validator BlockId Payload}
-    (V : Nemo.View Validator BlockId Payload U) (T : Finset Validator) (lo K : ℕ) : Prop :=
-  Nemo.majority Validator ≤ T.card ∧
-    ∃ R₀ N, Nemo.SynchronisedOn U T R₀ ∧ R₀ ≤ S.slotRound lo ∧
-      (∀ r, R₀ ≤ r → r ≤ N → Nemo.PopulatedOn U T r) ∧ V.CoversUpto N ∧
-      ∀ k, k < K → S.slotRound k + 1 ≤ N
 
 /-- **Law 3 of `voteSupport`, for Nemo** (`Properties/Support.lean`): a
 majority referencing the candidate one round up is its direct commit.
@@ -349,27 +336,6 @@ theorem voteSupport_commits (hn : 0 < Fintype.card Validator) :
   intro S' hround hlead'
   refine Nemo.Decided.directCommit (S := S') ⟨hLmem, by rw [hround]; exact hLr,
     by rw [hlead' k (by omega)]; exact hLc⟩ ?_
-  rw [hround]; exact hin
-
-
-/-- **A reliably-led slot commits**, at a bound one above the slot: a
-direct commit reads that slot's leader and no other. -/
-theorem leaderCommits :
-    LeaderCommits (nemoRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload)) (fun S {U} V T lo K => nemoLive S (U := U) V T lo K) := by
-  intro S U V T lo K hlive k hlo hK hlead
-  obtain ⟨hcard, R₀, N, hs, hR, hpop, hcov, hN⟩ := hlive
-  have hRk : R₀ ≤ S.slotRound k := le_trans hR (S.mono hlo)
-  have hNk := hN k hK
-  obtain ⟨L, hL, hdc⟩ := Nemo.directCommit_of_leader_mem (S := S) (U := U) hcard hs hRk
-    (hpop _ hRk (by omega)) (hpop _ (by omega) (by omega)) hlead
-  have hin : Nemo.DirectCommitIn U V L (S.slotRound k) :=
-    Nemo.directCommitIn_of_coversUpto hdc (hcov.mono hNk)
-  refine ⟨L, by omega, Nemo.Decided.directCommit hL hin, ?_⟩
-  intro S' hround hlead'
-  obtain ⟨hm, hr, hcr⟩ := hL
-  refine Nemo.Decided.directCommit (S := S') ⟨hm, by rw [hround]; exact hr,
-    by rw [hlead' k (by omega)]; exact hcr⟩ ?_
   rw [hround]; exact hin
 
 /-- **A3 as a property.** The two indirect constructors, by cases on a

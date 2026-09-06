@@ -1,4 +1,4 @@
-import LeanDag.Integration.ScheduleShape
+import LeanDag.GC.ChopDecided
 import LeanDag.Adaptive.Mysticeti
 import LeanDag.Properties.Arcs.GC
 import LeanDag.Properties.Compose
@@ -67,8 +67,8 @@ theorem injective_slotRound_chop (hd : G ≤ S.slotRound d)
     Function.Injective (S.chop G d hd).slotRound := by
   intro k₁ k₂ h
   simp only [Slots.chop_slotRound] at h
-  have h₁ := le_slotRound_add S hd k₁
-  have h₂ := le_slotRound_add S hd k₂
+  have h₁ := horizon_le_slotRound hd k₁
+  have h₂ := horizon_le_slotRound hd k₂
   have : S.slotRound (d + k₁) = S.slotRound (d + k₂) := by omega
   have := hinj this
   omega

@@ -206,24 +206,6 @@ theorem chop_block_eq : (chop U G).block = chopBlock U G := rfl
 
 /-! ## Transfer lemmas: rounds, layers, reachability, cones -/
 
-/-- Round `m` of the truncation is round `G + m` of the original. -/
-theorem blocksAt_chop (m : ℕ) :
-    blocksAt (chop U G) m = blocksAt U (G + m) := by
-  ext i
-  simp only [mem_blocksAt, mem_chop_ids, chop_block_eq, chopBlock_round]
-  constructor
-  · rintro ⟨⟨hi, hG⟩, hr⟩
-    exact ⟨hi, by omega⟩
-  · rintro ⟨hi, hr⟩
-    exact ⟨⟨hi, by omega⟩, by omega⟩
-
-/-- And so are its authors. -/
-theorem authorsAt_chop (m : ℕ) :
-    authorsAt (chop U G) m = authorsAt U (G + m) := by
-  unfold authorsAt
-  rw [chop_block_eq, blocksAt_chop]
-  exact creatorsOf_chopBlock _
-
 /-- A step in the truncation is a step in the original. -/
 theorem reaches_of_reaches_chop (h : Reaches (chop U G) b i) :
     Reaches U b i := by
@@ -302,83 +284,5 @@ theorem dosValid_chop (hdos : DoSValid U) : DoSValid (chop U G) := by
   have := hdos b hbU i hiU
   rw [← chopBlock_creator (U := U) (G := G)] at this
   exact this (exposedIn_of_exposedIn_chop hb hexp)
-
-/-! ## G2 — verdict invariance
-
-Every commit-rule notion for a slot at rebased round `s` (original round
-`G + s`) reads only rounds strictly above the base layer, where `chop`
-changes nothing but the label. -/
-
-theorem supporters_chop {m : ℕ} (hm : 1 ≤ m) :
-    supporters (chop U G) b m = supporters U b (G + m) := by
-  unfold supporters
-  rw [chop_block_eq, blocksAt_chop, creatorsOf_chopBlock]
-  congr 1
-  refine Finset.filter_congr fun q hq => ?_
-  rw [mem_blocksAt] at hq
-  rw [chopBlock_refs_of_lt (by omega)]
-
-theorem blames_chop {L : BlockId} {m : ℕ} (hm : 1 ≤ m) :
-    blames (chop U G) L m = blames U L (G + m) := by
-  unfold blames
-  rw [chop_block_eq, blocksAt_chop, creatorsOf_chopBlock]
-  congr 1
-  refine Finset.filter_congr fun q hq => ?_
-  rw [mem_blocksAt] at hq
-  rw [chopBlock_refs_of_lt (by omega)]
-
-theorem votesIn_chop {C L : BlockId} (hC : C ∈ U.ids)
-    (hCr : G < (U.block C).round - 1) :
-    votesIn (chop U G) C L = votesIn U C L := by
-  unfold votesIn
-  rw [chop_block_eq, chopBlock_refs_of_lt (by omega)]
-  refine Finset.filter_congr fun q hq => ?_
-  have := U.round_of_mem_refs hC hq
-  rw [chopBlock_refs_of_lt (by omega)]
-
-theorem certifies_chop {C L : BlockId} (hC : C ∈ U.ids)
-    (hCr : G < (U.block C).round - 1) :
-    Certifies (chop U G) C L ↔ Certifies U C L := by
-  unfold Certifies
-  rw [votesIn_chop hC hCr, chop_block_eq, creatorsOf_chopBlock]
-
-/-- Certificates for the slot at rebased round `s` are the original
-slot's certificates, verbatim. -/
-theorem certificates_chop {L : BlockId} (s : ℕ) :
-    certificates (chop U G) L s = certificates U L (G + s) := by
-  unfold certificates
-  rw [blocksAt_chop]
-  refine Finset.filter_congr fun C hC => ?_
-  rw [mem_blocksAt] at hC
-  exact certifies_chop hC.1 (by omega)
-
-theorem directCommit_chop {L : BlockId} (s : ℕ) :
-    DirectCommit (chop U G) L s ↔ DirectCommit U L (G + s) := by
-  unfold DirectCommit
-  rw [certificates_chop, chop_block_eq, creatorsOf_chopBlock]
-
-theorem directSkip_chop {L : BlockId} (s : ℕ) :
-    DirectSkip (chop U G) L s ↔ DirectSkip U L (G + s) := by
-  unfold DirectSkip
-  rw [blames_chop (by omega : 1 ≤ s + 1)]
-  exact Iff.rfl
-
-/-- **The indirect test survives the cut**: an anchor above the horizon
-certifies a slot above the horizon in the truncation exactly when it did
-in the original. With `directCommit_chop`/`directSkip_chop` this is the
-per-slot decision invariance of `garbage.md` G3 — the indirect verdict is
-a property of the anchor's cone, and never consults the pruned prefix. -/
-theorem certifiedIn_chop {A L : BlockId} (hA : A ∈ (chop U G).ids) (s : ℕ) :
-    CertifiedIn (chop U G) A L s ↔ CertifiedIn U A L (G + s) := by
-  unfold CertifiedIn
-  rw [certificates_chop]
-  constructor
-  · rintro ⟨C, hC, hreach⟩
-    exact ⟨C, hC, reaches_of_reaches_chop hreach⟩
-  · rintro ⟨C, hC, hreach⟩
-    refine ⟨C, hC, ?_⟩
-    rw [reaches_chop_iff hA]
-    rw [mem_certificates] at hC
-    exact ⟨hreach, by omega⟩
 
 end LeanDag

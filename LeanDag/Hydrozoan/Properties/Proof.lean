@@ -8,8 +8,9 @@ import LeanDag.Hydrozoan.Helpers.SlotAgreement
 # Hydrozoan conforms to the target properties — proof
 
 `Causal` is HI3's argument in the shared vocabulary and is discharged in
-`Helpers/Carrier.lean`. What is proved here is persistence, and the
-argument has one idea in it.
+`Helpers/Carrier.lean`; the band is `Helpers/Banded.lean`, and
+persistence is `Persist.of_banded` applied. The argument behind the band
+has one idea in it.
 
 **Everything an old anchor can see is old.** `Properties.Extends`
 guarantees only that the extension holds every old block and denotes it
@@ -46,33 +47,8 @@ variable {BlockId : Type} [DecidableEq BlockId] [LinearOrder BlockId]
 variable [LeanDag.Hydrozoan.Faults Replica]
 variable {U U' : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
 
-/-! ## Persistence
-
-Was an induction over the six constructors, with a family of
-monotonicity lemmas beneath it. Both are gone: an extension carries
-every band, so persistence is `banded_aux` applied, and the transfer
-lemmas the induction needed live in `Helpers/Banded.lean` where the band
-uses them. -/
-
-/-- **Hydrozoan's verdicts survive every extension**, at Hydrozoan's own
-schedule vocabulary, which is what the integration arc consumes. -/
-theorem persist_aux [S : LeanDag.Hydrozoan.Slots Replica]
-    (he : Extends rule U U') {V : LeanDag.Hydrozoan.View U}
-    {V' : LeanDag.Hydrozoan.View U'} (hV : V.ids ⊆ V'.ids)
-    {k : ℕ} {v : Option BlockId} (h : LeanDag.Hydrozoan.Decided U V k v) :
-    LeanDag.Hydrozoan.Decided U' V' k v := by
-  obtain ⟨top, -, ht⟩ := banded_aux (S := S) h
-  refine ht 0 0 0 0 S U' V' k (by omega) ?_ ?_ (AgreeBand.of_extends he _ _)
-    (fun b hb _ _ => hV hb)
-  · intro m m' hm
-    have : m = m' := by omega
-    subst this; rfl
-  · intro m m' hm _
-    have : m = m' := by omega
-    subst this; rfl
 
 /-! ## The assembly -/
-
 
 theorem holds : Statement := by
   intro Replica _ _ BlockId _ _ _

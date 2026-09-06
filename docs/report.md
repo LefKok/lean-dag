@@ -3065,16 +3065,12 @@ the full universe and absent from its truncation (§25).
 ### 9.2 Verdicts survive the cut
 
 Every commit-rule notion of §3 for a slot above the cut is invariant — the
-rules read a window of rounds that truncation does not touch:
-
-```lean
-theorem certificates_chop (s : ℕ) :
-    certificates (chop U G) L s = certificates U L (G + s)
-```
-
-and likewise `supporters_chop`, `blames_chop`, `directCommit_chop`,
-`directSkip_chop`, and the indirect test `certifiedIn_chop`. The full
-decision relation follows under an *induced schedule*: slots re-indexed
+rules read a window of rounds that truncation does not touch. The
+per-rule lemmas that first said so (one each for supporters, blames,
+certificates, the direct commit, the direct skip and the indirect test)
+are retired: the invariance is `LocalTruncate.of_banded` at the core's
+band, which carries the whole decision relation at once. The full
+decision relation holds under an *induced schedule*: slots re-indexed
 from a base slot `d` whose round clears the horizon, with
 `Slots.chop S G d hd` given by `slotRound' k = slotRound (d + k) − G` (the
 condition `hd : G ≤ S.slotRound d` is what keeps the re-based rounds above
@@ -3894,12 +3890,17 @@ passed. It cannot be committed:
 
 **SS3.**
 ```lean
-theorem directSkip_fresh {T : Finset Validator} {k : ℕ}
+theorem decided_none_fresh [S : Slots Validator] (sk : SkipMsg U)
+    {V : View Validator BlockId Payload U} {T : Finset Validator} {k : ℕ}
     (hcard : quorumCard Validator ≤ T.card)
-    (hv1T : sk.v1 ∉ T)
-    (hpop : PopulatedOn U T (k + 1)) (hk1 : sk.r0 < k) (hk2 : k ≤ sk.r) :
-    DirectSkip sk.skipFill (sk.fresh k) k
+    (hlead : S.leader k = sk.v1) (hk1 : sk.r0 < S.slotRound k) (hk2 : S.slotRound k ≤ sk.r)
+    (hpres : PresentAt MysticetiProperties.mysticetiRule V T (S.slotRound k + 1)) :
+    Decided sk.skipFill (sk.liftView V) k none
 ```
+
+stated as a verdict on the lifted view, from `SkipsUnsupported` and the
+fill's `Extends` witness (`Properties/Arcs/SafeSkip.lean`); the
+rule-level form, a direct skip of the filled block, is retired.
 
 No old block references a fresh identifier — the filled blocks did not
 exist when the old blocks were built, and completeness (P4) keeps old
@@ -4970,10 +4971,12 @@ lies above the cut by construction, so `chop` retains its references
 and the original clause applies unchanged. A condition that quantifies *upward* transports through truncation with
 fewer side conditions than one pinned at a fixed round.
 
-At layer S, **I3** carries fairness and shape through `Slots.chop`
-(`fairScheduleOn_chop`, `fairRunOn_chop`, `spansEligible_chop`), which
+At layer S, **I3** carried fairness and shape through `Slots.chop`, which
 is what gives a validator joining from a truncation a schedule that is
-fair and spanning in its own right. The corresponding cell for
+fair and spanning in its own right. Those three lemmas are retired: the
+`Truncates` witness carries the schedule in its `slotRound` and `leader`
+clauses, and liveness across the cut is `Support.live_of_truncates`
+with no fairness lemma in between. The corresponding cell for
 `slotsOf` is empty on purpose: an adaptive policy changes who leads, so
 fairness of the induced instance cannot follow from the base
 schedule's, and §13.4's `PlacesRuns` is the replacement. That contrast
@@ -10460,7 +10463,7 @@ reused.
 | Label | Statement | Lean *(module)* |
 |:---|:---|:---|
 | G1 | truncation is a universe; the DoS condition crosses one way | `chop`, `dosValid_chop` *(GC/Chop)* |
-| G2 | per-slot verdict invariance | `certificates_chop`, `directCommit_chop`, `certifiedIn_chop`, … *(GC/Chop)* |
+| G2 | per-slot verdict invariance, retired in favour of the band | `LocalTruncate.of_banded` *(Properties/Derived/Truncate)* |
 | G3 | the decision relation survives the cut | `decided_chop_iff` *(Properties/Arcs/GC)* |
 | G4 | cross-cut agreement, arbitrary joiner views | `decided_agree_chop` *(GC/ChopDecided)* |
 | G5 | liveness transfers | `populated_chop` *(GC/Window)* |
@@ -10516,7 +10519,7 @@ reused.
 |:---|:---|:---|
 | SS1 | the fill is a universe; old blocks read unchanged | `SkipMsg.skipFill`, `SkipMsg.skipFill_block_old` *(SafeSkip/Basic)* |
 | SS2 | the gap is populated: production restored | `SkipMsg.skipFill_populatedOn` *(SafeSkip/Basic)* |
-| SS3 | the fill cannot conjure a commit | `SkipMsg.directSkip_fresh` *(SafeSkip/Basic)* |
+| SS3 | the fill cannot conjure a commit | `decided_none_fresh` *(Properties/Arcs/SafeSkip)* |
 | SS4 | the rule-level sets are unchanged, for every candidate | retired: a consequence of `Banded` through `Persist.of_banded` *(Properties/Derived/FromBand)* |
 | SS5 | verdict invariance across the fill | `decided_fill_of_persist` *(Properties/Arcs/SafeSkip)* |
 | SS6 | agreement across a recovery | `decided_fill_agree_of_properties` *(Properties/Arcs/SafeSkip)* |
@@ -10663,7 +10666,7 @@ reused.
 |:---|:---|:---|
 | I1 | honest non-equivocation survives truncation and the fill | `honestNoEquiv_chop`, `honestNoEquiv_skipFill` *(Integration/Preservation)* |
 | I2 | coverage survives truncation, at a horizon offset | `synchronisedOn_chop` *(Integration/Preservation)* |
-| I3 | fairness and shape survive truncation | `fairScheduleOn_chop`, `fairRunOn_chop`, `spansEligible_chop` *(Integration/ScheduleShape)* |
+| I3 | retired: the schedule rides in the `Truncates` witness | `truncates_chop` *(Properties/Arcs/GC)* |
 | I4 | coverage under the fill: refuted for a set including the recovering validator, preserved otherwise, restored above the fill | `not_synchronisedOn_skipFill`, `synchronisedOn_skipFill_of_notMem`, `synchronisedOn_skipFill_above` *(Integration/Coverage)* |
 | I5 | the joiner: horizon-stability, and epoch alignment | `HorizonStable`, `joiner_assign_agree`, `epochOf_add_of_dvd` *(Integration/Joiner)* |
 | I6 | anchor retention, and the lag bounds the outage | `anchor_pruned`, `chopMsg`, `outage_bounded_by_lag` *(Integration/Retention)* |
@@ -23947,24 +23950,6 @@ def dagTop (D : Dag Validator BlockId Payload) : ℕ :=
 
 **The top of the band**: two rounds above the highest round the DAG holds. The two are slack — nothing sits there — and they give the transport lemmas the room they need above a candidate.
 
-#### `finWhaleLive`
-
-*def, `FinWhale.Carrier.lean`*
-
-```lean
-def finWhaleLive (S : Slots Validator) {D : Dag Validator BlockId Payload}
-    (V : (finWhaleRule (Payload := Payload)).View D) (T : Finset Validator) (lo K : ℕ) : Prop :=
-  T = (Correct : Finset Validator) ∧
-    ∃ R N, LeanDag.FinWhale.CommitsCorrectLeaders (schedOf S) D R N ∧
-      R ≤ S.slotRound lo ∧ (∀ k, k < K → S.slotRound k + 2 ≤ N) ∧
-      ∀ n, R ≤ n → n ≤ N → ∀ b ∈ LeanDag.FinWhale.blocksAt D n,
-        (D.block b).creator ∈ T → b ∈ V.val
-```
-
-**FinWhale's liveness precondition**, over a slot window: the liveness interface holds from a coverage round `R` to a horizon `N`, the window starts at or above `R`, every slot of it sits two rounds under `N`, and the view holds the reliable blocks in between.
-
-`T` is `Correct` rather than an arbitrary quorum, because FinWhale's certificates are named — a view is shown to hold what reliable validators produced, and nothing else.
-
 #### `fwSupport`
 
 *def, `FinWhale.Carrier.lean`*
@@ -24443,22 +24428,6 @@ def toCheckpointQC (payload : CertificatePayload (Validator := Validator)
 ```
 
 A payload accepted by the verifier yields a genuine checkpoint QC.
-
-#### `hybridLive`
-
-*def, `HybridProperties.lean`*
-
-```lean
-def hybridLive (S : Slots Validator)
-    {U : {U : BlockUniverse Validator BlockId Payload // HonestNoEquiv U}}
-    (V : View Validator BlockId Payload U.val) (T : Finset Validator) (lo K : ℕ) : Prop :=
-  Hybrid.q Validator ≤ T.card ∧
-    ∃ R₀ N, SynchronisedOn U.val T R₀ ∧ R₀ ≤ S.slotRound lo ∧
-      (∀ r, R₀ ≤ r → r ≤ N → PopulatedOn U.val T r) ∧ V.CoversUpto N ∧
-      ∀ k, k < K → S.slotRound k + 1 ≤ N
-```
-
-**Hybrid's liveness precondition**, over a slot window, at the hybrid quorum `q = n − fb − fc` and a wavelength of two.
 
 #### `adaptBlock`
 
@@ -25579,20 +25548,6 @@ def mahiMahiRule (w : ℕ) : DagRule Validator BlockId Payload where
 
 **Mahi-Mahi as a carrier**, one per wave width.
 
-#### `mahiLive`
-
-*def, `MahiMahiProperties.lean`*
-
-```lean
-def mahiLive (w : ℕ) (S : Slots Validator)
-    {U : BlockUniverse Validator BlockId Payload} (V : View Validator BlockId Payload U)
-    (T : Finset Validator) (lo K : ℕ) : Prop :=
-  ∃ N, (∀ k, k < K → MahiMahi.decisionRound Validator w k ≤ N) ∧ V.CoversUpto N ∧
-    ∀ k, lo ≤ k → k < K → S.leader k ∈ T → S.leader k ∈ MahiMahi.good (S := S) U w k
-```
-
-**Mahi-Mahi's liveness precondition**, over a slot window: the view is caught up to a horizon the window's decision rounds sit under, and every `T`-led slot of the window has a good leader.
-
 #### `mmSupport`
 
 *def, `MahiMahiProperties.lean`*
@@ -25732,21 +25687,6 @@ def nemoReliability (Validator : Type) [Fintype Validator] [DecidableEq Validato
 
 **Nemo's fault model, as a counting parameter.** Nemo is crash-only and nobody equivocates, so the reliable set is everyone and the slack is what a majority may miss. A committee of at least one makes it a minority, which is all the count needs.
 
-#### `nemoLive`
-
-*def, `NemoProperties.lean`*
-
-```lean
-def nemoLive (S : Slots Validator) {U : Nemo.Universe Validator BlockId Payload}
-    (V : Nemo.View Validator BlockId Payload U) (T : Finset Validator) (lo K : ℕ) : Prop :=
-  Nemo.majority Validator ≤ T.card ∧
-    ∃ R₀ N, Nemo.SynchronisedOn U T R₀ ∧ R₀ ≤ S.slotRound lo ∧
-      (∀ r, R₀ ≤ r → r ≤ N → Nemo.PopulatedOn U T r) ∧ V.CoversUpto N ∧
-      ∀ k, k < K → S.slotRound k + 1 ≤ N
-```
-
-**Nemo's liveness precondition**, over a slot window. Its wavelength is two, so the horizon sits one round above the slot where the core's sits two, and the quorum is a *majority* rather than a Byzantine quorum — the model is crash-only.
-
 #### `odontocetiRule`
 
 *def, `Odontoceti.Carrier.lean`*
@@ -25764,21 +25704,6 @@ def odontocetiRule : DagRule Validator BlockId Payload where
 ```
 
 **Odontoceti as a carrier**, at its own namespace rather than through `Barnacle.odontocetiRule`: a protocol's conformance should not route through a mechanism (`docs/target-properties.md` §8).
-
-#### `odontocetiLive`
-
-*def, `OdontocetiProperties.lean`*
-
-```lean
-def odontocetiLive (S : Slots Validator) {U : BlockUniverse Validator BlockId Payload}
-    (V : View Validator BlockId Payload U) (T : Finset Validator) (lo K : ℕ) : Prop :=
-  quorumCard Validator ≤ T.card ∧
-    ∃ R₀ N, SynchronisedOn U T R₀ ∧ R₀ ≤ S.slotRound lo ∧
-      (∀ r, R₀ ≤ r → r ≤ N → PopulatedOn U T r) ∧ V.CoversUpto N ∧
-      ∀ k, k < K → S.slotRound k + 1 ≤ N
-```
-
-**What Odontoceti's liveness route asks of a deployment**, at its own wavelength: the horizon is one round above the slot, where the core's is two.
 
 #### `optimalRule`
 
@@ -26588,7 +26513,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 1064 theorems that either another module of the
+The 1062 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -29651,37 +29576,6 @@ theorem dosValid_chop (hdos : DoSValid U) : DoSValid (chop U G)
 
 **G1, DoS half — the one-way door.** The condition survives truncation; the converse fails by design (the statute of limitations, witnessed in `LeanDagTest/GC/Chop.lean`).
 
-#### `certificates_chop`
-
-*theorem, `GC.Chop.lean`*
-
-```lean
-theorem certificates_chop {L : BlockId} (s : ℕ) :
-    certificates (chop U G) L s = certificates U L (G + s)
-```
-
-Certificates for the slot at rebased round `s` are the original slot's certificates, verbatim.
-
-#### `directCommit_chop`
-
-*theorem, `GC.Chop.lean`*
-
-```lean
-theorem directCommit_chop {L : BlockId} (s : ℕ) :
-    DirectCommit (chop U G) L s ↔ DirectCommit U L (G + s)
-```
-
-#### `certifiedIn_chop`
-
-*theorem, `GC.Chop.lean`*
-
-```lean
-theorem certifiedIn_chop {A L : BlockId} (hA : A ∈ (chop U G).ids) (s : ℕ) :
-    CertifiedIn (chop U G) A L s ↔ CertifiedIn U A L (G + s)
-```
-
-**The indirect test survives the cut**: an anchor above the horizon certifies a slot above the horizon in the truncation exactly when it did in the original. With `directCommit_chop`/`directSkip_chop` this is the per-slot decision invariance of `garbage.md` G3 — the indirect verdict is a property of the anchor's cone, and never consults the pruned prefix.
-
 #### `horizon_le_slotRound`
 
 *theorem, `GC.ChopDecided.lean`*
@@ -30496,20 +30390,6 @@ theorem skipFill_populatedOn {T : Finset Validator} {k : ℕ}
 
 **The gap is populated.** With `v1` restored to the reliable set, every gap round carries a `v1` block — the production hypothesis liveness consumes, recovered from one message.
 
-#### `directSkip_fresh`
-
-*theorem, `SafeSkip.Basic.lean`*
-
-```lean
-theorem directSkip_fresh {T : Finset Validator} {k : ℕ}
-    (hcard : quorumCard Validator ≤ T.card)
-    (hv1T : sk.v1 ∉ T)
-    (hpop : PopulatedOn U T (k + 1)) (hk1 : sk.r0 < k) (hk2 : k ≤ sk.r) :
-    DirectSkip sk.skipFill (sk.fresh k) k
-```
-
-**The fill cannot conjure a commit.** A filled block landing on a leader slot is directly skipped: no old block references a fresh id, so every reliable validator's block at the round above blames it. The mechanism restores production without touching the slots the network already passed.
-
 #### `reaches_fill_old`
 
 *theorem, `SafeSkip.Invariance.lean`*
@@ -30594,19 +30474,6 @@ theorem honestNoEquiv_chop (hne : HonestNoEquiv U) :
 
 **I2.** Truncation preserves honest non-equivocation.
 
-#### `synchronisedOn_chop`
-
-*theorem, `Integration.Preservation.lean`*
-
-```lean
-theorem synchronisedOn_chop (hs : SynchronisedOn U T R) (hGR : R ≤ G + R') :
-    SynchronisedOn (chop U G) T R'
-```
-
-**I4.** Truncation preserves coverage, with the horizon offset.
-
-The referencing block sits at chopped round `n + 1`, hence at original round `G + n + 1`, strictly above the cut — so `chop` retains its references verbatim and the original clause applies directly.
-
 #### `honestNoEquiv_skipFill`
 
 *theorem, `Integration.Preservation.lean`*
@@ -30660,54 +30527,7 @@ theorem synchronisedOn_skipFill_above (sk : SkipMsg U) {T : Finset Validator}
 
 **I5, positively.** Coverage holds *strictly* above the fill: past the target round every block is old, references are preserved, and the original condition applies unchanged. This is the form a liveness argument after recovery consumes — the recovered validator is building its own blocks again, and the network covers them in the ordinary way.
 
-The strictness is not slack in the proof. At `n = sk.r` the lower block may still be the last filled one, and `not_synchronisedOn_skipFill` refutes coverage there; `sk.r < R'` is exactly the first round at which every block in play is old.
-
-#### `le_slotRound_add`
-
-*theorem, `Integration.ScheduleShape.lean`*
-
-```lean
-theorem le_slotRound_add (S : Slots Validator) (hd : G ≤ S.slotRound d) (k : ℕ) :
-    G ≤ S.slotRound (d + k)
-```
-
-Every slot at or above the base slot has its round above the cut — the fact that makes the rebasing subtraction faithful.
-
-#### `fairScheduleOn_chop`
-
-*theorem, `Integration.ScheduleShape.lean`*
-
-```lean
-theorem fairScheduleOn_chop (S : Slots Validator) (hd : G ≤ S.slotRound d)
-    (h : FairScheduleOn (S := S) T) :
-    FairScheduleOn (S := S.chop G d hd) T
-```
-
-**I13.** Truncation preserves schedule fairness: a reliable leader arbitrarily far out in the original schedule is one arbitrarily far out in the re-indexed one, found by shifting the search past the base slot.
-
-#### `fairRunOn_chop`
-
-*theorem, `Integration.ScheduleShape.lean`*
-
-```lean
-theorem fairRunOn_chop (S : Slots Validator) (hd : G ≤ S.slotRound d)
-    (h : FairRunOn (S := S) T c) :
-    FairRunOn (S := S.chop G d hd) T c
-```
-
-**I13, run form.** The same for runs of `c` consecutive reliable-led slots, which is what the liveness capstones consume.
-
-#### `spansEligible_chop`
-
-*theorem, `Integration.ScheduleShape.lean`*
-
-```lean
-theorem spansEligible_chop (S : Slots Validator) (hd : G ≤ S.slotRound d)
-    (h : SpansEligible (Validator := Validator) (S := S) c) :
-    SpansEligible (Validator := Validator) (S := S.chop G d hd) c
-```
-
-**I15.** Truncation preserves the spanning property. Eligibility is a statement about rounds, which the truncation rebases by `−G`; the base-slot condition keeps every round in play above the cut, where the subtraction is faithful and the original inequality transfers.
+The strictness is not slack in the proof. At `n = sk.r` the lower block may still be the last filled one, and `not_synchronisedOn_skipFill` refutes coverage there; `sk.r < R'` is exactly the first round at which every block in play is old. The proof is `RebasedAbove.synchronisedOn_of` at the fill's `Sustains` witness: what was a direct argument about old blocks is the generic one.
 
 #### `joiner_assign_agree`
 
@@ -31548,19 +31368,6 @@ theorem run_exists (ha : Agree R) (hlc : LeaderCommits R Live)
 ```
 
 **The adaptive fixpoint exists.** Under a policy that places runs, with the protocol's precondition at every height, a total adaptive run exists — partial runs at every height glued along the diagonal, `partialRun_agree` making the stage-by-stage choices cohere. With `run_agree` it is THE fixpoint.
-
-#### `Run.commits`
-
-*theorem, `Adaptive.Liveness.lean`*
-
-```lean
-theorem Run.commits (ha : Agree R) (hlc : LeaderCommits R Live)
-    {V : R.View U} (A : Run P U V) {lo K : ℕ}
-    (hlive : Live (slotsOf P.inj A.assign) V T lo K) {k : ℕ} (hlo : lo ≤ k) (hK : k < K)
-    (hlead : A.assign k ∈ T) : ∃ L, A.vdct k = some L
-```
-
-**A reliable leader's slot commits in the run.**
 
 #### `lt_bound`
 
@@ -38262,26 +38069,6 @@ theorem isLeaderBlock_sched {S₁ S₂ : LeanDag.Hydrozoan.Slots Replica} {k : �
     LeanDag.Hydrozoan.IsLeaderBlock (S := S₂) U k L
 ```
 
-#### `banded_aux`
-
-*theorem, `Hydrozoan.Helpers.Banded.lean`*
-
-```lean
-theorem banded_aux {V : LeanDag.Hydrozoan.View U} {k : ℕ} {v : Option BlockId}
-    (hd : LeanDag.Hydrozoan.Decided U V k v) :
-    ∃ top, S.slotRound k + 2 ≤ top ∧
-      ∀ (g g' d d' : ℕ) (S' : LeanDag.Hydrozoan.Slots Replica)
-        (U' : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
-        (V' : LeanDag.Hydrozoan.View U') (k' : ℕ),
-        k + d' = k' + d →
-        (∀ m m', m + d' = m' + d → S.slotRound m + g = S'.slotRound m' + g') →
-        (∀ m m', m + d' = m' + d → S.slotRound m ≤ top → S.leader m = S'.leader m') →
-        AgreeBand rule U U' (S.slotRound k + g) (top + g) g g' →
-        (∀ b, b ∈ V.ids → S.slotRound k ≤ (U.block b).round →
-          (U.block b).round ≤ top → b ∈ V'.ids) →
-        LeanDag.Hydrozoan.Decided (S := S') U' V' k' v
-```
-
 #### `banded`
 
 *theorem, `Hydrozoan.Helpers.Banded.lean`*
@@ -38568,6 +38355,20 @@ theorem viewAgreeAbove_chop_hz {V : LeanDag.Hydrozoan.View U} :
 
 **The chopped view agrees with the original above the cut.**
 
+#### `decided_chop_iff_hz`
+
+*theorem, `Integration.HydrozoanMechanisms.lean`*
+
+```lean
+theorem decided_chop_iff_hz (hd : G ≤ S.slotRound d) {V : LeanDag.Hydrozoan.View U}
+    {k : ℕ} {v : Option BlockId} :
+    (LeanDag.Hydrozoan.rule (Replica := Replica) (BlockId := BlockId)).Decided S V (d + k) v ↔
+      (LeanDag.Hydrozoan.rule (Replica := Replica) (BlockId := BlockId)).Decided
+        (S.chop G d hd) (chopViewHZ V G) k v
+```
+
+**Verdict transport across the cut, for Hydrozoan.**
+
 #### `hzBlk_round`
 
 *theorem, `Integration.HydrozoanMechanisms.lean`*
@@ -38596,6 +38397,21 @@ theorem hzBlk_round (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) (i : B
       ⟨k, sk.v1, (U.block (sk.line k)).parents⟩
 ```
 
+#### `decided_agree_copyFillHZ`
+
+*theorem, `Integration.HydrozoanMechanisms.lean`*
+
+```lean
+theorem decided_agree_copyFillHZ {sk : SkipData U.ids (hzBlk U)} (S : Slots Replica)
+    {V : LeanDag.Hydrozoan.View U} {V' V'' : LeanDag.Hydrozoan.View (copyFillHZ U sk)}
+    (hsub : V.ids ⊆ V'.ids) {k : ℕ} {u u' : Option BlockId}
+    (h : (LeanDag.Hydrozoan.rule (Replica := Replica) (BlockId := BlockId)).Decided S V k u)
+    (h' : (LeanDag.Hydrozoan.rule (Replica := Replica) (BlockId := BlockId)).Decided S V'' k u') :
+    u = u'
+```
+
+**And agreement across it.**
+
 #### `truncates_chop_nemo`
 
 *theorem, `Integration.NemoMechanisms.lean`*
@@ -38621,6 +38437,85 @@ theorem sustains_skipFill_nemo :
 ```
 
 **What the fill sustains.** Above `sk.r` the fill added nothing, so every block there is old and unchanged. Below it the claim would be false, and deliberately: the blocks a fill adds stand in for blocks that voted, and need not vote as they did.
+
+#### `leaderExcludedAll_copyFillHZ`
+
+*theorem, `Integration.OptimalMechanisms.lean`*
+
+```lean
+theorem leaderExcludedAll_copyFillHZ (hU : LeaderExcludedAll U) :
+    LeaderExcludedAll (copyFillHZ U sk)
+```
+
+**Leader exclusion survives the copy fill.** A filled block's parents are the donor's; old blocks vote only for old blocks; so whatever a block of the fill witnesses, a block of the old universe with the same parents witnessed, and its parents were already excluded.
+
+#### `decided_chop_iff_opt`
+
+*theorem, `Integration.OptimalMechanisms.lean`*
+
+```lean
+theorem decided_chop_iff_opt (hd : G ≤ S.slotRound d) {V : LeanDag.Hydrozoan.View W.val}
+    {k : ℕ} {v : Option BlockId} :
+    (OptimalHydrozoanProperties.optimalRule (Replica := Replica) (BlockId := BlockId)).Decided
+      S V (d + k) v ↔
+      (OptimalHydrozoanProperties.optimalRule (Replica := Replica) (BlockId := BlockId)).Decided
+        (S.chop G d hd) (U := chopOpt W G) (chopViewHZ V G) k v
+```
+
+**Verdict transport across the cut, for Optimal-Hydrozoan.**
+
+#### `decided_copyFill_opt`
+
+*theorem, `Integration.OptimalMechanisms.lean`*
+
+```lean
+theorem decided_copyFill_opt (S : Slots Replica) {V : LeanDag.Hydrozoan.View W.val}
+    {V' : LeanDag.Hydrozoan.View (copyFillOpt W sk).val} (hsub : V.ids ⊆ V'.ids)
+    {k : ℕ} {u : Option BlockId}
+    (h : (OptimalHydrozoanProperties.optimalRule (Replica := Replica)
+      (BlockId := BlockId)).Decided S V k u) :
+    (OptimalHydrozoanProperties.optimalRule (Replica := Replica)
+      (BlockId := BlockId)).Decided S V' k u
+```
+
+**Verdicts survive the recovery, for Optimal-Hydrozoan** — the cell the skip-fill refutation had put out of scope, closed by the fill that adds no edge.
+
+#### `stack_core`
+
+*theorem, `Integration.StackRules.lean`*
+
+```lean
+theorem stack_core (sk : SkipMsg U) (hd : G ≤ S.slotRound d) :
+    Stack (MysticetiProperties.mysticetiRule (Payload := Payload)) U S
+      (chop sk.skipFill G) (S.chop G d hd) G (max (sk.r + 1) G) d
+```
+
+**The core's fill-then-cut is a stack**, settling at the later of the gap's top and the horizon, shifted by the horizon, re-indexed from the base slot.
+
+#### `stack_core_safe_and_live`
+
+*theorem, `Integration.StackRules.lean`*
+
+```lean
+theorem stack_core_safe_and_live (sk : SkipMsg U) (hd : G ≤ S.slotRound d)
+    {V : View Validator BlockId Payload U} {V' : View Validator BlockId Payload (chop sk.skipFill G)}
+    (hv : ViewAgreeAbove (MysticetiProperties.mysticetiRule (Payload := Payload)) V V'
+      (max (sk.r + 1) G)) :
+    (∀ (k : ℕ) (v : Option BlockId), max (sk.r + 1) G ≤ S.slotRound (d + k) →
+        (Decided U V (d + k) v ↔ Decided (S := S.chop G d hd) (chop sk.skipFill G) V' k v)) ∧
+    (∀ (W : View Validator BlockId Payload (chop sk.skipFill G)) (k : ℕ) (w v : Option BlockId),
+        max (sk.r + 1) G ≤ S.slotRound (d + k) →
+        Decided (S := S.chop G d hd) (chop sk.skipFill G) W k w → Decided U V (d + k) v → w = v) ∧
+    (∀ {rel : Reliability Validator} {T : Finset Validator} {lo K : ℕ},
+        MysticetiProperties.coreSupport.live rel S (U := U) V T lo K →
+        max (sk.r + 1) G ≤ S.slotRound lo → d ≤ lo → lo < K →
+        (∀ N, G ≤ N → CoversUpto (MysticetiProperties.mysticetiRule (Payload := Payload)) V N →
+          CoversUpto (MysticetiProperties.mysticetiRule (Payload := Payload)) V' (N - G)) →
+        MysticetiProperties.coreSupport.live rel (S.chop G d hd) (U := chop sk.skipFill G) V' T
+          (lo - d) (K - d))
+```
+
+**Safety and liveness across the core's stack**, from the properties.
 
 #### `causal`
 
@@ -39557,19 +39452,6 @@ theorem decided_agree_horizons (ha : Agree R) (hlt : LocalTruncate R)
 
 **And across two horizons.** Validators cut at different depths agree on every shared slot, matched through the absolute slot index. Horizons need never be negotiated.
 
-#### `directCommit_chop`
-
-*theorem, `Properties.Arcs.GC.lean`*
-
-```lean
-theorem directCommit_chop {T : Finset Validator} {r : ℕ} {L : BlockId}
-    (hr : G ≤ r) (hcard : quorumCard Validator ≤ T.card)
-    (hpop : LeanDag.PopulatedOn U T (r + 2)) (hc : CertifiesAt U T r L) :
-    DirectCommit (chop U G) L (r - G)
-```
-
-**The reactive commit survives the cut** — the consumer test, from the obligation rather than from `chop` directly.
-
 #### `truncates_chop`
 
 *theorem, `Properties.Arcs.GC.lean`*
@@ -39632,6 +39514,19 @@ theorem synchronisedOn_chop {T : Finset Validator} {Rs R' : ℕ}
 ```
 
 **Synchrony survives the cut, from the rebase.** `Integration/Preservation.synchronisedOn_chop` proves this directly; it is `Sustains` applied, as votes and production already were.
+
+#### `coversUpto_of_truncates`
+
+*theorem, `Properties.Arcs.Liveness.lean`*
+
+```lean
+theorem coversUpto_of_truncates {R : DagRule Validator BlockId Payload} {U U' : R.Universe}
+    {S S' : Slots Validator} {G d N : ℕ} (h : Truncates R U U' S S' G d)
+    {V : R.View U} {V' : R.View U'} (hv : ViewAgreeAbove R V V' G) (hGN : G ≤ N)
+    (hc : CoversUpto R V N) : CoversUpto R V' (N - G)
+```
+
+**Coverage survives the cut**, on a view that agrees with the original above the horizon: a block of the truncation under the rebased bound is an old block under the original one.
 
 #### `exists_decided_of_coverage`
 
@@ -39951,6 +39846,41 @@ theorem sustains_skipFill (sk : SkipMsg U) :
 ```
 
 **A fill sustains from the top of its gap.** Above `sk.r` the fill added nothing, so every block there is old and unchanged. Below it the claim would be false, and deliberately: the blocks a fill adds stand in for blocks that voted, and need not vote as they did.
+
+#### `decided_none_fresh`
+
+*theorem, `Properties.Arcs.SafeSkip.lean`*
+
+```lean
+theorem decided_none_fresh [S : Slots Validator] (sk : SkipMsg U)
+    {V : View Validator BlockId Payload U} {T : Finset Validator} {k : ℕ}
+    (hcard : quorumCard Validator ≤ T.card)
+    (hlead : S.leader k = sk.v1) (hk1 : sk.r0 < S.slotRound k) (hk2 : S.slotRound k ≤ sk.r)
+    (hpres : PresentAt MysticetiProperties.mysticetiRule V T (S.slotRound k + 1)) :
+    Decided sk.skipFill (sk.liftView V) k none
+```
+
+**SS3, as a verdict, from the properties.** The slot the recovering replica leads at a gap round is decided `none` on the lifted view, given a quorum of the pre-crash view present one round above it. No induction; the fill is an extension, and the core skips what nothing supports.
+
+#### `Stack.safe_and_live`
+
+*theorem, `Properties.Arcs.Stack.lean`*
+
+```lean
+theorem Stack.safe_and_live (hb : Banded R) (ha : Agree R) (sp : Support R) (hloc : sp.Local)
+    (st : Stack R U S U' S' G R₀ d) {V : R.View U} {V' : R.View U'}
+    (hv : ViewAgreeAbove R V V' R₀) :
+    (∀ (k : ℕ) (v : Option BlockId), R₀ ≤ S.slotRound (d + k) →
+        (R.Decided S V (d + k) v ↔ R.Decided S' V' k v)) ∧
+    (∀ (W : R.View U') (k : ℕ) (w v : Option BlockId), R₀ ≤ S.slotRound (d + k) →
+        R.Decided S' W k w → R.Decided S V (d + k) v → w = v) ∧
+    (∀ {rel : Reliability Validator} {T : Finset Validator} {lo K : ℕ},
+        sp.live rel S V T lo K → R₀ ≤ S.slotRound lo → d ≤ lo → lo < K →
+        (∀ N, G ≤ N → CoversUpto R V N → CoversUpto R V' (N - G)) →
+        sp.live rel S' V' T (lo - d) (K - d))
+```
+
+**Every stack of mechanisms keeps safety and liveness**, for any rule with `Banded`, `Agree` and a support. Above the composite settling round: verdicts transport to the composite's numbering, any view of the composite agrees with the original, and the liveness precondition carries. Nothing is assumed about which mechanisms are stacked or in what order.
 
 #### `refl`
 
@@ -40579,7 +40509,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 1056 lemmas used only within the file that proves
+The 1035 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -40923,23 +40853,16 @@ subsection per module, in the layer order of Appendices B and C.
 | `byzPool_succ_subset` | The freeze step: a round in which every correct acceptance is correct-authored adds nothing to the pool — … |
 | `card_viewUpto_le_of_allExposed` | B5 — the slope decays to the correct-production rate. After exposure-complete at `m`, a correct view is … |
 
-### `GC/Chop.lean` (13)
+### `GC/Chop.lean` (6)
 
 | Lemma | Role |
 |:---|:---|
-| `authorsAt_chop` | And so are its authors. |
-| `blames_chop` | — |
-| `blocksAt_chop` | Round `m` of the truncation is round `G + m` of the original. |
-| `certifies_chop` | — |
 | `chopBlock_refs_subset` | The truncation's references never exceed the original's. |
 | `creatorsOf_chopBlock` | Creators are untouched, so creator sets are, pointwise. |
-| `directSkip_chop` | — |
 | `exposedIn_of_exposedIn_chop` | Exposure in the truncation is exposure in the original: the witnessing pair survives un-rebasing. |
 | `reaches_chop_iff` | — |
 | `reaches_chop_of_reaches` | A path of the original whose endpoint stays at or above the cut never dips below it, so it survives … |
 | `reaches_of_reaches_chop` | A step in the truncation is a step in the original. |
-| `supporters_chop` | — |
-| `votesIn_chop` | — |
 
 ### `GC/ChopDecided.lean` (3)
 
@@ -41046,12 +40969,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `selfParent_spec` | — |
 | `toSkipMsg_line` | — |
 | `toSkipMsg_r` | — |
-
-### `Integration/Coverage.lean` (1)
-
-| Lemma | Role |
-|:---|:---|
-| `mem_ids_of_round_gt` | Above the fill every block is an old one: the fresh identifiers occupy gap rounds only. |
 
 ### `Integration/Joiner.lean` (7)
 
@@ -41174,11 +41091,12 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `const_pick` | — |
 
-### `Adaptive/Liveness.lean` (3)
+### `Adaptive/Liveness.lean` (4)
 
 | Lemma | Role |
 |:---|:---|
 | `Run.assign_eq` | The run's schedule is the policy's, as a function. |
+| `Run.commits` | A reliable leader's slot commits in the run. |
 | `Run.commits_in_epoch` | Every epoch past the first carries `c` consecutive commits. |
 | `Run.live_of_staged` | The staged precondition, read at a total run's own schedule. |
 
@@ -42133,7 +42051,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `spSkip_new` | And a candidate the band adds is skipped too. An old block two rounds above the slot carries a quorum of … |
 | `voters_subset` | Votes survive: an old voter is a voter. |
 
-### `FinWhale/Carrier.lean` (19)
+### `FinWhale/Carrier.lean` (18)
 
 | Lemma | Role |
 |:---|:---|
@@ -42141,7 +42059,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `decided_iff` | A verdict of this rule is the pass's verdict. One direction is the pass being an assignment; the other is … |
 | `decided_of_directCommit` | A direct commit in view is a verdict, at any schedule and with no side condition. |
 | `le_dagHorizon` | An assignment commits only below the horizon: a commit names a block of the slot, so the slot's round is … |
-| `leaderCommits` | A reliably-led slot commits, at a bound one above the slot: the commit is direct, and a direct commit … |
 | `lt_of_elig` | Eligible slots are above: a schedule's rounds are monotone, so three rounds up is at least one slot up. |
 | `mem_blocksAt` | Membership of a round layer, unfolded once so the proofs below do not have to. |
 | `mem_slotBlocks` | And of a slot's blocks. |
@@ -42189,7 +42106,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `mem_recoveryCorrect` | Recovery-correct membership excludes all three fault classes. |
 | `mem_reliableSigner` | Reliable signing excludes precisely the two classes allowed to equivocate. |
 
-### `HybridProperties.lean` (11)
+### `HybridProperties.lean` (10)
 
 | Lemma | Role |
 |:---|:---|
@@ -42198,17 +42115,17 @@ subsection per module, in the layer order of Appendices B and C.
 | `descends` | And a committed run decides everything below it. |
 | `directCommitIn_band` | And so does the direct commit. |
 | `directSkipSlotIn_band` | And the slot-level skip transports, which is what the repair was for. Blockers stay blockers: a … |
-| `leaderCommits` | A reliably-led slot commits, at a bound one above the slot. |
 | `not_thickLink_band_novel` | A candidate the band did not carry passes the indirect test from no old anchor. Its supporters would sit … |
 | `skipsUnsupported` | Hybrid skips an unsupported slot from a hybrid quorum. |
 | `supportersIn_band` | Supporters survive the band. |
 | `thickLink_band` | So the indirect test reads the same. |
 | `toCore` | The band at Hybrid's carrier is the band at the core's, the universe being the core's under a predicate. |
 
-### `Hydrozoan/Helpers/Banded.lean` (13)
+### `Hydrozoan/Helpers/Banded.lean` (14)
 
 | Lemma | Role |
 |:---|:---|
+| `banded_aux` | — |
 | `blamesInView_sched` | — |
 | `bnd_author` | — |
 | `bnd_mem` | — |
@@ -42256,12 +42173,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `no_base_of_naive_shift` | A pure shift by a positive horizon admits no round-zero block, and a non-empty valid universe must have … |
 | `parents_empty_of_round_zero` | A block at round zero has no parents: the predecessor condition is unsatisfiable there. |
 
-### `Hydrozoan/Properties/Proof.lean` (1)
-
-| Lemma | Role |
-|:---|:---|
-| `persist_aux` | Hydrozoan's verdicts survive every extension, at Hydrozoan's own schedule vocabulary, which is what the … |
-
 ### `Integration/AdaptiveHydrozoan.lean` (4)
 
 | Lemma | Role |
@@ -42306,7 +42217,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `sustains_skipFill_hybrid` | What the fill sustains, for Hybrid — the core's witness, projected field by field. |
 | `truncates_chop_hybrid` | The cut is a truncation of Hybrid's carrier. The core's witness, projected: the subtype's `ids` and … |
 
-### `Integration/HydrozoanMechanisms.lean` (9)
+### `Integration/HydrozoanMechanisms.lean` (7)
 
 | Lemma | Role |
 |:---|:---|
@@ -42314,8 +42225,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `chopBlkHZ_parents_of_le` | — |
 | `copyFillHZ_parents_old` | An old block's parents are old. |
 | `decided_agree_chop_hz` | And cross-cut agreement. |
-| `decided_agree_copyFillHZ` | And agreement across it. |
-| `decided_chop_iff_hz` | Verdict transport across the cut, for Hydrozoan. |
 | `decided_copyFillHZ` | Verdicts survive the recovery, for Hydrozoan. |
 | `extends_copyFillHZ` | The fill is an extension of Hydrozoan's carrier. |
 | `sustains_copyFillHZ` | What the fill sustains: from the top of its gap. |
@@ -42335,18 +42244,15 @@ subsection per module, in the layer order of Appendices B and C.
 | `skipFillNemo_block_old` | — |
 | `viewAgreeAbove_chop_nemo` | The chopped view agrees with the original above the cut. |
 
-### `Integration/OptimalMechanisms.lean` (11)
+### `Integration/OptimalMechanisms.lean` (8)
 
 | Lemma | Role |
 |:---|:---|
 | `decided_agree_chop_opt` | And cross-cut agreement. |
 | `decided_agree_copyFill_opt` | And agreement across it. |
-| `decided_chop_iff_opt` | Verdict transport across the cut, for Optimal-Hydrozoan. |
-| `decided_copyFill_opt` | Verdicts survive the recovery, for Optimal-Hydrozoan — the cell the skip-fill refutation had put out … |
 | `extends_copyFill_opt` | The fill is an extension of Optimal-Hydrozoan's carrier. |
 | `isCandidateAt_of_old` | A candidate voted for by an old block is old, and a candidate in the old universe. |
 | `leaderExcludedAll_chopHZ` | Leader exclusion survives the cut. A block bound by exclusion sits two rounds above the horizon, so it … |
-| `leaderExcludedAll_copyFillHZ` | Leader exclusion survives the copy fill. A filled block's parents are the donor's; old blocks vote only … |
 | `sustains_copyFill_opt` | What the fill sustains: from the top of its gap. |
 | `truncates_chop_opt` | The cut is a truncation of Optimal-Hydrozoan's carrier — Hydrozoan's witness, projected. |
 | `viewAgreeAbove_chop_opt` | — |
@@ -42390,28 +42296,25 @@ subsection per module, in the layer order of Appendices B and C.
 | `sustains_addGenesis_odontoceti` | And sustains it from round one. |
 | `sustains_addGenesis_opt` | — |
 
-### `Integration/ReactiveMechanisms.lean` (5)
+### `Integration/ReactiveMechanisms.lean` (4)
 
 | Lemma | Role |
 |:---|:---|
-| `coversUpto_chop` | The chopped view covers the rebased horizon. |
 | `decidedBelow_of_run_chop_reactive` | Anchored liveness after the cut, for a reactive execution: a run of `c` reliably-led slots in the … |
 | `live_addGenesis_reactive` | And re-genesis. |
 | `live_chop_reactive` | The reactive precondition survives the cut, as the support's, at the re-indexed schedule. |
 | `live_skipFill_reactive` | And the fill, on any view of it caught up as far as the old one. |
 
-### `Integration/StackRules.lean` (6)
+### `Integration/StackRules.lean` (4)
 
 | Lemma | Role |
 |:---|:---|
-| `stack_core` | The core's fill-then-cut is a stack, settling at the later of the gap's top and the horizon, shifted by … |
-| `stack_core_safe_and_live` | Safety and liveness across the core's stack, from the properties. |
 | `stack_finwhale` | — |
 | `stack_finwhale_safe_and_live` | Safety and liveness across FinWhale's stack. |
 | `stack_nemo` | — |
 | `stack_nemo_safe_and_live` | Safety and liveness across Nemo's stack. |
 
-### `MahiMahiProperties.lean` (14)
+### `MahiMahiProperties.lean` (13)
 
 | Lemma | Role |
 |:---|:---|
@@ -42424,7 +42327,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `directCommitIn_band` | And so does the direct commit. |
 | `directCommitIn_of_coversUpto` | A view caught up to the decision round holds every certificate, so it commits what the DAG commits. |
 | `directSkipIn_band` | And the direct skip. A blamer stays a blamer, and a candidate the band added changes nothing: the blame … |
-| `leaderCommits` | A good leader's slot commits, at a bound one above the slot: the commit reads that slot's round and leader … |
 | `mmSupport_local` | Law 1: `certifies_band` at the band a `RebasedAbove` is. |
 | `not_certifiedIn_band_novel` | — |
 | `toCore` | The two carriers project identically, so a band for one is a band for the other. |
@@ -42475,7 +42377,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `nemoRule_ids` | — |
 | `nemoRule_viewIds` | — |
 
-### `NemoProperties.lean` (12)
+### `NemoProperties.lean` (11)
 
 | Lemma | Role |
 |:---|:---|
@@ -42486,13 +42388,12 @@ subsection per module, in the layer order of Appendices B and C.
 | `descends` | And a committed run decides everything below it, from `Indirect` with no induction of its own. |
 | `directCommitIn_band` | And so does the direct commit. |
 | `isLeaderBlock_band` | A candidate of a slot is a candidate of the slot the shift names. |
-| `leaderCommits` | A reliably-led slot commits, at a bound one above the slot: a direct commit reads that slot's leader and … |
 | `memB` | — |
 | `not_certifiedIn_band_novel` | A candidate the band did not carry is certified from no old anchor. Its certificate would have to lie in … |
 | `refsB` | — |
 | `supportersIn_band` | The supporters a view holds transport. A voting-round block the view held is a block of the shifted … |
 
-### `OdontocetiProperties.lean` (12)
+### `OdontocetiProperties.lean` (11)
 
 | Lemma | Role |
 |:---|:---|
@@ -42501,7 +42402,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `decidedBelow_of_decidedWithin` | Odontoceti's bounded relation lands in the derived one. |
 | `descends` | And a committed run decides everything below it. Was a downward induction carrying the bound by hand; it … |
 | `directCommitIn_band` | And so does the direct commit. |
-| `leaderCommits` | A reliably-led slot commits, at a bound one above the slot: a direct commit reads that slot's leader and … |
 | `not_thickLink_band_novel` | A candidate the band did not carry is thick-linked from no old anchor. Its supporters would have to sit in … |
 | `skipsUnsupported` | Odontoceti skips an unsupported slot from a correct quorum. |
 | `supportersIn_band` | Supporters survive the band. A block one round above the slot that referenced the candidate references it … |
@@ -42537,7 +42437,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `witnessesEquivocation_bnd` | Witnessing an equivocation is the same event. Both directions: a witness on the larger side is voted for … |
 | `witnessesEquivocation_sched` | — |
 
-### `Properties/Arcs/GC.lean` (11)
+### `Properties/Arcs/GC.lean` (12)
 
 | Lemma | Role |
 |:---|:---|
@@ -42548,6 +42448,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `decided_chop_iff_odontoceti` | Verdict transport across the cut, for Odontoceti. |
 | `decided_of_truncate` | A verdict survives the cut, at the replica's own numbering. |
 | `decided_of_truncated` | And a verdict of the truncation is a verdict of the whole DAG, which is what lets a pruned replica be … |
+| `directCommit_chop` | The reactive commit survives the cut — the consumer test, from the obligation rather than from `chop` … |
 | `noEquivOn_chop` | And so does non-equivocation, from the truncation. |
 | `sustains_chop` | The cut sustains the core from its horizon. |
 | `truncates_chop_mahimahi` | The cut is a truncation of Mahi-Mahi's carrier too. |
@@ -42566,7 +42467,7 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `card_correct_le_two_mul_coveredAt` | CQ2 (the half, where the committee gives it). Every cone carries, at every round below it, blocks from at … |
 
-### `Properties/Arcs/SafeSkip.lean` (8)
+### `Properties/Arcs/SafeSkip.lean` (7)
 
 | Lemma | Role |
 |:---|:---|
@@ -42575,16 +42476,14 @@ subsection per module, in the layer order of Appendices B and C.
 | `decided_fill_agree_odontoceti` | And agreement across it. |
 | `decided_fill_mahimahi` | Verdicts survive the fill, for Mahi-Mahi. |
 | `decided_fill_odontoceti` | Verdicts survive the fill, for Odontoceti. |
-| `decided_none_fresh` | SS3, as a verdict, from the properties. The slot the recovering replica leads at a gap round is decided … |
 | `decided_skipFill` | Verdicts survive the recovery, for any protocol that has proved persistence. The replica that recovered … |
 | `presentAt_liftView` | Presence in the pre-crash view is presence in the lifted one: the ids are the same and old blocks are … |
 
-### `Properties/Arcs/Stack.lean` (3)
+### `Properties/Arcs/Stack.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
 | `Stack.rebased` | A stack is one mechanism. |
-| `Stack.safe_and_live` | Every stack of mechanisms keeps safety and liveness, for any rule with `Banded`, `Agree` and a support. … |
 | `live_of_rebased` | `live` survives any rebase, at the rebased numbering, for a window above the settling round. … |
 
 ### `Properties/Band.lean` (3)

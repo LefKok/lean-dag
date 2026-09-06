@@ -103,7 +103,6 @@ structure SkipData (ids : Finset BlockId)
   hgap : ∀ b ∈ ids, (blk b).creator = v1 →
     (blk B1).round < (blk b).round → (blk b).round ≤ r → False
 
-
 /-- **A Safe Skip message at a core universe**: the same data, read off
 `U`. Stated over `ids`/`blk` rather than over a universe because the
 *data* of a fill is the same for every rule in this development, and
@@ -375,28 +374,6 @@ theorem skipFill_populatedOn {T : Finset Validator} {k : ℕ}
     exact ⟨b, sk.ids_subset_skipFill hb,
       by rw [sk.skipFill_block_old hb]; exact hbc,
       by rw [sk.skipFill_block_old hb]; exact hbr⟩
-
-/-- **The fill cannot conjure a commit.** A filled block landing on a
-leader slot is directly skipped: no old block references a fresh id, so
-every reliable validator's block at the round above blames it. The
-mechanism restores production without touching the slots the network
-already passed. -/
-theorem directSkip_fresh {T : Finset Validator} {k : ℕ}
-    (hcard : quorumCard Validator ≤ T.card)
-    (hv1T : sk.v1 ∉ T)
-    (hpop : PopulatedOn U T (k + 1)) (hk1 : sk.r0 < k) (hk2 : k ≤ sk.r) :
-    DirectSkip sk.skipFill (sk.fresh k) k := by
-  refine le_trans hcard (Finset.card_le_card ?_)
-  intro v hv
-  obtain ⟨b, hb, hbc, hbr⟩ := hpop v hv
-  refine mem_blames.mpr ⟨b, ?_, ?_, ?_, ?_⟩
-  · exact sk.ids_subset_skipFill hb
-  · rw [sk.skipFill_block_old hb]; exact hbr
-  · -- an old block cannot reference a fresh id
-    rw [sk.skipFill_block_old hb]
-    intro hmem
-    exact sk.hfresh_new k (U.complete b hb _ hmem)
-  · rw [sk.skipFill_block_old hb]; exact hbc
 
 end SkipMsg
 

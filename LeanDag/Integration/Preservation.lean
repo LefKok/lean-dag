@@ -17,7 +17,7 @@ universe with no further proof. The table this file fills:
 | Invariant | `chop U G` | `skipFill` |
 |:---|:---|:---|
 | `HonestNoEquiv` | I2 | I3 |
-| `SynchronisedOn` | I4 | I5 — *refuted*, see `Integration/Coverage.lean` |
+| `SynchronisedOn` | `Properties.Arcs.synchronisedOn_chop`, from `Sustains` | I5 — *refuted*, see `Integration/Coverage.lean` |
 
 `Populated`, `DoSValid` and the verdict facts already had their cells
 filled by the arcs themselves (`populated_chop`, `dosValid_chop`,
@@ -76,22 +76,6 @@ section Coverage
 variable [F : Faults Validator]
 variable {U : BlockUniverse Validator BlockId Payload} {G : ℕ}
 variable {T : Finset Validator} {R R' : ℕ}
-
-/-- **I4.** Truncation preserves coverage, with the horizon offset.
-
-The referencing block sits at chopped round `n + 1`, hence at original
-round `G + n + 1`, strictly above the cut — so `chop` retains its
-references verbatim and the original clause applies directly. -/
-theorem synchronisedOn_chop (hs : SynchronisedOn U T R) (hGR : R ≤ G + R') :
-    SynchronisedOn (chop U G) T R' := by
-  intro n hn b hb hbround hbcreator a ha haround hacreator
-  rw [mem_chop_ids] at hb ha
-  simp only [chop_block_eq, chopBlock_round] at hbround haround
-  simp only [chop_block_eq, chopBlock_creator] at hbcreator hacreator
-  -- the referrer is strictly above the cut, so its references survive
-  have hb_lt : G < (U.block b).round := by omega
-  rw [chop_block_eq, chopBlock_refs_of_lt hb_lt]
-  exact hs (G + n) (by omega) b hb.1 (by omega) hbcreator a ha.1 (by omega) hacreator
 
 end Coverage
 

@@ -1,4 +1,5 @@
 import LeanDag.Integration.Preservation
+import LeanDag.Properties.Arcs.SafeSkip
 
 /-!
 # I5 — the fill does not restore coverage, and why that is correct
@@ -33,22 +34,10 @@ namespace LeanDag
 
 namespace Integration
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator]
-variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
+variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 variable {U : BlockUniverse Validator BlockId Payload}
-
-/-- Above the fill every block is an old one: the fresh identifiers
-occupy gap rounds only. -/
-theorem mem_ids_of_round_gt (sk : SkipMsg U) {b : BlockId}
-    (hb : b ∈ sk.skipFill.ids) (hround : sk.r < (sk.skipFill.block b).round) :
-    b ∈ U.ids := by
-  rcases Finset.mem_union.mp hb with ho | hf
-  · exact ho
-  · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
-    rw [sk.skipFill_block_fresh] at hround
-    simp only [SkipData.fillBlock] at hround
-    omega
 
 /-- **I5, refuted.** The fill does not restore coverage. If the
 recovering validator is counted reliable — which is exactly what SS2
@@ -112,7 +101,6 @@ theorem synchronisedOn_skipFill_of_notMem (sk : SkipMsg U) {T : Finset Validator
   rw [sk.skipFill_block_old hao] at haround hac
   exact hs n hn b hbo hbround hbc a hao haround hac
 
-
 /-- **I5, positively.** Coverage holds *strictly* above the fill: past
 the target round every block is old, references are preserved, and the
 original condition applies unchanged. This is the form a liveness
@@ -122,17 +110,17 @@ its own blocks again, and the network covers them in the ordinary way.
 The strictness is not slack in the proof. At `n = sk.r` the lower
 block may still be the last filled one, and
 `not_synchronisedOn_skipFill` refutes coverage there; `sk.r < R'` is
-exactly the first round at which every block in play is old. -/
+exactly the first round at which every block in play is old. The proof
+is `RebasedAbove.synchronisedOn_of` at the fill's `Sustains` witness:
+what was a direct argument about old blocks is the generic one. -/
 theorem synchronisedOn_skipFill_above (sk : SkipMsg U) {T : Finset Validator}
     {R R' : ℕ} (hs : SynchronisedOn U T R) (hR : R ≤ R') (hR' : sk.r < R') :
     SynchronisedOn sk.skipFill T R' := by
-  intro n hn b hb hbround hbc a ha haround hac
-  -- both blocks sit above the fill, hence are old
-  have hbo : b ∈ U.ids := mem_ids_of_round_gt sk hb (by omega)
-  have hao : a ∈ U.ids := mem_ids_of_round_gt sk ha (by omega)
-  rw [sk.skipFill_block_old hbo] at hbround hbc ⊢
-  rw [sk.skipFill_block_old hao] at haround hac
-  exact hs n (by omega) b hbo hbround hbc a hao haround hac
+  have h := Properties.RebasedAbove.synchronisedOn_of
+    (R := MysticetiProperties.mysticetiRule) (Properties.Arcs.sustains_skipFill sk)
+    (T := T) (r := R') (Nat.succ_le_of_lt hR') (Nat.zero_le _)
+    (Properties.SynchronisedOn.mono (MysticetiProperties.synchronisedOn_eq.mpr hs) hR)
+  exact MysticetiProperties.synchronisedOn_eq.mp (by simpa using h)
 
 end Integration
 

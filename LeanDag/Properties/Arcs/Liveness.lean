@@ -26,6 +26,21 @@ namespace LeanDag
 
 namespace Properties
 
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
+variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
+
+/-- **Coverage survives the cut**, on a view that agrees with the original
+above the horizon: a block of the truncation under the rebased bound is an
+old block under the original one. -/
+theorem coversUpto_of_truncates {R : DagRule Validator BlockId Payload} {U U' : R.Universe}
+    {S S' : Slots Validator} {G d N : ℕ} (h : Truncates R U U' S S' G d)
+    {V : R.View U} {V' : R.View U'} (hv : ViewAgreeAbove R V V' G) (hGN : G ≤ N)
+    (hc : CoversUpto R V N) : CoversUpto R V' (N - G) := by
+  intro b hb hr
+  have hm := (h.mem_iff b).mp hb
+  have hround := h.round_of hb
+  exact (hv b hm.1 hm.2).mp (hc b hm.1 (by omega))
+
 namespace Support
 
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]

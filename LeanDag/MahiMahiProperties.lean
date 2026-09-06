@@ -451,7 +451,6 @@ theorem banded_aux [S : Slots Validator] (hw : 2 ≤ w)
       · exact absurd hc' (not_certifiedIn_band_novel hab hw hAL.1 hAlo hAhi hLo hL'.2.1
           hkk (by omega) (by omega))
 
-
 /-- **Mahi-Mahi reads a band**, at every width its rules are stated
 for. -/
 theorem banded (hw : 2 ≤ w) :
@@ -488,15 +487,6 @@ theorem directCommitIn_of_coversUpto {U : BlockUniverse Validator BlockId Payloa
   intro C hC
   obtain ⟨hCU, hCr, -⟩ := MahiMahi.mem_certificates.mp hC
   exact Finset.mem_inter.mpr ⟨hC, hV C hCU (by omega)⟩
-
-/-- **Mahi-Mahi's liveness precondition**, over a slot window: the view
-is caught up to a horizon the window's decision rounds sit under, and
-every `T`-led slot of the window has a good leader. -/
-def mahiLive (w : ℕ) (S : Slots Validator)
-    {U : BlockUniverse Validator BlockId Payload} (V : View Validator BlockId Payload U)
-    (T : Finset Validator) (lo K : ℕ) : Prop :=
-  ∃ N, (∀ k, k < K → MahiMahi.decisionRound Validator w k ≤ N) ∧ V.CoversUpto N ∧
-    ∀ k, lo ≤ k → k < K → S.leader k ∈ T → S.leader k ∈ MahiMahi.good (S := S) U w k
 
 /-! ## Mahi-Mahi's support shape
 
@@ -591,31 +581,6 @@ theorem mmSupport_commits {w : ℕ} (hw : 2 ≤ w) :
   refine MahiMahi.Decided.directCommit (S := S') ⟨hLmem, ?_, ?_⟩ ?_
   · rw [hround]; exact hLr'
   · rw [hlead' k (by omega)]; exact hLc'
-  · show MahiMahi.DirectCommitIn U V w L (S'.slotRound k)
-    rw [hround]; exact hin
-
-
-/-- **A good leader's slot commits**, at a bound one above the slot:
-the commit reads that slot's round and leader and no others. -/
-theorem leaderCommits (w : ℕ) :
-    LeaderCommits (mahiMahiRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload) w)
-      (fun S {U} V T lo K => mahiLive w S (U := U) V T lo K) := by
-  intro S U V T lo K hlive k hlo hK hlead
-  obtain ⟨N, hN, hcov, hgood⟩ := hlive
-  have hg := hgood k hlo hK hlead
-  unfold MahiMahi.good at hg
-  rw [MahiMahi.mem_goodAt] at hg
-  obtain ⟨L, hLU, hLr, hLc, hcommit⟩ := hg
-  have hdr : MahiMahi.decisionRound Validator w k
-      = MahiMahi.decisionRoundAt w (S.slotRound k) := rfl
-  have hin : MahiMahi.DirectCommitIn U V w L (S.slotRound k) :=
-    directCommitIn_of_coversUpto hcommit (hcov.mono (by rw [← hdr]; exact hN k hK))
-  refine ⟨L, by omega, MahiMahi.Decided.directCommit ⟨hLU, hLr, hLc⟩ hin, ?_⟩
-  intro S' hround hlead'
-  refine MahiMahi.Decided.directCommit (S := S') ⟨hLU, ?_, ?_⟩ ?_
-  · rw [hround]; exact hLr
-  · rw [hlead' k (by omega)]; exact hLc
   · show MahiMahi.DirectCommitIn U V w L (S'.slotRound k)
     rw [hround]; exact hin
 
