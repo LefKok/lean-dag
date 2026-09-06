@@ -63,9 +63,9 @@ RULES = [
 # one-round shape and per rule otherwise; `Commits` is per rule always, so
 # a rule is scored as having a support when a `.Commits` law is stated at
 # its carrier. `LeaderCommits` is derived from it (§11.8).
-OBLIGATIONS = ["Causal", "Banded", "Agree", "CommitsCandidate", "Indirect", "Support",
+OBLIGATIONS = ["Banded", "Agree", "CommitsCandidate", "Indirect", "Support",
                "CommitsDirect", "SkipsUnsupported", "Quorate"]
-REQUIRED = 6
+REQUIRED = 5
 DERIVED = ["LeaderCommits", "Persist", "LocalTruncate", "Descends"]
 # What each derived property follows from. `Descends` used to be an
 # obligation and is now the indirect rule with a downward induction on
@@ -173,8 +173,7 @@ def main():
     if partial_:
         print("Carrier but not the five and a support: " + ", ".join(partial_) + ".")
         print("  `Agree` and `CommitsCandidate` are `Barnacle.Laws` renamed;")
-        print("  `Causal` needs the universe-level facts `Laws` states only for views,")
-        print("  and `Banded` is the induction each rule owes. Those four are per-rule.")
+        print("  and `Banded` is the induction each rule owes. Those three are per-rule.")
     if without:
         print(f"{len(without)} with no carrier: " + ", ".join(without) + ".")
     print("* CommitsDirect, SkipsUnsupported and Quorate are optional "

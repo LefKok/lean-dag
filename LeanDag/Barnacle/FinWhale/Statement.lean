@@ -34,14 +34,15 @@ def finWhale : BaseRule Validator BlockId Payload where
   viewIds := fun V => V.val
   viewSound := fun V => V.property.subset
   viewComplete := fun V => V.property.closed
+  causal := fun D => LeanDag.FinWhale.causalStructure D
   full := fun D => ⟨D.ids, ⟨Finset.Subset.rfl, D.complete⟩⟩
   historyView := fun D A hA =>
     ⟨historyFrom D.block A,
-      ⟨fun i hi => (FinWhaleProperties.causal D).mem_ids_of_reaches hA
-          (((FinWhaleProperties.causal D).mem_history_iff hA).mp hi),
-        fun i hi j hj => ((FinWhaleProperties.causal D).mem_history_iff hA).mpr
+      ⟨fun i hi => (LeanDag.FinWhale.causalStructure D).mem_ids_of_reaches hA
+          (((LeanDag.FinWhale.causalStructure D).mem_history_iff hA).mp hi),
+        fun i hi j hj => ((LeanDag.FinWhale.causalStructure D).mem_history_iff hA).mpr
           (Relation.ReflTransGen.tail
-            (((FinWhaleProperties.causal D).mem_history_iff hA).mp hi) hj)⟩⟩
+            (((LeanDag.FinWhale.causalStructure D).mem_history_iff hA).mp hi) hj)⟩⟩
   waveLength := 3
   DirectCommitIn := fun V L r => FinWhaleProperties.DirectCommitIn V L r
   decDirect := fun V L _ => inferInstanceAs (Decidable

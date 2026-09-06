@@ -68,7 +68,7 @@ density (D25) plus the partition. -/
 theorem card_coveredAt_ge (hb : b ∈ U.ids) (hδ : δ < (U.block b).round) :
     (Correct : Finset Validator).card - F.f ≤ (coveredAt U b δ).card :=
   Arcs.card_coveredAt_ge (R := MysticetiProperties.mysticetiRule)
-    MysticetiProperties.causal MysticetiProperties.quorate hb hδ
+    MysticetiProperties.quorate hb hδ
 
 /-! ## Where the arc depends on the rule
 
@@ -99,7 +99,7 @@ theorem card_coveredAt_ge_of_decided {V : View Validator BlockId Payload U}
     {k : ℕ} (h : Decided U V k (some L)) (hδ : δ < (U.block L).round) :
     (Correct : Finset Validator).card - F.f ≤ (coveredAt U L δ).card :=
   Arcs.card_coveredAt_ge_of_decided (R := MysticetiProperties.mysticetiRule)
-    MysticetiProperties.causal MysticetiProperties.quorate
+    MysticetiProperties.quorate
     MysticetiProperties.commitsCandidate h hδ
 
 /-- **CQ2 (the half, exactly).** Every commit carries, at every round
@@ -110,8 +110,8 @@ theorem card_correct_le_two_mul_coveredAt_of_decided
     (h : Decided U V k (some L)) (hδ : δ < (U.block L).round) :
     (Correct : Finset Validator).card ≤ 2 * (coveredAt U L δ).card :=
   Arcs.card_correct_le_two_mul_coveredAt_of_decided
-    (R := MysticetiProperties.mysticetiRule) MysticetiProperties.causal
-    MysticetiProperties.quorate MysticetiProperties.commitsCandidate
+    (R := MysticetiProperties.mysticetiRule) MysticetiProperties.quorate
+    MysticetiProperties.commitsCandidate
     (by
       simp only [coreReliability_correct, coreReliability_slack]
       have := two_f_add_one_le_card_correct (Validator := Validator)
@@ -122,7 +122,7 @@ unfolding both CQ3 and CQ6 rest on. -/
 theorem mem_ledgerSet_of_mem_history {g : ℕ → Option BlockId} {n k : ℕ}
     (hg : g k = some L) (hk : k < n) (hL : L ∈ U.ids)
     (hb : b ∈ history U L) : b ∈ ledgerSet U g n :=
-  Arcs.mem_ledgerSetOf_of_mem_history MysticetiProperties.causal hg hk hL hb
+  Arcs.mem_ledgerSetOf_of_mem_history (R := MysticetiProperties.mysticetiRule) hg hk hL hb
 
 /-- **CQ3 (ledger coverage, cumulative).** For a verdict assignment `g`
 of a view with a committed slot `k < n` whose leader sits at round `r`:
@@ -138,7 +138,7 @@ theorem ledger_coverage {V : View Validator BlockId Payload U}
       (Correct : Finset Validator).card - F.f ≤ S.card ∧
       ∀ v ∈ S, ∃ i ∈ ledgerSet U g n,
         (U.block i).creator = v ∧ (U.block i).round = δ :=
-  Arcs.ledger_coverage MysticetiProperties.causal MysticetiProperties.quorate
+  Arcs.ledger_coverage MysticetiProperties.quorate
     MysticetiProperties.commitsCandidate hdec hg hk hδ
 
 end Decided

@@ -111,6 +111,7 @@ def finWhaleRule : DagRule Validator BlockId Payload where
   viewIds := fun V => V.val
   viewSound := fun V => V.property.subset
   viewComplete := fun V => V.property.closed
+  causal := fun D => LeanDag.FinWhale.causalStructure D
   Decided := fun S D V k v =>
     ∃ dec, Assignment (schedOf S) D V.val V.property dec ∧ VerdictIs dec k v
 
@@ -119,13 +120,6 @@ def finWhaleRule : DagRule Validator BlockId Payload where
 theorem quorate : Quorate (finWhaleRule (Validator := Validator) (BlockId := BlockId)
     (Payload := Payload)) (coreReliability Validator) :=
   fun D b hb hr => (D.valid b hb).quorum hr
-
-/-- FinWhale's DAGs are block DAGs. -/
-theorem causal : Causal (finWhaleRule (Validator := Validator) (BlockId := BlockId)
-    (Payload := Payload)) :=
-  fun D =>
-    { complete := fun i hi j hj => D.complete i hi j hj
-      refs_round := fun i hi j hj => (D.valid i hi).predecessor j hj }
 
 /-- **Two views decide alike.** Lemma 12 under the property's name: the
 exclusions come from the DAG, the deterministic rule is the least

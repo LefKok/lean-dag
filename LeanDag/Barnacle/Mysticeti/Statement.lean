@@ -38,6 +38,7 @@ def mysticeti [Faults Validator] : BaseRule Validator BlockId Payload where
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
   viewComplete := fun V => V.complete
+  causal := fun U => U.causal
   full := fun U => LeanDag.View.full U
   historyView := fun U A hA => historyViewOf U A hA
   waveLength := 3

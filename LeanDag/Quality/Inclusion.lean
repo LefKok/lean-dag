@@ -53,8 +53,7 @@ theorem mem_history_of_decided_commit (hs : Synchronised U R)
     (hlt : (U.block b).round < (U.block L).round) :
     b ∈ history U L :=
   Properties.Arcs.mem_history_of_decided_commit
-    (R := MysticetiProperties.mysticetiRule) MysticetiProperties.causal
-    MysticetiProperties.quorate MysticetiProperties.commitsCandidate hs hdec hLc hb hbc hR hlt
+    (R := MysticetiProperties.mysticetiRule) MysticetiProperties.quorate MysticetiProperties.commitsCandidate hs hdec hLc hb hbc hR hlt
 
 /-- **A slot whose commit carries a whole round into the ledger.**
 
@@ -95,7 +94,7 @@ theorem committed_of_correct_block (hT : T ⊆ (Correct : Finset Validator))
     Properties.Arcs.committed_of_correct_block
       (R := MysticetiProperties.mysticetiRule (Validator := Validator) (BlockId := BlockId)
         (Payload := Payload))
-      MysticetiProperties.causal MysticetiProperties.quorate
+      MysticetiProperties.quorate
       MysticetiProperties.commitsCandidate MysticetiProperties.leaderCommits S hT fair R m hRm
   refine ⟨k', hm, hRk', ?_⟩
   intro U N hpop hs hN

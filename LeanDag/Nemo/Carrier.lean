@@ -48,6 +48,7 @@ def nemoRule : DagRule Validator BlockId Payload where
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
   viewComplete := fun V => V.complete
+  causal := fun U => U.causal
   Decided := fun S _ V k v => Nemo.Decided (S := S) _ V k v
 
 @[simp] theorem nemoRule_ids (U : Nemo.Universe Validator BlockId Payload) :
@@ -84,14 +85,6 @@ theorem quorate (hn : 0 < Fintype.card Validator) :
     unfold Nemo.majority; omega
   rw [hq] at h
   exact h
-
-/-- Nemo's universes are block DAGs. Completeness is a field; the round
-condition comes from validity, where the core reads it off directly. -/
-theorem causal : Causal (nemoRule (Validator := Validator) (BlockId := BlockId)
-    (Payload := Payload)) :=
-  fun U =>
-    { complete := fun i hi j hj => U.complete i hi j hj
-      refs_round := fun i hi j hj => U.round_of_mem_refs hi hj }
 
 /-- **Two views decide alike.** Nemo's `decided_unique` under the
 property's name. -/

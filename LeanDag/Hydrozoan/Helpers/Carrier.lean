@@ -64,6 +64,9 @@ def rule : Properties.DagRule Replica BlockId Unit where
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
   viewComplete := fun V => V.complete
+  causal := fun U =>
+    { complete := fun i hi j hj => U.complete i hi j hj
+      refs_round := fun i hi j hj => (U.valid i hi).predecessor j hj }
   Decided := fun S _ V k v =>
     @LeanDag.Hydrozoan.Decided _ _ _ _ _ _ _ (ofCoreSlots S) _ V k v
 
@@ -108,14 +111,6 @@ theorem quorate : Properties.Quorate (rule (Replica := Replica) (BlockId := Bloc
 
 @[simp] theorem rule_viewIds {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
     (V : LeanDag.Hydrozoan.View U) : (rule (BlockId := BlockId)).viewIds V = V.ids := rfl
-
-/-- **Hydrozoan's universes are block DAGs**, which is `HI3` in the
-shared vocabulary: the two fields are the universe's own `complete` and
-the `predecessor` half of its validity. -/
-theorem causal : Properties.Causal (rule (Replica := Replica) (BlockId := BlockId)) :=
-  fun U =>
-    { complete := fun i hi j hj => U.complete i hi j hj
-      refs_round := fun i hi j hj => (U.valid i hi).predecessor j hj }
 
 end Hydrozoan
 

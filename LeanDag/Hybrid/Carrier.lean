@@ -45,6 +45,7 @@ def hybridRule (k : ℕ) : DagRule Validator BlockId Payload where
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
   viewComplete := fun V => V.complete
+  causal := fun U => U.val.causal
   Decided := fun S U V s v => Hybrid.Decided (S := S) k U.val V s v
 
 /-- **Hybrid's universes are quorate**, at the derived fault model:
@@ -53,14 +54,6 @@ validity already asks for. -/
 theorem quorate (k : ℕ) : Quorate (hybridRule (Validator := Validator) (BlockId := BlockId)
     (Payload := Payload) k) (coreReliability Validator) :=
   fun U => U.val.quorateOn
-
-/-- Hybrid's universes are block DAGs — the core's argument, the
-underlying universe type being the core's. -/
-theorem causal (k : ℕ) : Causal (hybridRule (Validator := Validator) (BlockId := BlockId)
-    (Payload := Payload) k) :=
-  fun U =>
-    { complete := fun i hi j hj => U.val.complete i hi j hj
-      refs_round := fun i hi j hj => U.val.round_of_mem_refs hi hj }
 
 /-- **Two views decide alike.** H6 under the property's name, and
 unconditional because non-equivocation is now a field of the universe

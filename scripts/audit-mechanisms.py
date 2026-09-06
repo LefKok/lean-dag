@@ -75,7 +75,7 @@ MECHANISMS = [
       "LeanDag.Properties.Arcs.mem_history_of_decided_commit",
       "LeanDag.Properties.Arcs.committed_of_correct_block",
       "LeanDag.Properties.Arcs.chain_quality"],
-     ["Causal", "Quorate", "CommitsCandidate"]),
+     ["Quorate", "CommitsCandidate"]),
 ]
 
 

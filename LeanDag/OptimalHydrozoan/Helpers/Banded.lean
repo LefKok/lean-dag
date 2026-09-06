@@ -262,7 +262,7 @@ theorem evidenceLinked_bnd (h : AgreeBand rule U U' lo hi g g')
         (n' := LeanDag.Hydrozoan.decisionRound (S := S') Replica k')
         (by omega) (by omega) (by omega) hbA,
       (isFastEvidence_bnd h hkk hlead h1 (by omega) hbU (by omega) (by omega) L).mpr hbe,
-      AgreeBand.reaches_of causal h hA hAhi hbre (by omega)⟩
+      AgreeBand.reaches_of h hA hAhi hbre (by omega)⟩
   · rw [authorsOf_bnd h (fun b hb => ⟨(hsU b hb).1, by have := (hsU b hb).2; omega,
       by have := (hsU b hb).2; omega⟩)]
     exact hcard
@@ -282,7 +282,7 @@ theorem evidenceLinked_bnd_old (h : AgreeBand rule U U' lo hi g g')
     obtain ⟨hbA, -, hbre⟩ := hs b hb
     have hbr' : (U'.block b).round = S'.slotRound k' + 2 := (Finset.mem_filter.mp hbA).2
     have hlink : (rule.block U' b).round = (U'.block b).round := rfl
-    obtain ⟨hbU, -, hbeq⟩ := AgreeBand.reaches_old causal h hA hAlo hAhi hbre (by omega)
+    obtain ⟨hbU, -, hbeq⟩ := AgreeBand.reaches_old h hA hAlo hAhi hbre (by omega)
     have hbe : (U.block b).round + g = (U'.block b).round + g' := hbeq
     exact ⟨hbU, by omega⟩
   refine ⟨s, fun b hb => ?_, ?_⟩
@@ -290,7 +290,7 @@ theorem evidenceLinked_bnd_old (h : AgreeBand rule U U' lo hi g g')
     obtain ⟨hbU, hbr⟩ := hsU b hb
     have hlink : (rule.block U' b).round = (U'.block b).round := rfl
     have hbr'' : (U'.block b).round = S'.slotRound k' + 2 := (Finset.mem_filter.mp hbA).2
-    obtain ⟨-, hbreU, -⟩ := AgreeBand.reaches_old causal h hA hAlo hAhi hbre (by omega)
+    obtain ⟨-, hbreU, -⟩ := AgreeBand.reaches_old h hA hAlo hAhi hbre (by omega)
     exact ⟨Finset.mem_filter.mpr ⟨hbU, by omega⟩,
       (isFastEvidence_bnd h hkk hlead h1 (by omega) hbU (by omega) (by omega) L).mp hbe,
       hbreU⟩
@@ -315,7 +315,7 @@ theorem not_evidenceLinked_bnd_novel (h : AgreeBand rule U U' lo hi g g')
     obtain ⟨hbA, hbe, hbre⟩ := hs b hb
     have hbr' : (U'.block b).round = S'.slotRound k' + 2 := (Finset.mem_filter.mp hbA).2
     have hlink : (rule.block U' b).round = (U'.block b).round := rfl
-    obtain ⟨hbU, -, hbeq⟩ := AgreeBand.reaches_old causal h hA hAlo hAhi hbre (by omega)
+    obtain ⟨hbU, -, hbeq⟩ := AgreeBand.reaches_old h hA hAlo hAhi hbre (by omega)
     have hbe' : (U.block b).round + g = (U'.block b).round + g' := hbeq
     have hbr : (U.block b).round = S.slotRound k + 2 := by omega
     have hempty := votesFor_eq_empty_of_novel h hbU (by omega) (by omega) hL

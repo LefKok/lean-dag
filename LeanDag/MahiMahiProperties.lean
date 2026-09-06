@@ -68,7 +68,7 @@ theorem candidatesAt_band (h : AgreeBand (mahiMahiRule (Payload := Payload) w) U
   · rintro ⟨⟨hbU', hbr'⟩, hba, hbh⟩
     have hbre : ReachesFrom U'.block q b := (mem_history_iff (U := U') hq').mp hbh
     obtain ⟨hbU, hbreU, hbeq⟩ :=
-      AgreeBand.reaches_old MysticetiProperties.causal (toCore h) hq hqlo hqhi hbre
+      AgreeBand.reaches_old (toCore h) hq hqlo hqhi hbre
         (by show lo ≤ (U'.block b).round + g'; omega)
     have hbeq' : (U.block b).round + g = (U'.block b).round + g' := hbeq
     have hbb := MysticetiProperties.band_block (toCore h) hbU (by omega) (by omega)
@@ -80,7 +80,7 @@ theorem candidatesAt_band (h : AgreeBand (mahiMahiRule (Payload := Payload) w) U
     refine ⟨⟨MysticetiProperties.band_mem (toCore h) hbU (by omega) (by omega), by omega⟩,
       by rw [hbb.2]; exact hba, ?_⟩
     exact (mem_history_iff (U := U') hq').mpr
-      (AgreeBand.reaches_of MysticetiProperties.causal (toCore h) hq hqhi hbre
+      (AgreeBand.reaches_of (toCore h) hq hqhi hbre
         (by show lo ≤ (U.block b).round + g; omega))
 
 /-- **A vote is the vote it was.** Both clauses read the same cone, and
@@ -227,7 +227,7 @@ theorem certifiedIn_band (h : AgreeBand (mahiMahiRule (Payload := Payload) w) U 
     have hCr' : (U'.block C).round = r' + w - 1 := by
       have := (mem_blocksAt.mp hCA).2; omega
     obtain ⟨hCU, hreU, hCeq⟩ :=
-      AgreeBand.reaches_old MysticetiProperties.causal (toCore h) hA hAlo hAhi hre
+      AgreeBand.reaches_old (toCore h) hA hAlo hAhi hre
         (by show lo ≤ (U'.block C).round + g'; omega)
     have hCeq' : (U.block C).round + g = (U'.block C).round + g' := hCeq
     exact ⟨C, Finset.mem_filter.mpr ⟨mem_blocksAt.mpr ⟨hCU, by omega⟩,
@@ -237,7 +237,7 @@ theorem certifiedIn_band (h : AgreeBand (mahiMahiRule (Payload := Payload) w) U 
     have hCU : C ∈ U.ids := (mem_blocksAt.mp hCA).1
     have hCr : (U.block C).round = r + w - 1 := by have := (mem_blocksAt.mp hCA).2; omega
     exact ⟨C, certificates_band h hw hL hLr hrr hr hhi hC,
-      AgreeBand.reaches_of MysticetiProperties.causal (toCore h) hA hAhi hre
+      AgreeBand.reaches_of (toCore h) hA hAhi hre
         (by show lo ≤ (U.block C).round + g; omega)⟩
 
 theorem not_certifiedIn_band_novel
@@ -252,7 +252,7 @@ theorem not_certifiedIn_band_novel
   obtain ⟨hCA, hCc⟩ := Finset.mem_filter.mp hC
   have hCr' : (U'.block C).round = r' + w - 1 := by have := (mem_blocksAt.mp hCA).2; omega
   obtain ⟨hCU, -, hCeq⟩ :=
-    AgreeBand.reaches_old MysticetiProperties.causal (toCore h) hA hAlo hAhi hre
+    AgreeBand.reaches_old (toCore h) hA hAlo hAhi hre
       (by show lo ≤ (U'.block C).round + g'; omega)
   have hCeq' : (U.block C).round + g = (U'.block C).round + g' := hCeq
   have hCround : (U.block C).round = r + w - 1 := by omega
@@ -277,7 +277,7 @@ theorem not_certifiedIn_band_novel
   -- `L` is in an old block's cone, so `L` is old
   have hLh : L ∈ history U' q := (Finset.mem_filter.mp hqv.1).2.2
   obtain ⟨hLU, -, -⟩ :=
-    AgreeBand.reaches_old MysticetiProperties.causal (toCore h) hqU
+    AgreeBand.reaches_old (toCore h) hqU
       (by show lo ≤ (U.block q).round + g; omega)
       (by show (U.block q).round + g ≤ hi; omega)
       ((mem_history_iff (U := U') hq').mp hLh) (by show lo ≤ (U'.block L).round + g'; omega)

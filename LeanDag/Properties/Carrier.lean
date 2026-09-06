@@ -38,10 +38,9 @@ properties from the interface, not assuming them over it.
 Three things this file supplies:
 
 * `DagRule` — the carrier: what a mechanism may read of a protocol.
-* `Causal` — that a rule's universes are closed under references and
-  respect the predecessor condition. `Barnacle.Laws` states both of
-  these for *views* and neither for universes, though every instance
-  has them.
+* the `causal` law — that a rule's universes are closed under
+  references and respect the predecessor condition, carried by the
+  carrier as `viewSound` and `viewComplete` are.
 * `AgreeAbove` — the agreement notion locality is stated against.
 -/
 
@@ -81,14 +80,15 @@ structure DagRule (Validator : Type) [Fintype Validator] [DecidableEq Validator]
   window whoever measures it (`Barnacle/Window/`). -/
   viewComplete : ∀ {U : Universe} (V : View U),
     ∀ i ∈ viewIds V, ∀ j ∈ (block U i).refs, j ∈ viewIds V
+  /-- **A universe is a block DAG**: every reference is present and sits
+  one round below. The third law, for the reason the other two are laws:
+  every universe type in the development carries it in its validity
+  record, and it is a fact about the DAG model rather than about any
+  rule. It was a property (`Causal`) that nine carriers proved with the
+  same four lines. -/
+  causal : ∀ U : Universe, CausalStructure (block U) (ids U)
   /-- The decision relation under a schedule. -/
   Decided : Slots Validator → ∀ {U : Universe}, View U → ℕ → Option BlockId → Prop
-
-/-- **A rule's universes are block DAGs.** The structural facts
-`CausalStructure` names, which `Barnacle.Laws` states for views and not
-for universes. -/
-def Causal (R : DagRule Validator BlockId Payload) : Prop :=
-  ∀ U : R.Universe, CausalStructure (R.block U) (R.ids U)
 
 /-- **One DAG is another above a round, rebased.** At and above `R₀`
 the two universes hold the same blocks, at rounds `G` apart, with the
@@ -152,13 +152,13 @@ end RebasedAbove
 a fact about causal structure alone, and the step an induction over a
 derivation's anchors needs, since it says the region agreement covers
 is closed under the recursion. -/
-theorem Causal.refs_above {R : DagRule Validator BlockId Payload}
-    (hc : Causal R) {U : R.Universe} {r : ℕ}
+theorem DagRule.causal_refs_above {R : DagRule Validator BlockId Payload}
+    {U : R.Universe} {r : ℕ}
     {b : BlockId} (hb : b ∈ R.ids U) (hr : r < (R.block U b).round)
     {j : BlockId} (hj : j ∈ (R.block U b).refs) :
     j ∈ R.ids U ∧ r ≤ (R.block U j).round := by
-  refine ⟨(hc U).complete b hb j hj, ?_⟩
-  have := (hc U).refs_round b hb j hj
+  refine ⟨(R.causal U).complete b hb j hj, ?_⟩
+  have := (R.causal U).refs_round b hb j hj
   omega
 
 end Properties

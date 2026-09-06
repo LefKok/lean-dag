@@ -80,12 +80,12 @@ theorem coveredAt_eq_sdiff :
 /-- **CQ1, the count.** A block's cone covers all but at most the slack
 of the reliable validators, at every round below it. Purely structural:
 density plus the partition. -/
-theorem card_coveredAt_ge (hc : Causal R) (hq : Quorate R rel)
+theorem card_coveredAt_ge (hq : Quorate R rel)
     (hb : b ∈ R.ids U) (hδ : δ < (R.block U b).round) :
     rel.correct.card - rel.slack ≤ (coveredAt R rel U b δ).card := by
   have hsub : missingAtFrom (R.block U) rel b δ ⊆ rel.correct := Finset.filter_subset _ _
   have hcard := Finset.card_sdiff_of_subset hsub
-  have hmiss := card_missingAtFrom_le (hc U) (hq U) hb hδ
+  have hmiss := card_missingAtFrom_le (R.causal U) (hq U) hb hδ
   rw [coveredAt_eq_sdiff, hcard]
   omega
 
@@ -98,11 +98,11 @@ does not carry: the core has it from `n = 3f + 1`, and a model whose
 crash bound outruns its slack parameter need not. Stating it as a
 hypothesis is what lets the rules that have it quote the half and the
 rules that do not still quote `card_coveredAt_ge`. -/
-theorem card_correct_le_two_mul_coveredAt (hc : Causal R) (hq : Quorate R rel)
+theorem card_correct_le_two_mul_coveredAt (hq : Quorate R rel)
     (hhalf : 2 * rel.slack ≤ rel.correct.card)
     (hb : b ∈ R.ids U) (hδ : δ < (R.block U b).round) :
     rel.correct.card ≤ 2 * (coveredAt R rel U b δ).card := by
-  have := card_coveredAt_ge hc hq hb hδ
+  have := card_coveredAt_ge hq hb hδ
   omega
 
 /-! ## What a commit carries
@@ -117,18 +117,18 @@ variable {S : Slots Validator} {V : R.View U} {k : ℕ}
 /-- **CQ1.** A committed leader's flush covers all but the slack of the
 reliable validators at every round below it — any route, any view, no
 synchrony. -/
-theorem card_coveredAt_ge_of_decided (hc : Causal R) (hq : Quorate R rel)
+theorem card_coveredAt_ge_of_decided (hq : Quorate R rel)
     (hcc : CommitsCandidate R) (h : R.Decided S V k (some L))
     (hδ : δ < (R.block U L).round) :
     rel.correct.card - rel.slack ≤ (coveredAt R rel U L δ).card :=
-  card_coveredAt_ge hc hq (hcc.mem h) hδ
+  card_coveredAt_ge hq (hcc.mem h) hδ
 
 /-- **CQ2.** -/
-theorem card_correct_le_two_mul_coveredAt_of_decided (hc : Causal R) (hq : Quorate R rel)
+theorem card_correct_le_two_mul_coveredAt_of_decided (hq : Quorate R rel)
     (hcc : CommitsCandidate R) (hhalf : 2 * rel.slack ≤ rel.correct.card)
     (h : R.Decided S V k (some L)) (hδ : δ < (R.block U L).round) :
     rel.correct.card ≤ 2 * (coveredAt R rel U L δ).card :=
-  card_correct_le_two_mul_coveredAt hc hq hhalf (hcc.mem h) hδ
+  card_correct_le_two_mul_coveredAt hq hhalf (hcc.mem h) hδ
 
 /-- **The ledger a verdict assignment names**: everything in the causal
 history of a committed leader of a slot below `n`. The core's
@@ -138,17 +138,17 @@ def ledgerSetOf (R : DagRule Validator BlockId Payload) (U : R.Universe)
   {b | ∃ k, k < n ∧ ∃ L, g k = some L ∧ ReachesFrom (R.block U) L b}
 
 /-- A cone block of a committed slot is in the ledger. -/
-theorem mem_ledgerSetOf_of_mem_history (hc : Causal R) {g : ℕ → Option BlockId} {n : ℕ}
+theorem mem_ledgerSetOf_of_mem_history {g : ℕ → Option BlockId} {n : ℕ}
     (hg : g k = some L) (hk : k < n) (hL : L ∈ R.ids U)
     (hb : b ∈ historyFrom (R.block U) L) : b ∈ ledgerSetOf R U g n :=
-  ⟨k, hk, L, hg, ((hc U).mem_history_iff hL).mp hb⟩
+  ⟨k, hk, L, hg, ((R.causal U).mem_history_iff hL).mp hb⟩
 
 /-- **CQ3 (ledger coverage, cumulative).** For a verdict assignment `g`
 with a committed slot `k < n` whose leader sits at round `r`: for every
 `δ < r`, at least `|correct| − slack` reliable validators each have a
 round-`δ` block in the ledger. The set is exhibited, so no choice and no
 decidability of the ledger is needed. -/
-theorem ledger_coverage (hc : Causal R) (hq : Quorate R rel) (hcc : CommitsCandidate R)
+theorem ledger_coverage (hq : Quorate R rel) (hcc : CommitsCandidate R)
     {g : ℕ → Option BlockId} {n : ℕ}
     (hdec : R.Decided S V k (some L)) (hg : g k = some L) (hk : k < n)
     (hδ : δ < (R.block U L).round) :
@@ -157,10 +157,10 @@ theorem ledger_coverage (hc : Causal R) (hq : Quorate R rel) (hcc : CommitsCandi
       ∀ v ∈ W, ∃ i ∈ ledgerSetOf R U g n,
         (R.block U i).creator = v ∧ (R.block U i).round = δ := by
   refine ⟨coveredAt R rel U L δ, coveredAt_subset_correct,
-    card_coveredAt_ge_of_decided hc hq hcc hdec hδ, ?_⟩
+    card_coveredAt_ge_of_decided hq hcc hdec hδ, ?_⟩
   intro v hv
   obtain ⟨-, i, hi, hic, hir⟩ := mem_coveredAt.mp hv
-  exact ⟨i, mem_ledgerSetOf_of_mem_history hc hg hk (hcc.mem hdec) hi, hic, hir⟩
+  exact ⟨i, mem_ledgerSetOf_of_mem_history hg hk (hcc.mem hdec) hi, hic, hir⟩
 
 /-! ## Inclusion, at the price of synchrony
 
@@ -174,7 +174,7 @@ and asks nothing of the rule. -/
 /-- **CQ5.** Post-`R₀`, every reliable block is in the cone of **every**
 committed leader block with a reliable author at a later round — any
 commit route, any view. -/
-theorem mem_history_of_decided_commit (hc : Causal R) (hq : Quorate R rel)
+theorem mem_history_of_decided_commit (hq : Quorate R rel)
     (hcc : CommitsCandidate R) {R₀ : ℕ} (hs : SynchronisedOn R U rel.correct R₀)
     (hdec : R.Decided S V k (some L))
     (hLc : (R.block U L).creator ∈ rel.correct)
@@ -182,7 +182,7 @@ theorem mem_history_of_decided_commit (hc : Causal R) (hq : Quorate R rel)
     (hR : R₀ ≤ (R.block U b).round)
     (hlt : (R.block U b).round < (R.block U L).round) :
     b ∈ historyFrom (R.block U) L :=
-  mem_historyFrom_of_correct (hc U) (hq U) hs
+  mem_historyFrom_of_correct (R.causal U) (hq U) hs
     ((R.block U L).round - (R.block U b).round - 1)
     L (hcc.mem hdec) b hb hLc hbc hR (by omega)
 
@@ -207,7 +207,7 @@ property layer names no protocol, and the statement is one line. -/
 theorem committed_of_correct_block
     {Live : Slots Validator → ∀ {U : R.Universe}, R.View U → Finset Validator →
       ℕ → ℕ → Prop}
-    (hc : Causal R) (hq : Quorate R rel) (hcc : CommitsCandidate R)
+    (hq : Quorate R rel) (hcc : CommitsCandidate R)
     (hlc : LeaderCommits R Live) (S : Slots Validator) {T : Finset Validator}
     (hT : T ⊆ rel.correct) (fair : ∀ n, ∃ k, n ≤ k ∧ S.leader k ∈ T) (R₀ m : ℕ)
     (hR₀m : R₀ ≤ m) :
@@ -232,9 +232,9 @@ theorem committed_of_correct_block
   refine ⟨L, hdec, fun b hb hbc hbr => ?_⟩
   obtain ⟨-, hLr, hLc⟩ := hcc S U V k' L hdec
   have hmem : b ∈ historyFrom (R.block U) L :=
-    mem_history_of_decided_commit hc hq hcc hs hdec (by rw [hLc]; exact hT hlead) hb hbc
+    mem_history_of_decided_commit hq hcc hs hdec (by rw [hLc]; exact hT hlead) hb hbc
       (by omega) (by omega)
-  exact ⟨hmem, fun g n hg hn => mem_ledgerSetOf_of_mem_history hc hg hn (hcc.mem hdec) hmem⟩
+  exact ⟨hmem, fun g n hg hn => mem_ledgerSetOf_of_mem_history hg hn (hcc.mem hdec) hmem⟩
 
 /-! ## The capstone -/
 
@@ -246,7 +246,7 @@ is in the flush of a slot the schedule fixes in advance. -/
 theorem chain_quality
     {Live : Slots Validator → ∀ {U : R.Universe}, R.View U → Finset Validator →
       ℕ → ℕ → Prop}
-    (hc : Causal R) (hq : Quorate R rel) (hcc : CommitsCandidate R)
+    (hq : Quorate R rel) (hcc : CommitsCandidate R)
     (hlc : LeaderCommits R Live) (hhalf : 2 * rel.slack ≤ rel.correct.card)
     (S : Slots Validator) {T : Finset Validator} (hT : T ⊆ rel.correct)
     (fair : ∀ n, ∃ k, n ≤ k ∧ S.leader k ∈ T) (R₀ m : ℕ) (hR₀m : R₀ ≤ m) :
@@ -263,8 +263,8 @@ theorem chain_quality
               ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
                 b ∈ ledgerSetOf R U g n :=
   ⟨fun _ _ _ _ _ hdec hδ =>
-    card_correct_le_two_mul_coveredAt_of_decided hc hq hcc hhalf hdec hδ,
-   committed_of_correct_block hc hq hcc hlc S hT fair R₀ m hR₀m⟩
+    card_correct_le_two_mul_coveredAt_of_decided hq hcc hhalf hdec hδ,
+   committed_of_correct_block hq hcc hlc S hT fair R₀ m hR₀m⟩
 
 end Decided
 

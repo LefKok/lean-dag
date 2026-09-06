@@ -76,10 +76,10 @@ committed block reaches is a block of the universe, and everything it
 reaches *strictly* sits below the slot's round. The shape every
 chain-quality statement starts from, and the whole of what such a
 statement needs from the rule. -/
-theorem reaches_mem (hc : Causal R) (h : CommitsCandidate R)
+theorem reaches_mem (h : CommitsCandidate R)
     (hd : R.Decided S V k (some L)) {b : BlockId}
     (hb : ReachesFrom (R.block U) L b) : b ∈ R.ids U :=
-  (hc U).mem_ids_of_reaches (h.mem hd) hb
+  (R.causal U).mem_ids_of_reaches (h.mem hd) hb
 
 end CommitsCandidate
 

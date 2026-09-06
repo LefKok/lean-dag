@@ -358,8 +358,7 @@ directions are `Properties.Extends.reaches_iff`, which every extension
 gets and which this arc was re-proving for its own. -/
 theorem reaches_addGenesis {b i : BlockId} (hb : b ∈ V.ids) :
     Reaches (addGenesis V v g p hg hsev) b i ↔ Reaches V b i :=
-  Properties.Extends.reaches_iff MysticetiProperties.causal
-    (extends_addGenesis (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev)) hb
+  Properties.Extends.reaches_iff (extends_addGenesis (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev)) hb
 
 /-- Cones are unchanged, so every cone-based condition reads the same. -/
 theorem history_addGenesis {b : BlockId} (hb : b ∈ V.ids) :

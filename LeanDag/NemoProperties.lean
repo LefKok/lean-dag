@@ -126,17 +126,17 @@ theorem certifiedIn_band (h : AgreeBand (nemoRule (Payload := Payload)) U U' lo 
   · rintro ⟨p, hp, hpr, hpL⟩
     have hpre : ReachesFrom U'.block A p := (Nemo.mem_history_iff hA').mp hp
     obtain ⟨hpU, hpreU, hpeq⟩ :=
-      AgreeBand.reaches_old causal h hA hAlo hAhi hpre (by
+      AgreeBand.reaches_old h hA hAlo hAhi hpre (by
         show lo ≤ (U'.block p).round + g'; omega)
     have hpeq' : (U.block p).round + g = (U'.block p).round + g' := hpeq
     refine ⟨p, (Nemo.mem_history_iff hA).mpr hpreU, by omega, ?_⟩
     rwa [refsB h hpU (by omega) (by omega)] at hpL
   · rintro ⟨p, hp, hpr, hpL⟩
     have hpre : ReachesFrom U.block A p := (Nemo.mem_history_iff hA).mp hp
-    have hpU : p ∈ U.ids := (causal U).mem_ids_of_reaches hA hpre
+    have hpU : p ∈ U.ids := U.causal.mem_ids_of_reaches hA hpre
     have hb := blockB h hpU (by omega) (by omega)
     refine ⟨p, (Nemo.mem_history_iff hA').mpr
-      (AgreeBand.reaches_of causal h hA hAhi hpre (by
+      (AgreeBand.reaches_of h hA hAhi hpre (by
         show lo ≤ (U.block p).round + g; omega)), by omega, ?_⟩
     rw [refsB h hpU (by omega) (by omega)]; exact hpL
 
@@ -154,7 +154,7 @@ theorem not_certifiedIn_band_novel
   rw [certifiedIn_band h hA hAlo hAhi hrr hr hhi] at hc
   obtain ⟨p, hp, -, hpL⟩ := hc
   have hpre : ReachesFrom U.block A p := (Nemo.mem_history_iff hA).mp hp
-  exact hL (U.complete p ((causal U).mem_ids_of_reaches hA hpre) L hpL)
+  exact hL (U.complete p (U.causal.mem_ids_of_reaches hA hpre) L hpL)
 
 end Band
 

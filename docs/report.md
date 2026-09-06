@@ -4870,7 +4870,7 @@ implementation computes the same five verdicts on it.
 > preservation lemmas, the lifecycle theorem and the capstone that
 > read verdicts through the hybrid model — has been removed from the
 > code. What replaces it is the properties arc (`target-properties.md`):
-> every mechanism is proved once against `Causal`, `Banded`, `Agree`,
+> every mechanism is proved once against `Banded`, `Agree`,
 > `CommitsCandidate`, `Indirect` and a `Support`, and the composition
 > is `Stack.safe_and_live` (`Properties/Arcs/Stack.lean`), instantiated
 > for the core as `stack_core_safe_and_live` (`Integration/StackRules`).
@@ -18254,6 +18254,10 @@ structure BaseRule (Validator : Type) [Fintype Validator] [DecidableEq Validator
   reference. A field for the same reason as `viewSound`. -/
   viewComplete : ∀ {U : Universe} (V : View U),
     ∀ i ∈ viewIds V, ∀ j ∈ (block U i).refs, j ∈ viewIds V
+  /-- A universe is a block DAG: references are present and one round
+  below. A field for the same reason as the two above, and the one
+  `Properties.DagRule` carries under the same name. -/
+  causal : ∀ U : Universe, CausalStructure (block U) (ids U)
   /-- The full view: every block of the universe. -/
   full : ∀ U : Universe, View U
   /-- The causal history of a block of the universe, as a view. -/
@@ -19188,6 +19192,7 @@ def mysticeti [Faults Validator] : BaseRule Validator BlockId Payload where
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
   viewComplete := fun V => V.complete
+  causal := fun U => U.causal
   full := fun U => LeanDag.View.full U
   historyView := fun U A hA => historyViewOf U A hA
   waveLength := 3
@@ -19275,6 +19280,7 @@ def odontoceti [Faults5 Validator] : BaseRule Validator BlockId Payload where
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
   viewComplete := fun V => V.complete
+  causal := fun U => U.causal
   full := fun U => LeanDag.View.full U
   historyView := fun U A hA => historyViewOf U A hA
   waveLength := 2
@@ -19362,6 +19368,7 @@ def nemo : BaseRule Validator BlockId Payload where
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
   viewComplete := fun V => V.complete
+  causal := fun U => U.causal
   full := fun U => Nemo.View.full U
   historyView := fun U A hA => nemoHistoryViewOf U A hA
   waveLength := 2
@@ -22685,14 +22692,15 @@ def finWhale : BaseRule Validator BlockId Payload where
   viewIds := fun V => V.val
   viewSound := fun V => V.property.subset
   viewComplete := fun V => V.property.closed
+  causal := fun D => LeanDag.FinWhale.causalStructure D
   full := fun D => ⟨D.ids, ⟨Finset.Subset.rfl, D.complete⟩⟩
   historyView := fun D A hA =>
     ⟨historyFrom D.block A,
-      ⟨fun i hi => (FinWhaleProperties.causal D).mem_ids_of_reaches hA
-          (((FinWhaleProperties.causal D).mem_history_iff hA).mp hi),
-        fun i hi j hj => ((FinWhaleProperties.causal D).mem_history_iff hA).mpr
+      ⟨fun i hi => (LeanDag.FinWhale.causalStructure D).mem_ids_of_reaches hA
+          (((LeanDag.FinWhale.causalStructure D).mem_history_iff hA).mp hi),
+        fun i hi j hj => ((LeanDag.FinWhale.causalStructure D).mem_history_iff hA).mpr
           (Relation.ReflTransGen.tail
-            (((FinWhaleProperties.causal D).mem_history_iff hA).mp hi) hj)⟩⟩
+            (((LeanDag.FinWhale.causalStructure D).mem_history_iff hA).mp hi) hj)⟩⟩
   waveLength := 3
   DirectCommitIn := fun V L r => FinWhaleProperties.DirectCommitIn V L r
   decDirect := fun V L _ => inferInstanceAs (Decidable
@@ -22864,6 +22872,7 @@ def BaseRule.toDagRule (R : BaseRule Validator BlockId Payload) :
   viewIds := R.viewIds
   viewSound := R.viewSound
   viewComplete := R.viewComplete
+  causal := R.causal
   Decided := R.Decided
 ```
 
@@ -23021,6 +23030,9 @@ def hydrozoan [LeanDag.Hydrozoan.Faults Replica] :
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
   viewComplete := fun V => V.complete
+  causal := fun U =>
+    { complete := fun i hi j hj => U.complete i hi j hj
+      refs_round := fun i hi j hj => (U.valid i hi).predecessor j hj }
   full := fun U => LeanDag.Hydrozoan.View.full U
   historyView := fun U A hA => Hydrozoan.historyView U A hA
   waveLength := 3
@@ -23201,6 +23213,7 @@ def mahiMahi [Faults Validator] (w : ℕ) : BaseRule Validator BlockId Payload w
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
   viewComplete := fun V => V.complete
+  causal := fun U => U.causal
   full := fun U => LeanDag.View.full U
   historyView := fun U A hA => historyViewOf U A hA
   waveLength := w
@@ -23292,6 +23305,9 @@ def optimalHydrozoan [LeanDag.OptimalHydrozoan.OptimalFaults Replica] :
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
   viewComplete := fun V => V.complete
+  causal := fun U =>
+    { complete := fun i hi j hj => U.val.complete i hi j hj
+      refs_round := fun i hi j hj => (U.val.valid i hi).predecessor j hj }
   full := fun U => LeanDag.Hydrozoan.View.full U.val
   historyView := fun U A hA => Hydrozoan.historyView U.val A hA
   waveLength := 3
@@ -23401,6 +23417,7 @@ def orcaella [HybridFaults Validator] (k : ℕ) : BaseRule Validator BlockId Pay
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
   viewComplete := fun V => V.complete
+  causal := fun U => U.val.causal
   full := fun U => LeanDag.View.full U.val
   historyView := fun U A hA => historyViewOf U.val A hA
   waveLength := 2
@@ -23894,6 +23911,7 @@ def finWhaleRule : DagRule Validator BlockId Payload where
   viewIds := fun V => V.val
   viewSound := fun V => V.property.subset
   viewComplete := fun V => V.property.closed
+  causal := fun D => LeanDag.FinWhale.causalStructure D
   Decided := fun S D V k v =>
     ∃ dec, Assignment (schedOf S) D V.val V.property dec ∧ VerdictIs dec k v
 ```
@@ -24020,6 +24038,7 @@ def hybridRule (k : ℕ) : DagRule Validator BlockId Payload where
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
   viewComplete := fun V => V.complete
+  causal := fun U => U.val.causal
   Decided := fun S U V s v => Hybrid.Decided (S := S) k U.val V s v
 ```
 
@@ -24484,6 +24503,9 @@ def rule : Properties.DagRule Replica BlockId Unit where
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
   viewComplete := fun V => V.complete
+  causal := fun U =>
+    { complete := fun i hi j hj => U.complete i hi j hj
+      refs_round := fun i hi j hj => (U.valid i hi).predecessor j hj }
   Decided := fun S _ V k v =>
     @LeanDag.Hydrozoan.Decided _ _ _ _ _ _ _ (ofCoreSlots S) _ V k v
 ```
@@ -24583,7 +24605,6 @@ def Statement : Prop :=
   ∀ (Replica : Type) [Fintype Replica] [DecidableEq Replica]
     (BlockId : Type) [DecidableEq BlockId] [LinearOrder BlockId]
     [LeanDag.Hydrozoan.Faults Replica],
-    LeanDag.Properties.Causal (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.Banded (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.Agree (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.CommitsCandidate (rule (Replica := Replica) (BlockId := BlockId)) ∧
@@ -25543,6 +25564,7 @@ def mahiMahiRule (w : ℕ) : DagRule Validator BlockId Payload where
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
   viewComplete := fun V => V.complete
+  causal := fun U => U.causal
   Decided := fun S _ V k v => MahiMahi.Decided (S := S) w _ V k v
 ```
 
@@ -25574,6 +25596,7 @@ def mysticetiRule : DagRule Validator BlockId Payload where
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
   viewComplete := fun V => V.complete
+  causal := fun U => U.causal
   Decided := fun S _ V k v => Decided (S := S) _ V k v
 ```
 
@@ -25667,6 +25690,7 @@ def nemoRule : DagRule Validator BlockId Payload where
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
   viewComplete := fun V => V.complete
+  causal := fun U => U.causal
   Decided := fun S _ V k v => Nemo.Decided (S := S) _ V k v
 ```
 
@@ -25700,6 +25724,7 @@ def odontocetiRule : DagRule Validator BlockId Payload where
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
   viewComplete := fun V => V.complete
+  causal := fun U => U.causal
   Decided := fun S _ V k v => Odontoceti.Decided (S := S) _ V k v
 ```
 
@@ -25719,6 +25744,9 @@ def optimalRule : DagRule Replica BlockId Unit where
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
   viewComplete := fun V => V.complete
+  causal := fun U =>
+    { complete := fun i hi j hj => U.val.complete i hi j hj
+      refs_round := fun i hi j hj => (U.val.valid i hi).predecessor j hj }
   Decided := fun S U V k v =>
     letI := LeanDag.Hydrozoan.ofCoreSlots S
     LeanDag.OptimalHydrozoan.DecidedOpt
@@ -25969,22 +25997,18 @@ structure DagRule (Validator : Type) [Fintype Validator] [DecidableEq Validator]
   window whoever measures it (`Barnacle/Window/`). -/
   viewComplete : ∀ {U : Universe} (V : View U),
     ∀ i ∈ viewIds V, ∀ j ∈ (block U i).refs, j ∈ viewIds V
+  /-- **A universe is a block DAG**: every reference is present and sits
+  one round below. The third law, for the reason the other two are laws:
+  every universe type in the development carries it in its validity
+  record, and it is a fact about the DAG model rather than about any
+  rule. It was a property (`Causal`) that nine carriers proved with the
+  same four lines. -/
+  causal : ∀ U : Universe, CausalStructure (block U) (ids U)
   /-- The decision relation under a schedule. -/
   Decided : Slots Validator → ∀ {U : Universe}, View U → ℕ → Option BlockId → Prop
 ```
 
 **What a mechanism may read of a protocol.** A universe type, views over it, the projections into the shared `Block` vocabulary, and the decision relation. Deliberately smaller than `Barnacle.BaseRule`, which adds what its own mechanism needs — a wave length, a direct-commit predicate and its decidability, the full and history views.
-
-#### `Causal`
-
-*def, `Properties.Carrier.lean`*
-
-```lean
-def Causal (R : DagRule Validator BlockId Payload) : Prop :=
-  ∀ U : R.Universe, CausalStructure (R.block U) (R.ids U)
-```
-
-**A rule's universes are block DAGs.** The structural facts `CausalStructure` names, which `Barnacle.Laws` states for views and not for universes.
 
 #### `RebasedAbove`
 
@@ -26513,7 +26537,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 1062 theorems that either another module of the
+The 1054 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -37496,17 +37520,6 @@ theorem quorate : Quorate (finWhaleRule (Validator := Validator) (BlockId := Blo
 
 **FinWhale's DAGs are quorate**: `ValidHere.quorum`, which asks for `n − f` distinct authors, read at the carrier.
 
-#### `causal`
-
-*theorem, `FinWhale.Carrier.lean`*
-
-```lean
-theorem causal : Causal (finWhaleRule (Validator := Validator) (BlockId := BlockId)
-    (Payload := Payload))
-```
-
-FinWhale's DAGs are block DAGs.
-
 #### `agree`
 
 *theorem, `FinWhale.Carrier.lean`*
@@ -37612,17 +37625,6 @@ theorem quorate (k : ℕ) : Quorate (hybridRule (Validator := Validator) (BlockI
 ```
 
 **Hybrid's universes are quorate**, at the derived fault model: `f = fb + fc`, so a quorum of `n − fb − fc` distinct authors is what validity already asks for.
-
-#### `causal`
-
-*theorem, `Hybrid.Carrier.lean`*
-
-```lean
-theorem causal (k : ℕ) : Causal (hybridRule (Validator := Validator) (BlockId := BlockId)
-    (Payload := Payload) k)
-```
-
-Hybrid's universes are block DAGs — the core's argument, the underlying universe type being the core's.
 
 #### `agree`
 
@@ -38011,16 +38013,6 @@ theorem quorate : Properties.Quorate (rule (Replica := Replica) (BlockId := Bloc
 ```
 
 **Hydrozoan's universes are quorate**: `ValidWrt.quorum`, which asks for `q = n − f − c` distinct authors, read at the carrier.
-
-#### `causal`
-
-*theorem, `Hydrozoan.Helpers.Carrier.lean`*
-
-```lean
-theorem causal : Properties.Causal (rule (Replica := Replica) (BlockId := BlockId))
-```
-
-**Hydrozoan's universes are block DAGs**, which is `HI3` in the shared vocabulary: the two fields are the universe's own `complete` and the `predecessor` half of its validity.
 
 #### `agree`
 
@@ -38439,17 +38431,6 @@ theorem stack_core_safe_and_live (sk : SkipMsg U) (hd : G ≤ S.slotRound d)
 
 **Safety and liveness across the core's stack**, from the properties.
 
-#### `causal`
-
-*theorem, `MahiMahi.Carrier.lean`*
-
-```lean
-theorem causal (w : ℕ) : Causal (mahiMahiRule (Validator := Validator) (BlockId := BlockId)
-    (Payload := Payload) w)
-```
-
-Mahi-Mahi's universes are block DAGs — the core's argument, the universe type being the core's.
-
 #### `quorate`
 
 *theorem, `MahiMahi.Carrier.lean`*
@@ -38616,16 +38597,6 @@ theorem directCommit_of_sustains (h : Sustains mysticetiRule U U' G R₀)
 ```
 
 **The reactive commit survives any sustaining mechanism.** The hypotheses are exactly what `Reactive/Mysticeti.directCommit` establishes on the original DAG — certification by `cert_or_wait`, and production — and the conclusion is the commit on the transformed one.
-
-#### `causal`
-
-*theorem, `MysticetiProperties.lean`*
-
-```lean
-theorem causal : Causal (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
-```
-
-The core's universes are block DAGs.
 
 #### `quorate`
 
@@ -39047,17 +39018,6 @@ theorem quorate (hn : 0 < Fintype.card Validator) :
 
 **Nemo's universes are quorate**: `ValidWrt.quorum`, which asks for a majority of distinct authors, read at the carrier.
 
-#### `causal`
-
-*theorem, `Nemo.Carrier.lean`*
-
-```lean
-theorem causal : Causal (nemoRule (Validator := Validator) (BlockId := BlockId)
-    (Payload := Payload))
-```
-
-Nemo's universes are block DAGs. Completeness is a field; the round condition comes from validity, where the core reads it off directly.
-
 #### `agree`
 
 *theorem, `Nemo.Carrier.lean`*
@@ -39148,17 +39108,6 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
 **Liveness.** Under post-`R` coverage, growth to the horizon, and a recurring run of `c` reliable-led slots, every slot below the run is decided — the run placed past both the target and `R` by fairness.
 
 The quantifier order is the content: the slot `b` is fixed by the *schedule* alone, before any universe is named, so "eventually" means "any DAG grown past this schedule-fixed slot". Crashed-leader slots are settled here and only here: they descend onto the run via `indirectSkip`.
-
-#### `causal`
-
-*theorem, `Odontoceti.Carrier.lean`*
-
-```lean
-theorem causal : Causal (odontocetiRule (Validator := Validator) (BlockId := BlockId)
-    (Payload := Payload))
-```
-
-Odontoceti's universes are block DAGs — the same argument as the core's, the universe type being the same.
 
 #### `quorate`
 
@@ -39261,16 +39210,6 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
 ```
 
 **O10 (thesis Theorem 12).** Under production and post-`R` synchrony, a recurring run of `c` correct-led slots decides every slot below it, on any view caught up to the horizon — with the run placed past both the target and `R` by fairness. Note the horizon: the run's last slot needs rounds up to its `slotRound + 1` only.
-
-#### `causal`
-
-*theorem, `OptimalHydrozoan.Carrier.lean`*
-
-```lean
-theorem causal : Causal (optimalRule (Replica := Replica) (BlockId := BlockId))
-```
-
-Optimal's universes are block DAGs — Hydrozoan's argument, the underlying universe being Hydrozoan's.
 
 #### `quorate`
 
@@ -39647,7 +39586,7 @@ Covered and missing partition the reliable validators.
 *theorem, `Properties.Arcs.Quality.lean`*
 
 ```lean
-theorem card_coveredAt_ge (hc : Causal R) (hq : Quorate R rel)
+theorem card_coveredAt_ge (hq : Quorate R rel)
     (hb : b ∈ R.ids U) (hδ : δ < (R.block U b).round) :
     rel.correct.card - rel.slack ≤ (coveredAt R rel U b δ).card
 ```
@@ -39659,7 +39598,7 @@ theorem card_coveredAt_ge (hc : Causal R) (hq : Quorate R rel)
 *theorem, `Properties.Arcs.Quality.lean`*
 
 ```lean
-theorem card_coveredAt_ge_of_decided (hc : Causal R) (hq : Quorate R rel)
+theorem card_coveredAt_ge_of_decided (hq : Quorate R rel)
     (hcc : CommitsCandidate R) (h : R.Decided S V k (some L))
     (hδ : δ < (R.block U L).round) :
     rel.correct.card - rel.slack ≤ (coveredAt R rel U L δ).card
@@ -39672,7 +39611,7 @@ theorem card_coveredAt_ge_of_decided (hc : Causal R) (hq : Quorate R rel)
 *theorem, `Properties.Arcs.Quality.lean`*
 
 ```lean
-theorem card_correct_le_two_mul_coveredAt_of_decided (hc : Causal R) (hq : Quorate R rel)
+theorem card_correct_le_two_mul_coveredAt_of_decided (hq : Quorate R rel)
     (hcc : CommitsCandidate R) (hhalf : 2 * rel.slack ≤ rel.correct.card)
     (h : R.Decided S V k (some L)) (hδ : δ < (R.block U L).round) :
     rel.correct.card ≤ 2 * (coveredAt R rel U L δ).card
@@ -39685,7 +39624,7 @@ theorem card_correct_le_two_mul_coveredAt_of_decided (hc : Causal R) (hq : Quora
 *theorem, `Properties.Arcs.Quality.lean`*
 
 ```lean
-theorem mem_ledgerSetOf_of_mem_history (hc : Causal R) {g : ℕ → Option BlockId} {n : ℕ}
+theorem mem_ledgerSetOf_of_mem_history {g : ℕ → Option BlockId} {n : ℕ}
     (hg : g k = some L) (hk : k < n) (hL : L ∈ R.ids U)
     (hb : b ∈ historyFrom (R.block U) L) : b ∈ ledgerSetOf R U g n
 ```
@@ -39697,7 +39636,7 @@ A cone block of a committed slot is in the ledger.
 *theorem, `Properties.Arcs.Quality.lean`*
 
 ```lean
-theorem ledger_coverage (hc : Causal R) (hq : Quorate R rel) (hcc : CommitsCandidate R)
+theorem ledger_coverage (hq : Quorate R rel) (hcc : CommitsCandidate R)
     {g : ℕ → Option BlockId} {n : ℕ}
     (hdec : R.Decided S V k (some L)) (hg : g k = some L) (hk : k < n)
     (hδ : δ < (R.block U L).round) :
@@ -39714,7 +39653,7 @@ theorem ledger_coverage (hc : Causal R) (hq : Quorate R rel) (hcc : CommitsCandi
 *theorem, `Properties.Arcs.Quality.lean`*
 
 ```lean
-theorem mem_history_of_decided_commit (hc : Causal R) (hq : Quorate R rel)
+theorem mem_history_of_decided_commit (hq : Quorate R rel)
     (hcc : CommitsCandidate R) {R₀ : ℕ} (hs : SynchronisedOn R U rel.correct R₀)
     (hdec : R.Decided S V k (some L))
     (hLc : (R.block U L).creator ∈ rel.correct)
@@ -39734,7 +39673,7 @@ theorem mem_history_of_decided_commit (hc : Causal R) (hq : Quorate R rel)
 theorem committed_of_correct_block
     {Live : Slots Validator → ∀ {U : R.Universe}, R.View U → Finset Validator →
       ℕ → ℕ → Prop}
-    (hc : Causal R) (hq : Quorate R rel) (hcc : CommitsCandidate R)
+    (hq : Quorate R rel) (hcc : CommitsCandidate R)
     (hlc : LeaderCommits R Live) (S : Slots Validator) {T : Finset Validator}
     (hT : T ⊆ rel.correct) (fair : ∀ n, ∃ k, n ≤ k ∧ S.leader k ∈ T) (R₀ m : ℕ)
     (hR₀m : R₀ ≤ m) :
@@ -39761,7 +39700,7 @@ Fairness is taken as a hypothesis rather than through `LeanDag.FairScheduleOn`, 
 theorem chain_quality
     {Live : Slots Validator → ∀ {U : R.Universe}, R.View U → Finset Validator →
       ℕ → ℕ → Prop}
-    (hc : Causal R) (hq : Quorate R rel) (hcc : CommitsCandidate R)
+    (hq : Quorate R rel) (hcc : CommitsCandidate R)
     (hlc : LeaderCommits R Live) (hhalf : 2 * rel.slack ≤ rel.correct.card)
     (S : Slots Validator) {T : Finset Validator} (hT : T ⊆ rel.correct)
     (fair : ∀ n, ∃ k, n ≤ k ∧ S.leader k ∈ T) (R₀ m : ℕ) (hR₀m : R₀ ≤ m) :
@@ -39925,7 +39864,7 @@ Agreement on a band gives agreement on any narrower one.
 *theorem, `Properties.Band.lean`*
 
 ```lean
-theorem reaches_of (hc : Causal R) (h : AgreeBand R U U' lo hi g g')
+theorem reaches_of (h : AgreeBand R U U' lo hi g g')
     {A : BlockId} (hA : A ∈ R.ids U) (hAhi : (R.block U A).round + g ≤ hi) :
     ∀ {C : BlockId}, ReachesFrom (R.block U) A C → lo ≤ (R.block U C).round + g →
       ReachesFrom (R.block U') A C
@@ -39940,7 +39879,7 @@ The floor is included, and deliberately: a path *into* the floor reads the refer
 *theorem, `Properties.Band.lean`*
 
 ```lean
-theorem reaches_old (hc : Causal R) (h : AgreeBand R U U' lo hi g g')
+theorem reaches_old (h : AgreeBand R U U' lo hi g g')
     {A : BlockId} (hA : A ∈ R.ids U) (hAlo : lo ≤ (R.block U A).round + g)
     (hAhi : (R.block U A).round + g ≤ hi) :
     ∀ {C : BlockId}, ReachesFrom (R.block U') A C →
@@ -40268,7 +40207,7 @@ theorem LocalTruncate.of_banded (h : Banded R) : LocalTruncate R
 *theorem, `Properties.Extends.lean`*
 
 ```lean
-theorem old_refs_old (hc : Causal R) (he : Extends R U U')
+theorem old_refs_old (he : Extends R U U')
     {b : BlockId} (hb : b ∈ R.ids U) {j : BlockId} (hj : j ∈ (R.block U' b).refs) :
     j ∈ R.ids U
 ```
@@ -40280,7 +40219,7 @@ theorem old_refs_old (hc : Causal R) (he : Extends R U U')
 *theorem, `Properties.Extends.lean`*
 
 ```lean
-theorem reaches_old (hc : Causal R) (he : Extends R U U')
+theorem reaches_old (he : Extends R U U')
     {A B : BlockId} (hA : A ∈ R.ids U) (h : ReachesFrom (R.block U') A B) :
     ReachesFrom (R.block U) A B ∧ B ∈ R.ids U
 ```
@@ -40294,7 +40233,7 @@ This is what every protocol's persistence proof turns on. A rung test asks wheth
 *theorem, `Properties.Extends.lean`*
 
 ```lean
-theorem reaches_iff (hc : Causal R) (he : Extends R U U')
+theorem reaches_iff (he : Extends R U U')
     {A B : BlockId} (hA : A ∈ R.ids U) :
     ReachesFrom (R.block U') A B ↔ ReachesFrom (R.block U) A B
 ```
@@ -40306,7 +40245,7 @@ And so reachability from an old block is the same relation in both universes.
 *theorem, `Properties.Optional.Skip.lean`*
 
 ```lean
-theorem unsupported_of_novel (hc : Causal R) {U U' : R.Universe} (he : Extends R U U')
+theorem unsupported_of_novel {U U' : R.Universe} (he : Extends R U U')
     {S : Slots Validator} {V' : R.View U'} {T : Finset Validator} {k : ℕ}
     (hnov : ∀ L, R.IsCandidate S U' k L → Novel R U U' L)
     (hold : ∀ c, c ∈ R.viewIds V' → (R.block U' c).creator ∈ T →
@@ -42502,7 +42441,7 @@ subsection per module, in the layer order of Appendices B and C.
 
 | Lemma | Role |
 |:---|:---|
-| `Causal.refs_above` | What a block above the cut references is itself above the cut — a fact about causal structure alone, and … |
+| `DagRule.causal_refs_above` | What a block above the cut references is itself above the cut — a fact about causal structure alone, and … |
 
 ### `Properties/Compose.lean` (4)
 

@@ -65,17 +65,17 @@ already present can reach what the extension added. This is the formal
 content of "blocks nothing references cannot change a verdict", and it
 is *derived* rather than assumed: an extension leaves old blocks alone,
 and an old block's references were already inside `U`. -/
-theorem old_refs_old (hc : Causal R) (he : Extends R U U')
+theorem old_refs_old (he : Extends R U U')
     {b : BlockId} (hb : b ∈ R.ids U) {j : BlockId} (hj : j ∈ (R.block U' b).refs) :
     j ∈ R.ids U := by
   rw [he.block b hb] at hj
-  exact (hc U).complete b hb j hj
+  exact (R.causal U).complete b hb j hj
 
 /-- Restated: an old block never references a novel identifier. -/
-theorem not_novel_of_mem_refs (hc : Causal R) (he : Extends R U U')
+theorem not_novel_of_mem_refs (he : Extends R U U')
     {b : BlockId} (hb : b ∈ R.ids U) {j : BlockId} (hj : j ∈ (R.block U' b).refs) :
     ¬ Novel R U U' j :=
-  fun hn => hn.2 (old_refs_old hc he hb hj)
+  fun hn => hn.2 (old_refs_old he hb hj)
 
 /-- **Nothing an old block reaches is new.** The reference lemma
 propagated along causal history: an extension can add blocks, but none
@@ -86,14 +86,14 @@ asks whether something is in reach of the *anchor*, and the anchor of a
 derivation over the old universe is old — so the extension cannot
 supply a new certificate, a new vote, or a new candidate to any rung,
 and the negative premises that would otherwise be destroyed survive. -/
-theorem reaches_old (hc : Causal R) (he : Extends R U U')
+theorem reaches_old (he : Extends R U U')
     {A B : BlockId} (hA : A ∈ R.ids U) (h : ReachesFrom (R.block U') A B) :
     ReachesFrom (R.block U) A B ∧ B ∈ R.ids U := by
   induction h with
   | refl => exact ⟨Relation.ReflTransGen.refl, hA⟩
   | @tail c b _ hstep ih =>
       have hc' : c ∈ R.ids U := ih.2
-      have hb : b ∈ R.ids U := old_refs_old hc he hc' hstep
+      have hb : b ∈ R.ids U := old_refs_old he hc' hstep
       refine ⟨ih.1.tail ?_, hb⟩
       have hstep' : b ∈ (R.block U' c).refs := hstep
       rw [he.block c hc'] at hstep'
@@ -101,14 +101,14 @@ theorem reaches_old (hc : Causal R) (he : Extends R U U')
 
 /-- And so reachability from an old block is the same relation in both
 universes. -/
-theorem reaches_iff (hc : Causal R) (he : Extends R U U')
+theorem reaches_iff (he : Extends R U U')
     {A B : BlockId} (hA : A ∈ R.ids U) :
     ReachesFrom (R.block U') A B ↔ ReachesFrom (R.block U) A B := by
-  refine ⟨fun h => (reaches_old hc he hA h).1, fun h => ?_⟩
+  refine ⟨fun h => (reaches_old he hA h).1, fun h => ?_⟩
   induction h with
   | refl => exact Relation.ReflTransGen.refl
   | @tail c b hAc hstep ih =>
-      have hc' : c ∈ R.ids U := (hc U).mem_ids_of_reaches hA hAc
+      have hc' : c ∈ R.ids U := (R.causal U).mem_ids_of_reaches hA hAc
       refine ih.tail ?_
       have hstep' : b ∈ (R.block U c).refs := hstep
       show b ∈ (R.block U' c).refs

@@ -177,7 +177,7 @@ use the standard axioms only.
 | `LeanDagTest/Quality/Model.lean` | `Ucens`; every result applied on data; the censorship exhibit |
 | `LeanDag/Density.lean` | `Reliability`, `QuorateOn`, density and the correct backbone over the raw block data |
 | `LeanDag/Properties/Optional/Quorate.lean` | `Properties.Quorate` — the validity clause at the carrier |
-| `LeanDag/Properties/Arcs/Quality.lean` | the whole arc for any rule showing `Causal`, `Quorate`, `CommitsCandidate` and `LeaderCommits` |
+| `LeanDag/Properties/Arcs/Quality.lean` | the whole arc for any rule showing `Quorate`, `CommitsCandidate` and `LeaderCommits` |
 | `LeanDagTest/Quality/Generic.lean` | the arc applied to FinWhale and Hydrozoan |
 
 ## 8. The arc, for any rule

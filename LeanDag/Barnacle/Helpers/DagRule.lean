@@ -44,6 +44,7 @@ def BaseRule.toDagRule (R : BaseRule Validator BlockId Payload) :
   viewIds := R.viewIds
   viewSound := R.viewSound
   viewComplete := R.viewComplete
+  causal := R.causal
   Decided := R.Decided
 
 @[simp] theorem toDagRule_ids (R : BaseRule Validator BlockId Payload) :
@@ -60,10 +61,9 @@ rules at once (`docs/target-properties.md` §11.2), and it is why
 `BaseRule.toDagRule` was worth taking before adding carriers one at a
 time.
 
-`Causal` is not among them: `Laws` states the structural facts for
-*views* — `view_complete` — and not for universes, so it gives neither
-completeness nor the round condition on references. `Banded` is not
-either, and would not be: it is the induction each protocol owes. -/
+The carrier's `causal` law is a field of `BaseRule` under the same
+name, so the coercion carries it. `Banded` is not a law and would not
+be: it is the induction each protocol owes. -/
 
 /-- **A4 is `Agree`.** The law and the property are the same statement. -/
 theorem agree_toDagRule (R : BaseRule Validator BlockId Payload) (L : BaseRule.Laws R) :

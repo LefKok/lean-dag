@@ -132,7 +132,7 @@ path that started below the floor would need them, and there is none —
 `lo ≤ (R.block U C).round + g` is the hypothesis. Mahi-Mahi is what
 forced the strengthening: its votes are read from a cone at the slot's
 *propose* round, which is the floor exactly. -/
-theorem reaches_of (hc : Causal R) (h : AgreeBand R U U' lo hi g g')
+theorem reaches_of (h : AgreeBand R U U' lo hi g g')
     {A : BlockId} (hA : A ∈ R.ids U) (hAhi : (R.block U A).round + g ≤ hi) :
     ∀ {C : BlockId}, ReachesFrom (R.block U) A C → lo ≤ (R.block U C).round + g →
       ReachesFrom (R.block U') A C := by
@@ -141,11 +141,11 @@ theorem reaches_of (hc : Causal R) (h : AgreeBand R U U' lo hi g g')
   | refl => intro _; exact Relation.ReflTransGen.refl
   | @tail b c hAb hstep ih =>
       intro hcr
-      have hb : b ∈ R.ids U := (hc U).mem_ids_of_reaches hA hAb
+      have hb : b ∈ R.ids U := (R.causal U).mem_ids_of_reaches hA hAb
       have hstep' : c ∈ (R.block U b).refs := hstep
-      have hround := (hc U).refs_round b hb c hstep'
+      have hround := (R.causal U).refs_round b hb c hstep'
       have hbhi : (R.block U b).round + g ≤ hi := by
-        have := (hc U).round_le_of_reaches hA hAb
+        have := (R.causal U).round_le_of_reaches hA hAb
         omega
       refine (ih (by omega)).tail ?_
       show c ∈ (R.block U' b).refs
@@ -153,7 +153,7 @@ theorem reaches_of (hc : Causal R) (h : AgreeBand R U U' lo hi g g')
       exact hstep'
 
 /-- **And a path of `U'` that stays above the floor is a path of `U`.** -/
-theorem reaches_old (hc : Causal R) (h : AgreeBand R U U' lo hi g g')
+theorem reaches_old (h : AgreeBand R U U' lo hi g g')
     {A : BlockId} (hA : A ∈ R.ids U) (hAlo : lo ≤ (R.block U A).round + g)
     (hAhi : (R.block U A).round + g ≤ hi) :
     ∀ {C : BlockId}, ReachesFrom (R.block U') A C →
@@ -169,17 +169,17 @@ theorem reaches_old (hc : Causal R) (h : AgreeBand R U U' lo hi g g')
       intro hcr
       have hstep' : c ∈ (R.block U' b).refs := hstep
       have hbU' : b ∈ R.ids U' :=
-        (hc U').mem_ids_of_reaches (h.mem A hA hAlo hAhi) hAb
-      have hround' := (hc U').refs_round b hbU' c hstep'
+        (R.causal U').mem_ids_of_reaches (h.mem A hA hAlo hAhi) hAb
+      have hround' := (R.causal U').refs_round b hbU' c hstep'
       obtain ⟨hbU, hbre, hbeq⟩ := ih (by omega)
       have hbhi : (R.block U b).round + g ≤ hi := by
-        have := (hc U).round_le_of_reaches hA hbre
+        have := (R.causal U).round_le_of_reaches hA hbre
         omega
       have hrefs : (R.block U' b).refs = (R.block U b).refs :=
         h.refs b hbU (by omega) hbhi
       rw [hrefs] at hstep'
-      have hroundU := (hc U).refs_round b hbU c hstep'
-      exact ⟨(hc U).complete b hbU c hstep', hbre.tail hstep', by omega⟩
+      have hroundU := (R.causal U).refs_round b hbU c hstep'
+      exact ⟨(R.causal U).complete b hbU c hstep', hbre.tail hstep', by omega⟩
 
 /-! ## Reading a band, at any carrier
 

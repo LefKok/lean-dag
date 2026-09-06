@@ -98,7 +98,7 @@ theorem coneSupports_band (h : AgreeBand (hybridRule (Payload := Payload) k) U U
     · rintro ⟨⟨hqU', hqr'⟩, hqL, hqh⟩
       have hqre : ReachesFrom U'.val.block A q := (mem_history_iff (U := U'.val) hA').mp hqh
       obtain ⟨hqU, hqreU, hqeq⟩ :=
-        AgreeBand.reaches_old MysticetiProperties.causal (toCore h) hA hAlo hAhi hqre
+        AgreeBand.reaches_old (toCore h) hA hAlo hAhi hqre
           (by show lo ≤ (U'.val.block q).round + g'; omega)
       have hqeq' : (U.val.block q).round + g = (U'.val.block q).round + g' := hqeq
       refine ⟨⟨hqU, by omega⟩, ?_, (mem_history_iff (U := U.val) hA).mpr hqreU⟩
@@ -110,7 +110,7 @@ theorem coneSupports_band (h : AgreeBand (hybridRule (Payload := Payload) k) U U
           (by omega) (by omega) (by omega) (mem_blocksAt.mpr ⟨hqU, hqr⟩))
       · rw [MysticetiProperties.band_refs (toCore h) hqU (by omega) (by omega)]; exact hqL
       · exact (mem_history_iff (U := U'.val) hA').mpr
-          (AgreeBand.reaches_of MysticetiProperties.causal (toCore h) hA hAhi hqre
+          (AgreeBand.reaches_of (toCore h) hA hAhi hqre
             (by show lo ≤ (U.val.block q).round + g; omega))
   unfold Hybrid.coneSupports
   rw [hset]

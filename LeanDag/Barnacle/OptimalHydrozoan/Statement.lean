@@ -53,6 +53,9 @@ def optimalHydrozoan [LeanDag.OptimalHydrozoan.OptimalFaults Replica] :
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
   viewComplete := fun V => V.complete
+  causal := fun U =>
+    { complete := fun i hi j hj => U.val.complete i hi j hj
+      refs_round := fun i hi j hj => (U.val.valid i hi).predecessor j hj }
   full := fun U => LeanDag.Hydrozoan.View.full U.val
   historyView := fun U A hA => Hydrozoan.historyView U.val A hA
   waveLength := 3

@@ -50,15 +50,8 @@ def mahiMahiRule (w : ℕ) : DagRule Validator BlockId Payload where
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
   viewComplete := fun V => V.complete
+  causal := fun U => U.causal
   Decided := fun S _ V k v => MahiMahi.Decided (S := S) w _ V k v
-
-/-- Mahi-Mahi's universes are block DAGs — the core's argument, the
-universe type being the core's. -/
-theorem causal (w : ℕ) : Causal (mahiMahiRule (Validator := Validator) (BlockId := BlockId)
-    (Payload := Payload) w) :=
-  fun U =>
-    { complete := fun i hi j hj => U.complete i hi j hj
-      refs_round := fun i hi j hj => U.round_of_mem_refs hi hj }
 
 /-- **And they are quorate**, at the core's fault model: validity's
 counting clause read at the carrier, which is what chain quality reads

@@ -100,6 +100,9 @@ def hydrozoan [LeanDag.Hydrozoan.Faults Replica] :
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
   viewComplete := fun V => V.complete
+  causal := fun U =>
+    { complete := fun i hi j hj => U.complete i hi j hj
+      refs_round := fun i hi j hj => (U.valid i hi).predecessor j hj }
   full := fun U => LeanDag.Hydrozoan.View.full U
   historyView := fun U A hA => Hydrozoan.historyView U A hA
   waveLength := 3

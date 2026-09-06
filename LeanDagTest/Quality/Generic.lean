@@ -61,8 +61,7 @@ theorem finWhale_card_coveredAt_ge_of_decided (S : Slots Validator)
     (Correct : Finset Validator).card - F.f ≤
       (coveredAt (LeanDag.FinWhaleProperties.finWhaleRule (Payload := Payload))
         (coreReliability Validator) D L δ).card :=
-  card_coveredAt_ge_of_decided LeanDag.FinWhaleProperties.causal
-    LeanDag.FinWhaleProperties.quorate LeanDag.FinWhaleProperties.commitsCandidate h hδ
+  card_coveredAt_ge_of_decided LeanDag.FinWhaleProperties.quorate LeanDag.FinWhaleProperties.commitsCandidate h hδ
 
 /-- **CQ2 for FinWhale.** At least half the correct validators, every
 round below every commit. -/
@@ -75,8 +74,7 @@ theorem finWhale_card_correct_le_two_mul (S : Slots Validator)
     (Correct : Finset Validator).card ≤
       2 * (coveredAt (LeanDag.FinWhaleProperties.finWhaleRule (Payload := Payload))
         (coreReliability Validator) D L δ).card :=
-  card_correct_le_two_mul_coveredAt_of_decided LeanDag.FinWhaleProperties.causal
-    LeanDag.FinWhaleProperties.quorate LeanDag.FinWhaleProperties.commitsCandidate
+  card_correct_le_two_mul_coveredAt_of_decided LeanDag.FinWhaleProperties.quorate LeanDag.FinWhaleProperties.commitsCandidate
     (by
       simp only [coreReliability_correct, coreReliability_slack]
       have := two_f_add_one_le_card_correct (Validator := Validator)
@@ -100,7 +98,7 @@ theorem hydrozoan_card_coveredAt_ge_of_decided (S : Slots Replica)
     (LeanDag.Hydrozoan.Correct : Finset Replica).card - (F.f + F.c) ≤
       (coveredAt (LeanDag.Hydrozoan.rule (Replica := Replica) (BlockId := BlockId))
         (LeanDag.Hydrozoan.hzReliability Replica) U L δ).card :=
-  card_coveredAt_ge_of_decided LeanDag.Hydrozoan.causal LeanDag.Hydrozoan.quorate
+  card_coveredAt_ge_of_decided LeanDag.Hydrozoan.quorate
     LeanDag.Hydrozoan.commitsCandidate h hδ
 
 end Hydrozoan
@@ -122,8 +120,7 @@ theorem odontoceti_card_correct_le_two_mul (S : Slots Validator)
     (Correct : Finset Validator).card ≤
       2 * (coveredAt (LeanDag.OdontocetiProperties.odontocetiRule (Payload := Payload))
         (coreReliability Validator) U L δ).card :=
-  card_correct_le_two_mul_coveredAt_of_decided LeanDag.OdontocetiProperties.causal
-    LeanDag.OdontocetiProperties.quorate LeanDag.OdontocetiProperties.commitsCandidate
+  card_correct_le_two_mul_coveredAt_of_decided LeanDag.OdontocetiProperties.quorate LeanDag.OdontocetiProperties.commitsCandidate
     (by
       simp only [coreReliability_correct, coreReliability_slack]
       have := two_f_add_one_le_card_correct (Validator := Validator)
@@ -147,8 +144,7 @@ theorem hybrid_card_correct_le_two_mul (kt : ℕ) (S : Slots Validator)
     (Correct : Finset Validator).card ≤
       2 * (coveredAt (LeanDag.HybridProperties.hybridRule (Payload := Payload) kt)
         (coreReliability Validator) U L δ).card :=
-  card_correct_le_two_mul_coveredAt_of_decided (LeanDag.HybridProperties.causal kt)
-    (LeanDag.HybridProperties.quorate kt) (LeanDag.HybridProperties.commitsCandidate kt)
+  card_correct_le_two_mul_coveredAt_of_decided (LeanDag.HybridProperties.quorate kt) (LeanDag.HybridProperties.commitsCandidate kt)
     (by
       simp only [coreReliability_correct, coreReliability_slack]
       have := two_f_add_one_le_card_correct (Validator := Validator)
@@ -172,8 +168,7 @@ theorem nemo_card_coveredAt_ge_of_decided (hn : 0 < Fintype.card Validator)
         (LeanDag.NemoProperties.nemoReliability Validator hn).slack ≤
       (coveredAt (LeanDag.NemoProperties.nemoRule (Payload := Payload))
         (LeanDag.NemoProperties.nemoReliability Validator hn) U L δ).card :=
-  card_coveredAt_ge_of_decided LeanDag.NemoProperties.causal
-    (LeanDag.NemoProperties.quorate hn) LeanDag.NemoProperties.commitsCandidate h hδ
+  card_coveredAt_ge_of_decided (LeanDag.NemoProperties.quorate hn) LeanDag.NemoProperties.commitsCandidate h hδ
 
 end Nemo
 
@@ -193,8 +188,7 @@ theorem optimal_card_coveredAt_ge_of_decided (S : Slots Replica)
     (LeanDag.Hydrozoan.Correct : Finset Replica).card - (O.f + O.c) ≤
       (coveredAt (LeanDag.OptimalHydrozoanProperties.optimalRule (BlockId := B))
         (LeanDag.Hydrozoan.hzReliability Replica) U L δ).card :=
-  card_coveredAt_ge_of_decided LeanDag.OptimalHydrozoanProperties.causal
-    LeanDag.OptimalHydrozoanProperties.quorate
+  card_coveredAt_ge_of_decided LeanDag.OptimalHydrozoanProperties.quorate
     LeanDag.OptimalHydrozoanProperties.commitsCandidate h hδ
 
 end OptimalHydrozoan
@@ -216,8 +210,7 @@ theorem mahiMahi_card_correct_le_two_mul (w : ℕ) (S : Slots Validator)
     (Correct : Finset Validator).card ≤
       2 * (coveredAt (LeanDag.MahiMahiProperties.mahiMahiRule (Payload := Payload) w)
         (coreReliability Validator) U L δ).card :=
-  card_correct_le_two_mul_coveredAt_of_decided (LeanDag.MahiMahiProperties.causal w)
-    (LeanDag.MahiMahiProperties.quorate w) (LeanDag.MahiMahiProperties.commitsCandidate w)
+  card_correct_le_two_mul_coveredAt_of_decided (LeanDag.MahiMahiProperties.quorate w) (LeanDag.MahiMahiProperties.commitsCandidate w)
     (by
       simp only [coreReliability_correct, coreReliability_slack]
       have := two_f_add_one_le_card_correct (Validator := Validator)

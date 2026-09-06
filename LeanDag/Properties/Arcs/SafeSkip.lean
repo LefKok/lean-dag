@@ -221,8 +221,7 @@ theorem decided_none_fresh [S : Slots Validator] (sk : SkipMsg U)
     Decided sk.skipFill (sk.liftView V) k none :=
   MysticetiProperties.skipsUnsupported S sk.skipFill (sk.liftView V) T k hcard
     (presentAt_liftView sk hpres)
-    (unsupported_of_novel MysticetiProperties.causal
-      (extends_of_skipFill MysticetiProperties.mysticetiRule sk rfl rfl rfl rfl)
+    (unsupported_of_novel (extends_of_skipFill MysticetiProperties.mysticetiRule sk rfl rfl rfl rfl)
       (fun L hL => ⟨hL.1, candidates_fresh sk hlead hk1 hk2 hL⟩)
       (fun c hcV _ _ => V.subset_ids hcV))
 

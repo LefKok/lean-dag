@@ -57,17 +57,13 @@ def optimalRule : DagRule Replica BlockId Unit where
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
   viewComplete := fun V => V.complete
+  causal := fun U =>
+    { complete := fun i hi j hj => U.val.complete i hi j hj
+      refs_round := fun i hi j hj => (U.val.valid i hi).predecessor j hj }
   Decided := fun S U V k v =>
     letI := LeanDag.Hydrozoan.ofCoreSlots S
     LeanDag.OptimalHydrozoan.DecidedOpt
       (Barnacle.OptimalHydrozoan.optUniverseOf U.val U.property) V k v
-
-/-- Optimal's universes are block DAGs — Hydrozoan's argument, the
-underlying universe being Hydrozoan's. -/
-theorem causal : Causal (optimalRule (Replica := Replica) (BlockId := BlockId)) :=
-  fun U =>
-    { complete := fun i hi j hj => U.val.complete i hi j hj
-      refs_round := fun i hi j hj => (U.val.valid i hi).predecessor j hj }
 
 /-- **Optimal-Hydrozoan's universes are quorate.** The underlying
 universe is Hydrozoan's, so the clause and the fault model are
@@ -330,8 +326,6 @@ theorem voteSupport_fast_commits
     rw [hlead' k (by omega)]; exact hL.2.2
   · change LeanDag.OptimalHydrozoan.FastCommitOptInView U.val V L (S'.slotRound k)
     rw [hround]; exact hin
-
-
 
 open Classical in
 /-- **The graded rule is total, at a bound.** Three rungs and three

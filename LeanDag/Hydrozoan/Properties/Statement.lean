@@ -59,7 +59,6 @@ def Statement : Prop :=
   ∀ (Replica : Type) [Fintype Replica] [DecidableEq Replica]
     (BlockId : Type) [DecidableEq BlockId] [LinearOrder BlockId]
     [LeanDag.Hydrozoan.Faults Replica],
-    LeanDag.Properties.Causal (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.Banded (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.Agree (rule (Replica := Replica) (BlockId := BlockId)) ∧
     LeanDag.Properties.CommitsCandidate (rule (Replica := Replica) (BlockId := BlockId)) ∧

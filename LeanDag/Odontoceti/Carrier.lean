@@ -44,15 +44,8 @@ def odontocetiRule : DagRule Validator BlockId Payload where
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
   viewComplete := fun V => V.complete
+  causal := fun U => U.causal
   Decided := fun S _ V k v => Odontoceti.Decided (S := S) _ V k v
-
-/-- Odontoceti's universes are block DAGs — the same argument as the
-core's, the universe type being the same. -/
-theorem causal : Causal (odontocetiRule (Validator := Validator) (BlockId := BlockId)
-    (Payload := Payload)) :=
-  fun U =>
-    { complete := fun i hi j hj => U.complete i hi j hj
-      refs_round := fun i hi j hj => U.round_of_mem_refs hi hj }
 
 /-- **Odontoceti's universes are quorate**: the core's `BlockUniverse`,
 so the core's clause, at the five-fault committee. -/

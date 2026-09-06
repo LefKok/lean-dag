@@ -276,7 +276,7 @@ theorem certifiedIn_bnd (h : AgreeBand rule U U' lo hi g g') {A L : BlockId} {n 
   have hCr : (U.block C).round = n + 2 := (Finset.mem_filter.mp (Finset.mem_filter.mp hC).1).2
   have hlink : (rule.block U C).round = (U.block C).round := rfl
   exact ⟨C, certificates_bnd h hnn h1 h2 hC,
-    AgreeBand.reaches_of causal h hA hAhi hre (by omega)⟩
+    AgreeBand.reaches_of h hA hAhi hre (by omega)⟩
 
 theorem certifiedIn_bnd_old (h : AgreeBand rule U U' lo hi g g') {A L : BlockId} {n n' : ℕ}
     (hA : A ∈ U.ids) (hAlo : lo ≤ (U.block A).round + g)
@@ -287,7 +287,7 @@ theorem certifiedIn_bnd_old (h : AgreeBand rule U U' lo hi g g') {A L : BlockId}
   obtain ⟨C, hC, hre⟩ := hc
   have hCr' : (U'.block C).round = n' + 2 := (Finset.mem_filter.mp (Finset.mem_filter.mp hC).1).2
   have hlink : (rule.block U' C).round = (U'.block C).round := rfl
-  obtain ⟨hCU, hreU, -⟩ := AgreeBand.reaches_old causal h hA hAlo hAhi hre (by omega)
+  obtain ⟨hCU, hreU, -⟩ := AgreeBand.reaches_old h hA hAlo hAhi hre (by omega)
   exact ⟨C, certificates_bnd_old h hnn h1 h2 hCU hC, hreU⟩
 
 theorem not_certifiedIn_bnd_novel (h : AgreeBand rule U U' lo hi g g') {A L : BlockId}
@@ -298,7 +298,7 @@ theorem not_certifiedIn_bnd_novel (h : AgreeBand rule U U' lo hi g g') {A L : Bl
   rintro ⟨C, hC, hre⟩
   have hCr' : (U'.block C).round = n' + 2 := (Finset.mem_filter.mp (Finset.mem_filter.mp hC).1).2
   have hlink : (rule.block U' C).round = (U'.block C).round := rfl
-  obtain ⟨hCU, -, hCeq⟩ := AgreeBand.reaches_old causal h hA hAlo hAhi hre (by omega)
+  obtain ⟨hCU, -, hCeq⟩ := AgreeBand.reaches_old h hA hAlo hAhi hre (by omega)
   have hCr : (U.block C).round = n + 2 := by
     have hce : (U.block C).round + g = (U'.block C).round + g' := hCeq
     omega
@@ -332,7 +332,7 @@ theorem weakLinked_bnd (h : AgreeBand rule U U' lo hi g g') {A L : BlockId} {n n
     have hlink : (rule.block U b).round = (U.block b).round := rfl
     exact ⟨blocksAt_bnd h (n := n + 1) (n' := n' + 1) (by omega) (by omega) (by omega) hbA,
       (isVote_bnd h hbU (by omega) (by omega)).mpr hbv,
-      AgreeBand.reaches_of causal h hA hAhi hbre (by omega)⟩
+      AgreeBand.reaches_of h hA hAhi hbre (by omega)⟩
   · rw [authorsOf_bnd h (fun b hb => ⟨(hsU b hb).1, by have := (hsU b hb).2; omega,
       by have := (hsU b hb).2; omega⟩)]
     exact hcard
@@ -349,7 +349,7 @@ theorem weakLinked_bnd_old (h : AgreeBand rule U U' lo hi g g') {A L : BlockId} 
     obtain ⟨hbA, -, hbre⟩ := hs b hb
     have hbr' : (U'.block b).round = n' + 1 := (Finset.mem_filter.mp hbA).2
     have hlink : (rule.block U' b).round = (U'.block b).round := rfl
-    obtain ⟨hbU, -, hbeq⟩ := AgreeBand.reaches_old causal h hA hAlo hAhi hbre (by omega)
+    obtain ⟨hbU, -, hbeq⟩ := AgreeBand.reaches_old h hA hAlo hAhi hbre (by omega)
     have hbe : (U.block b).round + g = (U'.block b).round + g' := hbeq
     exact ⟨hbU, by omega⟩
   refine ⟨s, fun b hb => ?_, ?_⟩
@@ -357,7 +357,7 @@ theorem weakLinked_bnd_old (h : AgreeBand rule U U' lo hi g g') {A L : BlockId} 
     obtain ⟨hbU, hbr⟩ := hsU b hb
     have hlink : (rule.block U' b).round = (U'.block b).round := rfl
     have hbr'' : (U'.block b).round = n' + 1 := (Finset.mem_filter.mp hbA).2
-    obtain ⟨-, hbreU, -⟩ := AgreeBand.reaches_old causal h hA hAlo hAhi hbre (by omega)
+    obtain ⟨-, hbreU, -⟩ := AgreeBand.reaches_old h hA hAlo hAhi hbre (by omega)
     exact ⟨Finset.mem_filter.mpr ⟨hbU, hbr⟩,
       (isVote_bnd h hbU (by omega) (by omega)).mp hbv, hbreU⟩
   · rw [← authorsOf_bnd h (fun b hb => ⟨(hsU b hb).1, by have := (hsU b hb).2; omega,
@@ -376,7 +376,7 @@ theorem not_weakLinked_bnd_novel (h : AgreeBand rule U U' lo hi g g') {A L : Blo
     obtain ⟨hbA, hbv, hbre⟩ := hs b hb
     have hbr' : (U'.block b).round = n' + 1 := (Finset.mem_filter.mp hbA).2
     have hlink : (rule.block U' b).round = (U'.block b).round := rfl
-    obtain ⟨hbU, -, hbeq⟩ := AgreeBand.reaches_old causal h hA hAlo hAhi hbre (by omega)
+    obtain ⟨hbU, -, hbeq⟩ := AgreeBand.reaches_old h hA hAlo hAhi hbre (by omega)
     have hbr : (U.block b).round = n + 1 := by
       have hbe : (U.block b).round + g = (U'.block b).round + g' := hbeq
       omega

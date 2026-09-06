@@ -112,14 +112,14 @@ whose candidates are novel is unsupported by any `T` whose voting-round
 blocks are old — because an old block references only old blocks. This
 is the hypothesis a fill hands the protocol; `SkipsUnsupported`'s grade
 says whether the protocol can use it. -/
-theorem unsupported_of_novel (hc : Causal R) {U U' : R.Universe} (he : Extends R U U')
+theorem unsupported_of_novel {U U' : R.Universe} (he : Extends R U U')
     {S : Slots Validator} {V' : R.View U'} {T : Finset Validator} {k : ℕ}
     (hnov : ∀ L, R.IsCandidate S U' k L → Novel R U U' L)
     (hold : ∀ c, c ∈ R.viewIds V' → (R.block U' c).creator ∈ T →
       (R.block U' c).round = S.slotRound k + 1 → c ∈ R.ids U) :
     Unsupported R S U' V' T k := by
   intro c hcV hT hr L hL hmem
-  exact (hnov L hL).2 (he.old_refs_old hc (hold c hcV hT hr) hmem)
+  exact (hnov L hL).2 (he.old_refs_old (hold c hcV hT hr) hmem)
 
 end Properties
 

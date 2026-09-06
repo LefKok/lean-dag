@@ -77,6 +77,10 @@ structure BaseRule (Validator : Type) [Fintype Validator] [DecidableEq Validator
   reference. A field for the same reason as `viewSound`. -/
   viewComplete : ∀ {U : Universe} (V : View U),
     ∀ i ∈ viewIds V, ∀ j ∈ (block U i).refs, j ∈ viewIds V
+  /-- A universe is a block DAG: references are present and one round
+  below. A field for the same reason as the two above, and the one
+  `Properties.DagRule` carries under the same name. -/
+  causal : ∀ U : Universe, CausalStructure (block U) (ids U)
   /-- The full view: every block of the universe. -/
   full : ∀ U : Universe, View U
   /-- The causal history of a block of the universe, as a view. -/

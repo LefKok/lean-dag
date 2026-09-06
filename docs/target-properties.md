@@ -1670,8 +1670,7 @@ which one depending on whether it transforms the DAG or a view.
 
 | Direction | Property | Content |
 |---|---|---|
-| protocol | `Causal` | universes are block DAGs |
-| | `Banded` | every verdict is carried by a band of rounds, with offsets on both axes |
+| protocol | `Banded` | every verdict is carried by a band of rounds, with offsets on both axes |
 | | `Agree` | two views of one universe under one schedule decide alike |
 | | `CommitsCandidate` | a commit names a block the DAG holds, at the slot's round, by the slot's leader |
 | | `LeaderCommits R Live` | under the protocol's own precondition, a reliably-led slot commits at a tight bound |
@@ -1695,7 +1694,7 @@ protocol's view type already carried the proof (§11.4d).
 | agreement across an extension | `Agree` + `Persist` |
 | `decidedBelow_of_run` | `LeaderCommits` + `Descends` |
 | `LiveRule.Descent`, and so Barnacle's `LiveOn` | `LeaderCommits` + `Indirect` |
-| a commit's causal cone is real | `Causal` + `CommitsCandidate` |
+| a commit's causal cone is real | the carrier's `causal` law + `CommitsCandidate` |
 | the three liveness predicates, and composition | `Sustains` |
 | non-equivocation across a cut | `Truncates` |
 | the additive half of production | `Extends` |
@@ -1718,18 +1717,18 @@ recomputes this from `docs/decls.json`: a rule shows a property when
 some theorem concludes it at one of the rule's carriers, or when its
 conformance `Statement` lists it.
 
-| rule | `Causal` | `Banded` | `Agree` | `CommitsCandidate` | `LeaderCommits` | `Indirect` | `CommitsDirect`* | `SkipsUnsupported`* |
-|---|---|---|---|---|---|---|---|---|
-| core Mysticeti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| reactive Mysticeti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Hydrozoan | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — | ✓ |
-| Optimal-Hydrozoan | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
-| Odontoceti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Nemo | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
-| Hybrid / Orcaella | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Mahi-Mahi | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
-| FinWhale | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
-| Black Marlin | — | — | — | — | — | — | — | — |
+| rule | `Banded` | `Agree` | `CommitsCandidate` | `LeaderCommits` | `Indirect` | `CommitsDirect`* | `SkipsUnsupported`* |
+|---|---|---|---|---|---|---|---|
+| core Mysticeti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| reactive Mysticeti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Hydrozoan | ✓ | ✓ | ✓ | ✓ | ✓ | — | ✓ |
+| Optimal-Hydrozoan | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
+| Odontoceti | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Nemo | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
+| Hybrid / Orcaella | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Mahi-Mahi | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
+| FinWhale | ✓ | ✓ | ✓ | ✓ | ✓ | ✓ | — |
+| Black Marlin | — | — | — | — | — | — | — |
 
 \* optional (`Properties/Optional/`): owed when a mechanism counts the
 rule's direct predicate, or when the rule skips without waiting for an
@@ -1759,10 +1758,10 @@ over `OptUniverse`, the second is indexed by an admissible threshold, so
 its carrier is one per `k`.
 
 **What an interface leaves undone, which is the more useful half.**
-`Causal` needs completeness and the round condition on references at the
-*universe*, and `Laws` states those for views only. `Banded` is the
-induction a protocol owes and no interface can supply it. So the four
-new carriers gain two obligations of six, the honest reading being that
+`Banded` is the induction a protocol owes and no interface can supply
+it (the universe-level causal facts were a second such obligation until
+§11.15 made them a law of both carriers). So the four
+new carriers gain one obligation of five, the honest reading being that
 a shared interface hands over the laws a protocol already had, under new
 names, and nothing deeper.
 
@@ -2784,11 +2783,10 @@ added `Support`. Once every rule had a support, both of the earlier two
 were consequences of it, and the obligations were counted twice. This
 section is the consolidation.
 
-**What a protocol owes: five properties and a support.**
+**What a protocol owes: four properties and a support.**
 
 | | |
 |---|---|
-| `Causal` | its universes are block DAGs |
 | `Banded` | its verdicts read a bounded window of references |
 | `Agree` | two views of one universe do not disagree |
 | `CommitsCandidate` | a commit names the slot's candidate |
@@ -3118,6 +3116,32 @@ and, for Nemo, of the committed-run descent, which only the direct
 proofs consumed. Hybrid keeps its direct H7: its carrier bakes
 `HonestNoEquiv` into the universe, and the direct theorem never needed
 it, so the property route would state a weaker theorem.
+
+### 11.15 `Causal` is a law of the carrier
+
+`Causal` said that a rule's universes are closed under references and
+that a reference sits one round below its referrer. Nine carriers proved
+it, each with the same four lines projecting the universe's validity
+record, and five of them on the same universe type. It was never a fact
+about a rule: it is the layered-DAG assumption of the whole development,
+made once in validity.
+
+It is now the field `causal` of `DagRule`, beside `viewSound` and
+`viewComplete`, and the field of the same name on Barnacle's
+`BaseRule`, so `BaseRule.toDagRule` carries it without an argument.
+Each carrier supplies it in its definition — `fun U => U.causal` where
+the universe is the core's, the validity record's two clauses
+otherwise — and the twenty-eight theorems that took `hc : Causal R` take
+nothing: `AgreeBand.reaches_of`, `Extends.reaches_old`,
+`unsupported_of_novel`, the chain-quality arc, and the rest read
+`R.causal`. Hydrozoan's conformance statement loses its first conjunct.
+
+The property set is four plus `Support`: `Banded`, `Agree`,
+`CommitsCandidate`, `Indirect`. `audit-conformance.py` scores those
+four and the support; its `caus` column is gone. `CommitsCandidate` is
+as trivial per rule as `Causal` was — one `cases` on the rule's
+`Decided` — but it is a fact about the decision relation, which the
+carrier deliberately leaves opaque, so it stays a property.
 
 **What the audits show.** `audit-mechanisms.py` reads the same matrix
 as before — every cell for Hydrozoan and Optimal-Hydrozoan `yes`, live

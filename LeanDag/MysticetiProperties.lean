@@ -110,6 +110,7 @@ def mysticetiRule : DagRule Validator BlockId Payload where
   viewIds := fun V => V.ids
   viewSound := fun V => V.subset_ids
   viewComplete := fun V => V.complete
+  causal := fun U => U.causal
   Decided := fun S _ V k v => Decided (S := S) _ V k v
 
 variable {U U' : BlockUniverse Validator BlockId Payload} {G R₀ : ℕ}
@@ -207,13 +208,6 @@ one thing a skip rule exists to be, and `Decided.directSkip` now takes
 does. Both protocols persist unconditionally, the grade is gone from
 `Persist`, and `Quorate` with it.
 -/
-
-
-/-- The core's universes are block DAGs. -/
-theorem causal : Causal (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
-  fun U =>
-    { complete := fun i hi j hj => U.complete i hi j hj
-      refs_round := fun i hi j hj => U.round_of_mem_refs hi hj }
 
 /-- **The core's universes are quorate**, at the core's fault model:
 validity's counting clause read at the carrier. This is what chain
@@ -342,18 +336,18 @@ theorem certifiedIn_old (he : Extends mysticetiRule U U') {A L : BlockId} {r : �
   unfold CertifiedIn
   constructor
   · rintro ⟨C, hC, hre⟩
-    obtain ⟨hreU, hCU⟩ := Extends.reaches_old causal he hA hre
+    obtain ⟨hreU, hCU⟩ := Extends.reaches_old he hA hre
     exact ⟨C, (mem_certificates_old he hCU).mp hC, hreU⟩
   · rintro ⟨C, hC, hre⟩
     have hCU : C ∈ U.ids := (mem_blocksAt.mp (Finset.mem_filter.mp hC).1).1
     exact ⟨C, (mem_certificates_old he hCU).mpr hC,
-      (Extends.reaches_iff causal he hA).mpr hre⟩
+      (Extends.reaches_iff he hA).mpr hre⟩
 
 /-- **A new candidate is certified by nothing an old anchor can see.** -/
 theorem not_certifiedIn_novel (he : Extends mysticetiRule U U') {A L : BlockId} {r : ℕ}
     (hA : A ∈ U.ids) (hL : L ∉ U.ids) : ¬ CertifiedIn U' A L r := by
   rintro ⟨C, hC, hre⟩
-  obtain ⟨-, hCU⟩ := Extends.reaches_old causal he hA hre
+  obtain ⟨-, hCU⟩ := Extends.reaches_old he hA hre
   have hcert : Certifies U' C L := (Finset.mem_filter.mp hC).2
   unfold Certifies at hcert
   have hempty : votesIn U' C L = ∅ := by
@@ -524,7 +518,7 @@ theorem certifiedIn_band (h : AgreeBand mysticetiRule U U' lo hi g g') {A L : Bl
     have hCr' : (U'.block C).round = r' + 2 := (mem_blocksAt.mp (Finset.mem_filter.mp hC).1).2
     have hCrR : (mysticetiRule.block U' C).round = r' + 2 := hCr'
     obtain ⟨hCU, hreU, hCeq⟩ :=
-      AgreeBand.reaches_old causal h hA hAlo hAhi hre (by omega)
+      AgreeBand.reaches_old h hA hAlo hAhi hre (by omega)
     have hCeq' : (U.block C).round + g = (U'.block C).round + g' := hCeq
     exact ⟨C, (mem_certificates_band h hCU (by omega) hrr hr hrhi).mp hC, hreU⟩
   · rintro ⟨C, hC, hre⟩
@@ -533,7 +527,7 @@ theorem certifiedIn_band (h : AgreeBand mysticetiRule U U' lo hi g g') {A L : Bl
     have hCr : (U.block C).round = r + 2 := (mem_blocksAt.mp hCA).2
     have hCrR : (mysticetiRule.block U C).round = r + 2 := hCr
     exact ⟨C, (mem_certificates_band h hCU hCr hrr hr hrhi).mpr hC,
-      AgreeBand.reaches_of causal h hA hAhi hre (by omega)⟩
+      AgreeBand.reaches_of h hA hAhi hre (by omega)⟩
 
 /-- **A candidate the band did not carry is certified by nothing an old
 anchor can see.** -/
@@ -545,7 +539,7 @@ theorem not_certifiedIn_band_novel (h : AgreeBand mysticetiRule U U' lo hi g g')
   rintro ⟨C, hC, hre⟩
   have hCr' : (U'.block C).round = r' + 2 := (mem_blocksAt.mp (Finset.mem_filter.mp hC).1).2
   have hCrR : (mysticetiRule.block U' C).round = r' + 2 := hCr'
-  obtain ⟨hCU, -, hCeq⟩ := AgreeBand.reaches_old causal h hA hAlo hAhi hre (by omega)
+  obtain ⟨hCU, -, hCeq⟩ := AgreeBand.reaches_old h hA hAlo hAhi hre (by omega)
   have hCeq' : (U.block C).round + g = (U'.block C).round + g' := hCeq
   have hcert : Certifies U' C L := (Finset.mem_filter.mp hC).2
   rw [certifies_band h hCU (by omega) (by omega)] at hcert
@@ -560,7 +554,6 @@ theorem not_certifiedIn_band_novel (h : AgreeBand mysticetiRule U U' lo hi g g')
   exact absurd hcert (Nat.pos_iff_ne_zero.mp quorumCard_pos)
 
 end Band
-
 
 /-! ### Persistence -/
 
@@ -1090,7 +1083,6 @@ theorem leaderCommits :
       (Payload := Payload)) (fun S {U} V T lo K => coreLive S (U := U) V T lo K) :=
   fun S _ V T lo K hlive => leaderCommits_cert S V T lo K (certLive_of_coreLive hlive)
 
-
 /-! ## The core's support shape
 
 `Properties/Support.lean`. What the core's commit counts: certificates
@@ -1282,7 +1274,6 @@ theorem descends {S : Slots Validator} {c : ℕ} (hc : 0 < c)
       (Payload := Payload)) S c :=
   Descends.of_indirect indirect hc (fun b i hi => eligible_iff.mp (hspans b i hi))
 
-
 end Bounded
 
 end MysticetiProperties
@@ -1357,6 +1348,5 @@ theorem all_decided_below_of_fairRun_correct {c : ℕ} (hc : 0 < c)
   all_decided_below_of_fairRun hc Finset.Subset.rfl card_correct hspan fair R k
 
 end Ledger
-
 
 end LeanDag

@@ -137,7 +137,7 @@ theorem coneSupports_band (h : AgreeBand (odontocetiRule (Payload := Payload)) U
       have hqre : ReachesFrom U'.block A q := (mem_history_iff (U := U') hA').mp hqh
       have hqrR : (MysticetiProperties.mysticetiRule.block U' q).round = r' + 1 := hqr'
       obtain ⟨hqU, hqreU, hqeq⟩ :=
-        AgreeBand.reaches_old MysticetiProperties.causal (toCore h) hA hAlo hAhi hqre (by omega)
+        AgreeBand.reaches_old (toCore h) hA hAlo hAhi hqre (by omega)
       have hqeq' : (U.block q).round + g = (U'.block q).round + g' := hqeq
       refine ⟨⟨hqU, by omega⟩, ?_, (mem_history_iff (U := U) hA).mpr hqreU⟩
       rwa [MysticetiProperties.band_refs (toCore h) hqU (by omega) (by omega)] at hqL
@@ -150,7 +150,7 @@ theorem coneSupports_band (h : AgreeBand (odontocetiRule (Payload := Payload)) U
           (by omega) (by omega) (by omega) (mem_blocksAt.mpr ⟨hqU, hqr⟩))
       · rw [MysticetiProperties.band_refs (toCore h) hqU (by omega) (by omega)]; exact hqL
       · exact (mem_history_iff (U := U') hA').mpr
-          (AgreeBand.reaches_of MysticetiProperties.causal (toCore h) hA hAhi hqre (by omega))
+          (AgreeBand.reaches_of (toCore h) hA hAhi hqre (by omega))
   unfold Odontoceti.coneSupports
   rw [hset]
   refine MysticetiProperties.creatorsOf_band (toCore h) ?_
