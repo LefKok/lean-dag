@@ -6,6 +6,7 @@ import LeanDag.SafeSkip.Invariance
 import LeanDag.MysticetiProperties
 import LeanDag.OdontocetiProperties
 import LeanDag.MahiMahiProperties
+import LeanDag.Properties.Arcs.GC
 
 /-!
 # Crash recovery, for any protocol with `Persist`
@@ -182,31 +183,9 @@ claim would be false, and deliberately: the blocks a fill adds stand in
 for blocks that voted, and need not vote as they did. -/
 theorem sustains_skipFill (sk : SkipMsg U) :
     Sustains (MysticetiProperties.mysticetiRule (Payload := Payload))
-      U sk.skipFill 0 (sk.r + 1) where
-  mem := fun b => by
-    show (b ∈ U.ids ∧ sk.r + 1 ≤ (U.block b).round) ↔
-      (b ∈ sk.skipFill.ids ∧ sk.r + 1 ≤ (sk.skipFill.block b).round + 0)
-    constructor
-    · rintro ⟨hb, hr⟩
-      exact ⟨sk.ids_subset_skipFill hb, by rw [sk.skipFill_block_old hb]; omega⟩
-    · rintro ⟨hb, hr⟩
-      have hbU : b ∈ U.ids := by
-        rcases Finset.mem_union.mp hb with ho | hf
-        · exact ho
-        · obtain ⟨k, hk1, hk2, rfl⟩ := sk.mem_freshIds.mp hf
-          rw [sk.skipFill_block_fresh] at hr
-          simp only [SkipData.fillBlock] at hr
-          omega
-      exact ⟨hbU, by rw [sk.skipFill_block_old hbU] at hr; omega⟩
-  round := fun b hb _ => by
-    show (sk.skipFill.block b).round + 0 = (U.block b).round
-    rw [sk.skipFill_block_old hb]; omega
-  creator := fun b hb _ => by
-    show (sk.skipFill.block b).creator = (U.block b).creator
-    rw [sk.skipFill_block_old hb]
-  refs := fun b hb _ => by
-    show (sk.skipFill.block b).refs = (U.block b).refs
-    rw [sk.skipFill_block_old hb]
+      U sk.skipFill 0 (sk.r + 1) :=
+  coreOnRecord.sustains_fill (U := U) (sk := sk) (B := sk.selfBlocks U.complete)
+    (hB := fun _ hk1 hk2 => sk.fillBlock_valid hk1 hk2)
 
 /-! ### The filled slot is decided, and SS3 falls out
 

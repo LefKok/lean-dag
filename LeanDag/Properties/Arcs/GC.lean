@@ -7,6 +7,7 @@ import LeanDag.OdontocetiProperties
 import LeanDag.MahiMahiProperties
 import LeanDag.Properties.Band
 import LeanDag.Properties.Derived.Truncate
+import LeanDag.Properties.Record
 
 /-!
 # Garbage collection, for any protocol with a band
@@ -106,28 +107,22 @@ section Core
 
 variable [Faults Validator] {U : BlockUniverse Validator BlockId Payload} {G : ℕ}
 
-/-- **The cut sustains the core from its horizon.** -/
+/-- **The core's carrier, read as block records**: both maps are the
+identity. -/
+def coreOnRecord :
+    (MysticetiProperties.mysticetiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)).OnRecord ValidWrt (Correct : Finset Validator) where
+  toRec := fun U => U
+  ofRec := fun W => W
+  ids_to := fun _ => rfl
+  block_to := fun _ => rfl
+  ids_of := fun _ => rfl
+  block_of := fun _ => rfl
+
+/-- **The cut sustains the core from its horizon.** The record's witness. -/
 theorem sustains_chop :
-    Sustains (MysticetiProperties.mysticetiRule (Payload := Payload)) U (chop U G) G G where
-  mem := fun b => by
-    show (b ∈ U.ids ∧ G ≤ (U.block b).round) ↔
-      (b ∈ (chop U G).ids ∧ G ≤ ((chop U G).block b).round + G)
-    rw [mem_chop_ids, chop_block_eq, chopBlock_round]
-    constructor
-    · rintro ⟨hb, hr⟩
-      refine ⟨⟨hb, hr⟩, ?_⟩
-      rw [Nat.sub_add_cancel hr]; exact hr
-    · rintro ⟨⟨hb, hr⟩, _⟩; exact ⟨hb, hr⟩
-  round := fun b _ hr => by
-    have hr' : G ≤ (U.block b).round := hr
-    show ((chop U G).block b).round + G = (U.block b).round
-    rw [chop_block_eq, chopBlock_round]; omega
-  creator := fun b _ _ => by
-    show ((chop U G).block b).creator = (U.block b).creator
-    rw [chop_block_eq, chopBlock_creator]
-  refs := fun b _ hr => by
-    show ((chop U G).block b).refs = (U.block b).refs
-    rw [chop_block_eq, chopBlock_refs_of_lt hr]
+    Sustains (MysticetiProperties.mysticetiRule (Payload := Payload)) U (chop U G) G G :=
+  coreOnRecord.sustains_chop U
 
 /-- **The reactive commit survives the cut** — the consumer test, from
 the obligation rather than from `chop` directly. -/
@@ -163,30 +158,8 @@ variable {S : Slots Validator} {G d : ℕ}
 have, exhibited before anything is proved from it. -/
 theorem truncates_chop (hd : G ≤ S.slotRound d) :
     Truncates (MysticetiProperties.mysticetiRule (Payload := Payload))
-      U (chop U G) S (S.chop G d hd) G d where
-  mem := fun b => by
-    show (b ∈ U.ids ∧ G ≤ (U.block b).round) ↔
-      (b ∈ (chop U G).ids ∧ G ≤ ((chop U G).block b).round + G)
-    rw [mem_chop_ids, chop_block_eq, chopBlock_round]
-    constructor
-    · rintro ⟨hb, hr⟩; exact ⟨⟨hb, hr⟩, by omega⟩
-    · rintro ⟨⟨hb, hr⟩, -⟩; exact ⟨hb, hr⟩
-  round := fun b hb hr => by
-    have hr' : G ≤ (U.block b).round := hr
-    show ((chop U G).block b).round + G = (U.block b).round
-    rw [chop_block_eq, chopBlock_round]; omega
-  creator := fun b _ _ => by
-    show ((chop U G).block b).creator = (U.block b).creator
-    rw [chop_block_eq, chopBlock_creator]
-  refs := fun b _ hr => by
-    show ((chop U G).block b).refs = (U.block b).refs
-    rw [chop_block_eq, chopBlock_refs_of_lt hr]
-  slotRound := fun k => by
-    have := horizon_le_slotRound hd k
-    show S.slotRound (d + k) - G + G = S.slotRound (d + k)
-    omega
-  leader := fun _ => rfl
-  base := hd
+      U (chop U G) S (S.chop G d hd) G d :=
+  coreOnRecord.truncates_chop U hd
 
 /-- **G3 re-derived, with no induction of its own.** Both directions of
 the cut's verdict transport, from the band. -/

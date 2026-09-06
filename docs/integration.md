@@ -48,11 +48,16 @@ what the files below contain is witnesses.
 
 ## 2. The mechanism cells
 
-Each rule with its own universe record builds its own cut and fill on
-the shared data (`chopBlk`, `SkipData`), discharges the three or four
-invariants its record carries, and applies the generic theorems. Rules
-on the core's `BlockUniverse` (the core, Odontoceti, Mahi-Mahi) take the
-core's `chop` and `skipFill` directly, in `Properties/Arcs/`.
+Every universe is the block record (`BlockRecord.lean`) at the rule's
+validity predicate, and the cut, the fill and re-genesis are built once
+at the record (`Record/`). A rule proves the four facts its predicate
+owes (`Validity.Mechanised`) and, if it does not read the author, that
+the copy fill is valid (`CopyStable`); a carrier read as records
+(`DagRule.OnRecord`, `Properties/Record.lean`) then has every witness
+the properties read. The core, Nemo and FinWhale are records by
+definition; Hydrozoan is one through its block adapter. Rules on the
+core's `BlockUniverse` (the core, Odontoceti, Mahi-Mahi) take the core's
+`chop` and `skipFill` directly, in `Properties/Arcs/`.
 
 | file | rule | cut | fill | what is applied |
 |---|---|---|---|---|
@@ -68,9 +73,9 @@ core's `chop` and `skipFill` directly, in `Properties/Arcs/`.
 
 The Hydrozoan and Optimal cells are described in more detail in
 `docs/hydrozoan-integration.md`. What every row has in common: the
-witness is three clauses on a block record, the verdict theorems are
-one line each, and the file proves nothing about the rule's decision
-relation.
+construction and its witnesses are one line each at the record, the
+verdict theorems are one line each, and the file proves nothing about
+the rule's decision relation.
 
 The two Optimal cells carry one invariant that is not a property, leader
 exclusion, across the cut and the copy fill. Across the cut: a block

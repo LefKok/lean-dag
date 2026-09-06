@@ -50,7 +50,7 @@ theorem reaches_own (hself : SelfParented D) :
   induction d with
   | zero =>
     intro b hb c hc hbc hcc hcr
-    have : c = b := D.correct_single c hc b hb (by rw [hcc]; exact hbc) hcc (by omega)
+    have : c = b := D.no_equivocation c hc b hb (by rw [hcc]; exact hbc) hcc (by omega)
     rw [this]
   | succ d ih =>
     intro b hb c hc hbc hcc hcr

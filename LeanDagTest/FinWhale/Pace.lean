@@ -72,7 +72,7 @@ def DgrowFor (lead : ℕ → Fin 4) (N : ℕ) : Dag (Fin 4) ℕ Unit where
       have := congrArg (fun (v : Fin 4) => (v : ℕ)) (hxl.trans hyl.symm)
       simpa [ugrow_block] using this
     omega
-  correct_single := (Ugrow N).no_equivocation
+  no_equivocation := (Ugrow N).no_equivocation
 
 @[simp] theorem dgrowFor_ids (lead : ℕ → Fin 4) (N : ℕ) :
     (DgrowFor lead N).ids = (Ugrow N).ids := rfl

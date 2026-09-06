@@ -128,10 +128,10 @@ theorem quorate : Quorate (finWhaleRule (Validator := Validator) (BlockId := Blo
   fun D b hb hr => (D.valid b hb).quorum hr
 
 /-- **One block per correct author per round**, from the DAG's
-`correct_single`. -/
+`no_equivocation`. -/
 theorem noEquiv : NoEquiv (finWhaleRule (Validator := Validator) (BlockId := BlockId)
     (Payload := Payload)) (coreReliability Validator) :=
-  fun D b c hb hc hbc heq hr => D.correct_single b hb c hc hbc heq hr
+  fun D b c hb hc hbc heq hr => D.no_equivocation b hb c hc hbc heq hr
 
 /-- **Two views decide alike.** Lemma 12 under the property's name: the
 exclusions come from the DAG, the deterministic rule is the least
@@ -624,17 +624,17 @@ theorem fwSupport_local :
     Support.Local (R := finWhaleRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload)) fwSupport := by
   intro D D' G R₀ h c L hc hcr _ _
-  change R₀ + 2 ≤ (LeanDag.FinWhale.Dag.block D c).round at hcr
-  have hrefs : (LeanDag.FinWhale.Dag.block D' c).refs = (LeanDag.FinWhale.Dag.block D c).refs :=
-    h.refs c hc (by change R₀ < (LeanDag.FinWhale.Dag.block D c).round; omega)
-  have hpar : ∀ q ∈ (LeanDag.FinWhale.Dag.block D c).refs,
-      (LeanDag.FinWhale.Dag.block D' q).refs = (LeanDag.FinWhale.Dag.block D q).refs ∧
-      (LeanDag.FinWhale.Dag.block D' q).creator = (LeanDag.FinWhale.Dag.block D q).creator := by
+  change R₀ + 2 ≤ (BlockRecord.block D c).round at hcr
+  have hrefs : (BlockRecord.block D' c).refs = (BlockRecord.block D c).refs :=
+    h.refs c hc (by change R₀ < (BlockRecord.block D c).round; omega)
+  have hpar : ∀ q ∈ (BlockRecord.block D c).refs,
+      (BlockRecord.block D' q).refs = (BlockRecord.block D q).refs ∧
+      (BlockRecord.block D' q).creator = (BlockRecord.block D q).creator := by
     intro q hq
-    have hqD := LeanDag.FinWhale.Dag.complete D c hc q hq
-    have hqr := (LeanDag.FinWhale.Dag.valid D c hc).predecessor q hq
-    exact ⟨h.refs q hqD (by change R₀ < (LeanDag.FinWhale.Dag.block D q).round; omega),
-      h.creator q hqD (by change R₀ ≤ (LeanDag.FinWhale.Dag.block D q).round; omega)⟩
+    have hqD := BlockRecord.complete D c hc q hq
+    have hqr := (BlockRecord.valid D c hc).predecessor q hq
+    exact ⟨h.refs q hqD (by change R₀ < (BlockRecord.block D q).round; omega),
+      h.creator q hqD (by change R₀ ≤ (BlockRecord.block D q).round; omega)⟩
   change LeanDag.FinWhale.SPCertificate D' c L ↔ LeanDag.FinWhale.SPCertificate D c L
   unfold LeanDag.FinWhale.SPCertificate LeanDag.FinWhale.parentsVoting creatorsOf
   rw [hrefs, Finset.filter_congr (fun q hq => by rw [(hpar q hq).1]),
@@ -656,13 +656,13 @@ theorem fwSupport_ofCoverage :
   intro w hw
   obtain ⟨q, hq', hqc, hqr⟩ := hpop (r + 1) (by omega) (by change r + 1 ≤ r + 2; omega) w hw
   have hqT : (finWhaleRule.block D q).creator ∈ T := by rw [hqc]; exact hw
-  have hvote : L ∈ (LeanDag.FinWhale.Dag.block D q).refs :=
+  have hvote : L ∈ (BlockRecord.block D q).refs :=
     hct r le_rfl (by change r < r + 2; omega) q hq' hqT hqr L hL hLc hLr
       Relation.ReflTransGen.refl
-  have hpar : q ∈ (LeanDag.FinWhale.Dag.block D c).refs :=
+  have hpar : q ∈ (BlockRecord.block D c).refs :=
     hct (r + 1) (by omega) (by change r + 1 < r + 2; omega) c hc hcc
-      (by change (LeanDag.FinWhale.Dag.block D c).round = r + 1 + 1
-          rw [show (LeanDag.FinWhale.Dag.block D c).round = r + 2 from hcr])
+      (by change (BlockRecord.block D c).round = r + 1 + 1
+          rw [show (BlockRecord.block D c).round = r + 2 from hcr])
       q hq' hqT hqr (Relation.ReflTransGen.single (show RefStepFrom (finWhaleRule.block D) q L from hvote))
   unfold LeanDag.FinWhale.parentsVoting creatorsOf
   exact Finset.mem_image.mpr ⟨q, Finset.mem_filter.mpr ⟨hpar, hvote⟩, hqc⟩
@@ -680,10 +680,10 @@ theorem fwSupport_commits :
     exact h2
   obtain ⟨L, hLmem, hLc, hLr⟩ := hpop (S.slotRound k) le_rfl
     (by change S.slotRound k ≤ S.slotRound k + 2; omega) (S.leader k) hlead
-  have hLc' : (LeanDag.FinWhale.Dag.block D L).creator = S.leader k := hLc
-  have hLr' : (LeanDag.FinWhale.Dag.block D L).round = S.slotRound k := hLr
+  have hLc' : (BlockRecord.block D L).creator = S.leader k := hLc
+  have hLr' : (BlockRecord.block D L).round = S.slotRound k := hLr
   have hlV : L ∈ V.val := hcov L hLmem
-    (by change (LeanDag.FinWhale.Dag.block D L).round ≤ S.slotRound k + 2; omega)
+    (by change (BlockRecord.block D L).round ≤ S.slotRound k + 2; omega)
   have hvc : LeanDag.FinWhale.viewCommit (schedOf S) D V.val V.property k L := by
     refine ⟨?_, Or.inr ⟨T, le_trans spQuorum_le_quorumCard hcard, fun v hv => ?_⟩⟩
     · rw [mem_slotBlocks]
@@ -691,9 +691,9 @@ theorem fwSupport_commits :
       exact ⟨⟨hlV, hLr'⟩, hLc'⟩
     · obtain ⟨b, hb, hbc, hbr⟩ := hpop (S.slotRound k + 2) (by omega)
         (by change S.slotRound k + 2 ≤ S.slotRound k + 2; omega) v hv
-      have hbr' : (LeanDag.FinWhale.Dag.block D b).round = S.slotRound k + 2 := hbr
+      have hbr' : (BlockRecord.block D b).round = S.slotRound k + 2 := hbr
       have hbV : b ∈ V.val := hcov b hb
-        (by change (LeanDag.FinWhale.Dag.block D b).round ≤ S.slotRound k + 2; omega)
+        (by change (BlockRecord.block D b).round ≤ S.slotRound k + 2; omega)
       refine ⟨b, ?_, hbc, hcert L ⟨hLmem, hLr, hLc⟩ v hv b hb hbc hbr⟩
       rw [mem_blocksAt]
       simp only [LeanDag.FinWhale.restrict_ids, LeanDag.FinWhale.restrict_block]
@@ -742,10 +742,10 @@ theorem voteSupport_fast_commits (h : F.byzantine.card ≤ P.p) :
     exact h2
   obtain ⟨L, hLmem, hLc, hLr⟩ := hpop (S.slotRound k) le_rfl
     (by change S.slotRound k ≤ S.slotRound k + 1; omega) (S.leader k) hlead
-  have hLc' : (LeanDag.FinWhale.Dag.block D L).creator = S.leader k := hLc
-  have hLr' : (LeanDag.FinWhale.Dag.block D L).round = S.slotRound k := hLr
+  have hLc' : (BlockRecord.block D L).creator = S.leader k := hLc
+  have hLr' : (BlockRecord.block D L).round = S.slotRound k := hLr
   have hlV : L ∈ V.val := hcov L hLmem
-    (by change (LeanDag.FinWhale.Dag.block D L).round ≤ S.slotRound k + 1; omega)
+    (by change (BlockRecord.block D L).round ≤ S.slotRound k + 1; omega)
   have hvc : LeanDag.FinWhale.viewCommit (schedOf S) D V.val V.property k L := by
     refine ⟨?_, Or.inl ?_⟩
     · rw [mem_slotBlocks]
@@ -757,9 +757,9 @@ theorem voteSupport_fast_commits (h : F.byzantine.card ≤ P.p) :
       intro v hv
       obtain ⟨b, hb, hbc, hbr⟩ := hpop (S.slotRound k + 1) (by omega)
         (by change S.slotRound k + 1 ≤ S.slotRound k + 1; omega) v hv
-      have hbr' : (LeanDag.FinWhale.Dag.block D b).round = S.slotRound k + 1 := hbr
+      have hbr' : (BlockRecord.block D b).round = S.slotRound k + 1 := hbr
       have hbV : b ∈ V.val := hcov b hb
-        (by change (LeanDag.FinWhale.Dag.block D b).round ≤ S.slotRound k + 1; omega)
+        (by change (BlockRecord.block D b).round ≤ S.slotRound k + 1; omega)
       unfold LeanDag.FinWhale.voters creatorsOf
       refine Finset.mem_image.mpr ⟨b, ?_, hbc⟩
       rw [Finset.mem_filter, mem_blocksAt]

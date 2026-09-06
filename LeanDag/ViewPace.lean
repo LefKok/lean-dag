@@ -737,7 +737,7 @@ theorem decided_of_local (vp : ViewPace U T N)
     (hlead : S.leader k ∈ T) :
     ∃ L, IsLeaderBlock U k L ∧ Decided U (View.full U) k (some L) := by
   obtain ⟨L, hL, hloc⟩ := vp.decided_local hcard hgst hbackoff hR hN hlead
-  exact ⟨L, hL, MysticetiProperties.decided_mono_of_band (View.subset_ids _) (hloc _ hlead)⟩
+  exact ⟨L, hL, MysticetiProperties.decided_mono_of_band (BlockRecord.View.subset_ids _) (hloc _ hlead)⟩
 
 end Liveness
 

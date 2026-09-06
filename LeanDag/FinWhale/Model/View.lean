@@ -40,7 +40,7 @@ def restrict (D : Dag Validator BlockId Payload) (V : Finset BlockId) (hV : IsVi
   block := D.block
   complete := hV.closed
   valid := fun i hi => D.valid i (hV.subset hi)
-  correct_single := fun i hi j hj => D.correct_single i (hV.subset hi) j (hV.subset hj)
+  no_equivocation := fun i hi j hj => D.no_equivocation i (hV.subset hi) j (hV.subset hj)
 
 variable {hV : IsView D V}
 

@@ -1,4 +1,5 @@
 import LeanDag.Block
+import LeanDag.BlockRecord
 
 /-!
 # Nemo-Nemo: the crash-fault DAG foundation
@@ -79,32 +80,53 @@ theorem refs_nonempty (h : ValidWrt blk b) (h0 : 0 < b.round) : b.refs.Nonempty 
 
 end ValidWrt
 
-/-- The crash block universe: majority-parent validity and **universal**
-non-equivocation — every validator is honest, so there is no Byzantine exemption.
-No `Faults` instance is needed. -/
-structure Universe (Validator BlockId Payload : Type*)
-    [Fintype Validator] [DecidableEq Validator] where
-  /-- Which blocks exist. -/
-  ids : Finset BlockId
-  /-- What each id denotes. -/
-  block : BlockId → Block Validator BlockId Payload
-  /-- Every referenced block is present. -/
-  complete : ∀ i ∈ ids, ∀ j ∈ (block i).refs, j ∈ ids
-  /-- Every block present is valid (majority parents). -/
-  valid : ∀ i ∈ ids, ValidWrt block (block i)
-  /-- **No validator equivocates** — one block per author per round, for everyone. -/
-  no_equivocation : ∀ i ∈ ids, ∀ j ∈ ids,
-    (block i).creator = (block j).creator → (block i).round = (block j).round → i = j
+/-- **Nemo's validity is mechanised.** -/
+instance ValidWrt.mechanised :
+    Validity.Mechanised (ValidWrt (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) where
+  pred := fun _ _ h => h.predecessor
+  reads := by
+    intro blk blk' ids b _ hb hagree h
+    refine ⟨?_, ?_⟩
+    · intro j hj; rw [hagree j (hb j hj)]; exact h.predecessor j hj
+    · intro hr
+      refine le_trans (h.quorum hr) (Finset.card_le_card ?_)
+      intro c hc
+      unfold creators creatorsOf at hc ⊢
+      obtain ⟨j, hj, hjc⟩ := Finset.mem_image.mp hc
+      exact Finset.mem_image.mpr ⟨j, hj, by rw [hagree j (hb j hj)]; exact hjc⟩
+  base := by
+    intro blk b h0 hr
+    refine ⟨?_, ?_⟩
+    · intro j hj; rw [hr] at hj; exact absurd hj (Finset.notMem_empty j)
+    · intro h; omega
+  chops := by
+    intro blk G b h hG
+    refine ⟨?_, ?_⟩
+    · intro j hj
+      have := h.predecessor j hj
+      change (chopBlk blk G j).round + 1 = b.round - G
+      rw [chopBlk_round]; omega
+    · intro hr
+      change majority Validator ≤ (creatorsOf (chopBlk blk G) b.refs).card
+      rw [creatorsOf_chopBlk]
+      exact h.quorum (by change 0 < b.round - G at hr; omega)
+
+/-- **And does not read the author**, so the copy fill is valid. -/
+instance ValidWrt.copyStable :
+    Validity.CopyStable (ValidWrt (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) where
+  copy := fun _ _ _ h => ⟨h.predecessor, h.quorum⟩
+
+/-- **Nemo's universe**: the block record at Nemo's validity, with
+non-equivocation asked of everyone — the crash model has no Byzantine
+validators. -/
+abbrev Universe (Validator BlockId Payload : Type*)
+    [Fintype Validator] [DecidableEq Validator] :=
+  BlockRecord Validator BlockId Payload ValidWrt (Finset.univ : Finset Validator)
 
 /-- A view: one validator's local, reference-closed sub-DAG. -/
-structure View (Validator BlockId Payload : Type*) [Fintype Validator]
-    [DecidableEq Validator] (U : Universe Validator BlockId Payload) where
-  /-- The ids this validator holds. -/
-  ids : Finset BlockId
-  /-- A view holds only blocks that exist. -/
-  subset_ids : ids ⊆ U.ids
-  /-- A view is closed under references. -/
-  complete : ∀ i ∈ ids, ∀ j ∈ (U.block i).refs, j ∈ ids
+abbrev View (Validator BlockId Payload : Type*) [Fintype Validator]
+    [DecidableEq Validator] (U : Universe Validator BlockId Payload) :=
+  BlockRecord.View U
 
 namespace Universe
 
@@ -115,7 +137,7 @@ correctness hypothesis (the crash simplification of the core's T1). -/
 theorem eq_of_creator_eq {i j : BlockId} (hi : i ∈ U.ids) (hj : j ∈ U.ids)
     (hc : (U.block i).creator = (U.block j).creator)
     (hround : (U.block i).round = (U.block j).round) : i = j :=
-  U.no_equivocation i hi j hj hc hround
+  U.no_equivocation i hi j hj (Finset.mem_univ _) hc hround
 
 /-- Completeness, as a subset statement. -/
 theorem refs_subset {i : BlockId} (hi : i ∈ U.ids) : (U.block i).refs ⊆ U.ids :=

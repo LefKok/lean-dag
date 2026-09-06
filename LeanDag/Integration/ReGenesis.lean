@@ -1,6 +1,7 @@
 import LeanDag.Integration.Retention
 import LeanDag.GC.Horizon
 import LeanDag.Properties.Compose
+import LeanDag.Record.Genesis
 import LeanDag.Properties.Arcs.GC
 
 /-!
@@ -55,62 +56,8 @@ a stranded validator is `severed_of_pruned_anchor`. -/
 def addGenesis (V : BlockUniverse Validator BlockId Payload) (v : Validator)
     (g : BlockId) (p : Payload) (hg : g ∉ V.ids)
     (hsev : ∀ b ∈ V.ids, (V.block b).creator ≠ v) :
-    BlockUniverse Validator BlockId Payload where
-  ids := insert g V.ids
-  block b := if b ∈ V.ids then V.block b else ⟨0, v, ∅, p⟩
-  complete := by
-    intro i hi j hj
-    rcases Finset.mem_insert.mp hi with rfl | ho
-    · -- the new block references nothing
-      rw [if_neg hg] at hj
-      exact absurd hj (Finset.notMem_empty j)
-    · rw [if_pos ho] at hj
-      exact Finset.mem_insert_of_mem (V.complete i ho j hj)
-  valid := by
-    intro i hi
-    rcases Finset.mem_insert.mp hi with rfl | ho
-    · -- round `0` with no references: every clause is vacuous
-      rw [if_neg hg]
-      refine ⟨?_, ?_, ?_, ?_⟩ <;>
-        first
-          | (intro j hj; exact absurd hj (Finset.notMem_empty j))
-          | (intro hr; exact absurd hr (by simp))
-    · rw [if_pos ho]
-      have hv := V.valid i ho
-      refine ⟨?_, ?_, ?_, ?_⟩
-      · intro j hj
-        rw [if_pos (V.complete i ho j hj)]
-        exact hv.predecessor j hj
-      · intro a ha b hb hab
-        rw [if_pos (V.complete i ho a ha), if_pos (V.complete i ho b hb)] at hab
-        exact hv.distinct_creators a ha b hb hab
-      · intro hr
-        refine le_trans (hv.quorum hr) (Finset.card_le_card ?_)
-        intro c hc
-        unfold creators creatorsOf at hc ⊢
-        obtain ⟨j, hj, hjc⟩ := Finset.mem_image.mp hc
-        refine Finset.mem_image.mpr ⟨j, hj, ?_⟩
-        simp only
-        rw [if_pos (V.complete i ho j hj)]
-        exact hjc
-      · intro hr
-        obtain ⟨j, hj, hjc⟩ := hv.self_parent hr
-        exact ⟨j, hj, by rw [if_pos (V.complete i ho j hj)]; exact hjc⟩
-  no_equivocation := by
-    intro i hi j hj hic hcc hrr
-    rcases Finset.mem_insert.mp hi with rfl | ho <;>
-      rcases Finset.mem_insert.mp hj with rfl | ho'
-    · rfl
-    · -- the new block against an old one: the old author cannot be `v`
-      rw [if_neg hg] at hcc
-      rw [if_pos ho'] at hcc
-      exact absurd hcc.symm (hsev j ho')
-    · rw [if_pos ho] at hcc
-      rw [if_neg hg] at hcc
-      exact absurd hcc (hsev i ho)
-    · rw [if_pos ho] at hic hcc hrr
-      rw [if_pos ho'] at hcc hrr
-      exact V.no_equivocation i ho j ho' hic hcc hrr
+    BlockUniverse Validator BlockId Payload :=
+  BlockRecord.addGenesis V v g p hg hsev
 
 variable {V : BlockUniverse Validator BlockId Payload} {v : Validator}
 variable {g : BlockId} {p : Payload}
@@ -146,10 +93,9 @@ variable {hg : g ∉ V.ids} {hsev : ∀ b ∈ V.ids, (V.block b).creator ≠ v}
 other, which is the whole of the safety side. -/
 theorem extends_addGenesis :
     Properties.Extends (MysticetiProperties.mysticetiRule (Payload := Payload))
-      V (addGenesis V v g p hg hsev) where
-  subset := fun b hb => Finset.mem_insert_of_mem hb
-  block := fun b hb =>
-    addGenesis_block_old (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev) hb
+      V (addGenesis V v g p hg hsev) :=
+  Properties.Arcs.coreOnRecord.extends_addGenesis (U := V) (v := v) (g := g) (p := p)
+    (hg := hg) (hsev := hsev)
 
 /-- **And it rebases from round one at no offset.** The block it adds
 sits at round zero, so at and above round one the two universes hold the
@@ -157,39 +103,10 @@ same blocks. Below that the relation says nothing, which is exactly
 where the mechanism does its work. -/
 theorem sustains_addGenesis :
     Properties.Sustains (MysticetiProperties.mysticetiRule (Payload := Payload))
-      V (addGenesis V v g p hg hsev) 0 1 where
-  mem := fun b => by
-    show (b ∈ V.ids ∧ 1 ≤ (V.block b).round) ↔
-      (b ∈ (addGenesis V v g p hg hsev).ids ∧
-        1 ≤ ((addGenesis V v g p hg hsev).block b).round + 0)
-    constructor
-    · rintro ⟨hb, hr⟩
-      exact ⟨Finset.mem_insert_of_mem hb, by
-        rw [addGenesis_block_old (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev) hb]
-        omega⟩
-    · rintro ⟨hb, hr⟩
-      rcases Finset.mem_insert.mp hb with rfl | ho
-      · rw [addGenesis_block_new (v := v) (p := p) (hg := hg) (hsev := hsev)] at hr
-        simp at hr
-      · refine ⟨ho, ?_⟩
-        rw [addGenesis_block_old (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev) ho] at hr
-        omega
-  round := fun b hb _ => by
-    show ((addGenesis V v g p hg hsev).block b).round + 0 = (V.block b).round
-    rw [addGenesis_block_old (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev) hb]
-    omega
-  creator := fun b hb _ => by
-    show ((addGenesis V v g p hg hsev).block b).creator = (V.block b).creator
-    rw [addGenesis_block_old (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev) hb]
-  refs := fun b hb _ => by
-    show ((addGenesis V v g p hg hsev).block b).refs = (V.block b).refs
-    rw [addGenesis_block_old (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev) hb]
+      V (addGenesis V v g p hg hsev) 0 1 :=
+  Properties.Arcs.coreOnRecord.sustains_addGenesis (U := V) (v := v) (g := g) (p := p)
+    (hg := hg) (hsev := hsev)
 
-/-- **Verdicts survive re-genesis.** The result this arc did not have:
-before the witnesses it said nothing about `Decided` at all, so a
-validator that rejoined had no guarantee that what it had already
-output still stood. One application of `Persist`, which is itself the
-band applied. -/
 theorem decided_addGenesis [S : Slots Validator]
     {W : View Validator BlockId Payload V}
     {W' : View Validator BlockId Payload (addGenesis V v g p hg hsev)}

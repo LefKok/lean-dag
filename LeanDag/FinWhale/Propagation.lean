@@ -68,12 +68,12 @@ theorem references_spCertificate {c l : BlockId}
   obtain ⟨q, hq, hqv⟩ := mem_creatorsOf.1 hv.1
   obtain ⟨b, hb, hbv, hbcert⟩ := hcertb v hv.2
   simp only [blocksAt, Finset.mem_filter] at hb
-  -- the parent and the certificate are one block, by `correct_single`
+  -- the parent and the certificate are one block, by `no_equivocation`
   have hqids : q ∈ D.ids := D.complete c hc q hq
   have hqround : (D.block q).round = (D.block l).round + 2 := by
     have := parent_round hc hq; omega
   have heq : q = b :=
-    D.correct_single q hqids b hb.1 (by rw [hqv]; exact hvc) (by rw [hqv, hbv])
+    D.no_equivocation q hqids b hb.1 (by rw [hqv]; exact hvc) (by rw [hqv, hbv])
       (by rw [hqround, hb.2])
   exact ⟨q, hq, heq ▸ hbcert⟩
 

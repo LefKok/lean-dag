@@ -375,7 +375,10 @@ mechanism relations (`Extends`, `Sustain`, `Truncate`, `Compose`), and
 `Arcs/` (`GC`, `SafeSkip`, `Liveness`, `Quality`, `Stack`, `Headline`).
 `Timed/Coverage.lean` — the timed model, and `Timed/Extension.lean` —
 coverage under an extension; `Adaptive/Joiner.lean` — the joiner
-across a cut. Each rule's conformance in
+across a cut. `BlockRecord.lean` and `Record/` — the block record every
+universe is, and the cut, fill and re-genesis built once at it;
+`Properties/Record.lean` — a carrier read as records, with every
+mechanism's witnesses. Each rule's conformance in
 its `*Properties.lean` or `Carrier.lean`; each rule's mechanism cells
 in `Integration/*Mechanisms.lean`, `Integration/ReGenesisRules.lean`
 and `Properties/Arcs/`.
@@ -2027,7 +2030,7 @@ The goal, restated in three parts:
    properties, automatically.
 
 **Where it stands** (2026-09-06; the sections below are the record of
-how it got here, and §11.13–§11.21 the last passes). Part 1 is four
+how it got here, and §11.13–§11.22 the last passes). Part 1 is four
 properties — `Banded`, `Agree`, `CommitsCandidate`, `Indirect` — and a
 `Support` with two laws, `Local` and `Commits` (§11.15, §11.16); the
 carrier carries the causal law itself, and synchrony is not a property
@@ -3753,6 +3756,58 @@ anchor (`Retention.lean`), the re-genesis block and its convergence
 (`Exposure.lean`, `DeliveryFill.lean`, `Margin.lean`,
 `CommonTarget.lean`), and Orcaella's carrier invariant
 (`Preservation.lean`).
+
+### 11.22 One block record for every rule
+
+Every universe type in the development had the same five fields —
+identifiers, a block map, closure, validity of each block against the
+rule's predicate, and one block per honest author per round — and every
+rule with its own record rebuilt the cut and the fill over them, about
+three hundred lines each. `BlockRecord Validator BlockId Payload P honest`
+is that shape once, parametrised by the validity predicate and the
+honest set. The core's `BlockUniverse` is it at `ValidWrt` and
+`Correct`, Nemo's `Universe` at its majority validity and `Finset.univ`,
+FinWhale's `Dag` at `ValidHere` and `Correct`, all three as abbreviations,
+so that the arcs' proofs are unchanged. Hydrozoan's universe keeps its
+own block type and is a record through the adapter,
+`Hydrozoan/Helpers/Record.lean`, at its validity read through the
+adapter and `NonByzantine`.
+
+**What a predicate owes** is `Validity.Mechanised`: references sit one
+round below (`pred`), validity reads only referenced blocks (`reads`), a
+reference-free round-zero block is valid (`base`), and validity survives
+the cut strictly above the horizon (`chops`). `Validity.CopyStable`, that
+the author is not read, is what the copy fill needs. Each of the four
+predicates proves them in ten to fifty lines.
+
+**The constructions** are `BlockRecord.chop`, `BlockRecord.fill` under
+a reading of the filled blocks (`SkipData.Blocks`: the self-referencing
+reading `selfBlocks` and the copy reading `copyBlocks`), `copyFill`
+with the copy reading's validity discharged from `CopyStable`,
+`addGenesis`, and the view lifts. The core's `chop`, `skipFill` and
+`addGenesis` are these at the core's record, the fill under the
+self-referencing reading with `fillBlock_valid` as its one obligation;
+`chopBlk` moves to `BlockRecord.lean` and `SkipData` to
+`SafeSkip/Data.lean`.
+
+**The witnesses** are proved once in `Properties/Record.lean`.
+`DagRule.OnRecord` reads a carrier's universes as records, two maps with
+the carrier's ids and block map agreeing with the record's, and at any
+such carrier `truncates_chop`, `sustains_chop`, `extends_fill`,
+`sustains_fill`, `extends_copyFill`, `sustains_copyFill`,
+`extends_addGenesis` and `sustains_addGenesis` hold. The core, Nemo and
+FinWhale have the identity maps (`coreOnRecord`, `nemoOnRecord`,
+`finWhaleOnRecord`); Hydrozoan has `toRecord` and `ofRecord`
+(`Hydrozoan.onRecord`). A rule's mechanism cell is now one line per
+construction and one per witness; Orcaella and Optimal-Hydrozoan, which
+take a neighbour's construction under one further invariant, are
+unchanged.
+
+The three per-rule mechanism files lose about eight hundred lines
+between them and keep every lemma name, so their consumers are
+untouched. FinWhale's `correct_single` is renamed `no_equivocation`,
+the record's name for the clause; Minnow, which has no carrier, keeps
+its own `Dag`.
 
 ### 11.5 Next steps, in order
 

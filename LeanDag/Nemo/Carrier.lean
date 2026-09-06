@@ -92,7 +92,7 @@ non-equivocation, at any of its reliability records. -/
 theorem noEquiv (hn : 0 < Fintype.card Validator) :
     NoEquiv (nemoRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
       (nemoReliability Validator hn) :=
-  fun U b c hb hc _ heq hr => U.no_equivocation b hb c hc heq hr
+  fun U b c hb hc _ heq hr => U.no_equivocation b hb c hc (Finset.mem_univ _) heq hr
 
 /-- **Two views decide alike.** Nemo's `decided_unique` under the
 property's name. -/

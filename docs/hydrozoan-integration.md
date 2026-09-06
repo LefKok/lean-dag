@@ -121,14 +121,16 @@ and a proof file. The decisions they embody:
 
 ## 4. The mechanisms
 
-`Integration/HydrozoanMechanisms.lean` builds Hydrozoan's cut and fill
-on the shared data, as Nemo and FinWhale do. The cut `chopHZ` rebases
-rounds by the horizon and drops the parents at or below it
-(`chopBlkHZ`), discharging completeness, validity and non-equivocation
-on the block record; `truncates_chop_hz` is its witness. The fill
-`copyFillHZ` is `SkipData.copyBlock` at Hydrozoan's block type — one
-block per gap round by the recovering replica, carrying the donor's
-parents — with `extends_copyFillHZ` and `sustains_copyFillHZ`. The
+`Integration/HydrozoanMechanisms.lean` takes Hydrozoan's cut and fill
+from the block record. `Hydrozoan/Helpers/Record.lean` reads a
+Hydrozoan universe as a record through the adapter between its block
+type and the shared one (`adaptBlock`, `unadapt`), at Hydrozoan's
+validity read through the adapter and with non-equivocation asked of
+the non-Byzantine replicas; that validity is `Mechanised` and
+`CopyStable`, and the carrier's `onRecord` is the pair of maps with
+every equation `rfl`. The cut `chopHZ` and the copy fill `copyFillHZ`
+are then the record's, with `truncates_chop_hz`, `extends_copyFillHZ`
+and `sustains_copyFillHZ` the generic witnesses at `onRecord`. The
 verdict cells are then `LocalTruncate.of_banded` and `Persist.of_banded`
 at `banded`, with agreement from `agree`: `decided_chop_iff_hz`,
 `decided_agree_chop_hz`, `decided_copyFillHZ`, `decided_agree_copyFillHZ`.

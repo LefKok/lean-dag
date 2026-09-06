@@ -151,7 +151,7 @@ def urecover : SkipMsg Uregen :=
     (by intro k hk1 hk2; interval_cases k <;> decide)
     (by
       intro k
-      simp only [Uregen, addGenesis, Finset.mem_insert]
+      simp only [Uregen, addGenesis, BlockRecord.addGenesis_ids, Finset.mem_insert]
       push Not
       refine ⟨by omega, ?_⟩
       intro hc

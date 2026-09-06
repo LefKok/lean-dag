@@ -7,6 +7,7 @@ import LeanDag.OdontocetiProperties
 import LeanDag.MahiMahiProperties
 import LeanDag.OptimalHydrozoan.Carrier
 import LeanDag.Properties.Arcs.Liveness
+import LeanDag.Hydrozoan.Helpers.Record
 
 /-!
 # Re-genesis, for every rule with a carrier
@@ -194,49 +195,8 @@ non-equivocation is kept because the author has no other block. -/
 def addGenesisNemo (U : Nemo.Universe Validator BlockId Payload) (v : Validator)
     (g : BlockId) (p : Payload) (hg : g ∉ U.ids)
     (hsev : ∀ b ∈ U.ids, (U.block b).creator ≠ v) :
-    Nemo.Universe Validator BlockId Payload where
-  ids := insert g U.ids
-  block b := if b ∈ U.ids then U.block b else ⟨0, v, ∅, p⟩
-  complete := by
-    intro i hi j hj
-    rcases Finset.mem_insert.mp hi with rfl | ho
-    · rw [if_neg hg] at hj
-      exact absurd hj (Finset.notMem_empty j)
-    · rw [if_pos ho] at hj
-      exact Finset.mem_insert_of_mem (U.complete i ho j hj)
-  valid := by
-    intro i hi
-    rcases Finset.mem_insert.mp hi with rfl | ho
-    · rw [if_neg hg]
-      refine ⟨?_, ?_⟩
-      · intro j hj; exact absurd hj (Finset.notMem_empty j)
-      · intro hr; exact absurd hr (by simp)
-    · rw [if_pos ho]
-      have hv := U.valid i ho
-      refine ⟨?_, ?_⟩
-      · intro j hj
-        rw [if_pos (U.complete i ho j hj)]
-        exact hv.predecessor j hj
-      · intro hr
-        refine le_trans (hv.quorum hr) (Finset.card_le_card ?_)
-        intro c hc
-        unfold creators creatorsOf at hc ⊢
-        obtain ⟨j, hj, hjc⟩ := Finset.mem_image.mp hc
-        refine Finset.mem_image.mpr ⟨j, hj, ?_⟩
-        simp only
-        rw [if_pos (U.complete i ho j hj)]
-        exact hjc
-  no_equivocation := by
-    intro i hi j hj hcc hrr
-    rcases Finset.mem_insert.mp hi with rfl | ho <;>
-      rcases Finset.mem_insert.mp hj with rfl | ho'
-    · rfl
-    · rw [if_neg hg, if_pos ho'] at hcc
-      exact absurd hcc.symm (hsev j ho')
-    · rw [if_pos ho, if_neg hg] at hcc
-      exact absurd hcc (hsev i ho)
-    · rw [if_pos ho, if_pos ho'] at hcc hrr
-      exact U.no_equivocation i ho j ho' hcc hrr
+    Nemo.Universe Validator BlockId Payload :=
+  BlockRecord.addGenesis U v g p hg hsev
 
 variable {U : Nemo.Universe Validator BlockId Payload} {v : Validator} {g : BlockId} {p : Payload}
 variable {hg : g ∉ U.ids} {hsev : ∀ b ∈ U.ids, (U.block b).creator ≠ v}
@@ -249,37 +209,15 @@ variable {hg : g ∉ U.ids} {hsev : ∀ b ∈ U.ids, (U.block b).creator ≠ v}
 
 theorem extends_addGenesis_nemo :
     Extends (NemoProperties.nemoRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload)) U (addGenesisNemo U v g p hg hsev) where
-  subset := fun _ hb => Finset.mem_insert_of_mem hb
-  block := fun b hb =>
-    addGenesisNemo_block_old (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev) hb
+      (Payload := Payload)) U (addGenesisNemo U v g p hg hsev) :=
+  nemoOnRecord.extends_addGenesis (U := U) (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev)
 
+/-- **And it sustains Nemo's carrier from round one.** -/
 theorem sustains_addGenesis_nemo :
     Sustains (NemoProperties.nemoRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload)) U (addGenesisNemo U v g p hg hsev) 0 1 where
-  mem := fun b => by
-    show (b ∈ U.ids ∧ 1 ≤ (U.block b).round) ↔
-      (b ∈ (addGenesisNemo U v g p hg hsev).ids ∧
-        1 ≤ ((addGenesisNemo U v g p hg hsev).block b).round + 0)
-    constructor
-    · rintro ⟨hb, hr⟩
-      exact ⟨Finset.mem_insert_of_mem hb, by rw [addGenesisNemo_block_old hb]; omega⟩
-    · rintro ⟨hb, hr⟩
-      rcases Finset.mem_insert.mp hb with rfl | ho
-      · rw [addGenesisNemo_block_new] at hr
-        simp at hr
-      · exact ⟨ho, by rw [addGenesisNemo_block_old ho] at hr; omega⟩
-  round := fun b hb _ => by
-    show ((addGenesisNemo U v g p hg hsev).block b).round + 0 = (U.block b).round
-    rw [addGenesisNemo_block_old hb]; omega
-  creator := fun b hb _ => by
-    show ((addGenesisNemo U v g p hg hsev).block b).creator = (U.block b).creator
-    rw [addGenesisNemo_block_old hb]
-  refs := fun b hb _ => by
-    show ((addGenesisNemo U v g p hg hsev).block b).refs = (U.block b).refs
-    rw [addGenesisNemo_block_old hb]
+      (Payload := Payload)) U (addGenesisNemo U v g p hg hsev) 0 1 :=
+  nemoOnRecord.sustains_addGenesis (U := U) (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev)
 
-/-- **Verdicts survive re-genesis, for Nemo.** -/
 theorem decided_addGenesis_nemo [S : Slots Validator] {V : Nemo.View Validator BlockId Payload U}
     {V' : Nemo.View Validator BlockId Payload (addGenesisNemo U v g p hg hsev)}
     (hsub : V.ids ⊆ V'.ids) {k : ℕ} {u : Option BlockId} (h : Nemo.Decided (S := S) U V k u) :
@@ -312,67 +250,8 @@ with no parents is vacuous — the leader clause by its second disjunct —
 and non-equivocation is kept because the author has no other block. -/
 def addGenesisFinWhale (D : Dag Validator B Payload) (v : Validator) (g : B) (p : Payload)
     (hg : g ∉ D.ids) (hsev : ∀ b ∈ D.ids, (D.block b).creator ≠ v) :
-    Dag Validator B Payload where
-  ids := insert g D.ids
-  block b := if b ∈ D.ids then D.block b else ⟨0, v, ∅, p⟩
-  complete := by
-    intro i hi j hj
-    rcases Finset.mem_insert.mp hi with rfl | ho
-    · rw [if_neg hg] at hj
-      exact absurd hj (Finset.notMem_empty j)
-    · rw [if_pos ho] at hj
-      exact Finset.mem_insert_of_mem (D.complete i ho j hj)
-  valid := by
-    intro i hi
-    rcases Finset.mem_insert.mp hi with rfl | ho
-    · rw [if_neg hg]
-      refine ⟨?_, ?_, ?_, ?_⟩
-      · intro j hj; exact absurd hj (Finset.notMem_empty j)
-      · intro a ha; exact absurd ha (Finset.notMem_empty a)
-      · intro hr; exact absurd hr (by simp)
-      · intro _; exact Or.inr (fun a ha => absurd ha (Finset.notMem_empty a))
-    · rw [if_pos ho]
-      have hv := D.valid i ho
-      refine ⟨?_, ?_, ?_, ?_⟩
-      · intro j hj
-        rw [if_pos (D.complete i ho j hj)]
-        exact hv.predecessor j hj
-      · intro a ha b hb hab
-        rw [if_pos (D.complete i ho a ha), if_pos (D.complete i ho b hb)] at hab
-        exact hv.distinct_creators a ha b hb hab
-      · intro hr
-        refine le_trans (hv.quorum hr) (Finset.card_le_card ?_)
-        intro c hc
-        unfold creators creatorsOf at hc ⊢
-        obtain ⟨j, hj, hjc⟩ := Finset.mem_image.mp hc
-        refine Finset.mem_image.mpr ⟨j, hj, ?_⟩
-        simp only
-        rw [if_pos (D.complete i ho j hj)]
-        exact hjc
-      · intro u
-        rcases hv.leader_clause u with hl | hr
-        · refine Or.inl ?_
-          intro a ha b hb x hx y hy hxv hyv
-          rw [if_pos (D.complete i ho a ha)] at hx
-          rw [if_pos (D.complete i ho b hb)] at hy
-          rw [if_pos (D.complete _ (D.complete i ho a ha) x hx)] at hxv
-          rw [if_pos (D.complete _ (D.complete i ho b hb) y hy)] at hyv
-          exact hl a ha b hb x hx y hy hxv hyv
-        · refine Or.inr ?_
-          intro a ha
-          rw [if_pos (D.complete i ho a ha)]
-          exact hr a ha
-  correct_single := by
-    intro i hi j hj _ hcc hrr
-    rcases Finset.mem_insert.mp hi with rfl | ho <;>
-      rcases Finset.mem_insert.mp hj with rfl | ho'
-    · rfl
-    · rw [if_neg hg, if_pos ho'] at hcc
-      exact absurd hcc.symm (hsev j ho')
-    · rw [if_pos ho, if_neg hg] at hcc
-      exact absurd hcc (hsev i ho)
-    · rw [if_pos ho, if_pos ho'] at hcc hrr
-      exact D.correct_single i ho j ho' (by rwa [if_pos ho] at *) hcc hrr
+    Dag Validator B Payload :=
+  BlockRecord.addGenesis D v g p hg hsev
 
 variable {D : Dag Validator B Payload} {v : Validator} {g : B} {p : Payload}
 variable {hg : g ∉ D.ids} {hsev : ∀ b ∈ D.ids, (D.block b).creator ≠ v}
@@ -385,37 +264,15 @@ variable {hg : g ∉ D.ids} {hsev : ∀ b ∈ D.ids, (D.block b).creator ≠ v}
 
 theorem extends_addGenesis_finwhale :
     Extends (FinWhaleProperties.finWhaleRule (Validator := Validator) (BlockId := B)
-      (Payload := Payload)) D (addGenesisFinWhale D v g p hg hsev) where
-  subset := fun _ hb => Finset.mem_insert_of_mem hb
-  block := fun b hb =>
-    addGenesisFinWhale_block_old (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev) hb
+      (Payload := Payload)) D (addGenesisFinWhale D v g p hg hsev) :=
+  finWhaleOnRecord.extends_addGenesis (U := D) (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev)
 
+/-- **And it sustains FinWhale's carrier from round one.** -/
 theorem sustains_addGenesis_finwhale :
     Sustains (FinWhaleProperties.finWhaleRule (Validator := Validator) (BlockId := B)
-      (Payload := Payload)) D (addGenesisFinWhale D v g p hg hsev) 0 1 where
-  mem := fun b => by
-    show (b ∈ D.ids ∧ 1 ≤ (D.block b).round) ↔
-      (b ∈ (addGenesisFinWhale D v g p hg hsev).ids ∧
-        1 ≤ ((addGenesisFinWhale D v g p hg hsev).block b).round + 0)
-    constructor
-    · rintro ⟨hb, hr⟩
-      exact ⟨Finset.mem_insert_of_mem hb, by rw [addGenesisFinWhale_block_old hb]; omega⟩
-    · rintro ⟨hb, hr⟩
-      rcases Finset.mem_insert.mp hb with rfl | ho
-      · rw [addGenesisFinWhale_block_new] at hr
-        simp at hr
-      · exact ⟨ho, by rw [addGenesisFinWhale_block_old ho] at hr; omega⟩
-  round := fun b hb _ => by
-    show ((addGenesisFinWhale D v g p hg hsev).block b).round + 0 = (D.block b).round
-    rw [addGenesisFinWhale_block_old hb]; omega
-  creator := fun b hb _ => by
-    show ((addGenesisFinWhale D v g p hg hsev).block b).creator = (D.block b).creator
-    rw [addGenesisFinWhale_block_old hb]
-  refs := fun b hb _ => by
-    show ((addGenesisFinWhale D v g p hg hsev).block b).refs = (D.block b).refs
-    rw [addGenesisFinWhale_block_old hb]
+      (Payload := Payload)) D (addGenesisFinWhale D v g p hg hsev) 0 1 :=
+  finWhaleOnRecord.sustains_addGenesis (U := D) (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev)
 
-/-- **Verdicts survive re-genesis, for FinWhale.** -/
 theorem decided_addGenesis_finwhale [S : Slots Validator]
     {V : {V : Finset B // IsView D V}}
     {V' : {V' : Finset B // IsView (addGenesisFinWhale D v g p hg hsev) V'}}
@@ -447,98 +304,35 @@ variable [LeanDag.Hydrozoan.Faults Replica]
 /-- **Re-genesis, at Hydrozoan's universe.** -/
 def addGenesisHZ (U : LeanDag.Hydrozoan.BlockUniverse Replica B) (v : Replica) (g : B)
     (hg : g ∉ U.ids) (hsev : ∀ b ∈ U.ids, (U.block b).author ≠ v) :
-    LeanDag.Hydrozoan.BlockUniverse Replica B where
-  ids := insert g U.ids
-  block b := if b ∈ U.ids then U.block b else ⟨0, v, ∅⟩
-  complete := by
-    intro i hi j hj
-    rcases Finset.mem_insert.mp hi with rfl | ho
-    · rw [if_neg hg] at hj
-      exact absurd hj (Finset.notMem_empty j)
-    · rw [if_pos ho] at hj
-      exact Finset.mem_insert_of_mem (U.complete i ho j hj)
-  valid := by
-    intro i hi
-    rcases Finset.mem_insert.mp hi with rfl | ho
-    · rw [if_neg hg]
-      refine ⟨?_, ?_, ?_⟩
-      · intro j hj; exact absurd hj (Finset.notMem_empty j)
-      · intro a ha; exact absurd ha (Finset.notMem_empty a)
-      · intro hr; exact absurd hr (by simp)
-    · rw [if_pos ho]
-      have hv := U.valid i ho
-      refine ⟨?_, ?_, ?_⟩
-      · intro j hj
-        rw [if_pos (U.complete i ho j hj)]
-        exact hv.predecessor j hj
-      · intro a ha b hb hab
-        rw [if_pos (U.complete i ho a ha), if_pos (U.complete i ho b hb)] at hab
-        exact hv.distinct_authors a ha b hb hab
-      · intro hr
-        refine le_trans (hv.quorum hr) (Finset.card_le_card ?_)
-        intro c hc
-        unfold LeanDag.Hydrozoan.authors LeanDag.Hydrozoan.authorsOf at hc ⊢
-        obtain ⟨j, hj, hjc⟩ := Finset.mem_image.mp hc
-        refine Finset.mem_image.mpr ⟨j, hj, ?_⟩
-        simp only
-        rw [if_pos (U.complete i ho j hj)]
-        exact hjc
-  no_equivocation := by
-    intro i hi j hj hib hcc hrr
-    rcases Finset.mem_insert.mp hi with rfl | ho <;>
-      rcases Finset.mem_insert.mp hj with rfl | ho'
-    · rfl
-    · rw [if_neg hg, if_pos ho'] at hcc
-      exact absurd hcc.symm (hsev j ho')
-    · rw [if_pos ho, if_neg hg] at hcc
-      exact absurd hcc (hsev i ho)
-    · rw [if_pos ho, if_pos ho'] at hcc hrr
-      rw [if_pos ho] at hib
-      exact U.no_equivocation i ho j ho' hib hcc hrr
+    LeanDag.Hydrozoan.BlockUniverse Replica B :=
+  LeanDag.Hydrozoan.onRecord.addGenesis U v g () hg hsev
 
 variable {U : LeanDag.Hydrozoan.BlockUniverse Replica B} {v : Replica} {g : B}
 variable {hg : g ∉ U.ids} {hsev : ∀ b ∈ U.ids, (U.block b).author ≠ v}
 
 @[simp] theorem addGenesisHZ_block_old {b : B} (hb : b ∈ U.ids) :
-    (addGenesisHZ U v g hg hsev).block b = U.block b := if_pos hb
+    (addGenesisHZ U v g hg hsev).block b = U.block b := by
+  change LeanDag.Hydrozoan.unadapt (if b ∈ U.ids then _ else _) = U.block b
+  rw [if_pos hb]; rfl
 
 @[simp] theorem addGenesisHZ_block_new :
-    (addGenesisHZ U v g hg hsev).block g = ⟨0, v, ∅⟩ := if_neg hg
+    (addGenesisHZ U v g hg hsev).block g = ⟨0, v, ∅⟩ := by
+  change LeanDag.Hydrozoan.unadapt (if g ∈ U.ids then _ else _) = _
+  rw [if_neg hg]; rfl
 
 theorem extends_addGenesisHZ :
     Extends (LeanDag.Hydrozoan.rule (Replica := Replica) (BlockId := B))
-      U (addGenesisHZ U v g hg hsev) where
-  subset := fun _ hb => Finset.mem_insert_of_mem hb
-  block := fun b hb => by
-    show LeanDag.Hydrozoan.adaptBlock ((addGenesisHZ U v g hg hsev).block b) =
-      LeanDag.Hydrozoan.adaptBlock (U.block b)
-    rw [addGenesisHZ_block_old hb]
+      U (addGenesisHZ U v g hg hsev) :=
+  LeanDag.Hydrozoan.onRecord.extends_addGenesis (U := U) (v := v) (g := g) (p := ())
+    (hg := hg) (hsev := hsev)
 
+/-- **And it sustains Hydrozoan's carrier from round one.** -/
 theorem sustains_addGenesisHZ :
     Sustains (LeanDag.Hydrozoan.rule (Replica := Replica) (BlockId := B))
-      U (addGenesisHZ U v g hg hsev) 0 1 where
-  mem := fun b => by
-    show (b ∈ U.ids ∧ 1 ≤ (U.block b).round) ↔
-      (b ∈ (addGenesisHZ U v g hg hsev).ids ∧ 1 ≤ ((addGenesisHZ U v g hg hsev).block b).round + 0)
-    constructor
-    · rintro ⟨hb, hr⟩
-      exact ⟨Finset.mem_insert_of_mem hb, by rw [addGenesisHZ_block_old hb]; omega⟩
-    · rintro ⟨hb, hr⟩
-      rcases Finset.mem_insert.mp hb with rfl | ho
-      · rw [addGenesisHZ_block_new] at hr
-        simp at hr
-      · exact ⟨ho, by rw [addGenesisHZ_block_old ho] at hr; omega⟩
-  round := fun b hb _ => by
-    show ((addGenesisHZ U v g hg hsev).block b).round + 0 = (U.block b).round
-    rw [addGenesisHZ_block_old hb]; omega
-  creator := fun b hb _ => by
-    show ((addGenesisHZ U v g hg hsev).block b).author = (U.block b).author
-    rw [addGenesisHZ_block_old hb]
-  refs := fun b hb _ => by
-    show ((addGenesisHZ U v g hg hsev).block b).parents = (U.block b).parents
-    rw [addGenesisHZ_block_old hb]
+      U (addGenesisHZ U v g hg hsev) 0 1 :=
+  LeanDag.Hydrozoan.onRecord.sustains_addGenesis (U := U) (v := v) (g := g) (p := ())
+    (hg := hg) (hsev := hsev)
 
-/-- **Verdicts survive re-genesis, for Hydrozoan.** -/
 theorem decided_addGenesisHZ (S : Slots Replica) {V : LeanDag.Hydrozoan.View U}
     {V' : LeanDag.Hydrozoan.View (addGenesisHZ U v g hg hsev)} (hsub : V.ids ⊆ V'.ids)
     {k : ℕ} {u : Option B}

@@ -1,4 +1,5 @@
 import LeanDag.Mysticeti
+import LeanDag.Record.Chop
 import LeanDag.DoS.Exposure
 
 /-!
@@ -28,55 +29,7 @@ forgiven — and the witness file makes that visible on data.
 
 namespace LeanDag
 
-/-! ## The operator, over raw block data
-
-The *data* of a cut is the same for every rule in this development, and
-only the invariants a universe carries differ, so the block-level
-operator is stated over a bare assignment and no fault model. Nemo and
-FinWhale keep their own universe records and take it unchanged. -/
-
-section Data
-
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
-variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
-variable {G : ℕ} {i : BlockId} {blk : BlockId → Block Validator BlockId Payload}
-
-/-- One block of the truncation, over the raw block assignment: the round
-is rebased by `−G`, and blocks at or below the cut — the new base layer,
-plus junk — lose their references.
-
-Stated over `blk` rather than over a universe because the *data* of a
-cut is the same for every rule in this development, and only the
-invariants a universe carries differ. Nemo and FinWhale keep their own
-universe records and take this unchanged
-(`docs/target-properties.md` §11.4). -/
-def chopBlk (blk : BlockId → Block Validator BlockId Payload) (G : ℕ)
-    (i : BlockId) : Block Validator BlockId Payload :=
-  if (blk i).round ≤ G then
-    { blk i with round := (blk i).round - G, refs := ∅ }
-  else
-    { blk i with round := (blk i).round - G }
-
-@[simp] theorem chopBlk_creator :
-    (chopBlk blk G i).creator = (blk i).creator := by unfold chopBlk; split <;> rfl
-
-@[simp] theorem chopBlk_round :
-    (chopBlk blk G i).round = (blk i).round - G := by unfold chopBlk; split <;> rfl
-
-theorem chopBlk_refs_of_le
-    (h : (blk i).round ≤ G) : (chopBlk blk G i).refs = ∅ := by
-  unfold chopBlk; rw [if_pos h]
-
-theorem chopBlk_refs_of_lt
-    (h : G < (blk i).round) : (chopBlk blk G i).refs = (blk i).refs := by
-  unfold chopBlk; rw [if_neg (by omega)]
-
-/-- Creators are untouched, so creator sets are, pointwise. -/
-theorem creatorsOf_chopBlk (s : Finset BlockId) :
-    creatorsOf (chopBlk blk G) s = creatorsOf blk s :=
-  Finset.image_congr fun i _ => chopBlk_creator
-
-end Data
+/-! The block-level operator `chopBlk` is `BlockRecord.lean`'s. -/
 
 variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator]
@@ -129,79 +82,15 @@ theorem creatorsOf_chopBlock (s : Finset BlockId) :
     creatorsOf (chopBlock U G) s = creatorsOf U.block s :=
   creatorsOf_chopBlk s
 
-/-- **The horizon** (`garbage.md` §2): the universe above the cut, rounds
-rebased, the round-`G` layer as the new geneses. -/
+/-- **The cut**: the block record's, at the core. -/
 def chop (U : BlockUniverse Validator BlockId Payload) (G : ℕ) :
-    BlockUniverse Validator BlockId Payload where
-  ids := U.ids.filter fun i => G ≤ (U.block i).round
-  block := chopBlock U G
-  complete := by
-    intro i hi j hj
-    rw [Finset.mem_filter] at hi
-    rcases Nat.lt_or_ge G (U.block i).round with h | h
-    · rw [chopBlock_refs_of_lt h] at hj
-      have hj_ids := U.complete i hi.1 j hj
-      have hj_round := U.round_of_mem_refs hi.1 hj
-      exact Finset.mem_filter.mpr ⟨hj_ids, by omega⟩
-    · rw [chopBlock_refs_of_le h] at hj
-      exact absurd hj (Finset.notMem_empty j)
-  valid := by
-    intro i hi
-    rw [Finset.mem_filter] at hi
-    have hv := U.valid i hi.1
-    rcases Nat.lt_or_ge G (U.block i).round with h | h
-    swap
-    · -- the new base layer (and junk): no references, nothing to prove
-      refine ⟨?_, ?_, ?_, ?_⟩ <;>
-        first
-          | (intro j hj
-             rw [chopBlock_refs_of_le h] at hj
-             exact absurd hj (Finset.notMem_empty j))
-          | (intro hr
-             rw [chopBlock_round] at hr
-             omega)
-    · refine ⟨?_, ?_, ?_, ?_⟩
-      · -- predecessor, rebased
-        intro j hj
-        rw [chopBlock_refs_of_lt h] at hj
-        have := hv.predecessor j hj
-        rw [chopBlock_round, chopBlock_round]
-        omega
-      · -- distinct creators, untouched
-        intro a ha b hb hab
-        rw [chopBlock_refs_of_lt h] at ha hb
-        rw [chopBlock_creator, chopBlock_creator] at hab
-        exact hv.distinct_creators a ha b hb hab
-      · -- quorum, untouched
-        intro _
-        have hcr : creators (chopBlock U G) (chopBlock U G i) =
-            creators U.block (U.block i) := by
-          unfold creators
-          rw [chopBlock_refs_of_lt h, creatorsOf_chopBlock]
-        rw [hcr]
-        exact hv.quorum (by omega)
-      · -- self-parent, untouched
-        intro _
-        obtain ⟨p, hp, hpc⟩ := hv.self_parent (by omega)
-        refine ⟨p, ?_, ?_⟩
-        · rw [chopBlock_refs_of_lt h]; exact hp
-        · rw [chopBlock_creator, chopBlock_creator]; exact hpc
-  no_equivocation := by
-    intro i hi j hj hic hcreator hround
-    rw [Finset.mem_filter] at hi hj
-    rw [chopBlock_creator] at hic hcreator
-    rw [chopBlock_creator] at hcreator
-    rw [chopBlock_round, chopBlock_round] at hround
-    exact U.no_equivocation i hi.1 j hj.1 hic hcreator (by omega)
+    BlockUniverse Validator BlockId Payload :=
+  BlockRecord.chop U G
 
-/-- The truncated universe holds exactly the blocks at or above the cut. -/
-@[simp]
 theorem mem_chop_ids :
     i ∈ (chop U G).ids ↔ i ∈ U.ids ∧ G ≤ (U.block i).round :=
-  Finset.mem_filter
+  BlockRecord.mem_chop_ids
 
-/-- The truncated universe looks blocks up through `chopBlock`. -/
-@[simp]
 theorem chop_block_eq : (chop U G).block = chopBlock U G := rfl
 
 /-! ## Transfer lemmas: rounds, layers, reachability, cones -/

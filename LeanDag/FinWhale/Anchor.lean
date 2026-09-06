@@ -190,7 +190,7 @@ theorem no_indirectCommit_of_spCommit {A : BlockId} {r : ℕ} {b b' : BlockId}
     obtain ⟨c₂, hc₂, -, hc₂v, hc₂fp⟩ := hevb v hv.2
     simp only [blocksAt, Finset.mem_filter] at hc₁ hc₂
     have heq : c₁ = c₂ :=
-      D.correct_single c₁ hc₁.1 c₂ hc₂.1 (by rw [hc₁v]; exact hvc) (by rw [hc₁v, hc₂v])
+      D.no_equivocation c₁ hc₁.1 c₂ hc₂.1 (by rw [hc₁v]; exact hvc) (by rw [hc₁v, hc₂v])
         (by rw [hc₁.2, hc₂.2, hbround])
     exact not_fpEvidence_of_spCertificate hb hb' hconf hc₁cert (heq ▸ hc₂fp)
 

@@ -1137,23 +1137,23 @@ theorem coreSupport_ofCoverage :
     have h2 := hq.2
     change Fintype.card Validator - Faults.f Validator ≤ T.card at h2
     exact h2
-  have hcr' : (BlockUniverse.block U c).round = r + 2 := hcr
-  have hcc' : (BlockUniverse.block U c).creator ∈ T := hcc
-  have hLr' : (BlockUniverse.block U L).round = r := hLr
-  have hLc' : (BlockUniverse.block U L).creator ∈ T := hLc
+  have hcr' : (BlockRecord.block U c).round = r + 2 := hcr
+  have hcc' : (BlockRecord.block U c).creator ∈ T := hcc
+  have hLr' : (BlockRecord.block U L).round = r := hLr
+  have hLc' : (BlockRecord.block U L).creator ∈ T := hLc
   change quorumCard Validator ≤ (creatorsOf U.block (votesIn U c L)).card
   refine le_trans hcard (Finset.card_le_card ?_)
   intro v hv
   obtain ⟨q, hq', hqc, hqr⟩ := hpop (r + 1) (by omega) (by change r + 1 ≤ r + 2; omega) v hv
-  have hqc' : (BlockUniverse.block U q).creator = v := hqc
-  have hqr' : (BlockUniverse.block U q).round = r + 1 := hqr
-  have hqT : (BlockUniverse.block U q).creator ∈ T := by rw [hqc']; exact hv
-  have hvote : L ∈ (BlockUniverse.block U q).refs :=
+  have hqc' : (BlockRecord.block U q).creator = v := hqc
+  have hqr' : (BlockRecord.block U q).round = r + 1 := hqr
+  have hqT : (BlockRecord.block U q).creator ∈ T := by rw [hqc']; exact hv
+  have hvote : L ∈ (BlockRecord.block U q).refs :=
     hct r le_rfl (by change r < r + 2; omega) q hq' hqT hqr' L hL hLc' hLr'
       Relation.ReflTransGen.refl
-  have hpar : q ∈ (BlockUniverse.block U c).refs :=
+  have hpar : q ∈ (BlockRecord.block U c).refs :=
     hct (r + 1) (by omega) (by change r + 1 < r + 2; omega) c hc hcc'
-      (by change (BlockUniverse.block U c).round = r + 1 + 1; rw [hcr']) q hq' hqT hqr'
+      (by change (BlockRecord.block U c).round = r + 1 + 1; rw [hcr']) q hq' hqT hqr'
       (Relation.ReflTransGen.single hvote)
   rw [mem_creatorsOf]
   exact ⟨q, Finset.mem_filter.mpr ⟨hpar, hvote⟩, hqc'⟩

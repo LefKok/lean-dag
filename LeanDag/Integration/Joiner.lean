@@ -33,21 +33,11 @@ variable [S : Slots Validator] {G d : ℕ}
 /-! ## The schedule transformers commute -/
 
 omit F in
-/-- The cut rebases the schedule. A schedule fact with no universe in it. -/
-theorem rebases_chop (hd : G ≤ S.slotRound d) : Rebases S (S.chop G d hd) G d where
-  slotRound := fun k => by
-    simp only [Slots.chop_slotRound]
-    have := horizon_le_slotRound hd k
-    omega
-  leader := fun _ => rfl
-  base := hd
-
-omit F in
 /-- Truncation preserves one-leader-per-round. -/
 theorem injective_slotRound_chop (hd : G ≤ S.slotRound d)
     (hinj : Function.Injective S.slotRound) :
     Function.Injective (S.chop G d hd).slotRound :=
-  (rebases_chop hd).injective hinj
+  (Properties.rebases_chop hd).injective hinj
 
 omit F in
 /-- **The transformers commute**, field by field: truncating an adaptive

@@ -97,7 +97,7 @@ def Dag.ofDoSValid (U : BlockUniverse Validator BlockId Payload) (leader : ℕ �
       distinct_creators := (U.valid i hi).distinct_creators
       quorum := (U.valid i hi).quorum
       leader_clause := leaderClause_of_dosValid hdos hi }
-  correct_single := U.no_equivocation
+  no_equivocation := U.no_equivocation
 
 @[simp] theorem ofDoSValid_ids {leader : ℕ → Validator} (hdos : DoSValid U) :
     (Dag.ofDoSValid U leader hdos).ids = U.ids := rfl

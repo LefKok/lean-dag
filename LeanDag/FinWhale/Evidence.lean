@@ -16,7 +16,7 @@ With it, Lemma 4 is the two counts of `Counting.lean` applied to a
 block's parent set, and Lemmas 2, 5, 8, 9 and 10 follow.
 
 The equivocating branch also needs the leader to be *Byzantine*, which it
-is: two blocks of one validator at one round is what `correct_single`
+is: two blocks of one validator at one round is what `no_equivocation`
 forbids of a correct one. `leader_byzantine_of_conflicting` says so, and
 `parents_byzantine_lt` turns it into the `f − 1` bound the count wants,
 via the validity clause that makes a block exposing equivocation drop the
@@ -74,7 +74,7 @@ theorem parentsVoting_of_correct_voter {b l : BlockId}
   have hqround : (D.block q).round = (D.block l).round + 1 := by
     have := parent_round hb hq; omega
   have heq : q = q' :=
-    D.correct_single q hqids q' hq'ids (by rw [hqv]; exact hcorr)
+    D.no_equivocation q hqids q' hq'ids (by rw [hqv]; exact hcorr)
       (by rw [hqv, hq'v]) (by rw [hqround, hq'round])
   refine mem_creatorsOf.2 ⟨q, ?_, hqv⟩
   rw [Finset.mem_filter]
@@ -85,7 +85,7 @@ theorem byzantine_of_conflicting {l l' : BlockId}
     (hl : l ∈ D.ids) (hl' : l' ∈ D.ids) (hconf : Conflicting D l l') :
     (D.block l).creator ∉ (Correct : Finset Validator) := by
   intro hcorr
-  exact hconf.1 (D.correct_single l hl l' hl' hcorr hconf.2.2 hconf.2.1)
+  exact hconf.1 (D.no_equivocation l hl l' hl' hcorr hconf.2.2 hconf.2.1)
 
 /-- **A correct validator votes for at most one block of a slot.** Its
 single round-`(r+1)` block carries at most one edge per validator, and
@@ -96,9 +96,9 @@ theorem not_voter_of_conflicting {l l' : BlockId} (hconf : Conflicting D l l') :
   simp only [voters, mem_creatorsOf, blocksAt, Finset.mem_filter] at hv hv'
   obtain ⟨q, ⟨⟨hqids, hqr⟩, hqref⟩, hqv⟩ := hv
   obtain ⟨q', ⟨⟨hq'ids, hq'r⟩, hq'ref⟩, hq'v⟩ := hv'
-  -- the two voting blocks are the same block, by `correct_single`
+  -- the two voting blocks are the same block, by `no_equivocation`
   have heq : q = q' :=
-    D.correct_single q hqids q' hq'ids (by rw [hqv]; exact hcorr) (by rw [hqv, hq'v])
+    D.no_equivocation q hqids q' hq'ids (by rw [hqv]; exact hcorr) (by rw [hqv, hq'v])
       (by rw [hqr, hq'r, hconf.2.1])
   -- so one block references both `l` and `l'`, which share a creator
   subst heq

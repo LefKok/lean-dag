@@ -89,7 +89,7 @@ def Dfast : Dag (Fin 9) (Fin 36) Unit where
   block := fastBlk
   complete := by decide
   valid := fun i _ => fastValid i
-  correct_single := by decide
+  no_equivocation := by decide
 
 /-! ### The votes
 
@@ -200,18 +200,18 @@ theorem eqValid : ∀ i : Fin 28, ValidHere eqBlk (eqBlk i) := by
   refine ⟨?_, ?_, ?_, ?_⟩ <;> revert i <;> decide
 
 /-- The equivocating execution. Validator `0` is Byzantine, so
-`correct_single` still holds. -/
+`no_equivocation` still holds. -/
 def Dequiv : Dag (Fin 9) (Fin 28) Unit where
   ids := Finset.univ
   block := eqBlk
   complete := by decide
   valid := fun i _ => eqValid i
-  correct_single := by decide
+  no_equivocation := by decide
 
 /-- The slot has two blocks, and they conflict. -/
 example : slotBlocks fwSched Dequiv 0 = {0, 27} ∧ Conflicting Dequiv 0 27 := by decide
 
-/-- The author of both is Byzantine — the only way `correct_single`
+/-- The author of both is Byzantine — the only way `no_equivocation`
 admits the pair. -/
 example : (Dequiv.block 0).creator ∉ (Correct : Finset (Fin 9)) := by decide
 
@@ -285,7 +285,7 @@ def Dskip : Dag (Fin 9) (Fin 27) Unit where
   block := skipBlk
   complete := by decide
   valid := fun i _ => skipValid i
-  correct_single := by decide
+  no_equivocation := by decide
 
 example : slotBlocks fwSched Dskip 0 = {0} ∧ voters Dskip 0 = ∅ := by decide
 
@@ -389,7 +389,7 @@ def Dsync : Dag (Fin 9) (Fin 27) Unit where
   block := syncBlk
   complete := by decide
   valid := fun i _ => syncValid i
-  correct_single := by decide
+  no_equivocation := by decide
 
 /-- No block sits above round `2`, which is what makes coverage a finite
 check. -/

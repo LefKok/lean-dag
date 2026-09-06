@@ -1,4 +1,5 @@
 import LeanDag.Block
+import LeanDag.BlockRecord
 import LeanDag.Density
 
 /-!
@@ -42,42 +43,25 @@ def coreReliability (Validator : Type*) [Fintype Validator] [DecidableEq Validat
     [DecidableEq Validator] [F : Faults Validator] :
     (coreReliability Validator).slack = F.f := rfl
 
-/-- Every block that exists, together with the well-formedness conditions
-the protocol guarantees. -/
-structure BlockUniverse (Validator BlockId Payload : Type*)
-    [Fintype Validator] [DecidableEq Validator] [Faults Validator] where
-  /-- Which blocks exist. -/
-  ids : Finset BlockId
-  /-- What each id denotes. Total, with junk outside `ids`; every statement
-  below quantifies over `i ∈ ids`, so the junk is never observed. -/
-  block : BlockId → Block Validator BlockId Payload
-  /-- Every referenced block is itself present. -/
-  complete : ∀ i ∈ ids, ∀ j ∈ (block i).refs, j ∈ ids
-  /-- Every block present is valid. -/
-  valid : ∀ i ∈ ids, ValidWrt block (block i)
-  /-- Correct validators do not equivocate: at most one block per correct
-  author per round. Byzantine validators are unconstrained. -/
-  no_equivocation : ∀ i ∈ ids, ∀ j ∈ ids,
-    (block i).creator ∈ (Correct : Finset Validator) →
-    (block i).creator = (block j).creator →
-    (block i).round = (block j).round → i = j
+/-- **The block universe**: every block that exists, authored by anyone,
+correct or Byzantine. The block record (`BlockRecord.lean`) at the
+core's validity predicate, with non-equivocation asked of the correct
+validators only. `block` is total, with junk outside `ids`; every clause
+quantifies over `i ∈ ids`, so the junk is never observed. -/
+abbrev BlockUniverse (Validator BlockId Payload : Type*)
+    [Fintype Validator] [DecidableEq Validator] [Faults Validator] :=
+  BlockRecord Validator BlockId Payload ValidWrt (Correct : Finset Validator)
 
-/-- A **view**: one validator's local DAG. A subset of the universe that is
-itself closed under references.
-
-Views share `U.block`, so they disagree about *which* blocks they hold, never
-about what an id denotes, and they inherit validity and non-equivocation from
-`U` unchanged. Different correct validators may hold different views — that
-asymmetry is the entire point of the cross-view results. -/
-structure View (Validator BlockId Payload : Type*) [Fintype Validator]
+/-- **A view**: one validator's local sub-DAG, a subset of the universe
+itself closed under references. Views share `U.block`, so they disagree
+about *which* blocks they hold, never about what an id denotes, and they
+inherit validity and non-equivocation from `U` unchanged. Different
+correct validators may hold different views — that asymmetry is the
+entire point of the cross-view results. -/
+abbrev View (Validator BlockId Payload : Type*) [Fintype Validator]
     [DecidableEq Validator] [Faults Validator]
-    (U : BlockUniverse Validator BlockId Payload) where
-  /-- The ids this validator holds. -/
-  ids : Finset BlockId
-  /-- A view holds only blocks that exist. -/
-  subset_ids : ids ⊆ U.ids
-  /-- A view is closed downward: it holds everything its blocks reference. -/
-  complete : ∀ i ∈ ids, ∀ j ∈ (U.block i).refs, j ∈ ids
+    (U : BlockUniverse Validator BlockId Payload) :=
+  BlockRecord.View U
 
 variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator]
@@ -155,5 +139,63 @@ theorem exists_common_mem_of_quorums {s t : Finset BlockId} {n : ℕ}
   exact ⟨q₁, hq₁, hqq ▸ hq₂⟩
 
 end BlockUniverse
+
+
+/-! ## What the core's validity owes the mechanisms -/
+
+section Mechanised
+
+variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable [F : Faults Validator]
+variable {BlockId : Type*} {Payload : Type*}
+
+/-- **The core's validity is mechanised**: references sit one round
+below, only referenced blocks are read, a reference-free genesis is
+valid, and validity survives the cut above the horizon. -/
+instance ValidWrt.mechanised :
+    Validity.Mechanised (ValidWrt (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) where
+  pred := fun _ _ h => h.predecessor
+  reads := by
+    intro blk blk' ids b _ hb hagree h
+    refine ⟨?_, ?_, ?_, ?_⟩
+    · intro j hj; rw [hagree j (hb j hj)]; exact h.predecessor j hj
+    · intro j hj l hl
+      rw [hagree j (hb j hj), hagree l (hb l hl)]
+      exact h.distinct_creators j hj l hl
+    · intro hr
+      refine le_trans (h.quorum hr) (Finset.card_le_card ?_)
+      intro c hc
+      unfold creators creatorsOf at hc ⊢
+      obtain ⟨j, hj, hjc⟩ := Finset.mem_image.mp hc
+      exact Finset.mem_image.mpr ⟨j, hj, by rw [hagree j (hb j hj)]; exact hjc⟩
+    · intro hr
+      obtain ⟨j, hj, hjc⟩ := h.self_parent hr
+      exact ⟨j, hj, by rw [hagree j (hb j hj)]; exact hjc⟩
+  base := by
+    intro blk b h0 hr
+    refine ⟨?_, ?_, ?_, ?_⟩
+    · intro j hj; rw [hr] at hj; exact absurd hj (Finset.notMem_empty j)
+    · intro j hj; rw [hr] at hj; exact absurd hj (Finset.notMem_empty j)
+    · intro h; omega
+    · intro h; omega
+  chops := by
+    intro blk G b h hG
+    refine ⟨?_, ?_, ?_, ?_⟩
+    · intro j hj
+      have := h.predecessor j hj
+      change (chopBlk blk G j).round + 1 = b.round - G
+      rw [chopBlk_round]; omega
+    · intro j hj l hl hjl
+      simp only [chopBlk_creator] at hjl
+      exact h.distinct_creators j hj l hl hjl
+    · intro hr
+      change quorumCard Validator ≤ (creatorsOf (chopBlk blk G) b.refs).card
+      rw [creatorsOf_chopBlk]
+      exact h.quorum (by change 0 < b.round - G at hr; omega)
+    · intro hr
+      obtain ⟨j, hj, hjc⟩ := h.self_parent (by change 0 < b.round - G at hr; omega)
+      exact ⟨j, hj, by rw [chopBlk_creator]; exact hjc⟩
+
+end Mechanised
 
 end LeanDag

@@ -1,5 +1,6 @@
 import LeanDag.FinWhale.Model.Params
 import LeanDag.Causality
+import LeanDag.BlockRecord
 
 /-!
 # FinWhale — the fast path, as the paper defines it
@@ -73,23 +74,80 @@ structure ValidHere (blk : BlockId → Block Validator BlockId Payload)
       (blk x).creator = v → (blk y).creator = v → x = y)
     ∨ (∀ i ∈ b.refs, (blk i).creator ≠ v)
 
-/-- A DAG the communication component can build. Equivocating blocks are
-admitted, of faulty validators only. -/
-structure Dag (Validator BlockId Payload : Type*) [Fintype Validator]
-    [DecidableEq Validator] [Faults Validator] [Params Validator] [DecidableEq BlockId] where
-  /-- Which blocks exist. -/
-  ids : Finset BlockId
-  /-- What each identifier denotes. -/
-  block : BlockId → Block Validator BlockId Payload
-  /-- The DAG is closed under edges. -/
-  complete : ∀ i ∈ ids, ∀ j ∈ (block i).refs, j ∈ ids
-  /-- Every block is valid. -/
-  valid : ∀ i ∈ ids, ValidHere block (block i)
-  /-- Only a faulty validator issues two blocks in one round. -/
-  correct_single : ∀ i ∈ ids, ∀ j ∈ ids,
-    (block i).creator ∈ (Correct : Finset Validator) →
-    (block i).creator = (block j).creator →
-    (block i).round = (block j).round → i = j
+/-- **FinWhale's validity is mechanised.** -/
+instance ValidHere.mechanised :
+    Validity.Mechanised (ValidHere (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) where
+  pred := fun _ _ h => h.predecessor
+  reads := by
+    intro blk blk' ids b hcl hb hagree h
+    refine ⟨?_, ?_, ?_, ?_⟩
+    · intro j hj; rw [hagree j (hb j hj)]; exact h.predecessor j hj
+    · intro j hj l hl
+      rw [hagree j (hb j hj), hagree l (hb l hl)]
+      exact h.distinct_creators j hj l hl
+    · intro hr
+      refine le_trans (h.quorum hr) (Finset.card_le_card ?_)
+      intro c hc
+      unfold creators creatorsOf at hc ⊢
+      obtain ⟨j, hj, hjc⟩ := Finset.mem_image.mp hc
+      exact Finset.mem_image.mpr ⟨j, hj, by rw [hagree j (hb j hj)]; exact hjc⟩
+    · intro v
+      rcases h.leader_clause v with h1 | h2
+      · left
+        intro i hi j hj x hx y hy hxv hyv
+        rw [hagree i (hb i hi)] at hx
+        rw [hagree j (hb j hj)] at hy
+        rw [hagree x (hcl i (hb i hi) x hx)] at hxv
+        rw [hagree y (hcl j (hb j hj) y hy)] at hyv
+        exact h1 i hi j hj x hx y hy hxv hyv
+      · right
+        intro i hi
+        rw [hagree i (hb i hi)]
+        exact h2 i hi
+  base := by
+    intro blk b h0 hr
+    refine ⟨?_, ?_, ?_, ?_⟩
+    · intro j hj; rw [hr] at hj; exact absurd hj (Finset.notMem_empty j)
+    · intro j hj; rw [hr] at hj; exact absurd hj (Finset.notMem_empty j)
+    · intro h; omega
+    · intro v; right; intro i hi; rw [hr] at hi; exact absurd hi (Finset.notMem_empty i)
+  chops := by
+    intro blk G b h hG
+    refine ⟨?_, ?_, ?_, ?_⟩
+    · intro j hj
+      have := h.predecessor j hj
+      change (chopBlk blk G j).round + 1 = b.round - G
+      rw [chopBlk_round]; omega
+    · intro j hj l hl hjl
+      simp only [chopBlk_creator] at hjl
+      exact h.distinct_creators j hj l hl hjl
+    · intro hr
+      change quorumCard Validator ≤ (creatorsOf (chopBlk blk G) b.refs).card
+      rw [creatorsOf_chopBlk]
+      exact h.quorum (by change 0 < b.round - G at hr; omega)
+    · intro v
+      rcases h.leader_clause v with h1 | h2
+      · left
+        intro i hi j hj x hx y hy hxv hyv
+        simp only [chopBlk_creator] at hxv hyv
+        exact h1 i hi j hj x (chopBlk_refs_subset hx) y (chopBlk_refs_subset hy) hxv hyv
+      · right
+        intro i hi
+        rw [chopBlk_creator]
+        exact h2 i hi
+
+/-- **And does not read the author**, so the copy fill is valid. -/
+instance ValidHere.copyStable :
+    Validity.CopyStable (ValidHere (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) where
+  copy := fun _ _ _ h => ⟨h.predecessor, h.distinct_creators, h.quorum, h.leader_clause⟩
+
+/-- **A DAG the communication component can build**: the block record
+at FinWhale's validity, with non-equivocation asked of the correct
+validators. Equivocating blocks are admitted, of faulty validators
+only. -/
+abbrev Dag (Validator BlockId Payload : Type*) [Fintype Validator]
+    [DecidableEq Validator] [Faults Validator] :=
+  BlockRecord Validator BlockId Payload ValidHere (Correct : Finset Validator)
 
 variable {D : Dag Validator BlockId Payload}
 

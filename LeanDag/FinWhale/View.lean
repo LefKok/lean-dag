@@ -129,7 +129,7 @@ theorem mem_view_of_voters (hV : IsView D V) {c l : BlockId} (hc : c ∈ V)
   have hqround : (D.block q).round = (D.block l).round + 1 := by
     have := parent_round hcids hq; omega
   have heq : q = q' :=
-    D.correct_single q hqids q' hq'.1.1 (by rw [hqw]; exact hwc) (by rw [hqw, hq'w])
+    D.no_equivocation q hqids q' hq'.1.1 (by rw [hqw]; exact hwc) (by rw [hqw, hq'w])
       (by rw [hqround, hq'.1.2])
   exact hV.closed q (hV.closed c hc q hq) l (heq ▸ hq'.2)
 
@@ -297,7 +297,7 @@ theorem no_directSkip_of_commit_view {r : ℕ} {l : BlockId}
     have hc₂round : (D.block c₂).round = S.round r + 2 := by
       simp only [blocksAt, restrict_block, Finset.mem_filter] at hc₂; exact hc₂.2
     have heq : c₁ = c₂ :=
-      D.correct_single c₁ hc₁.1 c₂ (hV.subset hc₂V) (by rw [hc₁w]; exact hwc)
+      D.no_equivocation c₁ hc₁.1 c₂ (hV.subset hc₂V) (by rw [hc₁w]; exact hwc)
         (by rw [hc₁w, hc₂w]) (by rw [hc₁.2, hc₂round, hlu.2.1])
     exact hnonfp l hlslot ((fpEvidence_restrict hc₂V).2 (heq ▸ lemma2 hc₁.1 hc₁cert))
 
@@ -346,7 +346,7 @@ theorem no_indirectCommit_of_directSkip_view {A : BlockId} {r : ℕ} {b : BlockI
       have hc₂round : (D.block c₂).round = S.round r + 2 := by
         simp only [blocksAt, restrict_block, Finset.mem_filter] at hc₂; exact hc₂.2
       have heq : c₁ = c₂ :=
-        D.correct_single c₁ hc₁.1 c₂ (hV.subset hc₂V) (by rw [hc₁w]; exact hwc)
+        D.no_equivocation c₁ hc₁.1 c₂ (hV.subset hc₂V) (by rw [hc₁w]; exact hwc)
           (by rw [hc₁w, hc₂w]) (by rw [hc₁.2, hc₂round])
       exact hnonfp b hbslotV ((fpEvidence_restrict hc₂V).2 (heq ▸ hc₁fp))
   -- and it is: either route exhibits a quorum behind `b`
@@ -372,7 +372,7 @@ theorem no_indirectCommit_of_directSkip_view {A : BlockId} {r : ℕ} {b : BlockI
     have hc₂round : (D.block c₂).round = S.round r + 2 := by
       simp only [blocksAt, restrict_block, Finset.mem_filter] at hc₂; exact hc₂.2
     have heq : c₁ = c₂ :=
-      D.correct_single c₁ hc₁.1 c₂ (hV.subset hc₂V) (by rw [hc₁w]; exact hw'c)
+      D.no_equivocation c₁ hc₁.1 c₂ (hV.subset hc₂V) (by rw [hc₁w]; exact hw'c)
         (by rw [hc₁w, hc₂w]) (by rw [hc₁.2, hc₂round])
     exact mem_view_of_parentsVoting hV (heq ▸ hc₂V)
       (parentsVoting_nonempty_of_fpEvidence hc₁fp)

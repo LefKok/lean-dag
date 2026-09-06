@@ -514,13 +514,13 @@ theorem mmSupport_local {w : ℕ} (hw : 2 ≤ w) :
     Support.Local (R := mahiMahiRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload) w) (mmSupport w) := by
   intro U U' G R₀ h c L hc hcr hL hLr
-  change R₀ + (w - 1) ≤ (BlockUniverse.block U c).round at hcr
-  change (BlockUniverse.block U L).round + (w - 1) = (BlockUniverse.block U c).round at hLr
-  exact certifies_band (agreeBand_of_rebasedAbove h (BlockUniverse.block U c).round R₀ le_rfl)
-    hc (by change R₀ < (BlockUniverse.block U c).round + 0; omega)
-    (by change (BlockUniverse.block U c).round + 0 ≤ (BlockUniverse.block U c).round; omega)
-    hL (by change R₀ ≤ (BlockUniverse.block U L).round + 0; omega)
-    (by change (BlockUniverse.block U L).round + 0 ≤ (BlockUniverse.block U c).round; omega)
+  change R₀ + (w - 1) ≤ (BlockRecord.block U c).round at hcr
+  change (BlockRecord.block U L).round + (w - 1) = (BlockRecord.block U c).round at hLr
+  exact certifies_band (agreeBand_of_rebasedAbove h (BlockRecord.block U c).round R₀ le_rfl)
+    hc (by change R₀ < (BlockRecord.block U c).round + 0; omega)
+    (by change (BlockRecord.block U c).round + 0 ≤ (BlockRecord.block U c).round; omega)
+    hL (by change R₀ ≤ (BlockRecord.block U L).round + 0; omega)
+    (by change (BlockRecord.block U L).round + 0 ≤ (BlockRecord.block U c).round; omega)
 
 /-- **Law 2**: every block at the voting round reaches the candidate —
 coverage toward it at the first layer, quorum intersection after — so
@@ -534,11 +534,11 @@ theorem mmSupport_ofCoverage {w : ℕ} (hw : 4 ≤ w) :
     change Fintype.card Validator - Faults.f Validator ≤ T.card at h2
     exact h2
   have hT : T ⊆ (Correct : Finset Validator) := hq.1
-  have hLr' : (BlockUniverse.block U L).round = r := hLr
-  have hLc' : (BlockUniverse.block U L).creator ∈ T := hLc
-  have hCr' : (BlockUniverse.block U C).round = r + (w - 1) := hCr
-  have hvotes : ∀ q ∈ BlockUniverse.ids U, (BlockUniverse.block U q).round = r + 1 →
-      (BlockUniverse.block U q).creator ∈ T → L ∈ (BlockUniverse.block U q).refs := by
+  have hLr' : (BlockRecord.block U L).round = r := hLr
+  have hLc' : (BlockRecord.block U L).creator ∈ T := hLc
+  have hCr' : (BlockRecord.block U C).round = r + (w - 1) := hCr
+  have hvotes : ∀ q ∈ BlockRecord.ids U, (BlockRecord.block U q).round = r + 1 →
+      (BlockRecord.block U q).creator ∈ T → L ∈ (BlockRecord.block U q).refs := by
     intro q hq hqr hqc
     exact hct r le_rfl (by change r < r + (w - 1); omega) q hq hqc hqr L hL hLc' hLr'
       Relation.ReflTransGen.refl
@@ -548,7 +548,7 @@ theorem mmSupport_ofCoverage {w : ℕ} (hw : 4 ≤ w) :
   refine MahiMahi.certifies_of_refs_reach (w := w) (r := r) (by omega) hC
     (by unfold MahiMahi.decisionRoundAt; omega) hL (hT hLc') ?_
   intro q hq
-  have hqids := BlockUniverse.complete U C hC q hq
+  have hqids := BlockRecord.complete U C hC q hq
   have hqr := BlockUniverse.round_of_mem_refs hC hq
   exact hreach q hqids (by omega)
 
@@ -567,14 +567,14 @@ theorem mmSupport_commits {w : ℕ} (hw : 2 ≤ w) :
     unfold MahiMahi.decisionRoundAt; omega
   obtain ⟨L, hLmem, hLc, hLr⟩ := hpop (S.slotRound k) le_rfl
     (by change S.slotRound k ≤ S.slotRound k + (w - 1); omega) (S.leader k) hlead
-  have hLr' : (BlockUniverse.block U L).round = S.slotRound k := hLr
-  have hLc' : (BlockUniverse.block U L).creator = S.leader k := hLc
+  have hLr' : (BlockRecord.block U L).round = S.slotRound k := hLr
+  have hLc' : (BlockRecord.block U L).creator = S.leader k := hLc
   have hdc : MahiMahi.DirectCommit U w L (S.slotRound k) := by
     unfold MahiMahi.DirectCommit
     refine le_trans hcard (Finset.card_le_card ?_)
     intro v hv
     obtain ⟨C, hC, hCc, hCr⟩ := hpop (S.slotRound k + (w - 1)) (by omega) le_rfl v hv
-    have hCr' : (BlockUniverse.block U C).round = MahiMahi.decisionRoundAt w (S.slotRound k) := by
+    have hCr' : (BlockRecord.block U C).round = MahiMahi.decisionRoundAt w (S.slotRound k) := by
       rw [hdr]; exact hCr
     rw [mem_creatorsOf]
     exact ⟨C, MahiMahi.mem_certificates.mpr
