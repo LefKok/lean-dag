@@ -6,6 +6,7 @@ import LeanDag.Hydrozoan.Helpers.Commit
 import LeanDag.OptimalHydrozoan.DirectLiveness.Proof
 import LeanDag.Properties.Commit
 import LeanDag.Properties.Live
+import LeanDag.Properties.Support
 import LeanDag.Properties.Agree
 import LeanDag.Properties.Candidate
 import LeanDag.Properties.Optional.Direct
@@ -164,6 +165,63 @@ def optLive (S : LeanDag.Slots Replica)
       (∀ r, R₀ ≤ r → r ≤ N → LeanDag.Hydrozoan.PopulatedOn U.val T r) ∧
       LeanDag.Hydrozoan.View.CoversUpto V N ∧
       ∀ k, k < K → S.slotRound k + 2 ≤ N
+
+/-! ## Optimal-Hydrozoan's support shape
+
+Hydrozoan's, at the underlying universe: Optimal changes the fast path
+and the skip, and the slow path is what liveness runs on. Laws 1 and 2
+are Hydrozoan's applied — the carrier projects to the same blocks — and
+Law 3 is Hydrozoan's slow commit wrapped in `DecidedOpt`. -/
+
+/-- **Optimal-Hydrozoan's support.** -/
+def optSupport : Support (optimalRule (Replica := Replica) (BlockId := BlockId)) where
+  wave := 2
+  Certifies := fun U C L => LeanDag.Hydrozoan.IsCertificate U.val C L
+
+/-- **Law 1**, Hydrozoan's at the underlying universe. -/
+theorem optSupport_local [LinearOrder BlockId] :
+    Support.Local (R := optimalRule (Replica := Replica) (BlockId := BlockId)) optSupport := by
+  intro U U' G R₀ h c L hc hcr hL hLr
+  exact LeanDag.Hydrozoan.hzSupport_local (U := U.val) (U' := U'.val)
+    ⟨h.mem, h.round, h.creator, h.refs⟩ c L hc hcr hL hLr
+
+/-- **Law 2**, Hydrozoan's at the underlying universe. -/
+theorem optSupport_ofCoverage [LinearOrder BlockId] :
+    Support.OfCoverage (R := optimalRule (Replica := Replica) (BlockId := BlockId)) optSupport
+      (LeanDag.Hydrozoan.hzReliability Replica) := by
+  intro U T hq r L hpop hct hL hLr hLc c hc hcc hcr
+  exact LeanDag.Hydrozoan.hzSupport_ofCoverage (U := U.val) T hq r L hpop hct hL hLr hLc
+    c hc hcc hcr
+
+/-- **Law 3**: the slow commit, in `DecidedOpt`. -/
+theorem optSupport_commits [LinearOrder BlockId] :
+    Support.Commits (R := optimalRule (Replica := Replica) (BlockId := BlockId)) optSupport
+      (LeanDag.Hydrozoan.hzReliability Replica) := by
+  intro S U V T k hq hpop hcert hcov hlead
+  letI : LeanDag.Hydrozoan.Slots Replica := LeanDag.Hydrozoan.ofCoreSlots S
+  have hcard : LeanDag.Hydrozoan.q Replica ≤ T.card := by
+    have h2 := hq.2
+    change Fintype.card Replica - (LeanDag.Hydrozoan.Faults.f Replica + LeanDag.Hydrozoan.Faults.c Replica) ≤ T.card at h2
+    unfold LeanDag.Hydrozoan.q; omega
+  obtain ⟨L, hLmem, hLc, hLr⟩ := hpop (S.slotRound k) le_rfl
+    (by change S.slotRound k ≤ S.slotRound k + 2; omega) (S.leader k) hlead
+  have hL : LeanDag.Hydrozoan.IsLeaderBlock U.val k L := ⟨hLmem, hLr, hLc⟩
+  have hslow : LeanDag.Hydrozoan.SlowCommit U.val L (S.slotRound k) :=
+    LeanDag.Hydrozoan.slowCommit_of_certifiesAt hcard
+      (hpop (S.slotRound k + 2) (by omega) (by change S.slotRound k + 2 ≤ S.slotRound k + 2; omega))
+      (hcert L ⟨hLmem, hLr, hLc⟩)
+  have hin : LeanDag.Hydrozoan.SlowCommitInView U.val V L (S.slotRound k) :=
+    LeanDag.Hydrozoan.slowCommitInView_of_coversUpto hslow hcov
+  refine ⟨L, by omega, LeanDag.OptimalHydrozoan.DecidedOpt.directSlow hL hin, ?_⟩
+  intro S' hround hlead'
+  refine LeanDag.OptimalHydrozoan.DecidedOpt.directSlow
+    (S := LeanDag.Hydrozoan.ofCoreSlots S') ⟨hL.1, ?_, ?_⟩ ?_
+  · change (U.val.block L).round = S'.slotRound k
+    rw [hround]; exact hL.2.1
+  · change (U.val.block L).author = S'.leader k
+    rw [hlead' k (by omega)]; exact hL.2.2
+  · change LeanDag.Hydrozoan.SlowCommitInView U.val V L (S'.slotRound k)
+    rw [hround]; exact hin
 
 /-- **Optimal-Hydrozoan's precondition is reachable**
 (`Properties/Live.lean`). Optimal leaves the slow path alone, so the

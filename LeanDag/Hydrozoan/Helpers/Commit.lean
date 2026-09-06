@@ -5,6 +5,7 @@ import LeanDag.Hydrozoan.DirectLiveness.Proof
 import LeanDag.Hydrozoan.SlotAgreement.Proof
 import LeanDag.Properties.Commit
 import LeanDag.Properties.Live
+import LeanDag.Properties.Support
 import LeanDag.Properties.Optional.Direct
 import LeanDag.Properties.Derived.Descent
 import LeanDag.Properties.Candidate
@@ -55,6 +56,117 @@ def hzLive (S : LeanDag.Slots Replica) {U : LeanDag.Hydrozoan.BlockUniverse Repl
       (∀ r, R₀ ≤ r → r ≤ N → LeanDag.Hydrozoan.PopulatedOn U T r) ∧
       LeanDag.Hydrozoan.View.CoversUpto V N ∧
       ∀ k, k < K → S.slotRound k + 2 ≤ N
+
+/-! ## Hydrozoan's support shape
+
+`Properties/Support.lean`. The slow path: certificates two rounds above
+the candidate, each a block whose voting parents number `q_cert`. The
+fast path is latency and is not a liveness shape. -/
+
+/-- **A quorum's certificates are a slow commit.** The certificate half
+of `slowCommit_of_synchronised`, with the coverage argument factored
+out so that Optimal-Hydrozoan can take it at its own universe. -/
+theorem slowCommit_of_certifiesAt {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
+    {T : Finset Replica} {r : ℕ} {L : BlockId}
+    (hcard : LeanDag.Hydrozoan.q Replica ≤ T.card)
+    (hpop2 : ∀ v ∈ T, ∃ C ∈ U.ids, (U.block C).author = v ∧ (U.block C).round = r + 2)
+    (hcert : ∀ v ∈ T, ∀ C, C ∈ U.ids → (U.block C).author = v → (U.block C).round = r + 2 →
+      LeanDag.Hydrozoan.IsCertificate U C L) :
+    LeanDag.Hydrozoan.SlowCommit U L r := by
+  have hsub : T ⊆ LeanDag.Hydrozoan.certifiers U L r := by
+    intro v hv
+    obtain ⟨C, hC, hCa, hCr⟩ := hpop2 v hv
+    exact LeanDag.Hydrozoan.mem_authorsOf.mpr
+      ⟨C, LeanDag.Hydrozoan.mem_certificates.mpr ⟨hC, hCr, hcert v hv C hC hCa hCr⟩, hCa⟩
+  exact le_trans LeanDag.Hydrozoan.qSlow_le_q (le_trans hcard (Finset.card_le_card hsub))
+
+/-- **Hydrozoan's support**: wavelength two, certification the rule's own. -/
+def hzSupport : Support (rule (Replica := Replica) (BlockId := BlockId)) where
+  wave := 2
+  Certifies := fun U C L => LeanDag.Hydrozoan.IsCertificate U C L
+
+/-- **Law 1.** A certifier two rounds above the settling round keeps its
+parents, and each parent keeps its parents and its author. -/
+theorem hzSupport_local :
+    Support.Local (R := rule (Replica := Replica) (BlockId := BlockId)) hzSupport := by
+  intro U U' G R₀ h c L hc hcr _ _
+  change R₀ + 2 ≤ (U.block c).round at hcr
+  have hrefs : (U'.block c).parents = (U.block c).parents :=
+    h.refs c hc (by change R₀ < (U.block c).round; omega)
+  have hpar : ∀ b ∈ (U.block c).parents,
+      (U'.block b).parents = (U.block b).parents ∧ (U'.block b).author = (U.block b).author := by
+    intro b hb
+    have hbU := U.complete c hc b hb
+    have hbr := (U.valid c hc).predecessor b hb
+    exact ⟨h.refs b hbU (by change R₀ < (U.block b).round; omega),
+      h.creator b hbU (by change R₀ ≤ (U.block b).round; omega)⟩
+  change LeanDag.Hydrozoan.IsCertificate U' c L ↔ LeanDag.Hydrozoan.IsCertificate U c L
+  unfold LeanDag.Hydrozoan.IsCertificate LeanDag.Hydrozoan.voteBlocks LeanDag.Hydrozoan.authorsOf
+  rw [hrefs, Finset.filter_congr (fun b hb => by
+      unfold LeanDag.Hydrozoan.IsVote; rw [(hpar b hb).1]),
+    Finset.image_congr (fun b hb => (hpar b (Finset.mem_of_mem_filter b hb)).2)]
+
+/-- **Law 2.** Coverage toward the candidate over two layers makes every
+quorum block two rounds up a certificate: `isCertificate_of_synchronised`
+with its antecedent cut to what it reads. -/
+theorem hzSupport_ofCoverage :
+    Support.OfCoverage (R := rule (Replica := Replica) (BlockId := BlockId)) hzSupport
+      (hzReliability Replica) := by
+  intro U T hq r L hpop hct hL hLr hLc C hC hCc hCr
+  have hcard : LeanDag.Hydrozoan.q Replica ≤ T.card := by
+    have h2 := hq.2
+    change Fintype.card Replica - (LeanDag.Hydrozoan.Faults.f Replica + LeanDag.Hydrozoan.Faults.c Replica) ≤ T.card at h2
+    unfold LeanDag.Hydrozoan.q; omega
+  have hLr' : (U.block L).round = r := hLr
+  have hLc' : (U.block L).author ∈ T := hLc
+  have hCr' : (U.block C).round = r + 2 := hCr
+  have hCc' : (U.block C).author ∈ T := hCc
+  change LeanDag.Hydrozoan.IsCertificate U C L
+  have hsub : T ⊆ LeanDag.Hydrozoan.authorsOf U.block (LeanDag.Hydrozoan.voteBlocks U C L) := by
+    intro v hv
+    obtain ⟨b, hb, hba, hbr⟩ := hpop (r + 1) (by omega) (by change r + 1 ≤ r + 2; omega) v hv
+    have hba' : (U.block b).author = v := hba
+    have hbr' : (U.block b).round = r + 1 := hbr
+    have hbT : (U.block b).author ∈ T := by rw [hba']; exact hv
+    have hvote : L ∈ (U.block b).parents :=
+      hct r le_rfl (by change r < r + 2; omega) b hb hbT hbr' L hL hLc' hLr'
+        Relation.ReflTransGen.refl
+    have href : b ∈ (U.block C).parents :=
+      hct (r + 1) (by omega) (by change r + 1 < r + 2; omega) C hC hCc'
+        (by change (U.block C).round = r + 1 + 1; rw [hCr']) b hb hbT hbr'
+        (Relation.ReflTransGen.single (show RefStepFrom (rule.block U) b L from hvote))
+    exact LeanDag.Hydrozoan.mem_authorsOf.mpr ⟨b, Finset.mem_filter.mpr ⟨href, hvote⟩, hba'⟩
+  exact le_trans LeanDag.Hydrozoan.qCert_le_q (le_trans hcard (Finset.card_le_card hsub))
+
+/-- **Law 3.** A quorum's certificates at the slot's candidate are a
+slow commit, which a view caught up to the decision round sees. -/
+theorem hzSupport_commits :
+    Support.Commits (R := rule (Replica := Replica) (BlockId := BlockId)) hzSupport
+      (hzReliability Replica) := by
+  intro S U V T k hq hpop hcert hcov hlead
+  letI : LeanDag.Hydrozoan.Slots Replica := ofCoreSlots S
+  have hcard : LeanDag.Hydrozoan.q Replica ≤ T.card := by
+    have h2 := hq.2
+    change Fintype.card Replica - (LeanDag.Hydrozoan.Faults.f Replica + LeanDag.Hydrozoan.Faults.c Replica) ≤ T.card at h2
+    unfold LeanDag.Hydrozoan.q; omega
+  obtain ⟨L, hLmem, hLc, hLr⟩ := hpop (S.slotRound k) le_rfl
+    (by change S.slotRound k ≤ S.slotRound k + 2; omega) (S.leader k) hlead
+  have hL : LeanDag.Hydrozoan.IsLeaderBlock U k L := ⟨hLmem, hLr, hLc⟩
+  have hslow : LeanDag.Hydrozoan.SlowCommit U L (S.slotRound k) :=
+    slowCommit_of_certifiesAt hcard
+      (hpop (S.slotRound k + 2) (by omega) (by change S.slotRound k + 2 ≤ S.slotRound k + 2; omega))
+      (hcert L ⟨hLmem, hLr, hLc⟩)
+  have hin : LeanDag.Hydrozoan.SlowCommitInView U V L (S.slotRound k) :=
+    slowCommitInView_of_coversUpto hslow hcov
+  refine ⟨L, by omega, LeanDag.Hydrozoan.Decided.directSlow hL hin, ?_⟩
+  intro S' hround hlead'
+  refine LeanDag.Hydrozoan.Decided.directSlow (S := ofCoreSlots S') ⟨hL.1, ?_, ?_⟩ ?_
+  · change (U.block L).round = S'.slotRound k
+    rw [hround]; exact hL.2.1
+  · change (U.block L).author = S'.leader k
+    rw [hlead' k (by omega)]; exact hL.2.2
+  · change LeanDag.Hydrozoan.SlowCommitInView U V L (S'.slotRound k)
+    rw [hround]; exact hin
 
 /-- **Hydrozoan's precondition is reachable** (`Properties/Live.lean`).
 The reliable set is `Correct`, which carries the quorum, and the

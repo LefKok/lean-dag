@@ -2725,16 +2725,44 @@ learns which execution model produced the certificates. That is what
 from coverage in which bridge they take to `Support.live`, and in
 nothing after it.
 
-**Not yet done.** Hydrozoan, Optimal-Hydrozoan, FinWhale and Mahi-Mahi
-have no `Support` yet. The first three are two-layer shapes at their own
-thresholds and their three laws exist under other names — FinWhale's
-Law 2 is `spCommitBy_of_synchronisedOn` (§11.6) with its antecedent cut
-down. Mahi-Mahi is the one that will test `CoversToward`: its certifier
-sits `w − 1` rounds up and must *reach* the candidate, which is why the
-predicate quantifies over the window with `ReachesFrom` rather than two
-fixed layers. Until then those four rules keep `LeaderCommits` and
-`LiveReachable` proved by hand, which the conformance table shows as
-`lead yes`, `live yes`, `supp --`.
+**All nine rules with a carrier now have a `Support`**, and the
+conformance table reads `supp yes` across the board.
+
+| rule | support | Law 1 | Law 2 | Law 3 |
+|---|---|---|---|---|
+| core Mysticeti | `coreSupport`, wave 2 | `certifies_of_sustains` | two-layer coverage | `directCommit_of_certifiesAt` |
+| reactive Mysticeti | the core's, by bridge | — | — | — |
+| Odontoceti, Nemo, Hybrid | `voteSupport`, wave 1 | generic | generic | one proof each |
+| Hydrozoan | `hzSupport`, wave 2 (slow path) | parents and grandparents kept | `isCertificate_of_synchronised` cut down | `slowCommit_of_certifiesAt` |
+| Optimal-Hydrozoan | `optSupport`, Hydrozoan's at `U.val` | Hydrozoan's | Hydrozoan's | Hydrozoan's slow commit in `DecidedOpt` |
+| FinWhale | `fwSupport`, wave 2 (slow path) | parents and grandparents kept | `spCommitBy_of_synchronisedOn` cut down | the SP-commit on the view, through the pass |
+| Mahi-Mahi | `mmSupport w`, wave `w − 1` | `certifies_band` at the band a `RebasedAbove` is | see below | the cone certificates, in view |
+
+**Mahi-Mahi was the test of `CoversToward`, and it passed without
+change to the predicate.** Its certifier sits `w − 1` rounds up and
+certifies through its cone, so what it needs of the candidate is
+reachability from every block at the voting round — Byzantine blocks
+included, since the certificate counts the certifier's parents whatever
+their author. `CoversToward` gives only that *reliable* blocks reference
+what reaches the candidate. The gap is closed the way the rule's own
+liveness closes it: coverage toward the candidate at the first layer
+puts every reliable block one round up on the candidate, and quorum
+intersection carries every block after that (`reaches_of_votes`, which
+is `reaches_of_synchronisedOn` with its coverage cut to the one layer it
+reads). So the antecedent did not have to be strengthened; the rule had
+the lemma that makes one layer of coverage enough.
+
+**The two-path rules took the slow path.** Hydrozoan's, Optimal's and
+FinWhale's supports are their slow-path certificates. A fast-path
+`Support` for each is admissible — that is what the parameter form is
+for — and would carry the tighter bound; none is written.
+
+**What a rule owes, on the evidence of nine.** A one-round rule owes one
+proof. A two-layer rule owes three, each an existing lemma with its
+antecedent cut to what it reads. A cone rule owes three, one of them
+new. And every rule then has `LeaderCommits`, `LiveReachable`, liveness
+from coverage, and liveness across every `Sustains` from the generic
+theorems, with no further argument.
 
 ### 11.5 Next steps, in order
 

@@ -6,6 +6,7 @@ import LeanDag.Properties.Candidate
 import LeanDag.Properties.Optional.Direct
 import LeanDag.Properties.Optional.Quorate
 import LeanDag.Properties.Live
+import LeanDag.Properties.Support
 
 /-!
 # FinWhale as a carrier
@@ -606,6 +607,118 @@ theorem spCommitBy_of_synchronisedOn {D : Dag Validator BlockId Payload} {Rnd r 
     hs (r + 1) (by omega) b hb hbr (by rw [hbc]; exact hv) q hq hqr (by rw [hqc]; exact hw)
   unfold LeanDag.FinWhale.parentsVoting creatorsOf
   exact Finset.mem_image.mpr ⟨q, Finset.mem_filter.mpr ⟨hpar, hvote⟩, hqc⟩
+
+/-! ## FinWhale's support shape
+
+`Properties/Support.lean`. The slow path: SP-certificates two rounds
+above the candidate, each a block `spQuorum` of whose parents vote. The
+fast path is latency and is not a liveness shape. -/
+
+/-- The slow-path quorum fits inside any quorum of the fault model:
+`n + 1 = 3f + 2p` with `p ≥ 1` gives `2f + p ≤ n − f`. -/
+theorem spQuorum_le_quorumCard :
+    LeanDag.FinWhale.spQuorum Validator ≤ quorumCard Validator := by
+  have hc := P.card_add_one
+  have hp := P.p_pos
+  have hf := P.p_le_f
+  have hqc : quorumCard Validator = Fintype.card Validator - F.f := rfl
+  have hsp : LeanDag.FinWhale.spQuorum Validator = 2 * F.f + P.p := rfl
+  omega
+
+/-- **FinWhale's support**: wavelength two, certification the slow path's. -/
+def fwSupport : Support (finWhaleRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)) where
+  wave := 2
+  Certifies := fun D c l => LeanDag.FinWhale.SPCertificate D c l
+
+/-- **Law 1.** A certifier two rounds above the settling round keeps its
+parents, and each parent keeps its parents and its author, so its
+voting parents are the same validators. -/
+theorem fwSupport_local :
+    Support.Local (R := finWhaleRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) fwSupport := by
+  intro D D' G R₀ h c L hc hcr _ _
+  change R₀ + 2 ≤ (LeanDag.FinWhale.Dag.block D c).round at hcr
+  have hrefs : (LeanDag.FinWhale.Dag.block D' c).refs = (LeanDag.FinWhale.Dag.block D c).refs :=
+    h.refs c hc (by change R₀ < (LeanDag.FinWhale.Dag.block D c).round; omega)
+  have hpar : ∀ q ∈ (LeanDag.FinWhale.Dag.block D c).refs,
+      (LeanDag.FinWhale.Dag.block D' q).refs = (LeanDag.FinWhale.Dag.block D q).refs ∧
+      (LeanDag.FinWhale.Dag.block D' q).creator = (LeanDag.FinWhale.Dag.block D q).creator := by
+    intro q hq
+    have hqD := LeanDag.FinWhale.Dag.complete D c hc q hq
+    have hqr := (LeanDag.FinWhale.Dag.valid D c hc).predecessor q hq
+    exact ⟨h.refs q hqD (by change R₀ < (LeanDag.FinWhale.Dag.block D q).round; omega),
+      h.creator q hqD (by change R₀ ≤ (LeanDag.FinWhale.Dag.block D q).round; omega)⟩
+  change LeanDag.FinWhale.SPCertificate D' c L ↔ LeanDag.FinWhale.SPCertificate D c L
+  unfold LeanDag.FinWhale.SPCertificate LeanDag.FinWhale.parentsVoting creatorsOf
+  rw [hrefs, Finset.filter_congr (fun q hq => by rw [(hpar q hq).1]),
+    Finset.image_congr (fun q hq => (hpar q (Finset.mem_of_mem_filter q hq)).2)]
+
+/-- **Law 2.** Coverage toward the candidate over two layers: every
+quorum block one round up votes, every quorum block two rounds up
+references each voter, and the quorum carries `spQuorum`. -/
+theorem fwSupport_ofCoverage :
+    Support.OfCoverage (R := finWhaleRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) fwSupport (coreReliability Validator) := by
+  intro D T hq r L hpop hct hL hLr hLc c hc hcc hcr
+  have hcard : quorumCard Validator ≤ T.card := by
+    have h2 := hq.2
+    change Fintype.card Validator - Faults.f Validator ≤ T.card at h2
+    exact h2
+  change LeanDag.FinWhale.spQuorum Validator ≤ (LeanDag.FinWhale.parentsVoting D c L).card
+  refine le_trans (le_trans spQuorum_le_quorumCard hcard) (Finset.card_le_card ?_)
+  intro w hw
+  obtain ⟨q, hq', hqc, hqr⟩ := hpop (r + 1) (by omega) (by change r + 1 ≤ r + 2; omega) w hw
+  have hqT : (finWhaleRule.block D q).creator ∈ T := by rw [hqc]; exact hw
+  have hvote : L ∈ (LeanDag.FinWhale.Dag.block D q).refs :=
+    hct r le_rfl (by change r < r + 2; omega) q hq' hqT hqr L hL hLc hLr
+      Relation.ReflTransGen.refl
+  have hpar : q ∈ (LeanDag.FinWhale.Dag.block D c).refs :=
+    hct (r + 1) (by omega) (by change r + 1 < r + 2; omega) c hc hcc
+      (by change (LeanDag.FinWhale.Dag.block D c).round = r + 1 + 1
+          rw [show (LeanDag.FinWhale.Dag.block D c).round = r + 2 from hcr])
+      q hq' hqT hqr (Relation.ReflTransGen.single (show RefStepFrom (finWhaleRule.block D) q L from hvote))
+  unfold LeanDag.FinWhale.parentsVoting creatorsOf
+  exact Finset.mem_image.mpr ⟨q, Finset.mem_filter.mpr ⟨hpar, hvote⟩, hqc⟩
+
+/-- **Law 3.** A quorum's SP-certificates at the slot's candidate, all
+held by a view caught up to the certificate round, are a direct commit
+on that view, and the pass commits it. -/
+theorem fwSupport_commits :
+    Support.Commits (R := finWhaleRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) fwSupport (coreReliability Validator) := by
+  intro S D V T k hq hpop hcert hcov hlead
+  have hcard : quorumCard Validator ≤ T.card := by
+    have h2 := hq.2
+    change Fintype.card Validator - Faults.f Validator ≤ T.card at h2
+    exact h2
+  obtain ⟨L, hLmem, hLc, hLr⟩ := hpop (S.slotRound k) le_rfl
+    (by change S.slotRound k ≤ S.slotRound k + 2; omega) (S.leader k) hlead
+  have hLc' : (LeanDag.FinWhale.Dag.block D L).creator = S.leader k := hLc
+  have hLr' : (LeanDag.FinWhale.Dag.block D L).round = S.slotRound k := hLr
+  have hlV : L ∈ V.val := hcov L hLmem
+    (by change (LeanDag.FinWhale.Dag.block D L).round ≤ S.slotRound k + 2; omega)
+  have hvc : LeanDag.FinWhale.viewCommit (schedOf S) D V.val V.property k L := by
+    refine ⟨?_, Or.inr ⟨T, le_trans spQuorum_le_quorumCard hcard, fun v hv => ?_⟩⟩
+    · rw [mem_slotBlocks]
+      simp only [LeanDag.FinWhale.restrict_ids, LeanDag.FinWhale.restrict_block]
+      exact ⟨⟨hlV, hLr'⟩, hLc'⟩
+    · obtain ⟨b, hb, hbc, hbr⟩ := hpop (S.slotRound k + 2) (by omega)
+        (by change S.slotRound k + 2 ≤ S.slotRound k + 2; omega) v hv
+      have hbr' : (LeanDag.FinWhale.Dag.block D b).round = S.slotRound k + 2 := hbr
+      have hbV : b ∈ V.val := hcov b hb
+        (by change (LeanDag.FinWhale.Dag.block D b).round ≤ S.slotRound k + 2; omega)
+      refine ⟨b, ?_, hbc, hcert L ⟨hLmem, hLr, hLc⟩ v hv b hb hbc hbr⟩
+      rw [mem_blocksAt]
+      simp only [LeanDag.FinWhale.restrict_ids, LeanDag.FinWhale.restrict_block]
+      exact ⟨hbV, by rw [hbr', hLr']⟩
+  refine ⟨L, by omega,
+    decided_iff.2 ((assignment_passOf V.property).wf.direct_commit k L hvc),
+    fun S' hround hlead' => ?_⟩
+  have hr : (schedOf S').round k = (schedOf S).round k := by
+    change S'.slotRound k = S.slotRound k; rw [hround]
+  have hvc' := (LeanDag.FinWhale.viewCommit_congr hr (hlead' k (by omega))).2 hvc
+  exact decided_iff.2 ((assignment_passOf V.property).wf.direct_commit k L hvc')
 
 /-- **FinWhale's precondition is reachable** (`Properties/Live.lean`).
 `finWhaleLive` asks for `CommitsCorrectLeaders`, which the arc supplies

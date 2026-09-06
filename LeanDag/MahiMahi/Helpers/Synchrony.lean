@@ -46,6 +46,34 @@ theorem reaches_of_synchronisedOn {T : Finset Validator} {R r : ℕ} {L : BlockI
   obtain ⟨b, rfl, h⟩ := reaches_pred_of_round_le (N := r + 2) hbase hc hcr
   exact h
 
+omit [LinearOrder BlockId] in
+/-- `reaches_of_synchronisedOn` with coverage cut down to the one layer
+it reads: every reliable block one round up references the candidate.
+The rest is quorum intersection, as before. -/
+theorem reaches_of_votes {T : Finset Validator} {r : ℕ} {L : BlockId}
+    (hT : T ⊆ (Correct : Finset Validator)) (hcard : quorumCard Validator ≤ T.card)
+    (hpop1 : PopulatedOn U T (r + 1))
+    (hL : L ∈ U.ids) (hLr : (U.block L).round = r) (hLc : (U.block L).creator ∈ T)
+    (hvotes : ∀ q ∈ U.ids, (U.block q).round = r + 1 → (U.block q).creator ∈ T →
+      L ∈ (U.block q).refs) :
+    ∀ c ∈ U.ids, r + 2 ≤ (U.block c).round → Reaches U c L := by
+  have hbase : ∀ c ∈ U.ids, (U.block c).round = r + 2 → ∃ b, b = L ∧ Reaches U c b := by
+    intro c hc hcr
+    have hTq : ∀ v ∈ T, ∃ q ∈ U.ids, (U.block q).round = r + 1 ∧ L ∈ (U.block q).refs ∧
+        (U.block q).creator = v := by
+      intro v hv
+      obtain ⟨q, hq, hqc, hqr⟩ := hpop1 v hv
+      exact ⟨q, hq, hqr, hvotes q hq hqr (hqc ▸ hv), hqc⟩
+    have hfcard : F.f + 1 ≤ T.card := by
+      have := F.card_validators
+      omega
+    obtain ⟨q, hq, hqL⟩ := exists_mem_refs_of_correct_support_of_card
+      (P := fun q => L ∈ (U.block q).refs) hTq (fun v hv => hT hv) hfcard hc hcr
+    exact ⟨L, rfl, Reaches.trans (Reaches.single hq) (Reaches.single hqL)⟩
+  intro c hc hcr
+  obtain ⟨b, rfl, h⟩ := reaches_pred_of_round_le (N := r + 2) hbase hc hcr
+  exact h
+
 section Slots
 
 variable [S : Slots Validator]

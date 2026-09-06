@@ -23835,6 +23835,19 @@ def finWhaleLive (S : Slots Validator) {D : Dag Validator BlockId Payload}
 
 `T` is `Correct` rather than an arbitrary quorum, because FinWhale's certificates are named — a view is shown to hold what reliable validators produced, and nothing else.
 
+#### `fwSupport`
+
+*def, `FinWhale.Carrier.lean`*
+
+```lean
+def fwSupport : Support (finWhaleRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)) where
+  wave := 2
+  Certifies := fun D c l => LeanDag.FinWhale.SPCertificate D c l
+```
+
+**FinWhale's support**: wavelength two, certification the slow path's.
+
 #### `finWhaleElig`
 
 *def, `FinWhale.Carrier.lean`*
@@ -24391,6 +24404,18 @@ def hzLive (S : LeanDag.Slots Replica) {U : LeanDag.Hydrozoan.BlockUniverse Repl
 ```
 
 **Hydrozoan's liveness precondition**, over a slot window: a correct DAG quorum synchronised from a round at or below the window's first slot, filling every round to a horizon the view is caught up to, with every slot of the window two rounds under it. It names no leader, so it holds under every schedule with the same rounds.
+
+#### `hzSupport`
+
+*def, `Hydrozoan.Helpers.Commit.lean`*
+
+```lean
+def hzSupport : Support (rule (Replica := Replica) (BlockId := BlockId)) where
+  wave := 2
+  Certifies := fun U C L => LeanDag.Hydrozoan.IsCertificate U C L
+```
+
+**Hydrozoan's support**: wavelength two, certification the rule's own.
 
 #### `NaiveShift`
 
@@ -25375,6 +25400,19 @@ def mahiLive (w : ℕ) (S : Slots Validator)
 
 **Mahi-Mahi's liveness precondition**, over a slot window: the view is caught up to a horizon the window's decision rounds sit under, and every `T`-led slot of the window has a good leader.
 
+#### `mmSupport`
+
+*def, `MahiMahiProperties.lean`*
+
+```lean
+def mmSupport (w : ℕ) : Support (mahiMahiRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload) w) where
+  wave := w - 1
+  Certifies := fun U C L => MahiMahi.Certifies U C L
+```
+
+**Mahi-Mahi's support** at wave `w`: certifiers at the decision round, certification the rule's own.
+
 #### `mysticetiRule`
 
 *def, `MysticetiProperties.lean`*
@@ -25588,6 +25626,18 @@ def optLive (S : LeanDag.Slots Replica)
 ```
 
 **Optimal-Hydrozoan's liveness precondition**, over a slot window. Hydrozoan's, unchanged: the slow path is the one that carries the guarantee, and Optimal leaves it alone — the fast path is about latency, not liveness.
+
+#### `optSupport`
+
+*def, `OptimalHydrozoan.Carrier.lean`*
+
+```lean
+def optSupport : Support (optimalRule (Replica := Replica) (BlockId := BlockId)) where
+  wave := 2
+  Certifies := fun U C L => LeanDag.Hydrozoan.IsCertificate U.val C L
+```
+
+**Optimal-Hydrozoan's support.**
 
 #### `Agree`
 
@@ -26108,6 +26158,7 @@ def CoversToward (R : DagRule Validator BlockId Payload) (U : R.Universe)
 def Local : Prop :=
   ∀ {U U' : R.Universe} {G R₀ : ℕ}, RebasedAbove R U U' G R₀ →
     ∀ c L, c ∈ R.ids U → R₀ + sp.wave ≤ (R.block U c).round →
+      L ∈ R.ids U → (R.block U L).round + sp.wave = (R.block U c).round →
       (sp.Certifies U' c L ↔ sp.Certifies U c L)
 ```
 
@@ -26317,7 +26368,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 1085 theorems that either another module of the
+The 1093 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -32203,6 +32254,19 @@ theorem exists_commonCore {r : ℕ} {c₀ : BlockId}
 
 The core's common correct ancestor (T3c), carried to every round `≥ r + 2` through references.
 
+#### `certifies_of_refs_reach`
+
+*theorem, `MahiMahi.Helpers.Counting.lean`*
+
+```lean
+theorem certifies_of_refs_reach {w r : ℕ} {C L : BlockId} (hw : 2 ≤ w)
+    (hC : C ∈ U.ids) (hCr : (U.block C).round = decisionRoundAt w r)
+    (hL : L ∈ U.ids) (hLc : (U.block L).creator ∈ (Correct : Finset Validator))
+    (hall : ∀ q ∈ (U.block C).refs, Reaches U q L) : Certifies U C L
+```
+
+A decision-round block all of whose references reach a correct candidate certifies it: every reference votes, and the references are a quorum.
+
 #### `directCommit_of_voting_reach`
 
 *theorem, `MahiMahi.Helpers.Counting.lean`*
@@ -32335,6 +32399,22 @@ theorem AgreeUpto.goodAt_eq (h : AgreeUpto U₁ U₂ d) {w r : ℕ} (hw : 1 ≤ 
 ```
 
 **MM2′.**
+
+#### `reaches_of_votes`
+
+*theorem, `MahiMahi.Helpers.Synchrony.lean`*
+
+```lean
+theorem reaches_of_votes {T : Finset Validator} {r : ℕ} {L : BlockId}
+    (hT : T ⊆ (Correct : Finset Validator)) (hcard : quorumCard Validator ≤ T.card)
+    (hpop1 : PopulatedOn U T (r + 1))
+    (hL : L ∈ U.ids) (hLr : (U.block L).round = r) (hLc : (U.block L).creator ∈ T)
+    (hvotes : ∀ q ∈ U.ids, (U.block q).round = r + 1 → (U.block q).creator ∈ T →
+      L ∈ (U.block q).refs) :
+    ∀ c ∈ U.ids, r + 2 ≤ (U.block c).round → Reaches U c L
+```
+
+`reaches_of_synchronisedOn` with coverage cut down to the one layer it reads: every reliable block one round up references the candidate. The rest is quorum intersection, as before.
 
 #### `good_of_synchronisedOn`
 
@@ -35702,6 +35782,26 @@ Prefixes survive flattening.
 theorem holds : Statement
 ```
 
+#### `qCert_le_q`
+
+*theorem, `Hydrozoan.Helpers.DirectLiveness.lean`*
+
+```lean
+theorem qCert_le_q : qCert Replica ≤ q Replica
+```
+
+`q_cert ≤ q` — Phase 2's "slow path collectible" row, as a lemma.
+
+#### `qSlow_le_q`
+
+*theorem, `Hydrozoan.Helpers.DirectLiveness.lean`*
+
+```lean
+theorem qSlow_le_q : qSlow Replica ≤ q Replica
+```
+
+`q_slow ≤ q` — the guaranteed quorum covers the certificate count.
+
 #### `qFast_le_card_correct`
 
 *theorem, `Hydrozoan.Helpers.DirectLiveness.lean`*
@@ -38013,6 +38113,45 @@ theorem agree : Agree (rule (Replica := Replica) (BlockId := BlockId))
 ```
 
 **Slot agreement as a property.**
+
+#### `slowCommit_of_certifiesAt`
+
+*theorem, `Hydrozoan.Helpers.Commit.lean`*
+
+```lean
+theorem slowCommit_of_certifiesAt {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
+    {T : Finset Replica} {r : ℕ} {L : BlockId}
+    (hcard : LeanDag.Hydrozoan.q Replica ≤ T.card)
+    (hpop2 : ∀ v ∈ T, ∃ C ∈ U.ids, (U.block C).author = v ∧ (U.block C).round = r + 2)
+    (hcert : ∀ v ∈ T, ∀ C, C ∈ U.ids → (U.block C).author = v → (U.block C).round = r + 2 →
+      LeanDag.Hydrozoan.IsCertificate U C L) :
+    LeanDag.Hydrozoan.SlowCommit U L r
+```
+
+**A quorum's certificates are a slow commit.** The certificate half of `slowCommit_of_synchronised`, with the coverage argument factored out so that Optimal-Hydrozoan can take it at its own universe.
+
+#### `hzSupport_local`
+
+*theorem, `Hydrozoan.Helpers.Commit.lean`*
+
+```lean
+theorem hzSupport_local :
+    Support.Local (R := rule (Replica := Replica) (BlockId := BlockId)) hzSupport
+```
+
+**Law 1.** A certifier two rounds above the settling round keeps its parents, and each parent keeps its parents and its author.
+
+#### `hzSupport_ofCoverage`
+
+*theorem, `Hydrozoan.Helpers.Commit.lean`*
+
+```lean
+theorem hzSupport_ofCoverage :
+    Support.OfCoverage (R := rule (Replica := Replica) (BlockId := BlockId)) hzSupport
+      (hzReliability Replica)
+```
+
+**Law 2.** Coverage toward the candidate over two layers makes every quorum block two rounds up a certificate: `isCertificate_of_synchronised` with its antecedent cut to what it reads.
 
 #### `leaderCommits`
 
@@ -40423,6 +40562,19 @@ theorem unsupported_of_novel (hc : Causal R) {U U' : R.Universe} (he : Extends R
 
 **The bridge from the mechanism.** After an extension, a slot all of whose candidates are novel is unsupported by any `T` whose voting-round blocks are old — because an old block references only old blocks. This is the hypothesis a fill hands the protocol; `SkipsUnsupported`'s grade says whether the protocol can use it.
 
+#### `agreeBand_of_rebasedAbove`
+
+*theorem, `Properties.Support.lean`*
+
+```lean
+theorem agreeBand_of_rebasedAbove {U U' : R.Universe} {G R₀ : ℕ}
+    (h : RebasedAbove R U U' G R₀) (hi lo : ℕ) (hlo : R₀ ≤ lo) :
+    AgreeBand R U U' lo hi 0 G where
+  mem
+```
+
+**A `RebasedAbove` is a band from its settling round up to any ceiling**, at offsets `0` and `G`. What lets a rule discharge `Local` with the band lemmas it already has for `Banded`.
+
 #### `populatedOn_insert_of_extends`
 
 *theorem, `Properties.Sustain.lean`*
@@ -40592,7 +40744,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 1099 lemmas used only within the file that proves
+The 1107 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -41324,11 +41476,10 @@ subsection per module, in the layer order of Appendices B and C.
 | `not_certifiedIn_of_directSkip` | The skip half of M4: a skipped slot's candidates are certified nowhere. |
 | `not_directSkipIn_of_directCommitIn` | A committed candidate's slot is not skipped, across views. |
 
-### `MahiMahi/Helpers/Counting.lean` (3)
+### `MahiMahi/Helpers/Counting.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
-| `certifies_of_refs_reach` | A decision-round block all of whose references reach a correct candidate certifies it: every reference … |
 | `nonempty_of_quorum` | A reliable quorum is nonempty. |
 | `votes_of_reaches` | Reaching a correct block is voting for it: it is in the cone, and no other block of that author and round … |
 
@@ -41811,15 +41962,13 @@ subsection per module, in the layer order of Appendices B and C.
 | `prefixConsistency` | — |
 | `seqAgreement` | — |
 
-### `Hydrozoan/Helpers/DirectLiveness.lean` (5)
+### `Hydrozoan/Helpers/DirectLiveness.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
 | `View.CoversUpto.mono` | Caught up to `N` is caught up to every lower horizon. |
 | `certificates_subset_ids` | Certificates are universe members. |
 | `isCertificate_of_synchronised` | Every `T`-authored decision block certifies the leader. |
-| `qCert_le_q` | `q_cert ≤ q` — Phase 2's "slow path collectible" row, as a lemma. |
-| `qSlow_le_q` | `q_slow ≤ q` — the guaranteed quorum covers the certificate count. |
 
 ### `Hydrozoan/DirectLiveness/Proof.lean` (2)
 
@@ -42161,7 +42310,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `spSkip_new` | And a candidate the band adds is skipped too. An old block two rounds above the slot carries a quorum of … |
 | `voters_subset` | Votes survive: an old voter is a voter. |
 
-### `FinWhale/Carrier.lean` (20)
+### `FinWhale/Carrier.lean` (24)
 
 | Lemma | Role |
 |:---|:---|
@@ -42169,6 +42318,9 @@ subsection per module, in the layer order of Appendices B and C.
 | `commitsDirect` | And a direct commit is a verdict, at every schedule. `IsCandidate` places the block at the slot, … |
 | `decided_iff` | A verdict of this rule is the pass's verdict. One direction is the pass being an assignment; the other is … |
 | `decided_of_directCommit` | A direct commit in view is a verdict, at any schedule and with no side condition. |
+| `fwSupport_commits` | Law 3. A quorum's SP-certificates at the slot's candidate, all held by a view caught up to the certificate … |
+| `fwSupport_local` | Law 1. A certifier two rounds above the settling round keeps its parents, and each parent keeps its … |
+| `fwSupport_ofCoverage` | Law 2. Coverage toward the candidate over two layers: every quorum block one round up votes, every quorum … |
 | `indirect` | The indirect rule, with its bound. The anchor is the committed slot `j`; the eligible slots between are … |
 | `le_dagHorizon` | An assignment commits only below the horizon: a commit names a block of the slot, so the slot's round is … |
 | `leaderCommits` | A reliably-led slot commits, at a bound one above the slot: the commit is direct, and a direct commit … |
@@ -42182,6 +42334,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `slotRound_le_of_decided` | A decided slot's round is one the DAG reaches. Every route to a verdict names a block: a direct commit … |
 | `spCommitBy_of_synchronisedOn` | Every correct validator certifies a correct leader, on a synchronised and populated DAG. The leader's … |
 | `spQuorum_le_card_correct` | The slow-path quorum fits inside the correct set. `n + 1 = 3f + 2p` with `p ≥ 1` gives `2f + p ≤ n − f`. |
+| `spQuorum_le_quorumCard` | The slow-path quorum fits inside any quorum of the fault model: `n + 1 = 3f + 2p` with `p ≥ 1` gives `2f + … |
 | `verdictIs_of_eq` | Two assignments agreeing at a slot carry the same verdict there. |
 | `verdictIs_optOf` | And reading it back is the verdict, wherever the slot is decided. |
 | `view_bounded` | A view is finite, so its blocks stop at a round. |
@@ -42263,12 +42416,13 @@ subsection per module, in the layer order of Appendices B and C.
 | `rule_ids` | — |
 | `rule_viewIds` | — |
 
-### `Hydrozoan/Helpers/Commit.lean` (3)
+### `Hydrozoan/Helpers/Commit.lean` (4)
 
 | Lemma | Role |
 |:---|:---|
 | `coversUpto_eq` | The carrier's coverage predicate is Hydrozoan's. |
 | `exists_coversUpto_decides` | A caught-up replica reaches every verdict, at the band's own ceiling rather than a rule-specific round. … |
+| `hzSupport_commits` | Law 3. A quorum's certificates at the slot's candidate are a slow commit, which a view caught up to the … |
 | `liveReachable` | Hydrozoan's precondition is reachable (`Properties/Live.lean`). The reliable set is `Correct`, which … |
 
 ### `Hydrozoan/Helpers/Skippability.lean` (1)
@@ -42515,7 +42669,7 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `commitsDirect` | And a direct commit is a verdict, at Mahi-Mahi's own direct predicate. |
 
-### `MahiMahiProperties.lean` (15)
+### `MahiMahiProperties.lean` (18)
 
 | Lemma | Role |
 |:---|:---|
@@ -42531,6 +42685,9 @@ subsection per module, in the layer order of Appendices B and C.
 | `indirect` | The indirect rule, with its bound. The anchor is the committed slot `j`; the eligible slots between are … |
 | `leaderCommits` | A good leader's slot commits, at a bound one above the slot: the commit reads that slot's round and leader … |
 | `liveReachable` | Mahi-Mahi's precondition is reachable (`Properties/Live.lean`), and here the guard is not a formality. … |
+| `mmSupport_commits` | Law 3: a quorum's certificates at the decision round are the direct commit, which a view caught up to that … |
+| `mmSupport_local` | Law 1: `certifies_band` at the band a `RebasedAbove` is. |
+| `mmSupport_ofCoverage` | Law 2: every block at the voting round reaches the candidate — coverage toward it at the first layer, … |
 | `not_certifiedIn_band_novel` | — |
 | `toCore` | The two carriers project identically, so a band for one is a band for the other. |
 | `votes_band` | A vote is the vote it was. Both clauses read the same cone, and `candidatesAt_band` settles it as an … |
@@ -42619,12 +42776,15 @@ subsection per module, in the layer order of Appendices B and C.
 | `toCore` | The two carriers project identically, so a band for one is a band for the other. |
 | `voteSupport_commits` | Law 3 of `voteSupport`, for Odontoceti (`Properties/Support.lean`): a quorum referencing the candidate one … |
 
-### `OptimalHydrozoan/Carrier.lean` (2)
+### `OptimalHydrozoan/Carrier.lean` (5)
 
 | Lemma | Role |
 |:---|:---|
 | `band_of` | A band at this carrier is a band at Hydrozoan's. The subtype's projections are the underlying universe's, … |
 | `liveReachable` | Optimal-Hydrozoan's precondition is reachable (`Properties/Live.lean`). Optimal leaves the slow path … |
+| `optSupport_commits` | Law 3: the slow commit, in `DecidedOpt`. |
+| `optSupport_local` | Law 1, Hydrozoan's at the underlying universe. |
+| `optSupport_ofCoverage` | Law 2, Hydrozoan's at the underlying universe. |
 
 ### `OptimalHydrozoan/Helpers/Banded.lean` (13)
 

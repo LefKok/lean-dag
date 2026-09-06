@@ -1129,7 +1129,7 @@ references strictly above it, which `RebasedAbove` preserves. -/
 theorem coreSupport_local :
     Support.Local (R := mysticetiRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload)) coreSupport := by
-  intro U U' G R₀ h c L hc hcr
+  intro U U' G R₀ h c L hc hcr _ _
   exact certifies_of_sustains h hc (by change R₀ + 2 ≤ (U.block c).round at hcr; omega)
 
 /-- **Law 2.** Coverage toward the candidate over two layers: every

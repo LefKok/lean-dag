@@ -3,6 +3,7 @@ import LeanDag.Properties.Sustain
 import LeanDag.Properties.Deliver
 import LeanDag.Properties.Candidate
 import LeanDag.Properties.Live
+import LeanDag.Properties.Band
 import LeanDag.Density
 
 /-!
@@ -94,6 +95,21 @@ theorem coversToward_of_synchronisedOn {U : R.Universe} {T : Finset Validator}
     CoversToward R U T r wave L :=
   fun n hn _ b hb hbc hbr a ha hac har _ => hs n (by omega) b hb hbr hbc a ha har hac
 
+/-- **A `RebasedAbove` is a band from its settling round up to any
+ceiling**, at offsets `0` and `G`. What lets a rule discharge `Local`
+with the band lemmas it already has for `Banded`. -/
+theorem agreeBand_of_rebasedAbove {U U' : R.Universe} {G R₀ : ℕ}
+    (h : RebasedAbove R U U' G R₀) (hi lo : ℕ) (hlo : R₀ ≤ lo) :
+    AgreeBand R U U' lo hi 0 G where
+  mem := fun b hb h1 _ => ((h.mem b).mp ⟨hb, by omega⟩).1
+  block := fun b hb hor => by
+    have hR : R₀ ≤ (R.block U b).round := by
+      rcases hor with ⟨h1, _⟩ | ⟨hb', h1, _⟩
+      · omega
+      · have := (h.of_mem' hb' (by omega)).2; omega
+    exact ⟨by have := h.round b hb hR; omega, h.creator b hb hR⟩
+  refs := fun b hb h1 _ => h.refs b hb (by omega)
+
 namespace Support
 
 variable (sp : Support R)
@@ -106,6 +122,7 @@ above the settling round certifies the same candidates. -/
 def Local : Prop :=
   ∀ {U U' : R.Universe} {G R₀ : ℕ}, RebasedAbove R U U' G R₀ →
     ∀ c L, c ∈ R.ids U → R₀ + sp.wave ≤ (R.block U c).round →
+      L ∈ R.ids U → (R.block U L).round + sp.wave = (R.block U c).round →
       (sp.Certifies U' c L ↔ sp.Certifies U c L)
 
 /-- **Law 2 — coverage certifies.** On a window the reliable set has
@@ -197,14 +214,15 @@ whole window, so each still certifies in the transformed universe, at
 the rebased round. -/
 theorem certifiesAt_of_rebased (hloc : sp.Local) {U U' : R.Universe} {G R₀ : ℕ}
     (h : RebasedAbove R U U' G R₀) {T : Finset Validator} {r : ℕ} {L : BlockId}
-    (hr : R₀ ≤ r) (hG : G ≤ r) (hc : sp.certifiesAt U T r L) :
+    (hr : R₀ ≤ r) (hG : G ≤ r) (hL : L ∈ R.ids U) (hLr : (R.block U L).round = r)
+    (hc : sp.certifiesAt U T r L) :
     sp.certifiesAt U' T (r - G) L := by
   intro v hv c hc' hcc hcr
   obtain ⟨hcU, hround⟩ := h.of_mem' hc' (by omega)
   have hcrU : (R.block U c).round = r + sp.wave := by omega
   have hccU : (R.block U c).creator = v := by
     rw [← h.creator c hcU (by omega)]; exact hcc
-  exact (hloc h c L hcU (by omega)).mpr (hc v hv c hcU hccU hcrU)
+  exact (hloc h c L hcU (by omega) hL (by omega)).mpr (hc v hv c hcU hccU hcrU)
 
 /-- **A commit survives a sustaining mechanism**, at the same schedule:
 the candidates are the same blocks, their certification carries over,
@@ -229,7 +247,7 @@ theorem exists_decided_of_sustains {rel : Reliability Validator}
     have hLc : (R.block U L).creator = S.leader k := by
       rw [← h.creator L hLU (by omega)]; exact hLc'
     have := sp.certifiesAt_of_rebased hloc h (T := T) (r := S.slotRound k) hR₀ (Nat.zero_le _)
-      (hcert L ⟨hLU, hLr, hLc⟩)
+      hLU hLr (hcert L ⟨hLU, hLr, hLc⟩)
     rwa [Nat.sub_zero] at this
 
 end Support
@@ -250,7 +268,7 @@ def voteSupport (R : DagRule Validator BlockId Payload) : Support R where
 /-- **Law 1 for vote support.** A block strictly above the settling
 round keeps its references. -/
 theorem voteSupport_local : (voteSupport R).Local := by
-  intro U U' G R₀ h c L hc hcr
+  intro U U' G R₀ h c L hc hcr _ _
   change R₀ + 1 ≤ (R.block U c).round at hcr
   change L ∈ (R.block U' c).refs ↔ L ∈ (R.block U c).refs
   rw [h.refs c hc (by omega)]

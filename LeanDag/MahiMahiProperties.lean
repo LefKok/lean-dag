@@ -6,6 +6,7 @@ import LeanDag.Properties.Commit
 import LeanDag.MahiMahi.Helpers.Liveness
 import LeanDag.MahiMahi.Helpers.Synchrony
 import LeanDag.Properties.Live
+import LeanDag.Properties.Support
 
 /-!
 # Mahi-Mahi's band, and the two liveness properties
@@ -496,6 +497,102 @@ def mahiLive (w : ℕ) (S : Slots Validator)
     (T : Finset Validator) (lo K : ℕ) : Prop :=
   ∃ N, (∀ k, k < K → MahiMahi.decisionRound Validator w k ≤ N) ∧ V.CoversUpto N ∧
     ∀ k, lo ≤ k → k < K → S.leader k ∈ T → S.leader k ∈ MahiMahi.good (S := S) U w k
+
+/-! ## Mahi-Mahi's support shape
+
+`Properties/Support.lean`, and the shape that tests `CoversToward`: the
+certifier sits `w − 1` rounds up and certifies through its cone, so
+what it needs of the candidate is not two reference layers but
+reachability. Coverage toward the candidate at the first layer, quorum
+intersection for every layer after (`reaches_of_votes`), and the rule's
+own `certifies_of_refs_reach` do the rest. -/
+
+/-- **Mahi-Mahi's support** at wave `w`: certifiers at the decision
+round, certification the rule's own. -/
+def mmSupport (w : ℕ) : Support (mahiMahiRule (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload) w) where
+  wave := w - 1
+  Certifies := fun U C L => MahiMahi.Certifies U C L
+
+/-- **Law 1**: `certifies_band` at the band a `RebasedAbove` is. -/
+theorem mmSupport_local {w : ℕ} (hw : 2 ≤ w) :
+    Support.Local (R := mahiMahiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) w) (mmSupport w) := by
+  intro U U' G R₀ h c L hc hcr hL hLr
+  change R₀ + (w - 1) ≤ (BlockUniverse.block U c).round at hcr
+  change (BlockUniverse.block U L).round + (w - 1) = (BlockUniverse.block U c).round at hLr
+  exact certifies_band (agreeBand_of_rebasedAbove h (BlockUniverse.block U c).round R₀ le_rfl)
+    hc (by change R₀ < (BlockUniverse.block U c).round + 0; omega)
+    (by change (BlockUniverse.block U c).round + 0 ≤ (BlockUniverse.block U c).round; omega)
+    hL (by change R₀ ≤ (BlockUniverse.block U L).round + 0; omega)
+    (by change (BlockUniverse.block U L).round + 0 ≤ (BlockUniverse.block U c).round; omega)
+
+/-- **Law 2**: every block at the voting round reaches the candidate —
+coverage toward it at the first layer, quorum intersection after — so
+every quorum block at the decision round certifies. -/
+theorem mmSupport_ofCoverage {w : ℕ} (hw : 4 ≤ w) :
+    Support.OfCoverage (R := mahiMahiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) w) (mmSupport w) (coreReliability Validator) := by
+  intro U T hq r L hpop hct hL hLr hLc C hC hCc hCr
+  have hcard : quorumCard Validator ≤ T.card := by
+    have h2 := hq.2
+    change Fintype.card Validator - Faults.f Validator ≤ T.card at h2
+    exact h2
+  have hT : T ⊆ (Correct : Finset Validator) := hq.1
+  have hLr' : (BlockUniverse.block U L).round = r := hLr
+  have hLc' : (BlockUniverse.block U L).creator ∈ T := hLc
+  have hCr' : (BlockUniverse.block U C).round = r + (w - 1) := hCr
+  have hvotes : ∀ q ∈ BlockUniverse.ids U, (BlockUniverse.block U q).round = r + 1 →
+      (BlockUniverse.block U q).creator ∈ T → L ∈ (BlockUniverse.block U q).refs := by
+    intro q hq hqr hqc
+    exact hct r le_rfl (by change r < r + (w - 1); omega) q hq hqc hqr L hL hLc' hLr'
+      Relation.ReflTransGen.refl
+  have hreach := MahiMahi.reaches_of_votes hT hcard
+    (hpop (r + 1) (by omega) (by change r + 1 ≤ r + (w - 1); omega)) hL hLr' hLc' hvotes
+  change MahiMahi.Certifies U C L
+  refine MahiMahi.certifies_of_refs_reach (w := w) (r := r) (by omega) hC
+    (by unfold MahiMahi.decisionRoundAt; omega) hL (hT hLc') ?_
+  intro q hq
+  have hqids := BlockUniverse.complete U C hC q hq
+  have hqr := BlockUniverse.round_of_mem_refs hC hq
+  exact hreach q hqids (by omega)
+
+/-- **Law 3**: a quorum's certificates at the decision round are the
+direct commit, which a view caught up to that round sees. -/
+theorem mmSupport_commits {w : ℕ} (hw : 2 ≤ w) :
+    Support.Commits (R := mahiMahiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) w) (mmSupport w) (coreReliability Validator) := by
+  intro S U V T k hq hpop hcert hcov hlead
+  letI : Slots Validator := S
+  have hcard : quorumCard Validator ≤ T.card := by
+    have h2 := hq.2
+    change Fintype.card Validator - Faults.f Validator ≤ T.card at h2
+    exact h2
+  have hdr : MahiMahi.decisionRoundAt w (S.slotRound k) = S.slotRound k + (w - 1) := by
+    unfold MahiMahi.decisionRoundAt; omega
+  obtain ⟨L, hLmem, hLc, hLr⟩ := hpop (S.slotRound k) le_rfl
+    (by change S.slotRound k ≤ S.slotRound k + (w - 1); omega) (S.leader k) hlead
+  have hLr' : (BlockUniverse.block U L).round = S.slotRound k := hLr
+  have hLc' : (BlockUniverse.block U L).creator = S.leader k := hLc
+  have hdc : MahiMahi.DirectCommit U w L (S.slotRound k) := by
+    unfold MahiMahi.DirectCommit
+    refine le_trans hcard (Finset.card_le_card ?_)
+    intro v hv
+    obtain ⟨C, hC, hCc, hCr⟩ := hpop (S.slotRound k + (w - 1)) (by omega) le_rfl v hv
+    have hCr' : (BlockUniverse.block U C).round = MahiMahi.decisionRoundAt w (S.slotRound k) := by
+      rw [hdr]; exact hCr
+    rw [mem_creatorsOf]
+    exact ⟨C, MahiMahi.mem_certificates.mpr
+      ⟨hC, hCr', hcert L ⟨hLmem, hLr, hLc⟩ v hv C hC hCc hCr⟩, hCc⟩
+  have hin : MahiMahi.DirectCommitIn U V w L (S.slotRound k) :=
+    directCommitIn_of_coversUpto hdc (by rw [hdr]; exact hcov)
+  refine ⟨L, by omega, MahiMahi.Decided.directCommit ⟨hLmem, hLr', hLc'⟩ hin, ?_⟩
+  intro S' hround hlead'
+  refine MahiMahi.Decided.directCommit (S := S') ⟨hLmem, ?_, ?_⟩ ?_
+  · rw [hround]; exact hLr'
+  · rw [hlead' k (by omega)]; exact hLc'
+  · show MahiMahi.DirectCommitIn U V w L (S'.slotRound k)
+    rw [hround]; exact hin
 
 /-- **Mahi-Mahi's precondition is reachable** (`Properties/Live.lean`),
 and here the guard is not a formality. `mahiLive` asks that the slot's
