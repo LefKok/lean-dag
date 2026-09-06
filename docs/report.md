@@ -25938,34 +25938,6 @@ abbrev AgreeAbove (R : DagRule Validator BlockId Payload)
 
 **Two universes agree above a round**: `RebasedAbove` at no offset.
 
-#### `LeaderCommits`
-
-*def, `Properties.Commit.lean`*
-
-```lean
-def LeaderCommits (R : DagRule Validator BlockId Payload)
-    (Live : Slots Validator → ∀ {U : R.Universe}, R.View U → Finset Validator → ℕ → ℕ → Prop) :
-    Prop :=
-  ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (T : Finset Validator) (lo K : ℕ),
-    Live S V T lo K → ∀ k, lo ≤ k → k < K → S.leader k ∈ T →
-      ∃ L, DecidedBelow R S (k + 1) V k (some L)
-```
-
-**A reliable leader's slot commits**, within a bound one above it, wherever the protocol's precondition `Live` holds over a slot window containing the slot.
-
-#### `Descends`
-
-*def, `Properties.Commit.lean`*
-
-```lean
-def Descends (R : DagRule Validator BlockId Payload) (S : Slots Validator) (c : ℕ) : Prop :=
-  ∀ {U : R.Universe} (V : R.View U) (b : ℕ),
-    (∀ j, b ≤ j → j < b + c → ∃ L, DecidedBelow R S (b + c) V j (some L)) →
-    ∀ i, i < b → ∃ v, DecidedBelow R S (b + c) V i v
-```
-
-**A committed run decides everything below it.** `c` consecutive slots from `b`, each committed within `b + c`, decide every slot below `b` within `b + c`.
-
 #### `Indirect`
 
 *def, `Properties.Commit.lean`*
@@ -26029,6 +26001,50 @@ def DeliversOn (R : DagRule Validator BlockId Payload) {U : R.Universe}
 
 **A view-level mechanism delivers the reliable set.** For every round, one of the views it produces holds every `T`-block from `lo` up to it. What a rate limiter can promise, and what `DoS/Delivers.lean` proves of the novelty budget.
 
+#### `Descends`
+
+*def, `Properties.Derived.Descent.lean`*
+
+```lean
+def Descends (R : DagRule Validator BlockId Payload) (S : Slots Validator) (c : ℕ) : Prop :=
+  ∀ {U : R.Universe} (V : R.View U) (b : ℕ),
+    (∀ j, b ≤ j → j < b + c → ∃ L, DecidedBelow R S (b + c) V j (some L)) →
+    ∀ i, i < b → ∃ v, DecidedBelow R S (b + c) V i v
+```
+
+**A committed run decides everything below it.** `c` consecutive slots from `b`, each committed within `b + c`, decide every slot below `b` within `b + c`.
+
+#### `LeaderCommits`
+
+*def, `Properties.Derived.LeaderCommits.lean`*
+
+```lean
+def LeaderCommits (R : DagRule Validator BlockId Payload)
+    (Live : Slots Validator → ∀ {U : R.Universe}, R.View U → Finset Validator → ℕ → ℕ → Prop) :
+    Prop :=
+  ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (T : Finset Validator) (lo K : ℕ),
+    Live S V T lo K → ∀ k, lo ≤ k → k < K → S.leader k ∈ T →
+      ∃ L, DecidedBelow R S (k + 1) V k (some L)
+```
+
+**A reliable leader's slot commits**, within a bound one above it, wherever the protocol's precondition `Live` holds over a slot window containing the slot.
+
+#### `live`
+
+*def, `Properties.Derived.LeaderCommits.lean`*
+
+```lean
+def live (rel : Reliability Validator) (S : Slots Validator) {U : R.Universe}
+    (V : R.View U) (T : Finset Validator) (lo K : ℕ) : Prop :=
+  rel.IsQuorum T ∧
+    ∃ N, CoversUpto R V N ∧ (∀ k, k < K → S.slotRound k + sp.wave ≤ N) ∧
+      ∀ k, lo ≤ k → k < K → S.leader k ∈ T →
+        (∀ n, S.slotRound k ≤ n → n ≤ S.slotRound k + sp.wave → PopulatedOn R U T n) ∧
+        ∀ L, R.IsCandidate S U k L → sp.certifiesAt U T (S.slotRound k) L
+```
+
+**The liveness precondition, in support terms.** A quorum, a horizon the view is caught up to with the window a wave under it, and at every quorum-led slot of the window production and certification.
+
 #### `Persist`
 
 *def, `Properties.Derived.Persist.lean`*
@@ -26086,27 +26102,6 @@ def Novel (R : DagRule Validator BlockId Payload) (U U' : R.Universe) (b : Block
 ```
 
 **What an extension adds.** A parameter in `Integration/Hydrozoan/Simulation.lean`, because that interface covers truncations too and there "novel" has to be supplied as empty. For an extension it is determined, so it is a definition here.
-
-#### `LiveReachable`
-
-*def, `Properties.Live.lean`*
-
-```lean
-def LiveReachable (R : DagRule Validator BlockId Payload)
-    (rel : Reliability Validator) (wave : ℕ)
-    (Live : Slots Validator → ∀ {U : R.Universe}, R.View U → Finset Validator → ℕ → ℕ → Prop) :
-    Prop :=
-  ∀ (U : R.Universe) (Rnd N : ℕ),
-    SynchronisedOn R U rel.correct Rnd →
-    (∀ r, Rnd ≤ r → r ≤ N → PopulatedOn R U rel.correct r) →
-    ∀ (S : Slots Validator) (V : R.View U) (k : ℕ),
-      CoversUpto R V N → Rnd ≤ S.slotRound k → S.slotRound k + wave ≤ N →
-        Live S V rel.correct k (k + 1)
-```
-
-**The rule's liveness precondition is reachable.** On a universe the reliable set has populated over `[Rnd, N]` and delivered from `Rnd`, and a view caught up to `N`, the rule's own `Live` holds at every slot from `Rnd` whose wave fits under the horizon.
-
-`wave` is the rule's, as `c` is in `Descends`: the core reads two rounds above a slot, Odontoceti one, Mahi-Mahi `w − 1`. The window is the single slot `[k, k + 1)`, which is what `LeaderCommits` needs to reach that slot and the least a precondition can be asked to cover.
 
 #### `CommitsDirect`
 
@@ -26263,22 +26258,6 @@ def Commits (rel : Reliability Validator) : Prop :=
 
 **Law 3 — certification commits.** A slot whose every candidate a reliable quorum certifies, on a populated window a view is caught up to, is committed within a bound one above it when a quorum member leads it. `LeaderCommits` with the precondition made explicit; the upper bound on `Certifies`.
 
-#### `live`
-
-*def, `Properties.Support.lean`*
-
-```lean
-def live (rel : Reliability Validator) (S : Slots Validator) {U : R.Universe}
-    (V : R.View U) (T : Finset Validator) (lo K : ℕ) : Prop :=
-  rel.IsQuorum T ∧
-    ∃ N, CoversUpto R V N ∧ (∀ k, k < K → S.slotRound k + sp.wave ≤ N) ∧
-      ∀ k, lo ≤ k → k < K → S.leader k ∈ T →
-        (∀ n, S.slotRound k ≤ n → n ≤ S.slotRound k + sp.wave → PopulatedOn R U T n) ∧
-        ∀ L, R.IsCandidate S U k L → sp.certifiesAt U T (S.slotRound k) L
-```
-
-**The liveness precondition, in support terms.** A quorum, a horizon the view is caught up to with the window a wave under it, and at every quorum-led slot of the window production and certification. The `Live` every rule with a `Support` has, and the one `LeaderCommits` is proved against.
-
 #### `voteSupport`
 
 *def, `Properties.Support.lean`*
@@ -26433,7 +26412,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 1093 theorems that either another module of the
+The 1092 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -31243,16 +31222,6 @@ theorem safety (hne : HonestNoEquiv U) (hk : Admissible Validator k)
 
 **Safety.** Two committed blocks for one slot are the same block, across any two views and any two routes.
 
-#### `q_le_card_correct`
-
-*theorem, `Hybrid.Liveness.lean`*
-
-```lean
-theorem q_le_card_correct : q Validator ≤ (Correct : Finset Validator).card
-```
-
-The fully-correct class carries the hybrid quorum: liveness's card hypothesis is satisfiable at `T := Correct`, with equality at the tight committee.
-
 #### `directCommit_of_leader_mem`
 
 *theorem, `Hybrid.Liveness.lean`*
@@ -35847,16 +35816,6 @@ Prefixes survive flattening.
 theorem holds : Statement
 ```
 
-#### `qCert_le_q`
-
-*theorem, `Hydrozoan.Helpers.DirectLiveness.lean`*
-
-```lean
-theorem qCert_le_q : qCert Replica ≤ q Replica
-```
-
-`q_cert ≤ q` — Phase 2's "slow path collectible" row, as a lemma.
-
 #### `qSlow_le_q`
 
 *theorem, `Hydrozoan.Helpers.DirectLiveness.lean`*
@@ -35878,6 +35837,27 @@ theorem qFast_le_card_correct
 ```
 
 Under `≤ p` actual faults, the correct pool reaches the fast quorum.
+
+#### `isCertificate_of_coversToward`
+
+*theorem, `Hydrozoan.Helpers.DirectLiveness.lean`*
+
+```lean
+theorem isCertificate_of_coversToward {U : BlockUniverse Replica BlockId}
+    {T : Finset Replica} {r : ℕ} {L : BlockId}
+    (hcard : q Replica ≤ T.card)
+    (hpop1 : ∀ v ∈ T, ∃ b ∈ U.ids, (U.block b).author = v ∧ (U.block b).round = r + 1)
+    (hct : ∀ n, r ≤ n → n < r + 2 →
+      ∀ b ∈ U.ids, (U.block b).author ∈ T → (U.block b).round = n + 1 →
+      ∀ a ∈ U.ids, (U.block a).author ∈ T → (U.block a).round = n →
+        Reaches U a L → a ∈ (U.block b).parents)
+    (hL : L ∈ U.ids) (hLr : (U.block L).round = r) (hLc : (U.block L).author ∈ T)
+    {C : BlockId} (hC : C ∈ U.ids) (hCa : (U.block C).author ∈ T)
+    (hCr : (U.block C).round = r + 2) :
+    IsCertificate U C L
+```
+
+**Coverage toward a candidate over two layers makes a certificate**: every quorum block one round up references the candidate, and every quorum block two rounds up references each of those. `isCertificate_of_synchronised` with its antecedent cut to what it reads, and stated without a schedule or a carrier so that Optimal-Hydrozoan can take it at its own universe.
 
 #### `exists_isLeaderBlock_of_populated`
 
@@ -38206,18 +38186,6 @@ theorem hzSupport_local :
 
 **Law 1.** A certifier two rounds above the settling round keeps its parents, and each parent keeps its parents and its author.
 
-#### `hzSupport_ofCoverage`
-
-*theorem, `Hydrozoan.Helpers.Commit.lean`*
-
-```lean
-theorem hzSupport_ofCoverage :
-    Support.OfCoverage (R := rule (Replica := Replica) (BlockId := BlockId)) hzSupport
-      (hzReliability Replica)
-```
-
-**Law 2.** Coverage toward the candidate over two layers makes every quorum block two rounds up a certificate: `isCertificate_of_synchronised` with its antecedent cut to what it reads.
-
 #### `leaderCommits`
 
 *theorem, `Hydrozoan.Helpers.Commit.lean`*
@@ -38228,7 +38196,7 @@ theorem leaderCommits :
       (fun S {U} V T lo K => hzLive S (U := U) V T lo K)
 ```
 
-**Direct liveness as a property**: a slot led by a member of the reliable quorum commits, and the commit reads that one leader, so its bound is one above the slot.
+**Direct liveness as a property**, now a corollary: the bridge composed with the one `LeaderCommits` every support has.
 
 #### `eligibleAsAnchor_sched`
 
@@ -39876,7 +39844,7 @@ theorem leaderCommits :
       (fun S {U} V T lo K => optLive S (U := U) V T lo K)
 ```
 
-**A reliably-led slot commits**, at a bound one above the slot: the slow commit reads that one leader, so a reassignment of the others leaves it standing.
+**A reliably-led slot commits**, now a corollary of the support.
 
 #### `indirect`
 
@@ -40541,6 +40509,17 @@ theorem decided_mono_of_banded (h : Banded R) {S : Slots Validator} {U : R.Unive
 
 **And monotonicity in the view.** Fix the universe and the band carries itself; a larger view holds everything the band names. The core's L2 is a four-case induction, and this is the same statement with none.
 
+#### `leaderCommits`
+
+*theorem, `Properties.Derived.LeaderCommits.lean`*
+
+```lean
+theorem leaderCommits {rel : Reliability Validator} (hlc : sp.Commits rel) :
+    LeaderCommits R (fun S {U} V T lo K => sp.live rel S (U := U) V T lo K)
+```
+
+**`LeaderCommits`, from Law 3.**
+
 #### `decidedBelow_of_run`
 
 *theorem, `Properties.Derived.Progress.lean`*
@@ -40594,24 +40573,6 @@ theorem reaches_iff (hc : Causal R) (he : Extends R U U')
 
 And so reachability from an old block is the same relation in both universes.
 
-#### `exists_decided_of_reachable`
-
-*theorem, `Properties.Live.lean`*
-
-```lean
-theorem exists_decided_of_reachable {rel : Reliability Validator} {wave : ℕ}
-    {Live : Slots Validator → ∀ {U : R.Universe}, R.View U → Finset Validator → ℕ → ℕ → Prop}
-    (hlc : LeaderCommits R Live) (hlr : LiveReachable R rel wave Live)
-    {U : R.Universe} {Rnd N : ℕ} (hs : SynchronisedOn R U rel.correct Rnd)
-    (hpop : ∀ r, Rnd ≤ r → r ≤ N → PopulatedOn R U rel.correct r)
-    (S : Slots Validator) (V : R.View U) (k : ℕ) (hcov : CoversUpto R V N)
-    (hRnd : Rnd ≤ S.slotRound k) (hN : S.slotRound k + wave ≤ N)
-    (hlead : S.leader k ∈ rel.correct) :
-    ∃ L, DecidedBelow R S (k + 1) V k (some L)
-```
-
-**A reliably-led slot commits on a DAG the reliable set produced.** The consumer test for the pair, and the statement the vacuity guard exists to make believable: the rule's precondition does not appear, so the conclusion cannot be true by the precondition being empty.
-
 #### `unsupported_of_novel`
 
 *theorem, `Properties.Optional.Skip.lean`*
@@ -40626,6 +40587,18 @@ theorem unsupported_of_novel (hc : Causal R) {U U' : R.Universe} (he : Extends R
 ```
 
 **The bridge from the mechanism.** After an extension, a slot all of whose candidates are novel is unsupported by any `T` whose voting-round blocks are old — because an old block references only old blocks. This is the hypothesis a fill hands the protocol; `SkipsUnsupported`'s grade says whether the protocol can use it.
+
+#### `coversToward_of_synchronisedOn`
+
+*theorem, `Properties.Support.lean`*
+
+```lean
+theorem coversToward_of_synchronisedOn {U : R.Universe} {T : Finset Validator}
+    {Rnd r wave : ℕ} {L : BlockId} (hs : SynchronisedOn R U T Rnd) (hr : Rnd ≤ r) :
+    CoversToward R U T r wave L
+```
+
+Full coverage from `Rnd` is coverage toward anything, over any window at or above `Rnd`.
 
 #### `agreeBand_of_rebasedAbove`
 
@@ -40809,7 +40782,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 1111 lemmas used only within the file that proves
+The 1105 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -41405,12 +41378,13 @@ subsection per module, in the layer order of Appendices B and C.
 | `thickLink_of_directCommitIn` | H4, from a view: a view-level direct commit passes the indirect test at every block two rounds up. |
 | `thickLink_of_directCommitIn_at_anchor` | Visibility from an anchor. A slot committed directly carries a thick link at any eligible anchor above it … |
 
-### `Hybrid/Liveness.lean` (2)
+### `Hybrid/Liveness.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
 | `all_decided_below_of_fairRun_correct` | H7 at `T := Correct` — the whole fully-correct class, which the tight committee requires exactly. |
 | `decided_of_leader_of_populated` | H7 against a horizon: two rounds read off it. |
+| `q_le_card_correct` | The fully-correct class carries the hybrid quorum: liveness's card hypothesis is satisfiable at `T := … |
 
 ### `Hybrid/Conservativity.lean` (5)
 
@@ -42027,13 +42001,14 @@ subsection per module, in the layer order of Appendices B and C.
 | `prefixConsistency` | — |
 | `seqAgreement` | — |
 
-### `Hydrozoan/Helpers/DirectLiveness.lean` (3)
+### `Hydrozoan/Helpers/DirectLiveness.lean` (4)
 
 | Lemma | Role |
 |:---|:---|
 | `View.CoversUpto.mono` | Caught up to `N` is caught up to every lower horizon. |
 | `certificates_subset_ids` | Certificates are universe members. |
 | `isCertificate_of_synchronised` | Every `T`-authored decision block certifies the leader. |
+| `qCert_le_q` | `q_cert ≤ q` — Phase 2's "slow path collectible" row, as a lemma. |
 
 ### `Hydrozoan/DirectLiveness/Proof.lean` (2)
 
@@ -42375,7 +42350,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `spSkip_new` | And a candidate the band adds is skipped too. An old block two rounds above the slot carries a quorum of … |
 | `voters_subset` | Votes survive: an old voter is a voter. |
 
-### `FinWhale/Carrier.lean` (25)
+### `FinWhale/Carrier.lean` (24)
 
 | Lemma | Role |
 |:---|:---|
@@ -42389,7 +42364,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `indirect` | The indirect rule, with its bound. The anchor is the committed slot `j`; the eligible slots between are … |
 | `le_dagHorizon` | An assignment commits only below the horizon: a commit names a block of the slot, so the slot's round is … |
 | `leaderCommits` | A reliably-led slot commits, at a bound one above the slot: the commit is direct, and a direct commit … |
-| `liveReachable` | FinWhale's precondition is reachable (`Properties/Live.lean`). `finWhaleLive` asks for … |
 | `lt_of_elig` | Eligible slots are above: a schedule's rounds are monotone, so three rounds up is at least one slot up. |
 | `mem_blocksAt` | Membership of a round layer, unfolded once so the proofs below do not have to. |
 | `mem_slotBlocks` | And of a slot's blocks. |
@@ -42437,7 +42411,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `mem_recoveryCorrect` | Recovery-correct membership excludes all three fault classes. |
 | `mem_reliableSigner` | Reliable signing excludes precisely the two classes allowed to equivocate. |
 
-### `HybridProperties.lean` (12)
+### `HybridProperties.lean` (11)
 
 | Lemma | Role |
 |:---|:---|
@@ -42446,7 +42420,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `descends` | And a committed run decides everything below it. |
 | `directCommitIn_band` | And so does the direct commit. |
 | `directSkipSlotIn_band` | And the slot-level skip transports, which is what the repair was for. Blockers stay blockers: a … |
-| `liveReachable` | Hybrid's precondition is reachable (`Properties/Live.lean`). The reliable set is the fully-correct class, … |
 | `not_thickLink_band_novel` | A candidate the band did not carry passes the indirect test from no old anchor. Its supporters would sit … |
 | `skipsUnsupported` | Hybrid skips an unsupported slot from a hybrid quorum. |
 | `supportersIn_band` | Supporters survive the band. |
@@ -42482,7 +42455,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `rule_ids` | — |
 | `rule_viewIds` | — |
 
-### `Hydrozoan/Helpers/Commit.lean` (6)
+### `Hydrozoan/Helpers/Commit.lean` (7)
 
 | Lemma | Role |
 |:---|:---|
@@ -42490,7 +42463,8 @@ subsection per module, in the layer order of Appendices B and C.
 | `exists_coversUpto_decides` | A caught-up replica reaches every verdict, at the band's own ceiling rather than a rule-specific round. … |
 | `fastCommitInView_of_coversUpto` | A view caught up to the voting round holds every vote, so a fast commit in the universe is a fast commit … |
 | `hzSupport_commits` | Law 3. A quorum's certificates at the slot's candidate are a slow commit, which a view caught up to the … |
-| `liveReachable` | Hydrozoan's precondition is reachable (`Properties/Live.lean`). The reliable set is `Correct`, which … |
+| `hzSupport_live_of_hzLive` | Hydrozoan's precondition is the support's. Coverage from `R₀` is coverage toward every candidate, and the … |
+| `hzSupport_ofCoverage` | Law 2. Coverage toward the candidate over two layers makes every quorum block two rounds up a certificate: … |
 | `voteSupport_fast_commits` | Law 3 of `voteSupport`, for Hydrozoan's fast path, under the fast fault model: `q_fast` votes one round up … |
 
 ### `Hydrozoan/Helpers/Skippability.lean` (1)
@@ -42737,7 +42711,7 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `commitsDirect` | And a direct commit is a verdict, at Mahi-Mahi's own direct predicate. |
 
-### `MahiMahiProperties.lean` (18)
+### `MahiMahiProperties.lean` (17)
 
 | Lemma | Role |
 |:---|:---|
@@ -42752,7 +42726,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `directSkipIn_band` | And the direct skip. A blamer stays a blamer, and a candidate the band added changes nothing: the blame … |
 | `indirect` | The indirect rule, with its bound. The anchor is the committed slot `j`; the eligible slots between are … |
 | `leaderCommits` | A good leader's slot commits, at a bound one above the slot: the commit reads that slot's round and leader … |
-| `liveReachable` | Mahi-Mahi's precondition is reachable (`Properties/Live.lean`), and here the guard is not a formality. … |
 | `mmSupport_commits` | Law 3: a quorum's certificates at the decision round are the direct commit, which a view caught up to that … |
 | `mmSupport_local` | Law 1: `certifies_band` at the band a `RebasedAbove` is. |
 | `mmSupport_ofCoverage` | Law 2: every block at the voting round reaches the candidate — coverage toward it at the first layer, … |
@@ -42760,7 +42733,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `toCore` | The two carriers project identically, so a band for one is a band for the other. |
 | `votes_band` | A vote is the vote it was. Both clauses read the same cone, and `candidatesAt_band` settles it as an … |
 
-### `MysticetiProperties.lean` (35)
+### `MysticetiProperties.lean` (34)
 
 | Lemma | Role |
 |:---|:---|
@@ -42774,7 +42747,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `certifies_band` | — |
 | `certifies_of_sustains` | The core's certificate predicate transports. |
 | `certifies_old` | — |
-| `coreSupport_commits` | Law 3. A quorum's certificates at the slot's candidate are a direct commit; a view caught up to the … |
+| `coreSupport_commits` | Law 3, as a corollary of `leaderCommits_cert`: the support's precondition at one slot is `certLive` at … |
 | `coreSupport_local` | Law 1. A certifier two rounds above the settling round reads references strictly above it, which … |
 | `coreSupport_ofCoverage` | Law 2. Coverage toward the candidate over two layers: every quorum block one round up references it, and … |
 | `coversUpto_eq` | The carrier's coverage predicate is the core's, on the nose. |
@@ -42788,7 +42761,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `ext_mem` | — |
 | `isLeaderBlock_mono` | — |
 | `isLeaderBlock_old` | — |
-| `liveReachable` | The core's precondition is reachable (`Properties/Live.lean`): `coreLive` is the conjunction of the three … |
 | `lt_bound` | The decided slot lies below the bound. |
 | `mem_certificates_band` | — |
 | `mem_certificates_old` | — |
@@ -42808,7 +42780,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `nemoRule_ids` | — |
 | `nemoRule_viewIds` | — |
 
-### `NemoProperties.lean` (13)
+### `NemoProperties.lean` (12)
 
 | Lemma | Role |
 |:---|:---|
@@ -42819,14 +42791,13 @@ subsection per module, in the layer order of Appendices B and C.
 | `descends` | And a committed run decides everything below it, from `Indirect` with no induction of its own. |
 | `directCommitIn_band` | And so does the direct commit. |
 | `isLeaderBlock_band` | A candidate of a slot is a candidate of the slot the shift names. |
-| `liveReachable` | Nemo's precondition is reachable (`Properties/Live.lean`). The reliable set is everyone — the model is … |
 | `memB` | — |
 | `not_certifiedIn_band_novel` | A candidate the band did not carry is certified from no old anchor. Its certificate would have to lie in … |
 | `refsB` | — |
 | `supportersIn_band` | The supporters a view holds transport. A voting-round block the view held is a block of the shifted … |
 | `voteSupport_commits` | Law 3 of `voteSupport`, for Nemo (`Properties/Support.lean`): a majority referencing the candidate one … |
 
-### `OdontocetiProperties.lean` (13)
+### `OdontocetiProperties.lean` (12)
 
 | Lemma | Role |
 |:---|:---|
@@ -42835,7 +42806,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `decidedBelow_of_decidedWithin` | Odontoceti's bounded relation lands in the derived one. |
 | `descends` | And a committed run decides everything below it. Was a downward induction carrying the bound by hand; it … |
 | `directCommitIn_band` | And so does the direct commit. |
-| `liveReachable` | Odontoceti's precondition is reachable (`Properties/Live.lean`), at its own wavelength: the horizon sits … |
 | `not_thickLink_band_novel` | A candidate the band did not carry is thick-linked from no old anchor. Its supporters would have to sit in … |
 | `skipsUnsupported` | Odontoceti skips an unsupported slot from a correct quorum. |
 | `supportersIn_band` | Supporters survive the band. A block one round above the slot that referenced the candidate references it … |
@@ -42849,8 +42819,8 @@ subsection per module, in the layer order of Appendices B and C.
 | Lemma | Role |
 |:---|:---|
 | `band_of` | A band at this carrier is a band at Hydrozoan's. The subtype's projections are the underlying universe's, … |
-| `liveReachable` | Optimal-Hydrozoan's precondition is reachable (`Properties/Live.lean`). Optimal leaves the slow path … |
 | `optSupport_commits` | Law 3: the slow commit, in `DecidedOpt`. |
+| `optSupport_live_of_optLive` | Optimal-Hydrozoan's precondition is the support's. |
 | `optSupport_local` | Law 1, Hydrozoan's at the underlying universe. |
 | `optSupport_ofCoverage` | Law 2, Hydrozoan's at the underlying universe. |
 | `voteSupport_fast_commits` | Law 3 of `voteSupport`, for Optimal-Hydrozoan's fast path. |
@@ -42887,6 +42857,14 @@ subsection per module, in the layer order of Appendices B and C.
 | `noEquivOn_chop` | And so does non-equivocation, from the truncation. |
 | `truncates_chop_mahimahi` | The cut is a truncation of Mahi-Mahi's carrier too. |
 | `truncates_chop_odontoceti` | The cut is a truncation of Odontoceti's carrier too. |
+
+### `Properties/Arcs/Liveness.lean` (3)
+
+| Lemma | Role |
+|:---|:---|
+| `certifiesAt_of_rebased` | Certification survives every mechanism, from Law 1. |
+| `exists_decided_of_coverage` | A reliably-led slot commits on a covered, populated DAG — for any rule with Laws 2 and 3. |
+| `exists_decided_of_sustains` | A commit survives a sustaining mechanism, at the same schedule. |
 
 ### `Properties/Arcs/Quality.lean` (1)
 
@@ -42993,16 +42971,10 @@ subsection per module, in the layer order of Appendices B and C.
 |:---|:---|
 | `mono` | A protocol skipping under a weaker condition skips under a stronger one, so the grades compare. |
 
-### `Properties/Support.lean` (8)
+### `Properties/Support.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
-| `certifiesAt_of_rebased` | Certification survives every mechanism, from Law 1. The certifiers a wave above `r` sit above the settling … |
-| `coversToward_of_synchronisedOn` | Full coverage from `Rnd` is coverage toward anything, over any window at or above `Rnd`. |
-| `exists_decided_of_coverage` | A reliably-led slot commits on a covered, populated DAG — for any rule with Laws 2 and 3, with no … |
-| `exists_decided_of_sustains` | A commit survives a sustaining mechanism, at the same schedule: the candidates are the same blocks, their … |
-| `leaderCommits` | `LeaderCommits`, from Law 3. |
-| `liveReachable` | The precondition is reachable, from Law 2. Coverage is coverage toward every candidate, so every candidate … |
 | `voteSupport_local` | Law 1 for vote support. A block strictly above the settling round keeps its references. |
 | `voteSupport_ofCoverage` | Law 2 for vote support. Coverage toward the candidate at its own round is the vote. |
 

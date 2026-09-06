@@ -1,8 +1,7 @@
-import LeanDag.Properties.Commit
+import LeanDag.Properties.Bounded
 import LeanDag.Properties.Sustain
 import LeanDag.Properties.Deliver
 import LeanDag.Properties.Candidate
-import LeanDag.Properties.Live
 import LeanDag.Properties.Band
 import LeanDag.Density
 
@@ -40,13 +39,12 @@ candidate — because that is exactly what its wait clauses guarantee.
 line; and it is the weakest antecedent under which every rule here
 certifies, which is what makes the three theorems at the end generic.
 
-**What becomes generic.** `exists_decided_of_coverage`: a rule with the
-laws commits a reliably-led slot on any covered, populated DAG, no
-per-rule `LiveReachable` needed. `certifiesAt_of_rebased`: certification
-survives every mechanism, once. `Support.leaderCommits`: the rule has
-`LeaderCommits` at `Support.live`, so everything downstream of that
-property — `decidedBelow_of_run`, chain quality, Barnacle — is reached
-with no per-rule liveness precondition at all.
+**What becomes generic** lives downstream. `Derived/LeaderCommits.lean`:
+`LeaderCommits` at `Support.live`, from Law 3, so everything a schedule
+mechanism reads — `decidedBelow_of_run`, chain quality, Barnacle — is
+reached with no per-rule precondition. `Arcs/Liveness.lean`: liveness
+on any covered DAG from Laws 2 and 3, and liveness across every
+`Sustains` from Laws 1 and 3.
 -/
 
 namespace LeanDag
@@ -150,105 +148,6 @@ def Commits (rel : Reliability Validator) : Prop :=
     CoversUpto R V (S.slotRound k + sp.wave) →
     S.leader k ∈ T →
     ∃ L, DecidedBelow R S (k + 1) V k (some L)
-
-/-! ## What follows, once -/
-
-/-- **The liveness precondition, in support terms.** A quorum, a horizon
-the view is caught up to with the window a wave under it, and at every
-quorum-led slot of the window production and certification. The `Live`
-every rule with a `Support` has, and the one `LeaderCommits` is proved
-against. -/
-def live (rel : Reliability Validator) (S : Slots Validator) {U : R.Universe}
-    (V : R.View U) (T : Finset Validator) (lo K : ℕ) : Prop :=
-  rel.IsQuorum T ∧
-    ∃ N, CoversUpto R V N ∧ (∀ k, k < K → S.slotRound k + sp.wave ≤ N) ∧
-      ∀ k, lo ≤ k → k < K → S.leader k ∈ T →
-        (∀ n, S.slotRound k ≤ n → n ≤ S.slotRound k + sp.wave → PopulatedOn R U T n) ∧
-        ∀ L, R.IsCandidate S U k L → sp.certifiesAt U T (S.slotRound k) L
-
-/-- **`LeaderCommits`, from Law 3.** -/
-theorem leaderCommits {rel : Reliability Validator} (hlc : sp.Commits rel) :
-    LeaderCommits R (fun S {U} V T lo K => sp.live rel S (U := U) V T lo K) := by
-  intro S U V T lo K hlive k hlo hK hlead
-  obtain ⟨hq, N, hcov, hN, hslot⟩ := hlive
-  obtain ⟨hpop, hcert⟩ := hslot k hlo hK hlead
-  exact hlc S V T k hq hpop hcert (hcov.mono (hN k hK)) hlead
-
-/-- **The precondition is reachable, from Law 2.** Coverage is coverage
-toward every candidate, so every candidate of a reliably-led slot is
-certified. No per-rule argument. -/
-theorem liveReachable {rel : Reliability Validator} (hcov : sp.OfCoverage rel) :
-    LiveReachable R rel sp.wave (fun S {U} V T lo K => sp.live rel S (U := U) V T lo K) := by
-  intro U Rnd N hs hpop S V k hV hRnd hN
-  refine ⟨rel.isQuorum_correct, N, hV, ?_, ?_⟩
-  · intro j hj
-    have := S.mono (Nat.lt_succ_iff.mp hj)
-    omega
-  · intro j hlo hj hlead
-    have hjk : j = k := by omega
-    subst hjk
-    refine ⟨fun n h1 h2 => hpop n (by omega) (by omega), ?_⟩
-    intro L hL v hv c hc hcc hcr
-    exact hcov U rel.correct rel.isQuorum_correct _ L
-      (fun n h1 h2 => hpop n (by omega) (by omega))
-      (coversToward_of_synchronisedOn hs hRnd) hL.1 hL.2.1 (by rw [hL.2.2]; exact hlead)
-      c hc (by rw [hcc]; exact hv) hcr
-
-/-- **A reliably-led slot commits on a covered, populated DAG** — for any
-rule with Laws 2 and 3, with no precondition of the rule's own in
-sight. -/
-theorem exists_decided_of_coverage {rel : Reliability Validator}
-    (hcov : sp.OfCoverage rel) (hlc : sp.Commits rel)
-    {U : R.Universe} {Rnd N : ℕ} (hs : SynchronisedOn R U rel.correct Rnd)
-    (hpop : ∀ r, Rnd ≤ r → r ≤ N → PopulatedOn R U rel.correct r)
-    (S : Slots Validator) (V : R.View U) (k : ℕ) (hV : CoversUpto R V N)
-    (hRnd : Rnd ≤ S.slotRound k) (hN : S.slotRound k + sp.wave ≤ N)
-    (hlead : S.leader k ∈ rel.correct) :
-    ∃ L, DecidedBelow R S (k + 1) V k (some L) :=
-  exists_decided_of_reachable (sp.leaderCommits hlc) (sp.liveReachable hcov) hs hpop S V k
-    hV hRnd hN hlead
-
-/-- **Certification survives every mechanism, from Law 1.** The
-certifiers a wave above `r` sit above the settling round with their
-whole window, so each still certifies in the transformed universe, at
-the rebased round. -/
-theorem certifiesAt_of_rebased (hloc : sp.Local) {U U' : R.Universe} {G R₀ : ℕ}
-    (h : RebasedAbove R U U' G R₀) {T : Finset Validator} {r : ℕ} {L : BlockId}
-    (hr : R₀ ≤ r) (hG : G ≤ r) (hL : L ∈ R.ids U) (hLr : (R.block U L).round = r)
-    (hc : sp.certifiesAt U T r L) :
-    sp.certifiesAt U' T (r - G) L := by
-  intro v hv c hc' hcc hcr
-  obtain ⟨hcU, hround⟩ := h.of_mem' hc' (by omega)
-  have hcrU : (R.block U c).round = r + sp.wave := by omega
-  have hccU : (R.block U c).creator = v := by
-    rw [← h.creator c hcU (by omega)]; exact hcc
-  exact (hloc h c L hcU (by omega) hL (by omega)).mpr (hc v hv c hcU hccU hcrU)
-
-/-- **A commit survives a sustaining mechanism**, at the same schedule:
-the candidates are the same blocks, their certification carries over,
-and production carries over, so Law 3 fires in the transformed universe
-on any view of it caught up far enough. -/
-theorem exists_decided_of_sustains {rel : Reliability Validator}
-    (hloc : sp.Local) (hlc : sp.Commits rel)
-    {U U' : R.Universe} {R₀ : ℕ} (h : Sustains R U U' 0 R₀)
-    (S : Slots Validator) (V' : R.View U') {T : Finset Validator} (k : ℕ) (hq : rel.IsQuorum T)
-    (hR₀ : R₀ ≤ S.slotRound k)
-    (hpop : ∀ n, S.slotRound k ≤ n → n ≤ S.slotRound k + sp.wave → PopulatedOn R U T n)
-    (hcert : ∀ L, R.IsCandidate S U k L → sp.certifiesAt U T (S.slotRound k) L)
-    (hV' : CoversUpto R V' (S.slotRound k + sp.wave)) (hlead : S.leader k ∈ T) :
-    ∃ L, DecidedBelow R S (k + 1) V' k (some L) := by
-  refine hlc S V' T k hq ?_ ?_ hV' hlead
-  · intro n h1 h2
-    have := h.populatedOn_of (T := T) (r := n) (by omega) (Nat.zero_le _) (hpop n h1 h2)
-    rwa [Nat.sub_zero] at this
-  · rintro L ⟨hL', hLr', hLc'⟩
-    obtain ⟨hLU, hround⟩ := h.of_mem' hL' (by omega)
-    have hLr : (R.block U L).round = S.slotRound k := by omega
-    have hLc : (R.block U L).creator = S.leader k := by
-      rw [← h.creator L hLU (by omega)]; exact hLc'
-    have := sp.certifiesAt_of_rebased hloc h (T := T) (r := S.slotRound k) hR₀ (Nat.zero_le _)
-      hLU hLr (hcert L ⟨hLU, hLr, hLc⟩)
-    rwa [Nat.sub_zero] at this
 
 end Support
 

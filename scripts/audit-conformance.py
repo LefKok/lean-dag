@@ -52,36 +52,25 @@ RULES = [
 ]
 
 # The obligations, in the order 11.1 lists them.
-# The six every rule owes, then `LiveReachable`, then the three in
+# The five every rule owes and its support, then the three in
 # `Properties/Optional/`, owed only when a mechanism asks:
 # `CommitsDirect` by a rule whose direct predicate a window count reads,
 # `SkipsUnsupported` by one that skips without waiting for an anchor,
 # and `Quorate` by chain quality.
 #
-# `LiveReachable` is not a seventh obligation but the guard on the
-# fifth. `LeaderCommits R Live` is stated against a precondition the
-# rule supplies, so it is true and empty for a rule whose `Live` nothing
-# satisfies; `LiveReachable` is the implication from coverage and
-# production to that precondition. It is scored per *carrier*, so a rule
-# that shares a carrier and adds a second precondition — reactive
-# Mysticeti, whose `reactiveLive` deliberately does not assume coverage
-# — reads `yes` here on the strength of the first. Its own guard is a
-# witness (`LeanDagTest/Reactive.lean`).
-#
 # `Support` is the shape a rule's commit counts in (`Properties/Support.lean`),
 # pinned by three laws. `Local` and `OfCoverage` are generic for the
 # one-round shape and per rule otherwise; `Commits` is per rule always, so
 # a rule is scored as having a support when a `.Commits` law is stated at
-# its carrier.
-OBLIGATIONS = ["Causal", "Banded", "Agree", "CommitsCandidate",
-               "LeaderCommits", "Indirect", "LiveReachable", "Support",
+# its carrier. `LeaderCommits` is derived from it (§11.8).
+OBLIGATIONS = ["Causal", "Banded", "Agree", "CommitsCandidate", "Indirect", "Support",
                "CommitsDirect", "SkipsUnsupported", "Quorate"]
 REQUIRED = 6
-DERIVED = ["Persist", "LocalTruncate", "Descends"]
+DERIVED = ["LeaderCommits", "Persist", "LocalTruncate", "Descends"]
 # What each derived property follows from. `Descends` used to be an
 # obligation and is now the indirect rule with a downward induction on
 # top (`Properties/Derived/Descent.lean`).
-DERIVED_FROM = {"Persist": "Banded", "LocalTruncate": "Banded",
+DERIVED_FROM = {"LeaderCommits": "Support", "Persist": "Banded", "LocalTruncate": "Banded",
                 "Descends": "Indirect"}
 
 # Files that state the generic theory rather than an instance of it.
@@ -146,7 +135,7 @@ def main():
     cols = OBLIGATIONS + ["|"] + DERIVED
     short = {"Causal": "caus", "Banded": "band", "Agree": "agre",
              "CommitsCandidate": "cand", "LeaderCommits": "lead",
-             "Indirect": "indr", "LiveReachable": "live", "Support": "supp",
+             "Indirect": "indr", "Support": "supp",
              "CommitsDirect": "drct*",
              "Descends": "desc",
              "SkipsUnsupported": "skip*", "Quorate": "quor*",
@@ -180,9 +169,9 @@ def main():
                 if cs and not all(any(c in shown.get(o, ()) for c in cs)
                                   for o in OBLIGATIONS[:REQUIRED])]
     print(f"\n{len(allcarriers)} carriers over {len(RULES)} rules; "
-          f"{conforming} show all six required properties.")
+          f"{conforming} show the five properties and a support.")
     if partial_:
-        print("Carrier but not the six: " + ", ".join(partial_) + ".")
+        print("Carrier but not the five and a support: " + ", ".join(partial_) + ".")
         print("  `Agree` and `CommitsCandidate` are `Barnacle.Laws` renamed;")
         print("  `Causal` needs the universe-level facts `Laws` states only for views,")
         print("  and `Banded` is the induction each rule owes. Those four are per-rule.")
@@ -193,13 +182,11 @@ def main():
           "rule's direct predicate, when the rule skips\n  without waiting for an "
           "anchor, or when a deployment quotes chain quality.")
     print("`supp`: the rule has a `Support` with its `Commits` law (`Properties/Support.lean`),\n"
-          "  so `LeaderCommits`, `LiveReachable` and liveness across every `Sustains` are\n"
-          "  the generic theorems applied. Where it is `--`, `lead` and `live` were proved\n"
-          "  by hand against the rule's own precondition.")
-    print("`live` is the guard on `lead`, not a seventh obligation: without it "
-          "`LeaderCommits`\n  is true of a rule whose precondition nothing "
-          "satisfies. It is scored per carrier,\n  so a second precondition on a "
-          "shared carrier is not measured here.")
+          "  so `LeaderCommits`, liveness on a covered DAG and liveness across every\n"
+          "  `Sustains` are the generic theorems applied (`Arcs/Liveness.lean`).")
+    print("`lead` is derived: `LeaderCommits` at `Support.live` follows from the support's\n"
+          "  `Commits` law. A rule that also states it against a precondition of its own\n"
+          "  reads `yes`; one that relies on the derivation reads `der`.")
     return 0
 
 

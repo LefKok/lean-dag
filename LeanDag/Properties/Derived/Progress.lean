@@ -1,4 +1,6 @@
 import LeanDag.Properties.Commit
+import LeanDag.Properties.Derived.LeaderCommits
+import LeanDag.Properties.Derived.Descent
 import LeanDag.Properties.Derived.Bounded
 
 /-!

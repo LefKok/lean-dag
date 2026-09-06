@@ -5,7 +5,7 @@ import LeanDag.Hydrozoan.Helpers.Carrier
 import LeanDag.Hydrozoan.Helpers.Commit
 import LeanDag.OptimalHydrozoan.DirectLiveness.Proof
 import LeanDag.Properties.Commit
-import LeanDag.Properties.Live
+import LeanDag.Properties.Derived.LeaderCommits
 import LeanDag.Properties.Support
 import LeanDag.Properties.Agree
 import LeanDag.Properties.Candidate
@@ -186,15 +186,20 @@ theorem optSupport_local [LinearOrder BlockId] :
     ⟨h.mem, h.round, h.creator, h.refs⟩ c L hc hcr hL hLr
 
 /-- **Law 2**, Hydrozoan's at the underlying universe. -/
-theorem optSupport_ofCoverage [LinearOrder BlockId] :
+theorem optSupport_ofCoverage :
     Support.OfCoverage (R := optimalRule (Replica := Replica) (BlockId := BlockId)) optSupport
       (LeanDag.Hydrozoan.hzReliability Replica) := by
   intro U T hq r L hpop hct hL hLr hLc c hc hcc hcr
-  exact LeanDag.Hydrozoan.hzSupport_ofCoverage (U := U.val) T hq r L hpop hct hL hLr hLc
-    c hc hcc hcr
+  have hcard : LeanDag.Hydrozoan.q Replica ≤ T.card := by
+    have h2 := hq.2
+    change Fintype.card Replica -
+      (LeanDag.Hydrozoan.Faults.f Replica + LeanDag.Hydrozoan.Faults.c Replica) ≤ T.card at h2
+    unfold LeanDag.Hydrozoan.q; omega
+  exact LeanDag.Hydrozoan.isCertificate_of_coversToward hcard
+    (hpop (r + 1) (by omega) (by change r + 1 ≤ r + 2; omega)) hct hL hLr hLc hc hcc hcr
 
 /-- **Law 3**: the slow commit, in `DecidedOpt`. -/
-theorem optSupport_commits [LinearOrder BlockId] :
+theorem optSupport_commits :
     Support.Commits (R := optimalRule (Replica := Replica) (BlockId := BlockId)) optSupport
       (LeanDag.Hydrozoan.hzReliability Replica) := by
   intro S U V T k hq hpop hcert hcov hlead
@@ -223,6 +228,41 @@ theorem optSupport_commits [LinearOrder BlockId] :
   · change LeanDag.Hydrozoan.SlowCommitInView U.val V L (S'.slotRound k)
     rw [hround]; exact hin
 
+/-- **Optimal-Hydrozoan's precondition is the support's.** -/
+theorem optSupport_live_of_optLive {S : LeanDag.Slots Replica}
+    {U : (optimalRule (Replica := Replica) (BlockId := BlockId)).Universe}
+    {V : LeanDag.Hydrozoan.View U.val} {T : Finset Replica} {lo K : ℕ}
+    (h : optLive S (U := U) V T lo K) :
+    Support.live (R := optimalRule (Replica := Replica) (BlockId := BlockId)) optSupport
+      (LeanDag.Hydrozoan.hzReliability Replica) S (U := U) V T lo K := by
+  obtain ⟨hT, hcard, R₀, N, hs, hR, hpop, hcov, hN⟩ := h
+  have hq : (LeanDag.Hydrozoan.hzReliability Replica).IsQuorum T := ⟨hT, by
+    change Fintype.card Replica -
+      (LeanDag.Hydrozoan.Faults.f Replica + LeanDag.Hydrozoan.Faults.c Replica) ≤ T.card
+    unfold LeanDag.Hydrozoan.q at hcard; omega⟩
+  have hpop' : ∀ n, R₀ ≤ n → n ≤ N →
+      Properties.PopulatedOn (optimalRule (Replica := Replica) (BlockId := BlockId)) U T n := by
+    intro n h1 h2 v hv
+    obtain ⟨b, hb, hbr, hba⟩ := hpop n h1 h2 v hv
+    exact ⟨b, hb, hba, hbr⟩
+  refine ⟨hq, N, hcov, hN, ?_⟩
+  intro k hlo hK hlead
+  have hRk : R₀ ≤ S.slotRound k := le_trans hR (S.mono hlo)
+  have hNk : S.slotRound k + 2 ≤ N := hN k hK
+  refine ⟨fun n h1 h2 => hpop' n (by omega) (by change n ≤ S.slotRound k + 2 at h2; omega), ?_⟩
+  rintro L ⟨hLmem, hLr, hLc⟩ v hv c hc hcc hcr
+  exact optSupport_ofCoverage U T hq (S.slotRound k) L
+    (fun n h1 h2 => hpop' n (by omega) (by change n ≤ S.slotRound k + 2 at h2; omega))
+    (coversToward_of_synchronisedOn hs hRk) hLmem hLr (by rw [hLc]; exact hlead)
+    c hc (by rw [hcc]; exact hv) hcr
+
+/-- **A reliably-led slot commits**, now a corollary of the support. -/
+theorem leaderCommits :
+    LeaderCommits (optimalRule (Replica := Replica) (BlockId := BlockId))
+      (fun S {U} V T lo K => optLive S (U := U) V T lo K) :=
+  fun S _ V T lo K h =>
+    Support.leaderCommits optSupport optSupport_commits S V T lo K (optSupport_live_of_optLive h)
+
 /-! ## Optimal-Hydrozoan's fast path
 
 `voteSupport` again — one round up, certifying is referencing — at the
@@ -247,7 +287,7 @@ def optFastReliability (Replica : Type) [Fintype Replica] [DecidableEq Replica]
   minority := hmin
 
 /-- **Law 3 of `voteSupport`, for Optimal-Hydrozoan's fast path.** -/
-theorem voteSupport_fast_commits [LinearOrder BlockId]
+theorem voteSupport_fast_commits
     (h : (O.byzantine ∪ O.crashed).card ≤ LeanDag.OptimalHydrozoan.pOpt Replica)
     (hmin : 2 * LeanDag.OptimalHydrozoan.pOpt Replica < Fintype.card Replica) :
     Support.Commits (R := optimalRule (Replica := Replica) (BlockId := BlockId))
@@ -291,56 +331,7 @@ theorem voteSupport_fast_commits [LinearOrder BlockId]
   · change LeanDag.OptimalHydrozoan.FastCommitOptInView U.val V L (S'.slotRound k)
     rw [hround]; exact hin
 
-/-- **Optimal-Hydrozoan's precondition is reachable**
-(`Properties/Live.lean`). Optimal leaves the slow path alone, so the
-reachability is Hydrozoan's, at the same reliable set and wavelength. -/
-theorem liveReachable :
-    LiveReachable (optimalRule (Replica := Replica) (BlockId := BlockId))
-      (LeanDag.Hydrozoan.hzReliability Replica) 2
-      (fun S {U} V T lo K => optLive S (U := U) V T lo K) := by
-  intro U Rnd N hs hpop S V k hcov hRnd hN
-  refine ⟨Finset.Subset.rfl, LeanDag.Hydrozoan.q_le_card_correct, Rnd, N, hs, hRnd,
-    ?_, hcov, ?_⟩
-  · intro r h1 h2 v hv
-    obtain ⟨b, hb, hbc, hbr⟩ := hpop r h1 h2 v hv
-    exact ⟨b, hb, hbr, hbc⟩
-  · intro j hj
-    have := S.mono (Nat.lt_succ_iff.mp hj)
-    omega
 
-/-- **A reliably-led slot commits**, at a bound one above the slot: the
-slow commit reads that one leader, so a reassignment of the others
-leaves it standing. -/
-theorem leaderCommits :
-    LeaderCommits (optimalRule (Replica := Replica) (BlockId := BlockId))
-      (fun S {U} V T lo K => optLive S (U := U) V T lo K) := by
-  intro S U V T lo K hlive k hlo hK hlead
-  obtain ⟨hT, hcard, R₀, N, hs, hR, hpop, hcov, hN⟩ := hlive
-  letI : LeanDag.Hydrozoan.Slots Replica := LeanDag.Hydrozoan.ofCoreSlots S
-  have hRk : R₀ ≤ S.slotRound k :=
-    le_trans hR ((LeanDag.Hydrozoan.ofCoreSlots S).mono hlo)
-  have hNk : S.slotRound k + 2 ≤ N := hN k hK
-  have hp0 : LeanDag.Hydrozoan.PopulatedOn U.val T (S.slotRound k) := hpop _ hRk (by omega)
-  have hp1 : LeanDag.Hydrozoan.PopulatedOn U.val T (S.slotRound k + 1) :=
-    hpop _ (by omega) (by omega)
-  have hp2 : LeanDag.Hydrozoan.PopulatedOn U.val T (S.slotRound k + 2) :=
-    hpop _ (by omega) (by omega)
-  obtain ⟨L, hL, hslow, -⟩ :=
-    (LeanDag.OptimalHydrozoan.DirectLiveness.holds Replica BlockId
-      (Barnacle.OptimalHydrozoan.optUniverseOf U.val U.property)).1
-      T R₀ k hT hcard hs hRk hp0 hp1 hp2 hlead V (hcov.mono hNk)
-  have hin : LeanDag.Hydrozoan.SlowCommitInView U.val V L (S.slotRound k) :=
-    LeanDag.Hydrozoan.slowCommitInView_of_coversUpto hslow (hcov.mono hNk)
-  refine ⟨L, by omega, LeanDag.OptimalHydrozoan.DecidedOpt.directSlow hL hin, ?_⟩
-  intro S' hround hlead'
-  refine LeanDag.OptimalHydrozoan.DecidedOpt.directSlow
-    (S := LeanDag.Hydrozoan.ofCoreSlots S') ⟨hL.1, ?_, ?_⟩ ?_
-  · change (U.val.block L).round = S'.slotRound k
-    rw [hround]; exact hL.2.1
-  · change (U.val.block L).author = S'.leader k
-    rw [hlead' k (by omega)]; exact hL.2.2
-  · change LeanDag.Hydrozoan.SlowCommitInView U.val V L (S'.slotRound k)
-    rw [hround]; exact hin
 
 open Classical in
 /-- **The graded rule is total, at a bound.** Three rungs and three

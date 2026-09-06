@@ -106,6 +106,8 @@ import LeanDag.Properties.Derived.FromBand
 import LeanDag.Properties.Derived.Progress
 import LeanDag.Properties.Derived.Truncate
 import LeanDag.Properties.Derived.Descent
+import LeanDag.Properties.Derived.LeaderCommits
+import LeanDag.Properties.Arcs.Liveness
 import LeanDag.Properties.Compose
 import LeanDag.Properties.Deliver
 import LeanDag.MysticetiProperties

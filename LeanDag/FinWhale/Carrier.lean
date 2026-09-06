@@ -5,7 +5,7 @@ import LeanDag.Properties.Agree
 import LeanDag.Properties.Candidate
 import LeanDag.Properties.Optional.Direct
 import LeanDag.Properties.Optional.Quorate
-import LeanDag.Properties.Live
+import LeanDag.Properties.Derived.LeaderCommits
 import LeanDag.Properties.Support
 
 /-!
@@ -787,36 +787,6 @@ theorem voteSupport_fast_commits (h : F.byzantine.card ≤ P.p) :
   have hvc' := (LeanDag.FinWhale.viewCommit_congr hr (hlead' k (by omega))).2 hvc
   exact decided_iff.2 ((assignment_passOf V.property).wf.direct_commit k L hvc')
 
-/-- **FinWhale's precondition is reachable** (`Properties/Live.lean`).
-`finWhaleLive` asks for `CommitsCorrectLeaders`, which the arc supplies
-from a timing model — `commits_of_reactive` from the reactive wait
-clauses, `commits_of_creation` from the block-creation conditions. This
-is the third route and the one the properties want: coverage and
-production alone, with no clock, give the slow path at every
-correct-led slot. -/
-theorem liveReachable :
-    LiveReachable (finWhaleRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload)) (coreReliability Validator) 2
-      (fun S {D} V T lo K => finWhaleLive S (D := D) V T lo K) := by
-  intro D Rnd N hs hpop S V k hcov hRnd hN
-  refine ⟨rfl, Rnd, N, ?_, hRnd, ?_, ?_⟩
-  · intro s hR hs2 hlead
-    have hR' : Rnd ≤ S.slotRound s := hR
-    have hs2' : S.slotRound s + 2 ≤ N := hs2
-    obtain ⟨L, hL, hLc, hLr⟩ := hpop (S.slotRound s) hR' (by omega) (S.leader s) hlead
-    have hLc' : (LeanDag.FinWhale.Dag.block D L).creator = S.leader s := hLc
-    have hLr' : (LeanDag.FinWhale.Dag.block D L).round = S.slotRound s := hLr
-    exact ⟨L, mem_slotBlocks.mpr ⟨⟨hL, hLr'⟩, hLc'⟩,
-      spCommitBy_of_synchronisedOn hs (hpop _ (by omega) (by omega))
-        (hpop _ (by omega) (by omega)) hR' hL hLr' (by rw [hLc']; exact hlead)⟩
-  · intro j hj
-    have := S.mono (Nat.lt_succ_iff.mp hj)
-    omega
-  · intro n hR hn b hb _
-    obtain ⟨hbD, hbr⟩ := mem_blocksAt.mp hb
-    refine hcov b hbD ?_
-    show (LeanDag.FinWhale.Dag.block D b).round ≤ N
-    rw [hbr]; exact hn
 
 /-- **A reliably-led slot commits**, at a bound one above the slot: the
 commit is direct, and a direct commit reads that slot's round and leader

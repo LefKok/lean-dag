@@ -1,6 +1,7 @@
 import LeanDag.Hydrozoan.Model.Liveness
 import LeanDag.Hydrozoan.Helpers.Counting
 import LeanDag.Hydrozoan.Helpers.DirectRules
+import LeanDag.Hydrozoan.Model.CausalHistory
 
 /-!
 # Direct-liveness toolkit
@@ -45,6 +46,36 @@ theorem qFast_le_card_correct
   omega
 
 section Wave
+
+/-- **Coverage toward a candidate over two layers makes a certificate**:
+every quorum block one round up references the candidate, and every
+quorum block two rounds up references each of those.
+`isCertificate_of_synchronised` with its antecedent cut to what it
+reads, and stated without a schedule or a carrier so that
+Optimal-Hydrozoan can take it at its own universe. -/
+theorem isCertificate_of_coversToward {U : BlockUniverse Replica BlockId}
+    {T : Finset Replica} {r : ℕ} {L : BlockId}
+    (hcard : q Replica ≤ T.card)
+    (hpop1 : ∀ v ∈ T, ∃ b ∈ U.ids, (U.block b).author = v ∧ (U.block b).round = r + 1)
+    (hct : ∀ n, r ≤ n → n < r + 2 →
+      ∀ b ∈ U.ids, (U.block b).author ∈ T → (U.block b).round = n + 1 →
+      ∀ a ∈ U.ids, (U.block a).author ∈ T → (U.block a).round = n →
+        Reaches U a L → a ∈ (U.block b).parents)
+    (hL : L ∈ U.ids) (hLr : (U.block L).round = r) (hLc : (U.block L).author ∈ T)
+    {C : BlockId} (hC : C ∈ U.ids) (hCa : (U.block C).author ∈ T)
+    (hCr : (U.block C).round = r + 2) :
+    IsCertificate U C L := by
+  have hsub : T ⊆ authorsOf U.block (voteBlocks U C L) := by
+    intro v hv
+    obtain ⟨b, hb, hba, hbr⟩ := hpop1 v hv
+    have hbT : (U.block b).author ∈ T := by rw [hba]; exact hv
+    have hvote : L ∈ (U.block b).parents :=
+      hct r le_rfl (by omega) b hb hbT hbr L hL hLc hLr Relation.ReflTransGen.refl
+    have href : b ∈ (U.block C).parents :=
+      hct (r + 1) (by omega) (by omega) C hC hCa (by rw [hCr]) b hb hbT hbr
+        (Relation.ReflTransGen.single (show RefStep U b L from hvote))
+    exact mem_authorsOf.mpr ⟨b, Finset.mem_filter.mpr ⟨href, hvote⟩, hba⟩
+  exact le_trans (qCert_le_q (Replica := Replica)) (le_trans hcard (Finset.card_le_card hsub))
 
 variable [S : Slots Replica] {U : BlockUniverse Replica BlockId}
   {T : Finset Replica} {R k : ℕ}

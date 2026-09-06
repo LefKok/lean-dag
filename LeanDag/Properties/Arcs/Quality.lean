@@ -1,6 +1,8 @@
 import LeanDag.Properties.Optional.Quorate
 import LeanDag.Properties.Candidate
 import LeanDag.Properties.Commit
+import LeanDag.Properties.Derived.LeaderCommits
+import LeanDag.Properties.Derived.Descent
 import LeanDag.Properties.Sustain
 
 /-!

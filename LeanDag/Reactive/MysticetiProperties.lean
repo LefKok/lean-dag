@@ -95,7 +95,7 @@ theorem leaderCommits_reactive :
 
 /-! ## What a mechanism needs from a reactive execution
 
-`LiveReachable` asks a rule's precondition to follow from coverage, and
+`Support.OfCoverage` asks a rule's precondition to follow from coverage, and
 a reactive execution does not have coverage — `SynchronisedOn` is false
 in one by design. That antecedent is the strongest fact statable in
 `ids`, `block` and `refs` alone, which is why the properties use it; it

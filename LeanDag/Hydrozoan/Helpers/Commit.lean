@@ -4,7 +4,7 @@ import LeanDag.Hydrozoan.IndirectLiveness.Statement
 import LeanDag.Hydrozoan.DirectLiveness.Proof
 import LeanDag.Hydrozoan.SlotAgreement.Proof
 import LeanDag.Properties.Commit
-import LeanDag.Properties.Live
+import LeanDag.Properties.Derived.LeaderCommits
 import LeanDag.Properties.Support
 import LeanDag.Properties.Optional.Direct
 import LeanDag.Properties.Derived.Descent
@@ -63,6 +63,7 @@ def hzLive (S : LeanDag.Slots Replica) {U : LeanDag.Hydrozoan.BlockUniverse Repl
 the candidate, each a block whose voting parents number `q_cert`. The
 fast path is latency and is not a liveness shape. -/
 
+omit [LinearOrder BlockId] in
 /-- **A quorum's certificates are a slow commit.** The certificate half
 of `slowCommit_of_synchronised`, with the coverage argument factored
 out so that Optimal-Hydrozoan can take it at its own universe. -/
@@ -117,26 +118,8 @@ theorem hzSupport_ofCoverage :
     have h2 := hq.2
     change Fintype.card Replica - (LeanDag.Hydrozoan.Faults.f Replica + LeanDag.Hydrozoan.Faults.c Replica) ≤ T.card at h2
     unfold LeanDag.Hydrozoan.q; omega
-  have hLr' : (U.block L).round = r := hLr
-  have hLc' : (U.block L).author ∈ T := hLc
-  have hCr' : (U.block C).round = r + 2 := hCr
-  have hCc' : (U.block C).author ∈ T := hCc
-  change LeanDag.Hydrozoan.IsCertificate U C L
-  have hsub : T ⊆ LeanDag.Hydrozoan.authorsOf U.block (LeanDag.Hydrozoan.voteBlocks U C L) := by
-    intro v hv
-    obtain ⟨b, hb, hba, hbr⟩ := hpop (r + 1) (by omega) (by change r + 1 ≤ r + 2; omega) v hv
-    have hba' : (U.block b).author = v := hba
-    have hbr' : (U.block b).round = r + 1 := hbr
-    have hbT : (U.block b).author ∈ T := by rw [hba']; exact hv
-    have hvote : L ∈ (U.block b).parents :=
-      hct r le_rfl (by change r < r + 2; omega) b hb hbT hbr' L hL hLc' hLr'
-        Relation.ReflTransGen.refl
-    have href : b ∈ (U.block C).parents :=
-      hct (r + 1) (by omega) (by change r + 1 < r + 2; omega) C hC hCc'
-        (by change (U.block C).round = r + 1 + 1; rw [hCr']) b hb hbT hbr'
-        (Relation.ReflTransGen.single (show RefStepFrom (rule.block U) b L from hvote))
-    exact LeanDag.Hydrozoan.mem_authorsOf.mpr ⟨b, Finset.mem_filter.mpr ⟨href, hvote⟩, hba'⟩
-  exact le_trans LeanDag.Hydrozoan.qCert_le_q (le_trans hcard (Finset.card_le_card hsub))
+  exact isCertificate_of_coversToward hcard
+    (hpop (r + 1) (by omega) (by change r + 1 ≤ r + 2; omega)) hct hL hLr hLc hC hCc hCr
 
 /-- **Law 3.** A quorum's certificates at the slot's candidate are a
 slow commit, which a view caught up to the decision round sees. -/
@@ -168,6 +151,43 @@ theorem hzSupport_commits :
   · change LeanDag.Hydrozoan.SlowCommitInView U V L (S'.slotRound k)
     rw [hround]; exact hin
 
+/-- **Hydrozoan's precondition is the support's.** Coverage from `R₀`
+is coverage toward every candidate, and the quorum is inside the
+correct set, so `hzLive` is `Support.live` at every slot of the window. -/
+theorem hzSupport_live_of_hzLive {S : LeanDag.Slots Replica}
+    {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId} {V : LeanDag.Hydrozoan.View U}
+    {T : Finset Replica} {lo K : ℕ} (h : hzLive S (U := U) V T lo K) :
+    Support.live (R := rule (Replica := Replica) (BlockId := BlockId)) hzSupport
+      (hzReliability Replica) S (U := U) V T lo K := by
+  obtain ⟨hT, hcard, R₀, N, hs, hR, hpop, hcov, hN⟩ := h
+  have hq : (hzReliability Replica).IsQuorum T := ⟨hT, by
+    change Fintype.card Replica -
+      (LeanDag.Hydrozoan.Faults.f Replica + LeanDag.Hydrozoan.Faults.c Replica) ≤ T.card
+    unfold LeanDag.Hydrozoan.q at hcard; omega⟩
+  have hpop' : ∀ n, R₀ ≤ n → n ≤ N →
+      Properties.PopulatedOn (rule (Replica := Replica) (BlockId := BlockId)) U T n := by
+    intro n h1 h2 v hv
+    obtain ⟨b, hb, hbr, hba⟩ := hpop n h1 h2 v hv
+    exact ⟨b, hb, hba, hbr⟩
+  refine ⟨hq, N, hcov, hN, ?_⟩
+  intro k hlo hK hlead
+  have hRk : R₀ ≤ S.slotRound k := le_trans hR (S.mono hlo)
+  have hNk : S.slotRound k + 2 ≤ N := hN k hK
+  refine ⟨fun n h1 h2 => hpop' n (by omega) (by change n ≤ S.slotRound k + 2 at h2; omega), ?_⟩
+  rintro L ⟨hLmem, hLr, hLc⟩ v hv c hc hcc hcr
+  exact hzSupport_ofCoverage U T hq (S.slotRound k) L
+    (fun n h1 h2 => hpop' n (by omega) (by change n ≤ S.slotRound k + 2 at h2; omega))
+    (coversToward_of_synchronisedOn hs hRk) hLmem hLr (by rw [hLc]; exact hlead)
+    c hc (by rw [hcc]; exact hv) hcr
+
+/-- **Direct liveness as a property**, now a corollary: the bridge
+composed with the one `LeaderCommits` every support has. -/
+theorem leaderCommits :
+    LeaderCommits (rule (Replica := Replica) (BlockId := BlockId))
+      (fun S {U} V T lo K => hzLive S (U := U) V T lo K) :=
+  fun S _ V T lo K h =>
+    Support.leaderCommits hzSupport hzSupport_commits S V T lo K (hzSupport_live_of_hzLive h)
+
 /-! ## Hydrozoan's fast path
 
 A second `Support` for the same rule, which is what the parameter form
@@ -193,6 +213,7 @@ def hzFastReliability (Replica : Type) [Fintype Replica] [DecidableEq Replica]
     have := F.card_replicas
     unfold LeanDag.Hydrozoan.p; omega
 
+omit [LinearOrder BlockId] in
 /-- A view caught up to the voting round holds every vote, so a fast
 commit in the universe is a fast commit in that view. -/
 theorem fastCommitInView_of_coversUpto {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
@@ -247,53 +268,6 @@ theorem voteSupport_fast_commits
   · change LeanDag.Hydrozoan.FastCommitInView U V L (S'.slotRound k)
     rw [hround]; exact hin
 
-/-- **Hydrozoan's precondition is reachable** (`Properties/Live.lean`).
-The reliable set is `Correct`, which carries the quorum, and the
-wavelength is two. -/
-theorem liveReachable :
-    LiveReachable (rule (Replica := Replica) (BlockId := BlockId))
-      (hzReliability Replica) 2
-      (fun S {U} V T lo K => hzLive S (U := U) V T lo K) := by
-  intro U Rnd N hs hpop S V k hcov hRnd hN
-  refine ⟨Finset.Subset.rfl, q_le_card_correct, Rnd, N, hs, hRnd, ?_, hcov, ?_⟩
-  · intro r h1 h2 v hv
-    obtain ⟨b, hb, hbc, hbr⟩ := hpop r h1 h2 v hv
-    exact ⟨b, hb, hbr, hbc⟩
-  · intro j hj
-    have := S.mono (Nat.lt_succ_iff.mp hj)
-    omega
-
-/-- **Direct liveness as a property**: a slot led by a member of the
-reliable quorum commits, and the commit reads that one leader, so its
-bound is one above the slot. -/
-theorem leaderCommits :
-    LeaderCommits (rule (Replica := Replica) (BlockId := BlockId))
-      (fun S {U} V T lo K => hzLive S (U := U) V T lo K) := by
-  intro S U V T lo K hlive k hlo hK hlead
-  obtain ⟨hT, hcard, R₀, N, hs, hR, hpop, hcov, hN⟩ := hlive
-  letI : LeanDag.Hydrozoan.Slots Replica := ofCoreSlots S
-  have hRk : R₀ ≤ S.slotRound k := le_trans hR ((ofCoreSlots S).mono hlo)
-  have hNk : S.slotRound k + 2 ≤ N := hN k hK
-  have hp0 : LeanDag.Hydrozoan.PopulatedOn U T (S.slotRound k) :=
-    hpop _ hRk (by omega)
-  have hp1 : LeanDag.Hydrozoan.PopulatedOn U T (S.slotRound k + 1) :=
-    hpop _ (by omega) (by omega)
-  have hp2 : LeanDag.Hydrozoan.PopulatedOn U T (S.slotRound k + 2) :=
-    hpop _ (by omega) (by omega)
-  obtain ⟨L, hL, hslow, -⟩ :=
-    DirectLiveness.holds Replica BlockId U T R₀ k hT hcard hs hRk hp0 hp1 hp2 hlead V
-      (hcov.mono hNk)
-  have hin : LeanDag.Hydrozoan.SlowCommitInView U V L (S.slotRound k) :=
-    slowCommitInView_of_coversUpto hslow (hcov.mono hNk)
-  refine ⟨L, by omega, LeanDag.Hydrozoan.Decided.directSlow hL hin, ?_⟩
-  intro S' hround hlead'
-  refine LeanDag.Hydrozoan.Decided.directSlow (S := ofCoreSlots S') ⟨hL.1, ?_, ?_⟩ ?_
-  · change (U.block L).round = S'.slotRound k
-    rw [hround]; exact hL.2.1
-  · change (U.block L).author = S'.leader k
-    rw [hlead' k (by omega)]; exact hL.2.2
-  · change LeanDag.Hydrozoan.SlowCommitInView U V L (S'.slotRound k)
-    rw [hround]; exact hin
 
 
 /-! ## The descent, at a bound -/

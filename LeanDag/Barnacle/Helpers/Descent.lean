@@ -1,6 +1,8 @@
 import LeanDag.Barnacle.Model.Heads
 import LeanDag.Barnacle.Helpers.DagRule
 import LeanDag.Properties.Commit
+import LeanDag.Properties.Derived.LeaderCommits
+import LeanDag.Properties.Derived.Descent
 
 /-!
 # The descent laws, from the target properties

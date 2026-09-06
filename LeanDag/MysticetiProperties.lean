@@ -5,7 +5,7 @@ import LeanDag.Properties.Optional.Skip
 import LeanDag.Properties.Optional.Direct
 import LeanDag.Properties.Optional.Quorate
 import LeanDag.Properties.Commit
-import LeanDag.Properties.Live
+import LeanDag.Properties.Derived.LeaderCommits
 import LeanDag.Properties.Support
 import LeanDag.Properties.Derived.Bounded
 import LeanDag.Properties.Derived.Descent
@@ -1165,8 +1165,10 @@ theorem coreSupport_ofCoverage :
   rw [mem_creatorsOf]
   exact ⟨q, Finset.mem_filter.mpr ⟨hpar, hvote⟩, hqc'⟩
 
-/-- **Law 3.** A quorum's certificates at the slot's candidate are a
-direct commit; a view caught up to the certificate round sees it. -/
+/-- **Law 3**, as a corollary of `leaderCommits_cert`: the support's
+precondition at one slot is `certLive` at that slot, and `certLive`
+asks less — any quorum by count, not one inside the correct set — so
+the direct proof is the one that stays and this is derived. -/
 theorem coreSupport_commits :
     Support.Commits (R := mysticetiRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload)) coreSupport (coreReliability Validator) := by
@@ -1175,33 +1177,17 @@ theorem coreSupport_commits :
     have h2 := hq.2
     change Fintype.card Validator - Faults.f Validator ≤ T.card at h2
     exact h2
-  obtain ⟨L, hLmem, hLc, hLr⟩ := hpop (S.slotRound k) le_rfl
-    (by change S.slotRound k ≤ S.slotRound k + 2; omega) (S.leader k) hlead
-  have hL : IsLeaderBlock (S := S) U k L := ⟨hLmem, hLr, hLc⟩
-  have hdc : DirectCommit U L (S.slotRound k) :=
-    directCommit_of_certifiesAt hcard
-      (hpop (S.slotRound k + 2) (by omega) (by change S.slotRound k + 2 ≤ S.slotRound k + 2; omega))
-      (hcert L ⟨hLmem, hLr, hLc⟩)
-  have hin : DirectCommitIn U V L (S.slotRound k) := directCommitIn_of_coversUpto hdc hcov
-  refine ⟨L, by omega, Decided.directCommit hL hin, ?_⟩
-  intro S' hround hlead'
-  refine Decided.directCommit (S := S') ⟨hLmem, by rw [hround]; exact hLr,
-    by rw [hlead' k (by omega)]; exact hLc⟩ ?_
-  rw [hround]; exact hin
-
-/-- **The core's precondition is reachable** (`Properties/Live.lean`):
-`coreLive` is the conjunction of the three carrier-level facts and the
-window bound, so the discharge is the record built. The core reads two
-rounds above a slot, which is its wave. -/
-theorem liveReachable :
-    LiveReachable (mysticetiRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload)) (coreReliability Validator) 2
-      (fun S {U} V T lo K => coreLive S (U := U) V T lo K) := by
-  intro U Rnd N hs hpop S V k hcov hRnd hN
-  refine ⟨card_correct, Rnd, N, hs, hRnd, hpop, hcov, ?_⟩
-  intro j hj
-  have := S.mono (Nat.lt_succ_iff.mp hj)
-  omega
+  refine leaderCommits_cert S V T k (k + 1) ⟨hcard, S.slotRound k + 2, hcov, ?_, ?_⟩ k le_rfl
+    (Nat.lt_succ_self k) hlead
+  · intro j hj
+    have := S.mono (Nat.lt_succ_iff.mp hj)
+    omega
+  · intro j hlo hj _
+    have hjk : j = k := by omega
+    rw [hjk]
+    exact ⟨hpop _ le_rfl (by change S.slotRound k ≤ S.slotRound k + 2; omega),
+      hpop _ (by omega) (by change S.slotRound k + 2 ≤ S.slotRound k + 2; omega),
+      fun L hL => hcert L hL⟩
 
 /-- **A3 as a property.** The two indirect constructors, by cases on a
 certified candidate at the slot — which is the whole proof, and is why

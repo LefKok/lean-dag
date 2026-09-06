@@ -2495,6 +2495,10 @@ slots when it means a dependence bound — *the verdict is settled by slot
 
 ### 11.6 The guard on the liveness precondition
 
+*Superseded by §11.8: `LiveReachable` has been folded into
+`Support.OfCoverage` and deleted. The section stands as the record of
+why the guard was needed.*
+
 `LeaderCommits R Live` says that *wherever* the protocol's own
 precondition holds, a slot led by a reliable validator commits. It does
 not say the precondition ever holds, and `Live` is a parameter the rule
@@ -2772,6 +2776,71 @@ antecedent cut to what it reads. A cone rule owes three, one of them
 new. And every rule then has `LeaderCommits`, `LiveReachable`, liveness
 from coverage, and liveness across every `Sustains` from the generic
 theorems, with no further argument.
+
+### 11.8 The set, consolidated
+
+§11.6 added `LiveReachable` as a guard on `LeaderCommits`, and §11.7
+added `Support`. Once every rule had a support, both of the earlier two
+were consequences of it, and the obligations were counted twice. This
+section is the consolidation.
+
+**What a protocol owes: five properties and a support.**
+
+| | |
+|---|---|
+| `Causal` | its universes are block DAGs |
+| `Banded` | its verdicts read a bounded window of references |
+| `Agree` | two views of one universe do not disagree |
+| `CommitsCandidate` | a commit names the slot's candidate |
+| `Indirect` | the anchored rule, at a bound |
+| `Support` with `Local`, `OfCoverage`, `Commits` | what its commit counts, and that coverage certifies and certificates commit |
+
+Everything else is derived, and lives in `Derived/`:
+
+| derived | from | where |
+|---|---|---|
+| `LeaderCommits` | `Support.Commits` | `Derived/LeaderCommits.lean` |
+| `Persist`, `LocalTruncate` | `Banded` | `Derived/FromBand.lean`, `Derived/Truncate.lean` |
+| `Descends` | `Indirect` | `Derived/Descent.lean` |
+
+`LiveReachable` is deleted. It guarded `LeaderCommits` against an
+unsatisfiable precondition, and `Support.OfCoverage` is that guard
+stated once at the support rather than once per rule; its eight
+per-rule discharges had no consumer. The three mechanism-side
+consequences of a support — liveness on a covered DAG, certification
+across every `RebasedAbove`, a commit across every `Sustains` — moved
+to `Arcs/Liveness.lean`, beside the safety arcs they mirror.
+
+**Which direct proofs went.** A rule keeps a direct `LeaderCommits`
+proof only where it says strictly more than the support does.
+Hydrozoan's and Optimal-Hydrozoan's preconditions already put the quorum
+inside the correct set, so their `leaderCommits` are now the bridge to
+`Support.live` composed with the derived theorem, and the direct proofs
+are deleted. The core's `coreSupport_commits` is now a corollary of
+`leaderCommits_cert`, the other way round, because `certLive` asks less
+— any quorum by count — and the more general statement is the one to
+keep.
+
+**Which stay, and why.** The core's, Odontoceti's, Nemo's, Hybrid's and
+Mahi-Mahi's `leaderCommits` are stated for any quorum by count, not one
+inside the correct set, and that generality is consumed —
+`Quantitative.lean`, `Quality/Capstone.lean`, the adaptive schedule and
+Barnacle's `GoodGives` all supply such a quorum. `Support.Commits` asks
+for `IsQuorum`, which puts the quorum inside the correct set because
+Mahi-Mahi's certificate needs the *candidate's* author correct and the
+uniform law cannot tell the rules apart. So those five direct proofs
+say more than the derivation gives, and stay. FinWhale's stays for a
+different reason: its precondition asks only that `spQuorum`
+certifiers exist, where the support asks that every quorum member
+certifies, so the direct theorem is the weaker-hypothesis one.
+
+**Still duplicated, and not touched here.** Barnacle's `LiveRule` layer
+— `Good`, `GoodGives`, `descent_of_properties` — restates `OfCoverage`
+and `Commits` per rule for the one mechanism that reads them. It has
+seven consumers inside Barnacle and is that mechanism's interface, not
+a property; retiring it means routing Barnacle's liveness through
+`Support.live`, which is a change to the mechanism rather than to the
+set.
 
 ### 11.5 Next steps, in order
 

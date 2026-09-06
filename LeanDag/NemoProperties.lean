@@ -5,7 +5,7 @@ import LeanDag.Nemo.Liveness
 import LeanDag.Properties.Band
 import LeanDag.Properties.Derived.Descent
 import LeanDag.Properties.Derived.Bounded
-import LeanDag.Properties.Live
+import LeanDag.Properties.Derived.LeaderCommits
 import LeanDag.Properties.Support
 
 /-!
@@ -351,23 +351,6 @@ theorem voteSupport_commits (hn : 0 < Fintype.card Validator) :
     by rw [hlead' k (by omega)]; exact hLc⟩ ?_
   rw [hround]; exact hin
 
-/-- **Nemo's precondition is reachable** (`Properties/Live.lean`).
-The reliable set is everyone — the model is crash-only — so the quorum
-clause is that a majority is at most the committee, which needs the
-committee non-empty and nothing else. -/
-theorem liveReachable (hn : 0 < Fintype.card Validator) :
-    LiveReachable (nemoRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload)) (nemoReliability Validator hn) 1
-      (fun S {U} V T lo K => nemoLive S (U := U) V T lo K) := by
-  intro U Rnd N hs hpop S V k hcov hRnd hN
-  refine ⟨?_, Rnd, N, hs, hRnd, hpop, hcov, ?_⟩
-  · show Nemo.majority Validator ≤ (Finset.univ : Finset Validator).card
-    rw [Finset.card_univ]
-    unfold Nemo.majority
-    omega
-  · intro j hj
-    have := S.mono (Nat.lt_succ_iff.mp hj)
-    omega
 
 /-- **A reliably-led slot commits**, at a bound one above the slot: a
 direct commit reads that slot's leader and no other. -/

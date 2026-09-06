@@ -32,6 +32,14 @@ variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 variable {R : DagRule Validator BlockId Payload} {Elig : (ℕ → ℕ) → ℕ → ℕ → Prop}
 
+/-- **A committed run decides everything below it.** `c` consecutive
+slots from `b`, each committed within `b + c`, decide every slot below
+`b` within `b + c`. -/
+def Descends (R : DagRule Validator BlockId Payload) (S : Slots Validator) (c : ℕ) : Prop :=
+  ∀ {U : R.Universe} (V : R.View U) (b : ℕ),
+    (∀ j, b ≤ j → j < b + c → ∃ L, DecidedBelow R S (b + c) V j (some L)) →
+    ∀ i, i < b → ∃ v, DecidedBelow R S (b + c) V i v
+
 /-- **The committed-run descent.** A stretch of slots `[b, n]`, each
 committed below `n + 1`, decides every slot under `b` — at the same
 bound, provided every slot under `b` has `n` eligible.
