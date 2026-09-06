@@ -1,6 +1,8 @@
 import LeanDag.Barnacle.Model.Rule
 import LeanDag.Barnacle.Helpers.Mysticeti
 
+import LeanDag.MysticetiProperties
+
 /-!
 # Barnacle over Mysticeti — statement
 
@@ -31,20 +33,12 @@ variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 /-- **Mysticeti as a base rule** — the data. Wave length three; the
 direct commit predicate counts certificates. -/
 def mysticeti [Faults Validator] : BaseRule Validator BlockId Payload where
-  Universe := BlockUniverse Validator BlockId Payload
-  View := fun U => LeanDag.View Validator BlockId Payload U
-  block := fun U => U.block
-  ids := fun U => U.ids
-  viewIds := fun V => V.ids
-  viewSound := fun V => V.subset_ids
-  viewComplete := fun V => V.complete
-  causal := fun U => U.causal
+  toDagRule := MysticetiProperties.mysticetiRule
   full := fun U => LeanDag.View.full U
   historyView := fun U A hA => historyViewOf U A hA
   waveLength := 3
   DirectCommitIn := fun V L r => LeanDag.DirectCommitIn _ V L r
   decDirect := fun V L r => decidableDirectCommitIn V L r
-  Decided := fun S {U} V k v => @LeanDag.Decided _ _ _ _ _ _ _ S U V k v
 
 namespace Mysticeti
 

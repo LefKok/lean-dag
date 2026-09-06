@@ -1,6 +1,8 @@
 import LeanDag.Barnacle.Helpers.Hydrozoan
 import LeanDag.Hydrozoan.Model.Liveness
 
+import LeanDag.Hydrozoan.Helpers.Carrier
+
 /-!
 # Barnacle over Hydrozoan — statement
 
@@ -80,37 +82,21 @@ identification is field-for-field and every component is `rfl`. Stated
 here rather than in the helpers because a reader of the instantiation
 must see that the rule runs under the schedule the interface hands it,
 unchanged. -/
-@[reducible]
-def slotsOf (S : Slots Replica) : LeanDag.Hydrozoan.Slots Replica where
-  slotRound := S.slotRound
-  leader := S.leader
-  mono := S.mono
-  unbounded := S.unbounded
-  keyed := S.keyed
+abbrev slotsOf (S : Slots Replica) : LeanDag.Hydrozoan.Slots Replica :=
+  LeanDag.Hydrozoan.ofCoreSlots S
 
 /-- **Hydrozoan as a base rule.** The universe is Hydrozoan's own; wave
 length three; the direct commit predicate is the disjunction of the two
 direct routes, each judged from the view. -/
 def hydrozoan [LeanDag.Hydrozoan.Faults Replica] :
     BaseRule Replica BlockId Unit where
-  Universe := LeanDag.Hydrozoan.BlockUniverse Replica BlockId
-  View := fun U => LeanDag.Hydrozoan.View U
-  block := fun U => Hydrozoan.adaptBlk U
-  ids := fun U => U.ids
-  viewIds := fun V => V.ids
-  viewSound := fun V => V.subset_ids
-  viewComplete := fun V => V.complete
-  causal := fun U =>
-    { complete := fun i hi j hj => U.complete i hi j hj
-      refs_round := fun i hi j hj => (U.valid i hi).predecessor j hj }
+  toDagRule := LeanDag.Hydrozoan.rule
   full := fun U => LeanDag.Hydrozoan.View.full U
   historyView := fun U A hA => Hydrozoan.historyView U A hA
   waveLength := 3
   DirectCommitIn := fun {U} V L r =>
     LeanDag.Hydrozoan.FastCommitInView U V L r ∨ LeanDag.Hydrozoan.SlowCommitInView U V L r
   decDirect := fun _ _ _ => inferInstance
-  Decided := fun S {U} V k v =>
-    letI := slotsOf S; LeanDag.Hydrozoan.Decided U V k v
 
 namespace Hydrozoan
 

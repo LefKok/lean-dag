@@ -2,6 +2,8 @@ import LeanDag.Barnacle.Helpers.OptimalHydrozoan
 import LeanDag.Barnacle.Hydrozoan.Statement
 import LeanDag.Hydrozoan.Model.Liveness
 
+import LeanDag.OptimalHydrozoan.Carrier
+
 /-!
 # Barnacle over Optimal-Hydrozoan — statement
 
@@ -45,17 +47,7 @@ the direct commit predicate is Optimal's fast path or Hydrozoan's
 slow one. -/
 def optimalHydrozoan [LeanDag.OptimalHydrozoan.OptimalFaults Replica] :
     BaseRule Replica BlockId Unit where
-  Universe := {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId //
-    OptimalHydrozoan.LeaderExcludedAll U}
-  View := fun U => LeanDag.Hydrozoan.View U.val
-  block := fun U => Hydrozoan.adaptBlk U.val
-  ids := fun U => U.val.ids
-  viewIds := fun V => V.ids
-  viewSound := fun V => V.subset_ids
-  viewComplete := fun V => V.complete
-  causal := fun U =>
-    { complete := fun i hi j hj => U.val.complete i hi j hj
-      refs_round := fun i hi j hj => (U.val.valid i hi).predecessor j hj }
+  toDagRule := OptimalHydrozoanProperties.optimalRule
   full := fun U => LeanDag.Hydrozoan.View.full U.val
   historyView := fun U A hA => Hydrozoan.historyView U.val A hA
   waveLength := 3
@@ -63,10 +55,6 @@ def optimalHydrozoan [LeanDag.OptimalHydrozoan.OptimalFaults Replica] :
     LeanDag.OptimalHydrozoan.FastCommitOptInView U.val V L r
       ∨ LeanDag.Hydrozoan.SlowCommitInView U.val V L r
   decDirect := fun _ _ _ => inferInstance
-  Decided := fun S {U} V k v =>
-    letI := slotsOf S
-    LeanDag.OptimalHydrozoan.DecidedOpt
-      (OptimalHydrozoan.optUniverseOf U.val U.property) V k v
 
 namespace OptimalHydrozoan
 

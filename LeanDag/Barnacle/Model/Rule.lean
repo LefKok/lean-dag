@@ -1,5 +1,6 @@
 import LeanDag.Mysticeti
 import LeanDag.Causality
+import LeanDag.Properties.Carrier
 
 /-!
 # Barnacle: the base-protocol interface
@@ -56,31 +57,8 @@ build it however it likes: the law `historyView_ids` pins its ids to
 `historyFrom`, the shared history function of `Causality.lean`, so that
 the window is a function of the universe and the anchor alone. -/
 structure BaseRule (Validator : Type) [Fintype Validator] [DecidableEq Validator]
-    (BlockId : Type) [DecidableEq BlockId] (Payload : Type) where
-  /-- The universe type of the base development. -/
-  Universe : Type
-  /-- The view type, indexed by universe. -/
-  View : Universe → Type
-  /-- The block an id denotes: round, creator and references. -/
-  block : Universe → BlockId → Block Validator BlockId Payload
-  /-- The ids of the universe. -/
-  ids : Universe → Finset BlockId
-  /-- The ids a view holds. -/
-  viewIds : ∀ {U : Universe}, View U → Finset BlockId
-  /-- A view holds only blocks the universe has. A field rather than a
-  law, matching `Properties.DagRule`: every view type carries the proof
-  already, and asking for it here is what lets `toDagRule` be taken
-  without `Laws` — so a rule reaches the properties before it has
-  proved anything. -/
-  viewSound : ∀ {U : Universe} (V : View U), viewIds V ⊆ ids U
-  /-- **A2.** A view is closed downward: it holds what its blocks
-  reference. A field for the same reason as `viewSound`. -/
-  viewComplete : ∀ {U : Universe} (V : View U),
-    ∀ i ∈ viewIds V, ∀ j ∈ (block U i).refs, j ∈ viewIds V
-  /-- A universe is a block DAG: references are present and one round
-  below. A field for the same reason as the two above, and the one
-  `Properties.DagRule` carries under the same name. -/
-  causal : ∀ U : Universe, CausalStructure (block U) (ids U)
+    (BlockId : Type) [DecidableEq BlockId] (Payload : Type)
+    extends Properties.DagRule Validator BlockId Payload where
   /-- The full view: every block of the universe. -/
   full : ∀ U : Universe, View U
   /-- The causal history of a block of the universe, as a view. -/
@@ -95,9 +73,6 @@ structure BaseRule (Validator : Type) [Fintype Validator] [DecidableEq Validator
   can compute the window count. -/
   decDirect : ∀ {U : Universe} (V : View U) (L : BlockId) (r : ℕ),
     Decidable (DirectCommitIn V L r)
-  /-- The decision relation under a schedule: on view `V`, slot `k` is
-  decided with verdict `v` — `some L` a commit, `none` a skip. -/
-  Decided : Slots Validator → ∀ {U : Universe}, View U → ℕ → Option BlockId → Prop
 
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}

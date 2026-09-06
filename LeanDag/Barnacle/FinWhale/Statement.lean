@@ -27,14 +27,7 @@ variable {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
 
 /-- **FinWhale as a base rule** — the data. -/
 def finWhale : BaseRule Validator BlockId Payload where
-  Universe := Dag Validator BlockId Payload
-  View := fun D => {V : Finset BlockId // IsView D V}
-  block := fun D i => D.block i
-  ids := fun D => D.ids
-  viewIds := fun V => V.val
-  viewSound := fun V => V.property.subset
-  viewComplete := fun V => V.property.closed
-  causal := fun D => LeanDag.FinWhale.causalStructure D
+  toDagRule := FinWhaleProperties.finWhaleRule
   full := fun D => ⟨D.ids, ⟨Finset.Subset.rfl, D.complete⟩⟩
   historyView := fun D A hA =>
     ⟨historyFrom D.block A,
@@ -47,8 +40,6 @@ def finWhale : BaseRule Validator BlockId Payload where
   DirectCommitIn := fun V L r => FinWhaleProperties.DirectCommitIn V L r
   decDirect := fun V L _ => inferInstanceAs (Decidable
     (L ∈ V.val ∧ LeanDag.FinWhale.DirectCommit (LeanDag.FinWhale.restrict _ V.val V.property) L))
-  Decided := fun S {D} V k v =>
-    (FinWhaleProperties.finWhaleRule (Payload := Payload)).Decided S (U := D) V k v
 
 /-- **FinWhale as a live rule**: a DAG is good when a correct quorum is
 synchronised from `Rnd` and populates the rounds to `N`. -/

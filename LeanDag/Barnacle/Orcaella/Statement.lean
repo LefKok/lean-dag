@@ -2,6 +2,8 @@ import LeanDag.Barnacle.Model.Heads
 import LeanDag.Barnacle.Helpers.Mysticeti
 import LeanDag.Hybrid.Liveness
 
+import LeanDag.Hybrid.Carrier
+
 /-!
 # Barnacle over Orcaella — statement
 
@@ -55,20 +57,12 @@ crash-prone validators included — does not equivocate; wave length two;
 the direct commit predicate counts supporters at the next round against
 the hybrid quorum `q = n − fb − fc`. -/
 def orcaella [HybridFaults Validator] (k : ℕ) : BaseRule Validator BlockId Payload where
-  Universe := {U : BlockUniverse Validator BlockId Payload // HonestNoEquiv U}
-  View := fun U => LeanDag.View Validator BlockId Payload U.val
-  block := fun U => U.val.block
-  ids := fun U => U.val.ids
-  viewIds := fun V => V.ids
-  viewSound := fun V => V.subset_ids
-  viewComplete := fun V => V.complete
-  causal := fun U => U.val.causal
+  toDagRule := HybridProperties.hybridRule k
   full := fun U => LeanDag.View.full U.val
   historyView := fun U A hA => historyViewOf U.val A hA
   waveLength := 2
   DirectCommitIn := fun {U} V L r => Hybrid.DirectCommitIn U.val V L r
   decDirect := fun _ _ _ => inferInstance
-  Decided := fun S {U} V s v => letI := S; Hybrid.Decided k U.val V s v
 
 /-- **Orcaella as a live rule**: a DAG is good when a fully-correct
 hybrid quorum is synchronised from `Rnd` and populates the rounds to

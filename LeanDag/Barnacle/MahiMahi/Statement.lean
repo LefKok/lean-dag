@@ -28,20 +28,12 @@ variable {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
 
 /-- **Mahi-Mahi as a base rule** — the data, at wave `w`. -/
 def mahiMahi [Faults Validator] (w : ℕ) : BaseRule Validator BlockId Payload where
-  Universe := BlockUniverse Validator BlockId Payload
-  View := fun U => LeanDag.View Validator BlockId Payload U
-  block := fun U => U.block
-  ids := fun U => U.ids
-  viewIds := fun V => V.ids
-  viewSound := fun V => V.subset_ids
-  viewComplete := fun V => V.complete
-  causal := fun U => U.causal
+  toDagRule := MahiMahiProperties.mahiMahiRule w
   full := fun U => LeanDag.View.full U
   historyView := fun U A hA => historyViewOf U A hA
   waveLength := w
   DirectCommitIn := fun V L r => MahiMahi.DirectCommitIn _ V w L r
   decDirect := fun _ _ _ => inferInstance
-  Decided := fun S {U} V k v => MahiMahi.Decided (S := S) w U V k v
 
 /-- **Mahi-Mahi as a live rule**: a DAG is good when a correct quorum is
 synchronised from `Rnd` and populates the rounds to `N`. -/

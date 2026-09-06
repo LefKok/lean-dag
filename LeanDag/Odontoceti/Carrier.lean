@@ -35,7 +35,7 @@ variable [F : Faults5 Validator]
 variable {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
 
 /-- **Odontoceti as a carrier**, at its own namespace rather than
-through `Barnacle.odontocetiRule`: a protocol's conformance should not
+through Barnacle's `odontoceti.toDagRule`, which now *is* this carrier: a protocol's conformance should not
 route through a mechanism (`docs/target-properties.md` §8). -/
 def odontocetiRule : DagRule Validator BlockId Payload where
   Universe := BlockUniverse Validator BlockId Payload

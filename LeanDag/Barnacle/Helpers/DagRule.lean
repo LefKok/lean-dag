@@ -7,20 +7,16 @@ import LeanDag.Properties.Optional.Direct
 /-!
 # A Barnacle rule is a `DagRule`
 
-Not part of the audit surface. The coercion that lets the six existing
-`BaseRule` instantiations — Mysticeti, Odontoceti, Nemo, Hybrid,
-Hydrozoan, Optimal-Hydrozoan — serve as carriers for
-`docs/target-properties.md` without being restated.
+Not part of the audit surface. How Barnacle's `BaseRule` instantiations
+share the protocols' carriers.
 
-**The dependency runs this way on purpose.** Barnacle is a mechanism,
-and `Properties` is what mechanisms are stated against; a coercion
-living in `Properties` would make every other mechanism depend on the
-adaptive leader count. So it lives here, and `Properties` imports
-nothing of Barnacle.
-
-The eventual tidier form is for `BaseRule` to `extend DagRule`. That
-edits a frozen `Model/` file, so it is not done here; the coercion is
-additive and settles the same question.
+`BaseRule` extends `Properties.DagRule`, so `toDagRule` is the parent
+projection and every Barnacle instance names the protocol's own carrier
+for it: `Barnacle.mysticeti.toDagRule` *is*
+`MysticetiProperties.mysticetiRule`, by `rfl`. One carrier per rule,
+and the properties a protocol proves at it are Barnacle's with no
+bridge. What remains below is the other direction: the two laws that
+are properties under another name.
 -/
 
 namespace LeanDag
@@ -29,23 +25,6 @@ namespace Barnacle
 
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
-
-/-- **Every Barnacle rule is a carrier.** The fields `DagRule` asks for
-are a sub-record of `BaseRule`'s, view soundness included, so the
-coercion needs no laws: a rule is a carrier before it has proved
-anything, which is what lets the properties be the hypotheses of
-Barnacle's own theorems rather than a parallel interface. -/
-def BaseRule.toDagRule (R : BaseRule Validator BlockId Payload) :
-    Properties.DagRule Validator BlockId Payload where
-  Universe := R.Universe
-  View := R.View
-  block := R.block
-  ids := R.ids
-  viewIds := R.viewIds
-  viewSound := R.viewSound
-  viewComplete := R.viewComplete
-  causal := R.causal
-  Decided := R.Decided
 
 @[simp] theorem toDagRule_ids (R : BaseRule Validator BlockId Payload) :
     R.toDagRule.ids = R.ids := rfl

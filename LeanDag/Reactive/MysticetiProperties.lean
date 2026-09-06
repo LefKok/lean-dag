@@ -1,5 +1,6 @@
 import LeanDag.Reactive.Mysticeti
 import LeanDag.MysticetiProperties
+import LeanDag.Properties.Arcs.Quality
 
 /-!
 # Reactive Mysticeti conforms to the schedule family
@@ -94,5 +95,91 @@ theorem leaderCommits_reactive :
   fun S _ V T lo K hlive => leaderCommits_cert S V T lo K (certLive_of_reactiveLive hlive)
 
 end MysticetiProperties
+
+namespace ReactiveM
+
+/-! ## RS5 — reactive inclusion, from the generic theorem
+
+`Reactive/Mysticeti.lean` records why inclusion survives a reactive
+execution: a correct author's blocks form one chain, and the author's
+next committed leader block reaches all of it. That is exactly the
+generic inclusion theorem (`Properties/Arcs/Quality.lean`) with the
+reactive bridge supplying `certLive`; the statements are the ones that
+were proved by hand there, unchanged. -/
+
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
+variable [F : Faults Validator]
+variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
+variable {S : Slots Validator} {T : Finset Validator}
+
+/-- **RS5 — reactive inclusion.** For every round `m` and author
+`u ∈ T`, the schedule fixes a `u`-led slot above `m` before any
+execution is named, and every sufficiently grown reactive execution
+commits that slot with a leader block whose cone contains `u`'s
+round-`m` block — which is therefore in the agreed ledger of any verdict
+assignment covering the slot.
+
+No coverage appears: the hypotheses are the reactive wait clauses, GST
+and the backoff, exactly as in `ReactiveM.decided`. What is added is
+only `FairToEach` — the schedule must return to `u` itself — and the
+self-parent chain does the rest. -/
+theorem committed_of_correct_block
+    (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : quorumCard Validator ≤ T.card)
+    (fair : FairToEach (S := S) T) {u : Validator} (hu : u ∈ T) (R m : ℕ)
+    (hRm : R ≤ m) :
+    ∃ k', m < S.slotRound k' ∧ R ≤ S.slotRound k' ∧ S.leader k' = u ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ)
+        (rm : ReactiveM U T N),
+        rm.gst ≤ R →
+        (∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n) →
+        S.slotRound k' + 2 ≤ N →
+        ∀ b ∈ U.ids, (U.block b).creator = u → (U.block b).round = m →
+          ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) ∧
+            Reaches U L b ∧
+            ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
+              b ∈ ledgerSet U g n := by
+  obtain ⟨k', hk', hlead⟩ := fair u hu (slotAt Validator (m + 1))
+  have hm : m < S.slotRound k' := by
+    have h1 := le_slotRound_slotAt (Validator := Validator) (m + 1)
+    have h2 := S.mono hk'
+    omega
+  refine ⟨k', hm, by omega, hlead, ?_⟩
+  intro U N rm hgst hto hN b hb hbc hbr
+  have hlive : MysticetiProperties.reactiveLive S (U := U) (View.full U) T k' (k' + 1) :=
+    ⟨hT, hcard, N, R, rm, hgst, hto, by omega, View.coversUpto_full U N,
+      fun j hj => by have := S.mono (Nat.lt_succ_iff.mp hj); omega⟩
+  obtain ⟨L, hdec, hL⟩ := Properties.Arcs.includes_of_leads
+    (R := MysticetiProperties.mysticetiRule) MysticetiProperties.selfParent
+    MysticetiProperties.noEquiv MysticetiProperties.commitsCandidate
+    MysticetiProperties.leaderCommits_cert S hT (by rw [hlead]; exact hu) (le_of_lt hm)
+    U (View.full U) (MysticetiProperties.certLive_of_reactiveLive hlive)
+  obtain ⟨hmem, hledger⟩ := hL b hb (by change (U.block b).creator = S.leader k'; rw [hbc, hlead]) hbr
+  have hcand := MysticetiProperties.commitsCandidate S U (View.full U) k' L hdec
+  exact ⟨L, hcand, hdec, (mem_history_iff hcand.1).mp hmem, hledger⟩
+
+/-- **No reliable validator's block is censored** (RS5, execution first). In
+a reactive run past GST whose timeout clears `2Δ + proc`, every block a
+reliable validator authors is reached by a later commit --- at a slot the
+validator leads itself --- and so enters the agreed ledger. -/
+theorem committed_of_correct_block_of_run {U : BlockUniverse Validator BlockId Payload} {N : ℕ}
+    (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : quorumCard Validator ≤ T.card)
+    (fair : FairToEach (S := S) T) (rm : ReactiveM U T N) {R m : ℕ}
+    (hgst : rm.gst ≤ R) (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n)
+    {u : Validator} (hu : u ∈ T) (hRm : R ≤ m) :
+    ∃ k', m < S.slotRound k' ∧ S.leader k' = u ∧
+      (S.slotRound k' + 2 ≤ N →
+        ∀ b ∈ U.ids, (U.block b).creator = u → (U.block b).round = m →
+          ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) ∧
+            Reaches U L b ∧
+            ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
+              b ∈ ledgerSet U g n) := by
+  obtain ⟨k', hm, hR, hlead, hrest⟩ :=
+    committed_of_correct_block (BlockId := BlockId) (Payload := Payload)
+      hT hcard fair hu R m hRm
+  exact ⟨k', hm, hlead, fun hN => hrest U N rm hgst hto hN⟩
+
+end ReactiveM
 
 end LeanDag

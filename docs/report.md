@@ -18245,31 +18245,8 @@ The existential over `v` is the paper's: "there is a vertex `v′` in slot `s′
 
 ```lean
 structure BaseRule (Validator : Type) [Fintype Validator] [DecidableEq Validator]
-    (BlockId : Type) [DecidableEq BlockId] (Payload : Type) where
-  /-- The universe type of the base development. -/
-  Universe : Type
-  /-- The view type, indexed by universe. -/
-  View : Universe → Type
-  /-- The block an id denotes: round, creator and references. -/
-  block : Universe → BlockId → Block Validator BlockId Payload
-  /-- The ids of the universe. -/
-  ids : Universe → Finset BlockId
-  /-- The ids a view holds. -/
-  viewIds : ∀ {U : Universe}, View U → Finset BlockId
-  /-- A view holds only blocks the universe has. A field rather than a
-  law, matching `Properties.DagRule`: every view type carries the proof
-  already, and asking for it here is what lets `toDagRule` be taken
-  without `Laws` — so a rule reaches the properties before it has
-  proved anything. -/
-  viewSound : ∀ {U : Universe} (V : View U), viewIds V ⊆ ids U
-  /-- **A2.** A view is closed downward: it holds what its blocks
-  reference. A field for the same reason as `viewSound`. -/
-  viewComplete : ∀ {U : Universe} (V : View U),
-    ∀ i ∈ viewIds V, ∀ j ∈ (block U i).refs, j ∈ viewIds V
-  /-- A universe is a block DAG: references are present and one round
-  below. A field for the same reason as the two above, and the one
-  `Properties.DagRule` carries under the same name. -/
-  causal : ∀ U : Universe, CausalStructure (block U) (ids U)
+    (BlockId : Type) [DecidableEq BlockId] (Payload : Type)
+    extends Properties.DagRule Validator BlockId Payload where
   /-- The full view: every block of the universe. -/
   full : ∀ U : Universe, View U
   /-- The causal history of a block of the universe, as a view. -/
@@ -18284,9 +18261,6 @@ structure BaseRule (Validator : Type) [Fintype Validator] [DecidableEq Validator
   can compute the window count. -/
   decDirect : ∀ {U : Universe} (V : View U) (L : BlockId) (r : ℕ),
     Decidable (DirectCommitIn V L r)
-  /-- The decision relation under a schedule: on view `V`, slot `k` is
-  decided with verdict `v` — `some L` a commit, `none` a skip. -/
-  Decided : Slots Validator → ∀ {U : Universe}, View U → ℕ → Option BlockId → Prop
 ```
 
 **The base protocol, as the paper assumes it — the data.** A universe of blocks with its views, the direct decision predicate, and a decision relation parametric in the schedule. The laws these must satisfy are `BaseRule.Laws` below, a proposition each instantiation is proved to meet in its own `Statement`/`Proof` pair.
@@ -19197,20 +19171,12 @@ The heads descent, for every live rule with descent laws, every keyed leader fun
 
 ```lean
 def mysticeti [Faults Validator] : BaseRule Validator BlockId Payload where
-  Universe := BlockUniverse Validator BlockId Payload
-  View := fun U => LeanDag.View Validator BlockId Payload U
-  block := fun U => U.block
-  ids := fun U => U.ids
-  viewIds := fun V => V.ids
-  viewSound := fun V => V.subset_ids
-  viewComplete := fun V => V.complete
-  causal := fun U => U.causal
+  toDagRule := MysticetiProperties.mysticetiRule
   full := fun U => LeanDag.View.full U
   historyView := fun U A hA => historyViewOf U A hA
   waveLength := 3
   DirectCommitIn := fun V L r => LeanDag.DirectCommitIn _ V L r
   decDirect := fun V L r => decidableDirectCommitIn V L r
-  Decided := fun S {U} V k v => @LeanDag.Decided _ _ _ _ _ _ _ S U V k v
 ```
 
 **Mysticeti as a base rule** — the data. Wave length three; the direct commit predicate counts certificates.
@@ -19285,20 +19251,12 @@ The descent laws, and liveness under round-robin at every count.
 
 ```lean
 def odontoceti [Faults5 Validator] : BaseRule Validator BlockId Payload where
-  Universe := BlockUniverse Validator BlockId Payload
-  View := fun U => LeanDag.View Validator BlockId Payload U
-  block := fun U => U.block
-  ids := fun U => U.ids
-  viewIds := fun V => V.ids
-  viewSound := fun V => V.subset_ids
-  viewComplete := fun V => V.complete
-  causal := fun U => U.causal
+  toDagRule := OdontocetiProperties.odontocetiRule
   full := fun U => LeanDag.View.full U
   historyView := fun U A hA => historyViewOf U A hA
   waveLength := 2
   DirectCommitIn := fun V L r => Odontoceti.DirectCommitIn _ V L r
   decDirect := fun _ _ _ => inferInstance
-  Decided := fun S {U} V k v => @Odontoceti.Decided _ _ _ _ _ _ _ S U V k v
 ```
 
 **Odontoceti as a base rule** — the data. Wave length two; the direct commit predicate counts supporters at the next round.
@@ -19373,20 +19331,12 @@ The laws, the descent laws, and liveness under round-robin.
 
 ```lean
 def nemo : BaseRule Validator BlockId Payload where
-  Universe := Nemo.Universe Validator BlockId Payload
-  View := fun U => Nemo.View Validator BlockId Payload U
-  block := fun U => U.block
-  ids := fun U => U.ids
-  viewIds := fun V => V.ids
-  viewSound := fun V => V.subset_ids
-  viewComplete := fun V => V.complete
-  causal := fun U => U.causal
+  toDagRule := NemoProperties.nemoRule
   full := fun U => Nemo.View.full U
   historyView := fun U A hA => nemoHistoryViewOf U A hA
   waveLength := 2
   DirectCommitIn := fun V L r => Nemo.DirectCommitIn _ V L r
   decDirect := fun _ _ _ => inferInstance
-  Decided := fun S {U} V k v => @Nemo.Decided _ _ _ _ _ _ S U V k v
 ```
 
 **Nemo-Nemo as a base rule** — the data. Wave length two; the direct commit predicate counts a majority of supporters at the next round. No fault class: the crash-fault universe's safety needs none.
@@ -22631,80 +22581,13 @@ abbrev PlacesRuns (P : AdaptivePolicy Validator BlockId Payload)
 
 **The adaptive fairness clause**, for the core.
 
-#### `mysticetiRule`
-
-*abbrev, `Barnacle.Conformance.lean`*
-
-```lean
-abbrev mysticetiRule : Properties.DagRule Validator BlockId Payload :=
-  (mysticeti (Validator := Validator) (BlockId := BlockId)
-    (Payload := Payload)).toDagRule
-```
-
-Mysticeti as a `DagRule`, through Barnacle.
-
-#### `nemoRule`
-
-*abbrev, `Barnacle.Conformance.lean`*
-
-```lean
-abbrev nemoRule : Properties.DagRule Validator BlockId Payload :=
-  (nemo (Validator := Validator) (BlockId := BlockId)
-    (Payload := Payload)).toDagRule
-```
-
-Nemo as a `DagRule`.
-
-#### `odontocetiRule`
-
-*abbrev, `Barnacle.Conformance.lean`*
-
-```lean
-abbrev odontocetiRule : Properties.DagRule Validator B Payload :=
-  (odontoceti (Validator := Validator) (BlockId := B)
-    (Payload := Payload)).toDagRule
-```
-
-Odontoceti as a `DagRule`.
-
-#### `orcaellaRule`
-
-*abbrev, `Barnacle.Conformance.lean`*
-
-```lean
-abbrev orcaellaRule (k : ℕ) (hk : Hybrid.Admissible Validator k) :
-    Properties.DagRule Validator B Payload :=
-  (orcaella (Validator := Validator) (BlockId := B)
-    (Payload := Payload) k).toDagRule
-```
-
-Orcaella — the hybrid rule at threshold `k` — as a `DagRule`. The threshold must be admissible, which is where the mixed fault bound enters and why this carrier is one per `k` rather than one outright.
-
-#### `optimalHydrozoanRule`
-
-*abbrev, `Barnacle.Conformance.lean`*
-
-```lean
-abbrev optimalHydrozoanRule : Properties.DagRule Replica BlockId Unit :=
-  (optimalHydrozoan (Replica := Replica) (BlockId := BlockId)).toDagRule
-```
-
-**Optimal-Hydrozoan as a `DagRule`**, which it had no way to be: its verdicts are `DecidedOpt` over `OptUniverse`, and Barnacle's instance is what puts them in the shared vocabulary.
-
 #### `finWhale`
 
 *def, `Barnacle.FinWhale.Statement.lean`*
 
 ```lean
 def finWhale : BaseRule Validator BlockId Payload where
-  Universe := Dag Validator BlockId Payload
-  View := fun D => {V : Finset BlockId // IsView D V}
-  block := fun D i => D.block i
-  ids := fun D => D.ids
-  viewIds := fun V => V.val
-  viewSound := fun V => V.property.subset
-  viewComplete := fun V => V.property.closed
-  causal := fun D => LeanDag.FinWhale.causalStructure D
+  toDagRule := FinWhaleProperties.finWhaleRule
   full := fun D => ⟨D.ids, ⟨Finset.Subset.rfl, D.complete⟩⟩
   historyView := fun D A hA =>
     ⟨historyFrom D.block A,
@@ -22717,8 +22600,6 @@ def finWhale : BaseRule Validator BlockId Payload where
   DirectCommitIn := fun V L r => FinWhaleProperties.DirectCommitIn V L r
   decDirect := fun V L _ => inferInstanceAs (Decidable
     (L ∈ V.val ∧ LeanDag.FinWhale.DirectCommit (LeanDag.FinWhale.restrict _ V.val V.property) L))
-  Decided := fun S {D} V k v =>
-    (FinWhaleProperties.finWhaleRule (Payload := Payload)).Decided S (U := D) V k v
 ```
 
 **FinWhale as a base rule** — the data.
@@ -22870,26 +22751,6 @@ def Statement : Prop :=
 
 The count of a healthy window, and the step it produces.
 
-#### `BaseRule.toDagRule`
-
-*def, `Barnacle.Helpers.DagRule.lean`*
-
-```lean
-def BaseRule.toDagRule (R : BaseRule Validator BlockId Payload) :
-    Properties.DagRule Validator BlockId Payload where
-  Universe := R.Universe
-  View := R.View
-  block := R.block
-  ids := R.ids
-  viewIds := R.viewIds
-  viewSound := R.viewSound
-  viewComplete := R.viewComplete
-  causal := R.causal
-  Decided := R.Decided
-```
-
-**Every Barnacle rule is a carrier.** The fields `DagRule` asks for are a sub-record of `BaseRule`'s, view soundness included, so the coercion needs no laws: a rule is a carrier before it has proved anything, which is what lets the properties be the hypotheses of Barnacle's own theorems rather than a parallel interface.
-
 #### `LiveRule.elig`
 
 *def, `Barnacle.Helpers.Descent.lean`*
@@ -22916,27 +22777,27 @@ def GoodOf (R : Properties.DagRule Validator BlockId Payload) (rel : Reliability
 
 #### `adapt`
 
-*def, `Barnacle.Helpers.Hydrozoan.lean`*
+*abbrev, `Barnacle.Helpers.Hydrozoan.lean`*
 
 ```lean
-def adapt (b : LeanDag.Hydrozoan.Block Replica BlockId) :
+abbrev adapt (b : LeanDag.Hydrozoan.Block Replica BlockId) :
     LeanDag.Block Replica BlockId Unit :=
-  { round := b.round, creator := b.author, refs := b.parents, payload := () }
+  LeanDag.Hydrozoan.adaptBlock b
 ```
 
 A Hydrozoan block as a core block: `author` becomes `creator`, `parents` becomes `refs`, and the payload is `Unit`.
 
 #### `adaptBlk`
 
-*def, `Barnacle.Helpers.Hydrozoan.lean`*
+*abbrev, `Barnacle.Helpers.Hydrozoan.lean`*
 
 ```lean
-def adaptBlk (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) :
+abbrev adaptBlk (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) :
     BlockId → LeanDag.Block Replica BlockId Unit :=
-  fun i => adapt (U.block i)
+  fun i => LeanDag.Hydrozoan.adaptBlock (U.block i)
 ```
 
-The universe's lookup, adapted.
+The universe's lookup, adapted: the carrier's `block`.
 
 #### `historyView`
 
@@ -23015,15 +22876,11 @@ def optUniverseOf (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
 
 #### `slotsOf`
 
-*def, `Barnacle.Hydrozoan.Statement.lean`*
+*abbrev, `Barnacle.Hydrozoan.Statement.lean`*
 
 ```lean
-def slotsOf (S : Slots Replica) : LeanDag.Hydrozoan.Slots Replica where
-  slotRound := S.slotRound
-  leader := S.leader
-  mono := S.mono
-  unbounded := S.unbounded
-  keyed := S.keyed
+abbrev slotsOf (S : Slots Replica) : LeanDag.Hydrozoan.Slots Replica :=
+  LeanDag.Hydrozoan.ofCoreSlots S
 ```
 
 **The schedules are one class.** `LeanDag.Slots` and `LeanDag.Hydrozoan.Slots` carry the same five fields, so the identification is field-for-field and every component is `rfl`. Stated here rather than in the helpers because a reader of the instantiation must see that the rule runs under the schedule the interface hands it, unchanged.
@@ -23035,24 +22892,13 @@ def slotsOf (S : Slots Replica) : LeanDag.Hydrozoan.Slots Replica where
 ```lean
 def hydrozoan [LeanDag.Hydrozoan.Faults Replica] :
     BaseRule Replica BlockId Unit where
-  Universe := LeanDag.Hydrozoan.BlockUniverse Replica BlockId
-  View := fun U => LeanDag.Hydrozoan.View U
-  block := fun U => Hydrozoan.adaptBlk U
-  ids := fun U => U.ids
-  viewIds := fun V => V.ids
-  viewSound := fun V => V.subset_ids
-  viewComplete := fun V => V.complete
-  causal := fun U =>
-    { complete := fun i hi j hj => U.complete i hi j hj
-      refs_round := fun i hi j hj => (U.valid i hi).predecessor j hj }
+  toDagRule := LeanDag.Hydrozoan.rule
   full := fun U => LeanDag.Hydrozoan.View.full U
   historyView := fun U A hA => Hydrozoan.historyView U A hA
   waveLength := 3
   DirectCommitIn := fun {U} V L r =>
     LeanDag.Hydrozoan.FastCommitInView U V L r ∨ LeanDag.Hydrozoan.SlowCommitInView U V L r
   decDirect := fun _ _ _ => inferInstance
-  Decided := fun S {U} V k v =>
-    letI := slotsOf S; LeanDag.Hydrozoan.Decided U V k v
 ```
 
 **Hydrozoan as a base rule.** The universe is Hydrozoan's own; wave length three; the direct commit predicate is the disjunction of the two direct routes, each judged from the view.
@@ -23218,20 +23064,12 @@ The three protocols, end to end.
 
 ```lean
 def mahiMahi [Faults Validator] (w : ℕ) : BaseRule Validator BlockId Payload where
-  Universe := BlockUniverse Validator BlockId Payload
-  View := fun U => LeanDag.View Validator BlockId Payload U
-  block := fun U => U.block
-  ids := fun U => U.ids
-  viewIds := fun V => V.ids
-  viewSound := fun V => V.subset_ids
-  viewComplete := fun V => V.complete
-  causal := fun U => U.causal
+  toDagRule := MahiMahiProperties.mahiMahiRule w
   full := fun U => LeanDag.View.full U
   historyView := fun U A hA => historyViewOf U A hA
   waveLength := w
   DirectCommitIn := fun V L r => MahiMahi.DirectCommitIn _ V w L r
   decDirect := fun _ _ _ => inferInstance
-  Decided := fun S {U} V k v => MahiMahi.Decided (S := S) w U V k v
 ```
 
 **Mahi-Mahi as a base rule** — the data, at wave `w`.
@@ -23309,17 +23147,7 @@ The laws, the descent laws, and liveness under round-robin.
 ```lean
 def optimalHydrozoan [LeanDag.OptimalHydrozoan.OptimalFaults Replica] :
     BaseRule Replica BlockId Unit where
-  Universe := {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId //
-    OptimalHydrozoan.LeaderExcludedAll U}
-  View := fun U => LeanDag.Hydrozoan.View U.val
-  block := fun U => Hydrozoan.adaptBlk U.val
-  ids := fun U => U.val.ids
-  viewIds := fun V => V.ids
-  viewSound := fun V => V.subset_ids
-  viewComplete := fun V => V.complete
-  causal := fun U =>
-    { complete := fun i hi j hj => U.val.complete i hi j hj
-      refs_round := fun i hi j hj => (U.val.valid i hi).predecessor j hj }
+  toDagRule := OptimalHydrozoanProperties.optimalRule
   full := fun U => LeanDag.Hydrozoan.View.full U.val
   historyView := fun U A hA => Hydrozoan.historyView U.val A hA
   waveLength := 3
@@ -23327,10 +23155,6 @@ def optimalHydrozoan [LeanDag.OptimalHydrozoan.OptimalFaults Replica] :
     LeanDag.OptimalHydrozoan.FastCommitOptInView U.val V L r
       ∨ LeanDag.Hydrozoan.SlowCommitInView U.val V L r
   decDirect := fun _ _ _ => inferInstance
-  Decided := fun S {U} V k v =>
-    letI := slotsOf S
-    LeanDag.OptimalHydrozoan.DecidedOpt
-      (OptimalHydrozoan.optUniverseOf U.val U.property) V k v
 ```
 
 **Optimal-Hydrozoan as a base rule.** The universe is the subtype of Hydrozoan universes obeying the exclusion rule; wave length three; the direct commit predicate is Optimal's fast path or Hydrozoan's slow one.
@@ -23422,20 +23246,12 @@ The descent laws, and liveness under round-robin.
 
 ```lean
 def orcaella [HybridFaults Validator] (k : ℕ) : BaseRule Validator BlockId Payload where
-  Universe := {U : BlockUniverse Validator BlockId Payload // HonestNoEquiv U}
-  View := fun U => LeanDag.View Validator BlockId Payload U.val
-  block := fun U => U.val.block
-  ids := fun U => U.val.ids
-  viewIds := fun V => V.ids
-  viewSound := fun V => V.subset_ids
-  viewComplete := fun V => V.complete
-  causal := fun U => U.val.causal
+  toDagRule := HybridProperties.hybridRule k
   full := fun U => LeanDag.View.full U.val
   historyView := fun U A hA => historyViewOf U.val A hA
   waveLength := 2
   DirectCommitIn := fun {U} V L r => Hybrid.DirectCommitIn U.val V L r
   decDirect := fun _ _ _ => inferInstance
-  Decided := fun S {U} V s v => letI := S; Hybrid.Decided k U.val V s v
 ```
 
 **Orcaella as a base rule** — the data, at indirect threshold `k`. The universe is the subtype of block universes whose honest class — crash-prone validators included — does not equivocate; wave length two; the direct commit predicate counts supporters at the next round against the hybrid quorum `q = n − fb − fc`.
@@ -25706,7 +25522,7 @@ def nemoRule : DagRule Validator BlockId Payload where
   Decided := fun S _ V k v => Nemo.Decided (S := S) _ V k v
 ```
 
-**Nemo as a carrier**, at its own namespace rather than through `Barnacle.nemoRule`: a protocol's conformance should not route through a mechanism.
+**Nemo as a carrier**, at its own namespace rather than through Barnacle's `nemo.toDagRule`, which now *is* this carrier: a protocol's conformance should not route through a mechanism.
 
 #### `nemoReliability`
 
@@ -25740,7 +25556,7 @@ def odontocetiRule : DagRule Validator BlockId Payload where
   Decided := fun S _ V k v => Odontoceti.Decided (S := S) _ V k v
 ```
 
-**Odontoceti as a carrier**, at its own namespace rather than through `Barnacle.odontocetiRule`: a protocol's conformance should not route through a mechanism (`docs/target-properties.md` §8).
+**Odontoceti as a carrier**, at its own namespace rather than through Barnacle's `odontoceti.toDagRule`, which now *is* this carrier: a protocol's conformance should not route through a mechanism (`docs/target-properties.md` §8).
 
 #### `optimalRule`
 
@@ -26639,7 +26455,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 1070 theorems that either another module of the
+The 1073 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -30319,33 +30135,6 @@ theorem decided_local (hT : T ⊆ (Correct : Finset Validator))
 ```
 
 **Reactive liveness is local too** (V18, reactive). Every reliable validator decides the slot on its own view, by the same explicit time as the timed discipline. The trunk supplies the argument (`decided_local_of_certifiesAt`); the reactive side supplies only its certificate stage, exactly as for the global statement. Reference coverage appears nowhere.
-
-#### `committed_of_correct_block`
-
-*theorem, `Reactive.Mysticeti.lean`*
-
-```lean
-theorem committed_of_correct_block
-    (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : quorumCard Validator ≤ T.card)
-    (fair : FairToEach (S := S) T) {u : Validator} (hu : u ∈ T) (R m : ℕ)
-    (hRm : R ≤ m) :
-    ∃ k', m < S.slotRound k' ∧ R ≤ S.slotRound k' ∧ S.leader k' = u ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ)
-        (rm : ReactiveM U T N),
-        rm.gst ≤ R →
-        (∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n) →
-        S.slotRound k' + 2 ≤ N →
-        ∀ b ∈ U.ids, (U.block b).creator = u → (U.block b).round = m →
-          ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) ∧
-            Reaches U L b ∧
-            ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
-              b ∈ ledgerSet U g n
-```
-
-**RS5 — reactive inclusion.** For every round `m` and author `u ∈ T`, the schedule fixes a `u`-led slot above `m` before any execution is named, and every sufficiently grown reactive execution commits that slot with a leader block whose cone contains `u`'s round-`m` block — which is therefore in the agreed ledger of any verdict assignment covering the slot.
-
-No coverage appears: the hypotheses are the reactive wait clauses, GST and the backoff, exactly as in `ReactiveM.decided`. What is added is only `FairToEach` — the schedule must return to `u` itself — and the self-parent chain does the rest.
 
 #### `reactive_directCommit`
 
@@ -37240,18 +37029,6 @@ theorem commitsCandidate_toDagRule (R : BaseRule Validator BlockId Payload)
 
 **And `candidates` is `CommitsCandidate`.** `BaseRule.IsLeaderBlock` and `DagRule.IsCandidate` are the same three conjuncts — present, at the slot's round, by the slot's leader — so this is the law verbatim.
 
-#### `commitsDirect_toDagRule`
-
-*theorem, `Barnacle.Helpers.DagRule.lean`*
-
-```lean
-theorem commitsDirect_toDagRule (R : BaseRule Validator BlockId Payload)
-    (L : BaseRule.Laws R) :
-    Properties.CommitsDirect R.toDagRule (fun {_} V => R.DirectCommitIn V)
-```
-
-**And `decided_of_directCommitIn` is `CommitsDirect`**, at the rule's own direct predicate. The clause had no consumer; the property does (`Barnacle/Healthy/`).
-
 #### `mysticetiLive_delivers`
 
 *theorem, `Barnacle.Helpers.Delivery.lean`*
@@ -37913,6 +37690,16 @@ theorem indirect (kt : ℕ) :
 theorem safety {kt : ℕ} (hpos : 0 < kt) (hk : Hybrid.Admissible Validator kt) :
     Properties.Safe (hybridRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload) kt)
+```
+
+#### `liveness`
+
+*theorem, `HybridProperties.lean`*
+
+```lean
+theorem liveness (kt : ℕ) : Properties.Support.Lives (Properties.voteSupport (hybridRule
+    (Validator := Validator) (BlockId := BlockId) (Payload := Payload) kt))
+    (coreReliability Validator)
 ```
 
 #### `bnd_parents`
@@ -38643,6 +38430,15 @@ theorem safety (hw : 2 ≤ w) : Properties.Safe (mahiMahiRule (Validator := Vali
     (BlockId := BlockId) (Payload := Payload) w)
 ```
 
+#### `liveness`
+
+*theorem, `MahiMahiProperties.lean`*
+
+```lean
+theorem liveness (hw : 2 ≤ w) : Properties.Support.Lives (mmSupport (Validator := Validator)
+    (BlockId := BlockId) (Payload := Payload) w) (coreReliability Validator)
+```
+
 #### `isLeaderBlock_congr`
 
 *theorem, `MysticetiProperties.lean`*
@@ -38885,7 +38681,7 @@ theorem commitsDirect : CommitsDirect
 
 **A direct commit is a verdict**, at the core's own direct-commit predicate. `Decided.directCommit` under the property's name.
 
-This completes the core and the reactive discipline, which share the rule: `Barnacle.mysticetiRule_commitsDirect` proves the same thing at Barnacle's carrier for the same protocol, and a rule wants it at the carrier its own mechanisms use.
+This completes the core and the reactive discipline, which share the rule: Barnacle's `commitsDirect_toDagRule` proves the same thing at Barnacle's carrier for the same protocol, and a rule wants it at the carrier its own mechanisms use.
 
 #### `persist`
 
@@ -39154,6 +38950,17 @@ theorem safety : Properties.Safe (mysticetiRule (Validator := Validator) (BlockI
 
 **Safety**, across any stack of mechanisms, for the core and for its reactive execution alike.
 
+#### `liveness`
+
+*theorem, `MysticetiProperties.lean`*
+
+```lean
+theorem liveness : Properties.Support.Lives (coreSupport (Validator := Validator)
+    (BlockId := BlockId) (Payload := Payload)) (coreReliability Validator)
+```
+
+**Liveness**, at the core's support: certification is the only antecedent, so the timed and the reactive execution share it.
+
 #### `quorate`
 
 *theorem, `Nemo.Carrier.lean`*
@@ -39397,6 +39204,16 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
 ```lean
 theorem safety : Properties.Safe (odontocetiRule (Validator := Validator) (BlockId := BlockId)
     (Payload := Payload))
+```
+
+#### `liveness`
+
+*theorem, `OdontocetiProperties.lean`*
+
+```lean
+theorem liveness : Properties.Support.Lives (Properties.voteSupport (odontocetiRule
+    (Validator := Validator) (BlockId := BlockId) (Payload := Payload)))
+    (coreReliability Validator)
 ```
 
 #### `quorate`
@@ -40589,6 +40406,33 @@ theorem leaderCommits_reactive :
 
 **Reactive Mysticeti commits its reliable leaders.** The statement is unchanged; the proof is now the bridge composed with the core's single `LeaderCommits`, where it was a second proof of the same shape.
 
+#### `committed_of_correct_block`
+
+*theorem, `Reactive.MysticetiProperties.lean`*
+
+```lean
+theorem committed_of_correct_block
+    (hT : T ⊆ (Correct : Finset Validator))
+    (hcard : quorumCard Validator ≤ T.card)
+    (fair : FairToEach (S := S) T) {u : Validator} (hu : u ∈ T) (R m : ℕ)
+    (hRm : R ≤ m) :
+    ∃ k', m < S.slotRound k' ∧ R ≤ S.slotRound k' ∧ S.leader k' = u ∧
+      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ)
+        (rm : ReactiveM U T N),
+        rm.gst ≤ R →
+        (∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n) →
+        S.slotRound k' + 2 ≤ N →
+        ∀ b ∈ U.ids, (U.block b).creator = u → (U.block b).round = m →
+          ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) ∧
+            Reaches U L b ∧
+            ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
+              b ∈ ledgerSet U g n
+```
+
+**RS5 — reactive inclusion.** For every round `m` and author `u ∈ T`, the schedule fixes a `u`-led slot above `m` before any execution is named, and every sufficiently grown reactive execution commits that slot with a leader block whose cone contains `u`'s round-`m` block — which is therefore in the agreed ledger of any verdict assignment covering the slot.
+
+No coverage appears: the hypotheses are the reactive wait clauses, GST and the backoff, exactly as in `ReactiveM.decided`. What is added is only `FairToEach` — the schedule must return to `u` itself — and the self-parent chain does the rest.
+
 #### `synchronisedOn_of_rebased`
 
 *theorem, `Timed.Coverage.lean`*
@@ -40701,7 +40545,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 1049 lemmas used only within the file that proves
+The 1034 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -41122,12 +40966,6 @@ subsection per module, in the layer order of Appendices B and C.
 | Lemma | Role |
 |:---|:---|
 | `slotRound_le_top` | A reliable leader reached its slot's round: its block is in the universe, and `le_top_of_built` reads the … |
-
-### `Reactive/Mysticeti.lean` (1)
-
-| Lemma | Role |
-|:---|:---|
-| `committed_of_correct_block_of_run` | No reliable validator's block is censored (RS5, execution first). In a reactive run past GST whose timeout … |
 
 ### `SafeSkip/Invariance.lean` (1)
 
@@ -42101,23 +41939,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `partialRun_assign_agree` | Assignments agree wherever the common verdicts determine them. |
 | `spansEligible_slotsOf` | Eligibility reads only the round structure, which reassignment fixes: the spanning property transfers to … |
 
-### `Barnacle/Conformance.lean` (12)
-
-| Lemma | Role |
-|:---|:---|
-| `mysticetiRule_agree` | — |
-| `mysticetiRule_commitsCandidate` | — |
-| `mysticetiRule_commitsDirect` | — |
-| `nemoRule_agree` | — |
-| `nemoRule_commitsCandidate` | — |
-| `nemoRule_commitsDirect` | — |
-| `odontocetiRule_agree` | — |
-| `odontocetiRule_commitsCandidate` | — |
-| `optimalHydrozoanRule_agree` | — |
-| `optimalHydrozoanRule_commitsCandidate` | — |
-| `orcaellaRule_agree` | — |
-| `orcaellaRule_commitsCandidate` | — |
-
 ### `Barnacle/FinWhale/Proof.lean` (3)
 
 | Lemma | Role |
@@ -42126,10 +41947,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `finWhaleLive_goodOf` | A good DAG is good in the properties' terms. |
 | `finWhale_laws` | The laws, for FinWhale. |
 
-### `Barnacle/Helpers/DagRule.lean` (2)
+### `Barnacle/Helpers/DagRule.lean` (3)
 
 | Lemma | Role |
 |:---|:---|
+| `commitsDirect_toDagRule` | And `decided_of_directCommitIn` is `CommitsDirect`, at the rule's own direct predicate. The clause had no … |
 | `toDagRule_block` | — |
 | `toDagRule_ids` | — |
 
@@ -42293,7 +42115,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `mem_recoveryCorrect` | Recovery-correct membership excludes all three fault classes. |
 | `mem_reliableSigner` | Reliable signing excludes precisely the two classes allowed to equivocate. |
 
-### `HybridProperties.lean` (11)
+### `HybridProperties.lean` (10)
 
 | Lemma | Role |
 |:---|:---|
@@ -42302,7 +42124,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `descends` | And a committed run decides everything below it. |
 | `directCommitIn_band` | And so does the direct commit. |
 | `directSkipSlotIn_band` | And the slot-level skip transports, which is what the repair was for. Blockers stay blockers: a … |
-| `liveness` | — |
 | `not_thickLink_band_novel` | A candidate the band did not carry passes the indirect test from no old anchor. Its supporters would sit … |
 | `skipsUnsupported` | Hybrid skips an unsupported slot from a hybrid quorum. |
 | `supportersIn_band` | Supporters survive the band. |
@@ -42506,7 +42327,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `stack_finwhale` | — |
 | `stack_nemo` | — |
 
-### `MahiMahiProperties.lean` (14)
+### `MahiMahiProperties.lean` (13)
 
 | Lemma | Role |
 |:---|:---|
@@ -42519,13 +42340,12 @@ subsection per module, in the layer order of Appendices B and C.
 | `directCommitIn_band` | And so does the direct commit. |
 | `directCommitIn_of_coversUpto` | A view caught up to the decision round holds every certificate, so it commits what the DAG commits. |
 | `directSkipIn_band` | And the direct skip. A blamer stays a blamer, and a candidate the band added changes nothing: the blame … |
-| `liveness` | — |
 | `mmSupport_local` | Law 1: `certifies_band` at the band a `RebasedAbove` is. |
 | `not_certifiedIn_band_novel` | — |
 | `toCore` | The two carriers project identically, so a band for one is a band for the other. |
 | `votes_band` | A vote is the vote it was. Both clauses read the same cone, and `candidatesAt_band` settles it as an … |
 
-### `MysticetiProperties.lean` (34)
+### `MysticetiProperties.lean` (33)
 
 | Lemma | Role |
 |:---|:---|
@@ -42552,7 +42372,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `ext_mem` | — |
 | `isLeaderBlock_mono` | — |
 | `isLeaderBlock_old` | — |
-| `liveness` | Liveness, at the core's support: certification is the only antecedent, so the timed and the reactive … |
 | `lt_bound` | The decided slot lies below the bound. |
 | `mem_certificates_band` | — |
 | `mem_certificates_old` | — |
@@ -42591,7 +42410,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `refsB` | — |
 | `supportersIn_band` | The supporters a view holds transport. A voting-round block the view held is a block of the shifted … |
 
-### `OdontocetiProperties.lean` (13)
+### `OdontocetiProperties.lean` (12)
 
 | Lemma | Role |
 |:---|:---|
@@ -42601,7 +42420,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `decidedBelow_of_decidedWithin` | Odontoceti's bounded relation lands in the derived one. |
 | `descends` | And a committed run decides everything below it. Was a downward induction carrying the bound by hand; it … |
 | `directCommitIn_band` | And so does the direct commit. |
-| `liveness` | — |
 | `not_thickLink_band_novel` | A candidate the band did not carry is thick-linked from no old anchor. Its supporters would have to sit in … |
 | `skipsUnsupported` | Odontoceti skips an unsupported slot from a correct quorum. |
 | `supportersIn_band` | Supporters survive the band. A block one round above the slot that referenced the candidate references it … |
@@ -42805,11 +42623,12 @@ subsection per module, in the layer order of Appendices B and C.
 | `deliversOn_viewAt` | The witness. A paced validator delivers the reliable set from any round it has settled past — the … |
 | `le_settleBy` | — |
 
-### `Reactive/MysticetiProperties.lean` (1)
+### `Reactive/MysticetiProperties.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
 | `certLive_of_reactiveLive` | The reactive discipline is the other bridge. `cert_or_wait` certifies every candidate of a reliably-led … |
+| `committed_of_correct_block_of_run` | No reliable validator's block is censored (RS5, execution first). In a reactive run past GST whose timeout … |
 
 ### `Timed/Coverage.lean` (2)
 

@@ -32,21 +32,16 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 # their own, and Barnacle's interface supplies a second for the rules it
 # instantiates. A property counts as shown at any of them.
 RULES = [
-    ("core Mysticeti",     ["MysticetiProperties.mysticetiRule",
-                            "Barnacle.mysticetiRule"], "two carriers"),
+    ("core Mysticeti",     ["MysticetiProperties.mysticetiRule"], None),
     ("reactive Mysticeti", ["MysticetiProperties.mysticetiRule"],
                            "shares the core's rule"),
     ("Hydrozoan",          ["Hydrozoan.rule"],                   None),
-    ("Optimal-Hydrozoan",  ["OptimalHydrozoanProperties.optimalRule",
-                            "Barnacle.optimalHydrozoanRule"],   "two carriers"),
-    ("Odontoceti",         ["OdontocetiProperties.odontocetiRule",
-                            "Barnacle.odontocetiRule"], "two carriers"),
-    ("Nemo",               ["NemoProperties.nemoRule",
-                            "Barnacle.nemoRule"],                "two carriers"),
+    ("Optimal-Hydrozoan",  ["OptimalHydrozoanProperties.optimalRule"], None),
+    ("Odontoceti",         ["OdontocetiProperties.odontocetiRule"], None),
+    ("Nemo",               ["NemoProperties.nemoRule"], None),
     ("Mahi-Mahi",          ["MahiMahiProperties.mahiMahiRule"],
                            "one carrier per wave width"),
-    ("Hybrid / Orcaella",  ["HybridProperties.hybridRule",
-                            "Barnacle.orcaellaRule"],           "two carriers, one per threshold"),
+    ("Hybrid / Orcaella",  ["HybridProperties.hybridRule"], "one carrier per threshold"),
     ("FinWhale",           ["FinWhaleProperties.finWhaleRule"],  "band transported one rule at a time (Band.lean)"),
     ("Black Marlin",       [], "no carrier; commits by round, no slot-indexed relation"),
 ]
@@ -84,11 +79,10 @@ GENERIC = re.compile(r"^LeanDag\.Properties\b")
 def owner(carrier):
     """The module prefix a carrier belongs to.
 
-    Needed because two carriers can share a short name: the core's
-    `MysticetiProperties.mysticetiRule` and Barnacle's
-    `Barnacle.mysticetiRule` both print as `mysticetiRule` inside their
-    own namespaces, and matching on the suffix alone credits one with
-    the other's instances.
+    Kept from when two carriers could share a short name (the core's
+    `mysticetiRule` and a Barnacle copy of it); Barnacle's `BaseRule` now
+    extends `DagRule` and names the protocol's carrier, so there is one
+    carrier per rule, but a suffix match is still the wrong test.
     """
     return "LeanDag." + carrier.split(".")[0]
 

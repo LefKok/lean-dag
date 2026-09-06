@@ -39,7 +39,7 @@ variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 
 /-- **Nemo as a carrier**, at its own namespace rather than through
-`Barnacle.nemoRule`: a protocol's conformance should not route through a
+Barnacle's `nemo.toDagRule`, which now *is* this carrier: a protocol's conformance should not route through a
 mechanism. -/
 def nemoRule : DagRule Validator BlockId Payload where
   Universe := Nemo.Universe Validator BlockId Payload

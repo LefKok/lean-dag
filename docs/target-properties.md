@@ -3257,6 +3257,29 @@ the reader's own view being caught up to a horizon, which is a delivery
 assumption about one validator; each execution model owes it, and the
 headline is conditional on it.
 
+### 11.19 One carrier per rule, and RS5 as an instance
+
+**One carrier.** `Barnacle.BaseRule` now `extends Properties.DagRule`,
+and each of its eight instantiations names the protocol's own carrier
+for the parent — `mysticeti.toDagRule` is `MysticetiProperties.mysticetiRule`
+by `rfl`, and likewise for Odontoceti, Nemo, Mahi-Mahi, Orcaella,
+FinWhale, Hydrozoan and Optimal-Hydrozoan. The two-carrier situation
+§11.2 recorded, where six rules proved `Agree` and `CommitsCandidate`
+once at their carrier and once as Barnacle's `Laws`, is over:
+`Barnacle/Conformance.lean` and the coercion `BaseRule.toDagRule` are
+gone, `audit-conformance.py` lists one carrier per rule, and Barnacle's
+Hydrozoan adapters (`adapt`, `adaptBlk`, `slotsOf`) are abbreviations
+for the carrier's. The bridges `agree_toDagRule` and
+`commitsCandidate_toDagRule` stay, since `Laws` still states the two
+properties for a rule that has proved Barnacle's laws and nothing else.
+
+**RS5.** `ReactiveM.committed_of_correct_block`, reactive inclusion,
+was proved by hand in `Reactive/Mysticeti.lean` along the self-parent
+chain. It is now stated in `Reactive/MysticetiProperties.lean`, with
+the same statement, as `includes_of_leads` at the core's support with
+the reactive bridge supplying certification — the generic inclusion
+theorem of §11.17, which was the reactive argument all along.
+
 **What the audits show.** `audit-mechanisms.py` reads the same matrix
 as before — every cell for Hydrozoan and Optimal-Hydrozoan `yes`, live
 and stack `der` — now from the native witnesses. `audit-bespoke.py`

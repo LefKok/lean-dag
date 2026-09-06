@@ -168,7 +168,7 @@ with it.
 
 Inclusion survives anyway, by a different route. A correct author's
 blocks form a single chain under the self-parent clause
-(`reaches_self_ancestor`), so a straggler's block lies below every later
+(`SelfParent.reaches_of_creator`; the core's `reaches_self_ancestor`), so a straggler's block lies below every later
 block of its *own author* — and when that author leads a slot, which
 per-validator fairness guarantees (`FairToEach`), the reactive vote
 discipline commits the leader block, and the whole chain enters the
@@ -181,89 +181,11 @@ ledger* one leadership rotation later. Commit latency at network speed,
 inclusion latency at rotation speed — and both halves of that sentence
 are theorems. -/
 
-/-- **RS5 — reactive inclusion.** For every round `m` and author
-`u ∈ T`, the schedule fixes a `u`-led slot above `m` before any
-execution is named, and every sufficiently grown reactive execution
-commits that slot with a leader block whose cone contains `u`'s
-round-`m` block — which is therefore in the agreed ledger of any verdict
-assignment covering the slot.
-
-No coverage appears: the hypotheses are the reactive wait clauses, GST
-and the backoff, exactly as in `ReactiveM.decided`. What is added is
-only `FairToEach` — the schedule must return to `u` itself — and the
-self-parent chain does the rest. -/
-theorem committed_of_correct_block
-    (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : quorumCard Validator ≤ T.card)
-    (fair : FairToEach (S := S) T) {u : Validator} (hu : u ∈ T) (R m : ℕ)
-    (hRm : R ≤ m) :
-    ∃ k', m < S.slotRound k' ∧ R ≤ S.slotRound k' ∧ S.leader k' = u ∧
-      ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ)
-        (rm : ReactiveM U T N),
-        rm.gst ≤ R →
-        (∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n) →
-        S.slotRound k' + 2 ≤ N →
-        ∀ b ∈ U.ids, (U.block b).creator = u → (U.block b).round = m →
-          ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) ∧
-            Reaches U L b ∧
-            ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
-              b ∈ ledgerSet U g n := by
-  -- the schedule fixes the slot: `u`-led, past round `m`
-  obtain ⟨k', hk', hlead⟩ := fair u hu (slotAt Validator (m + 1))
-  have hm : m < S.slotRound k' := by
-    have h1 := le_slotRound_slotAt (Validator := Validator) (m + 1)
-    have h2 := S.mono hk'
-    omega
-  refine ⟨k', hm, by omega, hlead, ?_⟩
-  intro U N rm hgst hto hN b hb hbc hbr
-  -- the reactive commit at `u`'s slot
-  obtain ⟨L, hL, hdec⟩ :=
-    rm.decided hT hcard hgst hto (by omega) hN (hlead ▸ hu)
-  -- the leader block is `u`-authored above `m`: the self-parent chain
-  -- carries it down to `b`
-  have hreach : Reaches U L b :=
-    reaches_self_ancestor (hT hu) hL.1 hb
-      (by rw [hL.2.2, hlead]) hbc (by rw [hL.2.1, hbr]; omega)
-  exact ⟨L, hL, hdec, hreach,
-    fun g n hg hn => ⟨k', hn, L, hg, hreach⟩⟩
-
-/-! ### The same result, execution first
-
-`committed_of_correct_block` fixes the slot *before* any execution is named:
-the schedule alone decides where `u`'s block will be picked up, and the
-statement then quantifies over every reactive execution reaching that far.
-That order is the strong reading, and it is why the theorem's conclusion
-carries a universally quantified execution inside an existential.
-
-The reader's order is the other one --- take an execution, ask what happens
-to a block. That is the corollary below: it says of a *given* run what the
-theorem says of all of them, and it is what the paper states. -/
-
-/-- **No reliable validator's block is censored** (RS5, execution first). In
-a reactive run past GST whose timeout clears `2Δ + proc`, every block a
-reliable validator authors is reached by a later commit --- at a slot the
-validator leads itself --- and so enters the agreed ledger.
-
-The slot is still the schedule's choice, so the horizon condition remains: the
-run must reach two rounds past it. Everything else is fixed before the
-statement begins. -/
-theorem committed_of_correct_block_of_run
-    (hT : T ⊆ (Correct : Finset Validator))
-    (hcard : quorumCard Validator ≤ T.card)
-    (fair : FairToEach (S := S) T) (rm : ReactiveM U T N) {R m : ℕ}
-    (hgst : rm.gst ≤ R) (hto : ∀ n, R ≤ n → 2 * rm.delay + rm.proc ≤ rm.timeout n)
-    {u : Validator} (hu : u ∈ T) (hRm : R ≤ m) :
-    ∃ k', m < S.slotRound k' ∧ S.leader k' = u ∧
-      (S.slotRound k' + 2 ≤ N →
-        ∀ b ∈ U.ids, (U.block b).creator = u → (U.block b).round = m →
-          ∃ L, IsLeaderBlock U k' L ∧ Decided U (View.full U) k' (some L) ∧
-            Reaches U L b ∧
-            ∀ (g : ℕ → Option BlockId) (n : ℕ), g k' = some L → k' < n →
-              b ∈ ledgerSet U g n) := by
-  obtain ⟨k', hm, hR, hlead, hrest⟩ :=
-    committed_of_correct_block (BlockId := BlockId) (Payload := Payload)
-      hT hcard fair hu R m hRm
-  exact ⟨k', hm, hlead, fun hN => hrest U N rm hgst hto hN⟩
+/-! **RS5 — reactive inclusion** is stated in `Reactive/MysticetiProperties.lean`
+as `ReactiveM.committed_of_correct_block`, an instance of the generic
+inclusion theorem (`Properties/Arcs/Quality.lean`) at the core's support:
+the reactive precondition is certification, and the self-parent chain is
+`SelfParent.reaches_of_creator`. -/
 
 end ReactiveM
 

@@ -759,7 +759,7 @@ theorem commitsCandidate : CommitsCandidate
 predicate. `Decided.directCommit` under the property's name.
 
 This completes the core and the reactive discipline, which share the
-rule: `Barnacle.mysticetiRule_commitsDirect` proves the same thing at
+rule: Barnacle's `commitsDirect_toDagRule` proves the same thing at
 Barnacle's carrier for the same protocol, and a rule wants it at the
 carrier its own mechanisms use. -/
 theorem commitsDirect : CommitsDirect

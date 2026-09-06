@@ -2,6 +2,8 @@ import LeanDag.Barnacle.Model.Heads
 import LeanDag.Barnacle.Helpers.Mysticeti
 import LeanDag.Odontoceti.Liveness
 
+import LeanDag.Odontoceti.Carrier
+
 /-!
 # Barnacle over Odontoceti — statement
 
@@ -28,20 +30,12 @@ variable {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
 /-- **Odontoceti as a base rule** — the data. Wave length two; the direct
 commit predicate counts supporters at the next round. -/
 def odontoceti [Faults5 Validator] : BaseRule Validator BlockId Payload where
-  Universe := BlockUniverse Validator BlockId Payload
-  View := fun U => LeanDag.View Validator BlockId Payload U
-  block := fun U => U.block
-  ids := fun U => U.ids
-  viewIds := fun V => V.ids
-  viewSound := fun V => V.subset_ids
-  viewComplete := fun V => V.complete
-  causal := fun U => U.causal
+  toDagRule := OdontocetiProperties.odontocetiRule
   full := fun U => LeanDag.View.full U
   historyView := fun U A hA => historyViewOf U A hA
   waveLength := 2
   DirectCommitIn := fun V L r => Odontoceti.DirectCommitIn _ V L r
   decDirect := fun _ _ _ => inferInstance
-  Decided := fun S {U} V k v => @Odontoceti.Decided _ _ _ _ _ _ _ S U V k v
 
 /-- **Odontoceti as a live rule**: a DAG is good when a correct quorum is
 synchronised from `Rnd` and populates the rounds to `N`. -/

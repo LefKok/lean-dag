@@ -52,7 +52,6 @@ CONFORMANCE = (
     "LeanDag.Nemo.Carrier", "LeanDag.NemoProperties",
     "LeanDag.Hybrid.Carrier", "LeanDag.HybridProperties",
     "LeanDag.OptimalHydrozoan.Carrier", "LeanDag.OptimalHydrozoan.Helpers.Banded",
-    "LeanDag.Barnacle.Conformance",
     "LeanDag.Barnacle.Helpers.DagRule", "LeanDag.Barnacle.Helpers.Descent",
 )
 

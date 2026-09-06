@@ -1,5 +1,6 @@
 import LeanDag.Barnacle.Model.Rule
 import LeanDag.Hydrozoan.Model.Decided
+import LeanDag.Hydrozoan.Helpers.Carrier
 
 /-!
 # Hydrozoan instance helpers
@@ -48,14 +49,14 @@ variable {BlockId : Type}
 
 /-- A Hydrozoan block as a core block: `author` becomes `creator`,
 `parents` becomes `refs`, and the payload is `Unit`. -/
-def adapt (b : LeanDag.Hydrozoan.Block Replica BlockId) :
+abbrev adapt (b : LeanDag.Hydrozoan.Block Replica BlockId) :
     LeanDag.Block Replica BlockId Unit :=
-  { round := b.round, creator := b.author, refs := b.parents, payload := () }
+  LeanDag.Hydrozoan.adaptBlock b
 
-/-- The universe's lookup, adapted. -/
-def adaptBlk (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) :
+/-- The universe's lookup, adapted: the carrier's `block`. -/
+abbrev adaptBlk (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) :
     BlockId → LeanDag.Block Replica BlockId Unit :=
-  fun i => adapt (U.block i)
+  fun i => LeanDag.Hydrozoan.adaptBlock (U.block i)
 
 @[simp] theorem adaptBlk_round (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
     (i : BlockId) : (adaptBlk U i).round = (U.block i).round := rfl
