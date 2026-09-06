@@ -24946,6 +24946,24 @@ def copyFillHZ (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
 
 **The copy fill, at Hydrozoan's universe.** One block per gap round, by the recovering replica, carrying the donor's parents at that round.
 
+#### `liftViewHZ`
+
+*def, `Integration.HydrozoanMechanisms.lean`*
+
+```lean
+def liftViewHZ (sk : SkipData U.ids (hzBlk U)) (V : LeanDag.Hydrozoan.View U) :
+    LeanDag.Hydrozoan.View (copyFillHZ U sk) where
+  ids := V.ids
+  subset_ids := fun i hi => Finset.mem_union_left _ (V.subset_ids hi)
+  complete := by
+    intro i hi j hj
+    have hj' : j ∈ ((copyFillHZ U sk).block i).parents := hj
+    rw [copyFillHZ_block_old (V.subset_ids hi)] at hj'
+    exact V.complete i hi j hj'
+```
+
+The old view, read in the filled universe: the same ids, closed because old blocks keep their parents.
+
 #### `chopNemo`
 
 *def, `Integration.NemoMechanisms.lean`*
@@ -26455,7 +26473,7 @@ Built from `Slots.uniformSingle` rather than by hand, so the class fields need n
 
 ## Appendix C. The theorem reference
 
-The 1073 theorems that either another module of the
+The 1077 theorems that either another module of the
 development depends on, or that Appendix A indexes as principal
 results — the second clause because the capstones are consumed
 by nothing, being endpoints. Each is the source statement,
@@ -37658,6 +37676,22 @@ theorem banded {kt : ℕ} (hpos : 0 < kt) :
 
 **Hybrid reads a band**, at every threshold the committee admits.
 
+#### `skipsUnsupported`
+
+*theorem, `HybridProperties.lean`*
+
+```lean
+theorem skipsUnsupported (kt : ℕ) :
+    SkipsUnsupported (hybridRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) kt) (fun T => Hybrid.q Validator ≤ T.card)
+```
+
+**Hybrid skips an unsupported slot from a hybrid quorum.**
+
+The liveness half of the repair, and the reason to believe it was a repair rather than a tightening: making the skip a count of blockers made it strictly harder to satisfy, and a rule no quorum can trigger would be sound and useless. This says the repaired rule is still reachable — a set meeting the hybrid quorum whose voting-round blocks reference no candidate skips the slot, with no anchor and no synchrony.
+
+The blamer set is the core's shape, so the containment argument is the core's; only the threshold differs.
+
 #### `voteSupport_commits`
 
 *theorem, `HybridProperties.lean`*
@@ -38039,21 +38073,17 @@ theorem commitsDirect :
 
 Hydrozoan had no `CommitsDirect` until `scripts/audit-bespoke.py` found `Barnacle.Hydrozoan.holds` reaching past the properties for it: the law it discharges, `Laws.decided_of_directCommitIn`, is this property, and was being proved from the constructors a second time.
 
-#### `decided_none_of_unsupported`
+#### `skipsUnsupported`
 
 *theorem, `Hydrozoan.Helpers.Skippability.lean`*
 
 ```lean
-theorem decided_none_of_unsupported {V : LeanDag.Hydrozoan.View U} {T : Finset Replica} {k : ℕ}
-    (hq : LeanDag.Hydrozoan.qFast Replica ≤ T.card)
-    (hpres : ∀ v ∈ T, ∃ c ∈ V.ids, (U.block c).author = v ∧
-      (U.block c).round = S.slotRound k + 1)
-    (huns : ∀ c ∈ V.ids, (U.block c).author ∈ T → (U.block c).round = S.slotRound k + 1 →
-      ∀ L, LeanDag.Hydrozoan.IsLeaderBlock U k L → L ∉ (U.block c).parents) :
-    LeanDag.Hydrozoan.Decided U V k none
+theorem skipsUnsupported :
+    Properties.SkipsUnsupported (rule (Replica := Replica) (BlockId := BlockId))
+      (fun T => LeanDag.Hydrozoan.qFast Replica ≤ T.card)
 ```
 
-**The skip fires at `qFast` blamers.**
+**`SkipsUnsupported` at the carrier**, at the grade `qFast ≤ |T|`.
 
 #### `holds`
 
@@ -39151,6 +39181,22 @@ theorem banded : Banded
 
 **Odontoceti reads a band.**
 
+#### `skipsUnsupported`
+
+*theorem, `OdontocetiProperties.lean`*
+
+```lean
+theorem skipsUnsupported :
+    SkipsUnsupported (odontocetiRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload)) (fun T => quorumCard Validator ≤ T.card)
+```
+
+**Odontoceti skips an unsupported slot from a correct quorum.**
+
+The liveness half of the repair. Making the skip a count of blockers rather than a vacuous quantification made it strictly harder to satisfy, and a rule no quorum can ever trigger would be sound and useless. This says the repaired rule is still reachable: a correct quorum whose voting-round blocks reference no candidate skips the slot, without waiting for an anchor.
+
+The count is the core's, so the argument is too — `subset_blamers` applies unchanged, the two carriers projecting identically.
+
 #### `voteSupport_commits`
 
 *theorem, `OdontocetiProperties.lean`*
@@ -39759,6 +39805,24 @@ theorem chain_quality
 
 **CQ7 (the capstone).** Chain quality in one statement, for any rule with a quorum law, self-reference and one block per reliable author per round. Unconditionally: every commit's flush covers at least half the reliable validators at every round below it. Under a schedule that keeps returning to every reliable validator: every reliable block is in the flush of a slot its author leads, fixed in advance by the schedule.
 
+#### `decided_none_of_novel`
+
+*theorem, `Properties.Arcs.SafeSkip.lean`*
+
+```lean
+theorem decided_none_of_novel {R : DagRule Validator BlockId Payload}
+    {Ok : Finset Validator → Prop} (hsk : SkipsUnsupported R Ok)
+    {U U' : R.Universe} (he : Extends R U U') (S : Slots Validator)
+    {V' : R.View U'} {T : Finset Validator} {k : ℕ} (hok : Ok T)
+    (hpres : PresentAt R V' T (S.slotRound k + 1))
+    (hnov : ∀ L, R.IsCandidate S U' k L → L ∉ R.ids U)
+    (hold : ∀ c, c ∈ R.viewIds V' → (R.block U' c).creator ∈ T →
+      (R.block U' c).round = S.slotRound k + 1 → c ∈ R.ids U) :
+    R.Decided S V' k none
+```
+
+**A slot whose candidates are all novel is skipped**, promptly.
+
 #### `extends_of_skipFill`
 
 *theorem, `Properties.Arcs.SafeSkip.lean`*
@@ -39827,6 +39891,18 @@ theorem sustains_skipFill (sk : SkipMsg U) :
 ```
 
 **A fill sustains from the top of its gap.** Above `sk.r` the fill added nothing, so every block there is old and unchanged. Below it the claim would be false, and deliberately: the blocks a fill adds stand in for blocks that voted, and need not vote as they did.
+
+#### `candidates_fresh`
+
+*theorem, `Properties.Arcs.SafeSkip.lean`*
+
+```lean
+theorem candidates_fresh [S : Slots Validator] (sk : SkipMsg U) {k : ℕ}
+    (hlead : S.leader k = sk.v1) (hk1 : sk.r0 < S.slotRound k) (hk2 : S.slotRound k ≤ sk.r)
+    {L : BlockId} (hL : IsLeaderBlock sk.skipFill k L) : L ∉ U.ids
+```
+
+**Every candidate of a slot the recovering replica leads, at a gap round, is a filled block** — the replica authored nothing old there.
 
 #### `decided_none_fresh`
 
@@ -40545,7 +40621,7 @@ The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `V
 
 ## Appendix D. Index of internal lemmas
 
-The 1034 lemmas used only within the file that proves
+The 1036 lemmas used only within the file that proves
 them. They are steps of the arguments above rather than results
 in their own right, so they are listed rather than displayed;
 the source is the reference for their statements. One
@@ -42115,7 +42191,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `mem_recoveryCorrect` | Recovery-correct membership excludes all three fault classes. |
 | `mem_reliableSigner` | Reliable signing excludes precisely the two classes allowed to equivocate. |
 
-### `HybridProperties.lean` (10)
+### `HybridProperties.lean` (9)
 
 | Lemma | Role |
 |:---|:---|
@@ -42125,7 +42201,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `directCommitIn_band` | And so does the direct commit. |
 | `directSkipSlotIn_band` | And the slot-level skip transports, which is what the repair was for. Blockers stay blockers: a … |
 | `not_thickLink_band_novel` | A candidate the band did not carry passes the indirect test from no old anchor. Its supporters would sit … |
-| `skipsUnsupported` | Hybrid skips an unsupported slot from a hybrid quorum. |
 | `supportersIn_band` | Supporters survive the band. |
 | `thickLink_band` | So the indirect test reads the same. |
 | `toCore` | The band at Hybrid's carrier is the band at the core's, the universe being the core's under a predicate. |
@@ -42169,10 +42244,11 @@ subsection per module, in the layer order of Appendices B and C.
 | `hzSupport_live_of_hzLive` | Hydrozoan's precondition is the support's. Coverage from `R₀` is coverage toward every candidate, and the … |
 | `voteSupport_fast_commits` | Law 3 of `voteSupport`, for Hydrozoan's fast path, under the fast fault model: `q_fast` votes one round up … |
 
-### `Hydrozoan/Helpers/Skippability.lean` (1)
+### `Hydrozoan/Helpers/Skippability.lean` (2)
 
 | Lemma | Role |
 |:---|:---|
+| `decided_none_of_unsupported` | The skip fires at `qFast` blamers. |
 | `subset_blamesInView` | Every member of `T` blames the slot. |
 
 ### `Hydrozoan/Helpers/Truncation.lean` (2)
@@ -42220,27 +42296,30 @@ subsection per module, in the layer order of Appendices B and C.
 | `skipFillFinWhale_block_old` | — |
 | `viewAgreeAbove_chop_finwhale` | The chopped view agrees with the original above the cut. |
 
-### `Integration/HybridMechanisms.lean` (7)
+### `Integration/HybridMechanisms.lean` (8)
 
 | Lemma | Role |
 |:---|:---|
 | `decided_agree_chop_hybrid` | And cross-cut agreement, from an arbitrary view of the truncation: a validator that joined from the cut … |
 | `decided_agree_skipFill_hybrid` | And agreement across it: a validator that recovered agrees with one that did not, from any view of the fill. |
 | `decided_chop_iff_hybrid` | Verdict transport across the cut, for Hybrid. A validator that has pruned below the horizon reaches … |
+| `decided_none_fresh_hybrid` | SS3 for Hybrid, from its `SkipsUnsupported`: the slot the recovering replica leads at a gap round is … |
 | `decided_skipFill_hybrid` | Verdicts survive the recovery, for Hybrid. The replica that recovered reaches every verdict it reached before. |
 | `extends_skipFill_hybrid` | The fill is an extension of Hybrid's carrier. |
 | `sustains_skipFill_hybrid` | What the fill sustains, for Hybrid — the core's witness, projected field by field. |
 | `truncates_chop_hybrid` | The cut is a truncation of Hybrid's carrier. The core's witness, projected: the subtype's `ids` and … |
 
-### `Integration/HydrozoanMechanisms.lean` (7)
+### `Integration/HydrozoanMechanisms.lean` (9)
 
 | Lemma | Role |
 |:---|:---|
 | `authorsOf_chopBlkHZ` | — |
+| `candidates_fresh_hz` | Every candidate of a slot the recovering replica leads, at a gap round, is a filled block. |
 | `chopBlkHZ_parents_of_le` | — |
 | `copyFillHZ_parents_old` | An old block's parents are old. |
 | `decided_agree_chop_hz` | And cross-cut agreement. |
 | `decided_copyFillHZ` | Verdicts survive the recovery, for Hydrozoan. |
+| `decided_none_fresh_hz` | SS3 for Hydrozoan, from its `SkipsUnsupported`: the slot the recovering replica leads at a gap round is … |
 | `extends_copyFillHZ` | The fill is an extension of Hydrozoan's carrier. |
 | `sustains_copyFillHZ` | What the fill sustains: from the top of its gap. |
 
@@ -42410,7 +42489,7 @@ subsection per module, in the layer order of Appendices B and C.
 | `refsB` | — |
 | `supportersIn_band` | The supporters a view holds transport. A voting-round block the view held is a block of the shifted … |
 
-### `OdontocetiProperties.lean` (12)
+### `OdontocetiProperties.lean` (11)
 
 | Lemma | Role |
 |:---|:---|
@@ -42421,7 +42500,6 @@ subsection per module, in the layer order of Appendices B and C.
 | `descends` | And a committed run decides everything below it. Was a downward induction carrying the bound by hand; it … |
 | `directCommitIn_band` | And so does the direct commit. |
 | `not_thickLink_band_novel` | A candidate the band did not carry is thick-linked from no old anchor. Its supporters would have to sit in … |
-| `skipsUnsupported` | Odontoceti skips an unsupported slot from a correct quorum. |
 | `supportersIn_band` | Supporters survive the band. A block one round above the slot that referenced the candidate references it … |
 | `thickLink_band` | So the indirect test reads the same. |
 | `thickLink_threshold_pos` | The thick-link threshold is positive: `Faults5` asks for `5f + 1` validators, so `card − 3f ≥ 2f + 1`. |
@@ -42497,11 +42575,11 @@ subsection per module, in the layer order of Appendices B and C.
 
 | Lemma | Role |
 |:---|:---|
-| `candidates_fresh` | Every candidate of a slot the recovering replica leads, at a gap round, is a filled block — the replica … |
 | `decided_fill_agree_mahimahi` | And agreement across it. |
 | `decided_fill_agree_odontoceti` | And agreement across it. |
 | `decided_fill_mahimahi` | Verdicts survive the fill, for Mahi-Mahi. |
 | `decided_fill_odontoceti` | Verdicts survive the fill, for Odontoceti. |
+| `decided_none_fresh_odontoceti` | SS3 for Odontoceti: the slot the recovering replica leads at a gap round is skipped at once, from its … |
 | `decided_skipFill` | Verdicts survive the recovery, for any protocol that has proved persistence. The replica that recovered … |
 | `presentAt_liftView` | Presence in the pre-crash view is presence in the lifted one: the ids are the same and old blocks are … |
 

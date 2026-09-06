@@ -138,6 +138,31 @@ theorem decided_agree_skipFill_hybrid (hpos : 0 < kt)
     (Persist.of_banded (HybridProperties.banded hpos)) (extends_skipFill_hybrid sk)
     (V' := sk.liftView V) (fun _ hb => hb) hV hW
 
+/-! ## Promptness: the fill cannot conjure a commit, for Hybrid -/
+
+/-- **SS3 for Hybrid**, from its `SkipsUnsupported`: the slot the
+recovering replica leads at a gap round is skipped at once. -/
+theorem decided_none_fresh_hybrid {U : (HybridProperties.hybridRule (Validator := Validator)
+    (BlockId := BlockId) (Payload := Payload) kt).Universe} (sk : SkipMsg U.val)
+    {V : View Validator BlockId Payload U.val} {T : Finset Validator} {k : ℕ}
+    (hq : Hybrid.q Validator ≤ T.card)
+    (hlead : S.leader k = sk.v1) (hk1 : sk.r0 < S.slotRound k) (hk2 : S.slotRound k ≤ sk.r)
+    (hpres : PresentAt (HybridProperties.hybridRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) kt) V T (S.slotRound k + 1)) :
+    (HybridProperties.hybridRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) kt).Decided S (U := skipFillHybrid U sk) (sk.liftView V) k none :=
+  decided_none_of_novel (HybridProperties.skipsUnsupported kt) (extends_skipFill_hybrid sk) S hq
+    (fun v hv => by
+      obtain ⟨c, hcV, hcc, hcr⟩ := hpres v hv
+      have hcU : c ∈ U.val.ids := V.subset_ids hcV
+      refine ⟨c, hcV, ?_, ?_⟩
+      · show (sk.skipFill.block c).creator = v
+        rw [sk.skipFill_block_old hcU]; exact hcc
+      · show (sk.skipFill.block c).round = S.slotRound k + 1
+        rw [sk.skipFill_block_old hcU]; exact hcr)
+    (fun L hL => candidates_fresh (S := S) sk hlead hk1 hk2 hL)
+    (fun c hcV _ _ => V.subset_ids hcV)
+
 end Integration
 
 end LeanDag

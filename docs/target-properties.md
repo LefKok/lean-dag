@@ -3280,6 +3280,26 @@ the same statement, as `includes_of_leads` at the core's support with
 the reactive bridge supplying certification — the generic inclusion
 theorem of §11.17, which was the reactive argument all along.
 
+### 11.20 Promptness: SS3 for every rule that skips
+
+`SkipsUnsupported` had one consumer, the core's SS3. It now has a
+generic one: `Arcs.decided_none_of_novel` (`Properties/Arcs/SafeSkip.lean`)
+says that for any rule with the property and any `Extends` witness
+whose candidates at a slot are all novel, the slot is decided `none` at
+once on any view whose reliable blocks one round up are old — no old
+block references a novel id, so nothing supports the slot, and the rule
+skips it. The instances are the fill cells the rules already have:
+`decided_none_fresh` (the core, and so its reactive execution),
+`decided_none_fresh_odontoceti` at the core's fill,
+`decided_none_fresh_hybrid` at `skipFillHybrid`, and
+`decided_none_fresh_hz` at Hydrozoan's copy fill through a lifted view
+`liftViewHZ`, each with the grade the rule's property carries (a
+quorum, Hybrid's `q`, Hydrozoan's `qFast`). `audit-mechanisms.py` shows
+them in a `prompt` column, owed exactly by the rules that show the
+property; Nemo, Mahi-Mahi, FinWhale and Optimal-Hydrozoan read `--`,
+which is the honest reading: their slots are settled by an anchor, not
+at once.
+
 **What the audits show.** `audit-mechanisms.py` reads the same matrix
 as before — every cell for Hydrozoan and Optimal-Hydrozoan `yes`, live
 and stack `der` — now from the native witnesses. `audit-bespoke.py`

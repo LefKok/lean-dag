@@ -39,6 +39,27 @@ namespace Arcs
 
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
+/-! ## Promptness: the fill cannot conjure a commit
+
+For any rule that skips unsupported slots (`SkipsUnsupported`, optional)
+and any extension whose candidates at a slot are all novel: the slot is
+decided `none` at once, on any view whose reliable blocks one round up
+are old. No old block references a novel id (`Extends.old_refs_old`),
+so the slot is unsupported, and the rule skips it. This is SS3 for
+every rule that shows the property, at every fill. -/
+
+/-- **A slot whose candidates are all novel is skipped**, promptly. -/
+theorem decided_none_of_novel {R : DagRule Validator BlockId Payload}
+    {Ok : Finset Validator → Prop} (hsk : SkipsUnsupported R Ok)
+    {U U' : R.Universe} (he : Extends R U U') (S : Slots Validator)
+    {V' : R.View U'} {T : Finset Validator} {k : ℕ} (hok : Ok T)
+    (hpres : PresentAt R V' T (S.slotRound k + 1))
+    (hnov : ∀ L, R.IsCandidate S U' k L → L ∉ R.ids U)
+    (hold : ∀ c, c ∈ R.viewIds V' → (R.block U' c).creator ∈ T →
+      (R.block U' c).round = S.slotRound k + 1 → c ∈ R.ids U) :
+    R.Decided S V' k none :=
+  hsk S U' V' T k hok hpres (unsupported_of_novel he (fun L hL => ⟨hL.1, hnov L hL⟩) hold)
+
 section Faults
 
 variable [Faults Validator]
@@ -219,11 +240,10 @@ theorem decided_none_fresh [S : Slots Validator] (sk : SkipMsg U)
     (hlead : S.leader k = sk.v1) (hk1 : sk.r0 < S.slotRound k) (hk2 : S.slotRound k ≤ sk.r)
     (hpres : PresentAt MysticetiProperties.mysticetiRule V T (S.slotRound k + 1)) :
     Decided sk.skipFill (sk.liftView V) k none :=
-  MysticetiProperties.skipsUnsupported S sk.skipFill (sk.liftView V) T k hcard
-    (presentAt_liftView sk hpres)
-    (unsupported_of_novel (extends_of_skipFill MysticetiProperties.mysticetiRule sk rfl rfl rfl rfl)
-      (fun L hL => ⟨hL.1, candidates_fresh sk hlead hk1 hk2 hL⟩)
-      (fun c hcV _ _ => V.subset_ids hcV))
+  decided_none_of_novel MysticetiProperties.skipsUnsupported
+    (extends_of_skipFill MysticetiProperties.mysticetiRule sk rfl rfl rfl rfl) S hcard
+    (presentAt_liftView sk hpres) (fun L hL => candidates_fresh sk hlead hk1 hk2 hL)
+    (fun c hcV _ _ => V.subset_ids hcV)
 
 end Core
 
@@ -263,6 +283,29 @@ theorem decided_fill_agree_odontoceti [S : Slots Validator] (sk : SkipMsg W)
     (extends_of_skipFill (OdontocetiProperties.odontocetiRule (Payload := Payload)) sk
       (U := W) (U' := sk.skipFill) rfl rfl rfl rfl)
     (V' := sk.liftView V) (fun _ hb => hb) hv hw
+
+/-- **SS3 for Odontoceti**: the slot the recovering replica leads at a
+gap round is skipped at once, from its `SkipsUnsupported`. -/
+theorem decided_none_fresh_odontoceti [S : Slots Validator] (sk : SkipMsg W)
+    {V : View Validator B Payload W} {T : Finset Validator} {k : ℕ}
+    (hcard : quorumCard Validator ≤ T.card)
+    (hlead : S.leader k = sk.v1) (hk1 : sk.r0 < S.slotRound k) (hk2 : S.slotRound k ≤ sk.r)
+    (hpres : PresentAt (OdontocetiProperties.odontocetiRule (Payload := Payload)) V T
+      (S.slotRound k + 1)) :
+    Odontoceti.Decided (U := sk.skipFill) (sk.liftView V) k none :=
+  decided_none_of_novel OdontocetiProperties.skipsUnsupported
+    (extends_of_skipFill (OdontocetiProperties.odontocetiRule (Payload := Payload)) sk
+      (U := W) (U' := sk.skipFill) rfl rfl rfl rfl) S hcard
+    (fun v hv => by
+      obtain ⟨c, hcV, hcc, hcr⟩ := hpres v hv
+      have hcU : c ∈ W.ids := V.subset_ids hcV
+      refine ⟨c, hcV, ?_, ?_⟩
+      · show (sk.skipFill.block c).creator = v
+        rw [sk.skipFill_block_old hcU]; exact hcc
+      · show (sk.skipFill.block c).round = S.slotRound k + 1
+        rw [sk.skipFill_block_old hcU]; exact hcr)
+    (fun L hL => candidates_fresh sk hlead hk1 hk2 hL)
+    (fun c hcV _ _ => V.subset_ids hcV)
 
 end Odontoceti
 

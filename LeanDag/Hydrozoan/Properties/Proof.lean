@@ -1,6 +1,7 @@
 import LeanDag.Hydrozoan.Properties.Statement
 import LeanDag.Hydrozoan.Helpers.Banded
 import LeanDag.Hydrozoan.Helpers.Commit
+import LeanDag.Hydrozoan.Helpers.Skippability
 import LeanDag.Properties.Derived.FromBand
 import LeanDag.Hydrozoan.Helpers.SlotAgreement
 
@@ -55,16 +56,7 @@ variable {U U' : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
 theorem holds : Statement := by
   intro Replica _ _ BlockId _ _ _
   refine ⟨banded, agree, commitsCandidate, ?_⟩
-  · intro S U V T k hq hpres huns
-    have hpres' : ∀ v ∈ T, ∃ c ∈ V.ids, (U.block c).author = v ∧
-        (U.block c).round = S.slotRound k + 1 := fun v hv => by
-      obtain ⟨c, hcV, hca, hcr⟩ := hpres v hv
-      exact ⟨c, hcV, hca, hcr⟩
-    have huns' : ∀ c ∈ V.ids, (U.block c).author ∈ T → (U.block c).round = S.slotRound k + 1 →
-        ∀ L, @LeanDag.Hydrozoan.IsLeaderBlock _ _ _ _ _ (ofCoreSlots S) U k L →
-          L ∉ (U.block c).parents :=
-      fun c hcV hT hr L hL => huns c hcV hT hr L hL
-    exact decided_none_of_unsupported (S := ofCoreSlots S) hq hpres' huns'
+  · exact skipsUnsupported
 
 /-! ## The headlines
 

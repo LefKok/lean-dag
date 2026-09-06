@@ -68,6 +68,9 @@ MECHANISMS = [
     ("adaptive leaders", {},
      ["LeanDag.Barnacle.descent_of_support"],
      ["Support", "Indirect"]),
+    ("prompt skip", {},
+     ["LeanDag.Properties.Arcs.decided_none_of_novel"],
+     ["SkipsUnsupported"]),
     ("chain quality", {},
      ["LeanDag.Properties.Arcs.card_coveredAt_ge_of_decided",
       "LeanDag.Properties.Arcs.card_correct_le_two_mul_coveredAt_of_decided",
@@ -135,6 +138,7 @@ def main():
     width = max(len(name) for name, _, _ in conformance.RULES) + 1
     cols = [name for name, _, _, _ in MECHANISMS]
     head = {"garbage collection": "cut", "extension": "extend", "re-genesis": "regen",
+            "prompt skip": "prompt",
             "adaptive leaders": "leaders", "chain quality": "quality"}
     # Liveness across the DAG-transforming mechanisms is one generic theorem
     # per shape (`Support.live_of_sustains`, `Support.live_of_truncates`), fed

@@ -1,4 +1,5 @@
 import LeanDag.Hydrozoan.Helpers.Commit
+import LeanDag.Hydrozoan.Helpers.Skippability
 import LeanDag.SafeSkip.Basic
 import LeanDag.Properties.Arcs.GC
 import LeanDag.Properties.Arcs.SafeSkip
@@ -381,6 +382,58 @@ theorem decided_agree_copyFillHZ {sk : SkipData U.ids (hzBlk U)} (S : Slots Repl
     u = u' :=
   decided_agree_extends LeanDag.Hydrozoan.agree (Persist.of_banded LeanDag.Hydrozoan.banded)
     extends_copyFillHZ (V' := V') hsub h h'
+
+/-! ## Promptness: the fill cannot conjure a commit, for Hydrozoan -/
+
+/-- The old view, read in the filled universe: the same ids, closed
+because old blocks keep their parents. -/
+def liftViewHZ (sk : SkipData U.ids (hzBlk U)) (V : LeanDag.Hydrozoan.View U) :
+    LeanDag.Hydrozoan.View (copyFillHZ U sk) where
+  ids := V.ids
+  subset_ids := fun i hi => Finset.mem_union_left _ (V.subset_ids hi)
+  complete := by
+    intro i hi j hj
+    have hj' : j ∈ ((copyFillHZ U sk).block i).parents := hj
+    rw [copyFillHZ_block_old (V.subset_ids hi)] at hj'
+    exact V.complete i hi j hj'
+
+/-- **Every candidate of a slot the recovering replica leads, at a gap
+round, is a filled block.** -/
+theorem candidates_fresh_hz (S : Slots Replica) {k : ℕ}
+    (hlead : S.leader k = sk.v1) (hk1 : sk.r0 < S.slotRound k) (hk2 : S.slotRound k ≤ sk.r)
+    {L : BlockId}
+    (hL : (LeanDag.Hydrozoan.rule (Replica := Replica) (BlockId := BlockId)).IsCandidate S
+      (copyFillHZ U sk) k L) : L ∉ U.ids := by
+  intro hLU
+  obtain ⟨-, hLr, hLc⟩ := hL
+  have hLr' : (LeanDag.Hydrozoan.adaptBlock ((copyFillHZ U sk).block L)).round = S.slotRound k := hLr
+  have hLc' : (LeanDag.Hydrozoan.adaptBlock ((copyFillHZ U sk).block L)).creator = S.leader k := hLc
+  rw [copyFillHZ_block_old hLU] at hLr' hLc'
+  exact sk.hgap L hLU (by rw [← hlead]; exact hLc')
+    (by change sk.r0 < (LeanDag.Hydrozoan.adaptBlock (U.block L)).round; omega)
+    (by change (LeanDag.Hydrozoan.adaptBlock (U.block L)).round ≤ sk.r; omega)
+
+/-- **SS3 for Hydrozoan**, from its `SkipsUnsupported`: the slot the
+recovering replica leads at a gap round is skipped at once, at the grade
+`qFast ≤ |T|`. -/
+theorem decided_none_fresh_hz (S : Slots Replica) {V : LeanDag.Hydrozoan.View U}
+    {T : Finset Replica} {k : ℕ} (hq : LeanDag.Hydrozoan.qFast Replica ≤ T.card)
+    (hlead : S.leader k = sk.v1) (hk1 : sk.r0 < S.slotRound k) (hk2 : S.slotRound k ≤ sk.r)
+    (hpres : PresentAt (LeanDag.Hydrozoan.rule (Replica := Replica) (BlockId := BlockId)) V T
+      (S.slotRound k + 1)) :
+    (LeanDag.Hydrozoan.rule (Replica := Replica) (BlockId := BlockId)).Decided S
+      (U := copyFillHZ U sk) (liftViewHZ sk V) k none :=
+  decided_none_of_novel LeanDag.Hydrozoan.skipsUnsupported extends_copyFillHZ S hq
+    (fun v hv => by
+      obtain ⟨c, hcV, hcc, hcr⟩ := hpres v hv
+      have hcU : c ∈ U.ids := V.subset_ids hcV
+      refine ⟨c, hcV, ?_, ?_⟩
+      · show (LeanDag.Hydrozoan.adaptBlock ((copyFillHZ U sk).block c)).creator = v
+        rw [copyFillHZ_block_old hcU]; exact hcc
+      · show (LeanDag.Hydrozoan.adaptBlock ((copyFillHZ U sk).block c)).round = S.slotRound k + 1
+        rw [copyFillHZ_block_old hcU]; exact hcr)
+    (fun L hL => candidates_fresh_hz S hlead hk1 hk2 hL)
+    (fun c hcV _ _ => V.subset_ids hcV)
 
 end Integration
 

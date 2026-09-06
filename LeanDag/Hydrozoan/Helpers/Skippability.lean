@@ -51,6 +51,22 @@ theorem decided_none_of_unsupported {V : LeanDag.Hydrozoan.View U} {T : Finset R
   LeanDag.Hydrozoan.Decided.directSkip
     (le_trans hq (Finset.card_le_card (subset_blamesInView hpres huns)))
 
+omit S in
+/-- **`SkipsUnsupported` at the carrier**, at the grade `qFast ≤ |T|`. -/
+theorem skipsUnsupported :
+    Properties.SkipsUnsupported (rule (Replica := Replica) (BlockId := BlockId))
+      (fun T => LeanDag.Hydrozoan.qFast Replica ≤ T.card) := by
+  intro S' U V T k hq hpres huns
+  have hpres' : ∀ v ∈ T, ∃ c ∈ V.ids, (U.block c).author = v ∧
+      (U.block c).round = S'.slotRound k + 1 := fun v hv => by
+    obtain ⟨c, hcV, hca, hcr⟩ := hpres v hv
+    exact ⟨c, hcV, hca, hcr⟩
+  have huns' : ∀ c ∈ V.ids, (U.block c).author ∈ T → (U.block c).round = S'.slotRound k + 1 →
+      ∀ L, @LeanDag.Hydrozoan.IsLeaderBlock _ _ _ _ _ (ofCoreSlots S') U k L →
+        L ∉ (U.block c).parents :=
+    fun c hcV hT hr L hL => huns c hcV hT hr L hL
+  exact decided_none_of_unsupported (S := ofCoreSlots S') hq hpres' huns'
+
 end Hydrozoan
 
 end LeanDag
