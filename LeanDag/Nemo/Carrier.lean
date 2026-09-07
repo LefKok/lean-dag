@@ -41,16 +41,8 @@ variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 /-- **Nemo as a carrier**, at its own namespace rather than through
 Barnacle's `nemo.toDagRule`, which now *is* this carrier: a protocol's conformance should not route through a
 mechanism. -/
-def nemoRule : DagRule Validator BlockId Payload where
-  Universe := Nemo.Universe Validator BlockId Payload
-  View := fun U => Nemo.View Validator BlockId Payload U
-  block := fun U i => U.block i
-  ids := fun U => U.ids
-  viewIds := fun V => V.ids
-  viewSound := fun V => V.subset_ids
-  viewComplete := fun V => V.complete
-  causal := fun U => U.causal
-  Decided := fun S _ V k v => Nemo.Decided (S := S) _ V k v
+def nemoRule : DagRule Validator BlockId Payload :=
+  (Nemo.nemoAnchored Validator BlockId Payload).toDagRule
 
 @[simp] theorem nemoRule_ids (U : Nemo.Universe Validator BlockId Payload) :
     (nemoRule (Payload := Payload)).ids U = U.ids := rfl
@@ -98,19 +90,19 @@ theorem noEquiv (hn : 0 < Fintype.card Validator) :
 property's name. -/
 theorem agree : Agree (nemoRule (Validator := Validator) (BlockId := BlockId)
     (Payload := Payload)) :=
-  fun S _ V₁ V₂ _ _ _ h₁ h₂ => Nemo.decided_unique (S := S) h₁ V₂ _ h₂
+  AnchoredRule.agree Nemo.nemoLaws
 
 /-- **A commit names the slot's candidate.** -/
 theorem commitsCandidate : CommitsCandidate
     (nemoRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
-  fun S _ _ _ _ hd => Nemo.isLeaderBlock_of_decided (S := S) hd
+  AnchoredRule.commitsCandidate
 
 /-- **And a direct commit is a verdict**, at Nemo's own direct
 predicate. -/
 theorem commitsDirect : CommitsDirect
     (nemoRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
     (fun {U} V L r => Nemo.DirectCommitIn U V L r) :=
-  fun S _ _ _ _ hc hd => Nemo.Decided.directCommit (S := S) hc hd
+  AnchoredRule.commitsDirect
 
 end NemoProperties
 

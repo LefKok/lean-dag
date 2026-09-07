@@ -123,10 +123,11 @@ theorem hand1_slot1 : N3.Decided S1 (View.full U3) 1 none := by
     have : i = 2 := by omega
     subst this
     exact absurd h3 (by decide)
-  · intro L hL
+  · intro _ _ L hL
     have hall : ∀ M : Fin 24, N3.IsLeaderBlock S1 U3 1 M → M = 4 := by decide
     have := hall L hL
     subst this
+    show ¬ Nemo.CertifiedIn _ _ _ _
     decide
 
 /-- The theorem's verdict for slot 1 at count 1 is the hand skip. -/
@@ -146,10 +147,11 @@ theorem hand1_slot4 : N3.Decided S1 (View.full U3) 4 none := by
     have : i = 5 := by omega
     subst this
     exact absurd h3 (by decide)
-  · intro L hL
+  · intro _ _ L hL
     have hall : ∀ M : Fin 24, N3.IsLeaderBlock S1 U3 4 M → M = 13 := by decide
     have := hall L hL
     subst this
+    show ¬ Nemo.CertifiedIn _ _ _ _
     decide
 
 /-- Clause 2 at `r = 1`: the committed slot the theorem finds in `[1, 5]` is
@@ -180,10 +182,11 @@ theorem hand3_slot1 : N3.Decided S3 (View.full U3) 1 none := by
     hand3_slot6 ?_ ?_
   · intro i h1 h2 h3
     exact absurd h3 (by interval_cases i <;> decide)
-  · intro L hL
+  · intro _ _ L hL
     have hall : ∀ M : Fin 24, N3.IsLeaderBlock S3 U3 1 M → M = 1 := by decide
     have := hall L hL
     subst this
+    show ¬ Nemo.CertifiedIn _ _ _ _
     decide
 
 theorem hand3_slot9 : N3.Decided S3 (View.full U3) 9 (some 9) :=
@@ -194,10 +197,11 @@ theorem hand3_slot3 : N3.Decided S3 (View.full U3) 3 none := by
     hand3_slot9 ?_ ?_
   · intro i h1 h2 h3
     exact absurd h3 (by interval_cases i <;> decide)
-  · intro L hL
+  · intro _ _ L hL
     have hall : ∀ M : Fin 24, N3.IsLeaderBlock S3 U3 3 M → M = 4 := by decide
     have := hall L hL
     subst this
+    show ¬ Nemo.CertifiedIn _ _ _ _
     decide
 
 theorem promise_m3 :

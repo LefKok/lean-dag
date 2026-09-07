@@ -1,5 +1,6 @@
 import LeanDag.Support
 import LeanDag.Ledger
+import LeanDag.Anchored
 import LeanDag.Slots
 
 /-!
@@ -363,19 +364,11 @@ theorem eligible_of_lt_of_spacing (hsp : ∀ k, S.slotRound k + 3 ≤ S.slotRoun
     · subst heq
       exact hsp k
 
-/-- `L` is a candidate block for slot `k`: the right round, the right author.
-
-A *correct* leader has at most one such block (T1); a Byzantine one may have
-several, which is why the definitions below quantify over candidates rather
-than selecting one. M5 supplies uniqueness where it is needed. -/
-def IsLeaderBlock (U : BlockUniverse Validator BlockId Payload) (k : ℕ) (L : BlockId) : Prop :=
-  L ∈ U.ids ∧ (U.block L).round = S.slotRound k ∧ (U.block L).creator = S.leader k
-
-/-- As with the Stage A predicates, these are decidable but Lean needs
-telling, so concrete models can settle them by `decide`. -/
-instance decidableIsLeaderBlock (k : ℕ) (L : BlockId) : Decidable (IsLeaderBlock U k L) :=
-  inferInstanceAs (Decidable (L ∈ U.ids ∧ (U.block L).round = S.slotRound k ∧
-    (U.block L).creator = S.leader k))
+/-! `L` is a candidate block for slot `k` — `IsLeaderBlock`, the record's
+(`Anchored.lean`): the right round, the right author. A *correct* leader
+has at most one such block (T1); a Byzantine one may have several, which
+is why the definitions below quantify over candidates rather than
+selecting one. M5 supplies uniqueness where it is needed. -/
 
 /-! ### View-relative direct rules
 
@@ -649,19 +642,6 @@ theorem isLeaderBlock_of_decided {V : View Validator BlockId Payload U} {j : ℕ
   cases h with
   | directCommit hL _ => exact hL
   | indirectCommit _ _ _ _ hL _ => exact hL
-
-omit [DecidableEq BlockId] in
-/-- **A block is the candidate of at most one slot.**
-
-Under the old three-round spacing this was free: `slotRound` was injective, so
-distinct slots sat at distinct rounds and a block's round named its slot.
-Under multiple leaders per round it is exactly what `Slots.keyed` yields — two
-slots sharing a round are told apart by their leaders, and a schedule that
-gave one validator two slots in a round would make one block the candidate for
-both. -/
-theorem slot_eq_of_isLeaderBlock {k₁ k₂ : ℕ} {L : BlockId}
-    (h₁ : IsLeaderBlock U k₁ L) (h₂ : IsLeaderBlock U k₂ L) : k₁ = k₂ :=
-  S.keyed (by simp only [← h₁.2.1, ← h₂.2.1, ← h₁.2.2, ← h₂.2.2])
 
 /-- **And so a committed block belongs to one slot.** The ledger reads
 verdicts off in slot order, so without this a single block could be delivered

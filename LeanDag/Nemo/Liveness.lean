@@ -61,8 +61,8 @@ namespace LeanDag
 
 namespace Nemo
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
-variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
+variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 variable {U : Universe Validator BlockId Payload}
 variable {T : Finset Validator} {L : BlockId} {s R N : ℕ}
 
@@ -118,36 +118,8 @@ end CrashModel
 
 variable [S : Slots Validator]
 
-omit S in
-/-- A larger view can only see more supporters. -/
-theorem directCommitIn_mono {V V' : View Validator BlockId Payload U}
-    (hsub : V.ids ⊆ V'.ids) {L : BlockId} {r : ℕ} (h : DirectCommitIn U V L r) :
-    DirectCommitIn U V' L r :=
-  le_trans h (Finset.card_le_card (Finset.image_subset_image
-    (Finset.inter_subset_inter Finset.Subset.rfl hsub)))
-
-/-- **Decisions are monotone in the view.** Induction on the derivation:
-the direct case is the monotonicity lemma above, and the two indirect cases
-rebuild themselves from the inductive hypotheses, carrying their
-`CertifiedIn` premises across unchanged — the indirect test is
-universe-level, so growth cannot disturb it. -/
-theorem decided_mono {V V' : View Validator BlockId Payload U}
-    (hsub : V.ids ⊆ V'.ids) {k : ℕ} {v : Option BlockId} (h : Decided U V k v) :
-    Decided U V' k v := by
-  induction h with
-  | directCommit hL hdc => exact Decided.directCommit hL (directCommitIn_mono hsub hdc)
-  | indirectCommit hkj helig _ _ hL hcert ihj ihmid =>
-      exact Decided.indirectCommit hkj helig ihj ihmid hL hcert
-  | indirectSkip hkj helig _ _ hnc ihj ihmid =>
-      exact Decided.indirectSkip hkj helig ihj ihmid hnc
-
-/-- **Commit propagation.** Whatever any validator decides on any view, the
-same verdict holds on the full view — and the full view is every live
-validator's eventual view, so this *is* "all live validators eventually
-reach the same decision". -/
-theorem decided_full {V : View Validator BlockId Payload U} {k : ℕ}
-    {v : Option BlockId} (h : Decided U V k v) : Decided U (View.full U) k v :=
-  decided_mono V.subset_ids h
+/-! Monotonicity in the view and commit propagation are the relation's
+(`AnchoredRule.decided_mono`, `decided_full`, at `nemoLaws`). -/
 
 /-! ## A reliable leader commits directly -/
 
@@ -201,21 +173,10 @@ theorem decided_of_leader_mem
     directCommit_of_leader_mem hcard hs hR hpop0 hpop1 hlead
   exact ⟨L, hLb, Decided.directCommit hLb (directCommitIn_of_coversUpto hdc hcov)⟩
 
-/-! ## A run of two spans eligibility -/
-
-variable (Validator) in
-/-- A run of `c` slots reaches past everything below it. -/
-def SpansEligible (c : ℕ) : Prop :=
-  ∀ b i : ℕ, i < b → Eligible Validator i (b + c - 1)
-
-omit [Fintype Validator] [DecidableEq Validator] in
-/-- Under a pipelined identity-round schedule, `c = 2` spans — two
-consecutive reliable leaders suffice at wavelength two. -/
-theorem spansEligible_two (hid : ∀ s, S.slotRound s = s) :
-    SpansEligible Validator 2 := by
-  intro b i hi
-  rw [eligible_iff, hid, hid]
-  omega
+/-! A run of slots spanning eligibility is the relation's
+`AnchoredRule.SpansEligible`; under a pipelined identity-round schedule
+`c = 2` spans (`spansEligible_of_identity`), two consecutive reliable
+leaders sufficing at wavelength two. -/
 
 /-! ## The two all-of-`Live` cases
 

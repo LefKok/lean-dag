@@ -124,11 +124,11 @@ theorem nemo_slot2 : Decided Unemo (View.full Unemo) 2 none := by
     subst this
     exact absurd h3 (by decide)
   · have hall : ∀ M : Fin 14, ¬ IsLeaderBlock Unemo 2 M := by decide
-    exact fun L hL => absurd hL (hall L)
+    exact fun _ _ L hL => absurd hL (hall L)
 
 -- Agreement, hypothesis-free: any verdict for slot 1 names block 4.
 example : ∀ v, Decided Unemo (View.full Unemo) 1 v → v = some 4 :=
-  fun _ hv => decided_agree hv nemo_slot1
+  fun _ hv => AnchoredRule.decided_agree Nemo.nemoLaws hv nemo_slot1
 
 -- The decidable indirect test, exercised positively and negatively: the
 -- anchor's cone holds a vote for slot 1's leader block, and a round-5
@@ -170,7 +170,8 @@ theorem nemo_fairRun : FairRunOn (S := nemoSlots) (Live (Fin 3)) 2 := by
   exact mem_live_of_val_lt (by rw [nemoSlots_leader_val]; omega)
 
 -- The identity schedule spans at `c = 2`.
-example : Nemo.SpansEligible (Fin 3) 2 := Nemo.spansEligible_two nemoSlots_slotRound
+example : (Nemo.nemoAnchored (Fin 3) (Fin 14) Unit).SpansEligible 2 :=
+  (Nemo.nemoAnchored (Fin 3) (Fin 14) Unit).spansEligible_of_identity nemoSlots_slotRound
 
 /-- **The headline applied.** Fairness and spanning discharged at the
 concrete schedule; growth and coverage left abstract, exactly as the
@@ -183,7 +184,7 @@ example (R k : ℕ) :
         ∀ i, i < b → ∃ v, Decided U (View.full U) i v := by
   obtain ⟨b, hk, hR, hrest⟩ :=
     Nemo.all_decided_below_of_fairRun_live (BlockId := Fin 14) (Payload := Unit)
-      (by omega) (Nemo.spansEligible_two nemoSlots_slotRound) nemo_fairRun R k
+      (by omega) ((Nemo.nemoAnchored (Fin 3) (Fin 14) Unit).spansEligible_of_identity nemoSlots_slotRound) nemo_fairRun R k
   exact ⟨b, hk, hR, fun U N hpop hs hN =>
     hrest U N (View.full U) hpop hs hN (View.coversUpto_full U N)⟩
 
@@ -195,8 +196,8 @@ choice transitively into everything, exactly as in the other arcs. The
 point is drift detection: nothing here should ever acquire an axiom beyond
 that baseline (`sorryAx` in particular). -/
 
-#print axioms LeanDag.Nemo.decided_unique
-#print axioms LeanDag.Nemo.outputAt_agree
+#print axioms LeanDag.AnchoredRule.decided_unique
+#print axioms LeanDag.AnchoredRule.outputAt_agree
 #print axioms LeanDag.Nemo.all_decided_below_of_fairRun
 #print axioms LeanDag.Nemo.majority_le_card_live
 #print axioms nemo_slot2
