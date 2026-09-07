@@ -66,11 +66,39 @@ theorem toDagRule_isCandidate {S : Slots Validator}
     {U : BlockRecord Validator BlockId Payload P honest} {k : ℕ} {L : BlockId} :
     R.toDagRule.IsCandidate S U k L ↔ IsLeaderBlock (S := S) U k L := Iff.rfl
 
-variable {R}
+/-- **An anchored rule under an invariant, as a carrier**: the records
+satisfying `I` as universes, the record's views, the relation as the
+verdict. For a rule whose laws hold only under an invariant. -/
+def toDagRuleOn (I : BlockRecord Validator BlockId Payload P honest → Prop) :
+    DagRule Validator BlockId Payload where
+  Universe := {U : BlockRecord Validator BlockId Payload P honest // I U}
+  View := fun U => U.val.View
+  block := fun U i => U.val.block i
+  ids := fun U => U.val.ids
+  viewIds := fun V => V.ids
+  viewSound := fun V => V.subset_ids
+  viewComplete := fun V => V.complete
+  causal := fun U => U.val.causal
+  Decided := fun S U V k v => R.Decided (S := S) U.val V k v
+
+variable {R} {I : BlockRecord Validator BlockId Payload P honest → Prop}
 
 /-- **Two views decide alike.** -/
 theorem agree (hl : R.Laws) : Agree R.toDagRule :=
-  fun S _ _ V₂ _ _ _ h₁ h₂ => decided_unique (S := S) hl h₁ V₂ _ h₂
+  fun S _ _ V₂ _ _ _ h₁ h₂ => decided_unique (S := S) hl trivial h₁ V₂ _ h₂
+
+/-- **Two views decide alike**, under the invariant. -/
+theorem agreeOn (hl : R.Laws I) : Agree (R.toDagRuleOn I) :=
+  fun S U _ V₂ _ _ _ h₁ h₂ => decided_unique (S := S) hl U.property h₁ V₂ _ h₂
+
+/-- **A commit names the slot's candidate**, under the invariant. -/
+theorem commitsCandidateOn : CommitsCandidate (R.toDagRuleOn I) :=
+  fun S _ _ _ _ hd => isLeaderBlock_of_decided (S := S) hd
+
+/-- **And a direct commit is a verdict**, under the invariant. -/
+theorem commitsDirectOn :
+    CommitsDirect (R.toDagRuleOn I) (fun {U} V L r => R.Commit U.val V L r) :=
+  fun S _ _ _ _ hc hd => Decided.directCommit (S := S) hc hd
 
 /-- **A commit names the slot's candidate.** -/
 theorem commitsCandidate : CommitsCandidate R.toDagRule :=
@@ -139,6 +167,17 @@ theorem indirect
     intro r hr L hL hlink
     rw [hround] at hlink
     exact hc r hr L ((hcand S' hround hlead L).mp hL) hlink
+
+/-- The indirect property under the invariant: the same case split, at
+the record inside. -/
+theorem indirectOn
+    (hleast : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
+      {A : BlockId} {i k : ℕ}, i < R.rungs →
+      (∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L (S.slotRound k)) →
+      ∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L (S.slotRound k) ∧
+        R.Least (S := S) U A i k L) :
+    Indirect (R.toDagRuleOn I) (fun sr i j => sr i + R.wave + 1 ≤ sr j) :=
+  fun S U V i j A helig hj hmid => indirect hleast S (U := U.val) V i j A helig hj hmid
 
 /-! ## The band -/
 
@@ -451,6 +490,20 @@ theorem banded : Banded R.toDagRule := by
   obtain ⟨top, -, ht⟩ := banded_aux hb (S := S) hd
   exact ⟨top, fun g g' d d' S' U' V' k' hkd hsch hlead hab hV =>
     ht g g' d d' S' U' V' k' hkd hsch hlead hab hV⟩
+
+omit hb in
+/-- A band at the carrier under an invariant is a band at the record. -/
+theorem agreeBand_of_on {U U' : {U : BlockRecord Validator BlockId Payload P honest // I U}}
+    (h : AgreeBand (R.toDagRuleOn I) U U' lo hi g g') :
+    AgreeBand R.toDagRule U.val U'.val lo hi g g' :=
+  ⟨h.mem, h.block, h.refs⟩
+
+/-- **And so is the rule under an invariant.** -/
+theorem bandedOn : Banded (R.toDagRuleOn I) := by
+  intro S U V k v hd
+  obtain ⟨top, -, ht⟩ := banded_aux hb (S := S) hd
+  exact ⟨top, fun g g' d d' S' U' V' k' hkd hsch hlead hab hV =>
+    ht g g' d d' S' U'.val V' k' hkd hsch hlead (agreeBand_of_on hab) hV⟩
 
 end Band
 

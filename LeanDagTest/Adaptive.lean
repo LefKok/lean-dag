@@ -279,7 +279,7 @@ theorem uodo_decidedWithin_slot1_swap :
 example : Odontoceti.Decided Uodo (View.full Uodo) 1 (some 7) :=
   uodo_decidedWithin_slot1.toDecided
 example : some (7 : Fin 24) = some 7 :=
-  AnchoredRule.DecidedWithin.agree Odontoceti.odontocetiLaws (S := slotsOf odo_inj oBase)
+  AnchoredRule.DecidedWithin.agree Odontoceti.odontocetiLaws trivial (S := slotsOf odo_inj oBase)
     uodo_decidedWithin_slot1 uodo_decidedWithin_slot1
 
 /-- **The canonicity clause through the bound**: `Uskip`'s slot `1` is

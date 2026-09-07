@@ -119,16 +119,16 @@ omit S in
 /-- **Nemo's laws**, every commit-against-commit case by candidate
 uniqueness and the crossings by visibility. -/
 theorem nemoLaws : (nemoAnchored Validator BlockId Payload).Laws where
-  commit_unique := fun hL₁ hL₂ _ _ => isLeaderBlock_unique hL₁ hL₂
-  commit_skip := fun _ _ h => h.elim
-  commit_link := fun _ h hA helig => ⟨0, Nat.one_pos,
+  commit_unique := fun _ hL₁ hL₂ _ _ => isLeaderBlock_unique hL₁ hL₂
+  commit_skip := fun _ _ _ h => h.elim
+  commit_link := fun _ _ h hA helig => ⟨0, Nat.one_pos,
     Nemo.certifiedIn_of_directCommitIn_at_anchor (show Nemo.DirectCommitIn _ _ _ _ from h) hA helig⟩
-  commit_link_unique := fun hL₁ hL₂ _ _ _ _ _ _ _ => isLeaderBlock_unique hL₁ hL₂
-  skip_link := fun h _ _ => h.elim
-  link_unique := fun hL₁ hL₂ _ _ _ _ _ _ _ _ => isLeaderBlock_unique hL₁ hL₂
-  commit_mono := fun hsub h => directCommitIn_mono hsub h
-  skip_mono := fun _ h => h
-  skip_congr := fun _ _ h => h
+  commit_link_unique := fun _ hL₁ hL₂ _ _ _ _ _ _ _ => isLeaderBlock_unique hL₁ hL₂
+  skip_link := fun _ h _ _ => h.elim
+  link_unique := fun _ hL₁ hL₂ _ _ _ _ _ _ _ _ => isLeaderBlock_unique hL₁ hL₂
+  commit_mono := fun _ hsub h => directCommitIn_mono hsub h
+  skip_mono := fun _ _ h => h
+  skip_congr := fun _ _ _ h => h
 
 end Nemo
 

@@ -194,23 +194,25 @@ inductive Decided (U : BlockRecord Validator BlockId Payload P honest) (V : U.Vi
 /-! ## What a rule owes -/
 
 /-- **The laws of an anchored rule** — what the direct predicates and the
-rungs must satisfy for agreement. Every rule proves each of them under
+rungs must satisfy for agreement, on the records satisfying an invariant
+`I` (every record, by default). Every rule proves each of them under
 its own name. -/
-structure Laws : Prop where
+structure Laws (I : BlockRecord Validator BlockId Payload P honest → Prop := fun _ => True) :
+    Prop where
   /-- Two direct commits at one slot, from any two views, name one block. -/
   commit_unique : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
     {V₁ V₂ : U.View} {k : ℕ} {L₁ L₂ : BlockId},
-    IsLeaderBlock U k L₁ → IsLeaderBlock U k L₂ →
+    I U → IsLeaderBlock U k L₁ → IsLeaderBlock U k L₂ →
     R.Commit U V₁ L₁ (S.slotRound k) → R.Commit U V₂ L₂ (S.slotRound k) → L₁ = L₂
   /-- A direct commit and a direct skip of one slot cannot both hold. -/
   commit_skip : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
     {V₁ V₂ : U.View} {k : ℕ} {L : BlockId},
-    IsLeaderBlock U k L → R.Commit U V₁ L (S.slotRound k) → R.Skip U V₂ S k → False
+    I U → IsLeaderBlock U k L → R.Commit U V₁ L (S.slotRound k) → R.Skip U V₂ S k → False
   /-- **Visibility.** A direct commit is linked, at some rung, from any
   candidate anchor of any eligible slot. -/
   commit_link : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
     {V : U.View} {k j : ℕ} {L A : BlockId},
-    IsLeaderBlock U k L → R.Commit U V L (S.slotRound k) →
+    I U → IsLeaderBlock U k L → R.Commit U V L (S.slotRound k) →
     IsLeaderBlock U j A → R.Eligible k j →
     ∃ i, i < R.rungs ∧ R.Link i U A L (S.slotRound k)
   /-- A direct commit and the tie-break's choice at any rung, from any
@@ -218,33 +220,33 @@ structure Laws : Prop where
   commit_link_unique : ∀ {S : Slots Validator}
     {U : BlockRecord Validator BlockId Payload P honest}
     {V : U.View} {k j i : ℕ} {L₁ L₂ A : BlockId},
-    IsLeaderBlock U k L₁ → IsLeaderBlock U k L₂ → R.Commit U V L₁ (S.slotRound k) →
+    I U → IsLeaderBlock U k L₁ → IsLeaderBlock U k L₂ → R.Commit U V L₁ (S.slotRound k) →
     IsLeaderBlock U j A → R.Eligible k j → i < R.rungs →
     (∀ i', i' < i → R.RungEmpty U A i' k) →
     R.Link i U A L₂ (S.slotRound k) → R.Least U A i k L₂ → L₁ = L₂
   /-- A direct skip excludes every link for the slot's candidates. -/
   skip_link : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
     {V : U.View} {k i : ℕ} {L A : BlockId},
-    R.Skip U V S k → IsLeaderBlock U k L → i < R.rungs → ¬ R.Link i U A L (S.slotRound k)
+    I U → R.Skip U V S k → IsLeaderBlock U k L → i < R.rungs → ¬ R.Link i U A L (S.slotRound k)
   /-- Two tie-break choices at one rung, from one anchor, are one block. -/
   link_unique : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
     {k j i : ℕ} {L₁ L₂ A : BlockId},
-    IsLeaderBlock U k L₁ → IsLeaderBlock U k L₂ → IsLeaderBlock U j A → R.Eligible k j →
+    I U → IsLeaderBlock U k L₁ → IsLeaderBlock U k L₂ → IsLeaderBlock U j A → R.Eligible k j →
     i < R.rungs → (∀ i', i' < i → R.RungEmpty U A i' k) →
     R.Link i U A L₁ (S.slotRound k) → R.Link i U A L₂ (S.slotRound k) →
     R.Least U A i k L₁ → R.Least U A i k L₂ → L₁ = L₂
   /-- A larger view can only see more of a direct commit. -/
   commit_mono : ∀ {U : BlockRecord Validator BlockId Payload P honest} {V V' : U.View}
-    {L : BlockId} {r : ℕ}, V.ids ⊆ V'.ids → R.Commit U V L r → R.Commit U V' L r
+    {L : BlockId} {r : ℕ}, I U → V.ids ⊆ V'.ids → R.Commit U V L r → R.Commit U V' L r
   /-- And of a direct skip. -/
   skip_mono : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
-    {V V' : U.View} {k : ℕ}, V.ids ⊆ V'.ids → R.Skip U V S k → R.Skip U V' S k
+    {V V' : U.View} {k : ℕ}, I U → V.ids ⊆ V'.ids → R.Skip U V S k → R.Skip U V' S k
   /-- The direct skip reads the schedule only at its own slot. -/
   skip_congr : ∀ {S₁ S₂ : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
-    {V : U.View} {k : ℕ}, S₁.slotRound k = S₂.slotRound k → S₁.leader k = S₂.leader k →
+    {V : U.View} {k : ℕ}, I U → S₁.slotRound k = S₂.slotRound k → S₁.leader k = S₂.leader k →
     R.Skip U V S₁ k → R.Skip U V S₂ k
 
-variable {R}
+variable {R} {I : BlockRecord Validator BlockId Payload P honest → Prop}
 
 /-! ## Agreement -/
 
@@ -286,7 +288,7 @@ theorem anchor_eq {W : Type*} {Dec : W → ℕ → Option BlockId → Prop}
 /-- Two tie-break choices at two rungs from one anchor are one block: at
 one rung by `link_unique`, and at different rungs the higher rung's
 emptiness premise contradicts the lower rung's link. -/
-theorem eq_of_indirect (hl : R.Laws) {k j i₁ i₂ : ℕ} {L₁ L₂ A : BlockId}
+theorem eq_of_indirect (hl : R.Laws I) (hI : I U) {k j i₁ i₂ : ℕ} {L₁ L₂ A : BlockId}
     (hL₁ : IsLeaderBlock U k L₁) (hL₂ : IsLeaderBlock U k L₂)
     (hA : IsLeaderBlock U j A) (helig : R.Eligible k j)
     (hi₁ : i₁ < R.rungs) (hemp₁ : ∀ i', i' < i₁ → R.RungEmpty U A i' k)
@@ -296,7 +298,7 @@ theorem eq_of_indirect (hl : R.Laws) {k j i₁ i₂ : ℕ} {L₁ L₂ A : BlockI
     L₁ = L₂ := by
   rcases lt_trichotomy i₁ i₂ with hlt | rfl | hgt
   · exact absurd hlink₁ (hemp₂ i₁ hlt L₁ hL₁)
-  · exact hl.link_unique hL₁ hL₂ hA helig hi₁ hemp₁ hlink₁ hlink₂ hmin₁ hmin₂
+  · exact hl.link_unique hI hL₁ hL₂ hA helig hi₁ hemp₁ hlink₁ hlink₂ hmin₁ hmin₂
   · exact absurd hlink₂ (hemp₁ i₂ hgt L₂ hL₂)
 
 /-- **Agreement.** No two validators reach conflicting decisions for a
@@ -305,38 +307,38 @@ induction on the first derivation: every commit-against-commit case
 closes by a uniqueness law, the direct-against-indirect crossings by
 visibility or by the skip law, and the one real case — indirect against
 indirect — by comparing the two anchors. -/
-theorem decided_unique (hl : R.Laws) {V₁ : U.View} {k : ℕ} {v₁ : Option BlockId}
+theorem decided_unique (hl : R.Laws I) (hI : I U) {V₁ : U.View} {k : ℕ} {v₁ : Option BlockId}
     (h₁ : R.Decided U V₁ k v₁) :
     ∀ (V₂ : U.View) (v₂ : Option BlockId), R.Decided U V₂ k v₂ → v₁ = v₂ := by
   induction h₁ with
   | @directCommit k L hL h =>
     intro V₂ v₂ h₂
     cases h₂ with
-    | directCommit hL₂ h₂ => exact congrArg some (hl.commit_unique hL hL₂ h h₂)
-    | directSkip hskip => exact absurd (hl.commit_skip hL h hskip) not_false
+    | directCommit hL₂ h₂ => exact congrArg some (hl.commit_unique hI hL hL₂ h h₂)
+    | directSkip hskip => exact absurd (hl.commit_skip hI hL h hskip) not_false
     | @indirectCommit _ j A L₂ i _ helig hj _ hi hemp hL₂ hlink hmin =>
-      exact congrArg some (hl.commit_link_unique hL hL₂ h (isLeaderBlock_of_decided hj) helig
+      exact congrArg some (hl.commit_link_unique hI hL hL₂ h (isLeaderBlock_of_decided hj) helig
         hi hemp hlink hmin)
     | @indirectSkip _ j A _ helig hj _ hnone =>
-      obtain ⟨i, hi, hlink⟩ := hl.commit_link hL h (isLeaderBlock_of_decided hj) helig
+      obtain ⟨i, hi, hlink⟩ := hl.commit_link hI hL h (isLeaderBlock_of_decided hj) helig
       exact absurd hlink (hnone i hi L hL)
   | @directSkip k hskip =>
     intro V₂ v₂ h₂
     cases h₂ with
-    | directCommit hL₂ h₂ => exact absurd (hl.commit_skip hL₂ h₂ hskip) not_false
+    | directCommit hL₂ h₂ => exact absurd (hl.commit_skip hI hL₂ h₂ hskip) not_false
     | directSkip _ => rfl
-    | indirectCommit _ _ _ _ hi _ hL₂ hlink _ => exact absurd hlink (hl.skip_link hskip hL₂ hi)
+    | indirectCommit _ _ _ _ hi _ hL₂ hlink _ => exact absurd hlink (hl.skip_link hI hskip hL₂ hi)
     | indirectSkip _ _ _ _ _ => rfl
   | @indirectCommit k j A L i hkj helig hj hmid hi hemp hL hlink hmin ihj ihmid =>
     intro V₂ v₂ h₂
     cases h₂ with
     | directCommit hL₂ h₂ =>
-      exact congrArg some (hl.commit_link_unique hL₂ hL h₂ (isLeaderBlock_of_decided hj) helig
+      exact congrArg some (hl.commit_link_unique hI hL₂ hL h₂ (isLeaderBlock_of_decided hj) helig
         hi hemp hlink hmin).symm
-    | directSkip hskip₂ => exact absurd hlink (hl.skip_link hskip₂ hL hi)
+    | directSkip hskip₂ => exact absurd hlink (hl.skip_link hI hskip₂ hL hi)
     | @indirectCommit _ j₂ A₂ L₂ i₂ hkj₂ helig₂ hj₂ hmid₂ hi₂ hemp₂ hL₂ hlink₂ hmin₂ =>
       obtain ⟨rfl, rfl⟩ := anchor_eq hkj helig hkj₂ helig₂ hj₂ hmid₂ ihj ihmid
-      exact congrArg some (eq_of_indirect hl hL hL₂ (isLeaderBlock_of_decided hj) helig
+      exact congrArg some (eq_of_indirect hl hI hL hL₂ (isLeaderBlock_of_decided hj) helig
         hi hemp hlink hmin hi₂ hemp₂ hlink₂ hmin₂)
     | @indirectSkip _ j₂ A₂ hkj₂ helig₂ hj₂ hmid₂ hnone₂ =>
       obtain ⟨rfl, rfl⟩ := anchor_eq hkj helig hkj₂ helig₂ hj₂ hmid₂ ihj ihmid
@@ -345,7 +347,7 @@ theorem decided_unique (hl : R.Laws) {V₁ : U.View} {k : ℕ} {v₁ : Option Bl
     intro V₂ v₂ h₂
     cases h₂ with
     | directCommit hL₂ h₂ =>
-      obtain ⟨i, hi, hlink⟩ := hl.commit_link hL₂ h₂ (isLeaderBlock_of_decided hj) helig
+      obtain ⟨i, hi, hlink⟩ := hl.commit_link hI hL₂ h₂ (isLeaderBlock_of_decided hj) helig
       exact absurd hlink (hnone i hi _ hL₂)
     | directSkip _ => rfl
     | @indirectCommit _ j₂ A₂ L₂ i₂ hkj₂ helig₂ hj₂ hmid₂ hi₂ _ hL₂ hlink₂ _ =>
@@ -354,30 +356,31 @@ theorem decided_unique (hl : R.Laws) {V₁ : U.View} {k : ℕ} {v₁ : Option Bl
     | indirectSkip _ _ _ _ _ => rfl
 
 /-- Agreement, in the shape callers want. -/
-theorem decided_agree (hl : R.Laws) {V₁ V₂ : U.View} {k : ℕ} {v₁ v₂ : Option BlockId}
+theorem decided_agree (hl : R.Laws I) (hI : I U) {V₁ V₂ : U.View} {k : ℕ} {v₁ v₂ : Option BlockId}
     (h₁ : R.Decided U V₁ k v₁) (h₂ : R.Decided U V₂ k v₂) : v₁ = v₂ :=
-  decided_unique hl h₁ V₂ v₂ h₂
+  decided_unique hl hI h₁ V₂ v₂ h₂
 
 /-- No two validators commit *different* blocks for one slot. -/
-theorem eq_of_decided_commit (hl : R.Laws) {V₁ V₂ : U.View} {k : ℕ} {L₁ L₂ : BlockId}
+theorem eq_of_decided_commit (hl : R.Laws I) (hI : I U) {V₁ V₂ : U.View} {k : ℕ} {L₁ L₂ : BlockId}
     (h₁ : R.Decided U V₁ k (some L₁)) (h₂ : R.Decided U V₂ k (some L₂)) : L₁ = L₂ :=
-  Option.some.inj (decided_agree hl h₁ h₂)
+  Option.some.inj (decided_agree hl hI h₁ h₂)
 
 /-- No validator commits a slot another has skipped. -/
-theorem not_decided_skip_of_decided_commit (hl : R.Laws) {V₁ V₂ : U.View} {k : ℕ}
+theorem not_decided_skip_of_decided_commit (hl : R.Laws I) (hI : I U)
+    {V₁ V₂ : U.View} {k : ℕ}
     {L : BlockId} (h₁ : R.Decided U V₁ k (some L)) (h₂ : R.Decided U V₂ k none) : False := by
-  simpa using decided_agree hl h₁ h₂
+  simpa using decided_agree hl hI h₁ h₂
 
 /-! ## Monotonicity in the view -/
 
 /-- **Decisions are monotone in the view.** The direct cases are the
 monotonicity laws; the indirect cases rebuild themselves from the
 inductive hypotheses, their link premises unchanged. -/
-theorem decided_mono (hl : R.Laws) {V V' : U.View} (hsub : V.ids ⊆ V'.ids) {k : ℕ}
+theorem decided_mono (hl : R.Laws I) (hI : I U) {V V' : U.View} (hsub : V.ids ⊆ V'.ids) {k : ℕ}
     {v : Option BlockId} (h : R.Decided U V k v) : R.Decided U V' k v := by
   induction h with
-  | directCommit hL hdc => exact Decided.directCommit hL (hl.commit_mono hsub hdc)
-  | directSkip hall => exact Decided.directSkip (hl.skip_mono hsub hall)
+  | directCommit hL hdc => exact Decided.directCommit hL (hl.commit_mono hI hsub hdc)
+  | directSkip hall => exact Decided.directSkip (hl.skip_mono hI hsub hall)
   | indirectCommit hkj helig _ _ hi hemp hL hlink hmin ihj ihmid =>
       exact Decided.indirectCommit hkj helig ihj ihmid hi hemp hL hlink hmin
   | indirectSkip hkj helig _ _ hnone ihj ihmid =>
@@ -385,33 +388,33 @@ theorem decided_mono (hl : R.Laws) {V V' : U.View} (hsub : V.ids ⊆ V'.ids) {k 
 
 /-- Whatever any validator decides on any view, the same verdict holds on
 the full view. -/
-theorem decided_full (hl : R.Laws) {V : U.View} {k : ℕ} {v : Option BlockId}
+theorem decided_full (hl : R.Laws I) (hI : I U) {V : U.View} {k : ℕ} {v : Option BlockId}
     (h : R.Decided U V k v) : R.Decided U (BlockRecord.View.full U) k v :=
-  decided_mono hl V.subset_ids h
+  decided_mono hl hI V.subset_ids h
 
 /-! ## The ledger -/
 
 /-- **The committed-leader sequence is agreed.** -/
-theorem commitSeq_agree (hl : R.Laws) {V₁ V₂ : U.View} {n : ℕ} {g₁ g₂ : ℕ → Option BlockId}
+theorem commitSeq_agree (hl : R.Laws I) (hI : I U) {V₁ V₂ : U.View} {n : ℕ} {g₁ g₂ : ℕ → Option BlockId}
     (h₁ : ∀ k, k < n → R.Decided U V₁ k (g₁ k))
     (h₂ : ∀ k, k < n → R.Decided U V₂ k (g₂ k)) :
     commitSeq g₁ n = commitSeq g₂ n :=
-  commitSeq_agree_of fun k hk => decided_agree hl (h₁ k hk) (h₂ k hk)
+  commitSeq_agree_of fun k hk => decided_agree hl hI (h₁ k hk) (h₂ k hk)
 
 /-- **Two validators output the same blocks.** -/
-theorem ledgerSet_agree (hl : R.Laws) {V₁ V₂ : U.View} {n : ℕ} {g₁ g₂ : ℕ → Option BlockId}
+theorem ledgerSet_agree (hl : R.Laws I) (hI : I U) {V₁ V₂ : U.View} {n : ℕ} {g₁ g₂ : ℕ → Option BlockId}
     (h₁ : ∀ k, k < n → R.Decided U V₁ k (g₁ k))
     (h₂ : ∀ k, k < n → R.Decided U V₂ k (g₂ k)) :
     ledgerSet U g₁ n = ledgerSet U g₂ n :=
-  ledgerSet_agree_of fun k hk => decided_agree hl (h₁ k hk) (h₂ k hk)
+  ledgerSet_agree_of fun k hk => decided_agree hl hI (h₁ k hk) (h₂ k hk)
 
 /-- **And validators agree on which slot a block enters at.** -/
-theorem outputAt_agree (hl : R.Laws) {V₁ V₂ : U.View} {n : ℕ} {g₁ g₂ : ℕ → Option BlockId}
+theorem outputAt_agree (hl : R.Laws I) (hI : I U) {V₁ V₂ : U.View} {n : ℕ} {g₁ g₂ : ℕ → Option BlockId}
     {b : BlockId} {k : ℕ}
     (h₁ : ∀ j, j < n → R.Decided U V₁ j (g₁ j))
     (h₂ : ∀ j, j < n → R.Decided U V₂ j (g₂ j))
     (hk : k < n) (ho : OutputAt U g₁ b k) : OutputAt U g₂ b k :=
-  outputAt_agree_of (fun j hj => decided_agree hl (h₁ j hj) (h₂ j hj)) hk ho
+  outputAt_agree_of (fun j hj => decided_agree hl hI (h₁ j hj) (h₂ j hj)) hk ho
 
 end AnchoredRule
 

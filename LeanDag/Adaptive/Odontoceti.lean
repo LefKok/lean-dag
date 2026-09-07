@@ -41,7 +41,7 @@ theorem decidedWithin_congr {hinj : Function.Injective S.slotRound}
     {v : Option BlockId} (ha : ∀ m, m < B → a₁ m = a₂ m)
     (h : Odontoceti.DecidedWithin (S := slotsOf hinj a₁) U V B k v) :
     Odontoceti.DecidedWithin (S := slotsOf hinj a₂) U V B k v :=
-  AnchoredRule.decidedWithin_congr_of_slotRound odontocetiLaws (S₁ := slotsOf hinj a₁)
+  AnchoredRule.decidedWithin_congr_of_slotRound odontocetiLaws trivial (S₁ := slotsOf hinj a₁)
     (S₂ := slotsOf hinj a₂) rfl (fun m hm => by simpa using ha m hm) h
 
 /-- A run closed up to epoch height `E`, two-round rule. -/
@@ -105,7 +105,7 @@ theorem partialRun_agree {P : AdaptivePolicy Validator BlockId Payload}
       exact ih (epochOf P.W j) (by omega) j rfl (by omega)
     have h₁ := R₁.closed k (by omega)
     have h₂ := R₂.closed k (by omega)
-    exact AnchoredRule.DecidedWithin.agree odontocetiLaws (S := slotsOf P.inj R₂.assign)
+    exact AnchoredRule.DecidedWithin.agree odontocetiLaws trivial (S := slotsOf P.inj R₂.assign)
       (decidedWithin_congr hassign h₁) h₂
 
 /-- **Safety, two-round rule: the adaptive fixpoint is unique** — with

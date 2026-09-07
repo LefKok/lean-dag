@@ -167,24 +167,24 @@ end DecidedWithin
 omit S in
 /-- **Odontoceti's laws.** -/
 theorem odontocetiLaws : (odontocetiAnchored Validator BlockId Payload).Laws where
-  commit_unique := fun hL₁ hL₂ h₁ h₂ => eq_of_directCommitIn hL₁ hL₂ h₁ h₂
-  commit_skip := fun hL h hskip =>
+  commit_unique := fun _ hL₁ hL₂ h₁ h₂ => eq_of_directCommitIn hL₁ hL₂ h₁ h₂
+  commit_skip := fun _ hL h hskip =>
     not_directSkipIn_of_directCommitIn h (directSkipIn_of_directSkipSlotIn hskip hL)
-  commit_link := fun _ h hA helig => ⟨0, Nat.one_pos, thickLink_of_directCommitIn h hA.1 (by
+  commit_link := fun _ _ h hA helig => ⟨0, Nat.one_pos, thickLink_of_directCommitIn h hA.1 (by
     have := (odontocetiAnchored Validator BlockId Payload).anchor_round_le hA helig
     simp only [odontocetiAnchored_wave] at this; omega)⟩
   commit_link_unique := by
-    intro S U V k j i L₁ L₂ A hL₁ hL₂ h _ _ _ _ hlink _
+    intro S U V k j i L₁ L₂ A _ hL₁ hL₂ h _ _ _ _ hlink _
     exact eq_of_directCommitIn_of_thickLink hL₁ hL₂ h hlink
-  skip_link := fun hskip hL _ =>
+  skip_link := fun _ hskip hL _ =>
     not_thickLink_of_directSkipIn (directSkipIn_of_directSkipSlotIn hskip hL) _
   link_unique := by
-    intro S U k j i L₁ L₂ A hL₁ hL₂ _ _ _ _ hl₁ hl₂ hm₁ hm₂
+    intro S U k j i L₁ L₂ A _ hL₁ hL₂ _ _ _ _ hl₁ hl₂ hm₁ hm₂
     exact le_antisymm (not_lt.mp (show ¬ L₂ < L₁ from hm₁ L₂ hL₂ hl₂))
       (not_lt.mp (show ¬ L₁ < L₂ from hm₂ L₁ hL₁ hl₁))
-  commit_mono := fun hsub h => le_trans h (Finset.card_le_card (supportersIn_mono hsub))
-  skip_mono := fun hsub h => directSkipSlotIn_mono hsub h
-  skip_congr := fun hround hk h => directSkipSlotIn_congr hround hk h
+  commit_mono := fun _ hsub h => le_trans h (Finset.card_le_card (supportersIn_mono hsub))
+  skip_mono := fun _ hsub h => directSkipSlotIn_mono hsub h
+  skip_congr := fun _ hround hk h => directSkipSlotIn_congr hround hk h
 
 omit S in
 /-- The rung's tie is the order, so a nonempty rung has a least

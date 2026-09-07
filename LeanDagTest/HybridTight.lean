@@ -177,10 +177,11 @@ theorem hybrid_bound_necessary (k : ℕ) :
   by_cases hk : k ≤ 3
   · -- indirect safety fails: skipped directly, committed indirectly
     refine ⟨UtightA, 1, by decide, ?_, ?_⟩
-    · refine Decided.indirectCommit (j := 1) (A := 17) (by omega) (by decide)
-        (Decided.directCommit (by decide) (by decide))
+    · refine Decided.indirectCommit (j := 1) (A := 17) (i := 0) (by omega)
+        (by show Slots.slotRound (Fin 8) 0 + 1 < Slots.slotRound (Fin 8) 1; decide)
+        (Decided.directCommit (by decide) (by show Hybrid.DirectCommitIn _ _ _ _; decide))
         (fun i h1 h2 _ => absurd h2 (by omega))
-        (by decide) ?_ ?_
+        Nat.one_pos (fun i' hi' => absurd hi' (Nat.not_lt_zero _)) (by decide) ?_ ?_
       · show k ≤ (Hybrid.coneSupports UtightA 17 1 0).card
         have h3 : (Hybrid.coneSupports UtightA 17 1 0).card = 3 := by decide
         omega
@@ -189,15 +190,16 @@ theorem hybrid_bound_necessary (k : ℕ) :
           decide
         have := hall L' hL'
         subst this
-        exact absurd hlt (lt_irrefl _)
-    · exact Decided.directSkip (by decide)
+        exact absurd (show (1 : Fin 29) < 1 from hlt) (lt_irrefl _)
+    · exact Decided.directSkip (by show Hybrid.DirectSkipSlotIn _ _ _; decide)
   · -- link integrity fails: committed directly, skipped indirectly
     refine ⟨UtightB, 1, by decide,
-      Decided.directCommit (by decide) (by decide), ?_⟩
-    refine Decided.indirectSkip (j := 1) (A := 17) (by omega) (by decide)
-      (Decided.directCommit (by decide) (by decide))
+      Decided.directCommit (by decide) (by show Hybrid.DirectCommitIn _ _ _ _; decide), ?_⟩
+    refine Decided.indirectSkip (j := 1) (A := 17) (by omega)
+      (by show Slots.slotRound (Fin 8) 0 + 1 < Slots.slotRound (Fin 8) 1; decide)
+      (Decided.directCommit (by decide) (by show Hybrid.DirectCommitIn _ _ _ _; decide))
       (fun i h1 h2 _ => absurd h2 (by omega))
-      (fun L' hL' => ?_)
+      (fun _ _ L' hL' => ?_)
     have hall : ∀ M : Fin 29, IsLeaderBlock UtightB 0 M → M = 1 := by decide
     have := hall L' hL'
     subst this

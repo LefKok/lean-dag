@@ -121,7 +121,7 @@ theorem uhyb4_slot3_not_directSkip :
 -- threshold.
 example : ∀ v, Hybrid.Decided 2 Uhyb4 (View.full Uhyb4) 1 v → v = some 5 :=
   fun v hv =>
-    (decided_agree (by decide) (by decide) hv uhyb4_slot1)
+    (AnchoredRule.decided_agree (Hybrid.hybridLaws (by decide)) (by decide) hv uhyb4_slot1)
 
 /-! ## `Uhyb9` — Byzantine and crash together, at the tight committee -/
 
@@ -230,7 +230,7 @@ example : HonestNoEquiv U11 := honestNoEquiv_of_fc_zero rfl U11
 -- … and on data.
 example : HonestNoEquiv U11 := by decide
 
-#print axioms LeanDag.Hybrid.decided_unique
+#print axioms LeanDag.Hybrid.hybridLaws
 #print axioms LeanDag.HybridProperties.safety
 #print axioms LeanDag.Hybrid.all_decided_below_of_fairRun
 #print axioms LeanDag.Hybrid.toHybrid_toFaults

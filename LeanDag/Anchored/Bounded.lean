@@ -58,7 +58,7 @@ inductive DecidedWithin (U : BlockRecord Validator BlockId Payload P honest) (V 
       (∀ i, i < R.rungs → R.RungEmpty U A i k) →
       DecidedWithin U V B k none
 
-variable {R}
+variable {R} {I : BlockRecord Validator BlockId Payload P honest → Prop}
 variable {U : BlockRecord Validator BlockId Payload P honest}
 
 namespace DecidedWithin
@@ -95,9 +95,10 @@ theorem mono (h : R.DecidedWithin U V B k v) (hBB : B ≤ B') : R.DecidedWithin 
       exact indirectSkip hkj (by omega) helig ihj (fun m h1 h2 h3 => ihmid m h1 h2 h3) hnone
 
 /-- Two bounded verdicts agree — agreement, through the embedding. -/
-theorem agree (hl : R.Laws) {V₁ V₂ : U.View} {B₁ B₂ k : ℕ} {v₁ v₂ : Option BlockId}
-    (h₁ : R.DecidedWithin U V₁ B₁ k v₁) (h₂ : R.DecidedWithin U V₂ B₂ k v₂) : v₁ = v₂ :=
-  decided_agree hl h₁.toDecided h₂.toDecided
+theorem agree (hl : R.Laws I) (hI : I U) {V₁ V₂ : U.View} {B₁ B₂ k : ℕ}
+    {v₁ v₂ : Option BlockId} (h₁ : R.DecidedWithin U V₁ B₁ k v₁)
+    (h₂ : R.DecidedWithin U V₂ B₂ k v₂) : v₁ = v₂ :=
+  decided_agree hl hI h₁.toDecided h₂.toDecided
 
 end DecidedWithin
 
@@ -142,7 +143,8 @@ theorem exists_bound {V : U.View} {k : ℕ} {v : Option BlockId} (h : R.Decided 
 schedules naming the same rounds and the same leaders below the bound:
 the candidate set reads the schedule only through `IsLeaderBlock`, the
 direct skip only at its slot, and the links not at all. -/
-theorem decidedWithin_congr_of_slotRound (hl : R.Laws) {S₁ S₂ : Slots Validator}
+theorem decidedWithin_congr_of_slotRound (hl : R.Laws I) (hI : I U)
+    {S₁ S₂ : Slots Validator}
     (hround : S₁.slotRound = S₂.slotRound) {V : U.View} {B k : ℕ} {v : Option BlockId}
     (ha : ∀ m, m < B → S₁.leader m = S₂.leader m)
     (h : R.DecidedWithin (S := S₁) U V B k v) : R.DecidedWithin (S := S₂) U V B k v := by
@@ -157,7 +159,7 @@ theorem decidedWithin_congr_of_slotRound (hl : R.Laws) {S₁ S₂ : Slots Valida
           (S₂ := ⟨sr, ld', hmono', hunb', hkeyed'⟩) rfl (ha k hk) hL) hdc
   | @directSkip k hk hall =>
       exact DecidedWithin.directSkip (S := ⟨sr, ld', hmono', hunb', hkeyed'⟩) hk
-        (hl.skip_congr (S₁ := ⟨sr, ld, hmono, hunb, hkeyed⟩)
+        (hl.skip_congr hI (S₁ := ⟨sr, ld, hmono, hunb, hkeyed⟩)
           (S₂ := ⟨sr, ld', hmono', hunb', hkeyed'⟩) rfl (ha k hk) hall)
   | @indirectCommit k j A L i hkj hj helig _ _ hi hemp hL hlink hmin ihj ihmid =>
       refine DecidedWithin.indirectCommit (S := ⟨sr, ld', hmono', hunb', hkeyed'⟩) hkj hj helig
@@ -293,10 +295,11 @@ theorem decided_below_of_committed_run
 variable [P.Mechanised]
 
 /-- **The bounded relation lands in the derived one.** -/
-theorem decidedBelow_of_decidedWithin (hl : R.Laws) {V : U.View} {B k : ℕ} {v : Option BlockId}
-    (h : R.DecidedWithin (S := S) U V B k v) : DecidedBelow R.toDagRule S B V k v :=
+theorem decidedBelow_of_decidedWithin (hl : R.Laws I) (hI : I U) {V : U.View}
+    {B k : ℕ} {v : Option BlockId} (h : R.DecidedWithin (S := S) U V B k v) :
+    DecidedBelow R.toDagRule S B V k v :=
   ⟨h.lt_bound, h.toDecided, fun S' hround hlead =>
-    (decidedWithin_congr_of_slotRound hl (S₁ := S) (S₂ := S') hround.symm
+    (decidedWithin_congr_of_slotRound hl hI (S₁ := S) (S₂ := S') hround.symm
       (fun m hm => (hlead m hm).symm) h).toDecided⟩
 
 end AnchoredRule

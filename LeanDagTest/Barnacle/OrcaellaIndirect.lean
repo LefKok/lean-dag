@@ -124,11 +124,12 @@ example : Hybrid.ThickLink 2 U5 18 6 1 ∧ ¬ Hybrid.ThickLink 3 U5 18 6 1 := by
 
 /-- The anchor, decided by hand at either threshold. -/
 theorem u5_slot3 (k : ℕ) : Hybrid.Decided k U5 (View.full U5) 3 (some 18) :=
-  Decided.directCommit (by decide) (by decide)
+  Decided.directCommit (by decide) (by show Hybrid.DirectCommitIn _ _ _ _; decide)
 
 /-- At threshold `2` the indirect rule **commits** slot `1`. -/
 theorem u5_commit : Hybrid.Decided 2 U5 (View.full U5) 1 (some 6) := by
-  refine Decided.indirectCommit (by omega) (by decide) (u5_slot3 2) ?_ (by decide) (by decide) ?_
+  refine Decided.indirectCommit (i := 0) (by omega) (by decide) (u5_slot3 2) ?_ (by decide)
+    (fun i' hi' => absurd hi' (Nat.not_lt_zero _)) (by decide) (by decide) ?_
   · intro i h1 h2 h3
     have : i = 2 := by omega
     subst this
@@ -137,7 +138,7 @@ theorem u5_commit : Hybrid.Decided 2 U5 (View.full U5) 1 (some 6) := by
     have hall : ∀ M : Fin 25, IsLeaderBlock U5 1 M → M = 6 := by decide
     have := hall L' hL'
     subst this
-    exact absurd hlt (by omega)
+    exact absurd (show (6 : Fin 25) < 6 from hlt) (lt_irrefl _)
 
 /-- At threshold `3` the same DAG **skips** it. -/
 theorem u5_skip : Hybrid.Decided 3 U5 (View.full U5) 1 none := by
@@ -146,10 +147,11 @@ theorem u5_skip : Hybrid.Decided 3 U5 (View.full U5) 1 none := by
     have : i = 2 := by omega
     subst this
     exact absurd h3 (by decide)
-  · intro L hL
+  · intro _ _ L hL
     have hall : ∀ M : Fin 25, IsLeaderBlock U5 1 M → M = 6 := by decide
     have := hall L hL
     subst this
+    show ¬ Hybrid.ThickLink _ _ _ _ _
     decide
 
 /-- The arc's `indirect` law at threshold `2`, verdict pinned by
@@ -270,7 +272,8 @@ theorem x9_slot3 : Hybrid.Decided 4 UhybX (View.full UhybX) 3 (some 27) :=
   Decided.directCommit (by decide) (by decide)
 
 theorem x9_slot1 : Hybrid.Decided 4 UhybX (View.full UhybX) 1 (some 16) := by
-  refine Decided.indirectCommit (by omega) (by decide) x9_slot3 ?_ (by decide) (by decide) ?_
+  refine Decided.indirectCommit (i := 0) (by omega) (by decide) x9_slot3 ?_ (by decide)
+    (fun i' hi' => absurd hi' (Nat.not_lt_zero _)) (by decide) (by decide) ?_
   · intro i h1 h2 h3
     have : i = 2 := by omega
     subst this
@@ -278,8 +281,8 @@ theorem x9_slot1 : Hybrid.Decided 4 UhybX (View.full UhybX) 1 (some 16) := by
   · intro L' hL' ht' hlt
     have hall : ∀ M : Fin 40, IsLeaderBlock UhybX 1 M → M = 16 ∨ M = 17 := by decide
     rcases hall L' hL' with h | h <;> subst h
-    · exact absurd hlt (by omega)
-    · exact absurd hlt (by decide)
+    · exact absurd (show (16 : Fin 40) < 16 from hlt) (lt_irrefl _)
+    · exact absurd (show (17 : Fin 40) < 16 from hlt) (by decide)
 
 /-- The arc's `indirect` law commits the **least** twin and refuses the
 greater — canonicity at the mixed committee, through `agree`. -/

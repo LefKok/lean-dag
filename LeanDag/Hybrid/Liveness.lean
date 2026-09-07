@@ -37,9 +37,9 @@ namespace LeanDag
 
 namespace Hybrid
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [H : HybridFaults Validator]
-variable {BlockId : Type*} [LinearOrder BlockId] {Payload : Type*}
+variable {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
 variable {U : BlockUniverse Validator BlockId Payload}
 variable [S : Slots Validator]
 variable {T : Finset Validator} {L : BlockId} {s R N k : ℕ}
@@ -117,81 +117,15 @@ theorem decided_of_leader_of_populated (_hT : T ⊆ (Correct : Finset Validator)
     (hpop _ (by omega) (by omega)) (hpop _ (by omega) (by omega))
     V (hcov.mono hN) hlead
 
-/-! ## H7b — a run of two spans eligibility -/
+/-! ## H7b, H7c — spanning and the descent
 
-variable (Validator) in
-/-- A run of `c` slots reaches past everything below it. -/
-def SpansEligible (c : ℕ) : Prop :=
-  ∀ b i : ℕ, i < b → Eligible Validator i (b + c - 1)
-
-omit [Fintype Validator] [DecidableEq Validator] H in
-/-- Under a pipelined identity-round schedule, `c = 2` spans — two
-consecutive reliable leaders, exactly as in the pure-Byzantine
-two-round development. -/
-theorem spansEligible_two (hid : ∀ s, S.slotRound s = s) :
-    SpansEligible Validator 2 := by
-  intro b i hi
-  rw [eligible_iff, hid, hid]
-  omega
-
-/-! ## H7c — a committed run clears everything below it -/
-
-/-- **The committed-run descent (O9's mirror).** Every slot below a
-committed run of eligible span is decided, at every threshold `k`:
-anchor each slot on the nearest eligible committed slot above it and
-commit the least candidate passing the indirect test — exactly the
-canonicity premise. -/
-theorem decided_below_of_committed_run
-    {V : View Validator BlockId Payload U} {b n : ℕ} (hbn : b ≤ n)
-    (hspan : ∀ i, i < b → Eligible Validator i n)
-    (hrun : ∀ j, b ≤ j → j ≤ n → ∃ B, Decided k U V j (some B)) :
-    ∀ i, i < b → ∃ v, Decided k U V i v := by
-  classical
-  have key : ∀ d i, i < b → b - i ≤ d → ∃ v, Decided k U V i v := by
-    intro d
-    induction d with
-    | zero => intro i hi hd; omega
-    | succ d ih =>
-      intro i hi hd
-      have hex : ∃ j, Eligible Validator i j ∧ ∃ B, Decided k U V j (some B) :=
-        ⟨n, hspan i hi, hrun n hbn (le_refl n)⟩
-      obtain ⟨helig, B, hB⟩ := Nat.find_spec hex
-      have hmid : ∀ i', i < i' → i' < Nat.find hex →
-          Eligible Validator i i' → Decided k U V i' none := by
-        intro i' h1 h2 h3
-        have hnc : ¬ ∃ C, Decided k U V i' (some C) := fun hc =>
-          Nat.find_min hex h2 ⟨h3, hc⟩
-        have hi'b : i' < b := by
-          by_contra hge
-          have hle : Nat.find hex ≤ n :=
-            Nat.find_le ⟨hspan i hi, hrun n hbn (le_refl n)⟩
-          exact hnc (hrun i' (by omega) (by omega))
-        obtain ⟨v, hv⟩ := ih i' hi'b (by omega)
-        cases v with
-        | none => exact hv
-        | some C => exact absurd ⟨C, hv⟩ hnc
-      by_cases hc : ∃ L, IsLeaderBlock U i L ∧ ThickLink k U B L (S.slotRound i)
-      · -- commit a minimal passing candidate
-        have hCne : (U.ids.filter fun L => IsLeaderBlock U i L ∧
-            ThickLink k U B L (S.slotRound i)).Nonempty := by
-          obtain ⟨L, hL, ht⟩ := hc
-          exact ⟨L, Finset.mem_filter.mpr ⟨hL.1, hL, ht⟩⟩
-        have hmem := Finset.min'_mem _ hCne
-        rw [Finset.mem_filter] at hmem
-        refine ⟨some ((U.ids.filter fun L => IsLeaderBlock U i L ∧
-            ThickLink k U B L (S.slotRound i)).min' hCne),
-          Decided.indirectCommit (lt_of_eligible helig)
-            helig hB hmid hmem.2.1 hmem.2.2 ?_⟩
-        intro L' hL' ht' hlt
-        exact absurd hlt (not_lt.mpr (Finset.min'_le _ L'
-          (Finset.mem_filter.mpr ⟨hL'.1, hL', ht'⟩)))
-      · push Not at hc
-        exact ⟨none, Decided.indirectSkip (lt_of_eligible helig) helig hB
-          hmid hc⟩
-  intro i hi
-  exact key (b - i) i hi (le_refl _)
-
-/-! ## H7 — liveness, composed -/
+A run of `c` slots spanning eligibility is the relation's
+`AnchoredRule.SpansEligible`; under a pipelined identity-round schedule
+`c = 2` spans (`spansEligible_of_identity`), two consecutive reliable
+leaders, exactly as in the pure-Byzantine two-round development. The
+committed-run descent (O9's mirror) is the relation's
+`decided_below_of_committed_run` at `Hybrid.exists_least`, at every
+threshold `k`. -/
 
 /-- **H7 (O10's mirror).** Under post-`R` coverage, growth to the
 horizon, and a recurring run of `c` reliable-led slots, every slot
@@ -202,7 +136,7 @@ fairness. The reliable set excludes the crash-prone by construction:
 theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
     (hT : T ⊆ (Correct : Finset Validator))
     (hcard : q Validator ≤ T.card)
-    (hspan : SpansEligible Validator c)
+    (hspan : (hybridAnchored Validator BlockId Payload k).SpansEligible c)
     (fair : FairRunOn T c) (R : ℕ) (s : ℕ) :
     ∃ b, s ≤ b ∧ R ≤ S.slotRound b ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ)
@@ -227,13 +161,13 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
     obtain ⟨L, _, hdec⟩ :=
       decided_of_leader_of_populated hT hcard hs hRj hpop (by omega) V hcov hlead
     exact ⟨L, hdec⟩
-  exact decided_below_of_committed_run (by omega)
+  exact AnchoredRule.decided_below_of_committed_run (fun hi h => exists_least hi h) (by omega)
     (fun i hi => hspan b i hi) hrun
 
 /-- **H7 at `T := Correct`** — the whole fully-correct class, which the
 tight committee requires exactly. -/
 theorem all_decided_below_of_fairRun_correct {c : ℕ} (hc : 0 < c)
-    (hspan : SpansEligible Validator c)
+    (hspan : (hybridAnchored Validator BlockId Payload k).SpansEligible c)
     (fair : FairRunOn (Correct : Finset Validator) c) (R : ℕ) (s : ℕ) :
     ∃ b, s ≤ b ∧ R ≤ S.slotRound b ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ)

@@ -128,7 +128,7 @@ theorem nemo_slot2 : Decided Unemo (View.full Unemo) 2 none := by
 
 -- Agreement, hypothesis-free: any verdict for slot 1 names block 4.
 example : ∀ v, Decided Unemo (View.full Unemo) 1 v → v = some 4 :=
-  fun _ hv => AnchoredRule.decided_agree Nemo.nemoLaws hv nemo_slot1
+  fun _ hv => AnchoredRule.decided_agree Nemo.nemoLaws trivial hv nemo_slot1
 
 -- The decidable indirect test, exercised positively and negatively: the
 -- anchor's cone holds a vote for slot 1's leader block, and a round-5
