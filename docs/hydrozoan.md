@@ -86,7 +86,7 @@ Three consequences shape the arc.
 | `Link` | the shared `Reaches` (`LeanDag/CausalHistory.lean`) |
 | Waves and pipelining, `ProposeRound`, `VotingRound`, `DecisionRound`, `GetLeaderBlocks` | `Model/Slots.lean` — `Slots`, `votingRound`, `decisionRound`, `IsLeaderBlock` |
 | `IsVote`, `IsCertificate`, `FastCommittedLeader`, `SlowCommittedLeader`, `SkippedLeader` | `Model/DirectRules.lean` |
-| `TryIndirectDecide`, `DecideFromAnchor` | `Model/IndirectRules.lean` (`EligibleAsAnchor`, `CertifiedIn`, `WeakLinked`), `Model/Decided.lean` (`Decided`) |
+| `TryIndirectDecide`, `DecideFromAnchor` | `Model/IndirectRules.lean` (`CertifiedIn`, `WeakLinked`), `Model/Decided.lean` (`hydrozoanAnchored`, the rule as an instance of the shared anchored relation `LeanDag/Anchored.lean`, whose eligibility `EligibleAt` at wave two is the paper's `r_decision < s.round`; `Decided`) |
 | after GST | `Model/Liveness.lean` — `PopulatedOn`, `SynchronisedOn`, `View.full`, `View.CoversUpto` |
 | `lem:thresholds` (the slack-cap table) | `ThresholdArithmetic/` (HZ1) |
 | slot safety, the two-case consistency argument | `DirectSafety/` (HZ2), `SlotAgreement/` (HZ3) |

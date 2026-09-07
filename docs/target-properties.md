@@ -2018,6 +2018,7 @@ directory, hence the one flat module.
 
 ---
 
+
 ## 11. Where the arc stands
 
 The goal, restated in three parts:
@@ -3947,8 +3948,8 @@ what the copies occupy; the order is the order to take them in.
 | view-restricted counting (**done**, §11.27) | `supportersIn` (Nemo, Odontoceti, Hybrid, Black Marlin), `blamesIn`, `slotBlamers`, `certificatesIn`, `votesIn`, FinWhale's `voters` | ~200 |
 | liveness predicates at the universe (**done**, §11.27) | `Nemo/Liveness.lean` and `Hydrozoan/Model/Liveness.lean` restating `PopulatedOn`, `SynchronisedOn`, `View.full`, `View.CoversUpto` | ~250 |
 | the ledger (**done**, §11.27) | `commitSeq`, `ledgerSet`, `OutputAt` and their theorems in `Mysticeti.lean`, `Nemo/Decision.lean`, `BlackMarlin/*/Ledger.lean`, `FinWhale/Model/Order.lean` | ~330 |
-| the anchored decision procedure | `Decided`, `decisionRound`, `Eligible`, `anchor_round_le`, `decided_unique`, `decided_agree` in `Nemo/Decision.lean`, `Odontoceti/Decision.lean`, `Hybrid/Decision.lean`, `MahiMahi/*/Decision.lean`, `Mysticeti.lean` | ~1,900 |
-| band and liveness proofs per rule | `banded_aux`, `directCommitIn_band`, `supportersIn_band`, `certifiedIn_band`, `all_decided_below_of_fairRun` in the five `*Properties.lean` files; `decided_of_leader_mem`, `decided_below_of_committed_run` in the `*/Liveness.lean` files | ~4,800 |
+| the anchored decision procedure (**done**, §11.29) | `Decided`, `decisionRound`, `Eligible`, `anchor_round_le`, `decided_unique`, `decided_agree` in `Nemo/Decision.lean`, `Odontoceti/Decision.lean`, `Hybrid/Decision.lean`, `MahiMahi/*/Decision.lean`, `Mysticeti.lean` | ~1,900 |
+| band and liveness proofs per rule (**done**, §11.29) | `banded_aux`, `directCommitIn_band`, `supportersIn_band`, `certifiedIn_band`, `all_decided_below_of_fairRun` in the five `*Properties.lean` files; `decided_of_leader_mem`, `decided_below_of_committed_run` in the `*/Liveness.lean` files | ~4,800 |
 | adaptive instantiations | `toPartial`, `partialRun_agree`, `epoch_closes`, `exists_partialRun`, `adaptiveRun_exists` in `Adaptive/Mysticeti.lean` and `Adaptive/Odontoceti.lean` | ~750 |
 
 **Counting on a view** follows from `View.toRecord` (§11.25): every
@@ -4095,6 +4096,80 @@ instantiations, which §11.26's last cluster will take.
 
 Net: about three hundred and fifty Lean lines fewer.
 
+### 11.29 One anchored decision relation, and one band
+
+The fourth and fifth clusters of §11.26, done for all eight rules.
+
+**The relation.** `LeanDag/Anchored.lean` states the decision relation
+once, over a record `AnchoredRule` of what varies between rules: the
+wave, the direct commit and skip as a view evaluates them, a number of
+graded rungs each a link from the anchor to a candidate, and a tie at
+each rung. `Decided` has four constructors — direct commit, direct
+skip, indirect commit at the first nonempty rung with the tie's choice,
+indirect skip when every rung is empty — and the anchor is the nearest
+eligible committed slot with every eligible slot between skipped, as
+before. Eligibility is `EligibleAt wave`, at the schedule. A rule
+supplies `Laws`, eleven facts: two direct commits of a slot name one
+block; a direct commit and a direct skip exclude each other; a direct
+commit is linked at some rung from every candidate of an eligible slot
+and is the only block the tie can choose there; a direct skip bars
+every link; two choices at one rung agree; the direct rules grow with
+the view; and the skip and the links read the schedule at their own
+slot only. Agreement, its two ledger corollaries, monotonicity in the
+view, the bounded relation with its schedule congruence
+(`Anchored/Bounded.lean`), totality at an anchor and the descent below a
+committed run are then theorems, once. The laws' invariant takes the
+schedule, so a rule whose laws hold only under a schedule-indexed
+condition can state them.
+
+**The band.** `Anchored/Band.lean` gives a rule its carrier
+(`toDagRule`, or `toDagRuleOn` under an invariant), `Agree`,
+`CommitsCandidate`, `CommitsDirect` and `Indirect` from the laws, and
+`Banded` from four `BandLaws`: the direct commit and skip carry across a
+band the view holds, a rung's link carries across at the universe both
+ways, and a candidate the band did not carry is linked from no old
+anchor. The band induction over the derivation is written once;
+`agreeBand_view` restricts a band to views, so a rule whose direct
+predicates are view-level reads its transport lemmas at the record.
+
+**The eight instances.** The core, Nemo, Odontoceti, Hybrid and
+Mahi-Mahi are one-rung instances (the certificate or the thick link,
+the order as the tie where a rule needs one, `False` where a link is
+unique). Hydrozoan is the two-rung instance certificate-then-weak-quorum
+with the order as the second tie; Optimal-Hydrozoan certificate-then-
+evidence with no tie, its laws under leader exclusion at the schedule
+and its carrier `toDagRuleOn` at the schedule-free exclusion, which
+moved from the Barnacle helper into Optimal's own model. FinWhale is a
+one-rung instance whose reverse pass is kept as the procedure, with
+`decided_of_wellFormed` showing every verdict of a well-formed pass is
+a derivation of the relation; Lemma 12, the `Exclusions` interface, the
+per-view safety theorems and the pass's canonical-form theorem are
+gone, and a run's tie-break is `chooseLeast`. What FinWhale had to add
+was the skip rule's monotonicity in the view (`directSkip_mono`), which
+no earlier statement needed. Hydrozoan's band lemmas are stated for any
+rule on its record, so Optimal reads them at its own carrier.
+
+**What was deleted.** Seven inductive relations and their bounded
+copies; seven agreement inductions; the per-rule view-monotonicity
+inductions; the three hand band inductions (Hydrozoan, Optimal,
+FinWhale, together some seven hundred lines) and the five band
+assemblies in the `*Properties.lean` files; the per-rule descents and
+totality lemmas; Hydrozoan's own `IsLeaderBlock`, `EligibleAsAnchor`
+and their instances; FinWhale's `Slots.Elig`, `Assignment`,
+`VerdictIs`, `decided_iff` and `Band` structure. Net across the five
+porting commits, some 3,700 lines added against 6,900 deleted.
+
+**What was found.** The rung link must read the schedule at its slot,
+not the round alone, or Optimal's evidence rung — which reads the
+leader through `WitnessesEquivocation` — cannot be a link; the laws'
+invariant must take the schedule for the same rule; and every band law
+needs the leader agreement at the slot, since a rung may read it.
+Hydrozoan's candidate predicate had been reducible where the shared one
+was not, which its filters over candidates depended on; the shared one
+is now reducible too.
+
+**What is left of §11.26** is the adaptive instantiations.
+
 ### 11.5 Next steps, in order
 
 1. **~~`Compose.lean`~~** (**done**, §11.3). The three composition
@@ -4135,6 +4210,7 @@ Net: about three hundred and fifty Lean lines fewer.
     `Banded` are per-rule, and `Banded` is the one that matters.
 11. **The six clusters of §11.26**: ~~counting on a view, the liveness
     predicates and the ledger~~ (**done**, §11.27; the forwarding
-    wrappers of the earlier steps deleted in §11.28), then the anchored
-    decision procedure with the band and liveness proofs behind it,
-    then the adaptive instantiations.
+    wrappers of the earlier steps deleted in §11.28), ~~the anchored
+    decision procedure with the band and liveness proofs behind it~~
+    (**done**, §11.29, for all eight rules), then the adaptive
+    instantiations.

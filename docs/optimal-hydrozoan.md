@@ -97,7 +97,7 @@ Three consequences shape the arc.
 Every Hydrozoan name the arc reuses — `q`, `qCert`, `qSlow`, `Correct`,
 `NonByzantine`, `BlockUniverse`, `View`, `Reaches`, `Slots`,
 `IsLeaderBlock`, `IsVote`, `IsCertificate`, `supporters`, `SlowCommit`,
-`blames`, `CertifiedIn`, `EligibleAsAnchor`, the liveness package — is
+`blames`, `CertifiedIn`, the liveness package — is
 `LeanDag.Hydrozoan`'s, applied to `U.toBlockUniverse`.
 
 ## 1. The fault model and the thresholds

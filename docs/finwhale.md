@@ -277,16 +277,19 @@ rather than as a procedure, and it takes the direct rules as parameters:
 because it reads only the anchor and the round. Giving both validators
 the same direct predicates would make the theorem trivial.
 
-`Exclusions` is what the two views must satisfy against each other, as
-nine fields: the commit is unique across views, a commit in one bars a
-skip in the other, a direct commit pins whatever the rule names, a direct
-commit forces the rule to name something, and a direct skip bars it from
-naming anything. `exclusions_of_dag` discharges all nine from the
-DAG-level theorems, under the reading that a view is a sub-DAG, so a
-direct verdict in a view is a direct verdict of the universe; §11
-replaces that reading with views themselves, and `exclusions_of_views`
-with it. `lemma12_direct` is the paper's own first branch, where either
-validator decided directly.
+What two views must satisfy against each other is the shared anchored
+relation's `Laws` (`LeanDag/Anchored.lean`), discharged for FinWhale
+in `View.lean` (`finWhaleLaws`): the commit is unique across views, a
+commit in one bars a skip in the other, a direct commit is linked from
+every eligible anchor and is the only block the tie-break can choose
+there, a direct skip bars every link, two choices agree, and the direct
+rules grow with the view. Each is one of the DAG-level theorems, under
+the reading that a view is a sub-DAG, so a direct verdict in a view is a
+direct verdict of the universe (`directCommit_restrict`), with the skip
+rule's growth (`directSkip_mono`) the one law FinWhale owes on its own.
+Lemma 12 is then the relation's agreement, and `decided_of_wellFormed`
+is what brings the pass under it: every verdict of a well-formed
+assignment is a derivation of the relation.
 
 **The pass is a procedure, not only a condition.** `Pass.lean` defines
 it: `slotVerdict` decides one slot from the verdicts above it — a direct
@@ -591,8 +594,7 @@ members qualify.
 directly committed. One hypothesis carries the growth there — `hsees`, that a direct
 commit of the universe is a direct commit of this validator's view. Read
 the other way it says the certificates have arrived, which is the
-"eventually" of the paper's statement, and it is the converse of what
-`exclusions_of_dag` consumes for safety. `all_decided` composes the two,
+"eventually" of the paper's statement. `all_decided` composes the two,
 and covers the slots before `R` as well: only the triple has to sit past
 it, since the reverse pass decides everything below.
 
@@ -668,10 +670,11 @@ block into the view by the counting above, and then the same block is
 FP-evidence for it — by Lemma 4 under a fast commit, by Lemma 2 under a
 slow one — which is what Non-FP-evidence denies.
 
-`exclusions_of_views` assembles the nine fields from two views of one
-DAG, and `safety_of_views`, `all_decided_of_view` and
-`agreement_of_views` are the capstones with the view conditions supplied
-rather than assumed.
+`finWhaleLaws` assembles the laws from the view lemmas, and
+`all_decided_of_view` and `agreement_of_commits` are the capstones with
+the view conditions supplied rather than assumed: two validators running
+the reverse pass on their own views deliver the same sequence, each pass
+landing in the relation and the relation's agreement doing the rest.
 
 **And a view is a validator's holdings.** `Holdings.lean` closes the last
 of it. `PaceCore.holds` is what a validator has at an instant, and its

@@ -110,7 +110,7 @@ and a proof file. The decisions they embody:
   field names `S.leader k`, while the interface fixes the universe type
   before the schedule arrives. The clause depends on a slot only through
   its `(round, leader)` pair, so `LeaderExcludedAll`
-  (`Barnacle/Helpers/OptimalHydrozoan.lean`) states it over the pair and
+  (`OptimalHydrozoan/Model/Universe.lean`) states it over the pair and
   `optUniverseOf` builds an `OptUniverse` at whatever schedule the
   interface hands over. A multi-leader schedule realises the pairs
   `{(r, getLeader (r + l)) : l < m}`, monotone in `m`
