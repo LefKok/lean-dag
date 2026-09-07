@@ -279,7 +279,7 @@ theorem uodo_decidedWithin_slot1_swap :
 example : Odontoceti.Decided Uodo (View.full Uodo) 1 (some 7) :=
   uodo_decidedWithin_slot1.toDecided
 example : some (7 : Fin 24) = some 7 :=
-  Odontoceti.DecidedWithin.agree (S := slotsOf odo_inj oBase)
+  AnchoredRule.DecidedWithin.agree Odontoceti.odontocetiLaws (S := slotsOf odo_inj oBase)
     uodo_decidedWithin_slot1 uodo_decidedWithin_slot1
 
 /-- **The canonicity clause through the bound**: `Uskip`'s slot `1` is
@@ -290,10 +290,10 @@ theorem uskip_decidedWithin_slot1 :
     Odontoceti.DecidedWithin (S := slotsOf odo_inj oBase)
       Uskip (View.full Uskip) 4 1 (some 7) := by
   refine Odontoceti.DecidedWithin.indirectCommit (S := slotsOf odo_inj oBase)
-    (j := 3) (A := 21) (by omega) (by omega) (by decide)
+    (j := 3) (A := 21) (i := 0) (by omega) (by omega) (by decide)
     (Odontoceti.DecidedWithin.directCommit (S := slotsOf odo_inj oBase)
       (by omega) (by decide) (by decide))
-    ?_ (by decide) (by decide) ?_
+    ?_ (by decide) (fun i' hi' => absurd hi' (Nat.not_lt_zero _)) (by decide) (by decide) ?_
   · intro i h1 h2 h3
     have : i = 2 := by omega
     subst this
@@ -303,7 +303,7 @@ theorem uskip_decidedWithin_slot1 :
         IsLeaderBlock (S := odoSlots) Uskip 1 M → M = 7 := by decide
     have := hall L' hL'
     subst this
-    exact absurd hlt (lt_irrefl _)
+    exact absurd (show (7 : Fin 36) < 7 from hlt) (lt_irrefl _)
 
 /-- Congruence on the two-round side: an assignment differing only
 above the bound derives the same verdict. -/

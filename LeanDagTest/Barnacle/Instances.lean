@@ -182,12 +182,13 @@ theorem twin'_indirect : ∃ v, O25.Decided odoSlots (View.full Utwin6') 0 v :=
 
 /-- … and by hand the least twin commits: the `¬ L' < 0` clause is trivial. -/
 theorem twin'_slot0 : Odontoceti.Decided Utwin6' (View.full Utwin6') 0 (some 0) :=
-  Odontoceti.Decided.indirectCommit (by omega) (by decide) twin'_slot2
+  Odontoceti.Decided.indirectCommit (i := 0) (by omega) (by decide) twin'_slot2
     (fun i h1 h2 h3 => by
       have : i = 1 := by omega
       subst this
       exact absurd h3 (by decide))
-    (by decide) (by decide) (fun _ _ _ hlt => absurd hlt (Nat.not_lt_zero _))
+    (by decide) (fun i' hi' => absurd hi' (Nat.not_lt_zero _)) (by decide) (by decide)
+    (fun _ _ _ hlt => absurd (show _ < (0 : Fin 25) from hlt) (Nat.not_lt_zero _))
 
 /-- So the law's verdict is the least twin, and the greater twin is refused. -/
 theorem twin'_least :

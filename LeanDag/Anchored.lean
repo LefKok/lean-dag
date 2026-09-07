@@ -62,6 +62,15 @@ theorem slot_eq_of_isLeaderBlock {k₁ k₂ : ℕ} {L : BlockId}
     (h₁ : IsLeaderBlock U k₁ L) (h₂ : IsLeaderBlock U k₂ L) : k₁ = k₂ :=
   S.keyed (by simp only [← h₁.2.1, ← h₂.2.1, ← h₁.2.2, ← h₂.2.2])
 
+omit S in
+/-- Only the leader clause of `IsLeaderBlock` consults the schedule's
+leaders, at the slot itself. -/
+theorem isLeaderBlock_congr {S₁ S₂ : Slots Validator} {k : ℕ} {L : BlockId}
+    (hround : S₁.slotRound k = S₂.slotRound k) (hk : S₁.leader k = S₂.leader k)
+    (h : IsLeaderBlock (S := S₁) U k L) : IsLeaderBlock (S := S₂) U k L := by
+  obtain ⟨h1, h2, h3⟩ := h
+  exact ⟨h1, by rw [← hround]; exact h2, by rw [← hk]; exact h3⟩
+
 end Candidates
 
 /-! ## The rule's data -/
@@ -230,6 +239,10 @@ structure Laws : Prop where
   /-- And of a direct skip. -/
   skip_mono : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
     {V V' : U.View} {k : ℕ}, V.ids ⊆ V'.ids → R.Skip U V S k → R.Skip U V' S k
+  /-- The direct skip reads the schedule only at its own slot. -/
+  skip_congr : ∀ {S₁ S₂ : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
+    {V : U.View} {k : ℕ}, S₁.slotRound k = S₂.slotRound k → S₁.leader k = S₂.leader k →
+    R.Skip U V S₁ k → R.Skip U V S₂ k
 
 variable {R}
 

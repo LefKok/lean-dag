@@ -51,52 +51,9 @@ the restatement over blocks can.
 
 namespace LeanDag
 
-section ScheduleCongruence
-
-/-! ## Reading the schedule at one slot
-
-Three lemmas the band's induction and the bounded relation both use:
-the direct rules consult the schedule's leaders only at the slot being
-decided, so two schedules naming the same round and leader there agree
-on the direct verdicts. Stated here, before either consumer, and
-universe-polymorphic so both can use them. -/
-
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
-variable [Faults Validator]
-variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
-variable {U : BlockUniverse Validator BlockId Payload}
-
-/-- Only the leader clause of `IsLeaderBlock` consults the schedule's
-leaders, at the slot itself. -/
-theorem isLeaderBlock_congr {S₁ S₂ : Slots Validator} {k : ℕ} {L : BlockId}
-    (hround : S₁.slotRound k = S₂.slotRound k) (hk : S₁.leader k = S₂.leader k)
-    (h : IsLeaderBlock (S := S₁) U k L) : IsLeaderBlock (S := S₂) U k L := by
-  obtain ⟨h1, h2, h3⟩ := h
-  exact ⟨h1, by rw [← hround]; exact h2, by rw [← hk]; exact h3⟩
-
-/-- **The slot-level skip reads the schedule only at its own slot**, so
-two schedules naming the same round and the same leader there agree on
-whether the slot is skipped. -/
-theorem slotBlamers_congr {S₁ S₂ : Slots Validator} {k : ℕ}
-    (hround : S₁.slotRound k = S₂.slotRound k) (hk : S₁.leader k = S₂.leader k) :
-    slotBlamers (S := S₁) U k = slotBlamers (S := S₂) U k := by
-  ext q
-  simp only [slotBlamers, Finset.mem_filter, mem_blocksAt, hround]
-  constructor
-  · rintro ⟨hqb, hqn⟩
-    exact ⟨hqb, fun j hj hjL => hqn j hj (isLeaderBlock_congr hround.symm hk.symm hjL)⟩
-  · rintro ⟨hqb, hqn⟩
-    exact ⟨hqb, fun j hj hjL => hqn j hj (isLeaderBlock_congr hround hk hjL)⟩
-
-/-- The count that reads it is therefore the same count. -/
-theorem directSkipSlotIn_congr {S₁ S₂ : Slots Validator}
-    {V : View Validator BlockId Payload U} {k : ℕ}
-    (hround : S₁.slotRound k = S₂.slotRound k) (hk : S₁.leader k = S₂.leader k)
-    (h : DirectSkipSlotIn (S := S₁) U V k) : DirectSkipSlotIn (S := S₂) U V k := by
-  unfold DirectSkipSlotIn at h ⊢
-  rwa [slotBlamers_congr hround hk] at h
-
-end ScheduleCongruence
+/-! Schedule congruence of the candidate and the slot-level skip is in
+`Anchored.lean` (`isLeaderBlock_congr`) and `Mysticeti.lean`
+(`directSkipSlotIn_congr`). -/
 
 namespace MysticetiProperties
 

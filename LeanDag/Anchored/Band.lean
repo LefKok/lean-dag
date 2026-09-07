@@ -172,6 +172,21 @@ theorem band_refs (h : AgreeBand R.toDagRule U U' lo hi g g') {b : BlockId}
     (hb : b ∈ U.ids) (h1 : lo < (U.block b).round + g) (h2 : (U.block b).round + g ≤ hi) :
     (U'.block b).refs = (U.block b).refs := h.refs b hb h1 h2
 
+/-- A round layer of `U` lands on the layer of `U'` the shift names. -/
+theorem blocksAt_band (h : AgreeBand R.toDagRule U U' lo hi g g') {r r' : ℕ}
+    (hrr : r + g = r' + g') (h1 : lo ≤ r + g) (h2 : r + g ≤ hi) :
+    blocksAt U r ⊆ blocksAt U' r' := by
+  intro b hb
+  rw [mem_blocksAt] at hb ⊢
+  have hbb := band_block h hb.1 (by omega) (by omega)
+  exact ⟨band_mem h hb.1 (by omega) (by omega), by omega⟩
+
+/-- The creators of a set of in-band blocks are what they were. -/
+theorem creatorsOf_band (h : AgreeBand R.toDagRule U U' lo hi g g') {s : Finset BlockId}
+    (hs : ∀ b ∈ s, b ∈ U.ids ∧ lo ≤ (U.block b).round + g ∧ (U.block b).round + g ≤ hi) :
+    creatorsOf U'.block s = creatorsOf U.block s :=
+  Finset.image_congr fun i hi' => (band_block h (hs i hi').1 (hs i hi').2.1 (hs i hi').2.2).2
+
 /-- A candidate of a slot is a candidate of the slot the shift names. -/
 theorem isLeaderBlock_band (h : AgreeBand R.toDagRule U U' lo hi g g') {k k' : ℕ} {L : BlockId}
     (hkk : S.slotRound k + g = S'.slotRound k' + g') (hlk : S.leader k = S'.leader k')
@@ -195,6 +210,41 @@ theorem isLeaderBlock_band_old (h : AgreeBand R.toDagRule U U' lo hi g g') {k k'
     (by simp only [toDagRule_block]; omega) (by simp only [toDagRule_block]; omega)
   simp only [toDagRule_block] at hb
   exact ⟨hLU, by omega, by rw [← hb.2, hc, ← hlk]⟩
+
+/-- **The core's slot-level skip carries across the band**, for any
+anchored rule on the core's record: a voting-round block the view held
+that referenced no candidate of the slot is a block of the shifted
+universe at the shifted round, and it references no candidate still,
+every candidate it could reference being old. -/
+theorem directSkipSlotIn_band {Validator : Type} [Fintype Validator] [DecidableEq Validator]
+    [Faults Validator] {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
+    {R : AnchoredRule Validator BlockId Payload ValidWrt Correct}
+    {U U' : BlockUniverse Validator BlockId Payload} {lo hi g g' : ℕ} {S S' : Slots Validator}
+    (h : AgreeBand R.toDagRule U U' lo hi g g')
+    {V : U.View} {V' : U'.View} {k k' : ℕ} (hkk : S.slotRound k + g = S'.slotRound k' + g')
+    (hlead : S.leader k = S'.leader k') (hlo : lo = S.slotRound k + g)
+    (hhi : S.slotRound k + 1 + g ≤ hi)
+    (hV : ∀ b, b ∈ V.ids → lo ≤ (U.block b).round + g → (U.block b).round + g ≤ hi →
+      b ∈ V'.ids)
+    (hs : DirectSkipSlotIn (S := S) U V k) : DirectSkipSlotIn (S := S') U' V' k' := by
+  unfold DirectSkipSlotIn at hs ⊢
+  refine le_trans hs (Finset.card_le_card ?_)
+  intro w hw
+  obtain ⟨q, hq, hvq⟩ := Finset.mem_image.mp hw
+  obtain ⟨hqf, hqV⟩ := Finset.mem_inter.mp hq
+  simp only [slotBlamers, Finset.mem_filter] at hqf
+  obtain ⟨hqA, hqn⟩ := hqf
+  have hqU : q ∈ U.ids := (mem_blocksAt.mp hqA).1
+  have hqr : (U.block q).round = S.slotRound k + 1 := (mem_blocksAt.mp hqA).2
+  refine Finset.mem_image.mpr ⟨q, ?_, ?_⟩
+  · simp only [Finset.mem_inter, slotBlamers, Finset.mem_filter]
+    refine ⟨⟨blocksAt_band h (by omega) (by omega) (by omega) hqA, ?_⟩,
+      hV q hqV (by omega) (by omega)⟩
+    rw [band_refs h hqU (by omega) (by omega)]
+    intro j hj hjL
+    have hjU : j ∈ U.ids := U.complete q hqU j hj
+    exact hqn j hj (isLeaderBlock_band_old h hkk hlead (by omega) (by omega) hjU hjL)
+  · rw [(band_block h hqU (by omega) (by omega)).2]; exact hvq
 
 /-- **What a rule owes the band**: its direct commit, its direct skip and
 its link rungs carry across a band covering the rounds they read, and a

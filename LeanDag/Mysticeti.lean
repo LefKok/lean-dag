@@ -632,6 +632,36 @@ theorem not_directSkip_of_directCommitIn {V₁ V₂ : View Validator BlockId Pay
     False :=
   not_directSkipIn_of_directCommitIn h₁ (directSkipIn_of_directSkipSlotIn h₂ hL)
 
+/-! ### Schedule congruence
+
+The slot-level skip reads the schedule only at its own slot, so two
+schedules naming the same round and the same leader there agree on it. -/
+
+omit S in
+/-- **The slot-level skip reads the schedule only at its own slot**, so
+two schedules naming the same round and the same leader there agree on
+whether the slot is skipped. -/
+theorem slotBlamers_congr {S₁ S₂ : Slots Validator} {k : ℕ}
+    (hround : S₁.slotRound k = S₂.slotRound k) (hk : S₁.leader k = S₂.leader k) :
+    slotBlamers (S := S₁) U k = slotBlamers (S := S₂) U k := by
+  ext q
+  simp only [slotBlamers, Finset.mem_filter, mem_blocksAt, hround]
+  constructor
+  · rintro ⟨hqb, hqn⟩
+    exact ⟨hqb, fun j hj hjL => hqn j hj (isLeaderBlock_congr hround.symm hk.symm hjL)⟩
+  · rintro ⟨hqb, hqn⟩
+    exact ⟨hqb, fun j hj hjL => hqn j hj (isLeaderBlock_congr hround hk hjL)⟩
+
+omit S in
+/-- The count that reads it is therefore the same count. -/
+theorem directSkipSlotIn_congr {S₁ S₂ : Slots Validator}
+    {V : View Validator BlockId Payload U} {k : ℕ}
+    (hround : S₁.slotRound k = S₂.slotRound k) (hk : S₁.leader k = S₂.leader k)
+    (h : DirectSkipSlotIn (S := S₁) U V k) : DirectSkipSlotIn (S := S₂) U V k := by
+  unfold DirectSkipSlotIn at h ⊢
+  rwa [slotBlamers_congr hround hk] at h
+
+
 /-! ## Stage C3 — agreement -/
 
 /-- Whatever route it took, a committed verdict names a genuine candidate for

@@ -135,7 +135,8 @@ variable [F5 : Faults5 Validator] [LinearOrder BlockId]
 variable {U : BlockUniverse Validator BlockId Payload} {N R : ℕ}
 
 /-- **Odontoceti O10**, from a `ViewPace`. -/
-example {c : ℕ} (hc : 0 < c) (hspan : Odontoceti.SpansEligible Validator c)
+example {c : ℕ} (hc : 0 < c)
+    (hspan : (Odontoceti.odontocetiAnchored Validator BlockId Payload).SpansEligible c)
     (fair : FairRunOn (Correct : Finset Validator) c) (k : ℕ)
     (vp : ViewPace U (Correct : Finset Validator) N)
     (hgst : vp.gst ≤ R)

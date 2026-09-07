@@ -89,6 +89,10 @@ instance {V : View Validator BlockId Payload U} (k : ℕ) :
     Decidable ((nemoAnchored Validator BlockId Payload).Skip U V S k) :=
   inferInstanceAs (Decidable False)
 
+instance (i : ℕ) (A L : BlockId) (r : ℕ) :
+    Decidable ((nemoAnchored Validator BlockId Payload).Link i U A L r) :=
+  inferInstanceAs (Decidable (CertifiedIn U A L r))
+
 /-- **The decision relation**: the anchored relation at Nemo's data. -/
 abbrev Decided (U : Universe Validator BlockId Payload) (V : View Validator BlockId Payload U) :
     ℕ → Option BlockId → Prop :=
@@ -124,6 +128,7 @@ theorem nemoLaws : (nemoAnchored Validator BlockId Payload).Laws where
   link_unique := fun hL₁ hL₂ _ _ _ _ _ _ _ _ => isLeaderBlock_unique hL₁ hL₂
   commit_mono := fun hsub h => directCommitIn_mono hsub h
   skip_mono := fun _ h => h
+  skip_congr := fun _ _ h => h
 
 end Nemo
 

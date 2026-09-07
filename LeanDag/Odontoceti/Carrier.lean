@@ -37,22 +37,14 @@ variable {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
 /-- **Odontoceti as a carrier**, at its own namespace rather than
 through Barnacle's `odontoceti.toDagRule`, which now *is* this carrier: a protocol's conformance should not
 route through a mechanism (`docs/target-properties.md` §8). -/
-def odontocetiRule : DagRule Validator BlockId Payload where
-  Universe := BlockUniverse Validator BlockId Payload
-  View := fun U => View Validator BlockId Payload U
-  block := fun U i => U.block i
-  ids := fun U => U.ids
-  viewIds := fun V => V.ids
-  viewSound := fun V => V.subset_ids
-  viewComplete := fun V => V.complete
-  causal := fun U => U.causal
-  Decided := fun S _ V k v => Odontoceti.Decided (S := S) _ V k v
+def odontocetiRule : DagRule Validator BlockId Payload :=
+  (Odontoceti.odontocetiAnchored Validator BlockId Payload).toDagRule
 
 /-- **Odontoceti's universes are quorate**: the core's `BlockUniverse`,
 so the core's clause, at the five-fault committee. -/
 theorem quorate : Quorate (odontocetiRule (Validator := Validator) (BlockId := BlockId)
     (Payload := Payload)) (coreReliability Validator) :=
-  fun U => U.quorateOn
+  fun U => BlockUniverse.quorateOn U
 
 /-- **P3′ at the carrier.** -/
 theorem selfParent : SelfParent (odontocetiRule (Validator := Validator) (BlockId := BlockId)
@@ -67,20 +59,19 @@ theorem noEquiv : NoEquiv (odontocetiRule (Validator := Validator) (BlockId := B
 /-- **Two views decide alike.** O5 under the property's name. -/
 theorem agree : Agree (odontocetiRule (Validator := Validator) (BlockId := BlockId)
     (Payload := Payload)) :=
-  fun S _ V₁ V₂ _ _ _ h₁ h₂ =>
-    Odontoceti.decided_unique (S := S) h₁ V₂ _ h₂
+  AnchoredRule.agree Odontoceti.odontocetiLaws
 
 /-- **A commit names the slot's candidate.** -/
 theorem commitsCandidate : CommitsCandidate
     (odontocetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
-  fun S _ _ _ _ hd => Odontoceti.isLeaderBlock_of_decided (S := S) hd
+  AnchoredRule.commitsCandidate
 
 /-- **And a direct commit is a verdict**, at Odontoceti's own direct
 predicate. -/
 theorem commitsDirect : CommitsDirect
     (odontocetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
     (fun {U} V L r => Odontoceti.DirectCommitIn U V L r) :=
-  fun S _ _ _ _ hc hd => Odontoceti.Decided.directCommit (S := S) hc hd
+  AnchoredRule.commitsDirect
 
 end OdontocetiProperties
 

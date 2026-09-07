@@ -29,113 +29,9 @@ variable {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
 variable {U : BlockUniverse Validator BlockId Payload}
 variable [S : Slots Validator]
 
-/-- The bounded two-round decision relation: `Odontoceti.Decided` with
-every slot mentioned strictly below `B`, canonicity clause included. -/
-inductive DecidedWithin (U : BlockUniverse Validator BlockId Payload)
-    (V : View Validator BlockId Payload U) (B : ℕ) : ℕ → Option BlockId → Prop
-  /-- The direct rule commits a candidate outright. -/
-  | directCommit {k : ℕ} {L : BlockId} :
-      k < B → IsLeaderBlock U k L → DirectCommitIn U V L (S.slotRound k) →
-      DecidedWithin U V B k (some L)
-  /-- The direct rule skips the slot, on a quorum of blockers. -/
-  | directSkip {k : ℕ} :
-      k < B → DirectSkipSlotIn U V k →
-      DecidedWithin U V B k none
-  /-- Anchored below the bound, the least candidate passing the indirect
-  test is committed. -/
-  | indirectCommit {k j : ℕ} {A L : BlockId} :
-      k < j → j < B → Eligible Validator k j → DecidedWithin U V B j (some A) →
-      (∀ i, k < i → i < j → Eligible Validator k i → DecidedWithin U V B i none) →
-      IsLeaderBlock U k L → ThickLink U A L (S.slotRound k) →
-      (∀ L', IsLeaderBlock U k L' → ThickLink U A L' (S.slotRound k) →
-        ¬ L' < L) →
-      DecidedWithin U V B k (some L)
-  /-- Anchored below the bound, no candidate passes. -/
-  | indirectSkip {k j : ℕ} {A : BlockId} :
-      k < j → j < B → Eligible Validator k j → DecidedWithin U V B j (some A) →
-      (∀ i, k < i → i < j → Eligible Validator k i → DecidedWithin U V B i none) →
-      (∀ L, IsLeaderBlock U k L → ¬ ThickLink U A L (S.slotRound k)) →
-      DecidedWithin U V B k none
-
-namespace DecidedWithin
-
-variable {V : View Validator BlockId Payload U} {B B' k : ℕ} {v : Option BlockId}
-
-/-- The bound is what it says: a derivation only names slots under it. -/
-theorem lt_bound (h : DecidedWithin U V B k v) : k < B := by
-  cases h with
-  | directCommit hk _ _ => exact hk
-  | directSkip hk _ => exact hk
-  | indirectCommit _ hj _ _ _ _ _ _ => omega
-  | indirectSkip _ hj _ _ _ _ => omega
-
-/-- Forgetting the bound: agreement for the bounded relation *is* O5. -/
-theorem toDecided (h : DecidedWithin U V B k v) : Decided U V k v := by
-  induction h with
-  | directCommit _ hL hdc => exact Decided.directCommit hL hdc
-  | directSkip _ hall => exact Decided.directSkip hall
-  | indirectCommit hkj _ helig _ _ hL ht hmin ihj ihmid =>
-      exact Decided.indirectCommit hkj helig ihj ihmid hL ht hmin
-  | indirectSkip hkj _ helig _ _ hnone ihj ihmid =>
-      exact Decided.indirectSkip hkj helig ihj ihmid hnone
-
-/-- The bound relaxes upward. -/
-theorem mono (h : DecidedWithin U V B k v) (hBB : B ≤ B') :
-    DecidedWithin U V B' k v := by
-  induction h with
-  | directCommit hk hL hdc => exact directCommit (by omega) hL hdc
-  | directSkip hk hall => exact directSkip (by omega) hall
-  | indirectCommit hkj hj helig _ _ hL ht hmin ihj ihmid =>
-      exact indirectCommit hkj (by omega) helig ihj
-        (fun i h1 h2 h3 => ihmid i h1 h2 h3) hL ht hmin
-  | indirectSkip hkj hj helig _ _ hnone ihj ihmid =>
-      exact indirectSkip hkj (by omega) helig ihj
-        (fun i h1 h2 h3 => ihmid i h1 h2 h3) hnone
-
-/-- Two bounded verdicts agree — `Properties.Agree`, through the
-embedding. The mechanism reads the property, not O5, which is where the
-property comes from. -/
-theorem agree {V₁ V₂ : View Validator BlockId Payload U} {B₁ B₂ k : ℕ}
-    {v₁ v₂ : Option BlockId} (h₁ : DecidedWithin U V₁ B₁ k v₁)
-    (h₂ : DecidedWithin U V₂ B₂ k v₂) : v₁ = v₂ :=
-  OdontocetiProperties.agree S V₁ V₂ k v₁ v₂ h₁.toDecided h₂.toDecided
-
-end DecidedWithin
-
-/-- **The bounded relation moves with the schedule**, for any two
-schedules naming the same rounds and the same leaders below the bound —
-the general form `DecidedBelow` reads, where `decidedWithin_congr` below
-is the `slotsOf` special case the adaptive fixpoint uses. -/
-theorem decidedWithin_congr_of_slotRound {S₁ S₂ : Slots Validator}
-    (hround : S₁.slotRound = S₂.slotRound) {V : View Validator BlockId Payload U}
-    {B k : ℕ} {v : Option BlockId} (ha : ∀ m, m < B → S₁.leader m = S₂.leader m)
-    (h : DecidedWithin (S := S₁) U V B k v) : DecidedWithin (S := S₂) U V B k v := by
-  obtain ⟨sr, ld, hmono, hunb, hkeyed⟩ := S₁
-  obtain ⟨sr', ld', hmono', hunb', hkeyed'⟩ := S₂
-  simp only at hround
-  subst hround
-  induction h with
-  | @directCommit k L hk hL hdc =>
-      exact DecidedWithin.directCommit (S := ⟨sr, ld', hmono', hunb', hkeyed'⟩) hk
-        (isLeaderBlock_congr (S₁ := ⟨sr, ld, hmono, hunb, hkeyed⟩)
-          (S₂ := ⟨sr, ld', hmono', hunb', hkeyed'⟩) rfl (ha k hk) hL) hdc
-  | @directSkip k hk hall =>
-      exact DecidedWithin.directSkip (S := ⟨sr, ld', hmono', hunb', hkeyed'⟩) hk
-        (directSkipSlotIn_congr (S₁ := ⟨sr, ld, hmono, hunb, hkeyed⟩)
-          (S₂ := ⟨sr, ld', hmono', hunb', hkeyed'⟩) rfl (ha k hk) hall)
-  | @indirectCommit k j A L hkj hj helig _ _ hL ht hmin ihj ihmid =>
-      exact DecidedWithin.indirectCommit (S := ⟨sr, ld', hmono', hunb', hkeyed'⟩) hkj hj helig
-        ihj (fun i h1 h2 h3 => ihmid i h1 h2 h3)
-        (isLeaderBlock_congr (S₁ := ⟨sr, ld, hmono, hunb, hkeyed⟩)
-          (S₂ := ⟨sr, ld', hmono', hunb', hkeyed'⟩) rfl (ha k (by omega)) hL) ht
-        (fun L' hL' ht' => hmin L'
-          (isLeaderBlock_congr (S₁ := ⟨sr, ld', hmono', hunb', hkeyed'⟩)
-            (S₂ := ⟨sr, ld, hmono, hunb, hkeyed⟩) rfl (ha k (by omega)).symm hL') ht')
-  | @indirectSkip k j A hkj hj helig _ _ hnone ihj ihmid =>
-      exact DecidedWithin.indirectSkip (S := ⟨sr, ld', hmono', hunb', hkeyed'⟩) hkj hj helig
-        ihj (fun i h1 h2 h3 => ihmid i h1 h2 h3)
-        (fun L hL => hnone L (isLeaderBlock_congr (S₁ := ⟨sr, ld', hmono', hunb', hkeyed'⟩)
-          (S₂ := ⟨sr, ld, hmono, hunb, hkeyed⟩) rfl (ha k (by omega)).symm hL))
+/-! The bounded two-round relation is `Odontoceti.DecidedWithin`, the
+relation's `AnchoredRule.DecidedWithin` at Odontoceti's data, with its
+embedding, bound and congruence proved there. -/
 
 /-- Congruence below the bound, canonicity clause included: the
 candidate set reads the schedule only through `IsLeaderBlock`, which
@@ -143,26 +39,10 @@ transports in both directions at the decided slot. -/
 theorem decidedWithin_congr {hinj : Function.Injective S.slotRound}
     {a₁ a₂ : ℕ → Validator} {V : View Validator BlockId Payload U} {B k : ℕ}
     {v : Option BlockId} (ha : ∀ m, m < B → a₁ m = a₂ m)
-    (h : DecidedWithin (S := slotsOf hinj a₁) U V B k v) :
-    DecidedWithin (S := slotsOf hinj a₂) U V B k v := by
-  induction h with
-  | @directCommit k L hk hL hdc =>
-      exact DecidedWithin.directCommit (S := slotsOf hinj a₂) hk
-        (isLeaderBlock_slotsOf_congr (ha k hk) hL) hdc
-  | @directSkip k hk hall =>
-      exact DecidedWithin.directSkip (S := slotsOf hinj a₂) hk
-        (directSkipSlotIn_congr (S₁ := slotsOf hinj a₁) (S₂ := slotsOf hinj a₂)
-          rfl (by simpa using ha k hk) hall)
-  | @indirectCommit k j A L hkj hj helig _ _ hL ht hmin ihj ihmid =>
-      exact DecidedWithin.indirectCommit (S := slotsOf hinj a₂) hkj hj helig ihj
-        (fun i h1 h2 h3 => ihmid i h1 h2 h3)
-        (isLeaderBlock_slotsOf_congr (ha k (by omega)) hL) ht
-        (fun L' hL' ht' =>
-          hmin L' (isLeaderBlock_slotsOf_congr (ha k (by omega)).symm hL') ht')
-  | @indirectSkip k j A hkj hj helig _ _ hnone ihj ihmid =>
-      exact DecidedWithin.indirectSkip (S := slotsOf hinj a₂) hkj hj helig ihj
-        (fun i h1 h2 h3 => ihmid i h1 h2 h3)
-        (fun L hL => hnone L (isLeaderBlock_slotsOf_congr (ha k (by omega)).symm hL))
+    (h : Odontoceti.DecidedWithin (S := slotsOf hinj a₁) U V B k v) :
+    Odontoceti.DecidedWithin (S := slotsOf hinj a₂) U V B k v :=
+  AnchoredRule.decidedWithin_congr_of_slotRound odontocetiLaws (S₁ := slotsOf hinj a₁)
+    (S₂ := slotsOf hinj a₂) rfl (fun m hm => by simpa using ha m hm) h
 
 /-- A run closed up to epoch height `E`, two-round rule. -/
 structure PartialRun (P : AdaptivePolicy Validator BlockId Payload)
@@ -174,7 +54,7 @@ structure PartialRun (P : AdaptivePolicy Validator BlockId Payload)
   vdct : ℕ → Option BlockId
   /-- Every slot of a closed epoch is decided inside its window. -/
   closed : ∀ k, epochOf P.W k < E →
-    DecidedWithin (S := slotsOf P.inj assign) U V
+    Odontoceti.DecidedWithin (S := slotsOf P.inj assign) U V
       (P.W * (epochOf P.W k + 2)) k (vdct k)
   /-- The assignment is the policy's, as far as the derivations read it. -/
   coherent : ∀ m, epochOf P.W m < E + 1 → assign m = P.pick U V vdct m
@@ -188,7 +68,7 @@ structure AdaptiveRun (P : AdaptivePolicy Validator BlockId Payload)
   /-- The verdicts. -/
   vdct : ℕ → Option BlockId
   /-- Every slot is decided inside its epoch window. -/
-  closed : ∀ k, DecidedWithin (S := slotsOf P.inj assign) U V
+  closed : ∀ k, Odontoceti.DecidedWithin (S := slotsOf P.inj assign) U V
     (P.W * (epochOf P.W k + 2)) k (vdct k)
   /-- The assignment is the policy's, everywhere. -/
   coherent : ∀ m, assign m = P.pick U V vdct m
@@ -225,7 +105,7 @@ theorem partialRun_agree {P : AdaptivePolicy Validator BlockId Payload}
       exact ih (epochOf P.W j) (by omega) j rfl (by omega)
     have h₁ := R₁.closed k (by omega)
     have h₂ := R₂.closed k (by omega)
-    exact DecidedWithin.agree (S := slotsOf P.inj R₂.assign)
+    exact AnchoredRule.DecidedWithin.agree odontocetiLaws (S := slotsOf P.inj R₂.assign)
       (decidedWithin_congr hassign h₁) h₂
 
 /-- **Safety, two-round rule: the adaptive fixpoint is unique** — with
@@ -243,58 +123,8 @@ section Existence
 variable {P : AdaptivePolicy Validator BlockId Payload}
 variable {T : Finset Validator} {c R N : ℕ}
 
-/-- The committed-run descent, bounded — the base `Odontoceti` descent
-with the anchor's bound carried through, least-candidate selection
-included. -/
-theorem decidedWithin_below_of_committed_run
-    {V : View Validator BlockId Payload U} {b n : ℕ} (hbn : b ≤ n)
-    (hspan : ∀ i, i < b → Eligible Validator i n)
-    (hrun : ∀ j, b ≤ j → j ≤ n → ∃ B', DecidedWithin U V (n + 1) j (some B')) :
-    ∀ i, i < b → ∃ v, DecidedWithin U V (n + 1) i v := by
-  classical
-  have key : ∀ d i, i < b → b - i ≤ d → ∃ v, DecidedWithin U V (n + 1) i v := by
-    intro d
-    induction d with
-    | zero => intro i hi hd; omega
-    | succ d ih =>
-      intro i hi hd
-      have hex : ∃ j, Eligible Validator i j ∧
-          ∃ B', DecidedWithin U V (n + 1) j (some B') :=
-        ⟨n, hspan i hi, hrun n hbn (le_refl n)⟩
-      have hle : Nat.find hex ≤ n :=
-        Nat.find_le ⟨hspan i hi, hrun n hbn (le_refl n)⟩
-      obtain ⟨helig, B', hB⟩ := Nat.find_spec hex
-      have hmid : ∀ i', i < i' → i' < Nat.find hex → Eligible Validator i i' →
-          DecidedWithin U V (n + 1) i' none := by
-        intro i' h1 h2 h3
-        have hnc : ¬ ∃ C, DecidedWithin U V (n + 1) i' (some C) :=
-          fun hc => Nat.find_min hex h2 ⟨h3, hc⟩
-        have hi'b : i' < b := by
-          by_contra hge
-          exact hnc (hrun i' (by omega) (by omega))
-        obtain ⟨v, hv⟩ := ih i' hi'b (by omega)
-        cases v with
-        | none => exact hv
-        | some C => exact absurd ⟨C, hv⟩ hnc
-      by_cases hc : ∃ L, IsLeaderBlock U i L ∧ ThickLink U B' L (S.slotRound i)
-      · have hCne : (U.ids.filter fun L => IsLeaderBlock U i L ∧
-            ThickLink U B' L (S.slotRound i)).Nonempty := by
-          obtain ⟨L, hL, ht⟩ := hc
-          exact ⟨L, Finset.mem_filter.mpr ⟨hL.1, hL, ht⟩⟩
-        have hmem := Finset.min'_mem _ hCne
-        rw [Finset.mem_filter] at hmem
-        refine ⟨some ((U.ids.filter fun L => IsLeaderBlock U i L ∧
-            ThickLink U B' L (S.slotRound i)).min' hCne),
-          DecidedWithin.indirectCommit (lt_of_eligible helig) (by omega)
-            helig hB hmid hmem.2.1 hmem.2.2 ?_⟩
-        intro L' hL' ht' hlt
-        exact absurd hlt (not_lt.mpr (Finset.min'_le _ L'
-          (Finset.mem_filter.mpr ⟨hL'.1, hL', ht'⟩)))
-      · push Not at hc
-        exact ⟨none, DecidedWithin.indirectSkip (lt_of_eligible helig)
-          (by omega) helig hB hmid hc⟩
-  intro i hi
-  exact key (b - i) i hi (le_refl _)
+/-! The committed-run descent, bounded, is the relation's
+`decidedWithin_below_of_committed_run` at `Odontoceti.exists_least`. -/
 
 /-- One epoch closes, two-round rule, on a view caught up to the
 horizon: O7 commits the placed run — two populated rounds where
@@ -303,19 +133,19 @@ holds them — and the bounded descent clears the epoch below. -/
 theorem epoch_closes (hT : T ⊆ (Correct : Finset Validator))
     (hcard : quorumCard Validator ≤ T.card)
     (hc : 0 < c) (hruns : PlacesRuns P T c)
-    (hspans : SpansEligible Validator c)
+    (hspans : (odontocetiAnchored Validator BlockId Payload).SpansEligible c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
     (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r)
     (V : View Validator BlockId Payload U) (hcov : V.CoversUpto N)
     (v : ℕ → Option BlockId) (E : ℕ)
     (hN : S.slotRound (P.W * (E + 2)) + 1 ≤ N) :
     ∀ k, epochOf P.W k < E + 1 →
-      ∃ w, DecidedWithin (S := slotsOf P.inj (fun m => P.pick U V v m)) U
+      ∃ w, Odontoceti.DecidedWithin (S := slotsOf P.inj (fun m => P.pick U V v m)) U
         V (P.W * (E + 2)) k w := by
   obtain ⟨b, hb1, hb2, hbT⟩ := hruns U V v E
   have hWpos := P.W_pos
   have hrun : ∀ j, b ≤ j → j ≤ b + c - 1 →
-      ∃ B', DecidedWithin (S := slotsOf P.inj (fun m => P.pick U V v m)) U
+      ∃ B', Odontoceti.DecidedWithin (S := slotsOf P.inj (fun m => P.pick U V v m)) U
         V (b + c - 1 + 1) j (some B') := by
     intro j hj1 hj2
     have hlead : (slotsOf P.inj (fun m => P.pick U V v m)).leader j ∈ T := by
@@ -336,19 +166,19 @@ theorem epoch_closes (hT : T ⊆ (Correct : Finset Validator))
         hcard hs hRj
         (hpop _ (by omega) (by omega))
         (hpop _ (by omega) (by omega)) hlead
-    exact ⟨L, DecidedWithin.directCommit
+    exact ⟨L, Odontoceti.DecidedWithin.directCommit
       (S := slotsOf P.inj (fun m => P.pick U V v m)) (by omega) hL
       (directCommitIn_of_coversUpto hdc (hcov.mono hround))⟩
   have hbelow :=
-    decidedWithin_below_of_committed_run (V := V)
+    AnchoredRule.decidedWithin_below_of_committed_run (fun hi h => exists_least hi h) (V := V)
       (S := slotsOf P.inj (fun m => P.pick U V v m))
-      (b := b) (n := b + c - 1) (by omega)
+      (b := b) (n := b + c - 1) (B := b + c - 1 + 1) (by omega) (by omega)
       (fun i hi => hspans b i hi) hrun
   intro k hk
   have hkb : k < b :=
     lt_of_lt_of_le ((epochOf_lt_iff hWpos).mp hk) hb1
   obtain ⟨w, hw⟩ := hbelow k hkb
-  exact ⟨w, DecidedWithin.mono (S := slotsOf P.inj (fun m => P.pick U V v m))
+  exact ⟨w, AnchoredRule.DecidedWithin.mono (S := slotsOf P.inj (fun m => P.pick U V v m))
     hw (by omega)⟩
 
 /-- Partial runs exist at every height, two-round rule, on a view
@@ -356,7 +186,7 @@ caught up to the horizon. -/
 theorem exists_partialRun (hT : T ⊆ (Correct : Finset Validator))
     (hcard : quorumCard Validator ≤ T.card)
     (hc : 0 < c) (hruns : PlacesRuns P T c)
-    (hspans : SpansEligible Validator c)
+    (hspans : (odontocetiAnchored Validator BlockId Payload).SpansEligible c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
     (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r)
     (V : View Validator BlockId Payload U) (hcov : V.CoversUpto N) (E : ℕ)
@@ -427,7 +257,7 @@ exactly as on the three-round side — and by
 theorem adaptiveRun_exists (hT : T ⊆ (Correct : Finset Validator))
     (hcard : quorumCard Validator ≤ T.card)
     (hc : 0 < c) (hruns : PlacesRuns P T c)
-    (hspans : SpansEligible Validator c)
+    (hspans : (odontocetiAnchored Validator BlockId Payload).SpansEligible c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
     (hpop : ∀ r, Populated U r)
     (V : View Validator BlockId Payload U) (hcov : ∀ N, V.CoversUpto N) :
