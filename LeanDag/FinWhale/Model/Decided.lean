@@ -1,0 +1,57 @@
+import LeanDag.FinWhale.Model.Anchor
+import LeanDag.Anchored
+
+/-!
+# FinWhale — the decision relation
+
+FinWhale as the shared anchored relation. The direct commit is the
+fast path or the slow path, evaluated on the validator's own view; the
+direct skip is the skip rule on that view; the one rung is the anchored
+indirect rule, an SP-certificate or a quorum of FP-evidence in the
+anchor's causal history, tie-broken by the identifier order — the
+paper's "deterministic rule", exhibited as the least candidate
+(`chooseLeast`). Eligibility is wave two: the anchor's candidate sits
+three rounds above the slot's.
+
+The reverse pass (`Model/Verdict.lean`, `Model/Pass.lean`) is the
+procedure a validator runs; what it computes is a derivation of this
+relation (`decided_of_wellFormed`), so agreement between validators is
+the relation's `decided_agree` at FinWhale's laws.
+-/
+
+namespace LeanDag
+
+namespace FinWhale
+
+section Rule
+
+variable (Validator BlockId Payload : Type*) [Fintype Validator] [DecidableEq Validator]
+  [F : Faults Validator] [P : Params Validator] [DecidableEq BlockId] [LinearOrder BlockId]
+
+/-- **FinWhale as an anchored rule.** -/
+def finWhaleAnchored :
+    AnchoredRule Validator BlockId Payload ValidHere (Correct : Finset Validator) where
+  wave := 2
+  Commit := fun _ V L _ => DirectCommit V.toRecord L
+  Skip := fun _ V S k => DirectSkip S V.toRecord k
+  rungs := 1
+  Link := fun _ U A L S k => IndirectCommit S U A k L
+  tie := fun _ L L' => L < L'
+
+end Rule
+
+variable {Validator BlockId Payload : Type*} [Fintype Validator] [DecidableEq Validator]
+  [F : Faults Validator] [P : Params Validator] [DecidableEq BlockId] [LinearOrder BlockId]
+  [S : Slots Validator]
+
+/-- The verdicts a validator holding view `V` may reach on slot `k`. -/
+abbrev Decided (D : Dag Validator BlockId Payload) (V : D.View) : ℕ → Option BlockId → Prop :=
+  (finWhaleAnchored Validator BlockId Payload).Decided (S := S) D V
+
+namespace Decided
+export AnchoredRule.Decided (directCommit directSkip indirectCommit indirectSkip)
+end Decided
+
+end FinWhale
+
+end LeanDag

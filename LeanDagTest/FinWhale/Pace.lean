@@ -480,8 +480,6 @@ noncomputable def fwRun (N : ℕ) : Run (Fin 4) ℕ Unit where
   live_le := Nat.le_refl _
   roundRobin := fwDreactRoundRobin N
   selfParented := selfParented_Dreact N
-  choose := chooseLeast (Slots.identity reactLeader) (Dreact N)
-  chooseSound := chooseSound_least
 
 /-- **Agreement on data.** Two correct validators of the run deliver the
 same sequence. The horizon is what Lemma 22's window asks for: `3f + 5`

@@ -252,6 +252,19 @@ theorem isLeaderBlock_band_old (h : AgreeBand R.toDagRule U U' lo hi g g') {k k'
   simp only [toDagRule_block] at hb
   exact ⟨hLU, by omega, by rw [← hb.2, hc, ← hlk]⟩
 
+/-- **A band restricts to views**: two views holding the band's blocks
+alike are in the band themselves, since a view's blocks are its
+record's. What a rule's band laws can be read at, for a direct
+predicate a view evaluates. -/
+theorem agreeBand_view (h : AgreeBand R.toDagRule U U' lo hi g g') {V : U.View} {V' : U'.View}
+    (hV : ∀ b, b ∈ V.ids → lo ≤ (U.block b).round + g → (U.block b).round + g ≤ hi →
+      b ∈ V'.ids) :
+    AgreeBand R.toDagRule V.toRecord V'.toRecord lo hi g g' where
+  mem := fun b hb h1 h2 => hV b hb h1 h2
+  block := fun b hb hor => h.block b (V.subset_ids hb)
+    (hor.imp id (fun ⟨hb', h1, h2⟩ => ⟨V'.subset_ids hb', h1, h2⟩))
+  refs := fun b hb h1 h2 => h.refs b (V.subset_ids hb) h1 h2
+
 /-- **The core's slot-level skip carries across the band**, for any
 anchored rule on the core's record: a voting-round block the view held
 that referenced no candidate of the slot is a block of the shifted

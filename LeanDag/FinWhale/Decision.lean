@@ -1,5 +1,6 @@
 import LeanDag.FinWhale.Propagation
 import LeanDag.FinWhale.Model.Decision
+import LeanDag.Anchored
 
 /-!
 # FinWhale — what a direct verdict excludes
@@ -16,7 +17,7 @@ voters excludes another for a conflicting block (Lemma 8) and excludes
 the SP-skip half of the skip rule (Lemma 6), so `direct_commit_unique`
 and `no_directSkip_of_commit` close every case where either validator
 decided directly, and neither needs the FP-evidence half of the skip rule
-at all. `lemma12_direct` is the branch assembled.
+at all. They are the relation's `commit_unique` and `commit_skip`.
 -/
 
 
@@ -29,6 +30,13 @@ variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 variable {D : Dag Validator BlockId Payload}
 variable {S : Slots Validator}
+
+/-- **A slot's blocks are its candidates**: the shared `IsLeaderBlock`. -/
+theorem mem_slotBlocks {b : BlockId} {n : ℕ} :
+    b ∈ slotBlocks S D n ↔ IsLeaderBlock D n b := by
+  unfold slotBlocks
+  rw [Finset.mem_filter, mem_blocksAt]
+  exact ⟨fun h => ⟨h.1.1, h.1.2, h.2⟩, fun h => ⟨⟨h.1, h.2.1⟩, h.2.2⟩⟩
 
 /-- Naming the witnesses is a restriction, not a weakening. -/
 theorem spCommit_of_spCommitBy {l : BlockId} {T : Finset Validator}
@@ -85,31 +93,6 @@ theorem no_directSkip_of_commit {r : ℕ} {l : BlockId}
     (hl : l ∈ slotBlocks S D r) (hcom : DirectCommit D l) : ¬ DirectSkip S D r := by
   rintro ⟨hskip, -⟩
   exact no_skip_of_quorum (voters_of_directCommit hcom) (hskip l hl)
-
-/-- **Lemma 12, the direct branch.** Where either validator decided the
-slot directly, the two decisions agree: the committed block is unique and
-the slot is not skipped.
-
-The indirect branch is not here, and stating what it would need is more
-useful than a definition that proves itself. The paper argues that two
-validators deciding indirectly do so from anchors that are the *same
-block* — by maximality of the disagreeing round, their decisions agree
-above it, so the anchors they commit are one block by Corollary 11 at the
-anchor's round — and that the same anchor yields the same decision, since
-the decision reads only its causal history.
-
-Neither half is available in this model. The reverse pass that picks an
-anchor is not modelled, so "the anchors are the same block" has nothing
-to be proved from; and with no anchor recursion there is no `decide` to
-show reads only the history. Both are what `Model/Rule.lean` would have
-to grow for Lemma 12 to close, and on the Black Marlin precedent — a
-sound commit rule and an unsound descent — that recursion is where the
-remaining risk sits. -/
-theorem lemma12_direct {r : ℕ} {l l' : BlockId}
-    (hl : l ∈ slotBlocks S D r) (hl' : l' ∈ slotBlocks S D r)
-    (hcom : DirectCommit D l) (hcom' : DirectCommit D l') :
-    l = l' ∧ ¬ DirectSkip S D r :=
-  ⟨direct_commit_unique hl hl' hcom hcom', no_directSkip_of_commit hl hcom⟩
 
 end FinWhale
 

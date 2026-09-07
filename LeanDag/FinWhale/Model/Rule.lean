@@ -151,20 +151,11 @@ abbrev Dag (Validator BlockId Payload : Type*) [Fintype Validator]
 
 variable {D : Dag Validator BlockId Payload}
 
-/-- **Which slots may anchor which.** The reverse pass reads an earlier
-slot's verdict off a later one, and the rules that let it do so live two
-rounds above the candidate, so the anchor's own candidate must sit at
-least three rounds up. Under the identity schedule this is `r + 2 < a`,
-which is the shape the protocol's runs meet it in.
-
-The pass is stated over an arbitrary eligibility and this is the one
-FinWhale supplies. Keeping it here, rather than at the conformance
-file, is what lets the protocol and the carrier run the same pass. -/
-def _root_.LeanDag.Slots.Elig (S : Slots Validator) (r a : ℕ) : Prop :=
-  S.slotRound r + 3 ≤ S.slotRound a
-
-instance (S : Slots Validator) : DecidableRel S.Elig :=
-  fun _ _ => inferInstanceAs (Decidable (_ ≤ _))
+/-! **Which slots may anchor which** is the shared `EligibleAt` at wave
+two: the rules that let the reverse pass read an earlier slot's verdict
+off a later one live two rounds above the candidate, so the anchor's own
+candidate must sit at least three rounds up. Under the identity schedule
+this is `r + 2 < a`, which is the shape the protocol's runs meet it in. -/
 
 /-- The validators whose round-`(r+1)` block references `l`: `l`'s voters,
 the record's `supporters` at the round above `l`. -/

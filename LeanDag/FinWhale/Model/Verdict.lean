@@ -20,9 +20,9 @@ since it reads only the anchor and the round. `ChooseSound` is what such
 a rule must satisfy, and `chooseLeast` is one that does: the least
 candidate in the identifier order, where the paper names none.
 
-`Exclusions` is not part of the protocol. It is the interface Lemma 12
-consumes — what two validators' direct rules must satisfy against each
-other — and `exclusions_of_dag` and `exclusions_of_views` discharge it.
+What the pass computes lands in the shared anchored relation
+(`Model/Decided.lean`, `decided_of_wellFormed`), and agreement between
+validators is the relation's.
 -/
 
 
@@ -45,6 +45,12 @@ inductive Verdict (BlockId : Type*) where
   /-- The slot is not yet decided. -/
   | undecided
   deriving DecidableEq
+
+/-- A decided verdict, as the relation's option: `some b` for a commit,
+`none` for a skip. Read only where the slot is decided. -/
+def Verdict.optOf {BlockId : Type*} : Verdict BlockId → Option BlockId
+  | Verdict.commit b => some b
+  | _ => none
 
 /-- **The anchor of `r`**: the first *eligible* slot above `r` that is
 not skipped.
@@ -82,35 +88,6 @@ structure WellFormed (Elig : ℕ → ℕ → Prop) (dcommit : ℕ → BlockId �
   /-- A slot decided without a direct rule was decided from an anchor. -/
   has_anchor : ∀ r, (¬ ∃ l, dcommit r l) → ¬ dskip r → dec r ≠ Verdict.undecided →
     ∃ a, Anchor Elig dec r a
-
-/-- **The exclusions Lemma 12 needs across two views**, as an interface.
-Each is a universe-level fact this arc proves — `direct_commit_unique`,
-`no_directSkip_of_commit`, `no_indirectCommit_of_fastCommit`,
-`no_indirectCommit_of_directSkip`, and Lemmas 3 and 5 for the last —
-lifted to two validators' views, where a direct verdict in a view is one
-in the universe because a view is a sub-DAG. -/
-structure Exclusions (dc dc' : ℕ → BlockId → Prop) (ds ds' : ℕ → Prop)
-    (choose : BlockId → ℕ → Option BlockId) (Above : ℕ → BlockId → Prop) : Prop where
-  /-- Two views cannot directly commit different blocks of a slot. -/
-  commit_unique : ∀ r l l', dc r l → dc' r l' → l = l'
-  /-- A direct commit in one view bars a direct skip in the other. -/
-  commit_bars_skip : ∀ r l, dc r l → ¬ ds' r
-  /-- And symmetrically. -/
-  commit_bars_skip' : ∀ r l, dc' r l → ¬ ds r
-  /-- A direct commit bars the deterministic rule naming anything else. -/
-  commit_pins_choose : ∀ r l A b, dc r l → choose A r = some b → b = l
-  /-- And symmetrically. -/
-  commit_pins_choose' : ∀ r l A b, dc' r l → choose A r = some b → b = l
-  /-- Under a direct commit the evidence reaches every anchor, so the
-  rule always finds a candidate. This is Lemma 7's indirect half, out of
-  Lemmas 3 and 5. -/
-  commit_forces_choose : ∀ r l A, Above r A → dc r l → ∃ b, choose A r = some b
-  /-- And symmetrically. -/
-  commit_forces_choose' : ∀ r l A, Above r A → dc' r l → ∃ b, choose A r = some b
-  /-- A direct skip bars the deterministic rule naming anything. -/
-  skip_bars_choose : ∀ r A b, ds r → choose A r ≠ some b
-  /-- And symmetrically. -/
-  skip_bars_choose' : ∀ r A b, ds' r → choose A r ≠ some b
 
 /-- **What the deterministic rule must satisfy.** It names only blocks
 the anchor could indirectly commit, and it names one whenever there is

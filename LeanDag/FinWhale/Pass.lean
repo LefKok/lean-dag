@@ -290,37 +290,6 @@ theorem mem_slotBlocks_of_decOf {D' : Dag Validator BlockId Payload} {N : ℕ}
         cases h
     · rw [dif_neg hc] at h; cases h
 
-/-- **Safety, with the verdicts computed rather than assumed.** Two
-validators running the reverse pass on their own views of one DAG deliver
-prefix-comparable sequences.
-
-Three of `safety_of_views`' hypotheses are gone: `WellFormed`, because
-the pass satisfies it; the slot condition, because the pass names only
-slot blocks; and finiteness, because nothing above the horizon is
-decided. What is left is `hk` — how far each validator's sequence runs —
-which is a choice of horizon, and `all_decided` is what establishes
-it. -/
-theorem safety_of_pass {V V' : D.View}
-    {choose : BlockId → ℕ → Option BlockId} (hch : ChooseSound S D choose) {N M : ℕ}
-    (hNV : ∀ b ∈ V.ids, (D.block b).round ≤ N) (hNV' : ∀ b ∈ V'.ids, (D.block b).round ≤ N)
-    {k k' : ℕ}
-    (hk : ∀ s, s < k → decOf S Elig (V.toRecord) choose M s ≠ Verdict.undecided)
-    (hk' : ∀ s, s < k' → decOf S Elig (V'.toRecord) choose M s ≠ Verdict.undecided)
-    (hlt : ∀ r a, Elig r a → r < a) (hrle : ∀ r, S.slotRound r ≤ N → r ≤ M)
-    (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ k, S.slotRound k = k)
-    (hist : BlockId → List BlockId) :
-    linearise hist (commitSeq (decOf S Elig (V.toRecord) choose M) k) <+:
-        linearise hist (commitSeq (decOf S Elig (V'.toRecord) choose M) k') ∨
-      linearise hist (commitSeq (decOf S Elig (V'.toRecord) choose M) k') <+:
-        linearise hist (commitSeq (decOf S Elig (V.toRecord) choose M) k) :=
-  safety_of_views   (wellFormed_decOf hNV hlt hrle choose)
-    (wellFormed_decOf hNV' hlt hrle choose) hch
-    (fun _ _ h => mem_slotBlocks_of_decOf (fun _ => slotBlocks_restrict) hch hlt h)
-    (fun _ _ h => mem_slotBlocks_of_decOf (fun _ => slotBlocks_restrict) hch hlt h)
-    (fun s (hs : M + 1 ≤ s) => ⟨decOf_of_gt (by omega), decOf_of_gt (by omega)⟩)
-    hk hk' hEl hid hist
-
-
 end FinWhale
 
 end LeanDag

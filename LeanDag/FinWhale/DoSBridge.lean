@@ -139,9 +139,7 @@ def Run.ofDoSValid [LinearOrder BlockId] (U : BlockUniverse Validator BlockId Pa
     (stable : ℕ) (gst_le : pace.gst ≤ stable) (liveHorizon : ℕ)
     (commits : CommitsCorrectLeaders (Slots.identity leader) (Dag.ofDoSValid U leader hdos)
       stable liveHorizon)
-    (live_le : liveHorizon ≤ paceHorizon) (roundRobin : RoundRobin leader)
-    (choose : BlockId → ℕ → Option BlockId)
-    (chooseSound : ChooseSound (Slots.identity leader) (Dag.ofDoSValid U leader hdos) choose) :
+    (live_le : liveHorizon ≤ paceHorizon) (roundRobin : RoundRobin leader) :
     Run Validator BlockId Payload where
   dag := Dag.ofDoSValid U leader hdos
   sched := (Slots.identity leader)
@@ -161,8 +159,6 @@ def Run.ofDoSValid [LinearOrder BlockId] (U : BlockUniverse Validator BlockId Pa
   live_le := live_le
   roundRobin := roundRobin
   selfParented := selfParented_ofDoSValid hdos
-  choose := choose
-  chooseSound := chooseSound
 
 /-! ## A reactive deployment over a DoS-protected DAG
 
@@ -239,7 +235,7 @@ noncomputable def Run.ofDoSValidReactive [LinearOrder BlockId]
   Run.ofDoSValid U S.leader hdos horizon rounds_le N rm.toPaceCore rounds_advance
     stable hgst N
     (commits_of_reactive rm rfl rfl hround (fun _ => rfl) (fun _ => rfl) rfl hgst hto)
-    (le_refl N) hrr (chooseLeast _ _) chooseSound_least
+    (le_refl N) hrr
 
 end FinWhale
 

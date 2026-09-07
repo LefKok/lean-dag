@@ -1,16 +1,15 @@
 import LeanDag.FinWhale.Decided
 import LeanDag.FinWhale.Model.View
+import LeanDag.FinWhale.Consistency
 
 /-!
 # FinWhale — views, and the direct rules relative to one
 
-The safety arc took each validator's direct rules as abstract predicates,
-with two conditions relating them to the universe: that a view's direct
-verdict is one of the universe (`exclusions_of_dag`), and, for liveness,
-that the universe's direct commit is one of the view (`hsees`). This file
-replaces the abstract predicates with the rules evaluated on the
-validator's own sub-DAG, and proves both conditions instead of assuming
-them.
+The direct rules are evaluated on the validator's own sub-DAG. This
+file proves what relates them to the universe — a view's direct verdict
+is one of the universe, and, for liveness, the universe's direct commit
+is one of the view (`hsees`) — and assembles FinWhale's laws for the
+anchored relation from them.
 
 A **view** is a reference-closed subset of the universe's blocks, and it
 is a `Dag` in its own right: validity and non-equivocation are inherited,
@@ -39,7 +38,10 @@ skip is not a skip of the universe, and the exclusions it takes part in
 have to be proved directly — `no_directSkip_of_commit_view` and
 `no_indirectCommit_of_directSkip_view` below. Both run through the second
 condition, the quorum of Non-FP-evidence blocks, which is what makes the
-missing block visible.
+missing block visible. The same quorum is what makes the skip grow with
+the view (`directSkip_mono`): a candidate a larger view adds is
+referenced by no block of the smaller one, so the no-evidence blocks'
+parents all decline to vote for it and none of them is evidence for it.
 -/
 
 
@@ -65,6 +67,18 @@ theorem slotBlocks_restrict {r : ℕ} : slotBlocks S (V.toRecord) r ⊆ slotBloc
   intro b hb
   simp only [slotBlocks, Finset.mem_filter] at hb ⊢
   exact ⟨blocksAt_restrict hb.1, hb.2⟩
+
+/-- Membership form. -/
+theorem slotBlocks_restrict' {r : ℕ} {b : BlockId} (h : b ∈ slotBlocks S (V.toRecord) r) :
+    b ∈ slotBlocks S D r := slotBlocks_restrict h
+
+/-- A candidate of the universe the view holds is a candidate of the
+view. -/
+theorem mem_slotBlocks_view {r : ℕ} {b : BlockId} (hb : b ∈ V.ids)
+    (h : b ∈ slotBlocks S D r) : b ∈ slotBlocks S (V.toRecord) r := by
+  simp only [slotBlocks, blocksAt, BlockRecord.View.toRecord_ids, BlockRecord.View.toRecord_block,
+    Finset.mem_filter] at h ⊢
+  exact ⟨⟨hb, h.1.2⟩, h.2⟩
 
 /-- Fewer blocks, fewer voters. -/
 theorem voters_restrict {l : BlockId} : voters (V.toRecord) l ⊆ voters D l := by
@@ -371,86 +385,6 @@ theorem no_indirectCommit_of_directSkip_view {A : BlockId} {r : ℕ} {b : BlockI
     exact mem_view_of_parentsVoting  (heq ▸ hc₂V)
       (parentsVoting_nonempty_of_fpEvidence hc₁fp)
 
-/-- **Lemma 12's side conditions, on two views of one DAG.** Nothing is
-assumed about how the views relate to the universe beyond their being
-views: the direct rules are evaluated on them, and every field is a
-theorem about that. -/
-theorem exclusions_of_views {V V' : D.View}
-    {choose : BlockId → ℕ → Option BlockId} (hch : ChooseSound S D choose) :
-    Exclusions (viewCommit S D V ) (viewCommit S D V' ) (viewSkip S D V ) (viewSkip S D V' )
-      choose (fun r A => A ∈ D.ids ∧ S.slotRound r + 3 ≤ (D.block A).round) := by
-  have hconf : ∀ (r : ℕ) (l b : BlockId), l ∈ slotBlocks S D r → b ∈ slotBlocks S D r → l ≠ b →
-      Conflicting D l b ∧ l ∈ D.ids ∧ b ∈ D.ids := by
-    intro r l b hl hb hne
-    simp only [slotBlocks, blocksAt, Finset.mem_filter] at hl hb
-    exact ⟨⟨hne, by rw [hl.1.2, hb.1.2], by rw [hl.2, hb.2]⟩, hl.1.1, hb.1.1⟩
-  refine
-    { commit_unique := fun r l l' ⟨hs, hc⟩ ⟨hs', hc'⟩ =>
-        direct_commit_unique (slotBlocks_restrict hs) (slotBlocks_restrict hs')
-          (directCommit_restrict hc) (directCommit_restrict hc')
-      commit_bars_skip := fun r l ⟨hs, hc⟩ =>
-        no_directSkip_of_commit_view (slotBlocks_restrict hs) (directCommit_restrict hc)
-      commit_bars_skip' := fun r l ⟨hs, hc⟩ =>
-        no_directSkip_of_commit_view (slotBlocks_restrict hs) (directCommit_restrict hc)
-      commit_forces_choose := fun r l A hA ⟨hs, hc⟩ =>
-        hch.total A r ⟨l, indirectCommit_of_directCommit hA.1 hA.2 (slotBlocks_restrict hs)
-          (directCommit_restrict hc)⟩
-      commit_forces_choose' := fun r l A hA ⟨hs, hc⟩ =>
-        hch.total A r ⟨l, indirectCommit_of_directCommit hA.1 hA.2 (slotBlocks_restrict hs)
-          (directCommit_restrict hc)⟩
-      skip_bars_choose := fun r A b hs hchb =>
-        no_indirectCommit_of_directSkip_view hs (hch.sound A r b hchb)
-      skip_bars_choose' := fun r A b hs hchb =>
-        no_indirectCommit_of_directSkip_view hs (hch.sound A r b hchb)
-      commit_pins_choose := ?_
-      commit_pins_choose' := ?_ } <;>
-  · intro r l A b h hchb
-    by_contra hne
-    obtain ⟨hs, hc⟩ := h
-    have hlslot := slotBlocks_restrict hs
-    have hcom := directCommit_restrict hc
-    have hind := hch.sound A r b hchb
-    obtain ⟨hcf, hlids, hbids⟩ := hconf r l b hlslot hind.1 (Ne.symm hne)
-    exact no_indirectCommit_of_directCommit hlids hbids hlslot hcf hcom hind
-
-/-! ## The capstones, with the views supplied
-
-`safety` and the liveness results were stated with the view conditions as
-hypotheses. Here they are again with views in place of them: what is
-assumed is that each validator follows the reverse pass on its own view,
-and — for liveness — that its view holds the blocks up to the horizon,
-which is what catching up means. -/
-
-/-- **Safety, on two views.** Two validators running the reverse pass on
-their own views of one DAG deliver prefix-comparable sequences. -/
-theorem safety_of_views {V V' : D.View}
-    {choose : BlockId → ℕ → Option BlockId} {dec dec' : ℕ → Verdict BlockId}
-    (hwf : WellFormed Elig (viewCommit S D V ) (viewSkip S D V ) choose dec)
-    (hwf' : WellFormed Elig (viewCommit S D V' ) (viewSkip S D V' ) choose dec')
-    (hch : ChooseSound S D choose)
-    (hslot : ∀ r A, dec r = Verdict.commit A → A ∈ slotBlocks S D r)
-    (hslot' : ∀ r A, dec' r = Verdict.commit A → A ∈ slotBlocks S D r)
-    {N : ℕ} (hbound : ∀ s, N ≤ s → dec s = Verdict.undecided ∧ dec' s = Verdict.undecided)
-    {k k' : ℕ} (hk : ∀ s, s < k → dec s ≠ Verdict.undecided)
-    (hk' : ∀ s, s < k' → dec' s ≠ Verdict.undecided)
-    (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ s, S.slotRound s = s)
-    (hist : BlockId → List BlockId) :
-    linearise hist (commitSeq dec k) <+: linearise hist (commitSeq dec' k') ∨
-      linearise hist (commitSeq dec' k') <+: linearise hist (commitSeq dec k) := by
-  have habove : ∀ (dq : ℕ → Verdict BlockId),
-      (∀ r A, dq r = Verdict.commit A → A ∈ slotBlocks S D r) →
-      ∀ r a A, Elig r a → dq a = Verdict.commit A → A ∈ D.ids ∧ S.slotRound r + 3 ≤ (D.block A).round := by
-    intro dq hq r a A hra₀ hcom
-    have hra := (hEl r a).mp hra₀
-    have hA := hq a A hcom
-    simp only [slotBlocks, blocksAt, Finset.mem_filter] at hA
-    exact ⟨hA.1.1, by simp only [hid] at hA ⊢; omega⟩
-  rcases lemma13 (lemma12 hwf hwf' (exclusions_of_views   hch)
-      (fun r a h => by have := (hEl r a).mp h; omega)
-      (habove dec hslot) (habove dec' hslot') hbound) hk hk' with h | h
-  · exact Or.inl (theorem14 hist h)
-  · exact Or.inr (theorem14 hist h)
-
 /-- **A view holding the reliable blocks sees the commits.** The liveness
 interface names its certificates as reliable validators' blocks, and a
 view holds those; the leader's own block is reliable too, the slot being
@@ -497,46 +431,320 @@ theorem all_decided_of_view {V : D.View}
     dec r ≠ Verdict.undecided :=
   all_decided hwf (sees_of_commits_of_held  hcommits hheld) hrr hEl hid hN
 
-/-- **Theorem 24, on two views.** Two validators that have caught up to
-the horizon deliver the same sequence. -/
-theorem agreement_of_views {V V' : D.View}
-    {choose : BlockId → ℕ → Option BlockId} {dec dec' : ℕ → Verdict BlockId}
-    (hwf : WellFormed Elig (viewCommit S D V ) (viewSkip S D V ) choose dec)
-    (hwf' : WellFormed Elig (viewCommit S D V' ) (viewSkip S D V' ) choose dec')
-    (hch : ChooseSound S D choose)
-    (hslot : ∀ r A, dec r = Verdict.commit A → A ∈ slotBlocks S D r)
-    (hslot' : ∀ r A, dec' r = Verdict.commit A → A ∈ slotBlocks S D r)
+/-! ## What a slot reads of its schedule
+
+Every rule reads the schedule at the slot it is deciding and nowhere
+else: the round the candidate proposes at, and who proposes it. Two
+schedules agreeing there give the same verdict, which is what a bound on
+a decision means — the relation's `skip_congr` and `link_congr`, and the
+second quantifier of `Properties.Indirect`. -/
+
+/-- **A slot's blocks read the schedule only at that slot.** -/
+theorem slotBlocks_congr {S S' : Slots Validator} {D : Dag Validator BlockId Payload} {k : ℕ}
+    (hr : S.slotRound k = S'.slotRound k) (hl : S.leader k = S'.leader k) :
+    slotBlocks S D k = slotBlocks S' D k := by
+  unfold slotBlocks; rw [hr, hl]
+
+/-- **And so does the direct skip rule.** -/
+theorem directSkip_congr {S S' : Slots Validator} {D : Dag Validator BlockId Payload} {k : ℕ}
+    (hr : S.slotRound k = S'.slotRound k) (hl : S.leader k = S'.leader k) :
+    DirectSkip S D k ↔ DirectSkip S' D k := by
+  unfold DirectSkip; rw [slotBlocks_congr hr hl, hr]
+
+/-- **The indirect rule reads the schedule only at the slot it decides.** -/
+theorem indirectCommit_congr {S S' : Slots Validator} {D : Dag Validator BlockId Payload}
+    {A : BlockId} {k : ℕ} {b : BlockId}
+    (hr : S.slotRound k = S'.slotRound k) (hl : S.leader k = S'.leader k) :
+    IndirectCommit S D A k b ↔ IndirectCommit S' D A k b := by
+  unfold IndirectCommit; rw [slotBlocks_congr hr hl, hr]
+
+open scoped Classical in
+/-- **And so does the tie-break.** -/
+theorem chooseLeast_congr [LinearOrder BlockId] {S S' : Slots Validator}
+    {D : Dag Validator BlockId Payload} {A : BlockId} {r : ℕ}
+    (hr : S.slotRound r = S'.slotRound r) (hl : S.leader r = S'.leader r) :
+    chooseLeast S D A r = chooseLeast S' D A r := by
+  have hset : (slotBlocks S D r).filter (fun b => IndirectCommit S D A r b) =
+      (slotBlocks S' D r).filter (fun b => IndirectCommit S' D A r b) := by
+    rw [slotBlocks_congr hr hl]
+    exact Finset.filter_congr fun b _ => by
+      simp [indirectCommit_congr (D := D) (A := A) (b := b) hr hl]
+  unfold chooseLeast
+  simp only [hset]
+
+/-- **A view's direct rules read the schedule only at the slot they
+decide**, since the rules they restrict do. -/
+theorem viewCommit_congr {S S' : Slots Validator} {D : Dag Validator BlockId Payload}
+    {V : D.View} {r : ℕ} {l : BlockId}
+    (hr : S.slotRound r = S'.slotRound r) (hl : S.leader r = S'.leader r) :
+    viewCommit S D V r l ↔ viewCommit S' D V r l := by
+  unfold viewCommit; rw [slotBlocks_congr hr hl]
+
+/-- The skip half. -/
+theorem viewSkip_congr {S S' : Slots Validator} {D : Dag Validator BlockId Payload}
+    {V : D.View} {r : ℕ}
+    (hr : S.slotRound r = S'.slotRound r) (hl : S.leader r = S'.leader r) :
+    viewSkip S D V r ↔ viewSkip S' D V r := by
+  unfold viewSkip; exact directSkip_congr hr hl
+
+/-! ## Views only grow -/
+
+/-- A larger view holds every block of a round the smaller one does. -/
+theorem blocksAt_mono {V' : D.View} (hsub : V.ids ⊆ V'.ids) {r : ℕ} :
+    blocksAt (V.toRecord) r ⊆ blocksAt (V'.toRecord) r := by
+  intro b hb
+  simp only [blocksAt, BlockRecord.View.toRecord_ids, BlockRecord.View.toRecord_block,
+    Finset.mem_filter] at hb ⊢
+  exact ⟨hsub hb.1, hb.2⟩
+
+/-- More blocks, more voters. -/
+theorem voters_mono {V' : D.View} (hsub : V.ids ⊆ V'.ids) {l : BlockId} :
+    voters (V.toRecord) l ⊆ voters (V'.toRecord) l := by
+  intro v hv
+  simp only [voters, supporters, mem_creatorsOf, Finset.mem_filter] at hv ⊢
+  obtain ⟨q, ⟨hq, hqref⟩, hqv⟩ := hv
+  exact ⟨q, ⟨blocksAt_mono hsub hq, hqref⟩, hqv⟩
+
+/-- And more validators declining to vote. -/
+theorem nonVoters_mono {V' : D.View} (hsub : V.ids ⊆ V'.ids) {l : BlockId} :
+    nonVoters (V.toRecord) l ⊆ nonVoters (V'.toRecord) l := by
+  intro v hv
+  simp only [nonVoters, mem_creatorsOf, Finset.mem_filter] at hv ⊢
+  obtain ⟨q, ⟨hq, hqref⟩, hqv⟩ := hv
+  exact ⟨q, ⟨blocksAt_mono hsub hq, hqref⟩, hqv⟩
+
+/-- A fast commit survives the view growing. -/
+theorem fastCommit_mono {V' : D.View} (hsub : V.ids ⊆ V'.ids) {l : BlockId}
+    (h : FastCommit (V.toRecord) l) : FastCommit (V'.toRecord) l :=
+  le_trans h (Finset.card_le_card (voters_mono hsub))
+
+/-- And a slow one: its certificates are blocks, and a certificate is a
+fact about the block's own references. -/
+theorem spCommit_mono {V' : D.View} (hsub : V.ids ⊆ V'.ids) {l : BlockId}
+    (h : SPCommit (V.toRecord) l) : SPCommit (V'.toRecord) l := by
+  obtain ⟨certs, hcard, hcerts⟩ := h
+  refine ⟨certs, hcard, fun v hv => ?_⟩
+  obtain ⟨b, hb, hbc, hcert⟩ := hcerts v hv
+  exact ⟨b, blocksAt_mono hsub hb, hbc, hcert⟩
+
+/-- So does the direct commit. -/
+theorem directCommit_mono {V' : D.View} (hsub : V.ids ⊆ V'.ids) {l : BlockId}
+    (h : DirectCommit (V.toRecord) l) : DirectCommit (V'.toRecord) l :=
+  h.elim (fun h => Or.inl (fastCommit_mono hsub h)) (fun h => Or.inr (spCommit_mono hsub h))
+
+/-- A view holds what it directly commits: a commit carries votes, and a
+vote is a reference the view is closed under. -/
+theorem mem_view_of_directCommit {l : BlockId} (h : DirectCommit (V.toRecord) l) :
+    l ∈ V.ids := by
+  have harith := params_arith (Validator := Validator)
+  rcases h with hfast | ⟨certs, hcard, hcerts⟩
+  · have hpos : 0 < (voters (V.toRecord) l).card := by
+      have := hfast
+      have hfc : fastCard Validator = Fintype.card Validator - P.p := rfl
+      simp only [FastCommit] at this
+      omega
+    obtain ⟨v, hv⟩ := Finset.card_pos.1 hpos
+    simp only [voters, supporters, mem_creatorsOf, Finset.mem_filter, blocksAt,
+      BlockRecord.View.toRecord_ids, BlockRecord.View.toRecord_block] at hv
+    obtain ⟨q, ⟨⟨hqV, -⟩, hql⟩, -⟩ := hv
+    exact V.complete q hqV l hql
+  · have hpos : 0 < certs.card := by simp only [spQuorum] at hcard; omega
+    obtain ⟨v, hv⟩ := Finset.card_pos.1 hpos
+    obtain ⟨b, hb, -, hcert⟩ := hcerts v hv
+    have hbV : b ∈ V.ids := by
+      simp only [blocksAt, BlockRecord.View.toRecord_ids, Finset.mem_filter] at hb; exact hb.1
+    have hne : (parentsVoting D b l).Nonempty := by
+      have hpos' : 0 < (parentsVoting (V.toRecord) b l).card := by
+        have := hcert; simp only [SPCertificate, spQuorum] at this; omega
+      exact Finset.card_pos.1 hpos'
+    exact mem_view_of_parentsVoting hbV hne
+
+/-- **The direct skip survives the view growing.** For a candidate the
+smaller view held, its blames and its no-evidence blocks carry over. For
+a candidate the larger view adds, no block of the smaller view
+references it: the no-evidence blocks' parents — a quorum of them, by
+validity — all decline to vote for it, and none of those blocks has a
+parent voting for it, so none is evidence for it. -/
+theorem directSkip_mono {V' : D.View} (hsub : V.ids ⊆ V'.ids) {k : ℕ}
+    (h : DirectSkip S (V.toRecord) k) : DirectSkip S (V'.toRecord) k := by
+  obtain ⟨hsp, nonev, hnon, hnonb⟩ := h
+  have harith := params_arith (Validator := Validator)
+  have hpos : 0 < nonev.card := by simp only [spQuorum] at hnon; omega
+  obtain ⟨v₀, hv₀⟩ := Finset.card_pos.1 hpos
+  obtain ⟨b₀, hb₀, -, -⟩ := hnonb v₀ hv₀
+  have hb₀V : b₀ ∈ V.ids := by
+    simp only [blocksAt, BlockRecord.View.toRecord_ids, Finset.mem_filter] at hb₀; exact hb₀.1
+  have hb₀round : (D.block b₀).round = S.slotRound k + 2 := by
+    simp only [blocksAt, BlockRecord.View.toRecord_block, Finset.mem_filter] at hb₀; exact hb₀.2
+  have hpar : quorumCard Validator ≤ (parentSet D b₀).card :=
+    (D.valid b₀ (V.subset_ids hb₀V)).quorum (by omega)
+  refine ⟨fun l hl => ?_, nonev, hnon, fun v hv => ?_⟩
+  · by_cases hlV : l ∈ V.ids
+    · exact le_trans (hsp l (mem_slotBlocks_view hlV (slotBlocks_restrict hl)))
+        (Finset.card_le_card (nonVoters_mono hsub))
+    · have hlr : (D.block l).round = S.slotRound k := by
+        simp only [slotBlocks, blocksAt, BlockRecord.View.toRecord_block, Finset.mem_filter] at hl
+        exact hl.1.2
+      refine le_trans (le_trans spQuorum_le_quorumCard hpar) (Finset.card_le_card ?_)
+      intro w hw
+      obtain ⟨q, hq, hqw⟩ := mem_creatorsOf.1 hw
+      have hqV : q ∈ V.ids := V.complete b₀ hb₀V q hq
+      have hqr : (D.block q).round = S.slotRound k + 1 := by
+        have := parent_round (V.subset_ids hb₀V) hq; omega
+      refine mem_creatorsOf.2 ⟨q, ?_, hqw⟩
+      simp only [nonVoters, blocksAt, BlockRecord.View.toRecord_ids, BlockRecord.View.toRecord_block,
+        Finset.mem_filter]
+      exact ⟨⟨hsub hqV, by rw [hqr, hlr]⟩, fun hlq => hlV (V.complete q hqV l hlq)⟩
+  · obtain ⟨b, hb, hbc, hnonfp⟩ := hnonb v hv
+    have hbV : b ∈ V.ids := by
+      simp only [blocksAt, BlockRecord.View.toRecord_ids, Finset.mem_filter] at hb; exact hb.1
+    refine ⟨b, blocksAt_mono hsub hb, hbc, fun l hl hfp => ?_⟩
+    have hfpD : FPEvidence D b l := (fpEvidence_restrict (V := V') (hsub hbV)).1 hfp
+    by_cases hlV : l ∈ V.ids
+    · exact hnonfp l (mem_slotBlocks_view hlV (slotBlocks_restrict hl))
+        ((fpEvidence_restrict (V := V) hbV).2 hfpD)
+    · exact hlV (mem_view_of_parentsVoting hbV (parentsVoting_nonempty_of_fpEvidence hfpD))
+
+/-! ## The reverse pass lands in the relation -/
+
+section Pass
+
+variable [LinearOrder BlockId]
+
+/-- **The reverse pass lands in the relation.** Every slot a well-formed
+assignment decides, it decides as the relation does: a direct verdict
+is the direct constructor; an indirect one reads the anchor — the least
+eligible unskipped slot, hence committed and with every eligible slot
+between skipped, both by the induction hypothesis — and the tie-break's
+choice is the rung's, or the rung is empty and the slot skips. -/
+theorem decided_of_wellFormed {V : D.View} {dec : ℕ → Verdict BlockId}
+    (hwf : WellFormed (EligibleAt (S := S) 2) (viewCommit S D V) (viewSkip S D V)
+      (chooseLeast S D) dec)
+    {N : ℕ} (hN : ∀ s, N ≤ s → dec s = Verdict.undecided) :
+    ∀ r, dec r ≠ Verdict.undecided → Decided D V r (dec r).optOf := by
+  suffices h : ∀ d r, N ≤ r + d → dec r ≠ Verdict.undecided → Decided D V r (dec r).optOf by
+    intro r; exact h N r (by omega)
+  intro d
+  induction d using Nat.strong_induction_on with
+  | _ d ih =>
+    intro r hNr hr
+    have hd0 : d ≠ 0 := by rintro rfl; exact hr (hN r (by omega))
+    have IH : ∀ s, r < s → dec s ≠ Verdict.undecided → Decided D V s (dec s).optOf :=
+      fun s hs hd => ih (d - 1) (by omega) s (by omega) hd
+    by_cases hdc : ∃ l, viewCommit S D V r l
+    · obtain ⟨l, hslot, hcom⟩ := hdc
+      rw [hwf.direct_commit r l ⟨hslot, hcom⟩]
+      exact Decided.directCommit (mem_slotBlocks.1 (slotBlocks_restrict hslot)) hcom
+    · by_cases hds : viewSkip S D V r
+      · rw [hwf.direct_skip r hds]
+        exact Decided.directSkip hds
+      · obtain ⟨a, hanc⟩ := hwf.has_anchor r hdc hds hr
+        rcases hva : dec a with A | - | -
+        · have hra : r < a := lt_of_eligibleAt hanc.1
+          have hA : Decided D V a (some A) := by
+            have := IH a hra (by rw [hva]; simp)
+            rwa [hva] at this
+          have hmid : ∀ m, r < m → m < a → EligibleAt (S := S) 2 r m → Decided D V m none := by
+            intro m h1 h2 h3
+            have hsk := hanc.2.2 m h3 h2
+            have := IH m h1 (by rw [hsk]; simp)
+            rwa [hsk] at this
+          have hval := hwf.indirect_commit r a A hdc hds hanc hva
+          rcases hch : chooseLeast S D A r with - | b
+          · rw [hch] at hval
+            rw [hval]
+            refine Decided.indirectSkip hra hanc.1 hA hmid (fun i hi L hL hlink => ?_)
+            have : i = 0 := by change i < 1 at hi; omega
+            subst this
+            exact absurd (chooseSound_least.total A r ⟨L, hlink⟩) (by rw [hch]; simp)
+          · rw [hch] at hval
+            rw [hval]
+            have hind := chooseSound_least.sound A r b hch
+            exact Decided.indirectCommit (i := 0) hra hanc.1 hA hmid Nat.one_pos
+              (fun _ h => absurd h (Nat.not_lt_zero _)) (mem_slotBlocks.1 hind.1) hind
+              (chooseLeast_least hch)
+        · exact absurd hva hanc.2.1
+        · exact absurd (hwf.indirect_undecided r a hdc hds hanc hva) hr
+
+end Pass
+
+/-! ## The laws
+
+What the relation asks of the rule, each a theorem above or in
+`Decision.lean` and `Anchor.lean`: a direct commit lifts from the view
+to the universe, where two of one slot are one block and a commit bars
+the skip; a direct commit is certified or evidenced in every eligible
+anchor's history, and no rival candidate is; a skipped slot links
+nothing; the least of two choices is both; and the direct rules grow
+with the view and read the schedule at their slot alone. -/
+
+/-- **FinWhale's laws.** -/
+theorem finWhaleLaws [LinearOrder BlockId] :
+    (finWhaleAnchored Validator BlockId Payload).Laws where
+  commit_unique := fun _ hL₁ hL₂ h₁ h₂ =>
+    direct_commit_unique (mem_slotBlocks.2 hL₁) (mem_slotBlocks.2 hL₂)
+      (directCommit_restrict h₁) (directCommit_restrict h₂)
+  commit_skip := fun _ hL h hskip =>
+    no_directSkip_of_commit_view (mem_slotBlocks.2 hL) (directCommit_restrict h) hskip
+  commit_link := by
+    intro S U V k j L A _ hL h hA helig
+    refine ⟨0, Nat.one_pos, indirectCommit_of_directCommit hA.1 ?_ (mem_slotBlocks.2 hL)
+      (directCommit_restrict h)⟩
+    have := (finWhaleAnchored Validator BlockId Payload).anchor_round_le hA helig
+    simp only [finWhaleAnchored_wave] at this
+    omega
+  commit_link_unique := by
+    intro S U V k j i L₁ L₂ A _ hL₁ hL₂ h _ _ _ _ hlink _
+    by_contra hne
+    exact no_indirectCommit_of_directCommit hL₁.1 hL₂.1 (mem_slotBlocks.2 hL₁)
+      ⟨hne, by rw [hL₁.2.1, hL₂.2.1], by rw [hL₁.2.2, hL₂.2.2]⟩ (directCommit_restrict h) hlink
+  skip_link := fun _ hskip _ _ => no_indirectCommit_of_directSkip_view hskip
+  link_unique := by
+    intro S U k j i L₁ L₂ A _ hL₁ hL₂ _ _ _ _ hl₁ hl₂ hm₁ hm₂
+    exact le_antisymm (not_lt.mp (show ¬ L₂ < L₁ from hm₁ L₂ hL₂ hl₂))
+      (not_lt.mp (show ¬ L₁ < L₂ from hm₂ L₁ hL₁ hl₁))
+  commit_mono := fun _ hsub h => directCommit_mono hsub h
+  skip_mono := fun _ hsub h => directSkip_mono hsub h
+  skip_congr := fun _ hround hk h => (directSkip_congr hround hk).1 h
+  link_congr := fun hround hk h => (indirectCommit_congr hround hk).1 h
+
+/-! ## The two theorems, end to end -/
+
+/-- **Theorem 24 (Agreement), end to end.** Two validators of one DAG,
+each running the reverse pass on its own view, deliver the same sequence
+at every horizon the DAG supports. The relation's agreement makes the
+verdicts agree wherever both are decided — each pass lands in the
+relation — and Lemma 23 makes them decided. `hsees` is the liveness
+interface, and the schedule that supplies it does not appear. -/
+theorem agreement_of_commits [LinearOrder BlockId] {V V' : D.View}
+    {dec dec' : ℕ → Verdict BlockId}
+    (hwf : WellFormed (EligibleAt (S := S) 2) (viewCommit S D V) (viewSkip S D V)
+      (chooseLeast S D) dec)
+    (hwf' : WellFormed (EligibleAt (S := S) 2) (viewCommit S D V') (viewSkip S D V')
+      (chooseLeast S D) dec')
     {M : ℕ} (hbound : ∀ s, M ≤ s → dec s = Verdict.undecided ∧ dec' s = Verdict.undecided)
-    {R N k : ℕ}
-    (hheld : ∀ n, R ≤ n → n ≤ N → ∀ b ∈ blocksAt D n,
-      (D.block b).creator ∈ (Correct : Finset Validator) → b ∈ V.ids)
-    (hheld' : ∀ n, R ≤ n → n ≤ N → ∀ b ∈ blocksAt D n,
-      (D.block b).creator ∈ (Correct : Finset Validator) → b ∈ V'.ids)
-    (hcommits : CommitsCorrectLeaders S D R N)
-    (hrr : RoundRobin S.leader) (hkN : max k R + (3 * F.f + 5) ≤ N)
-    (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ s, S.slotRound s = s)
+    {R N : ℕ} (hsees : SeesCommits S D (viewCommit S D V) R N)
+    (hsees' : SeesCommits S D (viewCommit S D V') R N)
+    (hrr : RoundRobin S.leader) (hid : ∀ s, S.slotRound s = s)
+    {k : ℕ} (hkN : max k R + (3 * F.f + 5) ≤ N)
     (hist : BlockId → List BlockId) :
     linearise hist (commitSeq dec k) = linearise hist (commitSeq dec' k) := by
-  have habove : ∀ (dq : ℕ → Verdict BlockId),
-      (∀ r A, dq r = Verdict.commit A → A ∈ slotBlocks S D r) →
-      ∀ r a A, Elig r a → dq a = Verdict.commit A → A ∈ D.ids ∧ S.slotRound r + 3 ≤ (D.block A).round := by
-    intro dq hq r a A hra₀ hcom
-    have hra := (hEl r a).mp hra₀
-    have hA := hq a A hcom
-    simp only [slotBlocks, blocksAt, Finset.mem_filter] at hA
-    exact ⟨hA.1.1, by simp only [hid] at hA ⊢; omega⟩
-  refine theorem24
-    (lemma12 hwf hwf' (exclusions_of_views   hch)
-      (fun r a h => by have := (hEl r a).mp h; omega)
-      (habove dec hslot) (habove dec' hslot') hbound)
-    (fun s hs => all_decided_of_view  hwf hheld hcommits hrr hEl hid (by
+  have hEl : ∀ r a, EligibleAt (S := S) 2 r a ↔ r + 2 < a := fun r a => by
+    simp only [EligibleAt, hid]
+  have hagree : ∀ s, dec s ≠ Verdict.undecided → dec' s ≠ Verdict.undecided →
+      dec s = dec' s := by
+    intro s h1 h2
+    exact Verdict.optOf_inj h1 h2 (AnchoredRule.decided_agree finWhaleLaws trivial
+      (decided_of_wellFormed hwf (fun s hs => (hbound s hs).1) s h1)
+      (decided_of_wellFormed hwf' (fun s hs => (hbound s hs).2) s h2))
+  refine theorem24 hagree
+    (fun s hs => all_decided hwf hsees hrr hEl hid (by
       have : max s R ≤ max k R := max_le_max (by omega) le_rfl
       omega))
-    (fun s hs => all_decided_of_view  hwf' hheld' hcommits hrr hEl hid (by
+    (fun s hs => all_decided hwf' hsees' hrr hEl hid (by
       have : max s R ≤ max k R := max_le_max (by omega) le_rfl
       omega))
     hist
-
 
 end FinWhale
 

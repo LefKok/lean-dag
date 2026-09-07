@@ -1,6 +1,7 @@
 import LeanDag.FinWhale.Holdings
 import LeanDag.FinWhale.Model.Protocol
 import LeanDag.FinWhale.Validity
+import LeanDag.FinWhale.View
 
 /-!
 # FinWhale — what the protocol guarantees
@@ -12,8 +13,8 @@ shape for a reader, who wants to know what FinWhale guarantees and under
 what.
 
 `Run` collects one execution of the protocol — the blocks, the schedule
-and the network that carried them, the rotation, the tie-break — and the
-four properties are stated over it. Their hypotheses are about the run
+and the network that carried them, the rotation — and the four
+properties are stated over it. Their hypotheses are about the run
 and nothing else: which validators are correct, and how far the
 horizon reaches.
 
@@ -43,8 +44,8 @@ def viewOf (hv : v ∈ (Correct : Finset Validator)) : run.dag.View :=
 /-- **The verdicts a validator reaches**, by running the reverse pass on
 its own view. -/
 noncomputable def verdicts (hv : v ∈ (Correct : Finset Validator)) : ℕ → Verdict BlockId :=
-  decOf run.sched run.sched.Elig (run.viewOf hv).toRecord
-    run.choose run.horizon
+  decOf run.sched (EligibleAt (S := run.sched) 2) (run.viewOf hv).toRecord
+    (chooseLeast run.sched run.dag) run.horizon
 
 /-- **And what it delivers**: the causal histories of its committed
 leader blocks, in order, each block once. -/
@@ -64,14 +65,8 @@ theorem view_rounds_le (hv : v ∈ (Correct : Finset Validator)) :
 
 /-- A run's schedule is the identity, so eligibility is the pass's
 `r + 2 < a` — three rounds up is three slots up. -/
-theorem elig_iff {r a : ℕ} : run.sched.Elig r a ↔ r + 2 < a := by
-  unfold Slots.Elig
-  rw [run.roundId, run.roundId]
-  omega
-
-/-- And an eligible anchor is a later slot. -/
-theorem lt_of_elig {r a : ℕ} (h : run.sched.Elig r a) : r < a := by
-  have := run.elig_iff.1 h; omega
+theorem elig_iff {r a : ℕ} : EligibleAt (S := run.sched) 2 r a ↔ r + 2 < a := by
+  simp only [EligibleAt, run.roundId]
 
 /-- The pass's slot horizon is its round horizon, because the two agree
 under the identity schedule. -/
@@ -80,15 +75,17 @@ theorem slot_le : ∀ r, run.sched.slotRound r ≤ run.horizon → r ≤ run.hor
 
 /-- Its verdicts follow the reverse pass. -/
 theorem wellFormed (hv : v ∈ (Correct : Finset Validator)) :
-    WellFormed run.sched.Elig (viewCommit run.sched run.dag (run.viewOf hv))
-      (viewSkip run.sched run.dag (run.viewOf hv)) run.choose (run.verdicts hv) :=
-  wellFormed_decOf (run.view_rounds_le hv) (fun _ _ => run.lt_of_elig) run.slot_le run.choose
+    WellFormed (EligibleAt (S := run.sched) 2) (viewCommit run.sched run.dag (run.viewOf hv))
+      (viewSkip run.sched run.dag (run.viewOf hv)) (chooseLeast run.sched run.dag)
+      (run.verdicts hv) :=
+  wellFormed_decOf (run.view_rounds_le hv) (fun _ _ => lt_of_eligibleAt (S := run.sched)) run.slot_le
+    (chooseLeast run.sched run.dag)
 
 /-- A committed verdict names a block of its slot. -/
 theorem slot_of_verdicts (hv : v ∈ (Correct : Finset Validator)) {r : ℕ} {A : BlockId}
     (h : run.verdicts hv r = Verdict.commit A) : A ∈ slotBlocks run.sched run.dag r :=
-  mem_slotBlocks_of_decOf (fun _ => slotBlocks_restrict) run.chooseSound
-    (fun _ _ => run.lt_of_elig) h
+  mem_slotBlocks_of_decOf (fun _ => slotBlocks_restrict) chooseSound_least
+    (fun _ _ => lt_of_eligibleAt (S := run.sched)) h
 
 /-- Nothing above the horizon is decided. -/
 theorem undecided_of_gt (hv : v ∈ (Correct : Finset Validator)) {s : ℕ}
@@ -127,6 +124,23 @@ theorem decidedBelow (hv : v ∈ (Correct : Finset Validator)) {k : ℕ}
   have : max s run.stable ≤ max k run.stable := max_le_max (by omega) le_rfl
   omega
 
+/-- Every verdict a validator reaches is a derivation of the relation:
+its pass is well formed and stops at the horizon. -/
+theorem decided_of_verdicts (hv : v ∈ (Correct : Finset Validator)) {r : ℕ}
+    (h : run.verdicts hv r ≠ Verdict.undecided) :
+    Decided (S := run.sched) run.dag (run.viewOf hv) r (run.verdicts hv r).optOf :=
+  decided_of_wellFormed (run.wellFormed hv) (N := run.horizon + 1)
+    (fun _ hs => run.undecided_of_gt hv (by omega)) r h
+
+/-- **Two validators never disagree**: the relation's agreement, at
+whatever slot both have decided. -/
+theorem verdicts_agree (hv : v ∈ (Correct : Finset Validator))
+    (hw : w ∈ (Correct : Finset Validator)) {s : ℕ}
+    (h1 : run.verdicts hv s ≠ Verdict.undecided) (h2 : run.verdicts hw s ≠ Verdict.undecided) :
+    run.verdicts hv s = run.verdicts hw s :=
+  Verdict.optOf_inj h1 h2 (AnchoredRule.decided_agree (S := run.sched) finWhaleLaws trivial
+    (run.decided_of_verdicts hv h1) (run.decided_of_verdicts hw h2))
+
 /-- **Agreement.** Two correct validators deliver the same sequence.
 Theorem 24, with the verdicts computed rather than assumed: each
 validator's view is what it holds, and its verdicts are the reverse pass
@@ -135,25 +149,26 @@ theorem agreement (hv : v ∈ (Correct : Finset Validator))
     (hw : w ∈ (Correct : Finset Validator)) {k : ℕ}
     (hk : max k run.stable + (3 * F.f + 5) ≤ run.liveHorizon) :
     run.delivers hv k = run.delivers hw k :=
-  agreement_of_views (V := run.viewOf hv) (V' := run.viewOf hw) (run.wellFormed hv) (run.wellFormed hw)
-    run.chooseSound (fun _ _ h => run.slot_of_verdicts hv h)
-    (fun _ _ h => run.slot_of_verdicts hw h)
+  agreement_of_commits (V := run.viewOf hv) (V' := run.viewOf hw) (run.wellFormed hv)
+    (run.wellFormed hw)
     (fun s (hs : run.horizon + 1 ≤ s) =>
       ⟨run.undecided_of_gt hv (by omega), run.undecided_of_gt hw (by omega)⟩)
-    (run.held hv) (run.held hw) run.commits run.roundRobin hk (fun _ _ => run.elig_iff) run.roundId
-    (histOf run.dag)
+    (sees_of_commits_of_held (V := run.viewOf hv) run.commits (run.held hv))
+    (sees_of_commits_of_held (V := run.viewOf hw) run.commits (run.held hw))
+    run.roundRobin run.roundId hk (histOf run.dag)
 
 /-- **Total order.** One validator's sequence is a prefix of another's,
-at any two horizons. Theorem 14 over Lemma 13. -/
+at any two horizons. Theorem 14 over Lemma 13, the agreement being the
+relation's. -/
 theorem totalOrder (hv : v ∈ (Correct : Finset Validator))
     (hw : w ∈ (Correct : Finset Validator)) {k k' : ℕ}
     (hk : max k run.stable + (3 * F.f + 5) ≤ run.liveHorizon)
     (hk' : max k' run.stable + (3 * F.f + 5) ≤ run.liveHorizon) :
-    run.delivers hv k <+: run.delivers hw k' ∨ run.delivers hw k' <+: run.delivers hv k :=
-  safety_of_pass (V := run.viewOf hv) (V' := run.viewOf hw) run.chooseSound
-    (run.view_rounds_le hv) (run.view_rounds_le hw)
-    (run.decidedBelow hv hk) (run.decidedBelow hw hk') (fun _ _ => run.lt_of_elig) run.slot_le
-    (fun _ _ => run.elig_iff) run.roundId (histOf run.dag)
+    run.delivers hv k <+: run.delivers hw k' ∨ run.delivers hw k' <+: run.delivers hv k := by
+  rcases lemma13 (fun _ h1 h2 => run.verdicts_agree hv hw h1 h2)
+    (run.decidedBelow hv hk) (run.decidedBelow hw hk') with h | h
+  · exact Or.inl (theorem14 _ h)
+  · exact Or.inr (theorem14 _ h)
 
 /-- **Integrity.** No block is delivered twice. Theorem 15 at the
 concrete order, and it asks nothing of the run: the order appends only
