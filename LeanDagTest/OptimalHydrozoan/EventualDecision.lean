@@ -88,7 +88,7 @@ example :
       (∀ L, ¬ IsLeaderBlock US 1 L) ∧ (∀ L, ¬ IsLeaderBlock US 5 L) := by
   decide
 
--- Synchronised from round 0 (the round-bounding pattern).
+-- LeanDag.Hydrozoan.Synchronised from round 0 (the round-bounding pattern).
 theorem us_synchronised : SynchronisedOn US {1, 2, 3} 0 := by
   intro n hn b hb hbr hbc a ha har hac
   have hmax : ∀ c : Fin 22, (US.block c).round ≤ 6 := by decide
@@ -140,36 +140,37 @@ def VS : LeanDag.Hydrozoan.View OS.toBlockRecord := View.full US
 -- (certificate 7 is a parent of 11); slot 1, candidate-less, is skipped
 -- through rung 3 anchored on slot 4 (15).
 theorem os_slot0_ladder : DecidedOpt OS VS 0 (some 3) :=
-  DecidedOpt.indirectCert (j := 3) (A := 11) (by omega) (by decide)
-    (DecidedOpt.directFast (by decide) (by decide))
+  DecidedOpt.indirectCommit (j := 3) (A := 11) (i := 0) (by omega) (by decide)
+    (DecidedOpt.directCommit (by decide) (Or.inl (by decide)))
     (fun i h1 h2 h3 => by
       have hi : i = 1 ∨ i = 2 := by omega
       rcases hi with rfl | rfl
       · exact absurd h3 (by decide)
       · exact absurd h3 (by decide))
+    (by decide) (fun _ h => absurd h (Nat.not_lt_zero _))
     (by decide)
-    ⟨7, by decide, Reaches.single (by decide)⟩
+    (show LeanDag.Hydrozoan.CertifiedIn US 11 3 0 from ⟨7, by decide, Reaches.single (by decide)⟩)
+    (fun _ _ _ h => h)
 theorem os_slot1_ladder : DecidedOpt OS VS 1 none :=
   DecidedOpt.indirectSkip (j := 4) (A := 15) (by omega) (by decide)
-    (DecidedOpt.directFast (by decide) (by decide))
+    (DecidedOpt.directCommit (by decide) (Or.inl (by decide)))
     (fun i h1 h2 h3 => by
       have hi : i = 2 ∨ i = 3 := by omega
       rcases hi with rfl | rfl
       · exact absurd h3 (by decide)
       · exact absurd h3 (by decide))
-    (fun L hL _ => absurd ⟨L, hL⟩ (by decide : ¬ ∃ L, IsLeaderBlock US 1 L))
-    (fun L hL _ => absurd ⟨L, hL⟩ (by decide : ¬ ∃ L, IsLeaderBlock US 1 L))
+    (fun _ _ L hL _ => absurd ⟨L, hL⟩ (by decide : ¬ ∃ L, IsLeaderBlock US 1 L))
 
 -- The direct routes reach the same verdicts, and slot agreement says
 -- they must: slot 0 fast-commits 3, slot 1 is directly skipped.
 example : ∀ v, DecidedOpt OS VS 0 v → v = some 3 := fun v h =>
   (OptimalHydrozoan.SlotAgreement.holds (Fin 4) (Fin 22) OS VS VS 0 _ v os_slot0_ladder h).symm
-example : DecidedOpt OS VS 0 (some 3) := DecidedOpt.directFast (by decide) (by decide)
+example : DecidedOpt OS VS 0 (some 3) := DecidedOpt.directCommit (by decide) (Or.inl (by decide))
 example : DecidedOpt OS VS 1 none := DecidedOpt.directSkip (by decide)
 
 -- Slot 6 has a candidate but no voting round: no direct route, and no
 -- anchor above — the table does not decide everything.
-example : IsLeaderBlock US 6 19 ∧ supporters US 19 7 = ∅ ∧ ¬ SkippedLeaderOpt US 6 := by
+example : IsLeaderBlock US 6 19 ∧ LeanDag.Hydrozoan.supporters US 19 7 = ∅ ∧ ¬ SkippedLeaderOpt US 6 := by
   decide
 
 -- Synchrony from R > 0 only: replica 1's round-1 block references the

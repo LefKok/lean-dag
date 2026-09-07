@@ -35,7 +35,6 @@ open LeanDag.Hydrozoan
 
 namespace EventualDecision
 
-open LeanDag.Hydrozoan.IndirectLiveness (SpansEligible)
 open LeanDag.Hydrozoan.EventualDecision (FairRunOn RunsRecur)
 
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
@@ -51,7 +50,7 @@ def RunDecidesBelow (U : OptUniverse Replica BlockId) : Prop :=
     q Replica ≤ T.card →                 -- ... of at least a DAG quorum,
     SynchronisedOn U.toBlockRecord T R →  -- internally synchronised from R,
     0 < c →                              -- a nonempty run of slots ...
-    SpansEligible Replica c →            -- ... every run's end anchoring all below,
+    (optimalAnchored Replica BlockId).SpansEligible c →  -- ... every run's end anchoring all below,
     R ≤ S.slotRound b →                  -- lying at or after R,
     (∀ i, i < c → S.leader (b + i) ∈ T) →  -- every run slot T-led,
     (∀ r, S.slotRound b ≤ r →            -- and T fills every round from

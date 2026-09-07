@@ -130,9 +130,9 @@ theorem nemoBandLaws : (Nemo.nemoAnchored Validator BlockId Payload).BandLaws wh
   commit_band := fun h hkk _ hlo hhi hV _ hc =>
     directCommitIn_band h hkk (by omega) (by simp only [Nemo.nemoAnchored_wave] at hhi; omega) hV hc
   skip_band := fun _ _ _ _ _ _ h => h.elim
-  link_band := fun h hA hAlo hAhi hkk hlo hhi _ _ =>
+  link_band := fun h hA hAlo hAhi hkk _ hlo hhi _ _ =>
     certifiedIn_band h hA hAlo hAhi hkk hlo (by simp only [Nemo.nemoAnchored_wave] at hhi; omega)
-  link_novel := fun h hA hAlo hAhi hkk hlo hhi _ _ hL =>
+  link_novel := fun h hA hAlo hAhi hkk _ hlo hhi _ _ hL =>
     not_certifiedIn_band_novel h hA hAlo hAhi hkk hlo
       (by simp only [Nemo.nemoAnchored_wave] at hhi; omega) hL
 

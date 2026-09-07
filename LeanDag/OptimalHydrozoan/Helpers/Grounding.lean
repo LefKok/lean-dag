@@ -85,7 +85,7 @@ theorem groundedProgress : GroundedProgress := by
     fun r hr => horizonUniverse_populated _ hm hq _ r hr
   have hsync : SynchronisedOn U.toBlockRecord (LeanDag.Hydrozoan.Correct : Finset (Fin n)) 0 :=
     horizonUniverse_synchronised _ hm hq _
-  have hspan : IndirectLiveness.SpansEligible (Fin n) 3 := by
+  have hspan : (optimalAnchored (Fin n) ℕ).SpansEligible 3 := by
     intro b' i hi
     change i + 2 < b' + 3 - 1
     omega

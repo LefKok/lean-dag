@@ -11,7 +11,7 @@ Two configurations, one per claim:
   leader is replica 2 — correct — with candidate id 0): all five
   round-2 blocks certify, the slot slow-commits and is Decided at the
   eventual view — while the fast path **cannot** fire there (five
-  supporters < q_fast = 6; actual faults 2 > p = 1). The slow path
+  LeanDag.Hydrozoan.supporters < q_fast = 6; actual faults 2 > p = 1). The slow path
   fires exactly where the fast path is out of reach: the design story
   in one pair of examples.
 * **Fast path, on a fresh low-fault configuration** `Fin 4` with
@@ -35,16 +35,16 @@ set_option maxRecDepth 8192
 example : IsLeaderBlock U6 0 0 := by decide
 
 -- Every round-2 block certifies it; the slot slow-commits.
-example : certificates U6 0 0 = {10, 11, 12, 13, 14} := by decide
+example : LeanDag.Hydrozoan.certificates U6 0 0 = {10, 11, 12, 13, 14} := by decide
 example : SlowCommit U6 0 0 := by decide
 
 -- The fast path is out of reach: only the five correct replicas voted.
-example : supporters U6 0 1 = {2, 3, 4, 5, 6} := by decide
+example : LeanDag.Hydrozoan.supporters U6 0 1 = {2, 3, 4, 5, 6} := by decide
 example : ¬ FastCommit U6 0 0 := by decide
 
 -- The harvest form: Decided at the eventual view, via the slow route.
 example : Decided U6 (View.full U6) 0 (some 0) :=
-  Decided.directSlow (by decide) (by decide)
+  Decided.directCommit (by decide) (Or.inr (by decide))
 
 -- End-to-end: the headline theorem applied to U6 with every hypothesis
 -- discharged concretely (T = Correct, R = 0, k = 0) — the mechanical
@@ -114,8 +114,8 @@ def U7 : BlockUniverse (Fin 4) (Fin 9) where
 
 -- Both rounds are fully populated by the correct replicas, and the
 -- universe is synchronised from round 0.
-example : Populated U7 0 ∧ Populated U7 1 ∧ Populated U7 2 := by decide
-theorem u7_synchronised : Synchronised U7 0 := by
+example : LeanDag.Hydrozoan.Populated U7 0 ∧ LeanDag.Hydrozoan.Populated U7 1 ∧ LeanDag.Hydrozoan.Populated U7 2 := by decide
+theorem u7_synchronised : LeanDag.Hydrozoan.Synchronised U7 0 := by
   intro n hn b hb hbr hbc a ha har hac
   have hmax : ∀ c : Fin 9, (U7.block c).round ≤ 2 := by decide
   have hb2 := hmax b
@@ -128,7 +128,7 @@ theorem u7_synchronised : Synchronised U7 0 := by
 -- The fast path fires at exact quorum: all three correct replicas vote
 -- for the correct leader's block.
 example : IsLeaderBlock U7 0 0 := by decide
-example : supporters U7 0 1 = {0, 2, 3} := by decide
+example : LeanDag.Hydrozoan.supporters U7 0 1 = {0, 2, 3} := by decide
 example : FastCommit U7 0 0 := by decide
 
 -- End-to-end: fastLatency applied with every hypothesis discharged
@@ -143,17 +143,17 @@ example : ∃ L, IsLeaderBlock U7 0 L ∧ FastCommit U7 L 0 :=
 
 -- The performance pair harvested as Decided verdicts at low faults.
 example : Decided U7 (View.full U7) 0 (some 0) :=
-  Decided.directFast (by decide) (by decide)
+  Decided.directCommit (by decide) (Or.inl (by decide))
 example : Decided U7 (View.full U7) 1 none :=
   Decided.directSkip (by decide)
 
 -- ## Direct skip at low faults: the other half of the opportunistic
 -- pair. Slot 1's leader is the crashed replica 1 — no candidate exists,
--- every round-2 block blames vacuously, and the three correct blamers
+-- every round-2 block LeanDag.Hydrozoan.blames vacuously, and the three correct blamers
 -- meet q_fast exactly.
 example : Slots.leader (Validator := Fin 4) 1 = 1 := by decide
 example : ∀ L : Fin 9, ¬ IsLeaderBlock U7 1 L := by decide
-example : blames U7 1 = {0, 2, 3} := by decide
+example : LeanDag.Hydrozoan.blames U7 1 = {0, 2, 3} := by decide
 example : SkippedLeader U7 1 := by decide
 
 -- End-to-end: skipLatency applied with every hypothesis discharged.

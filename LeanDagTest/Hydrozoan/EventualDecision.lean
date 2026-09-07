@@ -59,8 +59,8 @@ def U10 : BlockUniverse (Fin 4) (Fin 24) where
 example : IsLeaderBlock U10 2 7 ∧ IsLeaderBlock U10 3 11 ∧
     IsLeaderBlock U10 4 12 := by decide
 
--- Synchronised from round 0 (the round-bounding pattern).
-theorem u10_synchronised : Synchronised U10 0 := by
+-- LeanDag.Hydrozoan.Synchronised from round 0 (the round-bounding pattern).
+theorem u10_synchronised : LeanDag.Hydrozoan.Synchronised U10 0 := by
   intro n hn b hb hbr hbc a ha har hac
   have hmax : ∀ c : Fin 24, (U10.block c).round ≤ 7 := by decide
   have hb2 := hmax b

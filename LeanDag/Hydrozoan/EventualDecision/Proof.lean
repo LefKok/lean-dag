@@ -28,7 +28,7 @@ theorem ledgerProgress :
       [S : Slots Replica],
     ∀ (T : Finset Replica) (R k c : ℕ),
       T ⊆ (Correct : Finset Replica) → q Replica ≤ T.card →
-      0 < c → IndirectLiveness.SpansEligible Replica c →
+      0 < c → (hydrozoanAnchored Replica BlockId).SpansEligible c →
       FairRunOn Replica T c →
       ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
         ∀ (U : BlockUniverse Replica BlockId),

@@ -27,7 +27,7 @@ instance : Slots (Fin 7) :=
   Slots.uniformSingle 1 (by omega) fun k => ⟨(k + 2) % 7, by omega⟩
 
 -- Slot arithmetic under the pipelined schedule.
-example : votingRound (Fin 7) 0 = 1 ∧ decisionRound (Fin 7) 0 = 2 := by decide
+example : votingRound (Fin 7) 0 = 1 ∧ LeanDag.Hydrozoan.decisionRound (Fin 7) 0 = 2 := by decide
 
 -- Genesis id 2 is slot 0's candidate. Id 3 is not (right round, wrong
 -- creator); the equivocating id 7 is not either (wrong round and wrong
@@ -40,12 +40,12 @@ example : ¬ IsLeaderBlock U2 0 7 := by decide
 example : IsVote U2 7 2 ∧ IsVote U2 8 2 ∧ IsVote U2 9 2 := by decide
 
 -- ... so slot 0's candidate is fast-committed exactly at quorum: six
--- distinct supporters (the equivocator counted once, crashed replica 1
+-- distinct LeanDag.Hydrozoan.supporters (the equivocator counted once, crashed replica 1
 -- silent).
-example : supporters U2 2 1 = {0, 2, 3, 4, 5, 6} := by decide
+example : LeanDag.Hydrozoan.supporters U2 2 1 = {0, 2, 3, 4, 5, 6} := by decide
 example : FastCommit U2 2 0 := by decide
 
--- The view V2 misses id 11, so it sees only five supporters: a view can
+-- The view V2 misses id 11, so it sees only five LeanDag.Hydrozoan.supporters: a view can
 -- under-report a fast commit (the safe direction), never invent one.
 example : ¬ FastCommitInView U2 V2 2 0 := by decide
 
@@ -59,19 +59,19 @@ example : IsCertificate U2 14 2 := by decide
 -- further valid round-2 block here WOULD certify id 2. The structural
 -- fast-commit-with-no-possible-certificate witness arrives with the
 -- slot-safety phase.)
-example : certificates U2 2 0 = {14} := by decide
+example : LeanDag.Hydrozoan.certificates U2 2 0 = {14} := by decide
 example : certifiers U2 2 0 = {2} := by decide
 example : ¬ SlowCommit U2 2 0 := by decide
 
--- Nobody blames slot 0 — a fast-committed leader gathers no skip
+-- Nobody LeanDag.Hydrozoan.blames slot 0 — a fast-committed leader gathers no skip
 -- quorum.
-example : blames U2 0 = ∅ := by decide
+example : LeanDag.Hydrozoan.blames U2 0 = ∅ := by decide
 example : ¬ SkippedLeader U2 0 := by decide
 
 -- Slot 1 (round 1, led by replica 3): its candidate id 10 has a single
 -- voter at round 2 (id 14), far below q_fast — no fast commit.
 example : IsLeaderBlock U2 1 10 := by decide
-example : supporters U2 10 2 = {2} := by decide
+example : LeanDag.Hydrozoan.supporters U2 10 2 = {2} := by decide
 example : ¬ FastCommit U2 10 1 := by decide
 
 end Hydrozoan

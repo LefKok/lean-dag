@@ -1,4 +1,5 @@
 import LeanDag.Hydrozoan.Model.Decided
+import LeanDag.Anchored.Band
 import LeanDag.Properties.Extends
 import LeanDag.Properties.Derived.Persist
 import LeanDag.Properties.Optional.Quorate
@@ -23,19 +24,9 @@ variable {Replica : Type} [Fintype Replica] [DecidableEq Replica]
 variable {BlockId : Type} [DecidableEq BlockId] [LinearOrder BlockId]
 variable [F : LeanDag.Hydrozoan.Faults Replica]
 
-/-- **Hydrozoan as a carrier.** -/
-def rule : Properties.DagRule Replica BlockId Unit where
-  Universe := LeanDag.Hydrozoan.BlockUniverse Replica BlockId
-  View := fun U => LeanDag.Hydrozoan.View U
-  block := fun U i => U.block i
-  ids := fun U => U.ids
-  viewIds := fun V => V.ids
-  viewSound := fun V => V.subset_ids
-  viewComplete := fun V => V.complete
-  causal := fun U =>
-    { complete := fun i hi j hj => U.complete i hi j hj
-      refs_round := fun i hi j hj => (U.valid i hi).predecessor j hj }
-  Decided := fun S _ V k v => LeanDag.Hydrozoan.Decided (S := S) _ V k v
+/-- **Hydrozoan as a carrier**: the anchored relation's. -/
+abbrev rule : Properties.DagRule Replica BlockId Unit :=
+  (hydrozoanAnchored Replica BlockId).toDagRule
 
 /-- **Hydrozoan's fault model, as a counting parameter.** The slack is
 `f + c` — Byzantine and crashed together are what `Correct` excludes —

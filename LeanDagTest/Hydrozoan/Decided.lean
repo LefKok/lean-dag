@@ -7,18 +7,19 @@ import LeanDagTest.Hydrozoan.DirectRules
 
 A five-round universe under the pipelined schedule of
 `HydrozoanTest.DirectRules` (slot `k` at round `k`, leader `(k + 2) % 7`),
-exercising three `Decided` constructors end to end:
+exercising the direct commit, the direct skip and the indirect commit
+at rung `0` end to end:
 
 * slot 3 (leader 5, candidate id 24) is **fast-committed** — the anchor;
 * slot 2 (leader 4, candidate id 17) is **skipped** — every round-3
   block omits id 17 from its refs;
-* slot 0 (leader 2, candidate id 2) commits **indirectly via rung 1**,
+* slot 0 (leader 2, candidate id 2) commits **indirectly via rung 0**,
   anchored on slot 3: the anchor's refs include the certificate
   id 15.
 
-The `indirectWeak`/`indirectSkip` constructors are deliberately not
-exercised here: the scenario they need — a fast footprint with no
-certificate — is Phase 5's planned witness.
+The weak rung and the indirect skip are deliberately not exercised
+here: the scenario they need — a fast footprint with no certificate —
+is Phase 5's planned witness.
 
 Thresholds at `n = 7, f = c = k = 1`: `q_fast = 6`, `q_cert = 5`,
 `q_slow = 4`, `q_weak = 3`.
@@ -82,8 +83,8 @@ def Vfull3 : View U3 where
 
 -- Anchor eligibility: slot 3 can anchor slot 0; slot 2 — only two
 -- rounds ahead — cannot.
-example : EligibleAsAnchor (Fin 7) 0 3 := by decide
-example : ¬ EligibleAsAnchor (Fin 7) 0 2 := by decide
+example : EligibleAt (Validator := Fin 7) 2 0 3 := by decide
+example : ¬ EligibleAt (Validator := Fin 7) 2 0 2 := by decide
 
 -- Slot 3's candidate is id 24, fast-committed by all six round-4 votes.
 example : IsLeaderBlock U3 3 24 := by decide
@@ -91,7 +92,7 @@ example : FastCommitInView U3 Vfull3 24 3 := by decide
 
 -- The anchor commits via the fast path.
 example : Decided U3 Vfull3 3 (some 24) :=
-  Decided.directFast (by decide) (by decide)
+  Decided.directCommit (by decide) (Or.inl (by decide))
 
 -- Slot 2 is skipped: no round-3 block references its candidate id 17.
 example : SkippedLeaderInView U3 Vfull3 2 := by decide
@@ -100,7 +101,7 @@ example : Decided U3 Vfull3 2 none :=
 
 -- Rung 1's test holds structurally: certificate 15 sits among the
 -- anchor's refs.
-example : CertifiedIn U3 24 2 0 :=
+example : LeanDag.Hydrozoan.CertifiedIn U3 24 2 0 :=
   ⟨15, by decide, Reaches.single (by decide)⟩
 
 -- Rung 2's test also holds here (the rungs are not exclusive; the
@@ -111,7 +112,7 @@ example : WeakLinked U3 24 2 0 :=
 
 -- Negative rungs: the withheld equivocation id 8 gathers no votes at
 -- all, so neither rung can ever fire for it.
-example : ¬ CertifiedIn U3 24 8 1 := fun h =>
+example : ¬ LeanDag.Hydrozoan.CertifiedIn U3 24 8 1 := fun h =>
   absurd ((certifiedIn_iff_history (by decide)).mp h) (by decide)
 example : ¬ WeakLinked U3 24 8 1 := fun h =>
   absurd ((weakLinked_iff_history (by decide)).mp h) (by decide)
@@ -120,15 +121,17 @@ example : ¬ WeakLinked U3 24 8 1 := fun h =>
 -- on slot 3. Slots 1 and 2 are not eligible for slot 0, so the
 -- in-between premise is vacuous.
 example : Decided U3 Vfull3 0 (some 2) :=
-  Decided.indirectCert (j := 3) (A := 24) (by omega) (by decide)
-    (Decided.directFast (by decide) (by decide))
+  Decided.indirectCommit (j := 3) (A := 24) (i := 0) (by omega) (by decide)
+    (Decided.directCommit (by decide) (Or.inl (by decide)))
     (fun i h1 h2 h3 => by
       have hi : i = 1 ∨ i = 2 := by omega
       rcases hi with rfl | rfl
       · exact absurd h3 (by decide)
       · exact absurd h3 (by decide))
+    (by decide) (fun _ h => absurd h (Nat.not_lt_zero _))
     (by decide)
-    ⟨15, by decide, Reaches.single (by decide)⟩
+    (show LeanDag.Hydrozoan.CertifiedIn U3 24 2 0 from ⟨15, by decide, Reaches.single (by decide)⟩)
+    (fun _ _ _ h => h)
 
 end Hydrozoan
 

@@ -11,14 +11,14 @@ and the direct skip of `sections/optimal-algorithms.tex` (`IsFastEvidence`,
 plus their view-relative variants. Definitions only.
 
 Everything else of the direct layer is Hydrozoan's, untouched and reused:
-`IsVote`, `voteBlocks`, `IsCertificate`, `supporters`, `SlowCommit`, `blames`
+`LeanDag.Hydrozoan.IsVote`, `LeanDag.Hydrozoan.voteBlocks`, `LeanDag.Hydrozoan.IsCertificate`, `LeanDag.Hydrozoan.supporters`, `SlowCommit`, `LeanDag.Hydrozoan.blames`
 and their in-view forms (`Model/DirectRules.lean`). What changes:
 
 * the fast commit counts to `qFastOpt` instead of `qFast`;
 * the weak rung's aggregated vote count is replaced by a property of a
   *single* decision-round block — being fast evidence for a candidate —
   with quorums of such blocks counted where Hydrozoan counted votes;
-* the direct skip needs `qCert` blames **and** `qCert` decision-round
+* the direct skip needs `qCert` LeanDag.Hydrozoan.blames **and** `qCert` decision-round
   blocks that are fast evidence for no candidate; it is decided at the
   decision round, and its blame quorum is `qCert`, not `qFast`.
 
@@ -51,20 +51,20 @@ round. Two message delays; one vote fewer than Hydrozoan at the same
 committee size. -/
 def FastCommitOpt (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) (L : BlockId) (r : ℕ) :
     Prop :=
-  qFastOpt Replica ≤ (supporters U L (r + 1)).card
+  qFastOpt Replica ≤ (LeanDag.Hydrozoan.supporters U L (r + 1)).card
 
 /-- Fast commit, as judged from a single view. -/
 def FastCommitOptInView (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) (V : LeanDag.Hydrozoan.View U)
     (L : BlockId) (r : ℕ) : Prop :=
-  qFastOpt Replica ≤ (supportersInView U V L (r + 1)).card
+  qFastOpt Replica ≤ (LeanDag.Hydrozoan.supportersInView U V L (r + 1)).card
 
 /-- The replicas among `C`'s refs whose block votes for `L` — the set
 whose cardinality is the paper's `Votes(b, b_leader)` (Algorithm 3). Also
-the inner set of Hydrozoan's `IsCertificate`, which is definitionally
+the inner set of Hydrozoan's `LeanDag.Hydrozoan.IsCertificate`, which is definitionally
 `qCert ≤ (votesFor U C L).card`. -/
 def votesFor (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) (C L : BlockId) :
     Finset Replica :=
-  creatorsOf U.block (voteBlocks U C L)
+  creatorsOf U.block (LeanDag.Hydrozoan.voteBlocks U C L)
 
 section Slots
 
@@ -84,7 +84,7 @@ Stated as two implications rather than an `if`: no decidability is needed
 in the core. Not restricted to candidates, nor to decision-round blocks:
 like the paper's procedure, it may hold of a non-candidate `L` or of a
 `C` at any round; every consumer guards — `IsNoFastEvidence` and the
-decision relation with `IsLeaderBlock`, the quorum sets with `blocksAt`. -/
+decision relation with `IsLeaderBlock`, the quorum sets with `LeanDag.Hydrozoan.blocksAt`. -/
 def IsFastEvidence (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) (k : ℕ) (C L : BlockId) :
     Prop :=
   (¬ WitnessesEquivocation U k C →                 -- no equivocation witnessed:
@@ -109,17 +109,17 @@ fast evidence for no candidate — the second half of the paper's
 def NoEvidenceQuorum (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) (k : ℕ) : Prop :=
   ∃ s : Finset BlockId,                            -- some set of blocks such that
     (∀ b ∈ s,                                      -- every block in it
-      b ∈ blocksAt U (decisionRound Replica k) ∧   -- sits at slot k's decision round
+      b ∈ LeanDag.Hydrozoan.blocksAt U (LeanDag.Hydrozoan.decisionRound Replica k) ∧   -- sits at slot k's decision round
       IsNoFastEvidence U k b) ∧                    -- and is evidence for no candidate;
     qCert Replica ≤ (creatorsOf U.block s).card     -- and they come from q_cert creators
 
 /-- Slot `k` is skipped (the paper's `SkippedLeader(w)`, Optimal version):
-`qCert` blames at the voting round **and** a no-evidence quorum at the
-decision round. Hydrozoan's `blames` is reused (a blame is a voting-round
+`qCert` LeanDag.Hydrozoan.blames at the voting round **and** a no-evidence quorum at the
+decision round. Hydrozoan's `LeanDag.Hydrozoan.blames` is reused (a blame is a voting-round
 block referencing no candidate); only the threshold changes, from
 `qFast` to `qCert`, and the rule is settled one round later. -/
 def SkippedLeaderOpt (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) (k : ℕ) : Prop :=
-  qCert Replica ≤ (blames U k).card ∧              -- q_cert blames at the voting round
+  qCert Replica ≤ (LeanDag.Hydrozoan.blames U k).card ∧              -- q_cert LeanDag.Hydrozoan.blames at the voting round
     NoEvidenceQuorum U k                           -- and q_cert no-evidence decision blocks
 
 /-- The no-evidence quorum a view actually holds. -/
@@ -127,7 +127,7 @@ def NoEvidenceQuorumInView (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
     (k : ℕ) : Prop :=
   ∃ s : Finset BlockId,                            -- some set of blocks such that
     (∀ b ∈ s,                                      -- every block in it
-      b ∈ blocksAt U (decisionRound Replica k) ∧   -- sits at slot k's decision round,
+      b ∈ LeanDag.Hydrozoan.blocksAt U (LeanDag.Hydrozoan.decisionRound Replica k) ∧   -- sits at slot k's decision round,
       b ∈ V.ids ∧                                  -- is held by the view,
       IsNoFastEvidence U k b) ∧                    -- and is evidence for no candidate;
     qCert Replica ≤ (creatorsOf U.block s).card     -- and they come from q_cert creators
@@ -135,7 +135,7 @@ def NoEvidenceQuorumInView (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
 /-- Skip, as judged from a single view. -/
 def SkippedLeaderOptInView (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) (V : LeanDag.Hydrozoan.View U)
     (k : ℕ) : Prop :=
-  qCert Replica ≤ (blamesInView U V k).card ∧      -- q_cert blames in view
+  qCert Replica ≤ (LeanDag.Hydrozoan.blamesInView U V k).card ∧      -- q_cert LeanDag.Hydrozoan.blames in view
     NoEvidenceQuorumInView U V k                   -- and a no-evidence quorum in view
 
 end Slots

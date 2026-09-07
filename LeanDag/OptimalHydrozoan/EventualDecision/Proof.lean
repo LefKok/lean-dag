@@ -1,6 +1,7 @@
 import LeanDag.OptimalHydrozoan.EventualDecision.Statement
 import LeanDag.OptimalHydrozoan.DirectLiveness.Proof
-import LeanDag.OptimalHydrozoan.Helpers.IndirectLiveness
+import LeanDag.OptimalHydrozoan.Helpers.Decided
+import LeanDag.Anchored.Bounded
 import LeanDag.Hydrozoan.EventualDecision.Proof
 
 /-!
@@ -20,7 +21,6 @@ open LeanDag.Hydrozoan
 
 namespace EventualDecision
 
-open LeanDag.Hydrozoan.IndirectLiveness (SpansEligible)
 open LeanDag.Hydrozoan.EventualDecision (FairRunOn RunsRecur)
 
 variable {Replica BlockId : Type} [Fintype Replica] [DecidableEq Replica]
@@ -44,7 +44,7 @@ theorem runDecidesBelow (U : OptUniverse Replica BlockId) : RunDecidesBelow U :=
         (hpop _ hbj (by omega)) (hpop _ (by omega) (by omega))
         (hpop _ (by omega) (by omega)) hleadj V (hcov.mono (by omega))
     exact ⟨L, hdec⟩
-  exact decidedOpt_below_of_committed_run (by omega)
+  exact AnchoredRule.decided_below_of_committed_run exists_least (by omega)
     (fun i' hi' => hspan b i' hi') hrun i hi
 
 theorem holds : Statement := by
@@ -61,7 +61,7 @@ theorem ledgerProgress :
       [DecidableEq BlockId] [OptimalFaults Replica] [S : Slots Replica],
     ∀ (T : Finset Replica) (R k c : ℕ),
       T ⊆ (LeanDag.Hydrozoan.Correct : Finset Replica) → q Replica ≤ T.card →
-      0 < c → SpansEligible Replica c →
+      0 < c → (optimalAnchored Replica BlockId).SpansEligible c →
       FairRunOn Replica T c →
       ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
         ∀ (U : OptUniverse Replica BlockId),

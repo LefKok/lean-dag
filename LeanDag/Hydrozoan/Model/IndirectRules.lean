@@ -4,8 +4,10 @@ import LeanDag.CausalHistory
 /-!
 # The graded indirect rule's ingredients
 
-Trusted core: anchor eligibility and the two rung tests of the paper's
-`DecideFromAnchor` (`sections/algorithms.tex`). Rung 1 asks for an
+Trusted core: the two rung tests of the paper's `DecideFromAnchor`
+(`sections/algorithms.tex`); anchor eligibility is the shared
+`EligibleAt` at wave two, the anchor's propose round strictly past the
+slot's decision round. Rung 1 asks for an
 anchor-linked certificate; rung 2 asks for `q_weak` anchor-linked votes —
 the fast path's weak footprint, read by the indirect rule. The strict
 rung ordering (certificate before weak) is not encoded here; it lives in
@@ -22,18 +24,6 @@ bridge); the audited statement mentions only audited notions.
 namespace LeanDag
 
 namespace Hydrozoan
-
-section Eligibility
-
-variable (Replica : Type*) [S : Slots Replica]
-
-/-- Slot `j` may anchor slot `k`: `j`'s propose round lies strictly past
-`k`'s decision round (the paper's `r_decision < s.round` in
-`TryIndirectDecide`) — anchors sit at round ≥ propose + 3. -/
-def EligibleAsAnchor (k j : ℕ) : Prop :=
-  decisionRound Replica k < S.slotRound j
-
-end Eligibility
 
 section RungTests
 

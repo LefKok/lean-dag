@@ -24,8 +24,8 @@ so that its consequences are seen on data:
   route.
 
 Deferred (needs an equivocation in `UD`, or `n ≥ 5`): a Byzantine replica
-voting and blaming at once (three votes, two blames), a skip with exactly
-`qCert < qFast` blames, and an `f = 0` universe for fast/fast's
+voting and blaming at once (three votes, two LeanDag.Hydrozoan.blames), a skip with exactly
+`qCert < qFast` LeanDag.Hydrozoan.blames, and an `f = 0` universe for fast/fast's
 non-equivocation branch.
 -/
 
@@ -42,8 +42,8 @@ set_option maxRecDepth 16384
 -- Fast/fast with a rival: slot 1 of OX has candidates 4 and 5 (the
 -- Byzantine leader's two copies); 4 gathers exactly qFastOpt votes.
 example :
-    IsLeaderBlock UX 1 4 ∧ IsLeaderBlock UX 1 5 ∧ supporters UX 4 2 = {0, 1, 3} ∧
-      supporters UX 5 2 = {2} := by
+    IsLeaderBlock UX 1 4 ∧ IsLeaderBlock UX 1 5 ∧ LeanDag.Hydrozoan.supporters UX 4 2 = {0, 1, 3} ∧
+      LeanDag.Hydrozoan.supporters UX 5 2 = {2} := by
   decide
 example : FastCommitOptInView OX.toBlockRecord VX 4 (Slots.slotRound (Fin 4) 1) := by
   decide
@@ -72,7 +72,7 @@ def VDs : LeanDag.Hydrozoan.View OD.toBlockRecord := VDm
 -- level) and slow/slow agreement across two distinct views.
 example :
     ∀ L, IsLeaderBlock OD.toBlockRecord 0 L →
-      (certificates OD.toBlockRecord L (Slots.slotRound (Fin 4) 0)).Nonempty → L = 3 :=
+      (LeanDag.Hydrozoan.certificates OD.toBlockRecord L (Slots.slotRound (Fin 4) 0)).Nonempty → L = 3 :=
   fun L hL h =>
     (OptimalHydrozoan.DirectSafety.holds (Fin 4) (Fin 30) OD).2.1 0 L 3 hL (by decide) h (by decide)
 example :
@@ -120,16 +120,11 @@ theorem ox_no_anchor {j : ℕ} {A : Fin 16} (hj : 2 < j)
 -- ... hence the skipped slot commits its candidate by no route at all.
 example : ¬ DecidedOpt OX VX 0 (some 3) := fun h => by
   cases h with
-  | directFast hL hf =>
-    exact (OptimalHydrozoan.DirectSafety.holds (Fin 4) (Fin 16) OX).2.2.2.2 VX VX 0 3 hL (Or.inl hf)
+  | directCommit hL hc =>
+    exact (OptimalHydrozoan.DirectSafety.holds (Fin 4) (Fin 16) OX).2.2.2.2 VX VX 0 3 hL hc
       (by decide)
-  | directSlow hL hs =>
-    exact (OptimalHydrozoan.DirectSafety.holds (Fin 4) (Fin 16) OX).2.2.2.2 VX VX 0 3 hL (Or.inr hs)
-      (by decide)
-  | indirectCert hkj helig hanchor _ _ _ =>
-    exact ox_no_anchor helig (isLeaderBlock_of_decidedOpt hanchor)
-  | indirectEvidence hkj helig hanchor _ _ _ _ =>
-    exact ox_no_anchor helig (isLeaderBlock_of_decidedOpt hanchor)
+  | indirectCommit hkj helig hanchor _ _ _ _ _ _ =>
+    exact ox_no_anchor helig (AnchoredRule.isLeaderBlock_of_decided hanchor)
 
 end OptimalHydrozoan
 

@@ -1,4 +1,4 @@
-import LeanDag.Barnacle.Helpers.OptimalHydrozoan
+import LeanDag.Barnacle.Helpers.Hydrozoan
 import LeanDag.Barnacle.Hydrozoan.Statement
 import LeanDag.Hydrozoan.Model.Liveness
 

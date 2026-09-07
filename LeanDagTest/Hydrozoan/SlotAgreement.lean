@@ -117,21 +117,21 @@ example : SkippedLeaderInView U5 Vfull5 3 := by decide
 -- ahead to anchor it — so a derivation anchored on slot 4 must
 -- POSITIVELY dispose of slot 3 in between. Slots 1 and 2 are not
 -- eligible.
-example : EligibleAsAnchor (Fin 7) 0 4 := by decide
-example : EligibleAsAnchor (Fin 7) 0 3 := by decide
-example : ¬ EligibleAsAnchor (Fin 7) 0 2 := by decide
+example : EligibleAt (Validator := Fin 7) 2 0 4 := by decide
+example : EligibleAt (Validator := Fin 7) 2 0 3 := by decide
+example : ¬ EligibleAt (Validator := Fin 7) 2 0 2 := by decide
 
 -- Slot 0's candidate is certified by every round-2 block (all five of
 -- their refs vote for id 2).
 example : IsLeaderBlock U5 0 2 := by decide
-example : certificates U5 2 0 = {14, 15, 16, 17, 18, 19} := by decide
+example : LeanDag.Hydrozoan.certificates U5 2 0 = {14, 15, 16, 17, 18, 19} := by decide
 
 -- Slot 1's candidate id 10 is voteless: no round-2 block references
--- it, so it has no supporters, no certificates — nothing either rung
+-- it, so it has no LeanDag.Hydrozoan.supporters, no LeanDag.Hydrozoan.certificates — nothing either rung
 -- could ever find.
 example : IsLeaderBlock U5 1 10 := by decide
-example : supporters U5 10 2 = ∅ := by decide
-example : certificates U5 10 1 = ∅ := by decide
+example : LeanDag.Hydrozoan.supporters U5 10 2 = ∅ := by decide
+example : LeanDag.Hydrozoan.certificates U5 10 1 = ∅ := by decide
 
 -- The second view genuinely differs: the equivocation's second copy is
 -- withheld.
@@ -141,45 +141,48 @@ example : (7 : Fin 39) ∈ V5b.ids ∧ (8 : Fin 39) ∉ V5b.ids := by decide
 example : Decided U5 Vfull5 3 none := Decided.directSkip (by decide)
 
 -- The seam with a NON-vacuous in-between premise: slot 0 commits via
--- rung 1 anchored on slot 4; the eligible slot 3 in between is
+-- rung 0 anchored on slot 4; the eligible slot 3 in between is
 -- positively disposed of by its own skip derivation.
 example : Decided U5 Vfull5 0 (some 2) :=
-  Decided.indirectCert (j := 4) (A := 31) (by omega) (by decide)
-    (Decided.directFast (by decide) (by decide))
+  Decided.indirectCommit (j := 4) (A := 31) (i := 0) (by omega) (by decide)
+    (Decided.directCommit (by decide) (Or.inl (by decide)))
     (fun i h1 h2 h3 => by
       have hi : i = 1 ∨ i = 2 ∨ i = 3 := by omega
       rcases hi with rfl | rfl | rfl
       · exact absurd h3 (by decide)
       · exact absurd h3 (by decide)
       · exact Decided.directSkip (by decide))
+    (by decide) (fun _ h => absurd h (Nat.not_lt_zero _))
     (by decide)
-    ⟨15, by decide, Reaches.of_mem_refs (i := 31) (j := 20) (by decide)
-      (Reaches.single (by decide))⟩
+    (show LeanDag.Hydrozoan.CertifiedIn U5 31 2 0 from ⟨15, by decide,
+      Reaches.of_mem_refs (i := 31) (j := 20) (by decide) (Reaches.single (by decide))⟩)
+    (fun _ _ _ h => h)
 
 -- indirectSkip end-to-end: slot 1's candidate is voteless, so both
 -- rungs are empty at the anchor.
 example : Decided U5 Vfull5 1 none := by
   have hall : ∀ M : Fin 39, IsLeaderBlock U5 1 M → M = 10 := by decide
   refine Decided.indirectSkip (j := 4) (A := 31) (by omega) (by decide)
-    (Decided.directFast (by decide) (by decide))
+    (Decided.directCommit (by decide) (Or.inl (by decide)))
     (fun i h1 h2 h3 => by
       have hi : i = 2 ∨ i = 3 := by omega
       rcases hi with rfl | rfl
       · exact absurd h3 (by decide)
       · exact absurd h3 (by decide))
-    (fun L hL hcert => by
+    (fun i hi L hL => by
       have := hall L hL
       subst this
-      exact absurd ((certifiedIn_iff_history (by decide)).mp hcert) (by decide))
-    (fun L hL hweak => by
-      have := hall L hL
-      subst this
-      exact absurd ((weakLinked_iff_history (by decide)).mp hweak) (by decide))
+      rcases i with _ | _ | i
+      · exact fun hcert =>
+          absurd ((certifiedIn_iff_history (by decide)).mp hcert) (by decide)
+      · exact fun hweak =>
+          absurd ((weakLinked_iff_history (by decide)).mp hweak) (by decide)
+      · exact absurd hi (by change ¬ (i + 1 + 1 < 2); omega))
 
 -- The same slot from a different view, by a different route (V5b still
 -- holds six voters, so the direct fast path fires there), same verdict.
 example : Decided U5 V5b 0 (some 2) :=
-  Decided.directFast (by decide) (by decide)
+  Decided.directCommit (by decide) (Or.inl (by decide))
 
 end Hydrozoan
 

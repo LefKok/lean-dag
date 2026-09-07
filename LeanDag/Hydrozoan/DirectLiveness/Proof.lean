@@ -28,7 +28,7 @@ theorem holds : Statement := by
   have hslow := slowCommit_of_synchronised hcard hs hRk hpop1 hpop2 hL
     (by rw [hL.2.2]; exact hlead)
   exact ⟨L, hL, hslow,
-    Decided.directSlow hL (slowCommitInView_of_coversUpto hslow hcov)⟩
+    Decided.directCommit hL (Or.inr (slowCommitInView_of_coversUpto hslow hcov))⟩
 
 theorem fastLatency :
     ∀ (Replica BlockId : Type) [Fintype Replica] [DecidableEq Replica]

@@ -4,10 +4,10 @@ import LeanDag.Hydrozoan.Helpers.IndirectLiveness
 /-!
 # Proof: indirect liveness
 
-Generated. Totality is `decided_of_anchor` (three-way classical split
-over the rungs, with `Finset.min'` supplying the weak rung's least
-candidate); descent instantiates `decided_below_of_committed_run` at the
-run's last slot `n := b + c - 1`.
+Generated. Totality and the descent are the relation's
+`exists_decided_of_anchor` and `decided_below_of_committed_run` at the
+graded rule's rung choices, the latter at the run's last slot
+`n := b + c - 1`.
 -/
 
 namespace LeanDag
@@ -19,9 +19,9 @@ theorem holds : Statement := by
   intro Replica BlockId _ _ _ _ _ _ U
   constructor
   · intro V k j A helig hj hmid
-    exact decided_of_anchor helig hj hmid
+    exact AnchoredRule.exists_decided_of_anchor exists_least helig hj hmid
   · intro V b c hc hspan hrun i hi
-    exact decided_below_of_committed_run (by omega)
+    exact AnchoredRule.decided_below_of_committed_run exists_least (by omega)
       (fun i' hi' => hspan b i' hi') hrun i hi
 
 end IndirectLiveness

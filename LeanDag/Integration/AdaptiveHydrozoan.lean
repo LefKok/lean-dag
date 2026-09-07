@@ -43,9 +43,9 @@ variable {T : Finset Replica} {c : ℕ}
 the spanning clause transfers to every induced schedule verbatim. -/
 theorem spansEligible_slotsOf {hinj : Function.Injective (LeanDag.Slots.slotRound Replica)}
     {a : ℕ → Replica}
-    (h : LeanDag.Hydrozoan.IndirectLiveness.SpansEligible (S := S) Replica c) :
-    LeanDag.Hydrozoan.IndirectLiveness.SpansEligible
-      (S := slotsOf hinj a) Replica c := h
+    (h : (LeanDag.Hydrozoan.hydrozoanAnchored Replica BlockId).SpansEligible (S := S) c) :
+    (LeanDag.Hydrozoan.hydrozoanAnchored Replica BlockId).SpansEligible
+      (S := slotsOf hinj a) c := h
 
 /-- **Safety: the adaptive fixpoint over Hydrozoan is unique.** Two
 total runs on one universe, from any two views, hold the same verdicts
@@ -61,8 +61,7 @@ policy that places runs, with Hydrozoan's own liveness precondition
 holding at every height under the schedule that height computes, a total
 adaptive run exists. With the theorem above it is THE fixpoint. -/
 theorem adaptiveRun_exists_hz (hc : 0 < c) (hruns : Adaptive.PlacesRuns P T c)
-    (hspans : LeanDag.Hydrozoan.IndirectLiveness.SpansEligible
-      (S := S) Replica c)
+    (hspans : (LeanDag.Hydrozoan.hydrozoanAnchored Replica BlockId).SpansEligible (S := S) c)
     (V : LeanDag.Hydrozoan.View U)
     (hlive : ∀ (E : ℕ) (A : Adaptive.PartialRun P U V E),
       LeanDag.Hydrozoan.hzLive (slotsOf P.inj (fun m => P.pick U V A.vdct m)) V T
@@ -78,8 +77,7 @@ on a slot that nobody voted for does not stall Hydrozoan: the anchored
 rule disposes of it. No direct skip is needed, and the fill is not
 mentioned. -/
 theorem decidedBelow_of_run_hz {c : ℕ} (hc : 0 < c)
-    (hspans : LeanDag.Hydrozoan.IndirectLiveness.SpansEligible
-      (S := S) Replica c)
+    (hspans : (LeanDag.Hydrozoan.hydrozoanAnchored Replica BlockId).SpansEligible (S := S) c)
     (V : LeanDag.Hydrozoan.View U) (b : ℕ)
     (hlive : LeanDag.Hydrozoan.hzLive S V T b (b + c))
     (hlead : ∀ i, i < c → S.leader (b + i) ∈ T) :

@@ -23,8 +23,8 @@ namespace LeanDag
 
 open Properties
 
-variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
-variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
+variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 variable {P : Validity Validator BlockId Payload} {honest : Finset Validator}
 
 namespace AnchoredRule
@@ -232,6 +232,32 @@ theorem exists_least_of_lt [LinearOrder BlockId] {A : BlockId} {i k : ℕ}
   rw [hlt] at ht
   exact absurd (s.min'_le L' (Finset.mem_filter.mpr ⟨hL'.1, hL', hl'⟩)) (not_le.mpr ht)
 
+/-! ## Totality at an anchor -/
+
+/-- **Under the nearest eligible committed anchor the slot is decided**:
+the first nonempty rung's choice commits, or every rung is empty and the
+slot skips. -/
+theorem exists_decided_of_anchor
+    (hleast : ∀ {A : BlockId} {i k : ℕ}, i < R.rungs →
+      (∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k) →
+      ∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k ∧
+        R.Least (S := S) U A i k L)
+    {V : U.View} {k j : ℕ} {A : BlockId} (helig : R.Eligible (S := S) k j)
+    (hj : R.Decided (S := S) U V j (some A))
+    (hmid : ∀ m, k < m → m < j → R.Eligible (S := S) k m → R.Decided (S := S) U V m none) :
+    ∃ v, R.Decided (S := S) U V k v := by
+  classical
+  have hkj : k < j := R.lt_of_eligible helig
+  by_cases hc : ∃ r, r < R.rungs ∧ ∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link r U A L S k
+  · let r₀ := Nat.find hc
+    have hr₀ := Nat.find_spec hc
+    obtain ⟨L, hL, hlink, hmin⟩ := hleast hr₀.1 hr₀.2
+    refine ⟨some L, Decided.indirectCommit (i := r₀) hkj helig hj hmid hr₀.1 ?_ hL hlink hmin⟩
+    intro r' hr' L' hL' hlink'
+    exact Nat.find_min hc hr' ⟨lt_trans hr' hr₀.1, L', hL', hlink'⟩
+  · push Not at hc
+    exact ⟨none, Decided.indirectSkip hkj helig hj hmid fun r hr L hL hlink => hc r hr L hL hlink⟩
+
 /-! ## The descent -/
 
 /-- **A committed run of eligible span decides everything below it**,
@@ -320,7 +346,20 @@ theorem decided_below_of_committed_run
     hspan hrun' i hi
   exact ⟨v, hv.toDecided⟩
 
-variable [P.Mechanised]
+end AnchoredRule
+
+/-! ## Into the derived relation -/
+
+section Mechanised
+
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
+variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
+variable {P : Validity Validator BlockId Payload} {honest : Finset Validator}
+variable {R : AnchoredRule Validator BlockId Payload P honest} [S : Slots Validator]
+variable {I : Slots Validator → BlockRecord Validator BlockId Payload P honest → Prop}
+variable {U : BlockRecord Validator BlockId Payload P honest} [P.Mechanised]
+
+namespace AnchoredRule
 
 /-- **The bounded relation lands in the derived one.** -/
 theorem decidedBelow_of_decidedWithin (hl : R.Laws I) (hI : I S U) {V : U.View}
@@ -331,5 +370,7 @@ theorem decidedBelow_of_decidedWithin (hl : R.Laws I) (hI : I S U) {V : U.View}
       (fun m hm => (hlead m hm).symm) h).toDecided⟩
 
 end AnchoredRule
+
+end Mechanised
 
 end LeanDag

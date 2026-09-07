@@ -30,7 +30,7 @@ theorem subset_blamesInView {V : LeanDag.Hydrozoan.View U} {T : Finset Replica} 
     (hpres : ∀ v ∈ T, ∃ c ∈ V.ids, (U.block c).creator = v ∧
       (U.block c).round = S.slotRound k + 1)
     (huns : ∀ c ∈ V.ids, (U.block c).creator ∈ T → (U.block c).round = S.slotRound k + 1 →
-      ∀ L, LeanDag.Hydrozoan.IsLeaderBlock U k L → L ∉ (U.block c).refs) :
+      ∀ L, LeanDag.IsLeaderBlock U k L → L ∉ (U.block c).refs) :
     T ⊆ LeanDag.Hydrozoan.blamesInView U V k := by
   intro v hv
   obtain ⟨c, hcV, hca, hcr⟩ := hpres v hv
@@ -46,7 +46,7 @@ theorem decided_none_of_unsupported {V : LeanDag.Hydrozoan.View U} {T : Finset R
     (hpres : ∀ v ∈ T, ∃ c ∈ V.ids, (U.block c).creator = v ∧
       (U.block c).round = S.slotRound k + 1)
     (huns : ∀ c ∈ V.ids, (U.block c).creator ∈ T → (U.block c).round = S.slotRound k + 1 →
-      ∀ L, LeanDag.Hydrozoan.IsLeaderBlock U k L → L ∉ (U.block c).refs) :
+      ∀ L, LeanDag.IsLeaderBlock U k L → L ∉ (U.block c).refs) :
     LeanDag.Hydrozoan.Decided U V k none :=
   LeanDag.Hydrozoan.Decided.directSkip
     (le_trans hq (Finset.card_le_card (subset_blamesInView hpres huns)))
@@ -62,7 +62,7 @@ theorem skipsUnsupported :
     obtain ⟨c, hcV, hca, hcr⟩ := hpres v hv
     exact ⟨c, hcV, hca, hcr⟩
   have huns' : ∀ c ∈ V.ids, (U.block c).creator ∈ T → (U.block c).round = S'.slotRound k + 1 →
-      ∀ L, @LeanDag.Hydrozoan.IsLeaderBlock _ _ _ _ _ S' U k L →
+      ∀ L, @LeanDag.IsLeaderBlock _ _ _ _ _ S' U k L →
         L ∉ (U.block c).refs :=
     fun c hcV hT hr L hL => huns c hcV hT hr L hL
   exact decided_none_of_unsupported (S := S') hq hpres' huns'

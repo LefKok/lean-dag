@@ -8,20 +8,20 @@ import LeanDagTest.Hydrozoan.DirectRules
 
 The fast path's structural hazard made into a model: a slot
 fast-commits while
-**zero certificates exist in the whole universe** — not "not yet"
+**zero LeanDag.Hydrozoan.certificates exist in the whole universe** — not "not yet"
 (the temporal reading pinned in `HydrozoanTest/DirectRules.lean`) but
 structurally, through Byzantine equivocation: replica 0's second copy
 (id 8) omits the leader from its refs, and every round-2 block
 adopts that copy, capping every certificate candidate at 4 < q_cert
 vote-creators. This universe is the anti-vacuity guard for
 `FastSlowAgreement` (the theorem is not true merely because a fast
-commit drags certificates along) and the consistency argument's
+commit drags LeanDag.Hydrozoan.certificates along) and the consistency argument's
 Case 1: the fast path leaves only its weak footprint for the indirect
 rule.
 
 The view `V4` withholds one voter (id 13), so slot 0's **direct rules
-all fail in view** — no fast quorum, no certificates, no blames — and
-the `indirectWeak` constructor is exercised end to end as the *only*
+all fail in view** — no fast quorum, no LeanDag.Hydrozoan.certificates, no LeanDag.Hydrozoan.blames — and
+the weak rung is exercised end to end as the *only*
 route, with its rung-1-empty and tie-break premises discharged
 non-vacuously.
 
@@ -88,13 +88,13 @@ def V4 : View U4 where
 
 -- The universe fast-commits slot 0's candidate: six of seven creators
 -- vote (the equivocator counts once, through its voting copy).
-example : supporters U4 2 1 = {0, 2, 3, 4, 5, 6} := by decide
+example : LeanDag.Hydrozoan.supporters U4 2 1 = {0, 2, 3, 4, 5, 6} := by decide
 example : FastCommit U4 2 0 := by decide
 
--- THE STRUCTURAL FACT: zero certificates for the fast-committed leader
+-- THE STRUCTURAL FACT: zero LeanDag.Hydrozoan.certificates for the fast-committed leader
 -- exist anywhere — every round-2 block's votes for id 2 stop at four
 -- creators.
-example : certificates U4 2 0 = ∅ := by decide
+example : LeanDag.Hydrozoan.certificates U4 2 0 = ∅ := by decide
 example : ¬ SlowCommit U4 2 0 := by decide
 
 -- In the view V4 (missing one voter), every direct rule fails: the
@@ -118,19 +118,22 @@ example : FastCommitInView U4 V4 24 3 := by decide
 -- certificate set, and the tie-break against the (unique) candidate.
 example : Decided U4 V4 0 (some 2) := by
   have hall : ∀ M : Fin 32, IsLeaderBlock U4 0 M → M = 2 := by decide
-  refine Decided.indirectWeak (j := 3) (A := 24) (by omega) (by decide)
-    (Decided.directFast (by decide) (by decide))
+  refine Decided.indirectCommit (j := 3) (A := 24) (i := 1) (by omega) (by decide)
+    (Decided.directCommit (by decide) (Or.inl (by decide)))
     (fun i h1 h2 h3 => by
       have hi : i = 1 ∨ i = 2 := by omega
       rcases hi with rfl | rfl
       · exact absurd h3 (by decide)
       · exact absurd h3 (by decide))
-    (fun L' hL' hcert => by
+    (by decide)
+    (fun i hi L' hL' hcert => by
       have := hall L' hL'
+      subst this
+      have : i = 0 := by omega
       subst this
       exact absurd ((certifiedIn_iff_history (by decide)).mp hcert) (by decide))
     (by decide)
-    ((weakLinked_iff_history (by decide)).mpr (by decide))
+    (show WeakLinked U4 24 2 0 from (weakLinked_iff_history (by decide)).mpr (by decide))
     (fun L' hL' _ => by
       have := hall L' hL'
       subst this

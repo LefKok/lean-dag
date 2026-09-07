@@ -311,7 +311,7 @@ structure BandLaws : Prop where
     {lo hi g g' : ℕ} {A L : BlockId} {k k' i : ℕ},
     AgreeBand R.toDagRule U U' lo hi g g' → A ∈ U.ids →
     lo ≤ (U.block A).round + g → (U.block A).round + g ≤ hi →
-    S.slotRound k + g = S'.slotRound k' + g' →
+    S.slotRound k + g = S'.slotRound k' + g' → S.leader k = S'.leader k' →
     lo ≤ S.slotRound k + g → S.slotRound k + R.wave + g ≤ hi → i < R.rungs →
     IsLeaderBlock (S := S) U k L →
     (R.Link i U' A L S' k' ↔ R.Link i U A L S k)
@@ -320,7 +320,7 @@ structure BandLaws : Prop where
     {lo hi g g' : ℕ} {A L : BlockId} {k k' i : ℕ},
     AgreeBand R.toDagRule U U' lo hi g g' → A ∈ U.ids →
     lo ≤ (U.block A).round + g → (U.block A).round + g ≤ hi →
-    S.slotRound k + g = S'.slotRound k' + g' →
+    S.slotRound k + g = S'.slotRound k' + g' → S.leader k = S'.leader k' →
     lo ≤ S.slotRound k + g → S.slotRound k + R.wave + g ≤ hi → i < R.rungs →
     IsLeaderBlock (S := S') U' k' L → L ∉ U.ids → ¬ R.Link i U' A L S' k'
 
@@ -336,8 +336,8 @@ theorem rungEmpty_band (h : AgreeBand R.toDagRule U U' lo hi g g') {A : BlockId}
   intro L hL hlink
   by_cases hLo : L ∈ U.ids
   · have hL' := isLeaderBlock_band_old h hkk hlk hlo (by omega) hLo hL
-    exact he L hL' ((hb.link_band h hA hAlo hAhi hkk hlo hhi hi hL').mp hlink)
-  · exact hb.link_novel h hA hAlo hAhi hkk hlo hhi hi hL hLo hlink
+    exact he L hL' ((hb.link_band h hA hAlo hAhi hkk hlk hlo hhi hi hL').mp hlink)
+  · exact hb.link_novel h hA hAlo hAhi hkk hlk hlo hhi hi hL hLo hlink
 
 /-- The tie-break's choice carries across the band. -/
 theorem least_band (h : AgreeBand R.toDagRule U U' lo hi g g') {A L : BlockId} {k k' i : ℕ}
@@ -348,8 +348,8 @@ theorem least_band (h : AgreeBand R.toDagRule U U' lo hi g g') {A L : BlockId} {
   intro L' hL' hlink
   by_cases hLo : L' ∈ U.ids
   · have hL'' := isLeaderBlock_band_old h hkk hlk hlo (by omega) hLo hL'
-    exact hm L' hL'' ((hb.link_band h hA hAlo hAhi hkk hlo hhi hi hL'').mp hlink)
-  · exact absurd hlink (hb.link_novel h hA hAlo hAhi hkk hlo hhi hi hL' hLo)
+    exact hm L' hL'' ((hb.link_band h hA hAlo hAhi hkk hlk hlo hhi hi hL'').mp hlink)
+  · exact absurd hlink (hb.link_novel h hA hAlo hAhi hkk hlk hlo hhi hi hL' hLo)
 
 /-- **Every verdict reads a band of rounds.** One induction over the
 derivation. The direct cases read the slot's wave and stop; the indirect
@@ -436,7 +436,7 @@ theorem banded_aux {V : U.View} {k : ℕ} {v : Option BlockId}
       · intro i' hi'
         exact rungEmpty_band hb hab hAL.1 hAlo hAhi hkk hlk (by omega) (by omega)
           (lt_trans hi' hi) (hemp i' hi')
-      · exact (hb.link_band hab hAL.1 hAlo hAhi hkk (by omega) (by omega) hi hL).mpr hlink
+      · exact (hb.link_band hab hAL.1 hAlo hAhi hkk hlk (by omega) (by omega) hi hL).mpr hlink
       · exact least_band hb hab hAL.1 hAlo hAhi hkk hlk (by omega) (by omega) hi hmin
   | @indirectSkip k j A hkj helig hanchor hmid hnone ihj ihmid =>
       obtain ⟨topj, htopj, hjt⟩ := ihj

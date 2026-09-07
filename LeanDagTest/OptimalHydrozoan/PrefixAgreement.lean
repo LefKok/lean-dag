@@ -57,34 +57,37 @@ example : DecidesBelow OD VD gD 7 := by
   intro k hk
   have hcase : k = 0 ∨ k = 1 ∨ k = 2 ∨ k = 3 ∨ k = 4 ∨ k = 5 ∨ k = 6 := by omega
   rcases hcase with rfl | rfl | rfl | rfl | rfl | rfl | rfl
-  · exact DecidedOpt.directSlow (by decide) (by decide)
+  · exact DecidedOpt.directCommit (by decide) (Or.inr (by decide))
   · exact skipD1
   · exact od_slot2_evidence
-  · exact DecidedOpt.indirectCert (j := 6) (A := 22) (by omega) (by decide)
-      (DecidedOpt.directFast (by decide) (by decide))
+  · exact DecidedOpt.indirectCommit (j := 6) (A := 22) (i := 0) (by omega) (by decide)
+      (DecidedOpt.directCommit (by decide) (Or.inl (by decide)))
       (fun i h1 h2 h3 => by
         have hi : i = 4 ∨ i = 5 := by omega
         rcases hi with rfl | rfl
         · exact absurd h3 (by decide)
         · exact absurd h3 (by decide))
+      (by decide) (fun _ h => absurd h (Nat.not_lt_zero _))
       (by decide)
-      ⟨18, by decide, Reaches.single (by decide)⟩
+      (show LeanDag.Hydrozoan.CertifiedIn UD 22 13 3 from
+        ⟨18, by decide, Reaches.single (by decide)⟩)
+      (fun _ _ _ h => h)
   · exact skipD4
   · exact skipD5
-  · exact DecidedOpt.directFast (by decide) (by decide)
+  · exact DecidedOpt.directCommit (by decide) (Or.inl (by decide))
 
 -- The actual output sequence: skips dropped, slot order kept.
 example : commitSeq gD 7 = [3, 8, 13, 22] := rfl
 
 -- The shorter replica, in the one-vote-short view: slot 0 fast, slot 1
--- skipped, both directly; slot 2 has no direct route there (its blames
+-- skipped, both directly; slot 2 has no direct route there (its LeanDag.Hydrozoan.blames
 -- pass, its no-evidence quorum fails, no certificate, one vote) and no
 -- anchor (the view cannot fast-commit 22), so the replica stops there.
 theorem vds_gDs : DecidesBelow OD VDs' gDs 2 := by
   intro k hk
   have hcase : k = 0 ∨ k = 1 := by omega
   rcases hcase with rfl | rfl
-  · exact DecidedOpt.directFast (by decide) (by decide)
+  · exact DecidedOpt.directCommit (by decide) (Or.inl (by decide))
   · exact DecidedOpt.directSkip (by decide)
 example :
     ¬ FastCommitOptInView OD.toBlockRecord VDs' 8 (Slots.slotRound (Fin 4) 2) ∧
@@ -108,10 +111,10 @@ theorem vd_gD : DecidesBelow OD VD gD 7 := by
   intro k hk
   have hcase : k = 0 ∨ k = 1 ∨ k = 2 ∨ k = 3 ∨ k = 4 ∨ k = 5 ∨ k = 6 := by omega
   rcases hcase with rfl | rfl | rfl | rfl | rfl | rfl | rfl
-  · exact DecidedOpt.directFast (by decide) (by decide)
+  · exact DecidedOpt.directCommit (by decide) (Or.inl (by decide))
   · have hall : ∀ M : Fin 30, IsLeaderBlock UD 1 M → M = 29 := by decide
     refine DecidedOpt.indirectSkip (j := 6) (A := 22) (by omega) (by decide)
-      (DecidedOpt.directFast (by decide) (by decide))
+      (DecidedOpt.directCommit (by decide) (Or.inl (by decide)))
       (fun i h1 h2 h3 => by
         have hi : i = 2 ∨ i = 3 ∨ i = 4 ∨ i = 5 := by omega
         rcases hi with rfl | rfl | rfl | rfl
@@ -119,19 +122,20 @@ theorem vd_gD : DecidesBelow OD VD gD 7 := by
         · exact absurd h3 (by decide)
         · exact skipD4
         · exact skipD5)
-      (fun L hL hcert => by
+      (fun i hi L hL => by
         have := hall L hL
         subst this
-        exact absurd ((certifiedIn_iff_history (by decide)).mp hcert) (by decide))
-      (fun L hL hev => by
-        have := hall L hL
-        subst this
-        exact absurd ((evidenceLinked_iff_history (by decide)).mp hev) (by decide))
+        rcases i with _ | _ | i
+        · exact fun hcert =>
+            absurd ((certifiedIn_iff_history (by decide)).mp hcert) (by decide)
+        · exact fun hev =>
+            absurd ((evidenceLinked_iff_history (by decide)).mp hev) (by decide)
+        · exact absurd hi (by change ¬ (i + 1 + 1 < 2); omega))
   · exact od_slot2_evidence
-  · exact DecidedOpt.directFast (by decide) (by decide)
+  · exact DecidedOpt.directCommit (by decide) (Or.inl (by decide))
   · exact skipD4
   · exact skipD5
-  · exact DecidedOpt.directFast (by decide) (by decide)
+  · exact DecidedOpt.directCommit (by decide) (Or.inl (by decide))
 
 -- The theorem's prefix and ledger conjuncts on data: the short replica's
 -- output is a prefix of the full one, and so are their ledgers.
@@ -177,7 +181,7 @@ instance threeSlotsOpt : Slots (Fin 3) where
 /-- Nine blocks over four rounds, replica `0` silent after genesis. Ids
 0–2: genesis; 2 is slot 0's candidate (leader `2`). Round 1: 3, 4 by `1`,
 `2` reference `{1, 2}` — two votes for 2, exactly `qFastOpt`. Round 2: 5,
-6 by `1`, `2` reference `{3, 4}` — certificates for 2; 5 is slot 2's
+6 by `1`, `2` reference `{3, 4}` — LeanDag.Hydrozoan.certificates for 2; 5 is slot 2's
 candidate (leader `1`); both blame slot 1 (leader `0`, no candidate).
 Round 3: 7, 8 by `1`, `2` reference `{5, 6}` — two votes for 5, and
 no-evidence for slot 1. -/
@@ -224,20 +228,20 @@ theorem vc_gC : DecidesBelow OC VC gC 3 := by
   intro k hk
   have hcase : k = 0 ∨ k = 1 ∨ k = 2 := by omega
   rcases hcase with rfl | rfl | rfl
-  · exact DecidedOpt.directFast (by decide) (by decide)
+  · exact DecidedOpt.directCommit (by decide) (Or.inl (by decide))
   · exact DecidedOpt.directSkip (by decide)
-  · exact DecidedOpt.directFast (by decide) (by decide)
+  · exact DecidedOpt.directCommit (by decide) (Or.inl (by decide))
 
 -- Slot 0 also slow-commits (two certifiers), and the crashed leader's
--- slot is skipped by two blames and two vacuous no-evidence blocks.
-example : DecidedOpt OC VC 0 (some 2) := DecidedOpt.directSlow (by decide) (by decide)
-example : blames UC 1 = {1, 2} ∧ (∀ L, ¬ IsLeaderBlock UC 1 L) := by decide
+-- slot is skipped by two LeanDag.Hydrozoan.blames and two vacuous no-evidence blocks.
+example : DecidedOpt OC VC 0 (some 2) := DecidedOpt.directCommit (by decide) (Or.inr (by decide))
+example : LeanDag.Hydrozoan.blames UC 1 = {1, 2} ∧ (∀ L, ¬ IsLeaderBlock UC 1 L) := by decide
 
 -- The Optimal headline theorems at f = 0: no view skips slot 0, and
 -- every replica that has decided below 3 outputs [2, 5].
 example : ∀ V : LeanDag.Hydrozoan.View OC.toBlockRecord, ¬ DecidedOpt OC V 0 none := fun V h =>
   Option.some_ne_none 2 (OptimalHydrozoan.SlotAgreement.holds (Fin 3) (Fin 9) OC VC V 0 _ none
-    (DecidedOpt.directFast (by decide) (by decide)) h)
+    (DecidedOpt.directCommit (by decide) (Or.inl (by decide))) h)
 example :
     ∀ (V : LeanDag.Hydrozoan.View OC.toBlockRecord) (g : ℕ → Option (Fin 9)),
       DecidesBelow OC V g 3 → commitSeq g 3 = [2, 5] :=

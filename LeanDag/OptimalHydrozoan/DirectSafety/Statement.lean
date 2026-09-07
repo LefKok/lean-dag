@@ -15,15 +15,15 @@ applied to `U.toBlockRecord`; the other three read the Optimal rules.
 Each claim rests on a row of `Optimal/ThresholdArithmetic`:
 `FastUniqueness` for fast/fast (guarded by `f ≥ 1`; at `f = 0` no replica
 equivocates and a slot holds a single candidate, so agreement is by
-non-equivocation); `CertUniqueness` for certificates, for slow/slow, and
-for the slow half of commit/skip (the `qCert` blames of the Optimal skip
+non-equivocation); `CertUniqueness` for LeanDag.Hydrozoan.certificates, for slow/slow, and
+for the slow half of commit/skip (the `qCert` LeanDag.Hydrozoan.blames of the Optimal skip
 against the `qCert` votes inside a certificate); `CertFastExclusion` for
-fast/slow and for the fast half of commit/skip (the blames against the
+fast/slow and for the fast half of commit/skip (the LeanDag.Hydrozoan.blames against the
 `qFastOpt` fast voters).
 
 Commit/skip here is the paper's `lem:opt-commit-excludes-direct-skip`
 restricted to *direct* commits; its no-evidence half is never needed
-against them (the blames suffice) and only matters against the evidence
+against them (the LeanDag.Hydrozoan.blames suffice) and only matters against the evidence
 rung, which is slot agreement's business.
 
 Statements only; the proofs live in `Proof.lean` (generated).
@@ -49,7 +49,7 @@ def FastFastAgreement (U : OptUniverse Replica BlockId) : Prop :=
     FastCommitOptInView U.toBlockRecord V₂ L₂ (S.slotRound k) → L₁ = L₂
 
 /-- **Certificate uniqueness**: Hydrozoan's claim, on the underlying
-universe — certificates are unchanged. -/
+universe — LeanDag.Hydrozoan.certificates are unchanged. -/
 def CertUniqueness (U : OptUniverse Replica BlockId) : Prop :=
   Hydrozoan.DirectSafety.CertUniqueness U.toBlockRecord
 

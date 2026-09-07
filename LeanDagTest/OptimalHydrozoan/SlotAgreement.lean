@@ -50,20 +50,24 @@ set_option maxRecDepth 16384
 theorem). -/
 theorem od_slot2_evidence : DecidedOpt OD VD 2 (some 8) := by
   have hall : ∀ M : Fin 30, IsLeaderBlock UD 2 M → M = 8 := by decide
-  refine DecidedOpt.indirectEvidence (j := 6) (A := 22) (by omega) (by decide)
-    (DecidedOpt.directFast (by decide) (by decide))
+  refine DecidedOpt.indirectCommit (j := 6) (A := 22) (i := 1) (by omega) (by decide)
+    (DecidedOpt.directCommit (by decide) (Or.inl (by decide)))
     (fun i h1 h2 h3 => by
       have hi : i = 3 ∨ i = 4 ∨ i = 5 := by omega
       rcases hi with rfl | rfl | rfl
       · exact absurd h3 (by decide)
       · exact absurd h3 (by decide)
       · exact skipD5)
-    (fun L' hL' hcert => by
+    (by decide)
+    (fun i hi L' hL' hcert => by
       have := hall L' hL'
+      subst this
+      have : i = 0 := by omega
       subst this
       exact absurd ((certifiedIn_iff_history (by decide)).mp hcert) (by decide))
     (by decide)
-    ((evidenceLinked_iff_history (by decide)).mpr (by decide))
+    (show EvidenceLinked UD 22 8 2 from (evidenceLinked_iff_history (by decide)).mpr (by decide))
+    (fun _ _ _ h => h)
 
 -- The evidence-rung verdict is the only one, in every view.
 example : ∀ (V : LeanDag.Hydrozoan.View OD.toBlockRecord) v, DecidedOpt OD V 2 v → v = some 8 :=
@@ -80,7 +84,7 @@ example : ∀ L, DecidedOpt OD VD 2 (some L) → L = 8 := fun L h =>
 -- direct and indirect).
 example : ∀ V : LeanDag.Hydrozoan.View OD.toBlockRecord, ¬ DecidedOpt OD V 0 none := fun V h =>
   Option.some_ne_none 3 (OptimalHydrozoan.SlotAgreement.holds (Fin 4) (Fin 30) OD VD V 0 _ none
-    (DecidedOpt.directFast (by decide) (by decide)) h)
+    (DecidedOpt.directCommit (by decide) (Or.inl (by decide))) h)
 
 /-- The one-vote-short view of `UD`, typed at the projection. -/
 def VDs' : LeanDag.Hydrozoan.View OD.toBlockRecord := VDm
@@ -92,13 +96,13 @@ example : ¬ FastCommitOptInView OD.toBlockRecord VDs' 22 (Slots.slotRound (Fin 
   decide
 example : ∀ v, DecidedOpt OD VDs' 6 v → v = some 22 := fun v h =>
   (OptimalHydrozoan.SlotAgreement.holds (Fin 4) (Fin 30) OD VD VDs' 6 _ v
-    (DecidedOpt.directFast (by decide) (by decide)) h).symm
+    (DecidedOpt.directCommit (by decide) (Or.inl (by decide))) h).symm
 
 -- Slot 1 of OX: copy 4 fast-commits, so its rival copy 5 is never a
 -- verdict, in any view. (OX holds no anchor, so the data alone already
 -- forbids 5; the headline version, with an anchor, is OE below.)
 theorem ox_slot1_fast : DecidedOpt OX VX 1 (some 4) :=
-  DecidedOpt.directFast (by decide) (by decide)
+  DecidedOpt.directCommit (by decide) (Or.inl (by decide))
 example : ∀ V : LeanDag.Hydrozoan.View OX.toBlockRecord, ¬ DecidedOpt OX V 1 (some 5) := fun V h =>
   absurd (Option.some.inj (OptimalHydrozoan.SlotAgreement.holds (Fin 4) (Fin 16) OX VX V 1 _ _
     ox_slot1_fast h)) (by decide)
@@ -175,12 +179,12 @@ example :
     WitnessesEquivocation UE 1 13 ∧ IsFastEvidence UE 1 13 4 ∧ ¬ IsFastEvidence UE 1 13 5 ∧
       votesFor UE 13 4 = {1, 3} ∧ votesFor UE 13 5 = {2} ∧ ¬ IsCertificate UE 13 4 ∧
       (∀ j ∈ (UE.block 13).refs, (UE.block j).creator ≠ 0) ∧
-      certificates UE 4 1 = ∅ ∧ certificates UE 5 1 = ∅ := by
+      LeanDag.Hydrozoan.certificates UE 4 1 = ∅ ∧ LeanDag.Hydrozoan.certificates UE 5 1 = ∅ := by
   decide
 
 -- Slot 4's candidate 18 is the anchor, fast-committed by three votes; it
 -- reaches the three witnessing evidence blocks.
-example : IsLeaderBlock UE 4 18 ∧ supporters UE 18 5 = {1, 2, 3} := by decide
+example : IsLeaderBlock UE 4 18 ∧ LeanDag.Hydrozoan.supporters UE 18 5 = {1, 2, 3} := by decide
 example : EvidenceLinked UE 18 4 1 :=
   (evidenceLinked_iff_history (by decide)).mpr (by decide)
 
@@ -188,19 +192,23 @@ example : EvidenceLinked UE 18 4 1 :=
 with rung 1 refuted for both copies. -/
 theorem oe_slot1_evidence : DecidedOpt OE VE 1 (some 4) := by
   have hall : ∀ M : Fin 22, IsLeaderBlock UE 1 M → M = 4 ∨ M = 5 := by decide
-  refine DecidedOpt.indirectEvidence (j := 4) (A := 18) (by omega) (by decide)
-    (DecidedOpt.directFast (by decide) (by decide))
+  refine DecidedOpt.indirectCommit (j := 4) (A := 18) (i := 1) (by omega) (by decide)
+    (DecidedOpt.directCommit (by decide) (Or.inl (by decide)))
     (fun i h1 h2 h3 => by
       have hi : i = 2 ∨ i = 3 := by omega
       rcases hi with rfl | rfl
       · exact absurd h3 (by decide)
       · exact absurd h3 (by decide))
-    (fun L' hL' hcert => by
+    (by decide)
+    (fun i hi L' hL' hcert => by
+      have : i = 0 := by omega
+      subst this
       rcases hall L' hL' with rfl | rfl
       · exact absurd ((certifiedIn_iff_history (by decide)).mp hcert) (by decide)
       · exact absurd ((certifiedIn_iff_history (by decide)).mp hcert) (by decide))
     (by decide)
-    ((evidenceLinked_iff_history (by decide)).mpr (by decide))
+    (show EvidenceLinked UE 18 4 1 from (evidenceLinked_iff_history (by decide)).mpr (by decide))
+    (fun _ _ _ h => h)
 
 -- Hence copy 5 is never a verdict, and copy 4 the only one, in every view.
 example : ∀ V : LeanDag.Hydrozoan.View OE.toBlockRecord, ¬ DecidedOpt OE V 1 (some 5) := fun V h =>

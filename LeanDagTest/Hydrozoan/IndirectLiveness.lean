@@ -22,17 +22,17 @@ Two end-to-end applications, one per claim:
   can apply — and the run still forces a verdict, anchoring on its end
   (slots 2 and 3, though committed, are too close to be eligible).
   Disclosure: in this fully-referenced table the direct skip also
-  reaches slot 1 (with no candidate, every voting-round block blames
+  reaches slot 1 (with no candidate, every voting-round block LeanDag.Hydrozoan.blames
   vacuously), so its `none` verdict has a direct derivation too; `U9`
   below is where a verdict is provably out of the direct rules' reach.
 
-Plus a **positive `indirectWeak` witness** on a fresh `U9` (seven
+Plus a **positive weak-rung witness** on a fresh `U9` (seven
 replicas, seven rounds), the first where the weak rung is the only route
 in *any* view (the frozen `DirectSafety` witness also derives
-`indirectWeak`, but only in a withheld view — its full view
+the weak rung, but only in a withheld view — its full view
 fast-commits): slot 0's candidate gathers exactly `q_weak = 3` votes —
 too few for a fast commit (`q_fast = 6`), too few for any certificate
-to exist (`q_cert = 5`), and leaving only 3 blames (< `q_fast`), so
+to exist (`q_cert = 5`), and leaving only 3 LeanDag.Hydrozoan.blames (< `q_fast`), so
 **no direct rule can ever decide the slot, in any view**. Anchored on
 the fast-committed slot 3 (the nearest possible anchor — no eligible
 slots in between), the weak rung fires at the sole candidate.
@@ -61,7 +61,7 @@ set_option maxRecDepth 16384
 -- The anchor data, pinned: slot 4's candidate fast-commits in the full
 -- view; slots 1 and 2 cannot anchor slot 0, slot 3 can and is skipped.
 example : IsLeaderBlock U5 4 31 ∧ FastCommitInView U5 Vfull5 31 4 := by decide
-example : ¬ EligibleAsAnchor (Fin 7) 0 2 ∧ EligibleAsAnchor (Fin 7) 0 3 := by
+example : ¬ EligibleAt (Validator := Fin 7) 2 0 2 ∧ EligibleAt (Validator := Fin 7) 2 0 3 := by
   decide
 
 -- End-to-end: AnchoredTotality applied to U5 with every hypothesis
@@ -70,7 +70,7 @@ example : ¬ EligibleAsAnchor (Fin 7) 0 2 ∧ EligibleAsAnchor (Fin 7) 0 3 := by
 example : ∃ v, Decided U5 Vfull5 0 v :=
   (IndirectLiveness.holds (Fin 7) (Fin 39) U5).1 Vfull5 0 4 31
     (by decide)
-    (Decided.directFast (by decide) (by decide))
+    (Decided.directCommit (by decide) (Or.inl (by decide)))
     (fun i h1 h2 h3 => by
       have hi : i = 1 ∨ i = 2 ∨ i = 3 := by omega
       rcases hi with rfl | rfl | rfl
@@ -115,7 +115,7 @@ example : FastCommitInView U8 (View.full U8) 7 2 ∧
 
 -- Below the run, slot 1 has no candidate block at all: its leader is
 -- the crashed replica 1, so no commit rule can apply. (With no
--- candidate every round-2 block blames vacuously, so the direct skip
+-- candidate every round-2 block LeanDag.Hydrozoan.blames vacuously, so the direct skip
 -- happens to fire here as well — U9 below is where the direct rules
 -- are provably out of reach.)
 example : Slots.leader (Validator := Fin 4) 1 = 1 := by decide
@@ -123,18 +123,18 @@ example : ∀ L : Fin 18, ¬ IsLeaderBlock U8 1 L := by decide
 
 -- Slot 1's nearest eligible anchor is the run's END: slots 2 and 3,
 -- though committed, sit inside its decision window.
-example : ¬ EligibleAsAnchor (Fin 4) 1 2 ∧ ¬ EligibleAsAnchor (Fin 4) 1 3 ∧
-    EligibleAsAnchor (Fin 4) 1 4 := by decide
+example : ¬ EligibleAt (Validator := Fin 4) 2 1 2 ∧ ¬ EligibleAt (Validator := Fin 4) 2 1 3 ∧
+    EligibleAt (Validator := Fin 4) 2 1 4 := by decide
 
 -- The runway bound is tight: c = 2 does not span — a run starting at
 -- b = 1 ends at slot 2, which slot 0 cannot anchor on.
-example : ¬ IndirectLiveness.SpansEligible (Fin 4) 2 :=
+example : ¬ SpansEligibleAt (Validator := Fin 4) 2 2 :=
   fun h => absurd (h 1 0 Nat.one_pos) (by decide)
 
 /-- The pipelined `Fin 4` schedule spans eligibility at `c = 3`: a run's
 last slot sits at round `b + 2`, three rounds past every slot below the
 run. -/
-theorem spansEligible_four : IndirectLiveness.SpansEligible (Fin 4) 3 := by
+theorem spansEligible_four : SpansEligibleAt (Validator := Fin 4) 2 3 := by
   intro b i h
   change 1 * (i / 1) + 2 < 1 * ((b + 3 - 1) / 1)
   omega
@@ -151,15 +151,15 @@ example : ∀ i, i < 2 → ∃ v, Decided U8 (View.full U8) i v :=
     (fun j h1 h2 => by
       have hj : j = 2 ∨ j = 3 ∨ j = 4 := by omega
       rcases hj with rfl | rfl | rfl
-      · exact ⟨7, Decided.directFast (by decide) (by decide)⟩
-      · exact ⟨11, Decided.directFast (by decide) (by decide)⟩
-      · exact ⟨12, Decided.directFast (by decide) (by decide)⟩)
+      · exact ⟨7, Decided.directCommit (by decide) (Or.inl (by decide))⟩
+      · exact ⟨11, Decided.directCommit (by decide) (Or.inl (by decide))⟩
+      · exact ⟨12, Decided.directCommit (by decide) (Or.inl (by decide))⟩)
 
 -- The verdicts behind the descent's bare existence, pinned: slot 0
 -- fast-commits, slot 1 skips (here even directly — all three round-2
 -- blocks blame, meeting q_fast exactly).
 example : Decided U8 (View.full U8) 0 (some 0) :=
-  Decided.directFast (by decide) (by decide)
+  Decided.directCommit (by decide) (Or.inl (by decide))
 example : Decided U8 (View.full U8) 1 none :=
   Decided.directSkip (by decide)
 
@@ -214,50 +214,53 @@ def U9 : BlockUniverse (Fin 7) (Fin 43) where
   valid := by decide
   no_equivocation := by decide
 
--- Slot 0's candidate draws exactly q_weak = 3 supporters — and with
+-- Slot 0's candidate draws exactly q_weak = 3 LeanDag.Hydrozoan.supporters — and with
 -- only 3 votes in the whole universe, no certificate can ever form
 -- (q_cert = 5), while the 3 non-voters fall short of a skip quorum
 -- (q_fast = 6): no direct rule decides slot 0, in any view.
 example : IsLeaderBlock U9 0 2 := by decide
-example : supporters U9 2 1 = {2, 3, 4} := by decide
-example : certificates U9 2 0 = ∅ := by decide
-example : blames U9 0 = {0, 5, 6} := by decide
+example : Hydrozoan.supporters U9 2 1 = {2, 3, 4} := by decide
+example : LeanDag.Hydrozoan.certificates U9 2 0 = ∅ := by decide
+example : Hydrozoan.blames U9 0 = {0, 5, 6} := by decide
 example : ¬ FastCommitInView U9 (View.full U9) 2 0 ∧
     ¬ SlowCommitInView U9 (View.full U9) 2 0 ∧
     ¬ SkippedLeaderInView U9 (View.full U9) 0 := by decide
 
 -- The anchor: slot 3 is the nearest eligible slot (slots 1 and 2 are
 -- too close), and its candidate id 23 fast-commits at round 4.
-example : ¬ EligibleAsAnchor (Fin 7) 0 2 ∧ EligibleAsAnchor (Fin 7) 0 3 := by
+example : ¬ EligibleAt (Validator := Fin 7) 2 0 2 ∧ EligibleAt (Validator := Fin 7) 2 0 3 := by
   decide
 example : IsLeaderBlock U9 3 23 ∧ FastCommitInView U9 (View.full U9) 23 3 := by
   decide
 
 -- The three votes sit in the anchor's causal history: the weak rung's
 -- footprint, at exactly q_weak.
-example : qWeak (Fin 7) ≤ (creatorsOf U9.block ((blocksAt U9 1).filter
+example : qWeak (Fin 7) ≤ (creatorsOf U9.block ((Hydrozoan.blocksAt U9 1).filter
     fun b => IsVote U9 b 2 ∧ b ∈ history U9 23)).card := by decide
 
--- The positive `indirectWeak` derivation — the first on a universe
+-- The positive weak-rung derivation — the first on a universe
 -- where the direct rules fail in EVERY view (the frozen DirectSafety
 -- witness's failure is view-relative): every premise discharged
 -- concretely, with the in-between premise vacuous (no eligible slot
 -- between 0 and 3) and the tie-break settled by candidate uniqueness.
 example : Decided U9 (View.full U9) 0 (some 2) := by
   have hall : ∀ L' : Fin 43, IsLeaderBlock U9 0 L' → L' = 2 := by decide
-  refine Decided.indirectWeak (j := 3) (A := 23) (by omega) (by decide)
-    (Decided.directFast (by decide) (by decide))
+  refine Decided.indirectCommit (j := 3) (A := 23) (i := 1) (by omega) (by decide)
+    (Decided.directCommit (by decide) (Or.inl (by decide)))
     (fun i h1 h2 h3 => by
       have hi : i = 1 ∨ i = 2 := by omega
       rcases hi with rfl | rfl
       · exact absurd h3 (by decide)
       · exact absurd h3 (by decide))
-    (fun L' hL' hcert => by
+    (by decide)
+    (fun i hi L' hL' hcert => by
       have := hall L' hL'
+      subst this
+      have : i = 0 := by omega
       subst this
       exact absurd ((certifiedIn_iff_history (by decide)).mp hcert) (by decide))
     (by decide)
-    ((weakLinked_iff_history (by decide)).mpr (by decide))
+    (show WeakLinked U9 23 2 0 from (weakLinked_iff_history (by decide)).mpr (by decide))
     (fun L' hL' _ => by
       have := hall L' hL'
       subst this
@@ -273,7 +276,7 @@ example : FastCommitInView U9 (View.full U9) 30 4 ∧
     FastCommitInView U9 (View.full U9) 31 5 := by decide
 
 /-- The pipelined `Fin 7` schedule spans eligibility at `c = 3`. -/
-theorem spansEligible_seven : IndirectLiveness.SpansEligible (Fin 7) 3 := by
+theorem spansEligible_seven : SpansEligibleAt (Validator := Fin 7) 2 3 := by
   intro b i h
   change 1 * (i / 1) + 2 < 1 * ((b + 3 - 1) / 1)
   omega
@@ -287,9 +290,9 @@ example : ∀ i, i < 3 → ∃ v, Decided U9 (View.full U9) i v :=
     (fun j h1 h2 => by
       have hj : j = 3 ∨ j = 4 ∨ j = 5 := by omega
       rcases hj with rfl | rfl | rfl
-      · exact ⟨23, Decided.directFast (by decide) (by decide)⟩
-      · exact ⟨30, Decided.directFast (by decide) (by decide)⟩
-      · exact ⟨31, Decided.directFast (by decide) (by decide)⟩)
+      · exact ⟨23, Decided.directCommit (by decide) (Or.inl (by decide))⟩
+      · exact ⟨30, Decided.directCommit (by decide) (Or.inl (by decide))⟩
+      · exact ⟨31, Decided.directCommit (by decide) (Or.inl (by decide))⟩)
 
 -- Totality applied at the eligibility BOUNDARY: slot 3 = k + 3 is the
 -- nearest anchor the hypothesis admits (slot 0's decision round 2 sits
@@ -298,7 +301,7 @@ example : ∀ i, i < 3 → ∃ v, Decided U9 (View.full U9) i v :=
 example : ∃ v, Decided U9 (View.full U9) 0 v :=
   (IndirectLiveness.holds (Fin 7) (Fin 43) U9).1 (View.full U9) 0 3 23
     (by decide)
-    (Decided.directFast (by decide) (by decide))
+    (Decided.directCommit (by decide) (Or.inl (by decide)))
     (fun i h1 h2 h3 => by
       have hi : i = 1 ∨ i = 2 := by omega
       rcases hi with rfl | rfl
@@ -312,7 +315,7 @@ example : ∃ v, Decided U9 (View.full U9) 0 v :=
 -- history): a NONZERO footprint that still misses q_weak = 3. Guards
 -- the weak threshold itself — a weakening to "any vote suffices" would
 -- flip this example.
-example : (creatorsOf U9.block ((blocksAt U9 1).filter
+example : (creatorsOf U9.block ((Hydrozoan.blocksAt U9 1).filter
     fun b => IsVote U9 b 1 ∧ b ∈ history U9 23)).card = 2 := by decide
 example : ¬ WeakLinked U9 23 1 0 := fun h =>
   absurd ((weakLinked_iff_history (by decide)).mp h) (by decide)
@@ -384,12 +387,12 @@ def U11 : BlockUniverse (Fin 5) (Fin 26) where
 
 -- Slot 0's candidates are exactly the two equivocating copies; the
 -- voters split 3/2, so no direct rule can decide the slot in any view
--- (q_fast = 5, q_cert = 4, and nobody blames — every voter voted).
+-- (q_fast = 5, q_cert = 4, and nobody LeanDag.Hydrozoan.blames — every voter voted).
 example : ∀ L : Fin 26, IsLeaderBlock U11 0 L → L = 0 ∨ L = 1 := by decide
-example : supporters U11 0 1 = {0, 1, 2} ∧ supporters U11 1 1 = {3, 4} := by
+example : Hydrozoan.supporters U11 0 1 = {0, 1, 2} ∧ Hydrozoan.supporters U11 1 1 = {3, 4} := by
   decide
-example : certificates U11 0 0 = ∅ ∧ certificates U11 1 0 = ∅ := by decide
-example : blames U11 0 = ∅ := by decide
+example : LeanDag.Hydrozoan.certificates U11 0 0 = ∅ ∧ LeanDag.Hydrozoan.certificates U11 1 0 = ∅ := by decide
+example : Hydrozoan.blames U11 0 = ∅ := by decide
 example : ¬ FastCommitInView U11 (View.full U11) 0 0 ∧
     ¬ FastCommitInView U11 (View.full U11) 1 0 ∧
     ¬ SkippedLeaderInView U11 (View.full U11) 0 := by decide
@@ -410,25 +413,28 @@ example : WeakLinked U11 19 1 0 :=
 theorem u11_decided : Decided U11 (View.full U11) 0 (some 0) := by
   have hall : ∀ L' : Fin 26, IsLeaderBlock U11 0 L' → L' = 0 ∨ L' = 1 := by
     decide
-  refine Decided.indirectWeak (j := 3) (A := 19) (by omega) (by decide)
-    (Decided.directFast (by decide) (by decide))
+  refine Decided.indirectCommit (j := 3) (A := 19) (i := 1) (by omega) (by decide)
+    (Decided.directCommit (by decide) (Or.inl (by decide)))
     (fun i h1 h2 h3 => by
       have hi : i = 1 ∨ i = 2 := by omega
       rcases hi with rfl | rfl
       · exact absurd h3 (by decide)
       · exact absurd h3 (by decide))
-    (fun L' hL' hcert => by
+    (by decide)
+    (fun i hi L' hL' hcert => by
+      have : i = 0 := by omega
+      subst this
       rcases hall L' hL' with rfl | rfl
       · exact absurd ((certifiedIn_iff_history (by decide)).mp hcert)
           (by decide)
       · exact absurd ((certifiedIn_iff_history (by decide)).mp hcert)
           (by decide))
     (by decide)
-    ((weakLinked_iff_history (by decide)).mpr (by decide))
+    (show WeakLinked U11 19 0 0 from (weakLinked_iff_history (by decide)).mpr (by decide))
     (fun L' hL' _ => by
       rcases hall L' hL' with rfl | rfl
       · exact lt_irrefl _
-      · exact fun hlt => absurd hlt (by decide))
+      · exact fun hlt => absurd hlt (by change ¬ ((1 : Fin 26) < 0); decide))
 
 -- The greatest copy is NOT committed: slot agreement applied end-to-end
 -- against the derivation above — the second kill for the argmin

@@ -25,7 +25,7 @@ namespace LeanDag
 namespace Integration
 
 open LeanDag.Properties LeanDag.Properties.Arcs
-open LeanDag.Barnacle.OptimalHydrozoan
+open LeanDag.OptimalHydrozoan (LeaderExcludedAll IsCandidateAt WitnessesAt)
 
 variable {Replica : Type} [Fintype Replica] [DecidableEq Replica]
 variable {BlockId : Type} [DecidableEq BlockId] [LinearOrder BlockId]

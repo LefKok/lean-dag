@@ -75,7 +75,7 @@ def RunDecidesBelow (U : BlockUniverse Replica BlockId) : Prop :=
     q Replica ≤ T.card →                 -- ... of at least a DAG quorum,
     SynchronisedOn U T R →               -- internally synchronised from R,
     0 < c →                              -- a nonempty run of slots ...
-    IndirectLiveness.SpansEligible Replica c →  -- ... every run's end anchoring all below,
+    (hydrozoanAnchored Replica BlockId).SpansEligible c →  -- ... every run's end anchoring all below,
     R ≤ S.slotRound b →                  -- lying at or after R,
     (∀ i, i < c → S.leader (b + i) ∈ T) →  -- every run slot T-led,
     (∀ r, S.slotRound b ≤ r →            -- and T fills every round from

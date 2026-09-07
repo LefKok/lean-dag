@@ -38,7 +38,36 @@ namespace OptimalHydrozoan
 open LeanDag.Hydrozoan
 
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
-  [DecidableEq BlockId] [F : LeanDag.Hydrozoan.Faults Replica] [S : Slots Replica]
+  [DecidableEq BlockId] [F : LeanDag.Hydrozoan.Faults Replica]
+
+/-- A block of round `r` authored by `v` — `IsLeaderBlock` with the
+slot's `(round, leader)` pair given directly. -/
+def IsCandidateAt (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) (r : ℕ)
+    (v : Replica) (L : BlockId) : Prop :=
+  L ∈ U.ids ∧ (U.block L).round = r ∧ (U.block L).creator = v
+
+/-- `b` has watched `v` equivocate at round `r`: two distinct blocks of
+round `r` by `v`, each voted for by one of `b`'s refs. -/
+def WitnessesAt (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) (r : ℕ)
+    (v : Replica) (b : BlockId) : Prop :=
+  ∃ L₁ L₂, IsCandidateAt U r v L₁ ∧ IsCandidateAt U r v L₂ ∧ L₁ ≠ L₂ ∧
+    (∃ j ∈ (U.block b).refs, LeanDag.Hydrozoan.IsVote U j L₁) ∧
+    (∃ j ∈ (U.block b).refs, LeanDag.Hydrozoan.IsVote U j L₂)
+
+/-- **Leader exclusion, without a schedule.** A block that has watched a
+replica equivocate two rounds below it references nothing by that
+replica. The clause depends on a slot only through its `(round, leader)`
+pair, so this is the form a DAG-building layer can enforce without
+knowing who leads which slot, and the form the carrier's universes
+carry; the round is read off the block rather than quantified, which
+keeps it decidable on a finite model. It implies the slot form at every
+schedule (`leaderExcluded_of_all`). -/
+def LeaderExcludedAll (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) : Prop :=
+  ∀ b ∈ U.ids, ∀ v : Replica, 2 ≤ (U.block b).round →
+    WitnessesAt U ((U.block b).round - 2) v b →
+    ∀ j ∈ (U.block b).refs, (U.block j).creator ≠ v
+
+variable [S : Slots Replica]
 
 /-- `b` witnesses an equivocation in slot `k` (the paper's
 `WitnessesEquivocation(b, w)`, Algorithm 3): two *distinct* candidates of
@@ -52,27 +81,32 @@ its `Decidable` instance (over a `Fintype` of ids) lives in
 def WitnessesEquivocation (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) (k : ℕ)
     (b : BlockId) : Prop :=
   ∃ L₁ L₂, IsLeaderBlock U k L₁ ∧ IsLeaderBlock U k L₂ ∧ L₁ ≠ L₂ ∧
-    (∃ j ∈ (U.block b).refs, IsVote U j L₁) ∧
-    (∃ j ∈ (U.block b).refs, IsVote U j L₂)
+    (∃ j ∈ (U.block b).refs, LeanDag.Hydrozoan.IsVote U j L₁) ∧
+    (∃ j ∈ (U.block b).refs, LeanDag.Hydrozoan.IsVote U j L₂)
+
+/-- **Leader exclusion at a schedule** — the validity rule of
+`sections/optimal-protocol.tex`: a block at the decision round of slot
+`k` that witnesses an equivocation in `k` references no block authored
+by `k`'s leader. The round guard is stated explicitly (decision D4)
+although it is *redundant* for `b ∈ ids`: witnessing already forces
+`b`'s round to be `k`'s decision round (twice `predecessor`, from a
+voted candidate at `k`'s propose round), so no witness can tell its
+presence — it is here so the rule reads as the paper states it. With
+several slots per round the rule applies to each slot separately, which
+the `∀ k` gives directly. The invariant the decision relation's laws
+hold under. -/
+def LeaderExcluded (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) : Prop :=
+  ∀ b ∈ U.ids, ∀ k,
+    (U.block b).round = LeanDag.Hydrozoan.decisionRound Replica k →
+    WitnessesEquivocation U k b →
+    ∀ j ∈ (U.block b).refs, (U.block j).creator ≠ S.leader k
 
 /-- Hydrozoan's block universe plus the leader-exclusion rule. -/
 structure OptUniverse (Replica BlockId : Type*) [Fintype Replica]
     [DecidableEq Replica] [DecidableEq BlockId] [F : LeanDag.Hydrozoan.Faults Replica]
     [S : Slots Replica] extends LeanDag.Hydrozoan.BlockUniverse Replica BlockId where
-  /-- **Leader exclusion** — the validity rule of `sections/optimal-protocol.tex`:
-  a block at the decision round of slot `k` that witnesses an equivocation
-  in `k` references no block authored by `k`'s leader. The round guard is
-  stated explicitly (decision D4) although it is *redundant* for
-  `b ∈ ids`: witnessing already forces `b`'s round to be `k`'s decision
-  round (twice `predecessor`, from a voted candidate at `k`'s propose
-  round), so no witness can tell its presence — it is here so the rule
-  reads as the paper states it. With several slots per round the rule
-  applies to each slot separately, which the `∀ k` gives directly
-  (pinned by the two-slots-per-round schedule of the witness file). -/
-  leader_excluded : ∀ b ∈ ids, ∀ k,
-    (block b).round = decisionRound Replica k →
-    WitnessesEquivocation toBlockRecord k b →
-    ∀ j ∈ (block b).refs, (block j).creator ≠ S.leader k
+  /-- **Leader exclusion**, at the schedule the universe is indexed by. -/
+  leader_excluded : LeaderExcluded toBlockRecord
 
 end OptimalHydrozoan
 

@@ -40,8 +40,6 @@ open LeanDag.Hydrozoan
 
 namespace IndirectLiveness
 
-open LeanDag.Hydrozoan.IndirectLiveness (SpansEligible)
-
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
   [DecidableEq BlockId] [O : OptimalFaults Replica] [S : Slots Replica]
 
@@ -52,10 +50,10 @@ whose eligible in-betweens all skipped. The conclusion: some rung fires
 — slot `k` gets a verdict, commit or skip. -/
 def AnchoredTotality (U : OptUniverse Replica BlockId) : Prop :=
   ∀ (V : LeanDag.Hydrozoan.View U.toBlockRecord) (k j : ℕ) (A : BlockId),
-    EligibleAsAnchor Replica k j →       -- j sits ≥ 3 rounds past k,
+    (optimalAnchored Replica BlockId).Eligible k j →       -- j sits ≥ 3 rounds past k,
     DecidedOpt U V j (some A) →          -- slot j committed A,
     (∀ i, k < i → i < j →                -- and j is the NEAREST such slot:
-      EligibleAsAnchor Replica k i →     -- every eligible slot in between
+      (optimalAnchored Replica BlockId).Eligible k i →     -- every eligible slot in between
       DecidedOpt U V i none) →           -- skipped;
     ∃ v, DecidedOpt U V k v              -- then slot k has a verdict.
 
@@ -67,7 +65,7 @@ totality does the rest. -/
 def DecidedBelowRun (U : OptUniverse Replica BlockId) : Prop :=
   ∀ (V : LeanDag.Hydrozoan.View U.toBlockRecord) (b c : ℕ),
     0 < c →                              -- a nonempty run (implied by the next
-    SpansEligible Replica c →            -- premise; kept for uniformity), long
+    (optimalAnchored Replica BlockId).SpansEligible c →  -- premise; kept for uniformity), long
                                         -- enough to anchor below it,
     (∀ j, b ≤ j → j ≤ b + c - 1 →        -- of committed slots b … b+c−1:
       ∃ B, DecidedOpt U V j (some B)) →

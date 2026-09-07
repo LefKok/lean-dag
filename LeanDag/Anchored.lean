@@ -44,15 +44,20 @@ variable [S : Slots Validator]
 A correct leader has at most one such block; a Byzantine one may have
 several, which is why the rules quantify over candidates rather than
 selecting one. -/
+@[reducible]
 def IsLeaderBlock (U : BlockRecord Validator BlockId Payload P honest) (k : ℕ) (L : BlockId) :
     Prop :=
   L ∈ U.ids ∧ (U.block L).round = S.slotRound k ∧ (U.block L).creator = S.leader k
 
 variable {U : BlockRecord Validator BlockId Payload P honest}
 
-/-- Decidable, so concrete models can settle it by `decide`. -/
-instance decidableIsLeaderBlock [DecidableEq Validator] [DecidableEq BlockId] (k : ℕ)
-    (L : BlockId) : Decidable (IsLeaderBlock U k L) :=
+omit S in
+/-- Decidable, so concrete models can settle it by `decide`. The
+schedule is a plain implicit, found by unification, so the instance
+applies at any schedule a statement names and not only the ambient
+one. -/
+instance decidableIsLeaderBlock [DecidableEq Validator] [DecidableEq BlockId]
+    {S : Slots Validator} (k : ℕ) (L : BlockId) : Decidable (IsLeaderBlock (S := S) U k L) :=
   inferInstanceAs (Decidable (L ∈ U.ids ∧ (U.block L).round = S.slotRound k ∧
     (U.block L).creator = S.leader k))
 

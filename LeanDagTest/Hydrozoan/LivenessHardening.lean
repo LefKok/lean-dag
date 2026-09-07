@@ -26,7 +26,7 @@ eventual-decision phases' cold audits found unguarded:
   0 and 2 the pinned route is provably the ONLY one available in any
   view; slot 1 is deliberately multi-route. The anchors diversify too:
   slot 0's anchor is the development's first SLOW-committed anchor
-  (five supporters < `q_fast`, six certifiers ≥ `q_slow`).
+  (five LeanDag.Hydrozoan.supporters < `q_fast`, six certifiers ≥ `q_slow`).
 * **A sparse schedule** (`U14`, six replicas, three-round spacing): the
   first non-pipelined schedule. With three rounds between slots,
   `SpansEligible` holds already at `c = 1`, and the descent fires below
@@ -129,10 +129,10 @@ theorem u12_synchronised :
   clear hb2 hmax hn
   rcases hn2 with rfl | rfl <;> (revert b a; decide)
 
--- Slot 0 slow-commits at T: six supporters < q_fast = 7, but all six
+-- Slot 0 slow-commits at T: six LeanDag.Hydrozoan.supporters < q_fast = 7, but all six
 -- decision-round blocks certify.
 example : IsLeaderBlock U12 0 0 := by decide
-example : supporters U12 0 1 = {1, 2, 3, 4, 5, 6} := by decide
+example : LeanDag.Hydrozoan.supporters U12 0 1 = {1, 2, 3, 4, 5, 6} := by decide
 example : ¬ FastCommit U12 0 0 ∧ SlowCommit U12 0 0 := by decide
 
 -- End-to-end: CommitLiveness applied at the proper-subset T — the
@@ -208,25 +208,25 @@ def U13 : BlockUniverse (Fin 7) (Fin 43) where
 -- Slot 0 is rung-1-only: five votes (= q_cert, < q_fast), a UNIQUE
 -- certificate (id 13), one certifier (< q_slow), one blame (< q_fast).
 example : IsLeaderBlock U13 0 2 := by decide
-example : supporters U13 2 1 = {0, 2, 3, 4, 5} := by decide
-example : certificates U13 2 0 = {13} ∧ certifiers U13 2 0 = {0} := by decide
-example : blames U13 0 = {6} := by decide
+example : LeanDag.Hydrozoan.supporters U13 2 1 = {0, 2, 3, 4, 5} := by decide
+example : LeanDag.Hydrozoan.certificates U13 2 0 = {13} ∧ certifiers U13 2 0 = {0} := by decide
+example : LeanDag.Hydrozoan.blames U13 0 = {6} := by decide
 example : ¬ FastCommitInView U13 (View.full U13) 2 0 ∧
     ¬ SlowCommitInView U13 (View.full U13) 2 0 ∧
     ¬ SkippedLeaderInView U13 (View.full U13) 0 := by decide
 
 -- Slot 2 is rung-3-only: two votes (< q_weak = 3, so the weak rung is
--- out and no certificate can form), yet four blames (< q_fast = 6).
+-- out and no certificate can form), yet four LeanDag.Hydrozoan.blames (< q_fast = 6).
 example : IsLeaderBlock U13 2 16 := by decide
-example : supporters U13 16 3 = {0, 2} := by decide
-example : certificates U13 16 2 = ∅ ∧ blames U13 2 = {3, 4, 5, 6} := by
+example : LeanDag.Hydrozoan.supporters U13 16 3 = {0, 2} := by decide
+example : LeanDag.Hydrozoan.certificates U13 16 2 = ∅ ∧ LeanDag.Hydrozoan.blames U13 2 = {3, 4, 5, 6} := by
   decide
 example : ¬ SkippedLeaderInView U13 (View.full U13) 2 := by decide
 
 -- Slot 3: the development's first SLOW-committed anchor — five
--- supporters < q_fast, six certifiers ≥ q_slow.
+-- LeanDag.Hydrozoan.supporters < q_fast, six certifiers ≥ q_slow.
 example : IsLeaderBlock U13 3 23 := by decide
-example : supporters U13 23 4 = {0, 2, 3, 4, 5} := by decide
+example : LeanDag.Hydrozoan.supporters U13 23 4 = {0, 2, 3, 4, 5} := by decide
 example : ¬ FastCommit U13 23 3 ∧ SlowCommit U13 23 3 := by decide
 
 -- Slots 1, 4, 5 fast-commit (candidates 9, 30, 31).
@@ -234,43 +234,44 @@ example : IsLeaderBlock U13 1 9 ∧ FastCommitInView U13 (View.full U13) 9 1 ∧
     FastCommitInView U13 (View.full U13) 30 4 ∧
     FastCommitInView U13 (View.full U13) 31 5 := by decide
 example : Decided U13 (View.full U13) 1 (some 9) :=
-  Decided.directFast (by decide) (by decide)
+  Decided.directCommit (by decide) (Or.inl (by decide))
 
 -- Slot 0's derivation: the certificate rung, anchored on the
--- slow-committed slot 3 — the first indirectCert whose anchor is not
+-- slow-committed slot 3 — the first rung-`0` commit whose anchor is not
 -- fast-committed, and the first that is the slot's only route.
 example : Decided U13 (View.full U13) 0 (some 2) :=
-  Decided.indirectCert (j := 3) (A := 23) (by omega) (by decide)
-    (Decided.directSlow (by decide) (by decide))
+  Decided.indirectCommit (j := 3) (A := 23) (i := 0) (by omega) (by decide)
+    (Decided.directCommit (by decide) (Or.inr (by decide)))
     (fun i h1 h2 h3 => by
       have hi : i = 1 ∨ i = 2 := by omega
       rcases hi with rfl | rfl
       · exact absurd h3 (by decide)
       · exact absurd h3 (by decide))
+    (by decide) (fun _ h => absurd h (Nat.not_lt_zero _))
     (by decide)
-    ((certifiedIn_iff_history (by decide)).mpr (by decide))
+    (show LeanDag.Hydrozoan.CertifiedIn U13 23 2 0 from (certifiedIn_iff_history (by decide)).mpr (by decide))
+    (fun _ _ _ h => h)
 
 -- Slot 2's derivation: the indirect skip, with real negative rungs
 -- (a candidate exists and has votes — just not enough for any rung).
 example : Decided U13 (View.full U13) 2 none := by
   have hall : ∀ L : Fin 43, IsLeaderBlock U13 2 L → L = 16 := by decide
   refine Decided.indirectSkip (j := 5) (A := 31) (by omega) (by decide)
-    (Decided.directFast (by decide) (by decide))
+    (Decided.directCommit (by decide) (Or.inl (by decide)))
     (fun i h1 h2 h3 => by
       have hi : i = 3 ∨ i = 4 := by omega
       rcases hi with rfl | rfl
       · exact absurd h3 (by decide)
       · exact absurd h3 (by decide))
-    (fun L hL hcert => by
+    (fun i hi L hL => by
       have := hall L hL
       subst this
-      exact absurd ((certifiedIn_iff_history (by decide)).mp hcert)
-        (by decide))
-    (fun L hL hweak => by
-      have := hall L hL
-      subst this
-      exact absurd ((weakLinked_iff_history (by decide)).mp hweak)
-        (by decide))
+      rcases i with _ | _ | i
+      · exact fun hcert =>
+          absurd ((certifiedIn_iff_history (by decide)).mp hcert) (by decide)
+      · exact fun hweak =>
+          absurd ((weakLinked_iff_history (by decide)).mp hweak) (by decide)
+      · exact absurd hi (by change ¬ (i + 1 + 1 < 2); omega))
 
 -- End-to-end: the descent at b = 3, c = 3 — the three below-run slots
 -- resolve by three different routes (cert rung, direct fast, indirect
@@ -281,9 +282,9 @@ example : ∀ i, i < 3 → ∃ v, Decided U13 (View.full U13) i v :=
     (fun j h1 h2 => by
       have hj : j = 3 ∨ j = 4 ∨ j = 5 := by omega
       rcases hj with rfl | rfl | rfl
-      · exact ⟨23, Decided.directSlow (by decide) (by decide)⟩
-      · exact ⟨30, Decided.directFast (by decide) (by decide)⟩
-      · exact ⟨31, Decided.directFast (by decide) (by decide)⟩)
+      · exact ⟨23, Decided.directCommit (by decide) (Or.inr (by decide))⟩
+      · exact ⟨30, Decided.directCommit (by decide) (Or.inl (by decide))⟩
+      · exact ⟨31, Decided.directCommit (by decide) (Or.inl (by decide))⟩)
 
 -- ## A sparse schedule: descent below a SINGLE commit (U14, Fin 6)
 
@@ -313,7 +314,7 @@ example : p (Fin 6) = 1 ∧ q (Fin 6) = 4 ∧ qFast (Fin 6) = 5 ∧
 /-- With three rounds between slots, a run's last slot clears every
 below-slot's decision window already at `c = 1`: the run-length
 requirement is the schedule's density, not the theorem's. -/
-theorem spansEligible_six : IndirectLiveness.SpansEligible (Fin 6) 1 := by
+theorem spansEligible_six : SpansEligibleAt (Validator := Fin 6) 2 1 := by
   intro b i h
   change 3 * (i / 1) + 2 < 3 * ((b + 1 - 1) / 1)
   omega
@@ -353,10 +354,10 @@ example : ∀ i, i < 1 → ∃ v, Decided U14 (View.full U14) i v :=
     (fun j h1 h2 => by
       have hj : j = 1 := by omega
       subst hj
-      exact ⟨17, Decided.directFast (by decide) (by decide)⟩)
+      exact ⟨17, Decided.directCommit (by decide) (Or.inl (by decide))⟩)
 
--- Synchronised from round 0 — for the strict-R application below.
-theorem u14_synchronised : Synchronised U14 0 := by
+-- LeanDag.Hydrozoan.Synchronised from round 0 — for the strict-R application below.
+theorem u14_synchronised : LeanDag.Hydrozoan.Synchronised U14 0 := by
   intro n hn b hb hbr hbc a ha har hac
   have hmax : ∀ c : Fin 30, (U14.block c).round ≤ 5 := by decide
   have hb2 := hmax b

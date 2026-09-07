@@ -485,9 +485,9 @@ theorem coreBandLaws : (coreAnchored Validator BlockId Payload).BandLaws where
   skip_band := fun h hkk hlk hlo hhi hV hs =>
     AnchoredRule.directSkipSlotIn_band h hkk hlk hlo
       (by simp only [coreAnchored_wave] at hhi; omega) hV hs
-  link_band := fun h hA hAlo hAhi hkk hlo hhi _ _ =>
+  link_band := fun h hA hAlo hAhi hkk _ hlo hhi _ _ =>
     certifiedIn_band h hA hAlo hAhi hkk hlo (by simp only [coreAnchored_wave] at hhi; omega)
-  link_novel := fun h hA hAlo hAhi hkk hlo hhi _ _ hL =>
+  link_novel := fun h hA hAlo hAhi hkk _ hlo hhi _ _ hL =>
     not_certifiedIn_band_novel h hA hAlo hAhi hkk hlo
       (by simp only [coreAnchored_wave] at hhi; omega) hL
 

@@ -4,8 +4,7 @@ import LeanDag.History
 /-!
 # Indirect-rule instances and the history characterizations
 
-Generated: decidability for `EligibleAsAnchor`, its arithmetic reading, and the
-decidable characterizations of both rung tests through the computable
+Generated: the decidable characterizations of both rung tests through the computable
 `history` surrogate — this is what lets witness models settle
 `CertifiedIn` / `WeakLinked` (positively and negatively) by `decide`.
 Nothing here is part of the audit surface.
@@ -14,22 +13,6 @@ Nothing here is part of the audit surface.
 namespace LeanDag
 
 namespace Hydrozoan
-
-section Eligibility
-
-variable (Replica : Type*) [S : Slots Replica]
-
-instance decidableEligibleAsAnchor (k j : ℕ) : Decidable (EligibleAsAnchor Replica k j) :=
-  inferInstanceAs (Decidable (decisionRound Replica k < S.slotRound j))
-
-/-- Eligibility in propose-round arithmetic: the anchor's round is at
-least three past the candidate's. -/
-theorem eligibleAsAnchor_iff {k j : ℕ} :
-    EligibleAsAnchor Replica k j ↔ S.slotRound k + 3 ≤ S.slotRound j := by
-  simp only [EligibleAsAnchor, decisionRound]
-  omega
-
-end Eligibility
 
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
   [DecidableEq BlockId] [F : LeanDag.Hydrozoan.Faults Replica]

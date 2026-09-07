@@ -25,7 +25,52 @@ namespace OptimalHydrozoan
 open LeanDag.Hydrozoan
 
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
-  [DecidableEq BlockId] [F : LeanDag.Hydrozoan.Faults Replica] [S : Slots Replica]
+  [DecidableEq BlockId] [F : LeanDag.Hydrozoan.Faults Replica]
+
+/-! ## The schedule-free exclusion -/
+
+instance decIsCandidateAt (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
+    (r : ℕ) (v : Replica) (L : BlockId) : Decidable (IsCandidateAt U r v L) :=
+  inferInstanceAs (Decidable (L ∈ U.ids ∧ (U.block L).round = r ∧ (U.block L).creator = v))
+
+instance decWitnessesAt [Fintype BlockId]
+    (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
+    (r : ℕ) (v : Replica) (b : BlockId) : Decidable (WitnessesAt U r v b) :=
+  inferInstanceAs (Decidable (∃ L₁ L₂, IsCandidateAt U r v L₁ ∧ IsCandidateAt U r v L₂ ∧
+    L₁ ≠ L₂ ∧ (∃ j ∈ (U.block b).refs, LeanDag.Hydrozoan.IsVote U j L₁) ∧
+    (∃ j ∈ (U.block b).refs, LeanDag.Hydrozoan.IsVote U j L₂)))
+
+instance [Fintype BlockId] (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) :
+    Decidable (LeaderExcludedAll U) :=
+  inferInstanceAs (Decidable (∀ b ∈ U.ids, ∀ v : Replica, 2 ≤ (U.block b).round →
+    WitnessesAt U ((U.block b).round - 2) v b →
+    ∀ j ∈ (U.block b).refs, (U.block j).creator ≠ v))
+
+variable [S : Slots Replica]
+
+omit [DecidableEq BlockId] in
+/-- **The schedule-free exclusion is exclusion at every schedule.** -/
+theorem leaderExcluded_of_all (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
+    (h : LeaderExcludedAll U) : LeaderExcluded (S := S) U := by
+  intro b hb k hround hwit j hj
+  have h2 : 2 ≤ (U.block b).round := by
+    rw [hround]; unfold LeanDag.Hydrozoan.decisionRound; omega
+  have hr : (U.block b).round - 2 = S.slotRound k := by
+    rw [hround]; unfold LeanDag.Hydrozoan.decisionRound; omega
+  exact h b hb (S.leader k) h2 (by rw [hr]; exact hwit) j hj
+
+/-- **The schedule-free rule yields an `OptUniverse` at every
+schedule**, which is what lets the carrier be fixed before a schedule
+is supplied. -/
+def optUniverseOf (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
+    (h : LeaderExcludedAll U) : OptUniverse Replica BlockId :=
+  ⟨U, leaderExcluded_of_all U h⟩
+
+@[simp] theorem optUniverseOf_toBlockRecord
+    (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) (h : LeaderExcludedAll U) :
+    (optUniverseOf U h).toBlockRecord = U := rfl
+
+/-! ## Witnessing, decided through the refs -/
 
 omit [DecidableEq BlockId] in
 /-- Witnessing an equivocation, read off the refs' refs: the two
@@ -67,10 +112,7 @@ cheap route for equivocation-free witness models. -/
 theorem leaderExcluded_of_noEquivocation (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
     (h : ∀ i ∈ U.ids, ∀ j ∈ U.ids, (U.block i).creator = (U.block j).creator →
       (U.block i).round = (U.block j).round → i = j) :
-    ∀ b ∈ U.ids, ∀ k,
-      (U.block b).round = decisionRound Replica k →
-      WitnessesEquivocation U k b →
-      ∀ j ∈ (U.block b).refs, (U.block j).creator ≠ S.leader k :=
+    LeaderExcluded (S := S) U :=
   fun b _ k _ hw => absurd hw (not_witnessesEquivocation_of_noEquivocation U h k b)
 
 omit [DecidableEq BlockId] in
@@ -81,17 +123,14 @@ theorem leaderExcluded_of_bounded (U : LeanDag.Hydrozoan.BlockUniverse Replica B
     (hslot : ∀ k, S.slotRound k + 2 ≤ N → k ≤ B)
     (hround : ∀ b ∈ U.ids, (U.block b).round ≤ N)
     (h : ∀ b ∈ U.ids, ∀ k ≤ B,
-      (U.block b).round = decisionRound Replica k →
+      (U.block b).round = LeanDag.Hydrozoan.decisionRound Replica k →
       WitnessesEquivocation U k b →
       ∀ j ∈ (U.block b).refs, (U.block j).creator ≠ S.leader k) :
-    ∀ b ∈ U.ids, ∀ k,
-      (U.block b).round = decisionRound Replica k →
-      WitnessesEquivocation U k b →
-      ∀ j ∈ (U.block b).refs, (U.block j).creator ≠ S.leader k := by
+    LeaderExcluded (S := S) U := by
   intro b hb k hk
   refine h b hb k ?_ hk
   have h1 := hround b hb
-  simp only [decisionRound] at hk
+  simp only [LeanDag.Hydrozoan.decisionRound] at hk
   exact hslot k (by omega)
 
 end OptimalHydrozoan

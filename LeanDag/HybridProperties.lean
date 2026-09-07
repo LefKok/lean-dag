@@ -197,10 +197,10 @@ theorem hybridBandLaws {kt : ℕ} (hpos : 0 < kt) :
   skip_band := fun h hkk hlk hlo hhi hV hs =>
     directSkipSlotIn_band h hkk hlk hlo
       (by simp only [Hybrid.hybridAnchored_wave] at hhi; omega) hV hs
-  link_band := fun h hA hAlo hAhi hkk hlo hhi _ _ =>
+  link_band := fun h hA hAlo hAhi hkk _ hlo hhi _ _ =>
     thickLink_band h hA hAlo hAhi hkk hlo
       (by simp only [Hybrid.hybridAnchored_wave] at hhi; omega)
-  link_novel := fun h hA hAlo hAhi hkk hlo hhi _ _ hL =>
+  link_novel := fun h hA hAlo hAhi hkk _ hlo hhi _ _ hL =>
     not_thickLink_band_novel h hA hAlo hAhi hkk hlo
       (by simp only [Hybrid.hybridAnchored_wave] at hhi; omega) hL hpos
 

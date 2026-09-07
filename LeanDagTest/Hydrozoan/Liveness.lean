@@ -21,7 +21,7 @@ exactly quorum-sized: q = 5):
   (the adversary crowding out a slow correct block), and
   `SynchronisedOn` fails.
 * `U6d` — a correct replica (3) misses round 1 (a Byzantine block fills
-  the validity quorum): `Populated` fails at round 1, while the
+  the validity quorum): `LeanDag.Hydrozoan.Populated` fails at round 1, while the
   `T`-relative form without replica 3 still holds. The direct-liveness
   theorems require `q ≤ T.card`, so at this tight configuration dropping a
   correct replica exhausts the slack — both the design's tolerance and
@@ -57,13 +57,13 @@ def U6 : BlockUniverse (Fin 7) (Fin 15) where
   no_equivocation := by decide
 
 -- All three rounds are fully populated by the correct replicas.
-example : Populated U6 0 ∧ Populated U6 1 ∧ Populated U6 2 := by decide
+example : LeanDag.Hydrozoan.Populated U6 0 ∧ LeanDag.Hydrozoan.Populated U6 1 ∧ LeanDag.Hydrozoan.Populated U6 2 := by decide
 
 -- (Not decidable as stated — the ∀ over rounds is unbounded — so the
 -- proofs below bound the rounds first and decide each case.)
 /-- The synchrony hypothesis holds from round 0 (named: consumed by the
 end-to-end theorem applications in `HydrozoanTest/DirectLiveness.lean`). -/
-theorem u6_synchronised : Synchronised U6 0 := by
+theorem u6_synchronised : LeanDag.Hydrozoan.Synchronised U6 0 := by
   intro n hn b hb hbr hbc a ha har hac
   have hmax : ∀ c : Fin 15, (U6.block c).round ≤ 2 := by decide
   have hb2 := hmax b
@@ -99,7 +99,7 @@ example : ∀ i : Fin 16, (15 : Fin 16) ∉ (U6b.block i).refs := by decide
 
 -- An unreferenced Byzantine block does not break synchrony: both
 -- quantifiers are `T`-restricted.
-example : Synchronised U6b 0 := by
+example : LeanDag.Hydrozoan.Synchronised U6b 0 := by
   intro n hn b hb hbr hbc a ha har hac
   have hmax : ∀ c : Fin 16, (U6b.block c).round ≤ 2 := by decide
   have hb2 := hmax b
@@ -127,14 +127,14 @@ def U6c : BlockUniverse (Fin 7) (Fin 16) where
 
 -- The frozen-references failure, concretely: correct 10 does not
 -- reference correct 5.
-example : ¬ Synchronised U6c 0 := fun h =>
+example : ¬ LeanDag.Hydrozoan.Synchronised U6c 0 := fun h =>
   absurd (h 1 (by omega) 10 (by decide) (by decide) (by decide)
     5 (by decide) (by decide) (by decide)) (by decide)
 
 -- The start round `R` is load-bearing: the same universe IS
 -- synchronised from round 2 — its only violation sits below the start.
 -- (Deleting the `R ≤ n` guard from the definition falsifies this.)
-example : Synchronised U6c 2 := by
+example : LeanDag.Hydrozoan.Synchronised U6c 2 := by
   intro n hn b hb hbr hbc a ha har hac
   have hmax : ∀ c : Fin 16, (U6c.block c).round ≤ 2 := by decide
   have hb2 := hmax b
@@ -173,7 +173,7 @@ example : (0 : Fin 17) ∉ (U6e.block 15).refs := by decide
 -- ... yet synchrony holds: the referencing-side `T`-guard exempts it.
 -- (Deleting that guard from the definition falsifies this — the guard
 -- is load-bearing, not decorative.)
-example : Synchronised U6e 0 := by
+example : LeanDag.Hydrozoan.Synchronised U6e 0 := by
   intro n hn b hb hbr hbc a ha har hac
   have hmax : ∀ c : Fin 17, (U6e.block c).round ≤ 2 := by decide
   have hb2 := hmax b
@@ -197,13 +197,13 @@ def U6d : BlockUniverse (Fin 7) (Fin 15) where
   valid := by decide
   no_equivocation := by decide
 
--- `Populated` fails at round 1 — replica 3 has no block there — while
+-- `LeanDag.Hydrozoan.Populated` fails at round 1 — replica 3 has no block there — while
 -- the `T`-relative form without replica 3 still holds. (The
 -- direct-liveness theorems demand `q ≤ T.card`; at this tight
 -- configuration that slack is
 -- exhausted, so `U6d` supports no commit through round 1 — tolerance
 -- and its limit both visible.)
-example : ¬ Populated U6d 1 := by decide
+example : ¬ LeanDag.Hydrozoan.Populated U6d 1 := by decide
 example : PopulatedOn U6d ((Correct : Finset (Fin 7)).erase 3) 1 := by decide
 
 -- The eventual view of the Phase 6 witness is exactly the full view

@@ -48,11 +48,11 @@ set_option maxRecDepth 16384
 
 -- LeanDag.Hydrozoan.Correct = {1, 2}; every round up to 3 is filled by both.
 example : (LeanDag.Hydrozoan.Correct : Finset (Fin 3)) = {1, 2} := by decide
-example : Populated UC 0 ∧ Populated UC 1 ∧ Populated UC 2 ∧ Populated UC 3 := by decide
+example : LeanDag.Hydrozoan.Populated UC 0 ∧ LeanDag.Hydrozoan.Populated UC 1 ∧ LeanDag.Hydrozoan.Populated UC 2 ∧ LeanDag.Hydrozoan.Populated UC 3 := by decide
 
 /-- `UC` is synchronised from round 0: rounds stop at 3, so only
 `n ∈ {0, 1, 2}` carries an obligation, each decided on the table. -/
-theorem uc_synchronised : Synchronised UC 0 := by
+theorem uc_synchronised : LeanDag.Hydrozoan.Synchronised UC 0 := by
   intro n hn b hb hbr hbc a ha har hac
   have hmax : ∀ c : Fin 9, (UC.block c).round ≤ 3 := by decide
   have hb3 := hmax b
@@ -73,8 +73,8 @@ example :
 
 -- Skip liveness on slot 1 (leader 0, crashed, no candidate): guaranteed
 -- by the correct pair alone — no synchrony, no fault-count premise.
--- Hydrozoan's rule would need qFast = 3 blames and never fires here.
-example : (∀ L, ¬ IsLeaderBlock UC 1 L) ∧ blames UC 1 = {1, 2} ∧ ¬ SkippedLeader UC 1 := by
+-- Hydrozoan's rule would need qFast = 3 LeanDag.Hydrozoan.blames and never fires here.
+example : (∀ L, ¬ IsLeaderBlock UC 1 L) ∧ LeanDag.Hydrozoan.blames UC 1 = {1, 2} ∧ ¬ SkippedLeader UC 1 := by
   decide
 example : SkippedLeaderOpt UC 1 ∧ DecidedOpt OC (View.full UC) 1 none :=
   (OptimalHydrozoan.DirectLiveness.holds (Fin 3) (Fin 9) OC).2 (LeanDag.Hydrozoan.Correct : Finset (Fin 3)) 1
@@ -120,7 +120,7 @@ example : ¬ SynchronisedOn UD {1, 2, 3} 0 := fun h =>
 /-- Fifteen blocks over four rounds. Ids 0–3: genesis. Round 1: 4 by `0`
 (slot 1's candidate) and 5, 6, 7 by `1`, `2`, `3`, all referencing
 `{0, 1, 2}`. Round 2: 8 by `0` references `{4, 5, 6}` — the Byzantine
-vote for 4; 9, 10, 11 by `1`, `2`, `3` reference `{5, 6, 7}` — blames.
+vote for 4; 9, 10, 11 by `1`, `2`, `3` reference `{5, 6, 7}` — LeanDag.Hydrozoan.blames.
 Round 3: 12, 13, 14 by `1`, `2`, `3` reference `{8, 9, 10}`. -/
 def lkA : Fin 15 → Block (Fin 4) (Fin 15) := fun i =>
   if h : (i : ℕ) < 4 then
@@ -155,7 +155,7 @@ example :
   decide
 
 -- ... the correct replicas all blame the candidate, at exactly qCert ...
-example : blames UA 1 = {1, 2, 3} ∧ qCert (Fin 4) ≤ (blames UA 1).card := by decide
+example : LeanDag.Hydrozoan.blames UA 1 = {1, 2, 3} ∧ qCert (Fin 4) ≤ (LeanDag.Hydrozoan.blames UA 1).card := by decide
 
 -- ... yet the slot is not skipped: the single Byzantine vote 8, referenced
 -- by every correct decision-round block, makes each of them fast evidence

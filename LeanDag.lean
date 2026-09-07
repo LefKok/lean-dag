@@ -251,7 +251,6 @@ import LeanDag.Barnacle.Orcaella.Proof
 import LeanDag.Barnacle.Helpers.Hydrozoan
 import LeanDag.Barnacle.Hydrozoan.Statement
 import LeanDag.Barnacle.Hydrozoan.Proof
-import LeanDag.Barnacle.Helpers.OptimalHydrozoan
 import LeanDag.Barnacle.OptimalHydrozoan.Statement
 import LeanDag.Barnacle.OptimalHydrozoan.Proof
 import LeanDag.Barnacle.OptimalHydrozoanLive.Statement
@@ -351,7 +350,6 @@ import LeanDag.OptimalHydrozoan.PrefixAgreement.Proof
 import LeanDag.OptimalHydrozoan.Helpers.DirectLiveness
 import LeanDag.OptimalHydrozoan.DirectLiveness.Statement
 import LeanDag.OptimalHydrozoan.DirectLiveness.Proof
-import LeanDag.OptimalHydrozoan.Helpers.IndirectLiveness
 import LeanDag.OptimalHydrozoan.IndirectLiveness.Statement
 import LeanDag.OptimalHydrozoan.IndirectLiveness.Proof
 import LeanDag.OptimalHydrozoan.EventualDecision.Statement

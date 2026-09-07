@@ -6,7 +6,7 @@ import LeanDag.Hydrozoan.Model.IndirectRules
 
 Trusted core: the evidence rung of the paper's `DecideFromAnchor`
 (`sections/optimal-algorithms.tex`, Algorithm 3). Rung 1 — an anchor-linked
-certificate — is Hydrozoan's `CertifiedIn`, reused; anchor eligibility is
+certificate — is Hydrozoan's `LeanDag.Hydrozoan.CertifiedIn`, reused; anchor eligibility is
 Hydrozoan's `EligibleAsAnchor`, reused. Rung 2 replaces `WeakLinked`'s
 `q_weak` anchor-linked *votes* by `qCert` anchor-linked decision-round
 *blocks*, each fast evidence for the candidate.
@@ -35,7 +35,7 @@ def EvidenceLinked (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) (A L : 
     Prop :=
   ∃ s : Finset BlockId,                            -- some set of blocks such that
     (∀ b ∈ s,                                      -- every block in it
-      b ∈ blocksAt U (decisionRound Replica k) ∧   -- sits at slot k's decision round,
+      b ∈ LeanDag.Hydrozoan.blocksAt U (LeanDag.Hydrozoan.decisionRound Replica k) ∧   -- sits at slot k's decision round,
       IsFastEvidence U k b L ∧                     -- is fast evidence for L,
       Reaches U A b) ∧                             -- and lies in the anchor's history;
     qCert Replica ≤ (creatorsOf U.block s).card     -- and they come from q_cert creators

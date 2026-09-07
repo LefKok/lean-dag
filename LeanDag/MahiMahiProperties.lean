@@ -295,10 +295,10 @@ theorem mahiMahiBandLaws (hw : 2 ≤ w) :
     rw [← hlk]
     exact directSkipIn_band h hw hV hkk (by omega)
       (by simp only [MahiMahi.mahiMahiAnchored_wave] at hhi; omega) hs
-  link_band := fun h hA hAlo hAhi hkk hlo hhi _ hL =>
+  link_band := fun h hA hAlo hAhi hkk _ hlo hhi _ hL =>
     certifiedIn_band h hw hA hAlo hAhi hL.1 hL.2.1 hkk hlo
       (by simp only [MahiMahi.mahiMahiAnchored_wave] at hhi; omega)
-  link_novel := fun h hA hAlo hAhi hkk hlo hhi _ hL hLo =>
+  link_novel := fun h hA hAlo hAhi hkk _ hlo hhi _ hL hLo =>
     not_certifiedIn_band_novel h hw hA hAlo hAhi hLo hL.2.1 hkk hlo
       (by simp only [MahiMahi.mahiMahiAnchored_wave] at hhi; omega)
 

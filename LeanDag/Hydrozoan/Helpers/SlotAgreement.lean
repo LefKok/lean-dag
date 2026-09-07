@@ -77,16 +77,6 @@ theorem refs_nonempty {i : BlockId} (hi : i ∈ U.ids)
   have := q_pos (Replica := Replica)
   omega
 
-/-- Whatever route committed it, a verdict names a genuine candidate. -/
-theorem isLeaderBlock_of_decided [LinearOrder BlockId] [S : Slots Replica]
-    {V : View U} {j : ℕ} {A : BlockId}
-    (h : Decided U V j (some A)) : IsLeaderBlock U j A := by
-  cases h with
-  | directFast hL _ => exact hL
-  | directSlow hL _ => exact hL
-  | indirectCert _ _ _ _ hL _ => exact hL
-  | indirectWeak _ _ _ _ _ hL _ _ => exact hL
-
 /-- A certified-in-reach candidate has a certificate. -/
 theorem certificates_nonempty_of_certifiedIn {A L : BlockId} {r : ℕ}
     (h : CertifiedIn U A L r) : (certificates U L r).Nonempty := by
@@ -347,58 +337,36 @@ theorem not_certifiedIn_of_skipped {k : ℕ} {L : BlockId} {A : BlockId}
 
 end Skip
 
-/-! ## The anchor comparison (abstract, per lean-dag) -/
-
-omit [Fintype Replica] [DecidableEq Replica] [DecidableEq BlockId] in
-/-- Two searches for the nearest eligible committed slot above `k`
-cannot disagree: whichever anchor is earlier is decided `none` by the
-other side's intermediate premise and `some` by its own derivation. No
-consensus content — `Dec` and `Elig` are arbitrary. -/
-theorem anchor_eq {W : Type*} {Dec : W → ℕ → Option BlockId → Prop}
-    {Elig : ℕ → Prop} {k j j₂ : ℕ} {A A₂ : BlockId} {V₂ : W}
-    (hkj : k < j) (helig : Elig j) (hkj₂ : k < j₂) (helig₂ : Elig j₂)
-    (hj₂ : Dec V₂ j₂ (some A₂))
-    (hmid₂ : ∀ i, k < i → i < j₂ → Elig i → Dec V₂ i none)
-    (ihj : ∀ V v, Dec V j v → some A = v)
-    (ihmid : ∀ i, k < i → i < j → Elig i → ∀ V v, Dec V i v → none = v) :
-    j = j₂ ∧ A = A₂ := by
-  rcases lt_trichotomy j j₂ with hlt | heq | hgt
-  · exact absurd (ihj V₂ none (hmid₂ j hkj hlt helig)) (by simp)
-  · subst heq
-    exact ⟨rfl, Option.some.inj (ihj V₂ (some A₂) hj₂)⟩
-  · exact absurd (ihmid j₂ hkj₂ hgt helig₂ V₂ (some A₂) hj₂) (by simp)
-
-/-! ## At-anchor wrappers (view-level rules against a decided anchor) -/
+/-! ## The rungs fire at an eligible anchor -/
 
 section AtAnchor
 
 variable [LinearOrder BlockId] [S : Slots Replica]
 
 /-- The anchor's round, from its slot and eligibility. -/
-theorem anchor_round {W : View U} {k j : ℕ} {A : BlockId}
-    (hj : Decided U W j (some A)) (helig : EligibleAsAnchor Replica k j) :
+theorem anchor_round {k j : ℕ} {A : BlockId} (hA : IsLeaderBlock U j A)
+    (helig : (hydrozoanAnchored Replica BlockId).Eligible k j) :
     S.slotRound k + 3 ≤ (U.block A).round := by
-  have hA := isLeaderBlock_of_decided hj
-  rw [hA.2.1]
-  exact (eligibleAsAnchor_iff Replica).mp helig
+  have := (hydrozoanAnchored Replica BlockId).anchor_round_le hA helig
+  simp only [hydrozoanAnchored_wave] at this
+  omega
 
-/-- A slow commit in any view is certified at every decided eligible
-anchor. -/
-theorem certifiedIn_of_slowCommitInView_at_anchor {V W : View U} {k j : ℕ}
+/-- A slow commit in any view is certified at every candidate of an
+eligible slot. -/
+theorem certifiedIn_of_slowCommitInView_at_anchor {V : View U} {k j : ℕ}
     {L A : BlockId} (h : SlowCommitInView U V L (S.slotRound k))
-    (hj : Decided U W j (some A)) (helig : EligibleAsAnchor Replica k j) :
+    (hA : IsLeaderBlock U j A) (helig : (hydrozoanAnchored Replica BlockId).Eligible k j) :
     CertifiedIn U A L (S.slotRound k) :=
-  certifiedIn_of_slowCommit (slowCommit_of_slowCommitInView h)
-    (isLeaderBlock_of_decided hj).1 (anchor_round hj helig)
+  certifiedIn_of_slowCommit (slowCommit_of_slowCommitInView h) hA.1 (anchor_round hA helig)
 
-/-- A fast commit in any view is weak-linked at every decided eligible
-anchor. -/
-theorem weakLinked_of_fastCommitInView_at_anchor {V W : View U} {k j : ℕ}
+/-- A fast commit in any view is weak-linked at every candidate of an
+eligible slot. -/
+theorem weakLinked_of_fastCommitInView_at_anchor {V : View U} {k j : ℕ}
     {L A : BlockId} (h : FastCommitInView U V L (S.slotRound k))
-    (hj : Decided U W j (some A)) (helig : EligibleAsAnchor Replica k j) :
+    (hA : IsLeaderBlock U j A) (helig : (hydrozoanAnchored Replica BlockId).Eligible k j) :
     WeakLinked U A L (S.slotRound k) :=
-  weakLinked_of_fastCommit (fastCommit_of_fastCommitInView h)
-    (isLeaderBlock_of_decided hj).1 (by have := anchor_round hj helig; omega)
+  weakLinked_of_fastCommit (fastCommit_of_fastCommitInView h) hA.1
+    (by have := anchor_round hA helig; omega)
 
 end AtAnchor
 

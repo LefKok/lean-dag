@@ -1,5 +1,6 @@
 import LeanDag.Hydrozoan.Model.BlockUniverse
 import LeanDag.Slots
+import LeanDag.Anchored
 
 /-!
 # Slots and the leader schedule
@@ -35,22 +36,10 @@ def decisionRound (k : ℕ) : ℕ := S.slotRound k + 2
 
 end SlotArithmetic
 
-section LeaderBlocks
-
-variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
-  [F : LeanDag.Hydrozoan.Faults Replica] [S : Slots Replica]
-
-/-- `L` is a candidate block for slot `k`: the right round, the right
-creator (the paper's `GetLeaderBlocks`, as a membership predicate).
-Because replicas may equivocate, several blocks can satisfy this for one
-slot — the rules count creators, and the graded rule's tie-break picks
-among copies. Reducible so decidability is inferable inside filters. -/
-@[reducible]
-def IsLeaderBlock (U : BlockUniverse Replica BlockId) (k : ℕ) (L : BlockId) :
-    Prop :=
-  L ∈ U.ids ∧ (U.block L).round = S.slotRound k ∧ (U.block L).creator = S.leader k
-
-end LeaderBlocks
+/-! A slot's **candidates** are the shared `IsLeaderBlock`: the blocks at
+the slot's round by the slot's leader, of which an equivocating leader
+may have several — the rules count creators, and the graded rule's
+tie-break picks among copies. -/
 
 end Hydrozoan
 
