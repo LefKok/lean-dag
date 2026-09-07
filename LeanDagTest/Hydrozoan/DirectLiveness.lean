@@ -1,7 +1,6 @@
 import LeanDag.Hydrozoan.DirectLiveness.Proof
 import LeanDagTest.Hydrozoan.Liveness
 import LeanDagTest.Hydrozoan.DirectRules
-
 /-!
 # Witness: liveness fires
 

@@ -1,5 +1,4 @@
 import LeanDagTest.BlackMarlin.Divergence
-
 /-!
 # Black Marlin — counting support in the cone does not settle it either
 

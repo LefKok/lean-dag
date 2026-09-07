@@ -1,8 +1,7 @@
 import LeanDagTest.Barnacle.Model
 import LeanDag.Barnacle.Odontoceti.Proof
 import LeanDag.Barnacle.Nemo.Proof
-import LeanDagTest.Nemo
-
+import LeanDagTest.Nemo.Model
 /-!
 # Barnacle witnesses — the two-round rules on data
 

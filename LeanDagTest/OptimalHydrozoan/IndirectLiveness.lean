@@ -1,6 +1,5 @@
 import LeanDag.OptimalHydrozoan.IndirectLiveness.Proof
 import LeanDagTest.OptimalHydrozoan.SlotAgreement
-
 /-!
 # Witness: Optimal indirect liveness, applied
 

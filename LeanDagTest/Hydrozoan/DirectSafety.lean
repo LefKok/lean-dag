@@ -2,7 +2,6 @@ import LeanDag.Hydrozoan.DirectSafety.Proof
 import LeanDag.Hydrozoan.Model.Decided
 import LeanDag.Hydrozoan.Helpers.IndirectRules
 import LeanDagTest.Hydrozoan.DirectRules
-
 /-!
 # Witness: the structural fast-commit-without-certificate universe
 

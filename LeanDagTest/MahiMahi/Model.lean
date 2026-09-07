@@ -1,4 +1,4 @@
-import LeanDagTest.Model
+import LeanDagTest.Mysticeti.Model
 import LeanDag.MahiMahi.Model.Decision
 /-!
 # Mahi-Mahi witnesses — the rule at wave `w` on data

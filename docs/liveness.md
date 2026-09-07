@@ -755,7 +755,7 @@ the weak forms remain available untouched.
 | L6 | `FairScheduleOn`, then L1 and L4 | low — but see the quantifier order | ✓ `commits_recur_on` |
 | L7a | `Delivery`, then `Synchronised` as a theorem | low — see S4 | ✓ `synchronised_of_delivery` |
 | — | **`ugrowTiming`: a `Timing` witness at every horizon** | low, and required **first** | ✓ `ugrowTiming` |
-| — | **`ugrowHonest`, `ugrowSkew`: non-degenerate witnesses** | low — see S7 | ✓ `LeanDagTest/Partial.lean` |
+| — | **`ugrowHonest`, `ugrowSkew`: non-degenerate witnesses** | low — see S7 | ✓ `LeanDagTest/Mysticeti/Partial.lean` |
 | L7b | `Timing`, then `SynchronisedOn` from GST + backoff | medium — see S6 | ✓ `exists_synchronisedOn_of_backoff` |
 | L8a | `Rated`, then `R` read off instead of extracted | low — see S8 | ✓ `synchronisedOn_of_rate` |
 | L8b | `FairWithin` and `BoundedSpacing`, then L6 rebounded | low — see S8 | ✓ `commits_recur_by_round` |
@@ -788,7 +788,7 @@ rule applies three more times:
 horizon; the claim needed is that every horizon is reachable. `Ugrow N` takes
 `BlockId := ℕ` with round `b / 4`, creator `b % 4`, and refs the whole round
 below — finite at each `N`, unbounded across them. The `U`–`U7` models of
-`LeanDagTest/Model.lean` cannot serve: all are `Fin n` and of fixed height.
+`LeanDagTest/Mysticeti/Model.lean` cannot serve: all are `Fin n` and of fixed height.
 
 It also satisfies `Synchronised` at `R = 0`, since its blocks reference the
 entire round below. That matters because `Live` and `Synchronised` being
@@ -824,10 +824,10 @@ top-down, each layer *assumes* what the one below it *supplies*.
 | `LeanDag/Mysticeti/Liveness.lean` | L0–L6, plus `Populated`, `Live`, `Delivery`, `Synchronised`, `FairScheduleOn`, and L7a |
 | `LeanDag/Timing.lean` | L7b — `Timing`, `DriftFrom`, and `SynchronisedOn` earned from GST |
 | `LeanDag/Mysticeti/Quantitative.lean` | S8 — `Rated`, `FairWithin`, `BoundedSpacing`; S9 — the wait bound `Delay(Δ)` |
-| `LeanDagTest/Growth.lean` | `Ugrow`, `ugrowDelivery`, `ugrowTiming` — satisfiability at every horizon |
-| `LeanDagTest/Partial.lean` | `ugrowHonest`, `ugrowSkew` — the partial and skewed cases (S7) |
-| `LeanDagTest/Quantitative.lean` | `rrSlots` — round-robin, and the rated hypotheses witnessed (S8) |
-| `LeanDagTest/Model.lean` | the `Fin n` safety models; L0, L2 and L3 are exercised here |
+| `LeanDagTest/Mysticeti/Growth.lean` | `Ugrow`, `ugrowDelivery`, `ugrowTiming` — satisfiability at every horizon |
+| `LeanDagTest/Mysticeti/Partial.lean` | `ugrowHonest`, `ugrowSkew` — the partial and skewed cases (S7) |
+| `LeanDagTest/Mysticeti/Quantitative.lean` | `rrSlots` — round-robin, and the rated hypotheses witnessed (S8) |
+| `LeanDagTest/Mysticeti/Model.lean` | the `Fin n` safety models; L0, L2 and L3 are exercised here |
 
 Note the inversion: `Timing.lean` is logically the **bottom** of the stack and
 was the **last** file written. Proof order and file order differ, and §7
@@ -1108,7 +1108,7 @@ induction only ever took the **timeout-limited** branch. Partial views are the
 normal case, and a branch no witness reaches is a branch where a mistake would
 hide.
 
-`LeanDagTest/Partial.lean` supplies both over the same `Ugrow N` universe.
+`LeanDagTest/Mysticeti/Partial.lean` supplies both over the same `Ugrow N` universe.
 
 **`ugrowHonest`** — the Byzantine validator withholds, so correct validators
 hold only the three correct blocks of each round. `ugrowHonest_partial` shows
@@ -1178,7 +1178,7 @@ Adding it is what turns a slot bound into a round bound.
 **The witnesses matter more than usual here**, since a rated hypothesis is
 strong enough to be unsatisfiable — in which case the bounds are bounds on
 nothing, exactly as the unbounded `Live` and `Timing` were. All three are
-witnessed in `LeanDagTest/Quantitative.lean`:
+witnessed in `LeanDagTest/Mysticeti/Quantitative.lean`:
 
 - `ugrowTiming_rated` — the `2 ^ n` backoff is rated, and drives `R` to `0`;
 - `rrSlots_fairWithin` — genuine round-robin, window `f + 1 = 2`. `fairSlots`

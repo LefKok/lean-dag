@@ -619,7 +619,7 @@ schedule, whatever else a builder chose to reference.
 **The bridge that remains.** `Liveness.lean` keeps `populated_of_viewPace`
 and `synchronised_of_viewPace`: a FinWhale DAG can be fed production and
 coverage from the development's main line. That is a compatibility
-statement in the sense `LeanDagTest/Routes.lean` gives the word, not a
+statement in the sense `LeanDagTest/Mysticeti/Routes.lean` gives the word, not a
 route to liveness — the coverage it yields rests on `ViewPace`'s waiting
 floor, which FinWhale's pacemaker does not have.
 

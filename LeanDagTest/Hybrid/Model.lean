@@ -2,7 +2,6 @@ import LeanDag.Hybrid.Properties
 import LeanDag.Hybrid.Conservativity
 import LeanDag.Common.Schedule
 import LeanDagTest.Odontoceti.Model
-
 /-!
 # The hybrid fault model, witnessed
 

@@ -1,6 +1,5 @@
 import LeanDag.OptimalHydrozoan.SlotAgreement.Proof
 import LeanDagTest.OptimalHydrozoan.Decided
-
 /-!
 # Witness: Optimal slot agreement, applied
 

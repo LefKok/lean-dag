@@ -1,6 +1,5 @@
 import LeanDag.OptimalHydrozoan.EventualDecision.Proof
 import LeanDagTest.OptimalHydrozoan.IndirectLiveness
-
 /-!
 # Witness: Optimal eventual decision, applied
 

@@ -58,7 +58,7 @@ ALLOW = {
     # only this development's declarations, so these cannot be checked here.
     "Environment.constants", "ConstantInfo.value", "Finset.card", "Fintype.card",
     "Finset.filter", "Finset.min", "Finset.max", "Finset.min'", "lt_trichotomy", "Correct.card", "Finset.max'", "Nat.succ", "refs.card",
-    "LeanDagTest.Growth", "LeanDagTest.Unbounded", "Environment.constants",
+    "LeanDagTest.Mysticeti.Growth", "LeanDagTest.Mysticeti.Unbounded", "Environment.constants",
     "le_antisymm", "not_lt", "List.finRange", "Finset.sort",
     # Names of the reference implementation (the `mysticeti` repository, Rust)
     # that the Mahi-Mahi arc's docstrings quote.

@@ -1,5 +1,4 @@
 import LeanDagTest.Barnacle.Instances
-
 /-!
 # Barnacle witnesses — a bare majority, attacked
 

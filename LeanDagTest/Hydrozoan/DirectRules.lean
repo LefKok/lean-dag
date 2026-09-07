@@ -1,7 +1,6 @@
 import LeanDag.Common.Slots
 import LeanDag.Hydrozoan.Helpers.DirectRules
 import LeanDagTest.Hydrozoan.CausalHistory
-
 /-!
 # Witness: the direct rules fire
 

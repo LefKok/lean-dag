@@ -1,6 +1,5 @@
 import LeanDag.Mysticeti.ViewPace
-import LeanDagTest.Growth
-
+import LeanDagTest.Mysticeti.Growth
 /-!
 # What the view-convergence route cannot do without
 

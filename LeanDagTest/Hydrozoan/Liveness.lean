@@ -1,6 +1,5 @@
 import LeanDag.Hydrozoan.Model.Liveness
 import LeanDagTest.Hydrozoan.SlotAgreement
-
 /-!
 # Witness: the liveness hypotheses are satisfiable and biting
 

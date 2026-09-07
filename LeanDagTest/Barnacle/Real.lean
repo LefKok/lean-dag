@@ -3,8 +3,7 @@ import LeanDag.Barnacle.Live.Proof
 import LeanDag.Barnacle.Validity.Proof
 import LeanDag.Barnacle.Helpers.Delivery
 import LeanDag.Barnacle.Aimd.Proof
-import LeanDagTest.Growth
-
+import LeanDagTest.Mysticeti.Growth
 /-!
 # Barnacle witnesses — progress against the real rule
 

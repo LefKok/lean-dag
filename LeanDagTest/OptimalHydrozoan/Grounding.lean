@@ -1,6 +1,5 @@
 import LeanDag.OptimalHydrozoan.Grounding.Proof
 import LeanDagTest.OptimalHydrozoan.Universe
-
 /-!
 # Witness: Optimal-Hydrozoan grounding
 

@@ -1,7 +1,6 @@
 import LeanDag.Hydrozoan.SlotAgreement.Statement
 import LeanDag.Hydrozoan.Helpers.IndirectRules
 import LeanDagTest.Hydrozoan.DirectRules
-
 /-!
 # Witness: the hardening universe
 

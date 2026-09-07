@@ -1,6 +1,5 @@
-import LeanDagTest.Reactive
-import LeanDagTest.ViewPace
-
+import LeanDagTest.Reactive.Model
+import LeanDagTest.Mysticeti.ViewPace
 /-!
 # The collapse bound is tight
 

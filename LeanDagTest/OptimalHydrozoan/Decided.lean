@@ -4,7 +4,6 @@ import LeanDag.OptimalHydrozoan.Helpers.IndirectRules
 import LeanDag.OptimalHydrozoan.Helpers.Decided
 import LeanDag.Hydrozoan.Model.Liveness
 import LeanDagTest.OptimalHydrozoan.Universe
-
 /-!
 # Witness: the Optimal-Hydrozoan decision rules
 

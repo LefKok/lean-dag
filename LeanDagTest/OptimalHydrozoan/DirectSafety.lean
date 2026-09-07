@@ -1,7 +1,6 @@
 import LeanDag.OptimalHydrozoan.DirectSafety.Proof
 import LeanDag.OptimalHydrozoan.Helpers.Decided
 import LeanDagTest.OptimalHydrozoan.Decided
-
 /-!
 # Witness: Optimal direct-rule safety, applied
 

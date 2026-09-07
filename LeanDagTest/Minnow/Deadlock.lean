@@ -1,6 +1,5 @@
 import LeanDag.Minnow.Blocking
-import LeanDagTest.Model
-
+import LeanDagTest.Mysticeti.Model
 /-!
 # Minnow — a DAG in which `crs*` commits nothing, ever
 

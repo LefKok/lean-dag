@@ -340,7 +340,7 @@ exactly the authors' accepted sets. No theorem assumes a Byzantine-authored
 block is ever delivered to anyone: Byzantine delivery is entirely the
 adversary's choice, and a block delivered to nobody is not in `U` and
 imposes no burden (§1). Both extremes are witnessed: `ugrowHonest`
-(`LeanDagTest/Partial.lean`) discharges the liveness definitions with the
+(`LeanDagTest/Mysticeti/Partial.lean`) discharges the liveness definitions with the
 Byzantine validator publishing nothing at all, and `Dtwin` (§8) has
 Byzantine blocks reaching some correct validators and not others. The
 consequence for relaying — a correct validator's outbound duty is its own

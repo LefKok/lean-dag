@@ -1,7 +1,6 @@
 import LeanDag.Hydrozoan.Grounding.Proof
 import LeanDagTest.Hydrozoan.Model
 import LeanDagTest.Hydrozoan.DirectLiveness
-
 /-!
 # Witness: grounding
 

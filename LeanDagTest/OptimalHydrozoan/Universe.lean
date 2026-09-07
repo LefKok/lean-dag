@@ -1,6 +1,5 @@
 import LeanDag.OptimalHydrozoan.Helpers.Universe
 import LeanDagTest.OptimalHydrozoan.Thresholds
-
 /-!
 # Witness: the leader-exclusion rule
 

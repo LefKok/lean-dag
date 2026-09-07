@@ -1,6 +1,5 @@
 import LeanDag.Hydrozoan.PrefixAgreement.Statement
 import LeanDagTest.Hydrozoan.SlotAgreement
-
 /-!
 # Witness: output sequences
 

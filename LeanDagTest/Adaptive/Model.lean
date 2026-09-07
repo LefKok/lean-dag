@@ -2,9 +2,8 @@ import LeanDag.Adaptive.Basic
 import LeanDag.Adaptive.Run
 import LeanDag.Adaptive.Liveness
 import LeanDag.Adaptive.Odontoceti
-import LeanDagTest.Model
+import LeanDagTest.Mysticeti.Model
 import LeanDagTest.Odontoceti.Model
-
 /-!
 # Adaptive leaders, witnessed: the induced instance and the bounded relation
 

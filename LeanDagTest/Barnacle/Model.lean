@@ -1,4 +1,4 @@
-import LeanDagTest.Model
+import LeanDagTest.Mysticeti.Model
 import LeanDagTest.Odontoceti.Model
 import LeanDag.Barnacle.Model.Run
 import LeanDag.Barnacle.Mysticeti.Proof

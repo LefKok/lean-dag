@@ -1,8 +1,7 @@
 import LeanDag.Reactive.Mysticeti
 import LeanDag.Reactive.Odontoceti
 import LeanDag.Reactive.MysticetiProperties
-import LeanDagTest.Quantitative
-
+import LeanDagTest.Mysticeti.Quantitative
 /-!
 # The reactive schedule, witnessed
 

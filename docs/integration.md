@@ -226,7 +226,7 @@ mechanisms must respect; none is visible from a single mechanism.
 
 ## 5. Witnesses and audits
 
-The standing facts are exercised on data in `LeanDagTest/Integration.lean`:
+The standing facts are exercised on data in `LeanDagTest/Integration/Model.lean`:
 the coverage refutation on the crash
 family, retention and the outage bound, re-genesis and its convergence,
 the exposure check. The mechanism cells are checked by the build and by

@@ -1,6 +1,5 @@
 import LeanDag.OptimalHydrozoan.DirectLiveness.Proof
 import LeanDagTest.OptimalHydrozoan.PrefixAgreement
-
 /-!
 # Witness: Optimal direct liveness, applied
 

@@ -1,5 +1,4 @@
-import LeanDagTest.Catchup
-
+import LeanDagTest.Reactive.Catchup
 /-!
 # The collapse, exhibited from a large spread
 

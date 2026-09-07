@@ -2,9 +2,8 @@ import LeanDag.SafeSkip.Basic
 import LeanDag.SafeSkip.Invariance
 import LeanDag.Properties.Arcs.SafeSkip
 import LeanDag.SafeSkip.Jump
-import LeanDagTest.Unbounded
-import LeanDagTest.Quantitative
-
+import LeanDagTest.Mysticeti.Unbounded
+import LeanDagTest.Mysticeti.Quantitative
 /-!
 # Safe Skip, witnessed
 

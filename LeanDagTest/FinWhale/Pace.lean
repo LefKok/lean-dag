@@ -1,5 +1,5 @@
-import LeanDagTest.ViewPace
-import LeanDagTest.Reactive
+import LeanDagTest.Mysticeti.ViewPace
+import LeanDagTest.Reactive.Model
 import LeanDag.FinWhale.View
 import LeanDag.FinWhale.Reactive
 import LeanDag.FinWhale.Validity

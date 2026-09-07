@@ -1,6 +1,5 @@
 import LeanDag.GC.Bootstrap
 import LeanDagTest.DoS.Exclusion
-
 /-!
 # The bootstrap, witnessed
 

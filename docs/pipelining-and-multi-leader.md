@@ -536,7 +536,7 @@ eligible range beginning inside the run, so they resolve outright by §9.3;
 everything lower descends onto them.
 
 **`hspan` is the whole difference between the two schedules**, and it is one line
-each in `LeanDagTest/Pipelined.lean`:
+each in `LeanDagTest/Mysticeti/Pipelined.lean`:
 
 | schedule | `hspan` holds with | commits needed |
 |---|---|---|
@@ -695,7 +695,7 @@ paper by keeping `numOfProposers` small.
 `LeanDag/Mysticeti/Quantitative.lean` carries the restated `commits_recur_within` and
 `commits_recur_by_round`.
 
-**Witnesses** — `LeanDagTest/Pipelined.lean`, three `local instance` schedules so
+**Witnesses** — `LeanDagTest/Mysticeti/Pipelined.lean`, three `local instance` schedules so
 they never meet:
 
 - *pipelined* (`uniformSingle 1`): `¬ Eligible 0 1`, `¬ Eligible 0 2`,
@@ -724,7 +724,7 @@ and `SpansEligible 3` at *every* `n` and every fault configuration, with no
 premise beyond the fault model. One correct leader's wave is a full correct
 3-run by itself, so fairness needs only `Correct.Nonempty`, where per-slot
 rotation would need the pigeonhole argument recorded on `FairRunOn`.
-`LeanDagTest/WaveRobin.lean` pins the wave shape at `Fin 4` and instantiates
+`LeanDagTest/Common/WaveRobin.lean` pins the wave shape at `Fin 4` and instantiates
 L10 with no schedule hypothesis left.
 
 The existing instances in `LeanDagTest/{Model,Growth,Quantitative}.lean` were

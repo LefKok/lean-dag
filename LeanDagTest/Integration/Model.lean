@@ -7,8 +7,7 @@ import LeanDag.Integration.DeliveryFill
 import LeanDag.Integration.Margin
 import LeanDag.Integration.CommonTarget
 import LeanDag.Integration.HydrozoanMechanisms
-import LeanDagTest.SafeSkip
-
+import LeanDagTest.SafeSkip.Model
 /-!
 # The integration lemmas, witnessed
 

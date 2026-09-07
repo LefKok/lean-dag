@@ -1,6 +1,5 @@
 import LeanDag.Hydrozoan.Helpers.Block
 import LeanDagTest.Hydrozoan.Model
-
 /-!
 # Witness: a block universe with faults
 

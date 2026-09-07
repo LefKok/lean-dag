@@ -1,6 +1,5 @@
 import LeanDag.Hydrozoan.EventualDecision.Proof
 import LeanDagTest.Hydrozoan.IndirectLiveness
-
 /-!
 # Witness: the liveness hardening batch
 

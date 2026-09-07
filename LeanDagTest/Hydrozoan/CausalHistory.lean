@@ -2,7 +2,6 @@ import LeanDag.Common.History
 import LeanDag.Hydrozoan.Model.View
 import LeanDag.Hydrozoan.Helpers.Block
 import LeanDagTest.Hydrozoan.Model
-
 /-!
 # Witness: views and causal reachability
 

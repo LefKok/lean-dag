@@ -1,7 +1,6 @@
 import LeanDag.OptimalHydrozoan.Model.Faults
 import LeanDagTest.Hydrozoan.Model
 import LeanDagTest.Hydrozoan.Thresholds
-
 /-!
 # Witness: the Optimal-Hydrozoan fault model and thresholds
 

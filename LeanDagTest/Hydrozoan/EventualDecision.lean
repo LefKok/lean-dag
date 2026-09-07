@@ -1,6 +1,5 @@
 import LeanDag.Hydrozoan.EventualDecision.Proof
 import LeanDagTest.Hydrozoan.IndirectLiveness
-
 /-!
 # Witness: eventual decision fires
 

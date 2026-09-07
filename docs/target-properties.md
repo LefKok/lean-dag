@@ -576,7 +576,7 @@ extension, because an old block's references are old.
 Three consequences, none of them planned. The core's fill transport (SS5)
 loses its counting hypothesis. `decided_none_of_leader_absent` (L5)
 gains the quorum, and becomes checkable. And the witness universes must
-tell the truth: `LeanDagTest/Adaptive.lean`'s total adaptive runs become
+tell the truth: `LeanDagTest/Adaptive/Model.lean`'s total adaptive runs become
 **partial** runs, because a finite DAG cannot decide slots past its
 frontier and only the vacuous skip ever let it pretend otherwise.
 
@@ -2948,7 +2948,7 @@ to: the point of the reactive discipline is to commit *without* waiting
 for the main line, so `SynchronisedOn` is false in a reactive execution
 by design (`Reactive/Basic.lean`). Its precondition is guarded the other
 admissible way, by a witness — `ugrowReactiveLive` and
-`ugrowReactive_leaderCommits` in `LeanDagTest/Reactive.lean` exhibit a
+`ugrowReactive_leaderCommits` in `LeanDagTest/Reactive/Model.lean` exhibit a
 reactive execution that satisfies it and the verdict it yields.
 
 ### 11.6b One precondition for two execution models
@@ -3710,7 +3710,7 @@ and `decided_none_fresh_agree_hz`.
 as before — every cell for Hydrozoan and Optimal-Hydrozoan `yes`, live
 and stack `der` — now from the native witnesses. `audit-bespoke.py`
 still reports no bespoke links. The six Hydrozoan integration test
-files are gone with the cluster; `LeanDagTest/Integration.lean` keeps
+files are gone with the cluster; `LeanDagTest/Integration/Model.lean` keeps
 the axiom checks for what survives.
 
 ### 11.21 Coverage and the joiner, generic
@@ -4210,6 +4210,17 @@ from it are the core's committed-run results at the core's schedule
 shapes, not a shared notion. When a rule needs one of those results as a
 shared notion, the notion moves to `Common/`, as §11.28 did for the
 liveness predicates.
+
+**The tests follow.** `LeanDagTest/` mirrors the library: the core's
+witnesses (`Model`, `Growth`, `Partial`, `Pipelined`, `Quantitative`,
+`ViewPace`, `Unbounded`, `Routes`) are under `Mysticeti/`, the
+wave-aligned rotation's under `Common/`, and the arc witnesses that sat
+at the root are in the directory of the arc they exercise: `Adaptive/`,
+`Hybrid/` (the model, the tight bound and the checkpoint), `Reactive/`
+(the model, the catch-up bound and the collapse), `SafeSkip/`,
+`Integration/` and `Nemo/`, each as `Model.lean` where the library's
+directory has one carrier. The root of the test tree now holds only
+directories, as the library's does.
 
 ### 11.5 Next steps, in order
 

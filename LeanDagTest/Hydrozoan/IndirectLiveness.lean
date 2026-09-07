@@ -2,7 +2,6 @@ import LeanDag.Hydrozoan.IndirectLiveness.Proof
 import LeanDag.Hydrozoan.SlotAgreement.Proof
 import LeanDagTest.Hydrozoan.SlotAgreement
 import LeanDagTest.Hydrozoan.DirectLiveness
-
 /-!
 # Witness: indirect liveness fires
 

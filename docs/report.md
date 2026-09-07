@@ -2184,7 +2184,7 @@ at one round, and that round needs no network.
 
 ### 6.9 The route: view convergence over a partial schedule
 
-*(module `LeanDag/Mysticeti/ViewPace.lean`; witnesses in `LeanDagTest/ViewPace.lean`)*
+*(module `LeanDag/Mysticeti/ViewPace.lean`; witnesses in `LeanDagTest/Mysticeti/ViewPace.lean`)*
 
 The network assumption is **view convergence** — after GST, whatever a
 correct validator holds reaches every correct validator within `delay` —
@@ -2523,7 +2523,7 @@ against delivery.
 ### 6.11 Catch-up: the drift collapse
 
 *(clause and collapse in `LeanDag/Mysticeti/ViewPace.lean`; witnesses in
-`LeanDagTest/Catchup.lean`, `LeanDagTest/Collapse.lean`)*
+`LeanDagTest/Reactive/Catchup.lean`, `LeanDagTest/Reactive/Collapse.lean`)*
 
 The schedule alone does not contract drift. Under `waits` every clock
 advances by the same timeout, so the spread between validators is
@@ -4168,7 +4168,7 @@ recovery window (§16.5).
 ### 12.7 Round jumping: the fill is derived, not transmitted
 
 *(results in `LeanDag/SafeSkip/Jump.lean`; witness in
-`LeanDagTest/SafeSkip.lean`)*
+`LeanDagTest/SafeSkip/Model.lean`)*
 
 A slow validator at round `r` that sights a quorum at round `R ≫ r`
 wants its next block at `R + 1`, not `R − r` blocks of catch-up. The
@@ -9764,7 +9764,7 @@ every theorem above it vacuous, and vacuity is not otherwise detectable.
 | `Dtwin` | `UniformBudget Dtwin 3` and `ByzBudget Dtwin 0`: the acceptance budget, on a schedule with a real equivocation |
 | `rrSlots` | `Slots`, round-robin, satisfying `FairWithin T (f+1)` and `BoundedSpacing 3` |
 | `waveRobin n` | `Slots` at *every* `n`: the wave-aligned rotation, whose `FairRunOn Correct 3` and `SpansEligible 3` are theorems with no premise beyond the fault model (L12) — the one schedule family not pinned to a committee |
-| `Model.lean` | six `BlockUniverse` instances exercising the safety definitions |
+| `Mysticeti/Model.lean` | six `BlockUniverse` instances exercising the safety definitions |
 | `Ucrash N`, `ucrashMsg` | `SkipMsg`: a crashed line, the message against it, and the fill (SS7) |
 | `Usun`, `Usk`, `U44`, `U3` | `PartialRun` with a rising count, a skipped slot past the threshold, the real `Good` with the theorems yielding verdicts, and a bare majority under attack (BN3, BN8, BN9, BN10) |
 | `ucrashJump` | `JumpMsg`: the compact core of `ucrashMsg`, elaborating to the same fill (SS11) |
@@ -10546,10 +10546,10 @@ result in full, with every other theorem the body names.
 | L7 | coverage from view convergence, drift-free | `ViewPace.synchronisedOn_of_converges`; the drift-parametric engine `ViewPace.synchronisedOn_of_driftOn` *(ViewPace)* |
 | V1 | the referencing clause, unfused from the network's | `ViewPace.covers_of_converges` *(ViewPace)* |
 | V4 | the bound factored out of convergence | `convergesWithin_iff_bounded` *(ViewPace)* |
-| V10 | the bound in `converges` is necessary for coverage | `bound_is_necessary_pace`, `ugapPace_convergesEventually` *(LeanDagTest.Unbounded)* |
-| V11 | and its starting round is forced, not chosen | `gst_is_forced_pace` *(LeanDagTest.Unbounded)* |
-| V12 | as is its reliable set: coverage over `T` derived, over `Correct` false | `reliable_set_is_forced_pace`, `ustarvePace_synchronisedOn` *(LeanDagTest.Unbounded)* |
-| V17 | a partial build schedule, in which *stuck* is expressible: the structure, production, and the spine | `ViewPace`, `ViewPace.reached`, `ViewPace.populatedOn`, `ViewPace.commits_recur_via_pace`, `ugrowStuckPace_stuck` *(ViewPace, LeanDagTest.ViewPace)* |
+| V10 | the bound in `converges` is necessary for coverage | `bound_is_necessary_pace`, `ugapPace_convergesEventually` *(LeanDagTest.Mysticeti.Unbounded)* |
+| V11 | and its starting round is forced, not chosen | `gst_is_forced_pace` *(LeanDagTest.Mysticeti.Unbounded)* |
+| V12 | as is its reliable set: coverage over `T` derived, over `Correct` false | `reliable_set_is_forced_pace`, `ustarvePace_synchronisedOn` *(LeanDagTest.Mysticeti.Unbounded)* |
+| V17 | a partial build schedule, in which *stuck* is expressible: the structure, production, and the spine | `ViewPace`, `ViewPace.reached`, `ViewPace.populatedOn`, `ViewPace.commits_recur_via_pace`, `ugrowStuckPace_stuck` *(ViewPace, LeanDagTest.Mysticeti.ViewPace)* |
 | L11 | drift is derived, at the collapsed constant | `ViewPace.driftOn_of_catchup`, `ReactivePace.driftOn_of_catchup` *(ViewPace, Reactive/Basic)* |
 | L8a | the round of coverage, explicitly | `ViewPace.synchronisedOn_of_rate` *(ViewPace)* |
 | L8b | the committing slot, and its round | `commits_recur_within`, `commits_recur_by_round` *(Quantitative)* |
@@ -10643,10 +10643,10 @@ reused.
 
 | Label | Statement | Lean |
 |:---|:---|:---|
-| CU1 | drift does not contract past the collapse bound | `ugrowSkew_spread_constant` *(LeanDagTest.Catchup)* |
+| CU1 | drift does not contract past the collapse bound | `ugrowSkew_spread_constant` *(LeanDagTest.Reactive.Catchup)* |
 | CU2 | drift collapses to `Δ + proc`, from any spread | `PaceCore.drift_collapse` *(ViewPace)* |
 | CU3 | the deployment-free threshold `2Δ + proc` | merged into the main line: L7 (coverage) and L9 (the wait bound) |
-| CU4 | the collapse exhibited from a spread of ten | `ugrowLag_collapse`, `ugrowLag_decided` *(LeanDagTest.Collapse)* |
+| CU4 | the collapse exhibited from a spread of ten | `ugrowLag_collapse`, `ugrowLag_decided` *(LeanDagTest.Reactive.Collapse)* |
 | CU5 | the rush bound: a valid block certifies the honest floor | `exists_reliable_parent`, `PaceCore.round_le_top_succ`, `ViewPace.exists_honest_floor` *(ViewPace)* |
 
 **Safe Skip** (§12):
@@ -10659,11 +10659,11 @@ reused.
 | SS4 | the rule-level sets are unchanged, for every candidate | retired: a consequence of `Banded` through `Persist.of_banded` *(Properties/Derived/FromBand)* |
 | SS5 | verdict invariance across the fill | `decided_fill_of_persist` *(Properties/Arcs/SafeSkip)* |
 | SS6 | agreement across a recovery | `decided_fill_agree_of_properties` *(Properties/Arcs/SafeSkip)* |
-| SS7 | the crash, the message and the fill, on data | `Ucrash` witnesses *(LeanDagTest/SafeSkip)* |
+| SS7 | the crash, the message and the fill, on data | `Ucrash` witnesses *(LeanDagTest/SafeSkip/Model)* |
 | SS8 | the donor line is unique given its tip | `SkipMsg.line_eq_lineOf` *(SafeSkip/Jump)* |
 | SS9 | the denotation is a function of the compact core | `SkipMsg.skipFill_eq_of_core` *(SafeSkip/Jump)* |
 | SS10 | receivers derive the same fill, locally | `lineOf_mem_view`, `JumpMsg.denote_eq_of_core` *(SafeSkip/Jump)* |
-| SS11 | the jump message and its elaboration, on data | `ucrashJump` witnesses *(LeanDagTest/SafeSkip)* |
+| SS11 | the jump message and its elaboration, on data | `ucrashJump` witnesses *(LeanDagTest/SafeSkip/Model)* |
 
 **Adaptive leaders** (§13):
 
@@ -10676,7 +10676,7 @@ reused.
 | AL5 | liveness: the fixpoint exists, one epoch at a time | `epoch_closes`, `exists_partialRun`, `adaptiveRun_exists` *(Adaptive/Liveness)* |
 | AL6 | the adaptive ledger is agreed | `adaptive_commitSeq_agree` *(Adaptive/Run)* |
 | AL7 | the two-round mirror, from the same policy objects | `Odontoceti.adaptiveRun_agree`, `Odontoceti.adaptiveRun_exists` *(Adaptive/Odontoceti)* |
-| AL8 | adaptivity on data: the verdict moves with the assignment | `demotePolicy` witnesses *(LeanDagTest/Adaptive)* |
+| AL8 | adaptivity on data: the verdict moves with the assignment | `demotePolicy` witnesses *(LeanDagTest/Adaptive/Model)* |
 
 **Hybrid fault tolerance** (§14):
 
@@ -10690,8 +10690,8 @@ reused.
 | H6 | agreement and safety, at every admissible threshold | `Hybrid.hybridLaws` *(Hybrid/Decision)*, `HybridProperties.agree`, `HybridProperties.safety` *(HybridProperties)* |
 | H7 | liveness over the reliable-correct interface | `Hybrid.decided_of_leader_mem`, `Hybrid.all_decided_below_of_fairRun` *(Hybrid/Liveness)* |
 | H8 | conservativity: the crash-free hybrid is Odontoceti | `Faults5.toHybrid`, `Hybrid.toHybrid_toFaults` *(Hybrid/Conservativity)* |
-| H9 | one crash at four validators; the tight hybrid committee | `Uhyb4`, `Uhyb9` witnesses *(LeanDagTest/Hybrid)* |
-| H10 | the bound is necessary, at every threshold | `hybrid_bound_necessary` *(LeanDagTest/HybridTight)* |
+| H9 | one crash at four validators; the tight hybrid committee | `Uhyb4`, `Uhyb9` witnesses *(LeanDagTest/Hybrid/Model)* |
+| H10 | the bound is necessary, at every threshold | `hybrid_bound_necessary` *(LeanDagTest/Hybrid/Tight)* |
 | NN1 | the counting core: two majorities intersect | `Nemo.exists_mem_inter` *(Nemo/Basic)* |
 | NN2 | the hitting lemma: a majority of backers meets every valid block's parents | `Nemo.exists_mem_refs_of_correct_support_of_card` *(Nemo/Support)* |
 | NN3 | link integrity: a direct commit is certified two rounds up, everywhere | `Nemo.certifiedIn_of_directCommit` *(Nemo/Rules)* |
@@ -10700,7 +10700,7 @@ reused.
 | NN6 | the ledger is agreed and never retracted | `Nemo.commitSeq_agree`, `Nemo.outputAt_agree` *(Nemo/Decision)* |
 | NN7 | a reliable-led slot commits directly | `Nemo.decided_of_leader_mem` *(Nemo/Liveness)* |
 | NN8 | every slot below a recurring adjacent pair is decided | `Nemo.all_decided_below_of_fairRun` *(NemoProperties, from `Support.decidedBelow_of_fairRun`)* |
-| NN9 | one crash at three validators; the crashed slot settled indirectly | `Unemo` witnesses *(LeanDagTest/Nemo)* |
+| NN9 | one crash at three validators; the crashed slot settled indirectly | `Unemo` witnesses *(LeanDagTest/Nemo/Model)* |
 
 **Mahi-Mahi** (§17):
 

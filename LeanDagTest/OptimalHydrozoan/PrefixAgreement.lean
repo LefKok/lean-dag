@@ -1,6 +1,5 @@
 import LeanDag.OptimalHydrozoan.PrefixAgreement.Proof
 import LeanDagTest.OptimalHydrozoan.SlotAgreement
-
 /-!
 # Witness: Optimal output sequences
 
