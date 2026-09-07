@@ -77,6 +77,20 @@ variable {U : BlockRecord Validator BlockId Payload P honest}
 theorem refs_subset {i : BlockId} (hi : i ∈ U.ids) : (U.block i).refs ⊆ U.ids :=
   fun _ hj => U.complete i hi _ hj
 
+/-- **A view is a record.** Its ids under the universe's block map:
+closure is the view's, validity and non-equivocation are inherited,
+since the block map is unchanged. This is what a rule evaluates its
+rules on when it reads a view as a DAG in its own right. -/
+def View.toRecord (V : U.View) : BlockRecord Validator BlockId Payload P honest where
+  ids := V.ids
+  block := U.block
+  complete := V.complete
+  valid := fun i hi => U.valid i (V.subset_ids hi)
+  no_equivocation := fun i hi j hj => U.no_equivocation i (V.subset_ids hi) j (V.subset_ids hj)
+
+@[simp] theorem View.toRecord_ids (V : U.View) : V.toRecord.ids = V.ids := rfl
+@[simp] theorem View.toRecord_block (V : U.View) : V.toRecord.block = U.block := rfl
+
 end BlockRecord
 
 /-! ## The cut, over raw block data
@@ -162,6 +176,176 @@ class CopyStable : Prop where
   copy : ∀ (blk : BlockId → Block Validator BlockId Payload) (b : Block Validator BlockId Payload)
     (v : Validator), P blk b → P blk { b with creator := v }
 
+variable {P} in
+/-- The obligations transfer along an equivalence of predicates. -/
+theorem Mechanised.of_iff {Q : Validity Validator BlockId Payload} [Q.Mechanised]
+    (h : ∀ blk b, P blk b ↔ Q blk b) : P.Mechanised where
+  pred := fun blk b hp => Mechanised.pred blk b ((h blk b).mp hp)
+  reads := fun blk blk' ids b hcl hb hag hp =>
+    (h blk' b).mpr (Mechanised.reads blk blk' ids b hcl hb hag ((h blk b).mp hp))
+  base := fun blk b h0 hr => (h blk b).mpr (Mechanised.base blk b h0 hr)
+  chops := fun blk G b hp hG => (h _ _).mpr (Mechanised.chops blk G b ((h blk b).mp hp) hG)
+
+variable {P} in
+theorem CopyStable.of_iff {Q : Validity Validator BlockId Payload} [Q.CopyStable]
+    (h : ∀ blk b, P blk b ↔ Q blk b) : P.CopyStable where
+  copy := fun blk b v hp => (h _ _).mpr (CopyStable.copy blk b v ((h blk b).mp hp))
+
 end Validity
+
+/-! ## The validity family
+
+Every validity predicate in the development has one shape: references
+sit one round below, a non-genesis block references a quorum of
+distinct creators at the rule's threshold, and one further clause. The
+clause is where the rules differ — the core adds a self-parent,
+FinWhale a leader-consistency condition, Hydrozoan nothing beyond
+distinct creators, Nemo nothing at all — and it is the only part a rule
+proves anything about: given the clause's obligations, `ValidAt` is
+`Mechanised` once, and a rule's predicate inherits it along the
+equivalence with its own record. -/
+
+/-- A clause a validity predicate adds beyond the common shape. -/
+abbrev Clause (Validator BlockId Payload : Type*) :=
+  (BlockId → Block Validator BlockId Payload) → Block Validator BlockId Payload → Prop
+
+/-- **The common shape of every validity predicate**, at threshold `q`
+with clause `C`. -/
+structure ValidAt [DecidableEq Validator] (q : ℕ) (C : Clause Validator BlockId Payload)
+    (blk : BlockId → Block Validator BlockId Payload) (b : Block Validator BlockId Payload) :
+    Prop where
+  /-- Every reference sits in the immediately preceding round. -/
+  predecessor : ∀ i ∈ b.refs, (blk i).round + 1 = b.round
+  /-- Non-genesis blocks reference `q` distinct creators. -/
+  quorum : 0 < b.round → q ≤ (creators blk b).card
+  /-- The rule's own clause. -/
+  clause : C blk b
+
+/-- **What a clause owes**: the three facts of `Validity.Mechanised` that
+concern it, the predecessor fact being the family's. -/
+class Clause.Mechanised (C : Clause Validator BlockId Payload) : Prop where
+  reads : ∀ (blk blk' : BlockId → Block Validator BlockId Payload) (ids : Finset BlockId)
+    (b : Block Validator BlockId Payload),
+    (∀ i ∈ ids, ∀ j ∈ (blk i).refs, j ∈ ids) → (∀ j ∈ b.refs, j ∈ ids) →
+    (∀ j ∈ ids, blk' j = blk j) → C blk b → C blk' b
+  base : ∀ (blk : BlockId → Block Validator BlockId Payload) (b : Block Validator BlockId Payload),
+    b.round = 0 → b.refs = ∅ → C blk b
+  chops : ∀ (blk : BlockId → Block Validator BlockId Payload) (G : ℕ)
+    (b : Block Validator BlockId Payload),
+    C blk b → (∀ i ∈ b.refs, (blk i).round + 1 = b.round) → G < b.round →
+    C (chopBlk blk G) { b with round := b.round - G }
+
+/-- The clause does not read the creator. -/
+class Clause.CopyStable (C : Clause Validator BlockId Payload) : Prop where
+  copy : ∀ (blk : BlockId → Block Validator BlockId Payload) (b : Block Validator BlockId Payload)
+    (v : Validator), C blk b → C blk { b with creator := v }
+
+namespace Clause
+
+/-- No clause. -/
+def none : Clause Validator BlockId Payload := fun _ _ => True
+
+instance : Mechanised (none (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)) where
+  reads := fun _ _ _ _ _ _ _ _ => True.intro
+  base := fun _ _ _ _ => True.intro
+  chops := fun _ _ _ _ _ _ => True.intro
+
+instance : CopyStable (none (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)) where
+  copy := fun _ _ _ _ => True.intro
+
+/-- No two references share a creator. -/
+def distinct : Clause Validator BlockId Payload := fun blk b =>
+  ∀ i ∈ b.refs, ∀ j ∈ b.refs, (blk i).creator = (blk j).creator → i = j
+
+instance : Mechanised (distinct (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)) where
+  reads := fun blk blk' _ b _ hb hag h j hj l hl hjl => by
+    rw [hag j (hb j hj), hag l (hb l hl)] at hjl
+    exact h j hj l hl hjl
+  base := fun _ b _ hr j hj => by rw [hr] at hj; exact absurd hj (Finset.notMem_empty j)
+  chops := fun blk G b h _ _ j hj l hl hjl => by
+    simp only [chopBlk_creator] at hjl
+    exact h j hj l hl hjl
+
+instance : CopyStable (distinct (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)) where
+  copy := fun _ _ _ h => h
+
+/-- A non-genesis block references a block by its own creator. Read by
+the core; not `CopyStable`, which is why the core's fill adds a self
+reference. -/
+def selfParent : Clause Validator BlockId Payload := fun blk b =>
+  0 < b.round → ∃ i ∈ b.refs, (blk i).creator = b.creator
+
+instance : Mechanised (selfParent (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)) where
+  reads := fun blk blk' _ b _ hb hag h hr => by
+    obtain ⟨j, hj, hjc⟩ := h hr
+    exact ⟨j, hj, by rw [hag j (hb j hj)]; exact hjc⟩
+  base := fun _ b h0 _ hr => by change 0 < b.round at hr; omega
+  chops := fun blk G b h _ hG hr => by
+    obtain ⟨j, hj, hjc⟩ := h (by change 0 < b.round - G at hr; omega)
+    exact ⟨j, hj, by rw [chopBlk_creator]; exact hjc⟩
+
+/-- Two clauses together. -/
+def and (C D : Clause Validator BlockId Payload) : Clause Validator BlockId Payload :=
+  fun blk b => C blk b ∧ D blk b
+
+instance {C D : Clause Validator BlockId Payload} [Mechanised C] [Mechanised D] :
+    Mechanised (and C D) where
+  reads := fun blk blk' ids b hcl hb hag h =>
+    ⟨Mechanised.reads blk blk' ids b hcl hb hag h.1, Mechanised.reads blk blk' ids b hcl hb hag h.2⟩
+  base := fun blk b h0 hr => ⟨Mechanised.base blk b h0 hr, Mechanised.base blk b h0 hr⟩
+  chops := fun blk G b h hp hG =>
+    ⟨Mechanised.chops blk G b h.1 hp hG, Mechanised.chops blk G b h.2 hp hG⟩
+
+instance {C D : Clause Validator BlockId Payload} [CopyStable C] [CopyStable D] :
+    CopyStable (and C D) where
+  copy := fun blk b v h => ⟨CopyStable.copy blk b v h.1, CopyStable.copy blk b v h.2⟩
+
+end Clause
+
+section ValidAtMechanised
+
+variable [DecidableEq Validator] {q : ℕ} {C : Clause Validator BlockId Payload}
+
+/-- **The family is mechanised** whenever its clause is. -/
+instance ValidAt.mechanised [Clause.Mechanised C] :
+    Validity.Mechanised (ValidAt q C) where
+  pred := fun _ _ h => h.predecessor
+  reads := by
+    intro blk blk' ids b hcl hb hagree h
+    refine ⟨?_, ?_, Clause.Mechanised.reads blk blk' ids b hcl hb hagree h.clause⟩
+    · intro j hj; rw [hagree j (hb j hj)]; exact h.predecessor j hj
+    · intro hr
+      refine le_trans (h.quorum hr) (Finset.card_le_card ?_)
+      intro c hc
+      unfold creators creatorsOf at hc ⊢
+      obtain ⟨j, hj, hjc⟩ := Finset.mem_image.mp hc
+      exact Finset.mem_image.mpr ⟨j, hj, by rw [hagree j (hb j hj)]; exact hjc⟩
+  base := by
+    intro blk b h0 hr
+    refine ⟨?_, ?_, Clause.Mechanised.base blk b h0 hr⟩
+    · intro j hj; rw [hr] at hj; exact absurd hj (Finset.notMem_empty j)
+    · intro h; rw [h0] at h; exact absurd h (lt_irrefl 0)
+  chops := by
+    intro blk G b h hG
+    refine ⟨?_, ?_, Clause.Mechanised.chops blk G b h.clause h.predecessor hG⟩
+    · intro j hj
+      have := h.predecessor j hj
+      change (chopBlk blk G j).round + 1 = b.round - G
+      rw [chopBlk_round]; omega
+    · intro hr
+      change q ≤ (creatorsOf (chopBlk blk G) b.refs).card
+      rw [creatorsOf_chopBlk]
+      exact h.quorum (by change 0 < b.round - G at hr; omega)
+
+/-- **And does not read the creator** whenever its clause does not. -/
+instance ValidAt.copyStable [Clause.CopyStable C] : Validity.CopyStable (ValidAt q C) where
+  copy := fun blk b v h => ⟨h.predecessor, h.quorum, Clause.CopyStable.copy blk b v h.clause⟩
+
+end ValidAtMechanised
 
 end LeanDag

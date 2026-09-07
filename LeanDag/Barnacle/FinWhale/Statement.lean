@@ -28,18 +28,18 @@ variable {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
 /-- **FinWhale as a base rule** — the data. -/
 def finWhale : BaseRule Validator BlockId Payload where
   toDagRule := FinWhaleProperties.finWhaleRule
-  full := fun D => ⟨D.ids, ⟨Finset.Subset.rfl, D.complete⟩⟩
+  full := fun D => ⟨D.ids, Finset.Subset.rfl, D.complete⟩
   historyView := fun D A hA =>
     ⟨historyFrom D.block A,
-      ⟨fun i hi => (LeanDag.FinWhale.causalStructure D).mem_ids_of_reaches hA
-          (((LeanDag.FinWhale.causalStructure D).mem_history_iff hA).mp hi),
-        fun i hi j hj => ((LeanDag.FinWhale.causalStructure D).mem_history_iff hA).mpr
-          (Relation.ReflTransGen.tail
-            (((LeanDag.FinWhale.causalStructure D).mem_history_iff hA).mp hi) hj)⟩⟩
+      fun i hi => (LeanDag.FinWhale.causalStructure D).mem_ids_of_reaches hA
+        (((LeanDag.FinWhale.causalStructure D).mem_history_iff hA).mp hi),
+      fun i hi j hj => ((LeanDag.FinWhale.causalStructure D).mem_history_iff hA).mpr
+        (Relation.ReflTransGen.tail
+          (((LeanDag.FinWhale.causalStructure D).mem_history_iff hA).mp hi) hj)⟩
   waveLength := 3
   DirectCommitIn := fun V L r => FinWhaleProperties.DirectCommitIn V L r
   decDirect := fun V L _ => inferInstanceAs (Decidable
-    (L ∈ V.val ∧ LeanDag.FinWhale.DirectCommit (LeanDag.FinWhale.restrict _ V.val V.property) L))
+    (L ∈ V.ids ∧ LeanDag.FinWhale.DirectCommit (LeanDag.FinWhale.restrict _ V.ids V.isView) L))
 
 /-- **FinWhale as a live rule**: a DAG is good when a correct quorum is
 synchronised from `Rnd` and populates the rounds to `N`. -/

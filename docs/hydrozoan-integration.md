@@ -124,7 +124,8 @@ and a proof file. The decisions they embody:
 `Integration/HydrozoanMechanisms.lean` takes Hydrozoan's cut and fill
 from the block record, Hydrozoan's universe being that record.
 `Model/BlockUniverse.lean` shows its validity `Mechanised` and
-`CopyStable`, and `Hydrozoan/Helpers/Record.lean` gives the carrier's
+`CopyStable` as the validity family `ValidAt` at `q` with the
+distinct-creators clause, and `Hydrozoan/Helpers/Record.lean` gives the carrier's
 `onRecord`, every map the identity with
 every equation `rfl`. The cut `chopHZ`, the copy fill `copyFillHZ` and
 re-genesis `addGenesisHZ` are then the record's constructions at

@@ -50,9 +50,11 @@ what the files below contain is witnesses.
 
 Every universe is the block record (`BlockRecord.lean`) at the rule's
 validity predicate, and the cut, the fill and re-genesis are built once
-at the record (`Record/`). A rule proves the four facts its predicate
-owes (`Validity.Mechanised`) and, if it does not read the author, that
-the copy fill is valid (`CopyStable`); a carrier read as records
+at the record (`Record/`). A rule's predicate has the four facts its
+predicate owes (`Validity.Mechanised`) and, if it does not read the
+author, the copy fill's validity (`CopyStable`), both inherited along
+its equivalence with the validity family `ValidAt` at the rule's
+threshold and clause (`Mechanised.of_iff`); a carrier read as records
 (`DagRule.OnRecord`, `Properties/Record.lean`) then has every witness
 the properties read. The core, Nemo, FinWhale and Hydrozoan are records
 by definition, Hydrozoan's block being the shared block with no payload. Rules on the

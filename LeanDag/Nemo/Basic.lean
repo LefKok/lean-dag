@@ -80,41 +80,23 @@ theorem refs_nonempty (h : ValidWrt blk b) (h0 : 0 < b.round) : b.refs.Nonempty 
 
 end ValidWrt
 
-/-- **Nemo's validity is mechanised.** -/
-instance ValidWrt.mechanised :
-    Validity.Mechanised (ValidWrt (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) where
-  pred := fun _ _ h => h.predecessor
-  reads := by
-    intro blk blk' ids b _ hb hagree h
-    refine ⟨?_, ?_⟩
-    · intro j hj; rw [hagree j (hb j hj)]; exact h.predecessor j hj
-    · intro hr
-      refine le_trans (h.quorum hr) (Finset.card_le_card ?_)
-      intro c hc
-      unfold creators creatorsOf at hc ⊢
-      obtain ⟨j, hj, hjc⟩ := Finset.mem_image.mp hc
-      exact Finset.mem_image.mpr ⟨j, hj, by rw [hagree j (hb j hj)]; exact hjc⟩
-  base := by
-    intro blk b h0 hr
-    refine ⟨?_, ?_⟩
-    · intro j hj; rw [hr] at hj; exact absurd hj (Finset.notMem_empty j)
-    · intro h; omega
-  chops := by
-    intro blk G b h hG
-    refine ⟨?_, ?_⟩
-    · intro j hj
-      have := h.predecessor j hj
-      change (chopBlk blk G j).round + 1 = b.round - G
-      rw [chopBlk_round]; omega
-    · intro hr
-      change majority Validator ≤ (creatorsOf (chopBlk blk G) b.refs).card
-      rw [creatorsOf_chopBlk]
-      exact h.quorum (by change 0 < b.round - G at hr; omega)
+/-- **Nemo's validity is the family** at the majority, with no clause. -/
+theorem ValidWrt.iff_validAt (blk : BlockId → Block Validator BlockId Payload)
+    (b : Block Validator BlockId Payload) :
+    ValidWrt blk b ↔ ValidAt (majority Validator) Clause.none blk b :=
+  ⟨fun h => ⟨h.predecessor, h.quorum, True.intro⟩, fun h => ⟨h.predecessor, h.quorum⟩⟩
 
-/-- **And does not read the author**, so the copy fill is valid. -/
+/-- **Nemo's validity is mechanised**, along the family. -/
+instance ValidWrt.mechanised :
+    Validity.Mechanised
+      (ValidWrt (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
+  Validity.Mechanised.of_iff ValidWrt.iff_validAt
+
+/-- **And does not read the creator.** -/
 instance ValidWrt.copyStable :
-    Validity.CopyStable (ValidWrt (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) where
-  copy := fun _ _ _ h => ⟨h.predecessor, h.quorum⟩
+    Validity.CopyStable
+      (ValidWrt (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
+  Validity.CopyStable.of_iff ValidWrt.iff_validAt
 
 /-- **Nemo's universe**: the block record at Nemo's validity, with
 non-equivocation asked of everyone — the crash model has no Byzantine

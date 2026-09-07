@@ -3891,6 +3891,51 @@ of it, with its copy of the uniform constructors
 Barnacle's `slotsOf`, is gone, and FinWhale's `Sched` is spelled
 `Slots`.
 
+### 11.25 One validity family, and a view as a record
+
+**The validity family.** The four predicates — the core's `ValidWrt`,
+Nemo's, FinWhale's `ValidHere` and Hydrozoan's — each proved
+`Validity.Mechanised` by hand, ten to fifty lines apiece with the
+predecessor, quorum and distinct-creator cases repeated. They have one
+shape, and `BlockRecord.lean` states it once:
+
+```lean
+structure ValidAt [DecidableEq Validator] (q : ℕ) (C : Clause Validator BlockId Payload)
+    (blk : BlockId → Block Validator BlockId Payload) (b : Block Validator BlockId Payload) :
+    Prop where
+  predecessor : ∀ i ∈ b.refs, (blk i).round + 1 = b.round
+  quorum : 0 < b.round → q ≤ (creators blk b).card
+  clause : C blk b
+```
+
+A `Clause` owes the three facts that concern it (`Clause.Mechanised`:
+`reads`, `base`, `chops`; the predecessor fact is the family's) and,
+if it does not read the author, `Clause.CopyStable`. The clauses in use
+are `Clause.none`, `Clause.distinct`, `Clause.selfParent` and
+`Clause.and`, each with its instances in `BlockRecord.lean`;
+`ValidAt.mechanised` and `ValidAt.copyStable` are the family's
+instances at any such clause. A rule's predicate keeps its own
+structure — its accessors are read at some sixty sites — and inherits
+both obligations along an equivalence (`Validity.Mechanised.of_iff`,
+`Validity.CopyStable.of_iff`): the core is the family at `quorumCard`
+with `Clause.distinct.and Clause.selfParent` (`ValidWrt.iff_validAt`),
+Nemo at `majority` with `Clause.none`, FinWhale at `quorumCard` with
+`Clause.distinct.and leaderClause` — `leaderClause` and its two
+instances are the one clause outside `BlockRecord.lean` — and
+Hydrozoan at `q` with `Clause.distinct`. The four hand-written
+instances are deleted; the model files keep instances only, their
+equivalences inlined, since the partition admits no theorem there.
+
+**A view is a record.** `BlockRecord.View.toRecord` reads a view of
+any record as a record under the universe's block map, inheriting
+validity and non-equivocation. FinWhale's `restrict` is it at `IsView`
+repacked, and FinWhale's carrier view is now the record's `View` rather
+than a subtype of id sets over `IsView`: `viewIds` is `ids`, the
+`OnRecord` view maps are the identity, and `View.isView` recovers
+`IsView` where the rules still state it. `IsView` and `restrict`
+themselves stay, since the rules and the tests are written against
+them.
+
 ### 11.5 Next steps, in order
 
 1. **~~`Compose.lean`~~** (**done**, §11.3). The three composition

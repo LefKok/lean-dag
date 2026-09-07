@@ -76,72 +76,70 @@ structure ValidHere (blk : BlockId → Block Validator BlockId Payload)
       (blk x).creator = v → (blk y).creator = v → x = y)
     ∨ (∀ i ∈ b.refs, (blk i).creator ≠ v)
 
-/-- **FinWhale's validity is mechanised.** -/
-instance ValidHere.mechanised :
-    Validity.Mechanised (ValidHere (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) where
-  pred := fun _ _ h => h.predecessor
-  reads := by
-    intro blk blk' ids b hcl hb hagree h
-    refine ⟨?_, ?_, ?_, ?_⟩
-    · intro j hj; rw [hagree j (hb j hj)]; exact h.predecessor j hj
-    · intro j hj l hl
-      rw [hagree j (hb j hj), hagree l (hb l hl)]
-      exact h.distinct_creators j hj l hl
-    · intro hr
-      refine le_trans (h.quorum hr) (Finset.card_le_card ?_)
-      intro c hc
-      unfold creators creatorsOf at hc ⊢
-      obtain ⟨j, hj, hjc⟩ := Finset.mem_image.mp hc
-      exact Finset.mem_image.mpr ⟨j, hj, by rw [hagree j (hb j hj)]; exact hjc⟩
-    · intro v
-      rcases h.leader_clause v with h1 | h2
-      · left
-        intro i hi j hj x hx y hy hxv hyv
-        rw [hagree i (hb i hi)] at hx
-        rw [hagree j (hb j hj)] at hy
-        rw [hagree x (hcl i (hb i hi) x hx)] at hxv
-        rw [hagree y (hcl j (hb j hj) y hy)] at hyv
-        exact h1 i hi j hj x hx y hy hxv hyv
-      · right
-        intro i hi
-        rw [hagree i (hb i hi)]
-        exact h2 i hi
-  base := by
-    intro blk b h0 hr
-    refine ⟨?_, ?_, ?_, ?_⟩
-    · intro j hj; rw [hr] at hj; exact absurd hj (Finset.notMem_empty j)
-    · intro j hj; rw [hr] at hj; exact absurd hj (Finset.notMem_empty j)
-    · intro h; omega
-    · intro v; right; intro i hi; rw [hr] at hi; exact absurd hi (Finset.notMem_empty i)
-  chops := by
-    intro blk G b h hG
-    refine ⟨?_, ?_, ?_, ?_⟩
-    · intro j hj
-      have := h.predecessor j hj
-      change (chopBlk blk G j).round + 1 = b.round - G
-      rw [chopBlk_round]; omega
-    · intro j hj l hl hjl
-      simp only [chopBlk_creator] at hjl
-      exact h.distinct_creators j hj l hl hjl
-    · intro hr
-      change quorumCard Validator ≤ (creatorsOf (chopBlk blk G) b.refs).card
-      rw [creatorsOf_chopBlk]
-      exact h.quorum (by change 0 < b.round - G at hr; omega)
-    · intro v
-      rcases h.leader_clause v with h1 | h2
-      · left
-        intro i hi j hj x hx y hy hxv hyv
-        simp only [chopBlk_creator] at hxv hyv
-        exact h1 i hi j hj x (chopBlk_refs_subset hx) y (chopBlk_refs_subset hy) hxv hyv
-      · right
-        intro i hi
-        rw [chopBlk_creator]
-        exact h2 i hi
+/-- **FinWhale's clause**, as a clause of the validity family: either the
+parent set is consistent about `v` or `v`'s block is not among the
+parents. -/
+def leaderClause : Clause Validator BlockId Payload := fun blk b =>
+  ∀ v : Validator,
+    (∀ i ∈ b.refs, ∀ j ∈ b.refs, ∀ x ∈ (blk i).refs, ∀ y ∈ (blk j).refs,
+      (blk x).creator = v → (blk y).creator = v → x = y)
+    ∨ (∀ i ∈ b.refs, (blk i).creator ≠ v)
 
-/-- **And does not read the author**, so the copy fill is valid. -/
+/-- The clause reads two levels of references and no creator of `b`. -/
+instance leaderClause.mechanised :
+    Clause.Mechanised
+      (leaderClause (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) where
+  reads := by
+    intro blk blk' ids b hcl hb hagree h v
+    rcases h v with h1 | h2
+    · left
+      intro i hi j hj x hx y hy hxv hyv
+      rw [hagree i (hb i hi)] at hx
+      rw [hagree j (hb j hj)] at hy
+      rw [hagree x (hcl i (hb i hi) x hx)] at hxv
+      rw [hagree y (hcl j (hb j hj) y hy)] at hyv
+      exact h1 i hi j hj x hx y hy hxv hyv
+    · right
+      intro i hi
+      rw [hagree i (hb i hi)]
+      exact h2 i hi
+  base := fun _ b _ hr v => Or.inr fun i hi => by
+    rw [hr] at hi; exact absurd hi (Finset.notMem_empty i)
+  chops := by
+    intro blk G b h _ _ v
+    rcases h v with h1 | h2
+    · left
+      intro i hi j hj x hx y hy hxv hyv
+      simp only [chopBlk_creator] at hxv hyv
+      exact h1 i hi j hj x (chopBlk_refs_subset hx) y (chopBlk_refs_subset hy) hxv hyv
+    · right
+      intro i hi
+      rw [chopBlk_creator]
+      exact h2 i hi
+
+instance leaderClause.copyStable :
+    Clause.CopyStable
+      (leaderClause (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) where
+  copy := fun _ _ _ h => h
+
+/-- **FinWhale's validity is the family** at the core's quorum, with distinct
+creators and the leader clause, and so is mechanised. -/
+instance ValidHere.mechanised :
+    Validity.Mechanised
+      (ValidHere (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
+  Validity.Mechanised.of_iff
+    (Q := ValidAt (quorumCard Validator) (Clause.distinct.and leaderClause)) fun _ _ =>
+    ⟨fun h => ⟨h.predecessor, h.quorum, h.distinct_creators, h.leader_clause⟩,
+     fun h => ⟨h.predecessor, h.clause.1, h.quorum, h.clause.2⟩⟩
+
+/-- **And does not read the creator**, so the copy fill is valid. -/
 instance ValidHere.copyStable :
-    Validity.CopyStable (ValidHere (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) where
-  copy := fun _ _ _ h => ⟨h.predecessor, h.distinct_creators, h.quorum, h.leader_clause⟩
+    Validity.CopyStable
+      (ValidHere (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
+  Validity.CopyStable.of_iff
+    (Q := ValidAt (quorumCard Validator) (Clause.distinct.and leaderClause)) fun _ _ =>
+    ⟨fun h => ⟨h.predecessor, h.quorum, h.distinct_creators, h.leader_clause⟩,
+     fun h => ⟨h.predecessor, h.clause.1, h.quorum, h.clause.2⟩⟩
 
 /-- **A DAG the communication component can build**: the block record
 at FinWhale's validity, with non-equivocation asked of the correct

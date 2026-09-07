@@ -35,12 +35,8 @@ structure IsView (D : Dag Validator BlockId Payload) (V : Finset BlockId) : Prop
 /-- **A view is a DAG.** Validity and non-equivocation are inherited; the
 view's completeness is its closure. -/
 def restrict (D : Dag Validator BlockId Payload) (V : Finset BlockId) (hV : IsView D V) :
-    Dag Validator BlockId Payload where
-  ids := V
-  block := D.block
-  complete := hV.closed
-  valid := fun i hi => D.valid i (hV.subset hi)
-  no_equivocation := fun i hi j hj => D.no_equivocation i (hV.subset hi) j (hV.subset hj)
+    Dag Validator BlockId Payload :=
+  BlockRecord.View.toRecord (⟨V, hV.subset, hV.closed⟩ : D.View)
 
 variable {hV : IsView D V}
 

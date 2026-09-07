@@ -4,9 +4,8 @@ import LeanDag.FinWhale.Carrier
 /-!
 # Garbage collection, crash recovery and re-genesis for FinWhale
 
-FinWhale's DAG is the block record at `ValidHere`, and its views are a
-subtype of id sets, so its carrier reads as records by the identity on
-universes and by repacking on views. Every mechanism cell is
+FinWhale's DAG is the block record at `ValidHere` and its views are the
+record's, so its carrier reads as records by the identity. Every mechanism cell is
 `Arcs/Record.lean` at that instance. What FinWhale supplied is
 `ValidHere.mechanised` and `ValidHere.copyStable`, in
 `FinWhale/Model/Rule.lean`.
@@ -41,8 +40,8 @@ def finWhaleOnRecord :
   block_to := fun _ => rfl
   ids_of := fun _ _ => rfl
   block_of := fun _ _ => rfl
-  toView := fun V => ⟨V.val, V.property.subset, V.property.closed⟩
-  ofView := fun V => ⟨V.ids, ⟨V.subset_ids, V.complete⟩⟩
+  toView := fun V => V
+  ofView := fun V => V
   viewIds_to := fun _ => rfl
   viewIds_of := fun _ => rfl
 

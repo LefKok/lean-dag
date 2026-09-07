@@ -675,9 +675,45 @@ References sit one round below; validity reads only referenced blocks;
 a reference-free round-zero block is valid; and validity survives the
 cut strictly above the horizon. A predicate that does not read the
 author (`CopyStable`) also gets the copy fill's validity without a
-proof of its own. Each
-of the four predicates proves these once, in a few lines, and its cut,
-fill and re-genesis are the generic constructions.
+proof of its own.
+
+None of the four predicates proves these itself. Every validity
+predicate in the development has one shape — references sit one round
+below, a non-genesis block references a quorum of distinct creators at
+the rule's threshold, and one further clause — and that shape is stated
+once as the family `ValidAt`:
+
+```lean
+structure ValidAt [DecidableEq Validator] (q : ℕ) (C : Clause Validator BlockId Payload)
+    (blk : BlockId → Block Validator BlockId Payload) (b : Block Validator BlockId Payload) :
+    Prop where
+  predecessor : ∀ i ∈ b.refs, (blk i).round + 1 = b.round
+  quorum : 0 < b.round → q ≤ (creators blk b).card
+  clause : C blk b
+```
+
+A clause owes the three facts of `Mechanised` that concern it, the
+predecessor fact being the family's; `distinct`, `selfParent`, the empty
+clause `none` and the conjunction `and` are the clauses the four rules
+use, each with its obligations discharged in `BlockRecord.lean`, and
+the family is `Mechanised` at any clause that is (`ValidAt.mechanised`)
+and `CopyStable` at any clause that does not read the author. A rule's
+own predicate then inherits both along its equivalence with the family
+(`Mechanised.of_iff`):
+
+```lean
+theorem ValidWrt.iff_validAt (blk : BlockId → Block Validator BlockId Payload)
+    (b : Block Validator BlockId Payload) :
+    ValidWrt blk b ↔ ValidAt (quorumCard Validator) (Clause.distinct.and Clause.selfParent) blk b
+```
+
+The core is the family at its quorum with distinct creators and the
+self-parent clause; Nemo is it at the majority with no clause;
+FinWhale (§20.2) with distinct creators and its leader clause,
+`leaderClause`, the one clause proved outside `BlockRecord.lean`;
+Hydrozoan (§22) with distinct creators alone. The self-parent clause is
+the one that reads the author, which is why the core's fill adds a self
+reference where the other three take the copy fill.
 
 Non-equivocation is stated at the level of the universe, and must be. A
 per-view formulation is strictly weaker: two views could each satisfy "at most
@@ -6888,11 +6924,8 @@ creator and a set of edges, and
 ```lean
 structure ValidHere (blk : BlockId → Block Validator BlockId Payload)
     (b : Block Validator BlockId Payload) : Prop where
-  /-- Every edge points to the round immediately below. -/
   predecessor : ∀ i ∈ b.refs, (blk i).round + 1 = b.round
-  /-- No two edges share a process. -/
   distinct_creators : ∀ i ∈ b.refs, ∀ j ∈ b.refs, (blk i).creator = (blk j).creator → i = j
-  /-- A non-genesis vertex carries `2f + 1` edges by distinct processes. -/
   quorum : 0 < b.round → quorumCard Validator ≤ (creators blk b).card
 ```
 
@@ -7619,23 +7652,48 @@ the paper's own block structure has (§20.7).
 
 ```lean
 structure ValidHere (blk : BlockId → Block Validator BlockId Payload)
-    (leader : ℕ → Validator) (b : Block Validator BlockId Payload) : Prop where
+    (b : Block Validator BlockId Payload) : Prop where
+  /-- Every edge points to the round immediately below. -/
   predecessor : ∀ i ∈ b.refs, (blk i).round + 1 = b.round
+  /-- No two edges share a validator. -/
   distinct_creators : ∀ i ∈ b.refs, ∀ j ∈ b.refs, (blk i).creator = (blk j).creator → i = j
+  /-- A non-genesis block carries `n − f` edges by distinct validators. -/
   quorum : 0 < b.round → quorumCard Validator ≤ (creators blk b).card
-  leader_clause : 2 ≤ b.round →
+  /-- **FinWhale's clause, at every validator.** Either the parent set is
+  consistent about `v` — the parents vote for at most one of `v`'s blocks
+  — or `v`'s block is not among the parents. Consistency is a condition
+  on what the parents *reference*, not on who authored them.
+
+  **Stated at every validator rather than at the leader**, which is what
+  makes it schedule-free, and what lets a `Dag` be a `Properties.DagRule`
+  universe: a rule whose validity mentions the schedule cannot be
+  related to another DAG by a band, since a band is a statement about
+  blocks (`docs/porting-plan.md`).
+
+  It is a genuine strengthening of the paper's rule, and a harmless one:
+  a validator can check it locally, and it drops at most the `f` visibly
+  equivocating validators' blocks, leaving the `n − f` its quorum needs.
+  The same shape as Optimal-Hydrozoan's `LeaderExcludedAll`, and adopted
+  for the same reason. -/
+  leader_clause : ∀ v : Validator,
     (∀ i ∈ b.refs, ∀ j ∈ b.refs, ∀ x ∈ (blk i).refs, ∀ y ∈ (blk j).refs,
-      (blk x).creator = leader (b.round - 2) → (blk y).creator = leader (b.round - 2) → x = y)
-    ∨ (∀ i ∈ b.refs, (blk i).creator ≠ leader (b.round - 2))
+      (blk x).creator = v → (blk y).creator = v → x = y)
+    ∨ (∀ i ∈ b.refs, (blk i).creator ≠ v)
 ```
 
-The fourth clause is a disjunction, and its two halves read different
-things. The first is about what the parents *reference*: no two of their
-references are distinct blocks of the leader two rounds down. The second
-is about who *authored* them: that leader's own block is not a parent.
-Writing both over authorship, or both over references, breaks the
-counting of §20.3, which needs the exclusion half to be about authorship
-and the consistency half about references. `ExposesEquivocation` names
+The fourth clause is a disjunction at every validator `v`, and its two
+halves read different things. The first is about what the parents
+*reference*: no two of their references are distinct blocks of `v`. The
+second is about who *authored* them: `v`'s own block is not a parent.
+Stated at every validator rather than at the leader two rounds down,
+the clause mentions no schedule, which is what lets a `Dag` stand in a
+band (§2.4); at the leader it is the paper's condition, and it drops at
+most the `f` visibly equivocating validators' blocks. Writing both
+halves over authorship, or both over references, breaks the counting of
+§20.3, which needs the exclusion half to be about authorship and the
+consistency half about references. As a clause of the validity family
+(§2.3) it is `leaderClause`, and `ValidHere` is the family at the
+core's quorum with distinct creators and it. `ExposesEquivocation` names
 the failure of the first half in the form the counting takes: two parents
 of `b` vote for two conflicting blocks of the leader of round
 `(D.block b).round - 2`.
@@ -7657,7 +7715,9 @@ and every count the commit rules take is over the round immediately above
 a block, so the dropped edges carry no votes and no certificates. And
 `FinWhale.Dag` is the block record (§2.3) at `ValidHere`, with
 non-equivocation asked of the correct validators only, since
-equivocating blocks are admitted of faulty validators.
+equivocating blocks are admitted of faulty validators; a view of it is
+the record's view, and `restrict`, the DAG a rule reads a view as, is
+the record's `View.toRecord`.
 
 ### 20.3 The fast path, and Lemma 4
 
@@ -9727,7 +9787,7 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `Validators.lean` | the fault model (`n ≥ 3f+1`); T0 |
 | `Slots.lean` | the slot schedule every rule runs on; its constructors (`uniform`, `uniformSingle`, `identity`, `waveRobin`) |
 | `Block.lean` | `Block`, `ValidWrt`; T0′ |
-| `BlockRecord.lean` | the block record and its view; `chopBlk`; what a validity predicate owes the mechanisms (`Mechanised`, `CopyStable`) |
+| `BlockRecord.lean` | the block record and its view, and a view as a record (`View.toRecord`); `chopBlk`; what a validity predicate owes the mechanisms (`Mechanised`, `CopyStable`), and the validity family `ValidAt` with its clauses, which discharges it for every rule |
 | `Record/Chop.lean`, `Record/Fill.lean`, `Record/Genesis.lean` | the cut, the fill and re-genesis, built once at the record |
 | `BlockDag.lean` | `BlockUniverse` and `View` as the record at `ValidWrt`; the core's validity is mechanised; T1 |
 | `CausalHistory.lean` | `Reaches` at any block record; T2, T6a |
@@ -10348,6 +10408,7 @@ result in full, with every other theorem the body names.
 | T0 | two quorums share a correct validator | `exists_correct_mem_inter` *(Validators)* |
 | T0′ | two quorum-backed identifier sets share a correct author | `exists_correct_mem_creators_inter` *(Block)* |
 | T1 | non-equivocation, in usable form | `BlockUniverse.eq_of_creator_eq` *(BlockDag)* |
+| T1a | the core's validity is the validity family at its quorum, with distinct creators and a self-parent | `ValidWrt.iff_validAt` *(BlockDag)* |
 | T6 | two quorum-backed sets of round-`n` blocks share a block | `BlockUniverse.exists_common_mem_of_quorums` *(BlockDag)* |
 | T2 | causal history is non-increasing in round | `round_le_of_reaches` *(CausalHistory)* |
 | T6a | causal history does not escape a view | `View.mem_of_reaches`, `View.exists_reaches_iff` *(CausalHistory)* |
@@ -10755,7 +10816,7 @@ reused.
 
 ## Appendix B. The definition reference
 
-The 336 definitions and structures the report names, in
+The 345 definitions and structures the report names, in
 the order a reader meets them. Each entry is the source text,
 unabridged, with the explanation the source carries. This
 appendix is generated from the compiled development by
@@ -13656,6 +13717,20 @@ structure ValidHere (blk : BlockId → Block Validator BlockId Payload)
 
 **Validity, as FinWhale extends Mysticeti's.** Every edge sits in the round below, at most one edge per validator, a non-genesis block carries `n − f` of them by distinct validators, and the parent set is either leader-consistent with respect to the leader two rounds down or excludes that leader's block. The last clause is FinWhale's addition and is what the fast path's counting rests on.
 
+#### `leaderClause`
+
+*def, `FinWhale.Model.Rule.lean`*
+
+```lean
+def leaderClause : Clause Validator BlockId Payload := fun blk b =>
+  ∀ v : Validator,
+    (∀ i ∈ b.refs, ∀ j ∈ b.refs, ∀ x ∈ (blk i).refs, ∀ y ∈ (blk j).refs,
+      (blk x).creator = v → (blk y).creator = v → x = y)
+    ∨ (∀ i ∈ b.refs, (blk i).creator ≠ v)
+```
+
+**FinWhale's clause**, as a clause of the validity family: either the parent set is consistent about `v` or `v`'s block is not among the parents.
+
 #### `Dag`
 
 *abbrev, `FinWhale.Model.Rule.lean`*
@@ -13928,12 +14003,8 @@ structure IsView (D : Dag Validator BlockId Payload) (V : Finset BlockId) : Prop
 
 ```lean
 def restrict (D : Dag Validator BlockId Payload) (V : Finset BlockId) (hV : IsView D V) :
-    Dag Validator BlockId Payload where
-  ids := V
-  block := D.block
-  complete := hV.closed
-  valid := fun i hi => D.valid i (hV.subset hi)
-  no_equivocation := fun i hi j hj => D.no_equivocation i (hV.subset hi) j (hV.subset hj)
+    Dag Validator BlockId Payload :=
+  BlockRecord.View.toRecord (⟨V, hV.subset, hV.closed⟩ : D.View)
 ```
 
 **A view is a DAG.** Validity and non-equivocation are inherited; the view's completeness is its closure.
@@ -15897,6 +15968,21 @@ structure View (U : BlockRecord Validator BlockId Payload P honest) where
 
 **A view**: a reference-closed part of the universe. Views share `U.block`, so they disagree about *which* blocks they hold, never about what an id denotes.
 
+#### `View.toRecord`
+
+*def, `BlockRecord.lean`*
+
+```lean
+def View.toRecord (V : U.View) : BlockRecord Validator BlockId Payload P honest where
+  ids := V.ids
+  block := U.block
+  complete := V.complete
+  valid := fun i hi => U.valid i (V.subset_ids hi)
+  no_equivocation := fun i hi j hj => U.no_equivocation i (V.subset_ids hi) j (V.subset_ids hj)
+```
+
+**A view is a record.** Its ids under the universe's block map: closure is the view's, validity and non-equivocation are inherited, since the block map is unchanged. This is what a rule evaluates its rules on when it reads a view as a DAG in its own right.
+
 #### `chopBlk`
 
 *def, `BlockRecord.lean`*
@@ -15950,6 +16036,99 @@ class CopyStable : Prop where
 
 **The author is not read.** What the copy fill needs: a rule with no self-parent clause judges a re-authored block as it judged the original.
 
+#### `ValidAt`
+
+*structure, `BlockRecord.lean`*
+
+```lean
+structure ValidAt [DecidableEq Validator] (q : ℕ) (C : Clause Validator BlockId Payload)
+    (blk : BlockId → Block Validator BlockId Payload) (b : Block Validator BlockId Payload) :
+    Prop where
+  /-- Every reference sits in the immediately preceding round. -/
+  predecessor : ∀ i ∈ b.refs, (blk i).round + 1 = b.round
+  /-- Non-genesis blocks reference `q` distinct creators. -/
+  quorum : 0 < b.round → q ≤ (creators blk b).card
+  /-- The rule's own clause. -/
+  clause : C blk b
+```
+
+**The common shape of every validity predicate**, at threshold `q` with clause `C`.
+
+#### `Clause.Mechanised`
+
+*class, `BlockRecord.lean`*
+
+```lean
+class Clause.Mechanised (C : Clause Validator BlockId Payload) : Prop where
+  reads : ∀ (blk blk' : BlockId → Block Validator BlockId Payload) (ids : Finset BlockId)
+    (b : Block Validator BlockId Payload),
+    (∀ i ∈ ids, ∀ j ∈ (blk i).refs, j ∈ ids) → (∀ j ∈ b.refs, j ∈ ids) →
+    (∀ j ∈ ids, blk' j = blk j) → C blk b → C blk' b
+  base : ∀ (blk : BlockId → Block Validator BlockId Payload) (b : Block Validator BlockId Payload),
+    b.round = 0 → b.refs = ∅ → C blk b
+  chops : ∀ (blk : BlockId → Block Validator BlockId Payload) (G : ℕ)
+    (b : Block Validator BlockId Payload),
+    C blk b → (∀ i ∈ b.refs, (blk i).round + 1 = b.round) → G < b.round →
+    C (chopBlk blk G) { b with round := b.round - G }
+```
+
+**What a clause owes**: the three facts of `Validity.Mechanised` that concern it, the predecessor fact being the family's.
+
+#### `Clause.CopyStable`
+
+*class, `BlockRecord.lean`*
+
+```lean
+class Clause.CopyStable (C : Clause Validator BlockId Payload) : Prop where
+  copy : ∀ (blk : BlockId → Block Validator BlockId Payload) (b : Block Validator BlockId Payload)
+    (v : Validator), C blk b → C blk { b with creator := v }
+```
+
+The clause does not read the creator.
+
+#### `none`
+
+*def, `BlockRecord.lean`*
+
+```lean
+def none : Clause Validator BlockId Payload := fun _ _ => True
+```
+
+No clause.
+
+#### `distinct`
+
+*def, `BlockRecord.lean`*
+
+```lean
+def distinct : Clause Validator BlockId Payload := fun blk b =>
+  ∀ i ∈ b.refs, ∀ j ∈ b.refs, (blk i).creator = (blk j).creator → i = j
+```
+
+No two references share a creator.
+
+#### `selfParent`
+
+*def, `BlockRecord.lean`*
+
+```lean
+def selfParent : Clause Validator BlockId Payload := fun blk b =>
+  0 < b.round → ∃ i ∈ b.refs, (blk i).creator = b.creator
+```
+
+A non-genesis block references a block by its own creator. Read by the core; not `CopyStable`, which is why the core's fill adds a self reference.
+
+#### `and`
+
+*def, `BlockRecord.lean`*
+
+```lean
+def and (C D : Clause Validator BlockId Payload) : Clause Validator BlockId Payload :=
+  fun blk b => C blk b ∧ D blk b
+```
+
+Two clauses together.
+
 #### `DirectCommitIn`
 
 *def, `FinWhale.Carrier.lean`*
@@ -15957,7 +16136,7 @@ class CopyStable : Prop where
 ```lean
 def DirectCommitIn {D : Dag Validator BlockId Payload}
     (V : (finWhaleRule (Payload := Payload)).View D) (L : BlockId) (_r : ℕ) : Prop :=
-  L ∈ V.val ∧ LeanDag.FinWhale.DirectCommit (LeanDag.FinWhale.restrict D V.val V.property) L
+  L ∈ V.ids ∧ LeanDag.FinWhale.DirectCommit (LeanDag.FinWhale.restrict D V.ids V.isView) L
 ```
 
 **FinWhale's direct-commit predicate, as a view sees it**: the block is held, and the view's own restriction certifies it. The round is carried to match the property's shape and is not read — `IsCandidate` already says where the block sits.
@@ -16943,7 +17122,7 @@ def OfCoverage (sp : Support R) (rel : Reliability Validator) : Prop :=
 
 ## Appendix C. The theorem reference
 
-The 529 theorems the body or Appendix A names, each
+The 532 theorems the body or Appendix A names, each
 the source statement, unabridged. Generated with Appendix B;
 a theorem the report does not name is a step of an argument
 rather than a result it presents, and the source is its
@@ -16996,6 +17175,18 @@ theorem exists_correct_mem_creators_inter
 **T0'.** Two id-sets whose creator sets are quorums share a *correct* author.
 
 Stated on bare `Finset BlockId`s rather than on blocks, because that is what every call site needs: T3 intersects a block's refs with an arbitrary set `Q`, and T5 intersects two arbitrary sets, neither of which is any block's refs. For a block, apply it with `s := b.refs` and discharge the hypothesis with `ValidWrt.quorum`.
+
+#### `ValidWrt.iff_validAt`
+
+*theorem, `BlockDag.lean`*
+
+```lean
+theorem ValidWrt.iff_validAt (blk : BlockId → Block Validator BlockId Payload)
+    (b : Block Validator BlockId Payload) :
+    ValidWrt blk b ↔ ValidAt (quorumCard Validator) (Clause.distinct.and Clause.selfParent) blk b
+```
+
+**The core's validity is the family** at the core's quorum, with distinct creators and the self-parent clause.
 
 ### Causal structure
 
@@ -20137,6 +20328,18 @@ theorem exists_mem_inter {Q₁ Q₂ : Finset Validator}
 
 **The one quorum fact.** Two majorities always intersect — `(n/2+1) + (n/2+1) > n` — and, all validators being honest, the shared member is consistent. This is the crash analogue of the core's `exists_correct_mem_inter`, with the correctness filtering gone.
 
+#### `ValidWrt.iff_validAt`
+
+*theorem, `Nemo.Basic.lean`*
+
+```lean
+theorem ValidWrt.iff_validAt (blk : BlockId → Block Validator BlockId Payload)
+    (b : Block Validator BlockId Payload) :
+    ValidWrt blk b ↔ ValidAt (majority Validator) Clause.none blk b
+```
+
+**Nemo's validity is the family** at the majority, with no clause.
+
 #### `eq_of_mem_refs_of_creator_eq`
 
 *theorem, `Nemo.Basic.lean`*
@@ -22857,6 +23060,18 @@ theorem holds : Statement
 ```lean
 theorem holds : Statement
 ```
+
+#### `Mechanised.of_iff`
+
+*theorem, `BlockRecord.lean`*
+
+```lean
+theorem Mechanised.of_iff {Q : Validity Validator BlockId Payload} [Q.Mechanised]
+    (h : ∀ blk b, P blk b ↔ Q blk b) : P.Mechanised where
+  pred
+```
+
+The obligations transfer along an equivalence of predicates.
 
 #### `directSkip`
 

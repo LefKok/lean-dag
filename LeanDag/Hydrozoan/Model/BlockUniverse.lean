@@ -49,48 +49,20 @@ section Mechanised
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
   [DecidableEq BlockId] [F : Faults Replica]
 
-/-- **Hydrozoan's validity is mechanised.** -/
+/-- **Hydrozoan's validity is the family** at `q`, with distinct creators
+and no further clause, and so is mechanised. -/
 instance ValidWrt.mechanised :
-    Validity.Mechanised (ValidWrt (Replica := Replica) (BlockId := BlockId)) where
-  pred := fun _ _ h => h.predecessor
-  reads := by
-    intro blk blk' ids b _ hb hagree h
-    refine ⟨?_, ?_, ?_⟩
-    · intro j hj; rw [hagree j (hb j hj)]; exact h.predecessor j hj
-    · intro j hj l hl
-      rw [hagree j (hb j hj), hagree l (hb l hl)]
-      exact h.distinct_creators j hj l hl
-    · intro hr
-      refine le_trans (h.quorum hr) (Finset.card_le_card ?_)
-      intro c hc
-      unfold creators creatorsOf at hc ⊢
-      obtain ⟨j, hj, hjc⟩ := Finset.mem_image.mp hc
-      exact Finset.mem_image.mpr ⟨j, hj, by rw [hagree j (hb j hj)]; exact hjc⟩
-  base := by
-    intro blk b h0 hr
-    refine ⟨?_, ?_, ?_⟩
-    · intro j hj; rw [hr] at hj; exact absurd hj (Finset.notMem_empty j)
-    · intro j hj; rw [hr] at hj; exact absurd hj (Finset.notMem_empty j)
-    · intro h; omega
-  chops := by
-    intro blk G b h hG
-    refine ⟨?_, ?_, ?_⟩
-    · intro j hj
-      have := h.predecessor j hj
-      change (chopBlk blk G j).round + 1 = b.round - G
-      rw [chopBlk_round]; omega
-    · intro j hj l hl hjl
-      simp only [chopBlk_creator] at hjl
-      exact h.distinct_creators j hj l hl hjl
-    · intro hr
-      change q Replica ≤ (creatorsOf (chopBlk blk G) b.refs).card
-      rw [creatorsOf_chopBlk]
-      exact h.quorum (by change 0 < b.round - G at hr; omega)
+    Validity.Mechanised (ValidWrt (Replica := Replica) (BlockId := BlockId)) :=
+  Validity.Mechanised.of_iff (Q := ValidAt (q Replica) Clause.distinct) fun _ _ =>
+    ⟨fun h => ⟨h.predecessor, h.quorum, h.distinct_creators⟩,
+     fun h => ⟨h.predecessor, h.clause, h.quorum⟩⟩
 
 /-- **And does not read the creator.** -/
 instance ValidWrt.copyStable :
-    Validity.CopyStable (ValidWrt (Replica := Replica) (BlockId := BlockId)) where
-  copy := fun _ _ _ h => ⟨h.predecessor, h.distinct_creators, h.quorum⟩
+    Validity.CopyStable (ValidWrt (Replica := Replica) (BlockId := BlockId)) :=
+  Validity.CopyStable.of_iff (Q := ValidAt (q Replica) Clause.distinct) fun _ _ =>
+    ⟨fun h => ⟨h.predecessor, h.quorum, h.distinct_creators⟩,
+     fun h => ⟨h.predecessor, h.clause, h.quorum⟩⟩
 
 end Mechanised
 
