@@ -3936,6 +3936,64 @@ than a subtype of id sets over `IsView`: `viewIds` is `ids`, the
 themselves stay, since the rules and the tests are written against
 them.
 
+### 11.26 What remains to unify
+
+A survey of declaration names that recur across modules, after §11.22
+to §11.25, finds six clusters of per-rule restatement. Line counts are
+what the copies occupy; the order is the order to take them in.
+
+| Cluster | Where the copies are | Lines |
+|:---|:---|---:|
+| view-restricted counting | `supportersIn` (Nemo, Odontoceti, Hybrid, Black Marlin), `blamesIn`, `slotBlamers`, `certificatesIn`, `votesIn`, FinWhale's `voters` | ~200 |
+| liveness predicates at the universe | `Nemo/Liveness.lean` and `Hydrozoan/Model/Liveness.lean` restating `PopulatedOn`, `SynchronisedOn`, `View.full`, `View.CoversUpto` | ~250 |
+| the ledger | `commitSeq`, `ledgerSet`, `OutputAt` and their theorems in `Mysticeti.lean`, `Nemo/Decision.lean`, `BlackMarlin/*/Ledger.lean`, `FinWhale/Model/Order.lean` | ~330 |
+| the anchored decision procedure | `Decided`, `decisionRound`, `Eligible`, `anchor_round_le`, `decided_unique`, `decided_agree` in `Nemo/Decision.lean`, `Odontoceti/Decision.lean`, `Hybrid/Decision.lean`, `MahiMahi/*/Decision.lean`, `Mysticeti.lean` | ~1,900 |
+| band and liveness proofs per rule | `banded_aux`, `directCommitIn_band`, `supportersIn_band`, `certifiedIn_band`, `all_decided_below_of_fairRun` in the five `*Properties.lean` files; `decided_of_leader_mem`, `decided_below_of_committed_run` in the `*/Liveness.lean` files | ~4,800 |
+| adaptive instantiations | `toPartial`, `partialRun_agree`, `epoch_closes`, `exists_partialRun`, `adaptiveRun_exists` in `Adaptive/Mysticeti.lean` and `Adaptive/Odontoceti.lean` | ~750 |
+
+**Counting on a view** follows from `View.toRecord` (§11.25): every
+`supportersIn V L r` is `supporters` at the view read as a record, and
+likewise blames and certificates, so each `In` form becomes an
+abbreviation at `V.toRecord` and its lemmas are the record's.
+
+**Liveness predicates at the record** is §11.24's move for the
+coverage and population predicates: `Liveness.lean` states them at
+`BlockUniverse`, Nemo and Hydrozoan restate them word for word, and
+generalising the core's to `BlockRecord` deletes the copies.
+
+**One ledger.** The ledger reads a slot-to-verdict function and
+agreement across views and nothing else; one ledger over
+`DagRule.Decided` replaces the four, and Hydrozoan's prefix agreement
+is the same statement.
+
+**One anchored decision procedure.** Five rules define the same
+`Decided`: direct commit, direct skip, and an indirect step through a
+link from an anchor above, with the eligibility arithmetic, uniqueness
+and agreement proved five times. They differ in the direct predicates
+and in the link — certification for Mysticeti, Nemo and Mahi-Mahi, the
+thick link for Odontoceti and Hybrid. A procedure parametrised by the
+three predicates and three laws about them (a direct commit excludes a
+direct skip, two direct commits in a slot are one block, the link is
+unique) proves uniqueness and agreement once. `Barnacle.BaseRule`
+already abstracts the direct predicate, so the shape is known. About
+three hundred generic lines against fifteen hundred deleted.
+
+**Band and liveness proofs once** depend on the procedure. Each
+`*Properties.lean` shows every counting predicate band-invariant and
+assembles `Banded` from the pieces; over the generic procedure,
+`Banded` follows from band-invariance of the three predicates, one
+short lemma per rule, and the per-rule liveness files' descent
+arguments are one argument over it.
+
+**Adaptive** last: the two instantiations share their run
+construction and agreement over a rule that is `Banded` and `Agree`,
+which is what the joiner (§11.21) already runs on generically.
+
+What is left alone: the fault models, whose overlap is small and whose
+arithmetic is the protocols' content; the reactive layer, restated for
+Black Marlin and FinWhale over different pace types; and the Barnacle
+statement-and-proof pairs, which are the partition, not duplication.
+
 ### 11.5 Next steps, in order
 
 1. **~~`Compose.lean`~~** (**done**, §11.3). The three composition
@@ -3974,3 +4032,7 @@ them.
     Orcaella — each with `Agree` and `CommitsCandidate` from `Laws`.
     What it did not give is what item 3 is now for: `Causal` and
     `Banded` are per-rule, and `Banded` is the one that matters.
+11. **The six clusters of §11.26**: counting on a view, the liveness
+    predicates and the ledger first, then the anchored decision
+    procedure with the band and liveness proofs behind it, then the
+    adaptive instantiations.
