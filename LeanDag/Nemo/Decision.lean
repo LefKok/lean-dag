@@ -71,7 +71,7 @@ def nemoAnchored (Validator BlockId Payload : Type) [Fintype Validator] [Decidab
   Commit := fun U V L r => Nemo.DirectCommitIn U V L r
   Skip := fun _ _ _ _ => False
   rungs := 1
-  Link := fun _ U A L r => CertifiedIn U A L r
+  Link := fun _ U A L S k => CertifiedIn U A L (S.slotRound k)
   tie := fun _ _ _ => False
 
 omit S in
@@ -89,9 +89,9 @@ instance {V : View Validator BlockId Payload U} (k : ℕ) :
     Decidable ((nemoAnchored Validator BlockId Payload).Skip U V S k) :=
   inferInstanceAs (Decidable False)
 
-instance (i : ℕ) (A L : BlockId) (r : ℕ) :
-    Decidable ((nemoAnchored Validator BlockId Payload).Link i U A L r) :=
-  inferInstanceAs (Decidable (CertifiedIn U A L r))
+instance (i : ℕ) (A L : BlockId) (S : Slots Validator) (k : ℕ) :
+    Decidable ((nemoAnchored Validator BlockId Payload).Link i U A L S k) :=
+  inferInstanceAs (Decidable (CertifiedIn U A L (S.slotRound k)))
 
 /-- **The decision relation**: the anchored relation at Nemo's data. -/
 abbrev Decided (U : Universe Validator BlockId Payload) (V : View Validator BlockId Payload U) :
@@ -129,6 +129,9 @@ theorem nemoLaws : (nemoAnchored Validator BlockId Payload).Laws where
   commit_mono := fun _ hsub h => directCommitIn_mono hsub h
   skip_mono := fun _ _ h => h
   skip_congr := fun _ _ _ h => h
+  link_congr := fun hround _ h => by
+    change Nemo.CertifiedIn _ _ _ _ at h ⊢
+    rwa [← hround]
 
 end Nemo
 

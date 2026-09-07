@@ -831,7 +831,7 @@ with no tie to break, read at the three-round eligibility. -/
 theorem indirect :
     Indirect (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
       (fun sr i j => sr i + 3 ≤ sr j) :=
-  (AnchoredRule.indirect fun hi h => exists_least hi h).congr
+  (AnchoredRule.indirect coreLaws.link_congr fun hi h => exists_least hi h).congr
     (fun _ _ _ => by simp only [coreAnchored_wave] <;> omega)
 
 /-- **L4's capstone form, from the properties.** The shape every

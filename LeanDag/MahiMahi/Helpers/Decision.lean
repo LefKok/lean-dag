@@ -112,6 +112,13 @@ theorem certifiedIn_of_directCommitIn_at_anchor {w : ℕ} (hw : 1 ≤ w)
     unfold decisionRoundAt; omega)
 
 omit S in
+/-- The rung reads the schedule only at its slot's round. -/
+theorem linkCongr {w : ℕ} : (mahiMahiAnchored Validator BlockId Payload w).LinkCongr :=
+  fun hround _ h => by
+    change MahiMahi.CertifiedIn _ _ _ _ _ at h ⊢
+    rwa [← hround]
+
+omit S in
 /-- **Mahi-Mahi's laws** at any wave of at least two rounds: the core's
 M6 cases at wave `w`, every commit-against-commit case by certificate
 uniqueness. -/
@@ -139,14 +146,15 @@ theorem mahiMahiLaws {w : ℕ} (hw : 2 ≤ w) :
   skip_congr := fun _ hround hk h => by
     show DirectSkipIn _ _ _ _ _
     rw [← hround, ← hk]; exact h
+  link_congr := linkCongr
 
 /-- No tie: any linked candidate is the rung's choice. -/
 theorem exists_least {w : ℕ} {S : Slots Validator} {U : BlockUniverse Validator BlockId Payload}
     {A : BlockId} {i k : ℕ} (_ : i < (mahiMahiAnchored Validator BlockId Payload w).rungs)
     (h : ∃ L, IsLeaderBlock (S := S) U k L ∧
-      (mahiMahiAnchored Validator BlockId Payload w).Link i U A L (S.slotRound k)) :
+      (mahiMahiAnchored Validator BlockId Payload w).Link i U A L S k) :
     ∃ L, IsLeaderBlock (S := S) U k L ∧
-      (mahiMahiAnchored Validator BlockId Payload w).Link i U A L (S.slotRound k) ∧
+      (mahiMahiAnchored Validator BlockId Payload w).Link i U A L S k ∧
       (mahiMahiAnchored Validator BlockId Payload w).Least (S := S) U A i k L :=
   let ⟨L, hL, hl⟩ := h
   ⟨L, hL, hl, fun _ _ _ h => h⟩

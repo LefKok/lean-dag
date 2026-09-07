@@ -49,7 +49,7 @@ inductive DecidedWithin (U : BlockRecord Validator BlockId Payload P honest) (V 
       k < j → j < B → R.Eligible k j → DecidedWithin U V B j (some A) →
       (∀ m, k < m → m < j → R.Eligible k m → DecidedWithin U V B m none) →
       i < R.rungs → (∀ i', i' < i → R.RungEmpty U A i' k) →
-      IsLeaderBlock U k L → R.Link i U A L (S.slotRound k) → R.Least U A i k L →
+      IsLeaderBlock U k L → R.Link i U A L S k → R.Least U A i k L →
       DecidedWithin U V B k (some L)
   /-- Anchored below the bound, every rung is empty. -/
   | indirectSkip {k j : ℕ} {A : BlockId} :
@@ -58,7 +58,7 @@ inductive DecidedWithin (U : BlockRecord Validator BlockId Payload P honest) (V 
       (∀ i, i < R.rungs → R.RungEmpty U A i k) →
       DecidedWithin U V B k none
 
-variable {R} {I : BlockRecord Validator BlockId Payload P honest → Prop}
+variable {R} {I : Slots Validator → BlockRecord Validator BlockId Payload P honest → Prop}
 variable {U : BlockRecord Validator BlockId Payload P honest}
 
 /-- The bounded indirect commit at a single rung with no tie. -/
@@ -66,7 +66,7 @@ theorem DecidedWithin.indirectCommit_single {V : U.View} (h1 : R.rungs = 1)
     (hno : ∀ L L', ¬ R.tie 0 L L') {B k j : ℕ} {A L : BlockId}
     (hkj : k < j) (hjB : j < B) (helig : R.Eligible k j) (hj : R.DecidedWithin U V B j (some A))
     (hmid : ∀ m, k < m → m < j → R.Eligible k m → R.DecidedWithin U V B m none)
-    (hL : IsLeaderBlock U k L) (hlink : R.Link 0 U A L (S.slotRound k)) :
+    (hL : IsLeaderBlock U k L) (hlink : R.Link 0 U A L S k) :
     R.DecidedWithin U V B k (some L) :=
   DecidedWithin.indirectCommit (i := 0) hkj hjB helig hj hmid (by omega)
     (fun i' hi' => absurd hi' (Nat.not_lt_zero _)) hL hlink (fun L' _ _ h => hno L' L h)
@@ -76,7 +76,7 @@ theorem DecidedWithin.indirectSkip_single {V : U.View} (h1 : R.rungs = 1) {B k j
     {A : BlockId} (hkj : k < j) (hjB : j < B) (helig : R.Eligible k j)
     (hj : R.DecidedWithin U V B j (some A))
     (hmid : ∀ m, k < m → m < j → R.Eligible k m → R.DecidedWithin U V B m none)
-    (hnone : ∀ L, IsLeaderBlock U k L → ¬ R.Link 0 U A L (S.slotRound k)) :
+    (hnone : ∀ L, IsLeaderBlock U k L → ¬ R.Link 0 U A L S k) :
     R.DecidedWithin U V B k none :=
   DecidedWithin.indirectSkip hkj hjB helig hj hmid (fun i hi L hL => by
     have : i = 0 := by omega
@@ -116,7 +116,7 @@ theorem mono (h : R.DecidedWithin U V B k v) (hBB : B ≤ B') : R.DecidedWithin 
       exact indirectSkip hkj (by omega) helig ihj (fun m h1 h2 h3 => ihmid m h1 h2 h3) hnone
 
 /-- Two bounded verdicts agree — agreement, through the embedding. -/
-theorem agree (hl : R.Laws I) (hI : I U) {V₁ V₂ : U.View} {B₁ B₂ k : ℕ}
+theorem agree (hl : R.Laws I) (hI : I S U) {V₁ V₂ : U.View} {B₁ B₂ k : ℕ}
     {v₁ v₂ : Option BlockId} (h₁ : R.DecidedWithin U V₁ B₁ k v₁)
     (h₂ : R.DecidedWithin U V₂ B₂ k v₂) : v₁ = v₂ :=
   decided_agree hl hI h₁.toDecided h₂.toDecided
@@ -164,8 +164,7 @@ theorem exists_bound {V : U.View} {k : ℕ} {v : Option BlockId} (h : R.Decided 
 schedules naming the same rounds and the same leaders below the bound:
 the candidate set reads the schedule only through `IsLeaderBlock`, the
 direct skip only at its slot, and the links not at all. -/
-theorem decidedWithin_congr_of_slotRound (hl : R.Laws I) (hI : I U)
-    {S₁ S₂ : Slots Validator}
+theorem decidedWithin_congr_of_slotRound (hl : R.Laws I) {S₁ S₂ : Slots Validator} (hI : I S₁ U)
     (hround : S₁.slotRound = S₂.slotRound) {V : U.View} {B k : ℕ} {v : Option BlockId}
     (ha : ∀ m, m < B → S₁.leader m = S₂.leader m)
     (h : R.DecidedWithin (S := S₁) U V B k v) : R.DecidedWithin (S := S₂) U V B k v := by
@@ -186,19 +185,27 @@ theorem decidedWithin_congr_of_slotRound (hl : R.Laws I) (hI : I U)
       refine DecidedWithin.indirectCommit (S := ⟨sr, ld', hmono', hunb', hkeyed'⟩) hkj hj helig
         ihj (fun m h1 h2 h3 => ihmid m h1 h2 h3) hi ?_
         (isLeaderBlock_congr (S₁ := ⟨sr, ld, hmono, hunb, hkeyed⟩)
-          (S₂ := ⟨sr, ld', hmono', hunb', hkeyed'⟩) rfl (ha k (by omega)) hL) hlink ?_
+          (S₂ := ⟨sr, ld', hmono', hunb', hkeyed'⟩) rfl (ha k (by omega)) hL)
+        (hl.link_congr (S₁ := ⟨sr, ld, hmono, hunb, hkeyed⟩)
+          (S₂ := ⟨sr, ld', hmono', hunb', hkeyed'⟩) rfl (ha k (by omega)) hlink) ?_
       · intro i' hi' L' hL' hlink'
         exact hemp i' hi' L' (isLeaderBlock_congr (S₁ := ⟨sr, ld', hmono', hunb', hkeyed'⟩)
-          (S₂ := ⟨sr, ld, hmono, hunb, hkeyed⟩) rfl (ha k (by omega)).symm hL') hlink'
+          (S₂ := ⟨sr, ld, hmono, hunb, hkeyed⟩) rfl (ha k (by omega)).symm hL')
+          (hl.link_congr (S₁ := ⟨sr, ld', hmono', hunb', hkeyed'⟩)
+            (S₂ := ⟨sr, ld, hmono, hunb, hkeyed⟩) rfl (ha k (by omega)).symm hlink')
       · intro L' hL' hlink'
         exact hmin L' (isLeaderBlock_congr (S₁ := ⟨sr, ld', hmono', hunb', hkeyed'⟩)
-          (S₂ := ⟨sr, ld, hmono, hunb, hkeyed⟩) rfl (ha k (by omega)).symm hL') hlink'
+          (S₂ := ⟨sr, ld, hmono, hunb, hkeyed⟩) rfl (ha k (by omega)).symm hL')
+          (hl.link_congr (S₁ := ⟨sr, ld', hmono', hunb', hkeyed'⟩)
+            (S₂ := ⟨sr, ld, hmono, hunb, hkeyed⟩) rfl (ha k (by omega)).symm hlink')
   | @indirectSkip k j A hkj hj helig _ _ hnone ihj ihmid =>
       refine DecidedWithin.indirectSkip (S := ⟨sr, ld', hmono', hunb', hkeyed'⟩) hkj hj helig
         ihj (fun m h1 h2 h3 => ihmid m h1 h2 h3) ?_
       intro i hi L hL hlink
       exact hnone i hi L (isLeaderBlock_congr (S₁ := ⟨sr, ld', hmono', hunb', hkeyed'⟩)
-        (S₂ := ⟨sr, ld, hmono, hunb, hkeyed⟩) rfl (ha k (by omega)).symm hL) hlink
+        (S₂ := ⟨sr, ld, hmono, hunb, hkeyed⟩) rfl (ha k (by omega)).symm hL)
+        (hl.link_congr (S₁ := ⟨sr, ld', hmono', hunb', hkeyed'⟩)
+          (S₂ := ⟨sr, ld, hmono, hunb, hkeyed⟩) rfl (ha k (by omega)).symm hlink)
 
 /-! ## The tie-break's choice -/
 
@@ -211,12 +218,12 @@ theorem least_of_no_tie {A L : BlockId} {i k : ℕ} (hno : ∀ L L', ¬ R.tie i 
 choice; one exists whenever the rung is nonempty. -/
 theorem exists_least_of_lt [LinearOrder BlockId] {A : BlockId} {i k : ℕ}
     (hlt : ∀ L L', R.tie i L L' ↔ L < L')
-    (h : ∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L (S.slotRound k)) :
-    ∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L (S.slotRound k) ∧
+    (h : ∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k) :
+    ∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k ∧
       R.Least (S := S) U A i k L := by
   classical
   obtain ⟨L₀, hL₀, hl₀⟩ := h
-  set s := U.ids.filter (fun L => IsLeaderBlock (S := S) U k L ∧ R.Link i U A L (S.slotRound k))
+  set s := U.ids.filter (fun L => IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k)
     with hs
   have hne : s.Nonempty := ⟨L₀, Finset.mem_filter.mpr ⟨hL₀.1, hL₀, hl₀⟩⟩
   refine ⟨s.min' hne, (Finset.mem_filter.mp (s.min'_mem hne)).2.1,
@@ -234,8 +241,8 @@ intermediate premise the induction supplies, every eligible slot between
 being decided and not committed — and read the rungs there. -/
 theorem decidedWithin_below_of_committed_run
     (hleast : ∀ {A : BlockId} {i k : ℕ}, i < R.rungs →
-      (∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L (S.slotRound k)) →
-      ∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L (S.slotRound k) ∧
+      (∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k) →
+      ∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k ∧
         R.Least (S := S) U A i k L)
     {V : U.View} {b n B : ℕ} (hbn : b ≤ n) (hnB : n < B)
     (hspan : ∀ i, i < b → R.Eligible (S := S) i n)
@@ -268,7 +275,7 @@ theorem decidedWithin_below_of_committed_run
           | none => exact hv
           | some A' => exact absurd ⟨A', hv⟩ hnot
       by_cases hc : ∃ r, r < R.rungs ∧ ∃ L, IsLeaderBlock (S := S) U i L ∧
-          R.Link r U A L (S.slotRound i)
+          R.Link r U A L S i
       · let r₀ := Nat.find hc
         have hr₀ := Nat.find_spec hc
         obtain ⟨L, hL, hlink, hmin⟩ := hleast hr₀.1 hr₀.2
@@ -285,8 +292,8 @@ theorem decidedWithin_below_of_committed_run
 sits within one bound and the bounded descent applies. -/
 theorem decided_below_of_committed_run
     (hleast : ∀ {A : BlockId} {i k : ℕ}, i < R.rungs →
-      (∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L (S.slotRound k)) →
-      ∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L (S.slotRound k) ∧
+      (∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k) →
+      ∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k ∧
         R.Least (S := S) U A i k L)
     {V : U.View} {b n : ℕ} (hbn : b ≤ n)
     (hspan : ∀ i, i < b → R.Eligible (S := S) i n)
@@ -316,7 +323,7 @@ theorem decided_below_of_committed_run
 variable [P.Mechanised]
 
 /-- **The bounded relation lands in the derived one.** -/
-theorem decidedBelow_of_decidedWithin (hl : R.Laws I) (hI : I U) {V : U.View}
+theorem decidedBelow_of_decidedWithin (hl : R.Laws I) (hI : I S U) {V : U.View}
     {B k : ℕ} {v : Option BlockId} (h : R.DecidedWithin (S := S) U V B k v) :
     DecidedBelow R.toDagRule S B V k v :=
   ⟨h.lt_bound, h.toDecided, fun S' hround hlead =>

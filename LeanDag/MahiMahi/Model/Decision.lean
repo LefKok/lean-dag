@@ -92,7 +92,7 @@ def mahiMahiAnchored (Validator BlockId Payload : Type) [Fintype Validator]
   Commit := fun U V L r => MahiMahi.DirectCommitIn U V w L r
   Skip := fun U V S k => MahiMahi.DirectSkipIn U V w (S.leader k) (S.slotRound k)
   rungs := 1
-  Link := fun _ U A L r => MahiMahi.CertifiedIn U w A L r
+  Link := fun _ U A L S k => MahiMahi.CertifiedIn U w A L (S.slotRound k)
   tie := fun _ _ _ => False
 
 section Slots

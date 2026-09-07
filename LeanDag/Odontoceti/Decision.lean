@@ -124,7 +124,7 @@ def odontocetiAnchored (Validator BlockId Payload : Type) [Fintype Validator]
   Commit := fun U V L r => Odontoceti.DirectCommitIn U V L r
   Skip := fun U V S k => DirectSkipSlotIn (S := S) U V k
   rungs := 1
-  Link := fun _ U A L r => ThickLink U A L r
+  Link := fun _ U A L S k => ThickLink U A L (S.slotRound k)
   tie := fun _ L L' => L < L'
 
 omit S in
@@ -142,9 +142,9 @@ instance {V : View Validator BlockId Payload U} (k : ℕ) :
     Decidable ((odontocetiAnchored Validator BlockId Payload).Skip U V S k) :=
   inferInstanceAs (Decidable (DirectSkipSlotIn (S := S) U V k))
 
-instance (i : ℕ) (A L : BlockId) (r : ℕ) :
-    Decidable ((odontocetiAnchored Validator BlockId Payload).Link i U A L r) :=
-  inferInstanceAs (Decidable (ThickLink U A L r))
+instance (i : ℕ) (A L : BlockId) (S : Slots Validator) (k : ℕ) :
+    Decidable ((odontocetiAnchored Validator BlockId Payload).Link i U A L S k) :=
+  inferInstanceAs (Decidable (ThickLink U A L (S.slotRound k)))
 
 /-- **The decision relation**: the anchored relation at Odontoceti's data. -/
 abbrev Decided (U : BlockUniverse Validator BlockId Payload) (V : View Validator BlockId Payload U) :
@@ -185,6 +185,9 @@ theorem odontocetiLaws : (odontocetiAnchored Validator BlockId Payload).Laws whe
   commit_mono := fun _ hsub h => le_trans h (Finset.card_le_card (supportersIn_mono hsub))
   skip_mono := fun _ hsub h => directSkipSlotIn_mono hsub h
   skip_congr := fun _ hround hk h => directSkipSlotIn_congr hround hk h
+  link_congr := fun hround _ h => by
+    change ThickLink _ _ _ _ at h ⊢
+    rwa [← hround]
 
 omit S in
 /-- The rung's tie is the order, so a nonempty rung has a least
@@ -192,9 +195,9 @@ candidate. -/
 theorem exists_least {S : Slots Validator} {U : BlockUniverse Validator BlockId Payload}
     {A : BlockId} {i k : ℕ} (_ : i < (odontocetiAnchored Validator BlockId Payload).rungs)
     (h : ∃ L, IsLeaderBlock (S := S) U k L ∧
-      (odontocetiAnchored Validator BlockId Payload).Link i U A L (S.slotRound k)) :
+      (odontocetiAnchored Validator BlockId Payload).Link i U A L S k) :
     ∃ L, IsLeaderBlock (S := S) U k L ∧
-      (odontocetiAnchored Validator BlockId Payload).Link i U A L (S.slotRound k) ∧
+      (odontocetiAnchored Validator BlockId Payload).Link i U A L S k ∧
       (odontocetiAnchored Validator BlockId Payload).Least (S := S) U A i k L :=
   AnchoredRule.exists_least_of_lt (fun _ _ => Iff.rfl) h
 

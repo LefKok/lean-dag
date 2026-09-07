@@ -271,7 +271,7 @@ theorem indirect (kt : ℕ) :
     Indirect (hybridRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload) kt)
       (fun sr i j =>
         sr i + (Hybrid.hybridAnchored Validator BlockId Payload kt).wave + 1 ≤ sr j) :=
-  AnchoredRule.indirectOn fun hi h => Hybrid.exists_least hi h
+  AnchoredRule.indirectOn Hybrid.linkCongr fun hi h => Hybrid.exists_least hi h
 
 /-- **And a committed run decides everything below it.** -/
 theorem descends {kt : ℕ} {S : Slots Validator} {c : ℕ} (hc : 0 < c)

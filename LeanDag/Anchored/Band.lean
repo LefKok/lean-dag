@@ -88,8 +88,9 @@ theorem agree (hl : R.Laws) : Agree R.toDagRule :=
   fun S _ _ V₂ _ _ _ h₁ h₂ => decided_unique (S := S) hl trivial h₁ V₂ _ h₂
 
 /-- **Two views decide alike**, under the invariant. -/
-theorem agreeOn (hl : R.Laws I) : Agree (R.toDagRuleOn I) :=
-  fun S U _ V₂ _ _ _ h₁ h₂ => decided_unique (S := S) hl U.property h₁ V₂ _ h₂
+theorem agreeOn {J : Slots Validator → BlockRecord Validator BlockId Payload P honest → Prop}
+    (hl : R.Laws J) (hJ : ∀ S U, I U → J S U) : Agree (R.toDagRuleOn I) :=
+  fun S U _ V₂ _ _ _ h₁ h₂ => decided_unique (S := S) hl (hJ S U.val U.property) h₁ V₂ _ h₂
 
 /-- **A commit names the slot's candidate**, under the invariant. -/
 theorem commitsCandidateOn : CommitsCandidate (R.toDagRuleOn I) :=
@@ -116,11 +117,11 @@ tie-break's choice, and no rung holding any skips. The verdict survives
 a reassignment of leaders elsewhere, since the case split reads only
 slot `i`'s candidates and the anchor's history. What it needs of the
 tie is that a nonempty rung has a choice, `hleast`. -/
-theorem indirect
+theorem indirect (hcongr : R.LinkCongr)
     (hleast : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
       {A : BlockId} {i k : ℕ}, i < R.rungs →
-      (∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L (S.slotRound k)) →
-      ∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L (S.slotRound k) ∧
+      (∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k) →
+      ∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k ∧
         R.Least (S := S) U A i k L) :
     Indirect R.toDagRule (fun sr i j => sr i + R.wave + 1 ≤ sr j) := by
   classical
@@ -138,26 +139,27 @@ theorem indirect
     simp only [IsLeaderBlock, hround, hlead]
   -- the first rung holding a candidate, if any
   by_cases hc : ∃ r, r < R.rungs ∧ ∃ L, IsLeaderBlock (S := S) U i L ∧
-      R.Link r U A L (S.slotRound i)
+      R.Link r U A L S i
   · obtain ⟨r, hr, hrL⟩ := hc
     -- take the least such rung
     have hex : ∃ r, r < R.rungs ∧ ∃ L, IsLeaderBlock (S := S) U i L ∧
-        R.Link r U A L (S.slotRound i) := ⟨r, hr, hrL⟩
+        R.Link r U A L S i := ⟨r, hr, hrL⟩
     let r₀ := Nat.find hex
     have hr₀ := Nat.find_spec hex
     have hmin : ∀ r', r' < r₀ → ¬ ∃ L, IsLeaderBlock (S := S) U i L ∧
-        R.Link r' U A L (S.slotRound i) := fun r' hr' =>
+        R.Link r' U A L S i := fun r' hr' =>
       fun hL => Nat.find_min hex hr' ⟨lt_trans hr' hr₀.1, hL⟩
     obtain ⟨L, hL, hlink, hLmin⟩ := hleast hr₀.1 hr₀.2
     refine ⟨some L, fun S' hround hlead hj' hmid' => ?_⟩
     refine Decided.indirectCommit (S := S') (i := r₀) hlt ((heq S' hround i j).mpr he) hj'
       (fun i' h1 h2 h3 => hmid' i' h1 h2 (R.eligible_iff (S := S) |>.mp ((heq S' hround i i').mp h3)))
-      hr₀.1 ?_ ((hcand S' hround hlead L).mpr hL) (by rw [hround]; exact hlink) ?_
+      hr₀.1 ?_ ((hcand S' hround hlead L).mpr hL)
+      (hcongr (S₁ := S) (S₂ := S') (congrFun hround i).symm hlead.symm hlink) ?_
     · intro r' hr' L' hL' hlink'
-      rw [hround] at hlink'
+      have hlink' := hcongr (S₁ := S') (S₂ := S) (congrFun hround i) hlead hlink'
       exact hmin r' hr' ⟨L', (hcand S' hround hlead L').mp hL', hlink'⟩
     · intro L' hL' hlink'
-      rw [hround] at hlink'
+      have hlink' := hcongr (S₁ := S') (S₂ := S) (congrFun hround i) hlead hlink'
       exact hLmin L' ((hcand S' hround hlead L').mp hL') hlink'
   · push Not at hc
     refine ⟨none, fun S' hround hlead hj' hmid' => ?_⟩
@@ -165,19 +167,19 @@ theorem indirect
       (fun i' h1 h2 h3 => hmid' i' h1 h2 (R.eligible_iff (S := S) |>.mp ((heq S' hround i i').mp h3)))
       ?_
     intro r hr L hL hlink
-    rw [hround] at hlink
+    have hlink := hcongr (S₁ := S') (S₂ := S) (congrFun hround i) hlead hlink
     exact hc r hr L ((hcand S' hround hlead L).mp hL) hlink
 
 /-- The indirect property under the invariant: the same case split, at
 the record inside. -/
-theorem indirectOn
+theorem indirectOn (hcongr : R.LinkCongr)
     (hleast : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
       {A : BlockId} {i k : ℕ}, i < R.rungs →
-      (∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L (S.slotRound k)) →
-      ∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L (S.slotRound k) ∧
+      (∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k) →
+      ∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k ∧
         R.Least (S := S) U A i k L) :
     Indirect (R.toDagRuleOn I) (fun sr i j => sr i + R.wave + 1 ≤ sr j) :=
-  fun S U V i j A helig hj hmid => indirect hleast S (U := U.val) V i j A helig hj hmid
+  fun S U V i j A helig hj hmid => indirect hcongr hleast S (U := U.val) V i j A helig hj hmid
 
 /-! ## The band -/
 
@@ -312,7 +314,7 @@ structure BandLaws : Prop where
     S.slotRound k + g = S'.slotRound k' + g' →
     lo ≤ S.slotRound k + g → S.slotRound k + R.wave + g ≤ hi → i < R.rungs →
     IsLeaderBlock (S := S) U k L →
-    (R.Link i U' A L (S'.slotRound k') ↔ R.Link i U A L (S.slotRound k))
+    (R.Link i U' A L S' k' ↔ R.Link i U A L S k)
   /-- A candidate the band did not carry is linked from no old anchor. -/
   link_novel : ∀ {S S' : Slots Validator} {U U' : BlockRecord Validator BlockId Payload P honest}
     {lo hi g g' : ℕ} {A L : BlockId} {k k' i : ℕ},
@@ -320,7 +322,7 @@ structure BandLaws : Prop where
     lo ≤ (U.block A).round + g → (U.block A).round + g ≤ hi →
     S.slotRound k + g = S'.slotRound k' + g' →
     lo ≤ S.slotRound k + g → S.slotRound k + R.wave + g ≤ hi → i < R.rungs →
-    IsLeaderBlock (S := S') U' k' L → L ∉ U.ids → ¬ R.Link i U' A L (S'.slotRound k')
+    IsLeaderBlock (S := S') U' k' L → L ∉ U.ids → ¬ R.Link i U' A L S' k'
 
 variable (hb : R.BandLaws)
 include hb

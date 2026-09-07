@@ -443,7 +443,7 @@ def coreAnchored (Validator BlockId Payload : Type*) [Fintype Validator]
   Commit := fun U V L r => DirectCommitIn U V L r
   Skip := fun U V S k => DirectSkipSlotIn (S := S) U V k
   rungs := 1
-  Link := fun _ U A L r => CertifiedIn U A L r
+  Link := fun _ U A L S k => CertifiedIn U A L (S.slotRound k)
   tie := fun _ _ _ => False
 
 omit S in
@@ -608,15 +608,18 @@ theorem coreLaws : (coreAnchored Validator BlockId Payload).Laws where
     (Finset.inter_subset_inter Finset.Subset.rfl hsub)))
   skip_mono := fun _ hsub h => directSkipSlotIn_mono hsub h
   skip_congr := fun _ hround hk h => directSkipSlotIn_congr hround hk h
+  link_congr := fun hround _ h => by
+    change CertifiedIn _ _ _ _ at h ⊢
+    rwa [← hround]
 
 omit S in
 /-- No tie: any certified candidate is the rung's choice. -/
 theorem exists_least {S : Slots Validator} {U : BlockUniverse Validator BlockId Payload}
     {A : BlockId} {i k : ℕ} (_ : i < (coreAnchored Validator BlockId Payload).rungs)
     (h : ∃ L, IsLeaderBlock (S := S) U k L ∧
-      (coreAnchored Validator BlockId Payload).Link i U A L (S.slotRound k)) :
+      (coreAnchored Validator BlockId Payload).Link i U A L S k) :
     ∃ L, IsLeaderBlock (S := S) U k L ∧
-      (coreAnchored Validator BlockId Payload).Link i U A L (S.slotRound k) ∧
+      (coreAnchored Validator BlockId Payload).Link i U A L S k ∧
       (coreAnchored Validator BlockId Payload).Least (S := S) U A i k L :=
   let ⟨L, hL, hl⟩ := h
   ⟨L, hL, hl, fun _ _ _ h => h⟩

@@ -173,7 +173,7 @@ def hybridAnchored (Validator BlockId Payload : Type) [Fintype Validator]
   Commit := fun U V L r => Hybrid.DirectCommitIn U V L r
   Skip := fun U V S s => Hybrid.DirectSkipSlotIn (S := S) U V s
   rungs := 1
-  Link := fun _ U A L r => ThickLink k U A L r
+  Link := fun _ U A L S s => ThickLink k U A L (S.slotRound s)
   tie := fun _ L L' => L < L'
 
 omit S in
@@ -191,9 +191,9 @@ instance {V : View Validator BlockId Payload U} (k s : ℕ) :
     Decidable ((hybridAnchored Validator BlockId Payload k).Skip U V S s) :=
   inferInstanceAs (Decidable (Hybrid.DirectSkipSlotIn (S := S) U V s))
 
-instance (k i : ℕ) (A L : BlockId) (r : ℕ) :
-    Decidable ((hybridAnchored Validator BlockId Payload k).Link i U A L r) :=
-  inferInstanceAs (Decidable (ThickLink k U A L r))
+instance (k i : ℕ) (A L : BlockId) (S : Slots Validator) (s : ℕ) :
+    Decidable ((hybridAnchored Validator BlockId Payload k).Link i U A L S s) :=
+  inferInstanceAs (Decidable (ThickLink k U A L (S.slotRound s)))
 
 /-- **The decision relation** at threshold `k`: the anchored relation at
 Hybrid's data. -/
@@ -206,11 +206,18 @@ export AnchoredRule.Decided (directCommit directSkip indirectCommit indirectSkip
 end Decided
 
 omit S in
+/-- The rung reads the schedule only at its slot's round. -/
+theorem linkCongr {k : ℕ} : (hybridAnchored Validator BlockId Payload k).LinkCongr :=
+  fun hround _ h => by
+    change ThickLink _ _ _ _ _ at h ⊢
+    rwa [← hround]
+
+omit S in
 /-- **Hybrid's laws**, under `HonestNoEquiv` at an admissible threshold:
 the direct/direct cases by H2 and twin uniqueness, the crossings by
 H3/H4/H5, and two tie-break choices equal by antisymmetry. -/
 theorem hybridLaws {k : ℕ} (hk : Admissible Validator k) :
-    (hybridAnchored Validator BlockId Payload k).Laws HonestNoEquiv where
+    (hybridAnchored Validator BlockId Payload k).Laws (fun _ => HonestNoEquiv) where
   commit_unique := fun hne hL₁ hL₂ h₁ h₂ => eq_of_directCommitIn hne hL₁ hL₂ h₁ h₂
   commit_skip := fun hne hL h hskip =>
     not_directSkipIn_of_directCommitIn hne h (directSkipIn_of_directSkipSlotIn hskip hL)
@@ -230,6 +237,7 @@ theorem hybridLaws {k : ℕ} (hk : Admissible Validator k) :
   commit_mono := fun _ hsub h => le_trans h (Finset.card_le_card (supportersIn_mono hsub))
   skip_mono := fun _ hsub h => directSkipSlotIn_mono hsub h
   skip_congr := fun _ hround hk h => directSkipSlotIn_congr hround hk h
+  link_congr := linkCongr
 
 omit S in
 /-- The rung's tie is the order, so a nonempty rung has a least
@@ -237,9 +245,9 @@ candidate. -/
 theorem exists_least {S : Slots Validator} {U : BlockUniverse Validator BlockId Payload}
     {A : BlockId} {k i s : ℕ} (_ : i < (hybridAnchored Validator BlockId Payload k).rungs)
     (h : ∃ L, IsLeaderBlock (S := S) U s L ∧
-      (hybridAnchored Validator BlockId Payload k).Link i U A L (S.slotRound s)) :
+      (hybridAnchored Validator BlockId Payload k).Link i U A L S s) :
     ∃ L, IsLeaderBlock (S := S) U s L ∧
-      (hybridAnchored Validator BlockId Payload k).Link i U A L (S.slotRound s) ∧
+      (hybridAnchored Validator BlockId Payload k).Link i U A L S s ∧
       (hybridAnchored Validator BlockId Payload k).Least (S := S) U A i s L :=
   AnchoredRule.exists_least_of_lt (fun _ _ => Iff.rfl) h
 

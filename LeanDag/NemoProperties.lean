@@ -180,7 +180,7 @@ to break. -/
 theorem indirect :
     Indirect (nemoRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
       (fun sr i j => sr i + (Nemo.nemoAnchored Validator BlockId Payload).wave + 1 ≤ sr j) :=
-  AnchoredRule.indirect fun _ ⟨L, hL, hl⟩ => ⟨L, hL, hl, fun _ _ _ h => h⟩
+  AnchoredRule.indirect Nemo.nemoLaws.link_congr fun _ ⟨L, hL, hl⟩ => ⟨L, hL, hl, fun _ _ _ h => h⟩
 
 /-- **And a committed run decides everything below it**, from `Indirect`
 with no induction of its own. -/

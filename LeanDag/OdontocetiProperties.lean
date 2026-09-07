@@ -292,7 +292,7 @@ theorem indirect :
     Indirect (odontocetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
       (fun sr i j => sr i + (Odontoceti.odontocetiAnchored Validator BlockId Payload).wave + 1
         ≤ sr j) :=
-  AnchoredRule.indirect fun hi h => Odontoceti.exists_least hi h
+  AnchoredRule.indirect Odontoceti.odontocetiLaws.link_congr fun hi h => Odontoceti.exists_least hi h
 
 /-- **And a committed run decides everything below it.** Was a downward
 induction carrying the bound by hand; it is now `Descends.of_indirect`,

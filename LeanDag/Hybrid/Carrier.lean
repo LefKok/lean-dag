@@ -63,7 +63,7 @@ unconditional because non-equivocation is now a field of the universe
 rather than a premise. -/
 theorem agree {k : ℕ} (hk : Hybrid.Admissible Validator k) :
     Agree (hybridRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload) k) :=
-  AnchoredRule.agreeOn (Hybrid.hybridLaws hk)
+  AnchoredRule.agreeOn (Hybrid.hybridLaws hk) (fun _ _ h => h)
 
 /-- **A commit names the slot's candidate.** -/
 theorem commitsCandidate (k : ℕ) : CommitsCandidate
