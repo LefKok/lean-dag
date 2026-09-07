@@ -12,6 +12,8 @@ __pycache__/
 # Session scratch
 /.claude
 
-# Extracted declaration index (rebuild with scripts/extract-decls.py)
+# Extracted declaration index and dependency graph (rebuild with
+# scripts/extract-decls.py and `lake env lean scripts/DepGraph.lean`)
 docs/decls.json
+docs/depgraph/deps.tsv
 .DS_Store

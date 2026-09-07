@@ -25,6 +25,12 @@ with no incoming arrow rests only on definitions and unlabelled lemmas.
     lake env lean scripts/DepGraph.lean > docs/depgraph/deps.tsv
     python3 scripts/depgraph.py
 
+`deps.tsv` is not tracked: it is eight megabytes, changes with every
+Lean edit, and the audit scripts that read it (`audit-rounds.py`,
+`audit-bespoke.py`, `audit-mechanisms.py`) say to regenerate it before
+trusting a run. The four SVGs are tracked, since the report embeds two
+of them as figures.
+
 `scripts/DepGraph.lean` walks `Environment.constants` and, for every
 declaration of this development, records the constants appearing in its
 type **and in its body** — for a theorem, that body is the proof term, so
