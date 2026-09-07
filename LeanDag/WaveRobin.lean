@@ -66,13 +66,13 @@ theorem waveRobin_fairRun (n : ℕ) (hn : 0 < n) [F : Faults (Fin n)] :
     rw [hleader]
     exact hv
 
-/-- **`SpansEligible 3`, the pipelined shape, at every `n`.** A run of three
+/-- **`SpansEligibleAt 2 3`, the core's pipelined shape, at every `n`.** A run of three
 consecutive slots reaches three rounds past everything below it — the same
 arithmetic as `pipe_spansEligible`, freed of the committee. -/
 theorem waveRobin_spansEligible (n : ℕ) (hn : 0 < n) :
-    SpansEligible (Validator := Fin n) (S := waveRobin n hn) 3 := by
+    SpansEligibleAt (S := waveRobin n hn) 2 3 := by
   intro b i hi
-  simp only [eligible_iff, waveRobin_slotRound]
+  simp only [eligibleAt_iff, waveRobin_slotRound]
   omega
 
 /-- The wave-aligned rotation is fair in the single-slot sense too, so L6 and

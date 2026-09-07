@@ -61,6 +61,27 @@ inductive DecidedWithin (U : BlockRecord Validator BlockId Payload P honest) (V 
 variable {R} {I : BlockRecord Validator BlockId Payload P honest → Prop}
 variable {U : BlockRecord Validator BlockId Payload P honest}
 
+/-- The bounded indirect commit at a single rung with no tie. -/
+theorem DecidedWithin.indirectCommit_single {V : U.View} (h1 : R.rungs = 1)
+    (hno : ∀ L L', ¬ R.tie 0 L L') {B k j : ℕ} {A L : BlockId}
+    (hkj : k < j) (hjB : j < B) (helig : R.Eligible k j) (hj : R.DecidedWithin U V B j (some A))
+    (hmid : ∀ m, k < m → m < j → R.Eligible k m → R.DecidedWithin U V B m none)
+    (hL : IsLeaderBlock U k L) (hlink : R.Link 0 U A L (S.slotRound k)) :
+    R.DecidedWithin U V B k (some L) :=
+  DecidedWithin.indirectCommit (i := 0) hkj hjB helig hj hmid (by omega)
+    (fun i' hi' => absurd hi' (Nat.not_lt_zero _)) hL hlink (fun L' _ _ h => hno L' L h)
+
+/-- The bounded indirect skip at a single rung. -/
+theorem DecidedWithin.indirectSkip_single {V : U.View} (h1 : R.rungs = 1) {B k j : ℕ}
+    {A : BlockId} (hkj : k < j) (hjB : j < B) (helig : R.Eligible k j)
+    (hj : R.DecidedWithin U V B j (some A))
+    (hmid : ∀ m, k < m → m < j → R.Eligible k m → R.DecidedWithin U V B m none)
+    (hnone : ∀ L, IsLeaderBlock U k L → ¬ R.Link 0 U A L (S.slotRound k)) :
+    R.DecidedWithin U V B k none :=
+  DecidedWithin.indirectSkip hkj hjB helig hj hmid (fun i hi L hL => by
+    have : i = 0 := by omega
+    subst this; exact hnone L hL)
+
 namespace DecidedWithin
 
 variable {V : U.View} {B B' k : ℕ} {v : Option BlockId}

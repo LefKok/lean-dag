@@ -54,14 +54,14 @@ theorem uniformSingle_spacing (k : ℕ) :
   simp only [uniformSingle_slotRound]
   omega
 
-/-- Feeding `uniformSingle_spacing` to `eligible_of_lt_of_spacing` gives the
+/-- Feeding `uniformSingle_spacing` to `eligibleAt_of_lt_of_spacing` gives the
 other half of conservativity — under this schedule every later slot may anchor
 an earlier one, so the generalised `Decided` offers exactly the constructors
 the old one did. Stated for an *instance* of the schedule rather than for the
 term, which is how callers meet it. -/
 example [S : Slots Validator] (hsp : ∀ k, S.slotRound k = 3 * k) {k j : ℕ} (h : k < j) :
-    Eligible Validator k j :=
-  eligible_of_lt_of_spacing (fun k => by simp [hsp]; omega) h
+    EligibleAt (S := S) 2 k j :=
+  eligibleAt_of_lt_of_spacing (fun k => by simp [hsp]; omega) h
 
 /-- **Slot indices do not outrun rounds.** `keyed` makes
 `k ↦ (slotRound k, leader k)` injective and `mono` makes the slots at

@@ -24,16 +24,16 @@ namespace LeanDagTest
 open LeanDag
 
 -- Axiom audit for the results the generalisation introduced or reproved.
-#print axioms LeanDag.decided_unique
+#print axioms LeanDag.AnchoredRule.decided_unique
 #print axioms LeanDag.certifiedIn_of_directCommitIn
-#print axioms LeanDag.eligible_of_lt_of_spacing
-#print axioms LeanDag.lt_of_eligible
+#print axioms LeanDag.eligibleAt_of_lt_of_spacing
+#print axioms LeanDag.lt_of_eligibleAt
 #print axioms LeanDag.slot_eq_of_isLeaderBlock
-#print axioms LeanDag.slot_eq_of_decided_commit
-#print axioms LeanDag.exists_eligible
+#print axioms LeanDag.AnchoredRule.slot_eq_of_decided_commit
+#print axioms LeanDag.exists_eligibleAt
 #print axioms LeanDag.commits_recur_on
 #print axioms LeanDag.decided_of_first_eligible_commit
-#print axioms LeanDag.decided_below_of_committed_run
+#print axioms LeanDag.AnchoredRule.decided_below_of_committed_run
 #print axioms LeanDag.all_decided_below_of_fairRun
 #print axioms LeanDag.all_decided_below_of_fairRun_correct
 #print axioms LeanDag.decided_of_committed_above
@@ -70,29 +70,29 @@ example : pipeSlots.leader 5 = 1 := by decide
 there cannot reach a round-`2` certificate for slot `0`. Under the old
 premise — merely `0 < 1` — it would have been an admissible anchor, and one
 validator's direct commit would have become another's indirect skip. -/
-example : ¬ Eligible (Fin 4) 0 1 := by decide
+example : ¬ EligibleAt (Validator := Fin 4) 2 0 1 := by decide
 
 /-- Nor the slot after that: certificates for slot `0` sit at round `2`, and
 a round-`2` block reaches only round-`1` blocks. This is M2's bound being
 tight. -/
-example : ¬ Eligible (Fin 4) 0 2 := by decide
+example : ¬ EligibleAt (Validator := Fin 4) 2 0 2 := by decide
 
 /-- Three rounds on, the anchor is in range — and every later one too. -/
-example : Eligible (Fin 4) 0 3 := by decide
-example : Eligible (Fin 4) 0 4 := by decide
+example : EligibleAt (Validator := Fin 4) 2 0 3 := by decide
+example : EligibleAt (Validator := Fin 4) 2 0 4 := by decide
 
 /-- Eligibility is upward-closed, so "the nearest eligible committed slot" is
 well defined: the intermediate premise of `Decided` ranges over slots `3` up
 to the anchor, not over `1` and `2`. -/
-example : ∀ j, 3 ≤ j → Eligible (Fin 4) 0 j := by
+example : ∀ j, 3 ≤ j → EligibleAt (Validator := Fin 4) 2 0 j := by
   intro j hj
-  rw [eligible_iff]
+  rw [eligibleAt_iff]
   simp only [pipeSlots_slotRound]
   omega
 
 /-- An eligible anchor always exists — L6's `exists_eligible` on this
 schedule. -/
-example : ∃ j, Eligible (Fin 4) 0 j := exists_eligible 0
+example : ∃ j, EligibleAt (Validator := Fin 4) 2 0 j := exists_eligibleAt 2 0
 
 /-- **L8's hypothesis fails here, and this is the whole cost of pipelining.**
 
@@ -101,7 +101,7 @@ is left undecided — on the strength of *every* later slot being an eligible
 anchor. Slot `1` is not one for slot `0`, so the guarantee does not transfer,
 and the counterexample recorded at L8 shows it genuinely fails rather than
 merely resisting proof. -/
-example : ¬ (∀ a b : ℕ, a < b → Eligible (Fin 4) a b) :=
+example : ¬ (∀ a b : ℕ, a < b → EligibleAt (Validator := Fin 4) 2 a b) :=
   fun h => absurd (h 0 1 (by omega)) (by decide)
 
 /-- **L9's regress clause is satisfiable here**, and this is the arithmetic
@@ -110,9 +110,9 @@ decision round, so unless it is the very first eligible slot there is room for
 an *eligible* intermediate between the two — and that intermediate is what L9's
 descent consumes. -/
 example (i j : ℕ) (hgap : i + 3 < j) :
-    ∃ i', i < i' ∧ i' < j ∧ Eligible (Fin 4) i i' := by
+    ∃ i', i < i' ∧ i' < j ∧ EligibleAt (Validator := Fin 4) 2 i i' := by
   refine ⟨i + 3, by omega, hgap, ?_⟩
-  rw [eligible_iff]
+  rw [eligibleAt_iff]
   simp only [pipeSlots_slotRound]
   omega
 
@@ -128,12 +128,12 @@ leader election `j + 2` is committed whenever `j` is. -/
 
 /-- The first slot eligible to anchor `k` is `k + 3`; nothing between qualifies. -/
 theorem pipe_not_eligible_between (k i : ℕ) (h1 : k < i) (h2 : i < k + 3) :
-    ¬ Eligible (Fin 4) k i := by
-  simp only [eligible_iff, pipeSlots_slotRound]
+    ¬ EligibleAt (Validator := Fin 4) 2 k i := by
+  simp only [eligibleAt_iff, pipeSlots_slotRound]
   omega
 
-theorem pipe_eligible_add_three (k : ℕ) : Eligible (Fin 4) k (k + 3) := by
-  simp only [eligible_iff, pipeSlots_slotRound]
+theorem pipe_eligible_add_three (k : ℕ) : EligibleAt (Validator := Fin 4) 2 k (k + 3) := by
+  simp only [eligibleAt_iff, pipeSlots_slotRound]
   omega
 
 -- These two are exactly the arguments `decided_of_first_eligible_commit` takes,
@@ -147,18 +147,18 @@ run of three: `b`, `b + 1`, `b + 2`.
 
 Three is exactly right and two will not do — `Eligible (b - 1) (b + 1)` is
 false, since slot `b - 1`'s certificates sit at round `b + 1`. -/
-theorem pipe_hspan (b i : ℕ) (hi : i < b) : Eligible (Fin 4) i (b + 2) := by
-  simp only [eligible_iff, pipeSlots_slotRound]
+theorem pipe_hspan (b i : ℕ) (hi : i < b) : EligibleAt (Validator := Fin 4) 2 i (b + 2) := by
+  simp only [eligibleAt_iff, pipeSlots_slotRound]
   omega
 
-example (b : ℕ) (hb : 0 < b) : ¬ Eligible (Fin 4) (b - 1) (b + 1) := by
-  simp only [eligible_iff, pipeSlots_slotRound]
+example (b : ℕ) (hb : 0 < b) : ¬ EligibleAt (Validator := Fin 4) 2 (b - 1) (b + 1) := by
+  simp only [eligibleAt_iff, pipeSlots_slotRound]
   omega
 
 /-- **`SpansEligible 3`**, which is L10's schedule-shape hypothesis at this
 schedule: a run of three consecutive slots reaches three rounds past everything
 below it. -/
-theorem pipe_spansEligible : SpansEligible (Validator := Fin 4) 3 := by
+theorem pipe_spansEligible : SpansEligibleAt (Validator := Fin 4) 2 3 := by
   intro b i hi
   simpa using pipe_hspan b i hi
 
@@ -219,23 +219,23 @@ local instance spacedSlots : Slots (Fin 4) :=
 
 /-- **Eligibility is lateness.** Both directions: `lt_of_eligible` holds for
 every schedule, and the converse is what the three-round spacing buys. -/
-example : ∀ a b : ℕ, a < b ↔ Eligible (Fin 4) a b := by
+example : ∀ a b : ℕ, a < b ↔ EligibleAt (Validator := Fin 4) 2 a b := by
   intro a b
   constructor
   · intro h
-    rw [eligible_iff]
+    rw [eligibleAt_iff]
     simp only [spacedSlots_slotRound]
     omega
-  · exact lt_of_eligible
+  · exact lt_of_eligibleAt
 
 /-- So L8 applies, and the slot immediately below a commit — the one pipelining
 cannot decide — is decided here. -/
-example : Eligible (Fin 4) 6 7 := by decide
+example : EligibleAt (Validator := Fin 4) 2 6 7 := by decide
 
 /-- The next slot is always a legitimate anchor, which is what pipelining
 denies. -/
-example (i : ℕ) : Eligible (Fin 4) i (i + 1) := by
-  rw [eligible_iff]
+example (i : ℕ) : EligibleAt (Validator := Fin 4) 2 i (i + 1) := by
+  rw [eligibleAt_iff]
   simp only [spacedSlots_slotRound]
   omega
 
@@ -244,7 +244,7 @@ eligible anchor, there is nothing eligibly between it and `i`, so a stuck set
 cannot contain the slot below a commit. This is the arithmetic behind
 `stuck_empty_below_commit_of_spacing`: under three-round spacing the descent has
 nowhere to go. -/
-example (i : ℕ) : ¬ ∃ i', i < i' ∧ i' < i + 1 ∧ Eligible (Fin 4) i i' := by
+example (i : ℕ) : ¬ ∃ i', i < i' ∧ i' < i + 1 ∧ EligibleAt (Validator := Fin 4) 2 i i' := by
   rintro ⟨i', h1, h2, -⟩
   omega
 
@@ -253,14 +253,14 @@ spacing every slot below `b` has `b` itself as an eligible anchor, so
 `decided_below_of_committed_run` applies with `n = b`. Pipelining is what turns
 "one commit" into "three consecutive commits" — the whole difference between the
 two schedules, in one line each. -/
-theorem spaced_hspan (b i : ℕ) (hi : i < b) : Eligible (Fin 4) i b := by
-  simp only [eligible_iff, spacedSlots_slotRound]
+theorem spaced_hspan (b i : ℕ) (hi : i < b) : EligibleAt (Validator := Fin 4) 2 i b := by
+  simp only [eligibleAt_iff, spacedSlots_slotRound]
   omega
 
 /-- So L10's schedule-shape hypothesis holds at `c = 1` here, against `c = 3`
 under pipelining. That single number is the entire cost pipelining imposes on
 ledger-advance. -/
-theorem spaced_spansEligible : SpansEligible (Validator := Fin 4) 1 := by
+theorem spaced_spansEligible : SpansEligibleAt (Validator := Fin 4) 2 1 := by
   intro b i hi
   simpa using spaced_hspan b i hi
 
@@ -297,16 +297,16 @@ example : duoSlots.leader 0 ≠ duoSlots.leader 1 := by decide
 /-- **A co-round slot cannot anchor.** Slot `1` is not merely too close, it is
 at the *same* round as slot `0`. Under the old `k < j` premise it would have
 qualified, since `0 < 1`. -/
-example : ¬ Eligible (Fin 4) 0 1 := by decide
+example : ¬ EligibleAt (Validator := Fin 4) 2 0 1 := by decide
 
 /-- Nor anything below round `3`: slots `2` through `5` sit at rounds `1` and
 `2`. -/
-example : ¬ Eligible (Fin 4) 0 5 := by decide
+example : ¬ EligibleAt (Validator := Fin 4) 2 0 5 := by decide
 
 /-- Slot `6` opens round `3`, and is the first eligible anchor for slot `0`.
 With two leaders per round the wait is six slots but still only three
 rounds — the commit depth is unchanged, which is the whole point. -/
-example : Eligible (Fin 4) 0 6 := by decide
+example : EligibleAt (Validator := Fin 4) 2 0 6 := by decide
 
 /-- The ledger advances two slots per round rather than one per three. -/
 example : duoSlots.slotRound 6 = 3 := by decide

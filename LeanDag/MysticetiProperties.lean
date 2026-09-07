@@ -1,3 +1,4 @@
+import LeanDag.Anchored.Bounded
 import LeanDag.Properties.Sustain
 import LeanDag.Properties.Extends
 import LeanDag.Properties.Derived.Persist
@@ -65,16 +66,8 @@ variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 variable [Faults Validator]
 
 /-- **The core rule as a carrier.** -/
-def mysticetiRule : DagRule Validator BlockId Payload where
-  Universe := BlockUniverse Validator BlockId Payload
-  View := fun U => View Validator BlockId Payload U
-  block := fun U i => U.block i
-  ids := fun U => U.ids
-  viewIds := fun V => V.ids
-  viewSound := fun V => V.subset_ids
-  viewComplete := fun V => V.complete
-  causal := fun U => U.causal
-  Decided := fun S _ V k v => Decided (S := S) _ V k v
+def mysticetiRule : DagRule Validator BlockId Payload :=
+  (coreAnchored Validator BlockId Payload).toDagRule
 
 variable {U U' : BlockUniverse Validator BlockId Payload} {G R₀ : ℕ}
 
@@ -178,7 +171,7 @@ quality reads (`Properties/Arcs/Quality.lean`), and it is one line
 because `ValidWrt` already says it. -/
 theorem quorate : Quorate (mysticetiRule (Validator := Validator) (BlockId := BlockId)
     (Payload := Payload)) (coreReliability Validator) :=
-  fun U => U.quorateOn
+  fun U => BlockUniverse.quorateOn U
 
 /-- **P3′ at the carrier**: every non-genesis block references its
 author's previous block. -/
@@ -344,81 +337,31 @@ section Band
 
 variable {lo hi g g' : ℕ}
 
-theorem band_mem (h : AgreeBand mysticetiRule U U' lo hi g g') {b : BlockId}
-    (hb : b ∈ U.ids) (h1 : lo ≤ (U.block b).round + g) (h2 : (U.block b).round + g ≤ hi) :
-    b ∈ U'.ids := h.mem b hb h1 h2
-
-theorem band_block (h : AgreeBand mysticetiRule U U' lo hi g g') {b : BlockId}
-    (hb : b ∈ U.ids) (h1 : lo ≤ (U.block b).round + g) (h2 : (U.block b).round + g ≤ hi) :
-    (U'.block b).round + g' = (U.block b).round + g ∧
-      (U'.block b).creator = (U.block b).creator :=
-  h.block b hb (Or.inl ⟨h1, h2⟩)
-
-theorem band_block' (h : AgreeBand mysticetiRule U U' lo hi g g') {b : BlockId}
-    (hb : b ∈ U.ids) (hb' : b ∈ U'.ids)
-    (h1 : lo ≤ (U'.block b).round + g') (h2 : (U'.block b).round + g' ≤ hi) :
-    (U'.block b).round + g' = (U.block b).round + g ∧
-      (U'.block b).creator = (U.block b).creator :=
-  h.block b hb (Or.inr ⟨hb', h1, h2⟩)
-
-theorem band_refs (h : AgreeBand mysticetiRule U U' lo hi g g') {b : BlockId}
-    (hb : b ∈ U.ids) (h1 : lo < (U.block b).round + g) (h2 : (U.block b).round + g ≤ hi) :
-    (U'.block b).refs = (U.block b).refs := h.refs b hb h1 h2
-
-/-- A round layer of `U` lands on the layer of `U'` the shift names. -/
-theorem blocksAt_band (h : AgreeBand mysticetiRule U U' lo hi g g') {r r' : ℕ}
-    (hrr : r + g = r' + g') (h1 : lo ≤ r + g) (h2 : r + g ≤ hi) :
-    blocksAt U r ⊆ blocksAt U' r' := by
-  intro b hb
-  rw [mem_blocksAt] at hb ⊢
-  have hbb := band_block h hb.1 (by omega) (by omega)
-  exact ⟨band_mem h hb.1 (by omega) (by omega), by omega⟩
-
-theorem creatorsOf_band (h : AgreeBand mysticetiRule U U' lo hi g g') {s : Finset BlockId}
-    (hs : ∀ b ∈ s, b ∈ U.ids ∧ lo ≤ (U.block b).round + g ∧ (U.block b).round + g ≤ hi) :
-    creatorsOf U'.block s = creatorsOf U.block s :=
-  Finset.image_congr fun i hi' => (band_block h (hs i hi').1 (hs i hi').2.1 (hs i hi').2.2).2
+/-! The band's field projections, the layer and creator transports and
+the candidate's transport are the relation's (`Anchored/Band.lean`):
+`AnchoredRule.band_mem`, `band_block`, `band_block'`, `band_refs`,
+`blocksAt_band`, `creatorsOf_band`, `isLeaderBlock_band` and
+`isLeaderBlock_band_old`, at `mysticetiRule`. -/
 
 variable {S S' : Slots Validator}
-
-/-- A candidate of slot `k` is a candidate of the slot `k'` that answers
-to it: the shift carries its round, and the schedules name the same
-leader there. -/
-theorem isLeaderBlock_band (h : AgreeBand mysticetiRule U U' lo hi g g') {k k' : ℕ}
-    (hkk : S.slotRound k + g = S'.slotRound k' + g') (hlead : S.leader k = S'.leader k')
-    (h1 : lo ≤ S.slotRound k + g) (h2 : S.slotRound k + g ≤ hi) {L : BlockId}
-    (hL : IsLeaderBlock (S := S) U k L) : IsLeaderBlock (S := S') U' k' L := by
-  obtain ⟨hm, hr, hc⟩ := hL
-  have hb := band_block h hm (by omega) (by omega)
-  exact ⟨band_mem h hm (by omega) (by omega), by omega, by rw [hb.2, hc, hlead]⟩
-
-/-- And back, for a candidate the band already had. -/
-theorem isLeaderBlock_band_old (h : AgreeBand mysticetiRule U U' lo hi g g') {k k' : ℕ}
-    (hkk : S.slotRound k + g = S'.slotRound k' + g') (hlead : S.leader k = S'.leader k')
-    (h1 : lo ≤ S.slotRound k + g) (h2 : S.slotRound k + g ≤ hi) {L : BlockId}
-    (hLU : L ∈ U.ids) (hL : IsLeaderBlock (S := S') U' k' L) :
-    IsLeaderBlock (S := S) U k L := by
-  obtain ⟨hm, hr, hc⟩ := hL
-  have hb := band_block' h hLU hm (by omega) (by omega)
-  exact ⟨hLU, by omega, by rw [← hb.2, hc, ← hlead]⟩
 
 /-- The votes an in-band certificate counts are the votes it counted. -/
 theorem votesIn_band (h : AgreeBand mysticetiRule U U' lo hi g g') {C L : BlockId}
     (hC : C ∈ U.ids) (h1 : lo + 1 < (U.block C).round + g)
     (h2 : (U.block C).round + g ≤ hi) : votesIn U' C L = votesIn U C L := by
   unfold votesIn
-  rw [band_refs h hC (by omega) h2]
+  rw [AnchoredRule.band_refs h hC (by omega) h2]
   refine Finset.filter_congr fun q hq => ?_
   have hqU : q ∈ U.ids := U.complete C hC q hq
   have hqr := U.round_of_mem_refs hC hq
-  rw [band_refs h hqU (by omega) (by omega)]
+  rw [AnchoredRule.band_refs h hqU (by omega) (by omega)]
 
 theorem certifies_band (h : AgreeBand mysticetiRule U U' lo hi g g') {C L : BlockId}
     (hC : C ∈ U.ids) (h1 : lo + 1 < (U.block C).round + g)
     (h2 : (U.block C).round + g ≤ hi) :
     Certifies U' C L ↔ Certifies U C L := by
   unfold Certifies
-  rw [votesIn_band h hC h1 h2, creatorsOf_band h]
+  rw [votesIn_band h hC h1 h2, AnchoredRule.creatorsOf_band h]
   intro q hq
   have hqU : q ∈ U.ids := U.complete C hC q (Finset.mem_filter.mp hq).1
   have hqr := U.round_of_mem_refs hC (Finset.mem_filter.mp hq).1
@@ -429,10 +372,10 @@ theorem mem_certificates_band (h : AgreeBand mysticetiRule U U' lo hi g g') {C L
     (h1 : lo ≤ r + g) (h2 : r + 2 + g ≤ hi) :
     C ∈ certificates U' L r' ↔ C ∈ certificates U L r := by
   simp only [certificates, Finset.mem_filter, mem_blocksAt]
-  have hb := band_block h hC (by omega) (by omega)
+  have hb := AnchoredRule.band_block h hC (by omega) (by omega)
   rw [certifies_band h hC (by omega) (by omega)]
   exact ⟨fun hx => ⟨⟨hC, hr⟩, hx.2⟩,
-    fun hx => ⟨⟨band_mem h hC (by omega) (by omega), by omega⟩, hx.2⟩⟩
+    fun hx => ⟨⟨AnchoredRule.band_mem h hC (by omega) (by omega), by omega⟩, hx.2⟩⟩
 
 /-! ### The direct rules and the anchor test, across a shifted band -/
 
@@ -453,7 +396,7 @@ theorem directCommitIn_band (h : AgreeBand mysticetiRule U U' lo hi g g')
   refine Finset.mem_image.mpr ⟨C, Finset.mem_inter.mpr
     ⟨(mem_certificates_band h hCU hCr hrr hr hhi).mpr hCc,
       hV C hCV (by omega) (by omega)⟩, ?_⟩
-  rw [(band_block h hCU (by omega) (by omega)).2]; exact hvC
+  rw [(AnchoredRule.band_block h hCU (by omega) (by omega)).2]; exact hvC
 
 theorem directSkipSlotIn_band (h : AgreeBand mysticetiRule U U' lo hi g g')
     {V : View Validator BlockId Payload U} {V' : View Validator BlockId Payload U'}
@@ -474,13 +417,13 @@ theorem directSkipSlotIn_band (h : AgreeBand mysticetiRule U U' lo hi g g')
   have hqr : (U.block q).round = S.slotRound k + 1 := (mem_blocksAt.mp hqA).2
   refine Finset.mem_image.mpr ⟨q, ?_, ?_⟩
   · simp only [Finset.mem_inter, slotBlamers, Finset.mem_filter]
-    refine ⟨⟨blocksAt_band h (by omega) (by omega) (by omega) hqA, ?_⟩,
+    refine ⟨⟨AnchoredRule.blocksAt_band h (by omega) (by omega) (by omega) hqA, ?_⟩,
       hV q hqV (by omega) (by omega)⟩
-    rw [band_refs h hqU (by omega) (by omega)]
+    rw [AnchoredRule.band_refs h hqU (by omega) (by omega)]
     intro j hj hjL
     have hjU : j ∈ U.ids := U.complete q hqU j hj
-    exact hqn j hj (isLeaderBlock_band_old h hkk hlead (by omega) (by omega) hjU hjL)
-  · rw [(band_block h hqU (by omega) (by omega)).2]; exact hvq
+    exact hqn j hj (AnchoredRule.isLeaderBlock_band_old h hkk hlead (by omega) (by omega) hjU hjL)
+  · rw [(AnchoredRule.band_block h hqU (by omega) (by omega)).2]; exact hvq
 
 theorem certifiedIn_band (h : AgreeBand mysticetiRule U U' lo hi g g') {A L : BlockId}
     {r r' : ℕ} (hA : A ∈ U.ids) (hAlo : lo ≤ (U.block A).round + g)
@@ -532,162 +475,26 @@ end Band
 
 /-! ### Persistence -/
 
-/-- **Every verdict of the core reads a band of rounds**, from the slot's
-own round up to a top the derivation determines: any universe carrying
-that band, and any view holding the band's blocks, decides the slot the
-same way.
-
-One induction, four cases, and the two properties the mechanisms consume
-are corollaries of it. The direct cases read two rounds above the slot
-and stop. The indirect cases read their anchor's derivation and the
-intermediates', and the top is the largest of those, which is where the
-band's upper end comes from and why it cannot be fixed in advance.
-
-Nothing here supposes that the larger universe adds no candidates. Where
-one appears the anchor cannot see it, because the anchor's cone stays
-inside the band it came from (`not_certifiedIn_band_novel`), and the
-slot-level skip does not look for it at all. -/
-theorem banded_aux [S : Slots Validator] {U : BlockUniverse Validator BlockId Payload}
-    {V : View Validator BlockId Payload U} {k : ℕ} {v : Option BlockId}
-    (hd : Decided U V k v) :
-    ∃ top, S.slotRound k + 2 ≤ top ∧
-      ∀ (g g' d d' : ℕ) (S' : Slots Validator)
-        (U' : BlockUniverse Validator BlockId Payload)
-        (V' : View Validator BlockId Payload U') (k' : ℕ),
-        k + d' = k' + d →
-        (∀ m m', m + d' = m' + d → S.slotRound m + g = S'.slotRound m' + g') →
-        (∀ m m', m + d' = m' + d → S.slotRound m ≤ top → S.leader m = S'.leader m') →
-        AgreeBand mysticetiRule U U' (S.slotRound k + g) (top + g) g g' →
-        (∀ b, b ∈ V.ids → S.slotRound k ≤ (U.block b).round →
-          (U.block b).round ≤ top → b ∈ V'.ids) →
-        Decided (S := S') U' V' k' v := by
-  classical
-  induction hd with
-  | @directCommit k L hL hc =>
-      refine ⟨S.slotRound k + 2, le_refl _, ?_⟩
-      intro g g' d d' S' U' V' k' hkd hsch hlead hab hV
-      have hkk : S.slotRound k + g = S'.slotRound k' + g' := hsch k k' hkd
-      have hlk : S.leader k = S'.leader k' := hlead k k' hkd (by omega)
-      refine Decided.directCommit (S := S')
-        (isLeaderBlock_band hab hkk hlk (by omega) (by omega) hL) ?_
-      exact directCommitIn_band hab hkk (by omega) (by omega)
-        (fun b hb h1 h2 => hV b hb (by omega) (by omega)) hc
-  | @directSkip k hs =>
-      refine ⟨S.slotRound k + 2, le_refl _, ?_⟩
-      intro g g' d d' S' U' V' k' hkd hsch hlead hab hV
-      have hkk : S.slotRound k + g = S'.slotRound k' + g' := hsch k k' hkd
-      have hlk : S.leader k = S'.leader k' := hlead k k' hkd (by omega)
-      exact Decided.directSkip (S := S')
-        (directSkipSlotIn_band hab hkk hlk rfl (by omega)
-          (fun b hb h1 h2 => hV b hb (by omega) (by omega)) hs)
-  | @indirectCommit k j A L hkj helig hanchor hmid hL hcert ihj ihmid =>
-      obtain ⟨topj, htopj, hjt⟩ := ihj
-      set f : ℕ → ℕ := fun i =>
-        if hh : k < i ∧ i < j ∧ Eligible Validator k i then
-          (ihmid i hh.1 hh.2.1 hh.2.2).choose else 0 with hf
-      set top := max topj ((Finset.Ico (k + 1) j).sup f) with htop
-      have hkj' : S.slotRound k ≤ S.slotRound j := S.mono (le_of_lt hkj)
-      have hAL : IsLeaderBlock U j A := isLeaderBlock_of_decided hanchor
-      have hkey : ∀ i (h1 : k < i) (h2 : i < j) (h3 : Eligible Validator k i),
-          (ihmid i h1 h2 h3).choose ≤ top := by
-        intro i h1 h2 h3
-        have heqf : f i = (ihmid i h1 h2 h3).choose := by
-          simp only [hf]; exact dif_pos ⟨h1, h2, h3⟩
-        rw [← heqf, htop]
-        exact le_trans (Finset.le_sup (Finset.mem_Ico.mpr ⟨by omega, h2⟩)) (le_max_right _ _)
-      have htj : topj ≤ top := by rw [htop]; exact le_max_left _ _
-      have htopk : S.slotRound k + 2 ≤ top := by omega
-      refine ⟨top, htopk, ?_⟩
-      intro g g' d d' S' U' V' k' hkd hsch hlead hab hV
-      have hkk : S.slotRound k + g = S'.slotRound k' + g' := hsch k k' hkd
-      have hlk : S.leader k = S'.leader k' := hlead k k' hkd (by omega)
-      have hjd : j + d' = (j - k + k') + d := by omega
-      have hjj : S.slotRound j + g = S'.slotRound (j - k + k') + g' := hsch j _ hjd
-      have hAhi : (U.block A).round + g ≤ top + g := by rw [hAL.2.1]; omega
-      have hAlo : S.slotRound k + g ≤ (U.block A).round + g := by rw [hAL.2.1]; omega
-      refine Decided.indirectCommit (S := S') (by omega) (by
-          have := helig; unfold Eligible decisionRound at this ⊢; omega)
-        (hjt g g' d d' S' U' V' (j - k + k') hjd hsch
-          (fun m m' hm hb => hlead m m' hm (by omega))
-          (hab.mono (by omega) (by omega))
-          (fun b hb h1 h2 => hV b hb (by omega) (by omega))) ?_
-        (isLeaderBlock_band hab hkk hlk (by omega) (by omega) hL) ?_
-      · intro i' h1 h2 h3
-        have hi'd : (i' - k' + k) + d' = i' + d := by omega
-        have hii : S.slotRound (i' - k' + k) + g = S'.slotRound i' + g' :=
-          hsch _ i' hi'd
-        have hki : k < i' - k' + k := by omega
-        have hij : i' - k' + k < j := by omega
-        have helg : Eligible Validator (S := S) k (i' - k' + k) := by
-          have := h3; unfold Eligible decisionRound at this ⊢; omega
-        have hk2 := hkey _ hki hij helg
-        obtain ⟨htopi, hit⟩ := (ihmid _ hki hij helg).choose_spec
-        have hkr : S.slotRound k ≤ S.slotRound (i' - k' + k) := S.mono (by omega)
-        have := hit g g' d d' S' U' V' i' hi'd hsch
-          (fun m m' hm hb => hlead m m' hm (by omega))
-          (hab.mono (by omega) (by omega))
-          (fun b hb ha1 ha2 => hV b hb (by omega) (by omega))
-        exact this
-      · exact certifiedIn_band hab hAL.1 hAlo hAhi hkk (by omega) (by omega) |>.mpr hcert
-  | @indirectSkip k j A hkj helig hanchor hmid hnone ihj ihmid =>
-      obtain ⟨topj, htopj, hjt⟩ := ihj
-      set f : ℕ → ℕ := fun i =>
-        if hh : k < i ∧ i < j ∧ Eligible Validator k i then
-          (ihmid i hh.1 hh.2.1 hh.2.2).choose else 0 with hf
-      set top := max topj ((Finset.Ico (k + 1) j).sup f) with htop
-      have hkj' : S.slotRound k ≤ S.slotRound j := S.mono (le_of_lt hkj)
-      have hAL : IsLeaderBlock U j A := isLeaderBlock_of_decided hanchor
-      have hkey : ∀ i (h1 : k < i) (h2 : i < j) (h3 : Eligible Validator k i),
-          (ihmid i h1 h2 h3).choose ≤ top := by
-        intro i h1 h2 h3
-        have heqf : f i = (ihmid i h1 h2 h3).choose := by
-          simp only [hf]; exact dif_pos ⟨h1, h2, h3⟩
-        rw [← heqf, htop]
-        exact le_trans (Finset.le_sup (Finset.mem_Ico.mpr ⟨by omega, h2⟩)) (le_max_right _ _)
-      have htj : topj ≤ top := by rw [htop]; exact le_max_left _ _
-      have htopk : S.slotRound k + 2 ≤ top := by omega
-      refine ⟨top, htopk, ?_⟩
-      intro g g' d d' S' U' V' k' hkd hsch hlead hab hV
-      have hkk : S.slotRound k + g = S'.slotRound k' + g' := hsch k k' hkd
-      have hlk : S.leader k = S'.leader k' := hlead k k' hkd (by omega)
-      have hjd : j + d' = (j - k + k') + d := by omega
-      have hjj : S.slotRound j + g = S'.slotRound (j - k + k') + g' := hsch j _ hjd
-      have hAhi : (U.block A).round + g ≤ top + g := by rw [hAL.2.1]; omega
-      have hAlo : S.slotRound k + g ≤ (U.block A).round + g := by rw [hAL.2.1]; omega
-      refine Decided.indirectSkip (S := S') (by omega) (by
-          have := helig; unfold Eligible decisionRound at this ⊢; omega)
-        (hjt g g' d d' S' U' V' (j - k + k') hjd hsch
-          (fun m m' hm hb => hlead m m' hm (by omega))
-          (hab.mono (by omega) (by omega))
-          (fun b hb h1 h2 => hV b hb (by omega) (by omega))) ?_ ?_
-      · intro i' h1 h2 h3
-        have hi'd : (i' - k' + k) + d' = i' + d := by omega
-        have hki : k < i' - k' + k := by omega
-        have hij : i' - k' + k < j := by omega
-        have helg : Eligible Validator (S := S) k (i' - k' + k) := by
-          have hii := hsch _ i' hi'd
-          have := h3; unfold Eligible decisionRound at this ⊢; omega
-        have hk2 := hkey _ hki hij helg
-        obtain ⟨htopi, hit⟩ := (ihmid _ hki hij helg).choose_spec
-        have hkr : S.slotRound k ≤ S.slotRound (i' - k' + k) := S.mono (by omega)
-        exact hit g g' d d' S' U' V' i' hi'd hsch
-          (fun m m' hm hb => hlead m m' hm (by omega))
-          (hab.mono (by omega) (by omega))
-          (fun b hb ha1 ha2 => hV b hb (by omega) (by omega))
-      · intro L hL' hc'
-        by_cases hLo : L ∈ U.ids
-        · exact hnone L (isLeaderBlock_band_old hab hkk hlk (by omega) (by omega) hLo hL')
-            ((certifiedIn_band hab hAL.1 hAlo hAhi hkk (by omega) (by omega)).mp hc')
-        · exact not_certifiedIn_band_novel hab hAL.1 hAlo hAhi hkk (by omega) (by omega)
-            hLo hc'
+/-- **What the core owes the band**: its direct commit, its slot-level
+skip and the certificate in the anchor's cone carry across a band
+covering the slot's wave, and a candidate the band did not carry is
+certified from no old anchor. -/
+theorem coreBandLaws : (coreAnchored Validator BlockId Payload).BandLaws where
+  commit_band := fun h hkk _ hlo hhi hV _ hc =>
+    directCommitIn_band h hkk (by omega) (by simp only [coreAnchored_wave] at hhi; omega) hV hc
+  skip_band := fun h hkk hlk hlo hhi hV hs =>
+    AnchoredRule.directSkipSlotIn_band h hkk hlk hlo
+      (by simp only [coreAnchored_wave] at hhi; omega) hV hs
+  link_band := fun h hA hAlo hAhi hkk hlo hhi _ _ =>
+    certifiedIn_band h hA hAlo hAhi hkk hlo (by simp only [coreAnchored_wave] at hhi; omega)
+  link_novel := fun h hA hAlo hAhi hkk hlo hhi _ _ hL =>
+    not_certifiedIn_band_novel h hA hAlo hAhi hkk hlo
+      (by simp only [coreAnchored_wave] at hhi; omega) hL
 
 /-- **The core reads a band.** -/
 theorem banded : Banded
-    (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) := by
-  intro S U V k v hd
-  obtain ⟨top, -, ht⟩ := banded_aux (S := S) hd
-  exact ⟨top, fun g g' d d' S' U' V' k' hkd hsch hlead hab hV =>
-    ht g g' d d' S' U' V' k' hkd hsch hlead hab hV⟩
+    (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
+  AnchoredRule.banded coreBandLaws
 
 /-- The carrier's coverage predicate is the core's, on the nose. -/
 theorem coversUpto_eq {U : BlockUniverse Validator BlockId Payload}
@@ -699,7 +506,7 @@ under the property's name — one of seven such lemmas across the
 protocols, and the reason `Properties/Candidate.lean` exists. -/
 theorem commitsCandidate : CommitsCandidate
     (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
-  fun S _ _ _ _ hd => isLeaderBlock_of_decided (S := S) hd
+  AnchoredRule.commitsCandidate
 
 /-- **A direct commit is a verdict**, at the core's own direct-commit
 predicate. `Decided.directCommit` under the property's name.
@@ -797,127 +604,29 @@ end MysticetiProperties
 
 /-! ## The core's bounded decision relation
 
+`DecidedWithin` is the relation's (`Anchored/Bounded.lean`) at the core:
 `Decided`, with every slot the derivation mentions — the decided slot,
-the anchor, the eligible intermediates — strictly below a bound `B`.
-It is the protocol's own tool, not part of any interface: the mechanism
+the anchor, the eligible intermediates — strictly below a bound `B`. It
+is the protocol's own tool, not part of any interface: the mechanism
 reads `Properties.DecidedBelow`, and `decidedBelow_of_decidedWithin`
-carries this into that. What it adds is a **tight** bound, which the
-semantic form cannot recover.
-
-The bound lives in the relation because it cannot live anywhere else: a
-`Decided` derivation is a proof of a `Prop` and its anchors cannot be
-recovered from it. -/
+carries this into that. -/
 
 section BoundedRelation
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator]
-variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
+variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 variable {U : BlockUniverse Validator BlockId Payload}
 variable [S : Slots Validator]
 
-/-- **The bounded decision relation.** `Decided`, with every slot the
-derivation mentions strictly below `B`. -/
-inductive DecidedWithin (U : BlockUniverse Validator BlockId Payload)
-    (V : View Validator BlockId Payload U) (B : ℕ) : ℕ → Option BlockId → Prop
-  /-- The direct rule commits a candidate outright. -/
-  | directCommit {k : ℕ} {L : BlockId} :
-      k < B → IsLeaderBlock U k L → DirectCommitIn U V L (S.slotRound k) →
-      DecidedWithin U V B k (some L)
-  /-- The direct rule skips the slot. -/
-  | directSkip {k : ℕ} :
-      k < B → DirectSkipSlotIn U V k →
-      DecidedWithin U V B k none
-  /-- Anchored on the nearest eligible committed slot below the bound. -/
-  | indirectCommit {k j : ℕ} {A L : BlockId} :
-      k < j → j < B → Eligible Validator k j → DecidedWithin U V B j (some A) →
-      (∀ i, k < i → i < j → Eligible Validator k i → DecidedWithin U V B i none) →
-      IsLeaderBlock U k L → CertifiedIn U A L (S.slotRound k) →
-      DecidedWithin U V B k (some L)
-  /-- Anchored likewise, no candidate is in reach. -/
-  | indirectSkip {k j : ℕ} {A : BlockId} :
-      k < j → j < B → Eligible Validator k j → DecidedWithin U V B j (some A) →
-      (∀ i, k < i → i < j → Eligible Validator k i → DecidedWithin U V B i none) →
-      (∀ L, IsLeaderBlock U k L → ¬ CertifiedIn U A L (S.slotRound k)) →
-      DecidedWithin U V B k none
+/-- **The bounded decision relation**, at the core. -/
+abbrev DecidedWithin (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (B : ℕ) : ℕ → Option BlockId → Prop :=
+  (coreAnchored Validator BlockId Payload).DecidedWithin (S := S) U V B
 
 namespace DecidedWithin
-
-variable {V : View Validator BlockId Payload U} {B B' k : ℕ} {v : Option BlockId}
-
-/-- Forgetting the bound: every bounded derivation is a `Decided`
-derivation, so the base safety development — M1–M6 in particular —
-applies to bounded verdicts without restatement. -/
-theorem toDecided (h : DecidedWithin U V B k v) : Decided U V k v := by
-  induction h with
-  | directCommit _ hL hdc => exact Decided.directCommit hL hdc
-  | directSkip _ hall => exact Decided.directSkip hall
-  | indirectCommit hkj _ helig _ _ hL hcert ihj ihmid =>
-      exact Decided.indirectCommit hkj helig ihj ihmid hL hcert
-  | indirectSkip hkj _ helig _ _ hnone ihj ihmid =>
-      exact Decided.indirectSkip hkj helig ihj ihmid hnone
-
-/-- The decided slot lies below the bound. -/
-theorem lt_bound (h : DecidedWithin U V B k v) : k < B := by
-  cases h with
-  | directCommit hk _ _ => exact hk
-  | directSkip hk _ => exact hk
-  | indirectCommit hkj hj _ _ _ _ _ => omega
-  | indirectSkip hkj hj _ _ _ _ => omega
-
-/-- The bound relaxes upward. -/
-theorem mono (h : DecidedWithin U V B k v) (hBB : B ≤ B') :
-    DecidedWithin U V B' k v := by
-  induction h with
-  | directCommit hk hL hdc => exact directCommit (by omega) hL hdc
-  | directSkip hk hall => exact directSkip (by omega) hall
-  | indirectCommit hkj hj helig _ _ hL hcert ihj ihmid =>
-      exact indirectCommit hkj (by omega) helig ihj (fun i h1 h2 h3 => ihmid i h1 h2 h3)
-        hL hcert
-  | indirectSkip hkj hj helig _ _ hnone ihj ihmid =>
-      exact indirectSkip hkj (by omega) helig ihj (fun i h1 h2 h3 => ihmid i h1 h2 h3)
-        hnone
-
-/-- Two bounded verdicts agree — M6, through the embedding. -/
-theorem agree {V₁ V₂ : View Validator BlockId Payload U} {B₁ B₂ k : ℕ}
-    {v₁ v₂ : Option BlockId} (h₁ : DecidedWithin U V₁ B₁ k v₁)
-    (h₂ : DecidedWithin U V₂ B₂ k v₂) : v₁ = v₂ :=
-  decided_agree h₁.toDecided h₂.toDecided
-
+export AnchoredRule.DecidedWithin (directCommit directSkip indirectCommit indirectSkip)
 end DecidedWithin
-
-omit S in
-/-- **Congruence below the bound**, for any two schedules with one round
-structure. Only `IsLeaderBlock` consults the leaders, and only at slots
-below `B`; eligibility, decision rounds and every counting predicate
-read the rounds, which are shared. -/
-theorem decidedWithin_congr_of_slotRound {S₁ S₂ : Slots Validator}
-    (hround : S₁.slotRound = S₂.slotRound) {V : View Validator BlockId Payload U}
-    {B k : ℕ} {v : Option BlockId} (ha : ∀ m, m < B → S₁.leader m = S₂.leader m)
-    (h : DecidedWithin (S := S₁) U V B k v) : DecidedWithin (S := S₂) U V B k v := by
-  obtain ⟨sr, ld, hmono, hunb, hkeyed⟩ := S₁
-  obtain ⟨sr', ld', hmono', hunb', hkeyed'⟩ := S₂
-  simp only at hround
-  subst hround
-  induction h with
-  | @directCommit k L hk hL hdc =>
-      exact DecidedWithin.directCommit (S := ⟨sr, ld', hmono', hunb', hkeyed'⟩) hk
-        (isLeaderBlock_congr (S₁ := ⟨sr, ld, hmono, hunb, hkeyed⟩)
-          (S₂ := ⟨sr, ld', hmono', hunb', hkeyed'⟩) rfl (ha k hk) hL) hdc
-  | @directSkip k hk hall =>
-      exact DecidedWithin.directSkip (S := ⟨sr, ld', hmono', hunb', hkeyed'⟩) hk
-        (directSkipSlotIn_congr (S₁ := ⟨sr, ld, hmono, hunb, hkeyed⟩)
-          (S₂ := ⟨sr, ld', hmono', hunb', hkeyed'⟩) rfl (ha k hk) hall)
-  | @indirectCommit k j A L hkj hj helig _ _ hL hcert ihj ihmid =>
-      exact DecidedWithin.indirectCommit (S := ⟨sr, ld', hmono', hunb', hkeyed'⟩) hkj hj helig
-        ihj (fun i h1 h2 h3 => ihmid i h1 h2 h3)
-        (isLeaderBlock_congr (S₁ := ⟨sr, ld, hmono, hunb, hkeyed⟩)
-          (S₂ := ⟨sr, ld', hmono', hunb', hkeyed'⟩) rfl (ha k (by omega)) hL) hcert
-  | @indirectSkip k j A hkj hj helig _ _ hnone ihj ihmid =>
-      exact DecidedWithin.indirectSkip (S := ⟨sr, ld', hmono', hunb', hkeyed'⟩) hkj hj helig
-        ihj (fun i h1 h2 h3 => ihmid i h1 h2 h3)
-        (fun L hL => hnone L (isLeaderBlock_congr (S₁ := ⟨sr, ld', hmono', hunb', hkeyed'⟩)
-          (S₂ := ⟨sr, ld, hmono, hunb, hkeyed⟩) rfl (ha k (by omega)).symm hL))
 
 end BoundedRelation
 
@@ -940,9 +649,8 @@ variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 
 /-- **M6 as a property.** -/
 theorem agree :
-    Agree (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) := by
-  intro S U V₁ V₂ k v₁ v₂ h₁ h₂
-  exact decided_agree (S := S) (U := U) h₁ h₂
+    Agree (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
+  AnchoredRule.agree coreLaws
 
 /-- **The timed core's liveness precondition**, over a slot window: a
 quorum `T` synchronised from some round `R₀` at or below the window's
@@ -1118,42 +826,13 @@ theorem coreSupport_commits :
       hpop _ (by omega) (by change S.slotRound k + 2 ≤ S.slotRound k + 2; omega),
       fun L hL => hcert L hL⟩
 
-/-- **A3 as a property.** The two indirect constructors, by cases on a
-certified candidate at the slot — which is the whole proof, and is why
-the verdict survives a reassignment of leaders elsewhere: the case split
-reads slot `i`'s candidate and the anchor's history, and neither moves.
-This is `mysticetiLive_descent.indirect` and the case split inside
-`decided_below_of_committed_run`, stated once. -/
+/-- **A3 as a property**: the relation's indirect property at the core,
+with no tie to break, read at the three-round eligibility. -/
 theorem indirect :
-    Indirect (mysticetiRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload)) (fun sr i j => sr i + 3 ≤ sr j) := by
-  intro S U V i j A helig hj hmid
-  letI := S
-  have he : Eligible Validator i j := eligible_iff.mpr helig
-  by_cases hc : ∃ L, IsLeaderBlock (S := S) U i L ∧ CertifiedIn U A L (S.slotRound i)
-  · obtain ⟨L, hL, hcert⟩ := hc
-    refine ⟨some L, fun S' hround hlead hj' hmid' => ?_⟩
-    have heq : Eligible Validator (S := S') i j := by
-      show _ < _; simp only [decisionRound, hround]; exact he
-    refine Decided.indirectCommit (S := S') (lt_of_eligible (S := S) he) heq hj'
-      (fun i' h1 h2 h3 => hmid' i' h1 h2 (by
-        simp only [Eligible, decisionRound, hround] at h3; omega)) ?_ ?_
-    · obtain ⟨hm, hr, hcr⟩ := hL
-      exact ⟨hm, by rw [hround]; exact hr, by rw [hlead]; exact hcr⟩
-    · rw [hround]; exact hcert
-  · push Not at hc
-    refine ⟨none, fun S' hround hlead hj' hmid' => ?_⟩
-    have heq : Eligible Validator (S := S') i j := by
-      show _ < _; simp only [decisionRound, hround]; exact he
-    refine Decided.indirectSkip (S := S') (lt_of_eligible (S := S) he) heq hj'
-      (fun i' h1 h2 h3 => hmid' i' h1 h2 (by
-        simp only [Eligible, decisionRound, hround] at h3; omega)) ?_
-    intro L hL'
-    have hL : IsLeaderBlock (S := S) U i L := by
-      obtain ⟨hm, hr, hcr⟩ := hL'
-      exact ⟨hm, by rw [← hround]; exact hr, by rw [← hlead]; exact hcr⟩
-    rw [hround]
-    exact hc L hL
+    Indirect (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+      (fun sr i j => sr i + 3 ≤ sr j) :=
+  (AnchoredRule.indirect fun hi h => exists_least hi h).congr
+    (fun _ _ _ => by simp only [coreAnchored_wave] <;> omega)
 
 /-- **L4's capstone form, from the properties.** The shape every
 consumer of direct liveness uses — synchrony from `R`, production to a
@@ -1204,18 +883,8 @@ theorem commits_recur_on_of_properties [S : Slots Validator] {T : Finset Validat
   intro U N hpop hs hN
   exact decided_of_leader_of_populated_of_properties (S := S) hcard hs hRk' hpop hN hlead
 
-/-- **The core's own bounded relation lands in the derived one.**
-`DecidedWithin` still names the slots a derivation mentions, which is
-the tight information `LeaderCommits` and `Descends` need; this says
-that carrying it implies the semantic bound the mechanism reads. The
-old `BoundedRule` field asked the carrier for the relation itself. -/
-theorem decidedBelow_of_decidedWithin [S : Slots Validator]
-    {U : BlockUniverse Validator BlockId Payload} {V : View Validator BlockId Payload U}
-    {B k : ℕ} {v : Option BlockId} (h : DecidedWithin (S := S) U V B k v) :
-    DecidedBelow mysticetiRule S B V k v :=
-  ⟨h.lt_bound, h.toDecided, fun S' hround hlead =>
-    (decidedWithin_congr_of_slotRound (S₁ := S) (S₂ := S') hround.symm
-      (fun m hm => (hlead m hm).symm) h).toDecided⟩
+/-! The core's bounded relation lands in the derived one by the
+relation's `decidedBelow_of_decidedWithin` at `coreLaws`. -/
 
 /-- **The descent as a property**, under the spanning hypothesis on the
 round structure. What stood here was a downward induction carrying the
@@ -1223,10 +892,12 @@ bound by hand; it is now `Descends.of_indirect`, and the only
 Mysticeti-specific step is reading `Eligible` as the round inequality
 the property is stated with. -/
 theorem descends {S : Slots Validator} {c : ℕ} (hc : 0 < c)
-    (hspans : SpansEligible (Validator := Validator) (S := S) c) :
+    (hspans : (coreAnchored Validator BlockId Payload).SpansEligible (S := S) c) :
     Descends (mysticetiRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload)) S c :=
-  Descends.of_indirect indirect hc (fun b i hi => eligible_iff.mp (hspans b i hi))
+  Descends.of_indirect indirect hc (fun b i hi => by
+    have := (coreAnchored Validator BlockId Payload).eligible_iff.mp (hspans b i hi)
+    simp only [coreAnchored_wave] at this; omega)
 
 end Bounded
 
@@ -1271,7 +942,7 @@ L6, which gives infinitely many *commits* while saying nothing about the gaps
 between them. -/
 theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
     (hT : T ⊆ (Correct : Finset Validator)) (hcard : quorumCard Validator ≤ T.card)
-    (hspan : SpansEligible (Validator := Validator) c)
+    (hspan : (coreAnchored Validator BlockId Payload).SpansEligible c)
     (fair : FairRunOn T c) (R : ℕ) (k : ℕ) :
     ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),
@@ -1292,7 +963,7 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
 
 /-- **L10 at `T := Correct`.** -/
 theorem all_decided_below_of_fairRun_correct {c : ℕ} (hc : 0 < c)
-    (hspan : SpansEligible (Validator := Validator) c)
+    (hspan : (coreAnchored Validator BlockId Payload).SpansEligible c)
     (fair : FairRunOn (Correct : Finset Validator) c) (R : ℕ) (k : ℕ) :
     ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
       ∀ (U : BlockUniverse Validator BlockId Payload) (N : ℕ),

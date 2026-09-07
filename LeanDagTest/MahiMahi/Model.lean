@@ -185,9 +185,9 @@ example : MahiMahi.DirectSkip full4 3 1 1 ↔ LeanDag.DirectSkip full4 5 1 := by
 example : MahiMahi.certificates full4 3 5 1 = LeanDag.certificates full4 5 1 := by decide
 example : MahiMahi.votesIn full4 12 5 = LeanDag.votesIn full4 12 5 := by decide
 example : (MahiMahi.mahiMahiAnchored (Fin 4) (Fin 24) Unit 3).Eligible 1 4 ↔
-    LeanDag.Eligible (Fin 4) 1 4 := by decide
+    (LeanDag.coreAnchored (Fin 4) (Fin 24) Unit).Eligible 1 4 := by decide
 example : ¬ (MahiMahi.mahiMahiAnchored (Fin 4) (Fin 24) Unit 3).Eligible 1 3 ∧
-    ¬ LeanDag.Eligible (Fin 4) 1 3 := by decide
+    ¬ (LeanDag.coreAnchored (Fin 4) (Fin 24) Unit).Eligible 1 3 := by decide
 
 -- The same verdict on slot `1` from both relations.
 example : MahiMahi.Decided 3 full4 (View.full full4) 1 (some 5) :=

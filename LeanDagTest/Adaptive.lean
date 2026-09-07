@@ -63,11 +63,12 @@ theorem u7_decidedWithin_slot1 :
 `Model.lean` configuration, now with both slots inside bound `2`. -/
 theorem u7_decidedWithin_slot0 :
     DecidedWithin (S := slotsOf u7_inj aBase) U7 V7 2 0 (some 0) :=
-  DecidedWithin.indirectCommit (j := 1) (A := 12) (by omega) (by omega) (by decide)
+  AnchoredRule.DecidedWithin.indirectCommit_single rfl (fun _ _ h => h) (j := 1) (A := 12)
+    (by omega) (by omega) (by decide)
     u7_decidedWithin_slot1
     (fun _ h1 h2 _ => absurd h2 (by omega))
     (by decide)
-    ⟨8, by decide, Reaches.single (by decide)⟩
+    (show CertifiedIn U7 12 0 _ from ⟨8, by decide, Reaches.single (by decide)⟩)
 
 -- The structural lemmas, exercised.
 example : Decided (S := slotsOf u7_inj aBase) U7 V7 1 (some 12) :=
@@ -152,13 +153,13 @@ def run7 : PartialRun demotePolicy U7 V7 2 where
     interval_cases k
     · have hB : demotePolicy.W * (epochOf demotePolicy.W 0 + 2) = 2 := rfl
       rw [hB]
-      exact MysticetiProperties.decidedBelow_of_decidedWithin
+      exact AnchoredRule.decidedBelow_of_decidedWithin coreLaws trivial
         (S := slotsOf demotePolicy.inj (fun k => demotePolicy.pick U7 V7 vd7 k))
         (decidedWithin_congr (fun m hm => by interval_cases m <;> rfl)
           u7_decidedWithin_slot0)
     · have hB : demotePolicy.W * (epochOf demotePolicy.W 1 + 2) = 3 := rfl
       rw [hB]
-      exact MysticetiProperties.decidedBelow_of_decidedWithin
+      exact AnchoredRule.decidedBelow_of_decidedWithin coreLaws trivial
         (S := slotsOf demotePolicy.inj (fun k => demotePolicy.pick U7 V7 vd7 k))
         (decidedWithin_congr (fun m hm => by interval_cases m <;> rfl)
           (u7_decidedWithin_slot1.mono (by omega)))
@@ -176,19 +177,20 @@ def run7small : PartialRun demotePolicy U7 V7small 2 where
     interval_cases k
     · have hB : demotePolicy.W * (epochOf demotePolicy.W 0 + 2) = 2 := rfl
       rw [hB]
-      exact MysticetiProperties.decidedBelow_of_decidedWithin
+      exact AnchoredRule.decidedBelow_of_decidedWithin coreLaws trivial
         (S := slotsOf demotePolicy.inj (fun k => demotePolicy.pick U7 V7small vd7 k))
         (decidedWithin_congr (fun m hm => by interval_cases m <;> rfl)
-        (DecidedWithin.indirectCommit (S := slotsOf u7_inj aBase)
+        (AnchoredRule.DecidedWithin.indirectCommit_single rfl (fun _ _ h => h)
+          (S := slotsOf u7_inj aBase)
           (j := 1) (A := 12) (by omega) (by omega) (by decide)
           (DecidedWithin.directCommit (S := slotsOf u7_inj aBase)
             (by omega) (by decide) (by decide))
           (fun _ h1 h2 _ => absurd h2 (by omega))
           (by decide)
-          ⟨8, by decide, Reaches.single (by decide)⟩))
+          (show CertifiedIn U7 12 0 _ from ⟨8, by decide, Reaches.single (by decide)⟩)))
     · have hB : demotePolicy.W * (epochOf demotePolicy.W 1 + 2) = 3 := rfl
       rw [hB]
-      exact MysticetiProperties.decidedBelow_of_decidedWithin
+      exact AnchoredRule.decidedBelow_of_decidedWithin coreLaws trivial
         (S := slotsOf demotePolicy.inj (fun k => demotePolicy.pick U7 V7small vd7 k))
         (decidedWithin_congr (fun m hm => by interval_cases m <;> rfl)
           ((DecidedWithin.directCommit (S := slotsOf u7_inj aBase) (B := 2)
@@ -213,7 +215,7 @@ example : ∀ m, epochOf demotePolicy.W m < 3 → run7.assign m = run7small.assi
 /-- Three-round spacing spans at `c = 1`: a single committed slot
 anchors everything below it. The schedule-shape hypothesis the adaptive
 existence consumes, on this schedule. -/
-theorem u7_spansEligible : SpansEligible (Validator := Fin 4) 1 := by
+theorem u7_spansEligible : SpansEligibleAt (Validator := Fin 4) 2 1 := by
   intro b i hi
   change 3 * (i / 1) + 2 < 3 * ((b + 1 - 1) / 1)
   omega

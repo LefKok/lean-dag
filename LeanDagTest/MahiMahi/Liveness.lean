@@ -118,7 +118,7 @@ example : ¬ MahiMahi.UnpredictableRunWithin aim4 4 1 2 5 := by
 `i < b` has decision round `i + w − 1 < b + w − 1`. -/
 example : (MahiMahi.mahiMahiAnchored (Fin 4) (Fin 24) Unit 4).SpansEligible 4 := by
   intro b i hi
-  simp [AnchoredRule.Eligible, AnchoredRule.decisionRound, MahiMahi.mahiMahiAnchored]
+  simp [AnchoredRule.Eligible, EligibleAt, MahiMahi.mahiMahiAnchored]
   omega
 
 /-! ## MM3a on data -/

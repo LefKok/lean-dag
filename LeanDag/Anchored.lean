@@ -73,6 +73,64 @@ theorem isLeaderBlock_congr {S₁ S₂ : Slots Validator} {k : ℕ} {L : BlockId
 
 end Candidates
 
+/-! ## Eligibility, at a wave
+
+`j` may anchor `k` when its proposal lies past `k`'s decision round, which
+sits `wave` rounds above `k`'s proposal. A predicate on the pair of slots
+alone — not on any view — which is what makes agreement go through: two
+validators deciding the same slot agree on which slots may anchor it. -/
+
+section EligibleAt
+
+variable [S : Slots Validator]
+
+/-- `j` may anchor `k` at wave `wave`. -/
+def EligibleAt (wave k j : ℕ) : Prop := S.slotRound k + wave < S.slotRound j
+
+theorem eligibleAt_iff {wave k j : ℕ} :
+    EligibleAt (S := S) wave k j ↔ S.slotRound k + wave + 1 ≤ S.slotRound j := by
+  simp only [EligibleAt]; omega
+
+instance decidableEligibleAt (wave k j : ℕ) : Decidable (EligibleAt (S := S) wave k j) :=
+  inferInstanceAs (Decidable (S.slotRound k + wave < S.slotRound j))
+
+/-- An eligible anchor is a later slot. Monotonicity is what carries it. -/
+theorem lt_of_eligibleAt {wave k j : ℕ} (h : EligibleAt (S := S) wave k j) : k < j := by
+  by_contra hle
+  have : S.slotRound j ≤ S.slotRound k := S.mono (by omega)
+  simp only [EligibleAt] at h
+  omega
+
+/-- **Every slot has an eligible anchor somewhere**: the second job the
+schedule's `unbounded` does. -/
+theorem exists_eligibleAt (wave k : ℕ) : ∃ j, EligibleAt (S := S) wave k j := by
+  obtain ⟨j, hj⟩ := S.unbounded (S.slotRound k + wave + 1)
+  exact ⟨j, by rw [eligibleAt_iff]; omega⟩
+
+/-- Under a schedule whose consecutive slots are spaced past the wave,
+every later slot is an eligible anchor. -/
+theorem eligibleAt_of_lt_of_spacing {wave : ℕ}
+    (hsp : ∀ k, S.slotRound k + wave + 1 ≤ S.slotRound (k + 1)) {k j : ℕ} (h : k < j) :
+    EligibleAt (S := S) wave k j := by
+  rw [eligibleAt_iff]
+  induction j with
+  | zero => omega
+  | succ n ih =>
+    rcases Nat.lt_succ_iff_lt_or_eq.mp h with hlt | heq
+    · have := ih hlt
+      have := hsp n
+      omega
+    · subst heq
+      exact hsp k
+
+/-- **A run of `c` slots reaches past everything below it**, at a wave:
+the last slot of any `c` consecutive slots is eligible for every slot
+below the first. -/
+def SpansEligibleAt (wave c : ℕ) : Prop :=
+  ∀ b i : ℕ, i < b → EligibleAt (S := S) wave i (b + c - 1)
+
+end EligibleAt
+
 /-! ## The rule's data -/
 
 /-- **An anchored rule**: what a leader-based decision rule supplies. -/
@@ -105,38 +163,28 @@ variable [S : Slots Validator]
 /-- The round at which a slot's direct verdict is settled. -/
 def decisionRound (k : ℕ) : ℕ := S.slotRound k + R.wave
 
-/-- **`j` may anchor `k`.** Its proposal lies past `k`'s decision round. A
-predicate on the pair of slots alone — not on any view — which is what
-makes agreement go through: two validators deciding the same slot agree
-on which slots may anchor it. -/
-def Eligible (k j : ℕ) : Prop := R.decisionRound k < S.slotRound j
+/-- **`j` may anchor `k`**: eligibility at the rule's wave. -/
+abbrev Eligible (k j : ℕ) : Prop := EligibleAt (S := S) R.wave k j
 
 theorem eligible_iff {k j : ℕ} :
-    R.Eligible k j ↔ S.slotRound k + R.wave + 1 ≤ S.slotRound j := by
-  simp only [Eligible, decisionRound]
-  omega
-
-instance decidableEligible (k j : ℕ) : Decidable (R.Eligible k j) :=
-  inferInstanceAs (Decidable (R.decisionRound k < S.slotRound j))
+    R.Eligible k j ↔ S.slotRound k + R.wave + 1 ≤ S.slotRound j :=
+  eligibleAt_iff
 
 /-- An eligible anchor is a later slot. -/
-theorem lt_of_eligible {k j : ℕ} (h : R.Eligible k j) : k < j := by
-  by_contra hle
-  have : S.slotRound j ≤ S.slotRound k := S.mono (by omega)
-  rw [eligible_iff] at h
-  omega
+theorem lt_of_eligible {k j : ℕ} (h : R.Eligible k j) : k < j := lt_of_eligibleAt h
 
-/-- **A run of `c` slots reaches past everything below it**: the last
-slot of any `c` consecutive slots is eligible for every slot below the
-first. -/
-def SpansEligible (c : ℕ) : Prop :=
-  ∀ b i : ℕ, i < b → R.Eligible i (b + c - 1)
+/-- Every slot has an eligible anchor somewhere. -/
+theorem exists_eligible (k : ℕ) : ∃ j, R.Eligible k j := exists_eligibleAt R.wave k
+
+/-- **A run of `c` slots reaches past everything below it**, at the
+rule's wave. -/
+abbrev SpansEligible (c : ℕ) : Prop := SpansEligibleAt (S := S) R.wave c
 
 /-- Under an identity-round schedule, `wave + 1` consecutive slots span. -/
 theorem spansEligible_of_identity (hid : ∀ s, S.slotRound s = s) :
     R.SpansEligible (R.wave + 1) := by
   intro b i hi
-  rw [R.eligible_iff, hid, hid]
+  rw [eligibleAt_iff, hid, hid]
   omega
 
 variable {U : BlockRecord Validator BlockId Payload P honest}
@@ -190,6 +238,30 @@ inductive Decided (U : BlockRecord Validator BlockId Payload P honest) (V : U.Vi
       (∀ m, k < m → m < j → R.Eligible k m → Decided U V m none) →
       (∀ i, i < R.rungs → R.RungEmpty U A i k) →
       Decided U V k none
+
+variable {R} in
+/-- **The indirect commit at a single rung with no tie**: the shape the
+core, Nemo and Mahi-Mahi take. -/
+theorem Decided.indirectCommit_single {U : BlockRecord Validator BlockId Payload P honest}
+    {V : U.View} (h1 : R.rungs = 1) (hno : ∀ L L', ¬ R.tie 0 L L') {k j : ℕ} {A L : BlockId}
+    (hkj : k < j) (helig : R.Eligible k j) (hj : R.Decided U V j (some A))
+    (hmid : ∀ m, k < m → m < j → R.Eligible k m → R.Decided U V m none)
+    (hL : IsLeaderBlock U k L) (hlink : R.Link 0 U A L (S.slotRound k)) :
+    R.Decided U V k (some L) :=
+  Decided.indirectCommit (i := 0) hkj helig hj hmid (by omega)
+    (fun i' hi' => absurd hi' (Nat.not_lt_zero _)) hL hlink (fun L' _ _ h => hno L' L h)
+
+variable {R} in
+/-- **The indirect skip at a single rung.** -/
+theorem Decided.indirectSkip_single {U : BlockRecord Validator BlockId Payload P honest}
+    {V : U.View} (h1 : R.rungs = 1) {k j : ℕ} {A : BlockId}
+    (hkj : k < j) (helig : R.Eligible k j) (hj : R.Decided U V j (some A))
+    (hmid : ∀ m, k < m → m < j → R.Eligible k m → R.Decided U V m none)
+    (hnone : ∀ L, IsLeaderBlock U k L → ¬ R.Link 0 U A L (S.slotRound k)) :
+    R.Decided U V k none :=
+  Decided.indirectSkip hkj helig hj hmid (fun i hi L hL => by
+    have : i = 0 := by omega
+    subst this; exact hnone L hL)
 
 /-! ## What a rule owes -/
 

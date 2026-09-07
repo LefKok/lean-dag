@@ -266,22 +266,11 @@ theorem directSkipIn_mono {V V' : View Validator BlockId Payload U}
   le_trans h (Finset.card_le_card (Finset.image_subset_image
     (Finset.inter_subset_inter Finset.Subset.rfl hsub)))
 
-/-- **L2 — decisions are monotone in the view.** If `V ⊆ V'` then
-`Decided U V k v → Decided U V' k v`.
-
-Induction on the derivation. The two direct cases are the monotonicity
-lemmas above; the two indirect cases rebuild themselves from the inductive
-hypotheses, carrying their `CertifiedIn` premises across unchanged. -/
-theorem decided_mono {V V' : View Validator BlockId Payload U}
-    (hsub : V.ids ⊆ V'.ids) {k : ℕ} {v : Option BlockId} (h : Decided U V k v) :
-    Decided U V' k v := by
-  induction h with
-  | directCommit hL hdc => exact Decided.directCommit hL (directCommitIn_mono hsub hdc)
-  | directSkip hall => exact Decided.directSkip (directSkipSlotIn_mono hsub hall)
-  | indirectCommit hkj helig _ _ hL hcert ihj ihmid =>
-      exact Decided.indirectCommit hkj helig ihj ihmid hL hcert
-  | indirectSkip hkj helig _ _ hnc ihj ihmid =>
-      exact Decided.indirectSkip hkj helig ihj ihmid hnc
+/-! **L2 — decisions are monotone in the view** — and **L3, commit
+propagation** — are the relation's `decided_mono` and `decided_full` at
+`coreLaws`: a validator never revises a decision as its view grows, and
+whatever any validator decides on any view holds on the full view, which
+is every correct validator's eventual view. -/
 
 /-! ## L3 — commit propagation
 
@@ -295,15 +284,6 @@ into a theorem: the informal *eventually* is discharged by the framing, and
 what remains is L2 instantiated. It also fixes what `U` means — not every
 block anyone ever wrote, but every block some correct validator ever held. A
 Byzantine block revealed to nobody is simply not in the universe. -/
-
-/-- **L3 — commit propagation.** Whatever any validator decides on any view,
-the same verdict holds on the full view.
-
-Since the full view is every correct validator's eventual view (`liveness.md` §4.2), this
-*is* "all correct validators eventually reach the same decision". -/
-theorem decided_full {V : View Validator BlockId Payload U} {k : ℕ}
-    {v : Option BlockId} (h : Decided U V k v) : Decided U (View.full U) k v :=
-  decided_mono V.subset_ids h
 
 /-! **A view caught up to round `N`** is `View.CoversUpto`
 (`BlockRecord.lean`): it holds every block of the universe at a round at
@@ -727,17 +707,11 @@ theorem FairRunOn.fairScheduleOn {c : ℕ} (hc : 0 < c) (h : FairRunOn T c) :
   obtain ⟨k', hk', hrun⟩ := h k
   exact ⟨k', hk', by simpa using hrun 0 hc⟩
 
-/-- **A run of `c` slots reaches three rounds past everything below it.**
-
-This is the one place the schedule's *shape* enters P7′, and it is what makes
-`decided_below_of_committed_run`'s `hspan` available: the last slot of a run
-starting at `b` is an eligible anchor for every slot below `b`.
-
-It holds with `c = 1` under three-round spacing and with `c = 3` under
-pipelining — one commit against three consecutive, which is the entire cost
-pipelining imposes on this property. -/
-def SpansEligible (c : ℕ) : Prop :=
-  ∀ b i : ℕ, i < b → Eligible Validator i (b + c - 1)
+/-! A run of `c` slots spanning eligibility — every slot below the run
+having its last slot as an eligible anchor — is the relation's
+`SpansEligible` at the core. It holds with `c = 1` under three-round
+spacing and with `c = 3` under pipelining: one commit against three
+consecutive, the entire cost pipelining imposes on this property. -/
 
 omit [Fintype Validator] [DecidableEq Validator] F in
 /-- Some slot sits at or beyond any given round.
@@ -771,16 +745,9 @@ theorem slotAt_zero : slotAt Validator 0 = 0 := by
   omega
 
 omit [Fintype Validator] [DecidableEq Validator] F in
-/-- **Every slot has an eligible anchor somewhere.**
-
-The indirect rule may only anchor on a slot past `k`'s decision round, so the
-restriction would be worthless if no such slot existed. It is the second job
-`unbounded` does, and the reason a schedule that stalls at some round is
-excluded: under one, a slot left undecided by the direct rules could never be
-settled at all. -/
-theorem exists_eligible (k : ℕ) : ∃ j, Eligible Validator k j := by
-  obtain ⟨j, hj⟩ := S.unbounded (S.slotRound k + 3)
-  exact ⟨j, by rw [eligible_iff]; omega⟩
+/-! **Every slot has an eligible anchor somewhere** — the relation's
+`exists_eligible`, from `unbounded`: the restriction to slots past `k`'s
+decision round would be worthless if no such slot existed. -/
 
 /-- **L6 — commits recur.** For every slot `k` there is a later slot `k'`
 that **every** sufficiently grown synchronous DAG commits.
@@ -863,18 +830,21 @@ No hypothesis on the schedule, and none on synchrony: like L8 this is pure
 decision-relation combinatorics. -/
 theorem decided_of_first_eligible_commit {V : View Validator BlockId Payload U}
     {k j : ℕ} {A : BlockId}
-    (helig : Eligible Validator k j)
-    (hfirst : ∀ i, k < i → i < j → ¬ Eligible Validator k i)
+    (helig : (coreAnchored Validator BlockId Payload).Eligible k j)
+    (hfirst : ∀ i, k < i → i < j → ¬ (coreAnchored Validator BlockId Payload).Eligible k i)
     (hj : Decided U V j (some A)) :
     ∃ v, Decided U V k v := by
   classical
-  have hmid : ∀ i, k < i → i < j → Eligible Validator k i → Decided U V i none :=
+  have hmid : ∀ i, k < i → i < j → (coreAnchored Validator BlockId Payload).Eligible k i →
+      Decided U V i none :=
     fun i h1 h2 h3 => absurd h3 (hfirst i h1 h2)
   by_cases hc : ∃ L, IsLeaderBlock U k L ∧ CertifiedIn U A L (S.slotRound k)
   · obtain ⟨L, hL, hcert⟩ := hc
-    exact ⟨some L, Decided.indirectCommit (lt_of_eligible helig) helig hj hmid hL hcert⟩
+    exact ⟨some L, AnchoredRule.Decided.indirectCommit_single rfl (fun _ _ h => h)
+      (AnchoredRule.lt_of_eligible _ helig) helig hj hmid hL hcert⟩
   · push Not at hc
-    exact ⟨none, Decided.indirectSkip (lt_of_eligible helig) helig hj hmid hc⟩
+    exact ⟨none, AnchoredRule.Decided.indirectSkip_single rfl
+      (AnchoredRule.lt_of_eligible _ helig) helig hj hmid hc⟩
 
 open Classical in
 /-- **L8.** Given a committed slot, every slot below it is decided — provided
@@ -891,7 +861,7 @@ direct rule commits, M2 puts the certificate in reach of the anchor, so the
 indirect branch taken here agrees with it — and M6 guarantees as much in any
 case. -/
 theorem decided_of_committed_above
-    (helig : ∀ a b : ℕ, a < b → Eligible Validator a b)
+    (helig : ∀ a b : ℕ, a < b → (coreAnchored Validator BlockId Payload).Eligible a b)
     {V : View Validator BlockId Payload U} {n : ℕ} {A : BlockId}
     (hn : Decided U V n (some A)) :
     ∀ i, i ≤ n → ∃ v, Decided U V i v := by
@@ -913,7 +883,7 @@ theorem decided_of_committed_above
       obtain ⟨hij, hjn, A', hA'⟩ := Nat.find_spec hex
       -- Every slot between is decided by induction, and `none` by nearestness.
       have hmid : ∀ i', i < i' → i' < Nat.find hex →
-          Eligible Validator i i' → Decided U V i' none := by
+          (coreAnchored Validator BlockId Payload).Eligible i i' → Decided U V i' none := by
         intro i' h1 h2 _
         have hi'n : i' ≤ n := by omega
         obtain ⟨v, hv⟩ := ih i' hi'n (by omega)
@@ -922,9 +892,10 @@ theorem decided_of_committed_above
         | some B => exact absurd ⟨h1, hi'n, B, hv⟩ (Nat.find_min hex h2)
       by_cases hc : ∃ L, IsLeaderBlock U i L ∧ CertifiedIn U A' L (S.slotRound i)
       · obtain ⟨L, hL, hcert⟩ := hc
-        exact ⟨some L, Decided.indirectCommit hij (helig i _ hij) hA' hmid hL hcert⟩
+        exact ⟨some L, AnchoredRule.Decided.indirectCommit_single rfl (fun _ _ h => h) hij
+          (helig i _ hij) hA' hmid hL hcert⟩
       · push Not at hc
-        exact ⟨none, Decided.indirectSkip hij (helig i _ hij) hA' hmid hc⟩
+        exact ⟨none, AnchoredRule.Decided.indirectSkip_single rfl hij (helig i _ hij) hA' hmid hc⟩
   intro i hi
   exact key (n - i) i hi (le_refl _)
 
@@ -949,7 +920,7 @@ theorem all_decided_below_of_spacing
   refine ⟨n, hkn, hRn, ?_⟩
   intro U N hpop hs hN
   obtain ⟨L, _, hdec⟩ := hcommit U N hpop hs hN
-  exact decided_of_committed_above (fun _ _ h => eligible_of_lt_of_spacing hsp h) hdec
+  exact decided_of_committed_above (fun _ _ h => eligibleAt_of_lt_of_spacing hsp h) hdec
 
 /-! ## L9 — the obstruction: when slots are stuck for good
 
@@ -992,8 +963,9 @@ by hand. -/
 theorem notMem_stuck_of_decided {V : View Validator BlockId Payload U} {X : Set ℕ}
     (hcert : ∀ i ∈ X, ∀ L, IsLeaderBlock U i L → certificates U L (S.slotRound i) = ∅)
     (hskip : ∀ i ∈ X, ∃ L, IsLeaderBlock U i L ∧ ¬ DirectSkipIn U V L (S.slotRound i))
-    (hregress : ∀ i ∈ X, ∀ j, Eligible Validator i j → (∃ A, Decided U V j (some A)) →
-      ∃ i', i' ∈ X ∧ i < i' ∧ i' < j ∧ Eligible Validator i i')
+    (hregress : ∀ i ∈ X, ∀ j, (coreAnchored Validator BlockId Payload).Eligible i j →
+      (∃ A, Decided U V j (some A)) →
+      ∃ i', i' ∈ X ∧ i < i' ∧ i' < j ∧ (coreAnchored Validator BlockId Payload).Eligible i i')
     {i : ℕ} {v : Option BlockId} (h : Decided U V i v) : i ∉ X := by
   induction h with
   | @directCommit k L hL hdc =>
@@ -1005,7 +977,7 @@ theorem notMem_stuck_of_decided {V : View Validator BlockId Payload U} {X : Set 
     intro hk
     obtain ⟨L, hL, hns⟩ := hskip k hk
     exact hns (directSkipIn_of_directSkipSlotIn hall hL)
-  | @indirectCommit k j A L _ _ _ _ hL hcertIn _ _ =>
+  | @indirectCommit k j A L i _ _ _ _ _ _ hL hcertIn _ _ _ =>
     intro hk
     obtain ⟨C, hC⟩ := certificates_nonempty_of_certifiedIn hcertIn
     rw [hcert k hk L hL] at hC
@@ -1015,69 +987,18 @@ theorem notMem_stuck_of_decided {V : View Validator BlockId Payload U} {X : Set 
     obtain ⟨i', hi'X, h1, h2, h3⟩ := hregress k hk j helig ⟨A, hj⟩
     exact ihmid i' h1 h2 h3 hi'X
 
-open Classical in
-/-- **P7′ — a committed run decides everything below it.**
-
-This is L8 with `helig` removed, and it is the shape liveness actually needs.
-The hypotheses are:
-
-* `hrun` — the slots `b … n` are all committed;
-* `hspan` — every slot below `b` has `n` as an *eligible* anchor, which under
-  pipelining just says the run spans three rounds, i.e. `n ≥ b + 2`.
-
-Then every slot below `b` is decided. No synchrony, no timing, no fairness, and
-no hypothesis on the schedule — those enter only when discharging `hrun`, which
-L4 does for a run of `T`-led slots.
-
-Two changes from L8 make it work. The anchor is the nearest **eligible**
-committed slot rather than the nearest committed one, which is what removes
-`helig`; and an eligible intermediate is shown to lie below `b` — if it were in
-`b … n` it would be committed by `hrun`, contradicting minimality — which is
-what lets the induction hypothesis reach it.
-
-That second step is the whole content. It is why three consecutive commits
-suffice and why a *single* commit does not: the slots just below `b` have no
-eligible intermediates at all (their eligible range starts inside the run), so
-they resolve outright, and everything lower descends onto them. -/
-theorem decided_below_of_committed_run {V : View Validator BlockId Payload U} {b n : ℕ}
-    (hbn : b ≤ n)
-    (hspan : ∀ i, i < b → Eligible Validator i n)
-    (hrun : ∀ j, b ≤ j → j ≤ n → ∃ B, Decided U V j (some B)) :
-    ∀ i, i < b → ∃ v, Decided U V i v := by
-  classical
-  have key : ∀ d i, i < b → b - i ≤ d → ∃ v, Decided U V i v := by
-    intro d
-    induction d with
-    | zero => intro i hi hd; omega
-    | succ d ih =>
-      intro i hi hd
-      -- The nearest slot above `i` that is both eligible for it and committed.
-      have hex : ∃ j, Eligible Validator i j ∧ ∃ B, Decided U V j (some B) :=
-        ⟨n, hspan i hi, hrun n hbn (le_refl n)⟩
-      have hle : Nat.find hex ≤ n :=
-        Nat.find_le ⟨hspan i hi, hrun n hbn (le_refl n)⟩
-      obtain ⟨helig, B, hB⟩ := Nat.find_spec hex
-      have hmid : ∀ i', i < i' → i' < Nat.find hex → Eligible Validator i i' →
-          Decided U V i' none := by
-        intro i' h1 h2 h3
-        -- Minimality: an eligible slot below the anchor is not committed ...
-        have hnc : ¬ ∃ C, Decided U V i' (some C) := fun hc => Nat.find_min hex h2 ⟨h3, hc⟩
-        -- ... so it cannot lie in the run, so it lies below `b`, so the
-        -- induction hypothesis reaches it.
-        have hi'b : i' < b := by
-          by_contra hge
-          exact hnc (hrun i' (by omega) (by omega))
-        obtain ⟨v, hv⟩ := ih i' hi'b (by omega)
-        cases v with
-        | none => exact hv
-        | some C => exact absurd ⟨C, hv⟩ hnc
-      by_cases hc : ∃ L, IsLeaderBlock U i L ∧ CertifiedIn U B L (S.slotRound i)
-      · obtain ⟨L, hL, hcert⟩ := hc
-        exact ⟨some L, Decided.indirectCommit (lt_of_eligible helig) helig hB hmid hL hcert⟩
-      · push Not at hc
-        exact ⟨none, Decided.indirectSkip (lt_of_eligible helig) helig hB hmid hc⟩
-  intro i hi
-  exact key (b - i) i hi (le_refl _)
+/-! **P7′ — a committed run decides everything below it** — is the
+relation's `decided_below_of_committed_run` at `exists_least`: L8 with
+`helig` removed, the shape liveness actually needs. Given the slots
+`b … n` committed and every slot below `b` having `n` as an *eligible*
+anchor — which under pipelining just says the run spans three rounds —
+every slot below `b` is decided, with no synchrony, no timing, no
+fairness and no hypothesis on the schedule. The anchor is the nearest
+**eligible** committed slot, and an eligible intermediate lies below `b`
+— in the run it would be committed, contradicting minimality — which is
+what lets the induction hypothesis reach it. That second step is the
+whole content, and why three consecutive commits suffice where a single
+one does not. -/
 
 /-- **L8 and L9 are consistent, and their hypotheses are jointly exhaustive.**
 
@@ -1094,13 +1015,14 @@ theorem stuck_empty_below_commit_of_spacing
     {V : View Validator BlockId Payload U} {X : Set ℕ}
     (hcert : ∀ i ∈ X, ∀ L, IsLeaderBlock U i L → certificates U L (S.slotRound i) = ∅)
     (hskip : ∀ i ∈ X, ∃ L, IsLeaderBlock U i L ∧ ¬ DirectSkipIn U V L (S.slotRound i))
-    (hregress : ∀ i ∈ X, ∀ j, Eligible Validator i j → (∃ A, Decided U V j (some A)) →
-      ∃ i', i' ∈ X ∧ i < i' ∧ i' < j ∧ Eligible Validator i i')
+    (hregress : ∀ i ∈ X, ∀ j, (coreAnchored Validator BlockId Payload).Eligible i j →
+      (∃ A, Decided U V j (some A)) →
+      ∃ i', i' ∈ X ∧ i < i' ∧ i' < j ∧ (coreAnchored Validator BlockId Payload).Eligible i i')
     {n : ℕ} {A : BlockId} (hn : Decided U V n (some A)) :
     ∀ i, i ≤ n → i ∉ X := by
   intro i hi
   obtain ⟨v, hv⟩ :=
-    decided_of_committed_above (fun _ _ h => eligible_of_lt_of_spacing hsp h) hn i hi
+    decided_of_committed_above (fun _ _ h => eligibleAt_of_lt_of_spacing hsp h) hn i hi
   exact notMem_stuck_of_decided hcert hskip hregress hv
 
 end LeanDag

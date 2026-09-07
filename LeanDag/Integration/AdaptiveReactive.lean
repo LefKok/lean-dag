@@ -35,7 +35,7 @@ variable {P : AdaptivePolicy Validator BlockId Payload} {T : Finset Validator} {
 
 /-- **Partial runs exist at every height, reactively.** -/
 theorem exists_partialRun_reactive (hc : 0 < c) (hruns : PlacesRuns P T c)
-    (hspans : SpansEligible (Validator := Validator) c)
+    (hspans : (coreAnchored Validator BlockId Payload).SpansEligible c)
     (V : View Validator BlockId Payload U) (E : ℕ)
     (hlive : ∀ (E' : ℕ), E' < E → ∀ (A : PartialRun P U V E'),
       reactiveLive (slotsOf P.inj (fun m => P.pick U V A.vdct m)) V T P.W (P.W * (E' + 2))) :
@@ -48,7 +48,7 @@ policy that places runs, with the reactive clauses holding at every
 height under the schedule that height computes, a total adaptive run
 exists; with `adaptiveRun_agree` it is unique. -/
 theorem adaptiveRun_exists_reactive (hc : 0 < c) (hruns : PlacesRuns P T c)
-    (hspans : SpansEligible (Validator := Validator) c)
+    (hspans : (coreAnchored Validator BlockId Payload).SpansEligible c)
     (V : View Validator BlockId Payload U)
     (hlive : ∀ (E : ℕ) (A : PartialRun P U V E),
       reactiveLive (slotsOf P.inj (fun m => P.pick U V A.vdct m)) V T P.W (P.W * (E + 2))) :

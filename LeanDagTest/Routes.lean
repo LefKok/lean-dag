@@ -74,7 +74,7 @@ section Arcs
 variable {U : BlockUniverse Validator BlockId Payload} {N R : ℕ}
 
 /-- **Mysticeti L10**, from a `ViewPace`. -/
-example {c : ℕ} (hc : 0 < c) (hspan : SpansEligible (Validator := Validator) c)
+example {c : ℕ} (hc : 0 < c) (hspan : (coreAnchored Validator BlockId Payload).SpansEligible c)
     (fair : FairRunOn (Correct : Finset Validator) c) (k : ℕ)
     (vp : ViewPace U (Correct : Finset Validator) N)
     (hgst : vp.gst ≤ R)

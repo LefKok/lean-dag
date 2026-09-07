@@ -155,9 +155,8 @@ theorem exists_least {w : ℕ} {S : Slots Validator} {U : BlockUniverse Validato
 
 theorem eligible_three_iff {k j : ℕ} :
     (mahiMahiAnchored Validator BlockId Payload 3).Eligible k j ↔
-      LeanDag.Eligible Validator k j := by
-  unfold AnchoredRule.Eligible AnchoredRule.decisionRound LeanDag.Eligible LeanDag.decisionRound
-  simp only [mahiMahiAnchored_wave] <;> omega
+      (coreAnchored Validator BlockId Payload).Eligible k j := by
+  simp only [AnchoredRule.Eligible, eligibleAt_iff, mahiMahiAnchored_wave, coreAnchored_wave]
 
 omit S in
 theorem certifiedIn_three_iff {A L : BlockId} {r : ℕ} (hLr : (U.block L).round = r) :
@@ -209,11 +208,12 @@ theorem core_decided_of_decided {V : View Validator BlockId Payload U} {k : ℕ}
   | @directSkip k hskip =>
     exact LeanDag.Decided.directSkip (core_directSkipSlotIn_of_directSkipIn hskip)
   | @indirectCommit k j A L i hkj helig hj hmid _ _ hL hcert _ ihj ihmid =>
-    exact LeanDag.Decided.indirectCommit hkj (eligible_three_iff.mp helig) ihj
+    exact AnchoredRule.Decided.indirectCommit_single rfl (fun _ _ h => h) hkj
+      (eligible_three_iff.mp helig) ihj
       (fun i h1 h2 he => ihmid i h1 h2 (eligible_three_iff.mpr he)) hL
       ((certifiedIn_three_iff hL.2.1).mp hcert)
   | @indirectSkip k j A hkj helig hj hmid hnone ihj ihmid =>
-    exact LeanDag.Decided.indirectSkip hkj (eligible_three_iff.mp helig) ihj
+    exact AnchoredRule.Decided.indirectSkip_single rfl hkj (eligible_three_iff.mp helig) ihj
       (fun i h1 h2 he => ihmid i h1 h2 (eligible_three_iff.mpr he))
       (fun L hL hc => hnone 0 Nat.one_pos L hL ((certifiedIn_three_iff hL.2.1).mpr hc))
 

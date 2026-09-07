@@ -130,7 +130,7 @@ theorem indirect
   have heq : ∀ (S' : Slots Validator), S'.slotRound = S.slotRound → ∀ x y,
       R.Eligible (S := S') x y ↔ R.Eligible (S := S) x y := by
     intro S' hround x y
-    simp only [Eligible, decisionRound, hround]
+    simp only [Eligible, EligibleAt, hround]
   have hcand : ∀ (S' : Slots Validator), S'.slotRound = S.slotRound →
       S'.leader i = S.leader i → ∀ L,
       IsLeaderBlock (S := S') U i L ↔ IsLeaderBlock (S := S) U i L := by

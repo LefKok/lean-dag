@@ -16,8 +16,8 @@ open LeanDag
 #print axioms LeanDag.exists_certificate_reaches_of_directCommit
 #print axioms LeanDag.eq_of_directCommit_of_creator_eq
 #print axioms LeanDag.eq_of_certificates_nonempty
-#print axioms LeanDag.decided_unique
-#print axioms LeanDag.decided_agree
+#print axioms LeanDag.AnchoredRule.decided_unique
+#print axioms LeanDag.AnchoredRule.decided_agree
 #print axioms LeanDag.View.mem_of_reaches
 #print axioms LeanDag.indirect_agrees_with_direct
 
@@ -523,15 +523,16 @@ This inhabits `Decided`'s indirect constructor — the case the whole Stage C
 argument is about. Slot 1 sits at round 3, three rounds past slot 0, so it
 clears slot 0's decision round and is an eligible anchor. -/
 example : Decided U7 V7 0 (some 0) :=
-  Decided.indirectCommit (j := 1) (A := 12) (by omega) (by decide)
+  AnchoredRule.Decided.indirectCommit_single rfl (fun _ _ h => h) (j := 1) (A := 12)
+    (by omega) (by decide)
     (Decided.directCommit (by decide) (by decide))
     (fun i h1 h2 _ => absurd h2 (by omega))
     (by decide)
-    ⟨8, by decide, Reaches.single (by decide)⟩
+    (show CertifiedIn U7 12 0 _ from ⟨8, by decide, Reaches.single (by decide)⟩)
 
 -- The anchor is eligible, and *would not be* under a pipelined schedule that
 -- put slot 1 at round 1: the certificate for slot 0 sits at round 2.
-example : Eligible (Fin 4) 0 1 := by decide
+example : (coreAnchored (Fin 4) (Fin 24) Unit).Eligible 0 1 := by decide
 
 -- The anchor really is two rounds of indirection away from the certificate's
 -- own evidence: block 12 does not reference slot 0's candidate directly.
@@ -588,21 +589,22 @@ says no other validator, on any view, can reach a different verdict.
 
 /-- The indirect commit of slot 0, as constructed above. -/
 theorem decidedSlot0 : Decided U7 V7 0 (some 0) :=
-  Decided.indirectCommit (j := 1) (A := 12) (by omega) (by decide)
+  AnchoredRule.Decided.indirectCommit_single rfl (fun _ _ h => h) (j := 1) (A := 12)
+    (by omega) (by decide)
     (Decided.directCommit (by decide) (by decide))
     (fun i h1 h2 _ => absurd h2 (by omega))
     (by decide)
-    ⟨8, by decide, Reaches.single (by decide)⟩
+    (show CertifiedIn U7 12 0 _ from ⟨8, by decide, Reaches.single (by decide)⟩)
 
 /-- **M6 applied.** No view can skip slot 0 -- the indirect commit above
 settles it for every validator, not just the one that made it. -/
 example (V : View (Fin 4) (Fin 24) Unit U7) : ¬ Decided U7 V 0 none :=
-  fun h => not_decided_skip_of_decided_commit decidedSlot0 h
+  fun h => AnchoredRule.not_decided_skip_of_decided_commit coreLaws trivial decidedSlot0 h
 
 /-- And no view can commit a *different* block for slot 0. -/
 example (V : View (Fin 4) (Fin 24) Unit U7) (L : Fin 24) (h : Decided U7 V 0 (some L)) :
     L = 0 :=
-  (eq_of_decided_commit decidedSlot0 h).symm
+  (AnchoredRule.eq_of_decided_commit coreLaws trivial decidedSlot0 h).symm
 
 /-! ## The committed-leader sequence
 
@@ -631,7 +633,7 @@ reached slot 0 by a different route entirely. -/
 example (V : View (Fin 4) (Fin 24) Unit U7) (g : ℕ → Option (Fin 24))
     (hg : ∀ k, k < 2 → Decided U7 V k (g k)) :
     commitSeq g 2 = [0, 12] :=
-  (commitSeq_agree hg g7_decided).trans (by decide)
+  (AnchoredRule.commitSeq_agree coreLaws trivial hg g7_decided).trans (by decide)
 
 /-! ## No retraction, on the concrete model
 
@@ -667,7 +669,7 @@ example (V : View (Fin 4) (Fin 24) Unit U7) (g : ℕ → Option (Fin 24))
     OutputAt U7 g 0 0 := by
   have h0 : OutputAt U7 g7 0 0 :=
     ⟨⟨0, rfl, Reaches.refl⟩, fun j hj _ _ _ => absurd hj (by omega)⟩
-  exact outputAt_agree (n := 2) g7_decided hg (by omega) h0
+  exact AnchoredRule.outputAt_agree coreLaws trivial (n := 2) g7_decided hg (by omega) h0
 
 /-! ### L0 — density below the frontier
 
@@ -736,23 +738,24 @@ theorem smallDecidedSlot1 : Decided U7 V7small 1 (some 12) :=
 
 /-- **L2 applied.** The verdict survives the view growing to the full one. -/
 example : Decided U7 V7 1 (some 12) :=
-  decided_mono (by decide) smallDecidedSlot1
+  AnchoredRule.decided_mono coreLaws trivial (by decide) smallDecidedSlot1
 
 /-- L2 also carries the *indirect* commit of slot 0 -- the case whose
 negative `CertifiedIn` premise is the reason L2 holds at all. -/
 example : Decided U7 V7small 0 (some 0) :=
-  Decided.indirectCommit (j := 1) (A := 12) (by omega) (by decide) smallDecidedSlot1
+  AnchoredRule.Decided.indirectCommit_single rfl (fun _ _ h => h) (j := 1) (A := 12)
+    (by omega) (by decide) smallDecidedSlot1
     (fun i h1 h2 _ => absurd h2 (by omega))
     (by decide)
-    ⟨8, by decide, Reaches.single (by decide)⟩
+    (show CertifiedIn U7 12 0 _ from ⟨8, by decide, Reaches.single (by decide)⟩)
 
 /-- **L3 applied.** Any view's verdict holds on the full view -- which §4.2
 identifies as every correct validator's eventual view. -/
-example : Decided U7 (View.full U7) 1 (some 12) := decided_full smallDecidedSlot1
+example : Decided U7 (View.full U7) 1 (some 12) := AnchoredRule.decided_full coreLaws trivial smallDecidedSlot1
 
 /-- The full view is not some new object: it is `U7.ids` itself. -/
 example : (View.full U7).ids = U7.ids := rfl
 
 #print axioms LeanDag.card_authorsAt_of_lt
-#print axioms LeanDag.decided_mono
-#print axioms LeanDag.decided_full
+#print axioms LeanDag.AnchoredRule.decided_mono
+#print axioms LeanDag.AnchoredRule.decided_full
