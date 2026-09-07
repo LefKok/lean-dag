@@ -54,7 +54,8 @@ theorem emitted_of_decided (P : SigningRule M E U k vm)
     {v : Validator} (hv : v ∈ M.RecoveryCorrect) {b : BlockId}
     (hb : Hybrid.Decided k U (P.view v) slot (some b)) :
     E.emitted ⟨v, vm.checkpointAfterCommit slot block⟩ := by
-  have heq : b = block := Hybrid.safety hne hk hb commit
+  have heq : b = block :=
+    Option.some.inj (Hybrid.decided_agree hne hk hb commit)
   subst heq
   exact P.proposes v hv hb
 
@@ -127,12 +128,13 @@ end FlexibleFaults
 
 variable (Validator)
 
-/-- Proof of `CommitCheckpointUnique`: rewrite with `Hybrid.safety`. -/
+/-- Proof of `CommitCheckpointUnique`: rewrite with
+`Hybrid.decided_agree`. -/
 theorem commitCheckpointUnique
     (Payload : Type*)
     (vm : DeterministicVM (BlockId := BlockId) (Value := Value)) :
     CommitCheckpointUnique Validator Payload vm := by
   intro U k hne hk V₁ V₂ slot block₁ block₂ commit₁ commit₂
-  rw [Hybrid.safety hne hk commit₁ commit₂]
+  rw [Option.some.inj (Hybrid.decided_agree hne hk commit₁ commit₂)]
 
 end LeanDag.Hybrid.Checkpoint

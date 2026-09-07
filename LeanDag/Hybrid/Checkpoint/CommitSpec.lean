@@ -146,9 +146,9 @@ end FlexibleFaults
 variable (Validator)
 
 /-- Claim: base-consensus safety rules out a checkpoint fork. Under the
-hypotheses of `Hybrid.safety`, commits for one slot in any two views
-yield the same checkpoint content. This claim is about the VM and base
-consensus alone, so it mentions neither the fault model nor an
+hypotheses of `Hybrid.decided_agree`, commits for one slot in any two
+views yield the same checkpoint content. This claim is about the VM and
+base consensus alone, so it mentions neither the fault model nor an
 execution. -/
 def CommitCheckpointUnique (Payload : Type*)
     (vm : DeterministicVM (BlockId := BlockId) (Value := Value)) : Prop :=

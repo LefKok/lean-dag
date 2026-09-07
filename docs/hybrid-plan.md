@@ -35,7 +35,7 @@ as rules over a run: a correct online validator proposes the checkpoint
 of every slot it settles on its own view and witnesses certificates for
 its own proposals. `CommitProofs.lean` derives the quorum from the
 inherited fault bound, ties the proposals to a commit through
-`Hybrid.safety`, and composes with `Hybrid.decided_of_leader_mem` to
+`Hybrid.decided_agree`, and composes with `Hybrid.decided_of_leader_mem` to
 finalize a correctly led slot from DAG production and coverage. It does
 not derive AbC-induced DAG forks or an implementation of the rules.
 
@@ -217,7 +217,7 @@ canonical-candidate rule is retained, and a hybrid re-run of the
 `utwin6_both_pass` exhibit is part of the witness plan.
 
 **H6 (agreement and safety).** `Hybrid.decided_unique` and
-`Hybrid.safety`, mirroring O5/O6 from H2–H5 exactly as the Odontoceti
+`Hybrid.decided_agree`, mirroring O5/O6 from H2–H5 exactly as the Odontoceti
 proofs compose — per the extraction, O5 rests on O1, O1′, O2, O3, O4′
 and nothing else, so the mirror's dependency budget is known in
 advance.

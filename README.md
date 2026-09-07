@@ -120,9 +120,10 @@ move the committee — `n ≥ 5f+1` for two-round commitment,
   protocol as two rules, sign what you commit on your own view and
   witness what you proposed. `CommitProofs.lean` derives the quorum
   from the inherited fault bound, ties every online correct validator's
-  proposal to a given commit through `Hybrid.safety`, and composes with
-  `Hybrid.decided_of_leader_mem` so that DAG production and coverage
-  alone yield a finalized checkpoint for a correctly led slot.
+  proposal to a given commit through `Hybrid.decided_agree`, and
+  composes with `Hybrid.decided_of_leader_mem` so that DAG production
+  and coverage alone yield a finalized checkpoint for a correctly led
+  slot.
   The `*Spec.lean` files are the human-review trust boundary.
   `CommitSpec.lean` also states its theorems as `Prop`-valued claims, so
   `CommitProofs.lean` needs no reading; the safety and recovery pairs

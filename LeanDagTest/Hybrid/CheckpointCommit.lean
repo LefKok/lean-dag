@@ -96,7 +96,8 @@ theorem uhyb9_decided_eq {V : View (Fin 9) (Fin 18) Unit Uhyb9}
     simp at this
     omega
   interval_cases s
-  · exact ⟨rfl, Hybrid.safety (by decide) (by decide) h uhyb9_slot0⟩
+  · exact ⟨rfl, Option.some.inj
+      (Hybrid.decided_agree (by decide) (by decide) h uhyb9_slot0)⟩
   · exfalso
     cases h with
     | directCommit _ hdc =>
@@ -334,7 +335,8 @@ theorem usync9_decided_eq {V : View (Fin 9) (Fin 21) Unit Usync9}
   · exfalso
     have hnone : ∀ L, ¬ IsLeaderBlock Usync9 0 L := by decide
     exact hnone b hL
-  · exact ⟨rfl, Hybrid.safety (by decide) (by decide) h usync9_slot1⟩
+  · exact ⟨rfl, Option.some.inj
+      (Hybrid.decided_agree (by decide) (by decide) h usync9_slot1)⟩
   · exfalso
     cases h with
     | directCommit _ hdc =>
