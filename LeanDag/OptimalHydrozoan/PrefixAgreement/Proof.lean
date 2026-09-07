@@ -1,7 +1,6 @@
 import LeanDag.OptimalHydrozoan.PrefixAgreement.Statement
 import LeanDag.OptimalHydrozoan.SlotAgreement.Proof
 import LeanDag.Hydrozoan.PrefixAgreement.Proof
-
 /-!
 # Optimal-Hydrozoan: prefix agreement — proof
 

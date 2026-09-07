@@ -1,6 +1,5 @@
 import LeanDag.GC.Chop
-import LeanDag.Liveness
-
+import LeanDag.Mysticeti.Liveness
 /-!
 # Decisions survive the cut
 

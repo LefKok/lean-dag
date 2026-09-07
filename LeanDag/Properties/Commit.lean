@@ -1,5 +1,4 @@
 import LeanDag.Properties.Bounded
-
 /-!
 # The indirect rule
 

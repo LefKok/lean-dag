@@ -1,5 +1,4 @@
 import LeanDag.Properties.Candidate
-
 /-!
 # What a rule owes about its own direct rule
 

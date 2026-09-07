@@ -2,13 +2,12 @@ import LeanDag.Properties.Truncate
 import LeanDag.Properties.Sustain
 import LeanDag.GC.Chop
 import LeanDag.GC.ChopDecided
-import LeanDag.MysticetiProperties
-import LeanDag.OdontocetiProperties
-import LeanDag.MahiMahiProperties
+import LeanDag.Mysticeti.Properties
+import LeanDag.Odontoceti.Properties
+import LeanDag.MahiMahi.Properties
 import LeanDag.Properties.Band
 import LeanDag.Properties.Derived.Truncate
 import LeanDag.Properties.Record
-
 /-!
 # Garbage collection, for any protocol with a band
 

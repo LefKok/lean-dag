@@ -2,7 +2,6 @@ import LeanDag.OptimalHydrozoan.Model.Decided
 import LeanDag.OptimalHydrozoan.Helpers.DirectRules
 import LeanDag.OptimalHydrozoan.Helpers.SlotAgreement
 import LeanDag.Hydrozoan.Helpers.DirectLiveness
-
 /-!
 # Optimal-Hydrozoan: direct-liveness lemmas
 

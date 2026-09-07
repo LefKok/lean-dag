@@ -1,7 +1,7 @@
 import LeanDag.FinWhale.View
 import LeanDag.FinWhale.Band
 import LeanDag.FinWhale.Pass
-import LeanDag.Anchored.Band
+import LeanDag.Common.Anchored.Band
 import LeanDag.Properties.Agree
 import LeanDag.Properties.Candidate
 import LeanDag.Properties.Optional.Direct
@@ -9,11 +9,8 @@ import LeanDag.Properties.Optional.Quorate
 import LeanDag.Properties.Optional.SelfParent
 import LeanDag.Properties.Derived.LeaderCommits
 import LeanDag.Properties.Support
-
 import LeanDag.Timed.Coverage
-
 import LeanDag.Properties.Arcs.Headline
-
 /-!
 # FinWhale as a carrier
 

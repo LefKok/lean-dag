@@ -3,7 +3,6 @@ import LeanDag.Hydrozoan.Helpers.Grounding
 import LeanDag.OptimalHydrozoan.Helpers.Universe
 import LeanDag.OptimalHydrozoan.DirectLiveness.Proof
 import LeanDag.OptimalHydrozoan.EventualDecision.Proof
-
 /-!
 # Optimal-Hydrozoan: grounding — helpers
 

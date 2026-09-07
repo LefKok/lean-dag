@@ -1,9 +1,8 @@
 import LeanDag.OptimalHydrozoan.EventualDecision.Statement
 import LeanDag.OptimalHydrozoan.DirectLiveness.Proof
 import LeanDag.OptimalHydrozoan.Helpers.Decided
-import LeanDag.Anchored.Bounded
+import LeanDag.Common.Anchored.Bounded
 import LeanDag.Hydrozoan.EventualDecision.Proof
-
 /-!
 # Optimal-Hydrozoan: eventual decision — proof
 

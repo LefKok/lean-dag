@@ -1,7 +1,6 @@
 import LeanDag.Properties.Arcs.Record
 import LeanDag.Integration.Preservation
-import LeanDag.HybridProperties
-
+import LeanDag.Hybrid.Properties
 /-!
 # Garbage collection, crash recovery and re-genesis for Hybrid
 

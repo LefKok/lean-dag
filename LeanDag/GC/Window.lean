@@ -1,6 +1,5 @@
 import LeanDag.GC.Chop
 import LeanDag.DoS.Novelty
-
 /-!
 # The window: storage and liveness above the horizon
 

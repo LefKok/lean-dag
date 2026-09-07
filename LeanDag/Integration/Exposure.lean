@@ -1,6 +1,5 @@
 import LeanDag.Integration.ReGenesis
 import LeanDag.SafeSkip.Invariance
-
 /-!
 # I1 — the fill enlarges cones, and what that costs
 

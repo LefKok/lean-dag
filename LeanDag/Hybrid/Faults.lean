@@ -1,5 +1,4 @@
-import LeanDag.BlockDag
-
+import LeanDag.Common.BlockDag
 /-!
 # The hybrid fault model: Byzantine and crash-prone
 

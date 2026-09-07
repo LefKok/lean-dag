@@ -1,6 +1,5 @@
 import LeanDag.FinWhale.Consequences
 import LeanDag.FinWhale.Model.Skip
-
 /-!
 # FinWhale — why a commit rules the skip out
 

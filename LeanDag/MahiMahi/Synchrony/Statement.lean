@@ -1,6 +1,5 @@
 import LeanDag.MahiMahi.Model.Unpredictable
-import LeanDag.Quantitative
-
+import LeanDag.Mysticeti.Quantitative
 /-!
 # Partial synchrony, recovered — statement
 

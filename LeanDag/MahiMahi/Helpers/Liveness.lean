@@ -1,9 +1,8 @@
 import LeanDag.MahiMahi.Model.Unpredictable
 import LeanDag.MahiMahi.Helpers.Counting
 import LeanDag.MahiMahi.Helpers.Decision
-import LeanDag.Anchored.Bounded
-import LeanDag.ViewPace
-
+import LeanDag.Common.Anchored.Bounded
+import LeanDag.Mysticeti.ViewPace
 /-!
 # Helpers — the liveness layer
 

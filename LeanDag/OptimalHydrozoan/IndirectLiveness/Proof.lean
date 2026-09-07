@@ -1,7 +1,6 @@
 import LeanDag.OptimalHydrozoan.IndirectLiveness.Statement
 import LeanDag.OptimalHydrozoan.Helpers.Decided
-import LeanDag.Anchored.Bounded
-
+import LeanDag.Common.Anchored.Bounded
 /-!
 # Optimal-Hydrozoan: indirect liveness — proof
 

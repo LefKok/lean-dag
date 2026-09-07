@@ -1,6 +1,5 @@
 import LeanDag.OptimalHydrozoan.Model.Faults
 import LeanDag.Hydrozoan.ThresholdArithmetic.Statement
-
 /-!
 # Optimal-Hydrozoan: threshold arithmetic — statement
 

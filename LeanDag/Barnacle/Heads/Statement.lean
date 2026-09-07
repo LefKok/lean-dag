@@ -1,5 +1,4 @@
 import LeanDag.Barnacle.Model.Heads
-
 /-!
 # BN9 — the heads descent
 

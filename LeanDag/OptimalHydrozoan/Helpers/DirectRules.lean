@@ -1,7 +1,6 @@
 import LeanDag.OptimalHydrozoan.Model.DirectRules
 import LeanDag.OptimalHydrozoan.Helpers.Universe
 import LeanDag.Hydrozoan.Helpers.DirectRules
-
 /-!
 # Optimal-Hydrozoan: direct-rule instances and bridges
 

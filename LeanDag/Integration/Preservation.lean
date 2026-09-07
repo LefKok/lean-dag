@@ -1,8 +1,7 @@
 import LeanDag.GC.Chop
 import LeanDag.SafeSkip.Basic
-import LeanDag.Record.Invariant
+import LeanDag.Common.Record.Invariant
 import LeanDag.Hybrid.Faults
-
 /-!
 # Preservation: the transformer × invariant table, layer U
 

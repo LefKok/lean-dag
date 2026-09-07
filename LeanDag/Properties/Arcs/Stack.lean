@@ -1,6 +1,5 @@
 import LeanDag.Properties.Compose
 import LeanDag.Properties.Arcs.Liveness
-
 /-!
 # The composition theorem: every stack of mechanisms is one mechanism
 

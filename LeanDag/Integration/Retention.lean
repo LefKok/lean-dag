@@ -1,5 +1,4 @@
 import LeanDag.Integration.Preservation
-
 /-!
 # I7 — anchor retention: how long may a validator be down?
 

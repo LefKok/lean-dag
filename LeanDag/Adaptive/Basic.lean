@@ -1,5 +1,4 @@
-import LeanDag.Schedule
-
+import LeanDag.Common.Schedule
 /-!
 # Adaptive leaders: epochs and induced schedules
 

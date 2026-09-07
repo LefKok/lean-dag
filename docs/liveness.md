@@ -338,7 +338,7 @@ The only real proof in the plan is untouched by any of this.
 
 ## 5. Definitions
 
-Mirrors `LeanDag/Liveness.lean` and `LeanDag/Timing.lean`, in file order.
+Mirrors `LeanDag/Mysticeti/Liveness.lean` and `LeanDag/Timing.lean`, in file order.
 Several predicates come in two forms: a general one over a validator set `T`,
 and an abbreviation at `T := Correct` that recovers the original statement.
 The generalisation is S5; it is what lets L4 need only a *quorum* of reliable
@@ -471,7 +471,7 @@ def Timing.DriftFrom (tm : Timing U T N) (n₀ D : ℕ) : Prop :=
 
 ### The rated layer
 
-`LeanDag/Quantitative.lean`. Three optional hypotheses, each strengthening one
+`LeanDag/Mysticeti/Quantitative.lean`. Three optional hypotheses, each strengthening one
 already in play, and each yielding a bound the weak form cannot give (S8, S9).
 Nothing above depends on them.
 
@@ -710,7 +710,7 @@ is false. L4 needs a *correct* leader and L5 an *absent* one; a Byzantine
 
 ### Bounds
 
-`LeanDag/Quantitative.lean`. Every result here strengthens one above, and each
+`LeanDag/Mysticeti/Quantitative.lean`. Every result here strengthens one above, and each
 requires a strengthened hypothesis (S8, S9). Nothing imports the file, so
 the weak forms remain available untouched.
 
@@ -821,9 +821,9 @@ top-down, each layer *assumes* what the one below it *supplies*.
 
 | file | contents |
 |---|---|
-| `LeanDag/Liveness.lean` | L0–L6, plus `Populated`, `Live`, `Delivery`, `Synchronised`, `FairScheduleOn`, and L7a |
+| `LeanDag/Mysticeti/Liveness.lean` | L0–L6, plus `Populated`, `Live`, `Delivery`, `Synchronised`, `FairScheduleOn`, and L7a |
 | `LeanDag/Timing.lean` | L7b — `Timing`, `DriftFrom`, and `SynchronisedOn` earned from GST |
-| `LeanDag/Quantitative.lean` | S8 — `Rated`, `FairWithin`, `BoundedSpacing`; S9 — the wait bound `Delay(Δ)` |
+| `LeanDag/Mysticeti/Quantitative.lean` | S8 — `Rated`, `FairWithin`, `BoundedSpacing`; S9 — the wait bound `Delay(Δ)` |
 | `LeanDagTest/Growth.lean` | `Ugrow`, `ugrowDelivery`, `ugrowTiming` — satisfiability at every horizon |
 | `LeanDagTest/Partial.lean` | `ugrowHonest`, `ugrowSkew` — the partial and skewed cases (S7) |
 | `LeanDagTest/Quantitative.lean` | `rrSlots` — round-robin, and the rated hypotheses witnessed (S8) |
@@ -1152,7 +1152,7 @@ are themselves bare existentials**, so no bound is derivable from them.
 - `FairScheduleOn T : ∀ k, ∃ k', k ≤ k' ∧ S.leader k' ∈ T` — a schedule naming
   `T`-leaders at slots `0, 10, 1000, …` is fair, with unbounded gaps.
 
-So the fix is a **rated** hypothesis, and `LeanDag/Quantitative.lean` supplies
+So the fix is a **rated** hypothesis, and `LeanDag/Mysticeti/Quantitative.lean` supplies
 three. Nothing below it changes; every existing theorem keeps its weak
 hypotheses and stays available.
 

@@ -1,6 +1,5 @@
 import LeanDag.MahiMahi.Safety.Statement
 import LeanDag.MahiMahi.Helpers.Decision
-
 /-!
 # Safety at wave `w` — proof
 

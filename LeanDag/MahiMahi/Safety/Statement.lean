@@ -1,5 +1,4 @@
 import LeanDag.MahiMahi.Model.Decision
-
 /-!
 # Safety at wave `w` — statement
 

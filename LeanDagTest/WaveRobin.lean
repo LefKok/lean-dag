@@ -1,7 +1,6 @@
-import LeanDag.WaveRobin
-import LeanDag.MysticetiProperties
+import LeanDag.Common.WaveRobin
+import LeanDag.Mysticeti.Properties
 import LeanDag.Network.Quorum
-
 /-!
 # The wave-aligned rotation — the witnesses
 

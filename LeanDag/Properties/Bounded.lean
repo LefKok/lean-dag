@@ -1,5 +1,4 @@
 import LeanDag.Properties.Agree
-
 /-!
 # Verdicts decided below a slot bound
 

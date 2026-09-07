@@ -1,5 +1,4 @@
 import LeanDag.Properties.Band
-
 /-!
 # What follows from the band
 

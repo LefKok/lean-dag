@@ -1,6 +1,5 @@
 import LeanDag.OptimalHydrozoan.DirectLiveness.Statement
 import LeanDag.OptimalHydrozoan.Helpers.DirectLiveness
-
 /-!
 # Optimal-Hydrozoan: direct liveness — proof
 

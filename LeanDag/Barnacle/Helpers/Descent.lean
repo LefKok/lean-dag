@@ -4,7 +4,6 @@ import LeanDag.Properties.Commit
 import LeanDag.Properties.Derived.Descent
 import LeanDag.Properties.Arcs.Liveness
 import LeanDag.Timed.Coverage
-
 /-!
 # The descent laws, from the target properties
 

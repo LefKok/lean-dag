@@ -1,7 +1,6 @@
 import LeanDag.Properties.Sustain
 import LeanDag.Properties.Support
 import LeanDag.Properties.Arcs.Liveness
-
 /-!
 # The timed model: coverage, and the bridge into certification
 

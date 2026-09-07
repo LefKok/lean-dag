@@ -1,6 +1,5 @@
 import LeanDag.BlackMarlin.Safety.Statement
 import LeanDag.BlackMarlin.Helpers.Decision
-
 /-!
 # Black Marlin — safety of the commit rule, proved
 

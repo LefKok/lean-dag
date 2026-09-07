@@ -1,6 +1,5 @@
 import LeanDag.Adaptive.Mysticeti
 import LeanDag.Reactive.MysticetiProperties
-
 /-!
 # Adaptive leaders over reactive Mysticeti
 

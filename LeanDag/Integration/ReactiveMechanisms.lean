@@ -3,7 +3,6 @@ import LeanDag.Properties.Arcs.SafeSkip
 import LeanDag.Integration.ReGenesis
 import LeanDag.Reactive.MysticetiProperties
 import LeanDag.Properties.Arcs.Liveness
-
 /-!
 # The mechanisms over a reactive execution
 

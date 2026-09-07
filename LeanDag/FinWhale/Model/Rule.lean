@@ -1,9 +1,8 @@
 import LeanDag.FinWhale.Model.Params
-import LeanDag.Causality
-import LeanDag.BlockRecord
-import LeanDag.Support
-import LeanDag.Slots
-
+import LeanDag.Common.Causality
+import LeanDag.Common.BlockRecord
+import LeanDag.Common.Support
+import LeanDag.Common.Slots
 /-!
 # FinWhale — the fast path, as the paper defines it
 

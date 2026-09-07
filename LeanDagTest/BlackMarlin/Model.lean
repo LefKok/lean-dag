@@ -1,6 +1,5 @@
 import LeanDagTest.Model
 import LeanDag.BlackMarlin.Safety.Proof
-
 /-!
 # Black Marlin witnesses — Figure 1 on data
 

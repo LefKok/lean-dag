@@ -1,6 +1,5 @@
-import LeanDag.Support
-import LeanDag.History
-
+import LeanDag.Common.Support
+import LeanDag.Common.History
 /-!
 # Black Marlin — the commit rule
 

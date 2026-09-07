@@ -1,6 +1,5 @@
 import LeanDag.FinWhale.Decision
 import LeanDag.FinWhale.Model.Anchor
-
 /-!
 # FinWhale — the anchor, and why its tie-break is safe
 

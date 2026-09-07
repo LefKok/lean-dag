@@ -1,6 +1,5 @@
 import LeanDag.Barnacle.Model.Heads
 import LeanDag.FinWhale.Carrier
-
 /-!
 # Barnacle over FinWhale — statement
 

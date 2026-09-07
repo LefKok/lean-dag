@@ -1,6 +1,5 @@
 import LeanDag.MahiMahi.Model.Rules
-import LeanDag.Anchored
-
+import LeanDag.Common.Anchored
 /-!
 # Mahi-Mahi — the decision relation at wave `w`
 

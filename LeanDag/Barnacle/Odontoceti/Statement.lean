@@ -1,9 +1,7 @@
 import LeanDag.Barnacle.Model.Heads
 import LeanDag.Barnacle.Helpers.Mysticeti
 import LeanDag.Odontoceti.Liveness
-
 import LeanDag.Odontoceti.Carrier
-
 /-!
 # Barnacle over Odontoceti — statement
 

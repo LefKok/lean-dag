@@ -1,8 +1,7 @@
 import LeanDag.Hydrozoan.Model.Liveness
 import LeanDag.Hydrozoan.Helpers.Counting
 import LeanDag.Hydrozoan.Helpers.DirectRules
-import LeanDag.CausalHistory
-
+import LeanDag.Common.CausalHistory
 /-!
 # Direct-liveness toolkit
 

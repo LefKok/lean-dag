@@ -1,7 +1,6 @@
 import LeanDag.Adaptive.Liveness
 import LeanDag.Hydrozoan.Helpers.Commit
 import LeanDag.Properties.Derived.Progress
-
 /-!
 # Adaptive leaders over Hydrozoan
 

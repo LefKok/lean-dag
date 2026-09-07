@@ -1,7 +1,6 @@
 import LeanDag.Nemo.Basic
-import LeanDag.History
-import LeanDag.Support
-
+import LeanDag.Common.History
+import LeanDag.Common.Support
 /-!
 # Nemo-Nemo: support and coverage
 

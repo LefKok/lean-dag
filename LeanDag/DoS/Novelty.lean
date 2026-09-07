@@ -1,5 +1,5 @@
-import LeanDag.Liveness
-import LeanDag.History
+import LeanDag.Mysticeti.Liveness
+import LeanDag.Common.History
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
 
 /-!

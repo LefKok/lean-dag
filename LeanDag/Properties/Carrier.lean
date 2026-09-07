@@ -1,6 +1,5 @@
-import LeanDag.Causality
-import LeanDag.Schedule
-
+import LeanDag.Common.Causality
+import LeanDag.Common.Schedule
 /-!
 # The carrier a target property talks about
 

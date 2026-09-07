@@ -1,6 +1,5 @@
 import LeanDagTest.BlackMarlin.Liveness
 import LeanDag.BlackMarlin.ViewLiveness.Proof
-
 /-!
 # Black Marlin witnesses — liveness read at a validator's view
 

@@ -1,9 +1,8 @@
 import LeanDag.Integration.Retention
 import LeanDag.GC.Horizon
 import LeanDag.Properties.Compose
-import LeanDag.Record.Genesis
+import LeanDag.Common.Record.Genesis
 import LeanDag.Properties.Arcs.GC
-
 /-!
 # Re-genesis: restarting a severed chain at the cut
 

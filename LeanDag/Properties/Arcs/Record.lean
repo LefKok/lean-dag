@@ -3,7 +3,6 @@ import LeanDag.Properties.Derived.Truncate
 import LeanDag.Properties.Derived.FromBand
 import LeanDag.Properties.Arcs.GC
 import LeanDag.Properties.Arcs.SafeSkip
-
 /-!
 # The verdict cells, at any carrier on the record
 

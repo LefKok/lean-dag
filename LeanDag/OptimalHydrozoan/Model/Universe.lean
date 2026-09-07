@@ -1,5 +1,4 @@
 import LeanDag.Hydrozoan.Model.DirectRules
-
 /-!
 # Optimal-Hydrozoan: the block universe with leader exclusion
 

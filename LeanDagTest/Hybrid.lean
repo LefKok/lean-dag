@@ -1,6 +1,6 @@
-import LeanDag.HybridProperties
+import LeanDag.Hybrid.Properties
 import LeanDag.Hybrid.Conservativity
-import LeanDag.Schedule
+import LeanDag.Common.Schedule
 import LeanDagTest.Odontoceti.Model
 
 /-!

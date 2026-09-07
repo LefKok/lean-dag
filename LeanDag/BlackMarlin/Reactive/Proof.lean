@@ -1,6 +1,5 @@
 import LeanDag.BlackMarlin.Reactive.Statement
 import LeanDag.BlackMarlin.Helpers.Reactive
-
 /-!
 # Black Marlin — the reactive schedule, proved
 

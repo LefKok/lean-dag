@@ -1,6 +1,5 @@
 import LeanDag.Hydrozoan.Model.View
-import LeanDag.CausalHistory
-
+import LeanDag.Common.CausalHistory
 /-!
 # Causal-reachability lemmas
 

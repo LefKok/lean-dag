@@ -1,5 +1,4 @@
 import LeanDag.MahiMahi.Model.Good
-
 /-!
 # Mahi-Mahi — the unpredictable-leader clause
 

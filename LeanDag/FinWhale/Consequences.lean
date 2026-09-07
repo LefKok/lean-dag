@@ -1,5 +1,4 @@
 import LeanDag.FinWhale.Evidence
-
 /-!
 # FinWhale — what follows from Lemma 4
 

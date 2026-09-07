@@ -1,7 +1,6 @@
 import LeanDag.BlackMarlin.Model.Order
 import Mathlib.Data.Finset.Sort
 import LeanDag.BlackMarlin.Helpers.Ledger
-
 /-!
 # Black Marlin — the sequence layer
 

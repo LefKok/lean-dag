@@ -1,8 +1,7 @@
 import LeanDag.Barnacle.Orcaella.Statement
 import LeanDag.Barnacle.Helpers.Heads
 import LeanDag.Barnacle.Helpers.Descent
-import LeanDag.HybridProperties
-
+import LeanDag.Hybrid.Properties
 /-!
 # Orcaella instance helpers
 

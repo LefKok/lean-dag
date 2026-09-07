@@ -6,7 +6,6 @@ import LeanDag.Hydrozoan.DirectLiveness.Proof
 import LeanDag.Hydrozoan.IndirectLiveness.Proof
 import LeanDag.Hydrozoan.EventualDecision.Proof
 import LeanDag.Hydrozoan.Grounding.Proof
-
 /-!
 # The axioms tripwire
 

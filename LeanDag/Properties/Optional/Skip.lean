@@ -1,6 +1,5 @@
 import LeanDag.Properties.Extends
 import LeanDag.Properties.Derived.Persist
-
 /-!
 # Skippability: settling an unsupported slot without an anchor
 

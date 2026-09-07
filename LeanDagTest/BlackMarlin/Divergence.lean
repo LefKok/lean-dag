@@ -1,7 +1,6 @@
 import LeanDagTest.BlackMarlin.Ledger
 import LeanDag.BlackMarlin.Model.Recursion
 import LeanDag.BlackMarlin.Repair.Proof
-
 /-!
 # Black Marlin — two honest parties, two different blocks
 

@@ -1,5 +1,4 @@
 import LeanDag.Hydrozoan.Model.Faults
-
 /-!
 # Fault-model lemmas
 

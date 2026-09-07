@@ -1,5 +1,4 @@
 import LeanDag.FinWhale.Skip
-
 /-!
 # FinWhale — Lemmas 3 and 5, the evidence reaching upward
 

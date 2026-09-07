@@ -9,9 +9,7 @@ import LeanDag.Properties.Optional.Direct
 import LeanDag.Properties.Derived.Descent
 import LeanDag.Properties.Candidate
 import LeanDag.Properties.Deliver
-
 import LeanDag.Timed.Coverage
-
 /-!
 # Hydrozoan's liveness obligations
 

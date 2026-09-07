@@ -1,6 +1,5 @@
 import LeanDag.Hydrozoan.Model.Block
-import LeanDag.BlockRecord
-
+import LeanDag.Common.BlockRecord
 /-!
 # The block universe
 

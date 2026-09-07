@@ -1,7 +1,6 @@
 import LeanDag.BlackMarlin.ViewOrder.Statement
 import LeanDag.BlackMarlin.Order.Proof
 import LeanDag.BlackMarlin.Ledger.Proof
-
 /-!
 # Black Marlin — the delivered order at a validator's view, proved
 

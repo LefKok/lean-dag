@@ -1,6 +1,5 @@
 import LeanDag.Nemo.Rules
-import LeanDag.Anchored.Band
-
+import LeanDag.Common.Anchored.Band
 /-!
 # Nemo: the decision relation
 

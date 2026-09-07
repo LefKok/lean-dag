@@ -1,6 +1,5 @@
 import LeanDag.FinWhale.Decided
 import LeanDag.Reactive.Mysticeti
-
 /-!
 # FinWhale — liveness on the reactive schedule
 

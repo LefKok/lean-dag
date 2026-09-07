@@ -1,6 +1,5 @@
 import LeanDag.Barnacle.Nemo.Statement
 import LeanDag.Barnacle.Helpers.NemoLive
-
 /-!
 # Barnacle over Nemo-Nemo — proof
 

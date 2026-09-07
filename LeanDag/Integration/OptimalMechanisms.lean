@@ -1,6 +1,5 @@
 import LeanDag.OptimalHydrozoan.Carrier
 import LeanDag.Integration.HydrozoanMechanisms
-
 /-!
 # Garbage collection, crash recovery and re-genesis for Optimal-Hydrozoan
 

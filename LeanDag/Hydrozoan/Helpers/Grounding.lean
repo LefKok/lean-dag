@@ -3,7 +3,6 @@ import Mathlib.Order.Interval.Finset.Nat
 import LeanDag.Hydrozoan.Grounding.Statement
 import LeanDag.Hydrozoan.Helpers.SlotAgreement
 import LeanDag.Hydrozoan.Helpers.EventualDecision
-
 /-!
 # Helpers: grounding
 

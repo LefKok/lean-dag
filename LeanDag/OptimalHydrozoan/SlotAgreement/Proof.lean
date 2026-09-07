@@ -1,7 +1,6 @@
 import LeanDag.OptimalHydrozoan.SlotAgreement.Statement
 import LeanDag.OptimalHydrozoan.Helpers.SlotAgreement
 import LeanDag.OptimalHydrozoan.Helpers.IndirectRules
-
 /-!
 # Optimal-Hydrozoan: slot agreement — proof
 

@@ -1,6 +1,5 @@
 import LeanDag.BlackMarlin.Ledger.Statement
 import LeanDag.BlackMarlin.Helpers.Ledger
-
 /-!
 # Black Marlin — the delivered order, proved
 

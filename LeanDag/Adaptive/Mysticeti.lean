@@ -1,7 +1,6 @@
 import LeanDag.Adaptive.Liveness
 import LeanDag.Adaptive.Growth
-import LeanDag.MysticetiProperties
-
+import LeanDag.Mysticeti.Properties
 /-!
 # Adaptive Mysticeti: the core as an instance
 

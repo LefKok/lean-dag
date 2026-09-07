@@ -1,6 +1,5 @@
 import LeanDag.Odontoceti.Rules
-import LeanDag.Anchored.Bounded
-
+import LeanDag.Common.Anchored.Bounded
 /-!
 # Odontoceti: the decision relation
 

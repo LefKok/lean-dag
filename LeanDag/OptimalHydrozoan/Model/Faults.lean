@@ -1,5 +1,4 @@
 import LeanDag.Hydrozoan.Model.Faults
-
 /-!
 # Optimal-Hydrozoan: fault model and thresholds
 

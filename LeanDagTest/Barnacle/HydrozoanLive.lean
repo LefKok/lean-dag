@@ -1,6 +1,5 @@
 import LeanDagTest.Hydrozoan.DirectLiveness
 import LeanDag.Barnacle.HydrozoanLive.Proof
-
 /-!
 # Barnacle over Hydrozoan — the live witnesses
 

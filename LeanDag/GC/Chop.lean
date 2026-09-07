@@ -1,7 +1,6 @@
-import LeanDag.Mysticeti
-import LeanDag.Record.Chop
+import LeanDag.Mysticeti.Rule
+import LeanDag.Common.Record.Chop
 import LeanDag.DoS.Exposure
-
 /-!
 # The horizon: truncation as rebasing
 

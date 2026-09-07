@@ -1,8 +1,7 @@
 import LeanDag.Barnacle.MahiMahi.Statement
 import LeanDag.Barnacle.Helpers.Heads
 import LeanDag.Barnacle.Helpers.Descent
-import LeanDag.MahiMahiProperties
-
+import LeanDag.MahiMahi.Properties
 /-!
 # Barnacle over Mahi-Mahi — proof
 

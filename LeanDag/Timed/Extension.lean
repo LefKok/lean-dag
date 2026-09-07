@@ -1,6 +1,5 @@
 import LeanDag.Timed.Coverage
 import LeanDag.Properties.Extends
-
 /-!
 # Coverage under an extension
 

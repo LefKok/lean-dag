@@ -3,8 +3,7 @@ import LeanDag.Properties.Sustain
 import LeanDag.Properties.Deliver
 import LeanDag.Properties.Candidate
 import LeanDag.Properties.Band
-import LeanDag.Density
-
+import LeanDag.Common.Density
 /-!
 # Support: what a rule's commit counts
 

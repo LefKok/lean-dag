@@ -1,5 +1,4 @@
 import LeanDag.BlackMarlin.Model.Rules
-
 /-!
 # Black Marlin — the rule as a validator applies it
 

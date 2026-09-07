@@ -1,6 +1,5 @@
 import LeanDag.BlackMarlin.Liveness.Statement
 import LeanDag.BlackMarlin.Helpers.Decision
-
 /-!
 # Black Marlin — the liveness layer
 

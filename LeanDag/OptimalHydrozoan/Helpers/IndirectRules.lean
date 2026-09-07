@@ -1,7 +1,6 @@
 import LeanDag.OptimalHydrozoan.Model.IndirectRules
 import LeanDag.OptimalHydrozoan.Helpers.DirectRules
 import LeanDag.Hydrozoan.Helpers.IndirectRules
-
 /-!
 # Optimal-Hydrozoan: the evidence rung through the history surrogate
 

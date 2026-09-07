@@ -2,7 +2,6 @@ import LeanDag.FinWhale.Order
 import LeanDag.FinWhale.Model.Liveness
 import Mathlib.Data.Finset.Sort
 import LeanDag.FinWhale.Rotation
-
 /-!
 # FinWhale — every slot is decided, and what follows
 

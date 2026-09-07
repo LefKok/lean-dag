@@ -2,7 +2,6 @@ import LeanDag.Barnacle.HydrozoanLive.Statement
 import LeanDag.Barnacle.Helpers.Heads
 import LeanDag.Barnacle.Helpers.Descent
 import LeanDag.Hydrozoan.Helpers.Commit
-
 /-!
 # Barnacle over Hydrozoan — the live rule, proof
 

@@ -1,5 +1,4 @@
 import LeanDag.Barnacle.Model.Live
-
 /-!
 # Barnacle: the descent laws and runs of heads
 

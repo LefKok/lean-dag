@@ -1,6 +1,5 @@
 import LeanDag.Hydrozoan.PrefixAgreement.Statement
 import LeanDag.Hydrozoan.SlotAgreement.Proof
-
 /-!
 # Prefix agreement — proof
 

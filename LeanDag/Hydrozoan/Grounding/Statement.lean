@@ -1,5 +1,4 @@
 import LeanDag.Hydrozoan.EventualDecision.Statement
-
 /-!
 # Statement: grounding — the liveness hypotheses are dischargeable
 

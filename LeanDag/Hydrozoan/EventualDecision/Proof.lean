@@ -1,5 +1,4 @@
 import LeanDag.Hydrozoan.Helpers.EventualDecision
-
 /-!
 # Proof: eventual decision
 

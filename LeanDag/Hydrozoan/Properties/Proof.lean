@@ -4,9 +4,7 @@ import LeanDag.Hydrozoan.Helpers.Commit
 import LeanDag.Hydrozoan.Helpers.Skippability
 import LeanDag.Properties.Derived.FromBand
 import LeanDag.Hydrozoan.Helpers.SlotAgreement
-
 import LeanDag.Properties.Arcs.Headline
-
 /-!
 # Hydrozoan conforms to the target properties — proof
 

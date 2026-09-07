@@ -1,8 +1,7 @@
 import LeanDag.Barnacle.MysticetiLive.Statement
 import LeanDag.Barnacle.Odontoceti.Statement
 import LeanDag.Barnacle.Nemo.Statement
-import LeanDag.Persistence
-
+import LeanDag.Common.Persistence
 /-!
 # Barnacle helpers — the delivery law
 

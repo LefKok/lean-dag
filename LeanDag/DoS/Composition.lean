@@ -1,6 +1,5 @@
 import LeanDag.DoS.Novelty
 import LeanDag.DoS.Exclusion
-
 /-!
 # The two conditions, composed
 

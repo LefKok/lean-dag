@@ -3,11 +3,10 @@ import LeanDag.Properties.Derived.Persist
 import LeanDag.Properties.Optional.Skip
 import LeanDag.SafeSkip.Basic
 import LeanDag.SafeSkip.Invariance
-import LeanDag.MysticetiProperties
-import LeanDag.OdontocetiProperties
-import LeanDag.MahiMahiProperties
+import LeanDag.Mysticeti.Properties
+import LeanDag.Odontoceti.Properties
+import LeanDag.MahiMahi.Properties
 import LeanDag.Properties.Arcs.GC
-
 /-!
 # Crash recovery, for any protocol with `Persist`
 

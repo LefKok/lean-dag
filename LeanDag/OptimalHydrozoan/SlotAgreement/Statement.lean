@@ -1,5 +1,4 @@
 import LeanDag.OptimalHydrozoan.Model.Decided
-
 /-!
 # Optimal-Hydrozoan: slot agreement — statement
 

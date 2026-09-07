@@ -1,7 +1,6 @@
 import LeanDagTest.OptimalHydrozoan.Universe
 import LeanDag.Barnacle.OptimalHydrozoan.Proof
 import LeanDag.Barnacle.OptimalHydrozoanLive.Proof
-
 /-!
 # Barnacle over Optimal-Hydrozoan — the witnesses
 

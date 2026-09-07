@@ -1,6 +1,5 @@
 import LeanDag.GC.Window
 import LeanDag.DoS.Novelty
-
 /-!
 # The DoS capstones, bundling growth with the storage bound
 

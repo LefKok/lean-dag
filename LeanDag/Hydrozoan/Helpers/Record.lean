@@ -1,6 +1,5 @@
 import LeanDag.Hydrozoan.Helpers.Carrier
 import LeanDag.Properties.Record
-
 /-!
 # Hydrozoan's universe as a block record
 

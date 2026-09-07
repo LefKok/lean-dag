@@ -1,6 +1,5 @@
 import LeanDag.FinWhale.View
-import LeanDag.Anchored.Band
-
+import LeanDag.Common.Anchored.Band
 /-!
 # FinWhale — what a band of rounds carries
 

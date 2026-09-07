@@ -1,5 +1,4 @@
 import LeanDag.BlackMarlin.Helpers.Rules
-
 /-!
 # Black Marlin — the view layer
 

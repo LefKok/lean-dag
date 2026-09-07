@@ -2,7 +2,6 @@ import LeanDag.MahiMahi.Safety.Proof
 import LeanDag.MahiMahi.Counting.Proof
 import LeanDag.MahiMahi.Liveness.Proof
 import LeanDag.MahiMahi.Synchrony.Proof
-
 /-!
 # Mahi-Mahi — axiom audit
 

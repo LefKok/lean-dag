@@ -1,7 +1,6 @@
 import LeanDag.Barnacle.Model.Rule
-import LeanDag.History
-import LeanDag.Liveness
-
+import LeanDag.Common.History
+import LeanDag.Mysticeti.Liveness
 /-!
 # Mysticeti instance helpers
 

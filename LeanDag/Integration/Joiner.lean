@@ -2,7 +2,6 @@ import LeanDag.GC.ChopDecided
 import LeanDag.Adaptive.Mysticeti
 import LeanDag.Adaptive.Joiner
 import LeanDag.Properties.Arcs.GC
-
 /-!
 # I5 — the joiner and the adaptive schedule, at the core
 

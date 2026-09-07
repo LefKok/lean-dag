@@ -18,7 +18,6 @@ import LeanDag.Barnacle.Live.Proof
 import LeanDag.Barnacle.Healthy.Proof
 import LeanDag.Barnacle.Validity.Proof
 import LeanDag.Barnacle.Helpers.Delivery
-
 /-!
 # Barnacle — axiom audit
 

@@ -1,6 +1,5 @@
 import LeanDag.Hybrid.Rules
-import LeanDag.Anchored.Bounded
-
+import LeanDag.Common.Anchored.Bounded
 /-!
 # The hybrid decision relation
 

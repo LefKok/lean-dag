@@ -1,6 +1,5 @@
 import LeanDag.MahiMahi.Liveness.Statement
 import LeanDag.MahiMahi.Helpers.Liveness
-
 /-!
 # Liveness under the clause — proof
 

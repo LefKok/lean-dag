@@ -1,4 +1,4 @@
-import LeanDag.History
+import LeanDag.Common.History
 import Mathlib.Algebra.Order.BigOperators.Group.Finset
 
 /-!

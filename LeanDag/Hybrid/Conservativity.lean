@@ -1,6 +1,5 @@
 import LeanDag.Hybrid.Liveness
 import LeanDag.Odontoceti.Rules
-
 /-!
 # Conservativity: the crash-free hybrid is Odontoceti
 

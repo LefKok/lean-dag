@@ -1,6 +1,5 @@
 import LeanDag.OptimalHydrozoan.EventualDecision.Statement
 import LeanDag.Hydrozoan.Grounding.Statement
-
 /-!
 # Optimal-Hydrozoan: grounding — the liveness hypotheses are dischargeable
 

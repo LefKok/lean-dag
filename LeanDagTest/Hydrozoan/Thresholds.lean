@@ -1,5 +1,4 @@
 import LeanDag.Hydrozoan.Model.Faults
-
 /-!
 # Witness: the slack-cap threshold table
 

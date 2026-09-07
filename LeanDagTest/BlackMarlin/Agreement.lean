@@ -1,6 +1,5 @@
 import LeanDagTest.BlackMarlin.Reactive
 import LeanDag.BlackMarlin.Agreement.Proof
-
 /-!
 # Black Marlin witnesses — agreement on data
 

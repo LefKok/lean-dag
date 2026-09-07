@@ -1,6 +1,5 @@
 import LeanDag.Hydrozoan.DirectLiveness.Statement
 import LeanDag.Hydrozoan.Helpers.DirectLiveness
-
 /-!
 # Direct-commit liveness — proof
 

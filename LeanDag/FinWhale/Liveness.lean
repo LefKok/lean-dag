@@ -1,6 +1,5 @@
 import LeanDag.FinWhale.Decision
-import LeanDag.ViewPace
-
+import LeanDag.Mysticeti.ViewPace
 /-!
 # FinWhale — the bridge to the development's pacing line
 

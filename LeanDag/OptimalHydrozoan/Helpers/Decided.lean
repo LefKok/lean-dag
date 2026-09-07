@@ -1,7 +1,6 @@
 import LeanDag.OptimalHydrozoan.Model.Decided
 import LeanDag.OptimalHydrozoan.Helpers.DirectRules
-import LeanDag.Anchored.Bounded
-
+import LeanDag.Common.Anchored.Bounded
 /-!
 # Optimal-Hydrozoan: decision-relation lemmas
 

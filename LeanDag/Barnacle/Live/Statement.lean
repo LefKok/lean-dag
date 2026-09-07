@@ -2,7 +2,6 @@ import LeanDag.Barnacle.Progress.Statement
 import LeanDag.Barnacle.MysticetiLive.Statement
 import LeanDag.Barnacle.Odontoceti.Statement
 import LeanDag.Barnacle.Nemo.Statement
-
 /-!
 # BN11 — the mechanism over a base protocol, end to end
 

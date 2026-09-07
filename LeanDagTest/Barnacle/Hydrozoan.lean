@@ -1,8 +1,7 @@
 import LeanDagTest.Hydrozoan.Decided
 import LeanDag.Barnacle.Hydrozoan.Proof
 import LeanDag.Barnacle.Model.Window
-import LeanDag.Schedule
-
+import LeanDag.Common.Schedule
 /-!
 # Barnacle over Hydrozoan — the base witnesses
 

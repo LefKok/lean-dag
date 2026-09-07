@@ -1,6 +1,5 @@
 import LeanDag.Barnacle.Agreement.Statement
 import LeanDag.Barnacle.Helpers.Agreement
-
 /-!
 # BN3 — proof
 

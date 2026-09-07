@@ -1,6 +1,5 @@
-import LeanDag.Block
-import LeanDag.BlockRecord
-
+import LeanDag.Common.Block
+import LeanDag.Common.BlockRecord
 /-!
 # Nemo-Nemo: the crash-fault DAG foundation
 

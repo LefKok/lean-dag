@@ -1,7 +1,6 @@
 import LeanDag.FinWhale.Propagation
 import LeanDag.FinWhale.Model.Decision
-import LeanDag.Anchored
-
+import LeanDag.Common.Anchored
 /-!
 # FinWhale — what a direct verdict excludes
 

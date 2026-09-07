@@ -1,6 +1,5 @@
 import LeanDag.Hydrozoan.Model.View
-import LeanDag.Participation
-
+import LeanDag.Common.Participation
 /-!
 # Liveness hypotheses
 

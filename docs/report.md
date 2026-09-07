@@ -695,7 +695,7 @@ structure ValidAt [DecidableEq Validator] (q : ℕ) (C : Clause Validator BlockI
 A clause owes the three facts of `Mechanised` that concern it, the
 predecessor fact being the family's; `distinct`, `selfParent`, the empty
 clause `none` and the conjunction `and` are the clauses the four rules
-use, each with its obligations discharged in `BlockRecord.lean`, and
+use, each with its obligations discharged in `Common/BlockRecord.lean`, and
 the family is `Mechanised` at any clause that is (`ValidAt.mechanised`)
 and `CopyStable` at any clause that does not read the author. A rule's
 own predicate then inherits both along its equivalence with the family
@@ -710,18 +710,18 @@ theorem ValidWrt.iff_validAt (blk : BlockId → Block Validator BlockId Payload)
 The core is the family at its quorum with distinct creators and the
 self-parent clause; Nemo is it at the majority with no clause;
 FinWhale (§20.2) with distinct creators and its leader clause,
-`leaderClause`, the one clause proved outside `BlockRecord.lean`;
+`leaderClause`, the one clause proved outside `Common/BlockRecord.lean`;
 Hydrozoan (§22) with distinct creators alone. The self-parent clause is
 the one that reads the author, which is why the core's fill adds a self
 reference where the other three take the copy fill.
 
 **What else is stated once at the record.** The full view `View.full` and
-a view caught up to a round, `View.CoversUpto`, live in `BlockRecord.lean`;
+a view caught up to a round, `View.CoversUpto`, live in `Common/BlockRecord.lean`;
 the two liveness hypotheses `PopulatedOn` and `SynchronisedOn` in
-`Participation.lean`; the supporters and blamers a view holds,
-`supportersIn` and `blamesIn`, in `Support.lean`, each equal to the
+`Common/Participation.lean`; the supporters and blamers a view holds,
+`supportersIn` and `blamesIn`, in `Common/Support.lean`, each equal to the
 record's count at the view read as a record (`supportersIn_eq_toRecord`);
-and the ledger in `Ledger.lean` (§5.6). Every rule's direct rules,
+and the ledger in `Common/Ledger.lean` (§5.6). Every rule's direct rules,
 liveness hypotheses and ledger are these at its record, with no copy of
 its own, and the core's `chop`, `addGenesis` and their lemmas are the
 record's names, exported rather than restated.
@@ -769,7 +769,7 @@ def Reaches (U) : BlockId → BlockId → Prop := ReachesFrom U.block
 ```
 
 The walk is stated over the block assignment rather than over a universe
-type, because it consumes nothing else: `Causality.lean` proves it once, and
+type, because it consumes nothing else: `Common/Causality.lean` proves it once, and
 both the Byzantine universe here and the crash universe of §15 read it at
 their own data. What each supplies is a `CausalStructure` — references stay
 inside the population, and a reference sits one round below — which is
@@ -925,7 +925,7 @@ Every rule in this development decides a slot the same way: a direct rule
 fires on the validator's view, or the slot is read off the nearest
 **eligible** committed slot above it through a link from that anchor.
 What varies between the rules is the data, and the relation takes it as
-a record (`LeanDag/Anchored.lean`): the wave, the two direct predicates
+a record (`LeanDag/Common/Anchored.lean`): the wave, the two direct predicates
 as a view evaluates them, a number of graded rungs, each a link from the
 anchor to a candidate, and a tie at each rung:
 
@@ -1789,7 +1789,7 @@ the same set of blocks; and each block enters at exactly one slot, on which they
 agree.
 
 `commitSeq`, `ledgerSet` and `OutputAt` are stated once at the block record
-(`Ledger.lean`), where monotonicity and uniqueness hold of any verdict
+(`Common/Ledger.lean`), where monotonicity and uniqueness hold of any verdict
 assignment and agreement of any two assignments that agree below `n`
 (`ledgerSet_agree_of`, `outputAt_agree_of`). M7–M9 are those forms at M6;
 Nemo's ledger (§15) and Black Marlin's flush record (§19) are the same
@@ -1896,7 +1896,7 @@ def PopulatedOn (U) (T : Finset Validator) (r : ℕ) : Prop :=
 ```
 
 The predicate is stated over a raw block assignment and id population
-(`Participation.lean`), neither of which mentions validity, quorums or a
+(`Common/Participation.lean`), neither of which mentions validity, quorums or a
 fault model, so every universe type instantiates one definition rather
 than restating it: `PopulatedOn` is the `BlockUniverse` instance, and the
 crash universe of §15 takes the same predicate.
@@ -2162,7 +2162,7 @@ is finite combinatorics over a DAG; everything that mentions an instant
 lies below. Extraction confirms the division: every labelled result that
 mentions a clock lies below the interface — the view-pace family
 (V1–V17), catch-up (CU1–CU4) and the reactive schedule (RS1–RS5) — and
-none above it does. Every theorem of `ViewPace.lean` that concludes
+none above it does. Every theorem of `Mysticeti/ViewPace.lean` that concludes
 anything used above the line does so by first establishing
 `SynchronisedOn` or `PopulatedOn`. This is the separation the report's
 title claims, and the diagram shows it as a column that every liveness
@@ -2184,7 +2184,7 @@ at one round, and that round needs no network.
 
 ### 6.9 The route: view convergence over a partial schedule
 
-*(module `LeanDag/ViewPace.lean`; witnesses in `LeanDagTest/ViewPace.lean`)*
+*(module `LeanDag/Mysticeti/ViewPace.lean`; witnesses in `LeanDagTest/ViewPace.lean`)*
 
 The network assumption is **view convergence** — after GST, whatever a
 correct validator holds reaches every correct validator within `delay` —
@@ -2423,8 +2423,8 @@ proof but makes the conclusion false:
 
 ### 6.10 Quantitative results
 
-The structure-free rated hypotheses live in `Quantitative.lean`; the
-results they pin are stated over the structure in `ViewPace.lean`. Each
+The structure-free rated hypotheses live in `Mysticeti/Quantitative.lean`; the
+results they pin are stated over the structure in `Mysticeti/ViewPace.lean`. Each
 strengthens a result above under a strengthened clause (§4.5); a reader
 declining those clauses retains §6.1–§6.9 intact.
 
@@ -2522,7 +2522,7 @@ against delivery.
 
 ### 6.11 Catch-up: the drift collapse
 
-*(clause and collapse in `LeanDag/ViewPace.lean`; witnesses in
+*(clause and collapse in `LeanDag/Mysticeti/ViewPace.lean`; witnesses in
 `LeanDagTest/Catchup.lean`, `LeanDagTest/Collapse.lean`)*
 
 The schedule alone does not contract drift. Under `waits` every clock
@@ -2622,8 +2622,8 @@ clauses cut different waits, entry into a round and exit from it.
 
 ### 6.12 The view a validator holds
 
-*(module `LeanDag/PaceDelivery.lean`; `viewAt` and the local commit in
-`ViewPace.lean`)*
+*(module `LeanDag/Mysticeti/PaceDelivery.lean`; `viewAt` and the local commit in
+`Mysticeti/ViewPace.lean`)*
 
 Two objects in this development mean *what a validator has*, and this section connects them. The commit rules are view-relative — `Decided U V k v`
 over a refs-closed `View` — while the pacing line reasons about
@@ -4319,7 +4319,7 @@ The bound is carried by `Properties.DecidedBelow`
 (`Properties/Derived/Bounded.lean`), a definition on the rule's `Decided`
 that records every anchor below `B`, whose congruence
 `DecidedBelow.reschedule` is a theorem. The relation also states the bounded
-form explicitly (AL2, `LeanDag/Anchored/Bounded.lean`), once for every
+form explicitly (AL2, `LeanDag/Common/Anchored/Bounded.lean`), once for every
 rule, since a `Decided` derivation is a `Prop` and its anchors cannot be
 recovered from it:
 
@@ -4822,7 +4822,7 @@ validity with every validator honest, and it consumes only the
 fault-agnostic core — `Block` and the creator
 sets, the schedule class `Slots`, the anchor comparison (`eq_of_indirect`),
 the ledger reader `commitSeq`, and the participation predicates of
-`Participation.lean` (`PopulatedFrom`, `SynchronisedFrom`), stated over a raw block assignment so that the
+`Common/Participation.lean` (`PopulatedFrom`, `SynchronisedFrom`), stated over a raw block assignment so that the
 Byzantine and the crash universes instantiate one definition. The
 extraction records that the arc consumes no clause of §4's trust
 boundary: its universe carries its own. What it proves: agreement with
@@ -6160,7 +6160,7 @@ The last is a theorem where the core's counterpart is an assumption, and
 the difference is the protocol's rather than the mechanisation's. The
 core's `FairRunOn` needs runs of three; its docstring records the
 pigeonhole for per-slot rotation as prose rather than proving it, and
-`WaveRobin.lean` supplies runs of three by rotating in waves instead.
+`Common/WaveRobin.lean` supplies runs of three by rotating in waves instead.
 Black Marlin needs runs of two, and that case is a short counting
 argument: were no two cyclically adjacent anchors reliable, the
 successor map would inject the reliable set into the Byzantine one,
@@ -6226,7 +6226,7 @@ rule asks for two (§18.5).
 to conclude round `r + 1`, and holdings only grow, so a validator already
 on the fast path needs one further reliable anchor per round: entering
 costs a run of three, remaining costs a run of two. This is where the
-run-of-three pigeonhole `WaveRobin.lean` sidesteps re-enters the arc —
+run-of-three pigeonhole `Common/WaveRobin.lean` sidesteps re-enters the arc —
 not for the commit rule, where BML5 discharges a run of two outright, but
 for the guarantee that no timeout ever fires.
 
@@ -9870,32 +9870,37 @@ and `JumpMsg.denote_eq_of_core` (SS10), `adaptiveRun_agree` (AL3) and
 Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 `native_decide` and the extended trusted base it entails.
 
-**The core.**
+**The common layer, `Common/`.** What every rule is defined in terms of; no module here names a rule.
 
 | Module | Contents |
 |:---|:---|
-| `Validators.lean` | the fault model (`n ≥ 3f+1`); T0 |
-| `Slots.lean` | the slot schedule every rule runs on; its constructors (`uniform`, `uniformSingle`, `identity`, `waveRobin`) |
-| `Block.lean` | `Block`, `ValidWrt`; T0′ |
-| `BlockRecord.lean` | the block record and its view, and a view as a record (`View.toRecord`); `chopBlk`; what a validity predicate owes the mechanisms (`Mechanised`, `CopyStable`), and the validity family `ValidAt` with its clauses, which discharges it for every rule |
-| `Record/Chop.lean`, `Record/Fill.lean`, `Record/Genesis.lean` | the cut, the fill and re-genesis, built once at the record |
-| `BlockDag.lean` | `BlockUniverse` and `View` as the record at `ValidWrt`; the core's validity is mechanised; T1 |
-| `CausalHistory.lean` | `Reaches` at any block record; T2, T6a |
-| `Support.lean` | counting vocabulary at any block record, in the record and in a view (`supportersIn`, `blamesIn`); the core's hitting, propagation and coverage lemmas |
-| `Participation.lean` | `PopulatedOn` and `SynchronisedOn`, at raw block data and at any block record |
-| `Ledger.lean` | the ledger at any block record: `commitSeq`, `ledgerSet`, `OutputAt`; monotonicity, uniqueness, and agreement of agreeing assignments |
-| `History.lean` | causal history as a `Finset`, at any block record |
-| `Persistence.lean` | T3 |
-| `CommonCore.lean` | T3a, T3c |
-| `Anchored.lean` | the anchored decision relation every rule is an instance of: `AnchoredRule` (wave, direct commit and skip on a view, graded rungs, ties), `EligibleAt`, `Decided`, what a rule owes (`Laws`), and agreement, monotonicity and the ledger once |
-| `Anchored/Band.lean` | the carrier of a rule (`toDagRule`, `toDagRuleOn`), the four properties at it, the band laws and the band induction once, the indirect property |
-| `Anchored/Bounded.lean` | the bounded relation, its congruence across schedules, totality at an anchor and the descent below a committed run |
-| `Mysticeti.lean` | the commit rule; M1–M5; the core as an anchored rule (`coreAnchored`) and its laws (`coreLaws`), M6–M9 being the relation's |
-| `Schedule.lean` | conservativity of the pipelined schedule |
-| `Liveness.lean` | L0, L4–L6; the committed-run results at the core's schedule shapes |
+| `Common/Validators.lean` | the fault model (`n ≥ 3f+1`); T0 |
+| `Common/Slots.lean` | the slot schedule every rule runs on; its constructors (`uniform`, `uniformSingle`, `identity`, `waveRobin`) |
+| `Common/Schedule.lean` | conservativity of the pipelined schedule |
+| `Common/Block.lean` | `Block`, `ValidWrt`; T0′ |
+| `Common/BlockRecord.lean` | the block record and its view, and a view as a record (`View.toRecord`); `chopBlk`; what a validity predicate owes the mechanisms (`Mechanised`, `CopyStable`), and the validity family `ValidAt` with its clauses, which discharges it for every rule |
+| `Common/Record/Chop.lean`, `Common/Record/Fill.lean`, `Common/Record/Genesis.lean` | the cut, the fill and re-genesis, built once at the record |
+| `Common/BlockDag.lean` | `BlockUniverse` and `View` as the record at `ValidWrt`; the core's validity is mechanised; T1 |
+| `Common/CausalHistory.lean` | `Reaches` at any block record; T2, T6a |
+| `Common/Support.lean` | counting vocabulary at any block record, in the record and in a view (`supportersIn`, `blamesIn`); the core's hitting, propagation and coverage lemmas |
+| `Common/Participation.lean` | `PopulatedOn` and `SynchronisedOn`, at raw block data and at any block record |
+| `Common/Ledger.lean` | the ledger at any block record: `commitSeq`, `ledgerSet`, `OutputAt`; monotonicity, uniqueness, and agreement of agreeing assignments |
+| `Common/History.lean` | causal history as a `Finset`, at any block record |
+| `Common/Persistence.lean` | T3 |
+| `Common/CommonCore.lean` | T3a, T3c |
+| `Common/Anchored.lean` | the anchored decision relation every rule is an instance of: `AnchoredRule` (wave, direct commit and skip on a view, graded rungs, ties), `EligibleAt`, `Decided`, what a rule owes (`Laws`), and agreement, monotonicity and the ledger once |
+| `Common/Anchored/Band.lean` | the carrier of a rule (`toDagRule`, `toDagRuleOn`), the four properties at it, the band laws and the band induction once, the indirect property |
+| `Common/Anchored/Bounded.lean` | the bounded relation, its congruence across schedules, totality at an anchor and the descent below a committed run |
+
+**The core, `Mysticeti/`.** The pipelined rule and its route, as one instance of the common layer.
+
+| Module | Contents |
+|:---|:---|
+| `Mysticeti/Rule.lean` | the commit rule; M1–M5; the core as an anchored rule (`coreAnchored`) and its laws (`coreLaws`), M6–M9 being the relation's |
+| `Mysticeti/Liveness.lean` | L0, L4–L6; the committed-run results at the core's schedule shapes |
 | `Network/Quorum.lean` | the DoS capstones, production bundled with the storage bound |
-| `ViewPace.lean` | the route (§6.9): the structure, V1, V4, coverage, production, the spine, and the quantitative results L8a, L9, L11 |
-| `Quantitative.lean` | the rated hypotheses; L8b |
+| `Mysticeti/ViewPace.lean` | the route (§6.9): the structure, V1, V4, coverage, production, the spine, and the quantitative results L8a, L9, L11 |
+| `Mysticeti/Quantitative.lean` | the rated hypotheses; L8b |
 
 **The arcs** (§§7–23). All but `Integration/` consume the core read-only; §16 weakens one hypothesis of §12, for the reason given there:
 
@@ -9930,7 +9935,7 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `Adaptive/Liveness.lean` | the bounded descent; the fairness clause; existence |
 | `Properties/Record.lean` | a carrier on the record (`DagRule.OnRecord`), with its invariant and view maps; every mechanism's witnesses, once |
 | `Properties/Arcs/Record.lean` | every verdict cell of the cut, the fill and re-genesis, once, at any carrier on the record |
-| `Record/Invariant.lean` | what an invariant a carrier adds owes the mechanisms (`Invariant.Mechanised`) |
+| `Common/Record/Invariant.lean` | what an invariant a carrier adds owes the mechanisms (`Invariant.Mechanised`) |
 | `Adaptive/Joiner.lean` | the joiner across a cut: horizon-stability, the schedule transformers commute, agreement at the adaptive schedule |
 | `Adaptive/Odontoceti.lean` | the two-round mirror |
 | `Hybrid/Faults.lean` | the hybrid model; the derived instance; `HonestNoEquiv`; the counting core |
@@ -9953,11 +9958,11 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `Properties/Optional/` | `CommitsDirect`, `SkipsUnsupported`, `Quorate`, `SelfParent`, `NoEquiv` |
 | `Properties/Derived/` | `Persist`, `LocalTruncate`, `Descends`, `DecidedBelow`, progress |
 | `Properties/Extends.lean`, `Sustain.lean`, `Truncate.lean`, `Compose.lean` | the mechanism relations and their composition |
-| `Properties/Arcs/GC.lean`, `SafeSkip.lean`, `Liveness.lean`, `Quality.lean` | the generic theorems: cut, fill, prompt skip, liveness across a mechanism, chain quality |
+| `Properties/Arcs/GC.lean`, `SafeSkip.lean`, `Mysticeti/Liveness.lean`, `Quality.lean` | the generic theorems: cut, fill, prompt skip, liveness across a mechanism, chain quality |
 | `Properties/Arcs/Stack.lean`, `Headline.lean` | any stack of mechanisms is one; the safety and liveness headlines |
 | `Timed/Coverage.lean` | the timed model: coverage, `OfCoverage`, the bridge into `live` |
 | `Timed/Extension.lean` | coverage under an extension: refuted for a set holding a novel author, preserved for any other |
-| `MysticetiProperties.lean`, `OdontocetiProperties.lean`, `NemoProperties.lean`, `HybridProperties.lean`, `MahiMahiProperties.lean`, `FinWhale/Carrier.lean`, `Hydrozoan/Helpers/`, `OptimalHydrozoan/Carrier.lean`, `Reactive/MysticetiProperties.lean` | each rule's carrier, properties, support and headlines |
+| `Mysticeti/Properties.lean`, `Odontoceti/Properties.lean`, `Nemo/Properties.lean`, `Hybrid/Properties.lean`, `MahiMahi/Properties.lean`, `FinWhale/Carrier.lean`, `Hydrozoan/Helpers/`, `OptimalHydrozoan/Carrier.lean`, `Reactive/MysticetiProperties.lean` | each rule's carrier, properties, support and headlines |
 | `Integration/NemoMechanisms.lean`, `FinWhaleMechanisms.lean`, `HybridMechanisms.lean`, `HydrozoanMechanisms.lean`, `OptimalMechanisms.lean`, `ReactiveMechanisms.lean`, `StackRules.lean` | the mechanism cells at each rule: witnesses and instances |
 | `Nemo/Basic.lean` | the majority quorum and its intersection; crash validity; the universe with universal non-equivocation |
 | `Nemo/Support.lean` | the hitting, coverage and propagation lemmas at the majority |
@@ -10932,7 +10937,7 @@ and those are Appendix C.
 
 #### `Faults`
 
-*class, `Validators.lean`*
+*class, `Common.Validators.lean`*
 
 ```lean
 class Faults (Validator : Type*) [Fintype Validator] [DecidableEq Validator] where
@@ -10950,7 +10955,7 @@ The fault model: `n ≥ 3f+1` validators, at most `f` of them Byzantine.
 
 #### `Correct`
 
-*def, `Validators.lean`*
+*def, `Common.Validators.lean`*
 
 ```lean
 def Correct : Finset Validator := (F.byzantine)ᶜ
@@ -10962,7 +10967,7 @@ The correct (non-Byzantine) validators.
 
 #### `Block`
 
-*structure, `Block.lean`*
+*structure, `Common.Block.lean`*
 
 ```lean
 structure Block (Validator BlockId Payload : Type*) where
@@ -10980,7 +10985,7 @@ A block: its round, its author, the ids it references from the preceding round, 
 
 #### `creatorsOf`
 
-*def, `Block.lean`*
+*def, `Common.Block.lean`*
 
 ```lean
 def creatorsOf (blk : BlockId → Block Validator BlockId Payload)
@@ -10992,7 +10997,7 @@ The validators that authored a set of ids. Defined on an arbitrary `Finset Block
 
 #### `ValidWrt`
 
-*structure, `Block.lean`*
+*structure, `Common.Block.lean`*
 
 ```lean
 structure ValidWrt (blk : BlockId → Block Validator BlockId Payload)
@@ -11020,7 +11025,7 @@ The quorum is stated on the *creator set*, not on `refs.card`. That is the form 
 
 #### `BlockUniverse`
 
-*abbrev, `BlockDag.lean`*
+*abbrev, `Common.BlockDag.lean`*
 
 ```lean
 abbrev BlockUniverse (Validator BlockId Payload : Type*)
@@ -11032,7 +11037,7 @@ abbrev BlockUniverse (Validator BlockId Payload : Type*)
 
 #### `View`
 
-*abbrev, `BlockDag.lean`*
+*abbrev, `Common.BlockDag.lean`*
 
 ```lean
 abbrev View (Validator BlockId Payload : Type*) [Fintype Validator]
@@ -11047,7 +11052,7 @@ abbrev View (Validator BlockId Payload : Type*) [Fintype Validator]
 
 #### `CausalStructure`
 
-*structure, `Causality.lean`*
+*structure, `Common.Causality.lean`*
 
 ```lean
 structure CausalStructure (blk : BlockId → Block Validator BlockId Payload)
@@ -11062,7 +11067,7 @@ structure CausalStructure (blk : BlockId → Block Validator BlockId Payload)
 
 #### `Reaches`
 
-*def, `CausalHistory.lean`*
+*def, `Common.CausalHistory.lean`*
 
 ```lean
 def Reaches (U : BlockRecord Validator BlockId Payload P honest) : BlockId → BlockId → Prop :=
@@ -11073,7 +11078,7 @@ def Reaches (U : BlockRecord Validator BlockId Payload P honest) : BlockId → B
 
 #### `history`
 
-*def, `History.lean`*
+*def, `Common.History.lean`*
 
 ```lean
 def history (U : BlockRecord Validator BlockId Payload P honest) (b : BlockId) : Finset BlockId :=
@@ -11084,7 +11089,7 @@ The causal history of `b`, as a `Finset`.
 
 #### `authorsAt`
 
-*def, `Support.lean`*
+*def, `Common.Support.lean`*
 
 ```lean
 def authorsAt (U : BlockRecord Validator BlockId Payload P honest) (n : ℕ) : Finset Validator :=
@@ -11095,7 +11100,7 @@ The validators holding a block at a given round — the pool `p`.
 
 #### `supporters`
 
-*def, `Support.lean`*
+*def, `Common.Support.lean`*
 
 ```lean
 def supporters (U : BlockRecord Validator BlockId Payload P honest) (b : BlockId) (n : ℕ) :
@@ -11107,7 +11112,7 @@ The validators whose round-`n` block references `b`.
 
 #### `blames`
 
-*def, `Support.lean`*
+*def, `Common.Support.lean`*
 
 ```lean
 def blames (U : BlockRecord Validator BlockId Payload P honest) (L : BlockId) (n : ℕ) :
@@ -11121,7 +11126,7 @@ The complement of `supporters U L n` *within the round-`n` author pool* — but 
 
 #### `supportersIn`
 
-*def, `Support.lean`*
+*def, `Common.Support.lean`*
 
 ```lean
 def supportersIn (U : BlockRecord Validator BlockId Payload P honest) (V : U.View)
@@ -11133,7 +11138,7 @@ The supporters of `b` at round `n` that a view holds.
 
 #### `blamesIn`
 
-*def, `Support.lean`*
+*def, `Common.Support.lean`*
 
 ```lean
 def blamesIn (U : BlockRecord Validator BlockId Payload P honest) (V : U.View)
@@ -11147,7 +11152,7 @@ The blamers of `L` at round `n` that a view holds.
 
 #### `DirectCommit`
 
-*def, `Mysticeti.lean`*
+*def, `Mysticeti.Rule.lean`*
 
 ```lean
 def DirectCommit (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (r : ℕ) : Prop :=
@@ -11158,7 +11163,7 @@ def DirectCommit (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (r 
 
 #### `DirectCommitIn`
 
-*def, `Mysticeti.lean`*
+*def, `Mysticeti.Rule.lean`*
 
 ```lean
 def DirectCommitIn (U : BlockUniverse Validator BlockId Payload)
@@ -11170,7 +11175,7 @@ Direct commit, as judged from a single view.
 
 #### `DirectSkipIn`
 
-*def, `Mysticeti.lean`*
+*def, `Mysticeti.Rule.lean`*
 
 ```lean
 def DirectSkipIn (U : BlockUniverse Validator BlockId Payload)
@@ -11182,7 +11187,7 @@ Direct skip, as judged from a single view: the record's `blamesIn` at the round 
 
 #### `DirectSkipSlotIn`
 
-*def, `Mysticeti.lean`*
+*def, `Mysticeti.Rule.lean`*
 
 ```lean
 def DirectSkipSlotIn (U : BlockUniverse Validator BlockId Payload)
@@ -11196,7 +11201,7 @@ Strictly stronger than the per-candidate `DirectSkipIn`, which it implies (`dire
 
 #### `coreAnchored`
 
-*def, `Mysticeti.lean`*
+*def, `Mysticeti.Rule.lean`*
 
 ```lean
 def coreAnchored (Validator BlockId Payload : Type*) [Fintype Validator]
@@ -11214,7 +11219,7 @@ def coreAnchored (Validator BlockId Payload : Type*) [Fintype Validator]
 
 #### `Decided`
 
-*abbrev, `Mysticeti.lean`*
+*abbrev, `Mysticeti.Rule.lean`*
 
 ```lean
 abbrev Decided (U : BlockUniverse Validator BlockId Payload) (V : View Validator BlockId Payload U) :
@@ -11228,7 +11233,7 @@ abbrev Decided (U : BlockUniverse Validator BlockId Payload) (V : View Validator
 
 #### `PopulatedFrom`
 
-*def, `Participation.lean`*
+*def, `Common.Participation.lean`*
 
 ```lean
 def PopulatedFrom (blk : BlockId → Block Validator BlockId Payload)
@@ -11240,7 +11245,7 @@ Every validator in `T` authors a block at round `r` among `ids`.
 
 #### `SynchronisedFrom`
 
-*def, `Participation.lean`*
+*def, `Common.Participation.lean`*
 
 ```lean
 def SynchronisedFrom (blk : BlockId → Block Validator BlockId Payload)
@@ -11253,7 +11258,7 @@ From round `R` on, every `T`-authored block references every `T`-authored block 
 
 #### `PopulatedOn`
 
-*def, `Participation.lean`*
+*def, `Common.Participation.lean`*
 
 ```lean
 def PopulatedOn (U : BlockRecord Validator BlockId Payload P honest)
@@ -11265,7 +11270,7 @@ Every validator in `T` has a block at round `r`.
 
 #### `SynchronisedOn`
 
-*def, `Participation.lean`*
+*def, `Common.Participation.lean`*
 
 ```lean
 def SynchronisedOn (U : BlockRecord Validator BlockId Payload P honest)
@@ -11277,7 +11282,7 @@ From round `R` on, every `T`-authored block references every `T`-authored block 
 
 #### `Populated`
 
-*abbrev, `Liveness.lean`*
+*abbrev, `Mysticeti.Liveness.lean`*
 
 ```lean
 abbrev Populated (U : BlockUniverse Validator BlockId Payload) (r : ℕ) : Prop :=
@@ -11288,7 +11293,7 @@ The all-of-`Correct` case, which is what L1 produces.
 
 #### `Delivery`
 
-*structure, `Liveness.lean`*
+*structure, `Mysticeti.Liveness.lean`*
 
 ```lean
 structure Delivery (U : BlockUniverse Validator BlockId Payload) where
@@ -11327,7 +11332,7 @@ What each validator had in hand, one round at a time — and which of it it chos
 
 #### `Synchronised`
 
-*abbrev, `Liveness.lean`*
+*abbrev, `Mysticeti.Liveness.lean`*
 
 ```lean
 abbrev Synchronised (U : BlockUniverse Validator BlockId Payload) (R : ℕ) : Prop :=
@@ -11338,7 +11343,7 @@ The all-of-`Correct` case.
 
 #### `EventuallyDelivers`
 
-*def, `Liveness.lean`*
+*def, `Mysticeti.Liveness.lean`*
 
 ```lean
 def EventuallyDelivers (D : Delivery U) (R : ℕ) : Prop :=
@@ -11351,7 +11356,7 @@ def EventuallyDelivers (D : Delivery U) (R : ℕ) : Prop :=
 
 #### `VotesAt`
 
-*def, `Liveness.lean`*
+*def, `Mysticeti.Liveness.lean`*
 
 ```lean
 def VotesAt (U : BlockUniverse Validator BlockId Payload)
@@ -11364,7 +11369,7 @@ def VotesAt (U : BlockUniverse Validator BlockId Payload)
 
 #### `CertifiesAt`
 
-*def, `Liveness.lean`*
+*def, `Mysticeti.Liveness.lean`*
 
 ```lean
 def CertifiesAt (U : BlockUniverse Validator BlockId Payload)
@@ -11377,7 +11382,7 @@ def CertifiesAt (U : BlockUniverse Validator BlockId Payload)
 
 #### `CommitsAt`
 
-*def, `Liveness.lean`*
+*def, `Mysticeti.Liveness.lean`*
 
 ```lean
 def CommitsAt (BlockId : Type*) [DecidableEq BlockId] (Payload : Type*)
@@ -11398,7 +11403,7 @@ The conclusion the recurrence results share. Naming it keeps their quantifier or
 
 #### `FairScheduleOn`
 
-*def, `Liveness.lean`*
+*def, `Mysticeti.Liveness.lean`*
 
 ```lean
 def FairScheduleOn (T : Finset Validator) : Prop :=
@@ -11409,7 +11414,7 @@ The schedule names a correct leader arbitrarily far out. Without it no recurrenc
 
 #### `FairToEach`
 
-*def, `Liveness.lean`*
+*def, `Mysticeti.Liveness.lean`*
 
 ```lean
 def FairToEach (T : Finset Validator) : Prop :=
@@ -11420,7 +11425,7 @@ def FairToEach (T : Finset Validator) : Prop :=
 
 #### `FairRunOn`
 
-*def, `Liveness.lean`*
+*def, `Mysticeti.Liveness.lean`*
 
 ```lean
 def FairRunOn (T : Finset Validator) (c : ℕ) : Prop :=
@@ -11439,7 +11444,7 @@ Like `FairScheduleOn` this is an assumption about the schedule, not a theorem: `
 
 #### `Rated`
 
-*def, `Quantitative.lean`*
+*def, `Mysticeti.Quantitative.lean`*
 
 ```lean
 def Rated (timeout : ℕ → ℕ) : Prop := ∀ n, n ≤ timeout n
@@ -11451,7 +11456,7 @@ Weaker than it may look, and deliberately so: it fixes no shape, and any schedul
 
 #### `FairWithin`
 
-*def, `Quantitative.lean`*
+*def, `Mysticeti.Quantitative.lean`*
 
 ```lean
 def FairWithin (T : Finset Validator) (w : ℕ) : Prop :=
@@ -11464,7 +11469,7 @@ The rated form of `FairScheduleOn`. Note `w` is a property of the schedule alone
 
 #### `BoundedSpacing`
 
-*def, `Quantitative.lean`*
+*def, `Mysticeti.Quantitative.lean`*
 
 ```lean
 def BoundedSpacing (s : ℕ) : Prop := ∀ k, S.slotRound (k + 1) ≤ S.slotRound k + s
@@ -11476,7 +11481,7 @@ Consecutive slots are at most `s` rounds apart — the upper companion to such a
 
 #### `DriftOn`
 
-*def, `ViewPace.lean`*
+*def, `Mysticeti.ViewPace.lean`*
 
 ```lean
 def DriftOn (built : Validator → ℕ → ℕ) (T : Finset Validator)
@@ -11488,7 +11493,7 @@ Drift over a build schedule alone: `T`-validators are never more than `D` apart 
 
 #### `ConvergesEventually`
 
-*def, `ViewPace.lean`*
+*def, `Mysticeti.ViewPace.lean`*
 
 ```lean
 def ConvergesEventually (holds : Validator → ℕ → Finset BlockId)
@@ -11500,7 +11505,7 @@ def ConvergesEventually (holds : Validator → ℕ → Finset BlockId)
 
 #### `ConvergesWithin`
 
-*def, `ViewPace.lean`*
+*def, `Mysticeti.ViewPace.lean`*
 
 ```lean
 def ConvergesWithin (holds : Validator → ℕ → Finset BlockId)
@@ -11512,7 +11517,7 @@ def ConvergesWithin (holds : Validator → ℕ → Finset BlockId)
 
 #### `PaceCore`
 
-*structure, `ViewPace.lean`*
+*structure, `Mysticeti.ViewPace.lean`*
 
 ```lean
 structure PaceCore (U : BlockUniverse Validator BlockId Payload)
@@ -11617,7 +11622,7 @@ The trunk carries the schedule data, the views, the network's convergence clause
 
 #### `viewAt`
 
-*def, `ViewPace.lean`*
+*def, `Mysticeti.ViewPace.lean`*
 
 ```lean
 def viewAt (pc : PaceCore U T N) (v : Validator) (t : ℕ) :
@@ -11642,7 +11647,7 @@ This is the object that connects the two halves of the development. The pacing l
 
 #### `ViewPace`
 
-*structure, `ViewPace.lean`*
+*structure, `Mysticeti.ViewPace.lean`*
 
 ```lean
 structure ViewPace (U : BlockUniverse Validator BlockId Payload)
@@ -15210,241 +15215,6 @@ abbrev PlacesRuns (P : AdaptivePolicy Validator BlockId Payload)
 
 **The adaptive fairness clause**, for the core.
 
-#### `toDagRule`
-
-*def, `Anchored.Band.lean`*
-
-```lean
-def toDagRule [P.Mechanised] : DagRule Validator BlockId Payload where
-  Universe := BlockRecord Validator BlockId Payload P honest
-  View := fun U => U.View
-  block := fun U i => U.block i
-  ids := fun U => U.ids
-  viewIds := fun V => V.ids
-  viewSound := fun V => V.subset_ids
-  viewComplete := fun V => V.complete
-  causal := fun U => U.causal
-  Decided := fun S _ V k v => R.Decided (S := S) _ V k v
-```
-
-**An anchored rule as a carrier**: the record as universe, the record's views, the relation as the verdict.
-
-#### `toDagRuleOn`
-
-*def, `Anchored.Band.lean`*
-
-```lean
-def toDagRuleOn (I : BlockRecord Validator BlockId Payload P honest → Prop) :
-    DagRule Validator BlockId Payload where
-  Universe := {U : BlockRecord Validator BlockId Payload P honest // I U}
-  View := fun U => U.val.View
-  block := fun U i => U.val.block i
-  ids := fun U => U.val.ids
-  viewIds := fun V => V.ids
-  viewSound := fun V => V.subset_ids
-  viewComplete := fun V => V.complete
-  causal := fun U => U.val.causal
-  Decided := fun S U V k v => R.Decided (S := S) U.val V k v
-```
-
-**An anchored rule under an invariant, as a carrier**: the records satisfying `I` as universes, the record's views, the relation as the verdict. For a rule whose laws hold only under an invariant.
-
-#### `DecidedWithin`
-
-*inductive, `Anchored.Bounded.lean`*
-
-```lean
-inductive DecidedWithin (U : BlockRecord Validator BlockId Payload P honest) (V : U.View)
-    (B : ℕ) : ℕ → Option BlockId → Prop
-  /-- The direct rule commits a candidate outright. -/
-  | directCommit {k : ℕ} {L : BlockId} :
-      k < B → IsLeaderBlock U k L → R.Commit U V L (S.slotRound k) →
-      DecidedWithin U V B k (some L)
-  /-- The direct rule skips the slot. -/
-  | directSkip {k : ℕ} :
-      k < B → R.Skip U V S k → DecidedWithin U V B k none
-  /-- Anchored below the bound, the tie-break's choice at the first
-  nonempty rung is committed. -/
-  | indirectCommit {k j : ℕ} {A L : BlockId} {i : ℕ} :
-      k < j → j < B → R.Eligible k j → DecidedWithin U V B j (some A) →
-      (∀ m, k < m → m < j → R.Eligible k m → DecidedWithin U V B m none) →
-      i < R.rungs → (∀ i', i' < i → R.RungEmpty U A i' k) →
-      IsLeaderBlock U k L → R.Link i U A L S k → R.Least U A i k L →
-      DecidedWithin U V B k (some L)
-  /-- Anchored below the bound, every rung is empty. -/
-  | indirectSkip {k j : ℕ} {A : BlockId} :
-      k < j → j < B → R.Eligible k j → DecidedWithin U V B j (some A) →
-      (∀ m, k < m → m < j → R.Eligible k m → DecidedWithin U V B m none) →
-      (∀ i, i < R.rungs → R.RungEmpty U A i k) →
-      DecidedWithin U V B k none
-```
-
-**The bounded relation**: `Decided`, with every slot the derivation mentions strictly below `B`.
-
-#### `IsLeaderBlock`
-
-*def, `Anchored.lean`*
-
-```lean
-def IsLeaderBlock (U : BlockRecord Validator BlockId Payload P honest) (k : ℕ) (L : BlockId) :
-    Prop :=
-  L ∈ U.ids ∧ (U.block L).round = S.slotRound k ∧ (U.block L).creator = S.leader k
-```
-
-`L` is a candidate block for slot `k`: the right round, the right author. A correct leader has at most one such block; a Byzantine one may have several, which is why the rules quantify over candidates rather than selecting one.
-
-#### `EligibleAt`
-
-*def, `Anchored.lean`*
-
-```lean
-def EligibleAt (wave k j : ℕ) : Prop := S.slotRound k + wave < S.slotRound j
-```
-
-`j` may anchor `k` at wave `wave`.
-
-#### `AnchoredRule`
-
-*structure, `Anchored.lean`*
-
-```lean
-structure AnchoredRule (Validator : Type*) (BlockId : Type*) (Payload : Type*)
-    (P : Validity Validator BlockId Payload) (honest : Finset Validator) where
-  /-- The rounds a slot's direct rules read above its proposal, less one:
-  an anchor must sit strictly above `slotRound k + wave`. -/
-  wave : ℕ
-  /-- The direct commit, judged from a view: `Commit U V L r` says the
-  candidate `L` proposed at round `r` is committed by what `V` holds. -/
-  Commit : (U : BlockRecord Validator BlockId Payload P honest) → U.View → BlockId → ℕ → Prop
-  /-- The direct skip of a slot, judged from a view. -/
-  Skip : (U : BlockRecord Validator BlockId Payload P honest) → U.View → Slots Validator → ℕ → Prop
-  /-- The number of rungs of the indirect test. -/
-  rungs : ℕ
-  /-- Rung `i`: `Link i U A L r` says the anchor `A` links the candidate `L`
-  proposed at round `r`. -/
-  Link : ℕ → (U : BlockRecord Validator BlockId Payload P honest) → BlockId → BlockId →
-    Slots Validator → ℕ → Prop
-  /-- The tie-break at rung `i`: `tie i L' L` says `L'` is preferred to `L`.
-  Empty where the rung's link is unique per slot. -/
-  tie : ℕ → BlockId → BlockId → Prop
-```
-
-**An anchored rule**: what a leader-based decision rule supplies.
-
-#### `Eligible`
-
-*abbrev, `Anchored.lean`*
-
-```lean
-abbrev Eligible (k j : ℕ) : Prop := EligibleAt (S := S) R.wave k j
-```
-
-**`j` may anchor `k`**: eligibility at the rule's wave.
-
-#### `SpansEligible`
-
-*abbrev, `Anchored.lean`*
-
-```lean
-abbrev SpansEligible (c : ℕ) : Prop := SpansEligibleAt (S := S) R.wave c
-```
-
-**A run of `c` slots reaches past everything below it**, at the rule's wave.
-
-#### `Decided`
-
-*inductive, `Anchored.lean`*
-
-```lean
-inductive Decided (U : BlockRecord Validator BlockId Payload P honest) (V : U.View) :
-    ℕ → Option BlockId → Prop
-  /-- The direct rule commits a candidate outright. -/
-  | directCommit {k : ℕ} {L : BlockId} :
-      IsLeaderBlock U k L → R.Commit U V L (S.slotRound k) →
-      Decided U V k (some L)
-  /-- The direct rule skips the slot. -/
-  | directSkip {k : ℕ} :
-      R.Skip U V S k → Decided U V k none
-  /-- Anchored on the nearest eligible committed slot, every rung below
-  `i` is empty, and `L` is the tie-break's choice among the candidates
-  linked at rung `i`. -/
-  | indirectCommit {k j : ℕ} {A L : BlockId} {i : ℕ} :
-      k < j → R.Eligible k j → Decided U V j (some A) →
-      (∀ m, k < m → m < j → R.Eligible k m → Decided U V m none) →
-      i < R.rungs → (∀ i', i' < i → R.RungEmpty U A i' k) →
-      IsLeaderBlock U k L → R.Link i U A L S k → R.Least U A i k L →
-      Decided U V k (some L)
-  /-- Anchored on the nearest eligible committed slot, every rung is
-  empty. -/
-  | indirectSkip {k j : ℕ} {A : BlockId} :
-      k < j → R.Eligible k j → Decided U V j (some A) →
-      (∀ m, k < m → m < j → R.Eligible k m → Decided U V m none) →
-      (∀ i, i < R.rungs → R.RungEmpty U A i k) →
-      Decided U V k none
-```
-
-**`Decided U V k v`** — a validator holding the view `V` has settled slot `k`, committing `v = some L` or skipping it, `v = none`. Undecided is the absence of a derivation.
-
-#### `Laws`
-
-*structure, `Anchored.lean`*
-
-```lean
-structure Laws (I : Slots Validator → BlockRecord Validator BlockId Payload P honest → Prop :=
-    fun _ _ => True) : Prop where
-  /-- Two direct commits at one slot, from any two views, name one block. -/
-  commit_unique : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
-    {V₁ V₂ : U.View} {k : ℕ} {L₁ L₂ : BlockId},
-    I S U → IsLeaderBlock U k L₁ → IsLeaderBlock U k L₂ →
-    R.Commit U V₁ L₁ (S.slotRound k) → R.Commit U V₂ L₂ (S.slotRound k) → L₁ = L₂
-  /-- A direct commit and a direct skip of one slot cannot both hold. -/
-  commit_skip : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
-    {V₁ V₂ : U.View} {k : ℕ} {L : BlockId},
-    I S U → IsLeaderBlock U k L → R.Commit U V₁ L (S.slotRound k) → R.Skip U V₂ S k → False
-  /-- **Visibility.** A direct commit is linked, at some rung, from any
-  candidate anchor of any eligible slot. -/
-  commit_link : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
-    {V : U.View} {k j : ℕ} {L A : BlockId},
-    I S U → IsLeaderBlock U k L → R.Commit U V L (S.slotRound k) →
-    IsLeaderBlock U j A → R.Eligible k j →
-    ∃ i, i < R.rungs ∧ R.Link i U A L S k
-  /-- A direct commit and the tie-break's choice at any rung, from any
-  candidate anchor of any eligible slot, are one block. -/
-  commit_link_unique : ∀ {S : Slots Validator}
-    {U : BlockRecord Validator BlockId Payload P honest}
-    {V : U.View} {k j i : ℕ} {L₁ L₂ A : BlockId},
-    I S U → IsLeaderBlock U k L₁ → IsLeaderBlock U k L₂ → R.Commit U V L₁ (S.slotRound k) →
-    IsLeaderBlock U j A → R.Eligible k j → i < R.rungs →
-    (∀ i', i' < i → R.RungEmpty U A i' k) →
-    R.Link i U A L₂ S k → R.Least U A i k L₂ → L₁ = L₂
-  /-- A direct skip excludes every link for the slot's candidates. -/
-  skip_link : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
-    {V : U.View} {k i : ℕ} {L A : BlockId},
-    I S U → R.Skip U V S k → IsLeaderBlock U k L → i < R.rungs → ¬ R.Link i U A L S k
-  /-- Two tie-break choices at one rung, from one anchor, are one block. -/
-  link_unique : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
-    {k j i : ℕ} {L₁ L₂ A : BlockId},
-    I S U → IsLeaderBlock U k L₁ → IsLeaderBlock U k L₂ → IsLeaderBlock U j A → R.Eligible k j →
-    i < R.rungs → (∀ i', i' < i → R.RungEmpty U A i' k) →
-    R.Link i U A L₁ S k → R.Link i U A L₂ S k →
-    R.Least U A i k L₁ → R.Least U A i k L₂ → L₁ = L₂
-  /-- A larger view can only see more of a direct commit. -/
-  commit_mono : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
-    {V V' : U.View} {L : BlockId} {r : ℕ},
-    I S U → V.ids ⊆ V'.ids → R.Commit U V L r → R.Commit U V' L r
-  /-- And of a direct skip. -/
-  skip_mono : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
-    {V V' : U.View} {k : ℕ}, I S U → V.ids ⊆ V'.ids → R.Skip U V S k → R.Skip U V' S k
-  /-- The direct skip reads the schedule only at its own slot. -/
-  skip_congr : ∀ {S₁ S₂ : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
-    {V : U.View} {k : ℕ}, I S₁ U → S₁.slotRound k = S₂.slotRound k → S₁.leader k = S₂.leader k →
-    R.Skip U V S₁ k → R.Skip U V S₂ k
-  /-- And so does every rung's link. -/
-  link_congr : R.LinkCongr
-```
-
-**The laws of an anchored rule** — what the direct predicates and the rungs must satisfy for agreement, on the records satisfying an invariant `I` (every record, by default). Every rule proves each of them under its own name.
-
 #### `Laws`
 
 *def, `Barnacle.FinWhale.Statement.lean`*
@@ -15618,9 +15388,244 @@ def OrderAgreesWhenAnchorsReliable (U : BlockUniverse Validator BlockId Payload)
 
 The hypothesis is tight. `LeanDagTest/BlackMarlin/Divergence` exhibits two records with a single Byzantine anchor below them that deliver two reliably authored blocks in opposite orders.
 
+#### `toDagRule`
+
+*def, `Common.Anchored.Band.lean`*
+
+```lean
+def toDagRule [P.Mechanised] : DagRule Validator BlockId Payload where
+  Universe := BlockRecord Validator BlockId Payload P honest
+  View := fun U => U.View
+  block := fun U i => U.block i
+  ids := fun U => U.ids
+  viewIds := fun V => V.ids
+  viewSound := fun V => V.subset_ids
+  viewComplete := fun V => V.complete
+  causal := fun U => U.causal
+  Decided := fun S _ V k v => R.Decided (S := S) _ V k v
+```
+
+**An anchored rule as a carrier**: the record as universe, the record's views, the relation as the verdict.
+
+#### `toDagRuleOn`
+
+*def, `Common.Anchored.Band.lean`*
+
+```lean
+def toDagRuleOn (I : BlockRecord Validator BlockId Payload P honest → Prop) :
+    DagRule Validator BlockId Payload where
+  Universe := {U : BlockRecord Validator BlockId Payload P honest // I U}
+  View := fun U => U.val.View
+  block := fun U i => U.val.block i
+  ids := fun U => U.val.ids
+  viewIds := fun V => V.ids
+  viewSound := fun V => V.subset_ids
+  viewComplete := fun V => V.complete
+  causal := fun U => U.val.causal
+  Decided := fun S U V k v => R.Decided (S := S) U.val V k v
+```
+
+**An anchored rule under an invariant, as a carrier**: the records satisfying `I` as universes, the record's views, the relation as the verdict. For a rule whose laws hold only under an invariant.
+
+#### `DecidedWithin`
+
+*inductive, `Common.Anchored.Bounded.lean`*
+
+```lean
+inductive DecidedWithin (U : BlockRecord Validator BlockId Payload P honest) (V : U.View)
+    (B : ℕ) : ℕ → Option BlockId → Prop
+  /-- The direct rule commits a candidate outright. -/
+  | directCommit {k : ℕ} {L : BlockId} :
+      k < B → IsLeaderBlock U k L → R.Commit U V L (S.slotRound k) →
+      DecidedWithin U V B k (some L)
+  /-- The direct rule skips the slot. -/
+  | directSkip {k : ℕ} :
+      k < B → R.Skip U V S k → DecidedWithin U V B k none
+  /-- Anchored below the bound, the tie-break's choice at the first
+  nonempty rung is committed. -/
+  | indirectCommit {k j : ℕ} {A L : BlockId} {i : ℕ} :
+      k < j → j < B → R.Eligible k j → DecidedWithin U V B j (some A) →
+      (∀ m, k < m → m < j → R.Eligible k m → DecidedWithin U V B m none) →
+      i < R.rungs → (∀ i', i' < i → R.RungEmpty U A i' k) →
+      IsLeaderBlock U k L → R.Link i U A L S k → R.Least U A i k L →
+      DecidedWithin U V B k (some L)
+  /-- Anchored below the bound, every rung is empty. -/
+  | indirectSkip {k j : ℕ} {A : BlockId} :
+      k < j → j < B → R.Eligible k j → DecidedWithin U V B j (some A) →
+      (∀ m, k < m → m < j → R.Eligible k m → DecidedWithin U V B m none) →
+      (∀ i, i < R.rungs → R.RungEmpty U A i k) →
+      DecidedWithin U V B k none
+```
+
+**The bounded relation**: `Decided`, with every slot the derivation mentions strictly below `B`.
+
+#### `IsLeaderBlock`
+
+*def, `Common.Anchored.lean`*
+
+```lean
+def IsLeaderBlock (U : BlockRecord Validator BlockId Payload P honest) (k : ℕ) (L : BlockId) :
+    Prop :=
+  L ∈ U.ids ∧ (U.block L).round = S.slotRound k ∧ (U.block L).creator = S.leader k
+```
+
+`L` is a candidate block for slot `k`: the right round, the right author. A correct leader has at most one such block; a Byzantine one may have several, which is why the rules quantify over candidates rather than selecting one.
+
+#### `EligibleAt`
+
+*def, `Common.Anchored.lean`*
+
+```lean
+def EligibleAt (wave k j : ℕ) : Prop := S.slotRound k + wave < S.slotRound j
+```
+
+`j` may anchor `k` at wave `wave`.
+
+#### `AnchoredRule`
+
+*structure, `Common.Anchored.lean`*
+
+```lean
+structure AnchoredRule (Validator : Type*) (BlockId : Type*) (Payload : Type*)
+    (P : Validity Validator BlockId Payload) (honest : Finset Validator) where
+  /-- The rounds a slot's direct rules read above its proposal, less one:
+  an anchor must sit strictly above `slotRound k + wave`. -/
+  wave : ℕ
+  /-- The direct commit, judged from a view: `Commit U V L r` says the
+  candidate `L` proposed at round `r` is committed by what `V` holds. -/
+  Commit : (U : BlockRecord Validator BlockId Payload P honest) → U.View → BlockId → ℕ → Prop
+  /-- The direct skip of a slot, judged from a view. -/
+  Skip : (U : BlockRecord Validator BlockId Payload P honest) → U.View → Slots Validator → ℕ → Prop
+  /-- The number of rungs of the indirect test. -/
+  rungs : ℕ
+  /-- Rung `i`: `Link i U A L r` says the anchor `A` links the candidate `L`
+  proposed at round `r`. -/
+  Link : ℕ → (U : BlockRecord Validator BlockId Payload P honest) → BlockId → BlockId →
+    Slots Validator → ℕ → Prop
+  /-- The tie-break at rung `i`: `tie i L' L` says `L'` is preferred to `L`.
+  Empty where the rung's link is unique per slot. -/
+  tie : ℕ → BlockId → BlockId → Prop
+```
+
+**An anchored rule**: what a leader-based decision rule supplies.
+
+#### `Eligible`
+
+*abbrev, `Common.Anchored.lean`*
+
+```lean
+abbrev Eligible (k j : ℕ) : Prop := EligibleAt (S := S) R.wave k j
+```
+
+**`j` may anchor `k`**: eligibility at the rule's wave.
+
+#### `SpansEligible`
+
+*abbrev, `Common.Anchored.lean`*
+
+```lean
+abbrev SpansEligible (c : ℕ) : Prop := SpansEligibleAt (S := S) R.wave c
+```
+
+**A run of `c` slots reaches past everything below it**, at the rule's wave.
+
+#### `Decided`
+
+*inductive, `Common.Anchored.lean`*
+
+```lean
+inductive Decided (U : BlockRecord Validator BlockId Payload P honest) (V : U.View) :
+    ℕ → Option BlockId → Prop
+  /-- The direct rule commits a candidate outright. -/
+  | directCommit {k : ℕ} {L : BlockId} :
+      IsLeaderBlock U k L → R.Commit U V L (S.slotRound k) →
+      Decided U V k (some L)
+  /-- The direct rule skips the slot. -/
+  | directSkip {k : ℕ} :
+      R.Skip U V S k → Decided U V k none
+  /-- Anchored on the nearest eligible committed slot, every rung below
+  `i` is empty, and `L` is the tie-break's choice among the candidates
+  linked at rung `i`. -/
+  | indirectCommit {k j : ℕ} {A L : BlockId} {i : ℕ} :
+      k < j → R.Eligible k j → Decided U V j (some A) →
+      (∀ m, k < m → m < j → R.Eligible k m → Decided U V m none) →
+      i < R.rungs → (∀ i', i' < i → R.RungEmpty U A i' k) →
+      IsLeaderBlock U k L → R.Link i U A L S k → R.Least U A i k L →
+      Decided U V k (some L)
+  /-- Anchored on the nearest eligible committed slot, every rung is
+  empty. -/
+  | indirectSkip {k j : ℕ} {A : BlockId} :
+      k < j → R.Eligible k j → Decided U V j (some A) →
+      (∀ m, k < m → m < j → R.Eligible k m → Decided U V m none) →
+      (∀ i, i < R.rungs → R.RungEmpty U A i k) →
+      Decided U V k none
+```
+
+**`Decided U V k v`** — a validator holding the view `V` has settled slot `k`, committing `v = some L` or skipping it, `v = none`. Undecided is the absence of a derivation.
+
+#### `Laws`
+
+*structure, `Common.Anchored.lean`*
+
+```lean
+structure Laws (I : Slots Validator → BlockRecord Validator BlockId Payload P honest → Prop :=
+    fun _ _ => True) : Prop where
+  /-- Two direct commits at one slot, from any two views, name one block. -/
+  commit_unique : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
+    {V₁ V₂ : U.View} {k : ℕ} {L₁ L₂ : BlockId},
+    I S U → IsLeaderBlock U k L₁ → IsLeaderBlock U k L₂ →
+    R.Commit U V₁ L₁ (S.slotRound k) → R.Commit U V₂ L₂ (S.slotRound k) → L₁ = L₂
+  /-- A direct commit and a direct skip of one slot cannot both hold. -/
+  commit_skip : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
+    {V₁ V₂ : U.View} {k : ℕ} {L : BlockId},
+    I S U → IsLeaderBlock U k L → R.Commit U V₁ L (S.slotRound k) → R.Skip U V₂ S k → False
+  /-- **Visibility.** A direct commit is linked, at some rung, from any
+  candidate anchor of any eligible slot. -/
+  commit_link : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
+    {V : U.View} {k j : ℕ} {L A : BlockId},
+    I S U → IsLeaderBlock U k L → R.Commit U V L (S.slotRound k) →
+    IsLeaderBlock U j A → R.Eligible k j →
+    ∃ i, i < R.rungs ∧ R.Link i U A L S k
+  /-- A direct commit and the tie-break's choice at any rung, from any
+  candidate anchor of any eligible slot, are one block. -/
+  commit_link_unique : ∀ {S : Slots Validator}
+    {U : BlockRecord Validator BlockId Payload P honest}
+    {V : U.View} {k j i : ℕ} {L₁ L₂ A : BlockId},
+    I S U → IsLeaderBlock U k L₁ → IsLeaderBlock U k L₂ → R.Commit U V L₁ (S.slotRound k) →
+    IsLeaderBlock U j A → R.Eligible k j → i < R.rungs →
+    (∀ i', i' < i → R.RungEmpty U A i' k) →
+    R.Link i U A L₂ S k → R.Least U A i k L₂ → L₁ = L₂
+  /-- A direct skip excludes every link for the slot's candidates. -/
+  skip_link : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
+    {V : U.View} {k i : ℕ} {L A : BlockId},
+    I S U → R.Skip U V S k → IsLeaderBlock U k L → i < R.rungs → ¬ R.Link i U A L S k
+  /-- Two tie-break choices at one rung, from one anchor, are one block. -/
+  link_unique : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
+    {k j i : ℕ} {L₁ L₂ A : BlockId},
+    I S U → IsLeaderBlock U k L₁ → IsLeaderBlock U k L₂ → IsLeaderBlock U j A → R.Eligible k j →
+    i < R.rungs → (∀ i', i' < i → R.RungEmpty U A i' k) →
+    R.Link i U A L₁ S k → R.Link i U A L₂ S k →
+    R.Least U A i k L₁ → R.Least U A i k L₂ → L₁ = L₂
+  /-- A larger view can only see more of a direct commit. -/
+  commit_mono : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
+    {V V' : U.View} {L : BlockId} {r : ℕ},
+    I S U → V.ids ⊆ V'.ids → R.Commit U V L r → R.Commit U V' L r
+  /-- And of a direct skip. -/
+  skip_mono : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
+    {V V' : U.View} {k : ℕ}, I S U → V.ids ⊆ V'.ids → R.Skip U V S k → R.Skip U V' S k
+  /-- The direct skip reads the schedule only at its own slot. -/
+  skip_congr : ∀ {S₁ S₂ : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
+    {V : U.View} {k : ℕ}, I S₁ U → S₁.slotRound k = S₂.slotRound k → S₁.leader k = S₂.leader k →
+    R.Skip U V S₁ k → R.Skip U V S₂ k
+  /-- And so does every rung's link. -/
+  link_congr : R.LinkCongr
+```
+
+**The laws of an anchored rule** — what the direct predicates and the rungs must satisfy for agreement, on the records satisfying an invariant `I` (every record, by default). Every rule proves each of them under its own name.
+
 #### `View`
 
-*structure, `BlockRecord.lean`*
+*structure, `Common.BlockRecord.lean`*
 
 ```lean
 structure View (U : BlockRecord Validator BlockId Payload P honest) where
@@ -15636,7 +15641,7 @@ structure View (U : BlockRecord Validator BlockId Payload P honest) where
 
 #### `View.toRecord`
 
-*def, `BlockRecord.lean`*
+*def, `Common.BlockRecord.lean`*
 
 ```lean
 def View.toRecord (V : U.View) : BlockRecord Validator BlockId Payload P honest where
@@ -15651,7 +15656,7 @@ def View.toRecord (V : U.View) : BlockRecord Validator BlockId Payload P honest 
 
 #### `View.full`
 
-*def, `BlockRecord.lean`*
+*def, `Common.BlockRecord.lean`*
 
 ```lean
 def View.full (U : BlockRecord Validator BlockId Payload P honest) : U.View :=
@@ -15662,7 +15667,7 @@ def View.full (U : BlockRecord Validator BlockId Payload P honest) : U.View :=
 
 #### `View.CoversUpto`
 
-*def, `BlockRecord.lean`*
+*def, `Common.BlockRecord.lean`*
 
 ```lean
 def View.CoversUpto (V : U.View) (N : ℕ) : Prop :=
@@ -15673,7 +15678,7 @@ def View.CoversUpto (V : U.View) (N : ℕ) : Prop :=
 
 #### `chopBlk`
 
-*def, `BlockRecord.lean`*
+*def, `Common.BlockRecord.lean`*
 
 ```lean
 def chopBlk (blk : BlockId → Block Validator BlockId Payload) (G : ℕ)
@@ -15688,7 +15693,7 @@ One block of the truncation, over the raw block assignment.
 
 #### `Mechanised`
 
-*class, `BlockRecord.lean`*
+*class, `Common.BlockRecord.lean`*
 
 ```lean
 class Mechanised : Prop where
@@ -15714,7 +15719,7 @@ class Mechanised : Prop where
 
 #### `CopyStable`
 
-*class, `BlockRecord.lean`*
+*class, `Common.BlockRecord.lean`*
 
 ```lean
 class CopyStable : Prop where
@@ -15726,7 +15731,7 @@ class CopyStable : Prop where
 
 #### `ValidAt`
 
-*structure, `BlockRecord.lean`*
+*structure, `Common.BlockRecord.lean`*
 
 ```lean
 structure ValidAt [DecidableEq Validator] (q : ℕ) (C : Clause Validator BlockId Payload)
@@ -15744,7 +15749,7 @@ structure ValidAt [DecidableEq Validator] (q : ℕ) (C : Clause Validator BlockI
 
 #### `Clause.Mechanised`
 
-*class, `BlockRecord.lean`*
+*class, `Common.BlockRecord.lean`*
 
 ```lean
 class Clause.Mechanised (C : Clause Validator BlockId Payload) : Prop where
@@ -15764,7 +15769,7 @@ class Clause.Mechanised (C : Clause Validator BlockId Payload) : Prop where
 
 #### `Clause.CopyStable`
 
-*class, `BlockRecord.lean`*
+*class, `Common.BlockRecord.lean`*
 
 ```lean
 class Clause.CopyStable (C : Clause Validator BlockId Payload) : Prop where
@@ -15776,7 +15781,7 @@ The clause does not read the creator.
 
 #### `none`
 
-*def, `BlockRecord.lean`*
+*def, `Common.BlockRecord.lean`*
 
 ```lean
 def none : Clause Validator BlockId Payload := fun _ _ => True
@@ -15786,7 +15791,7 @@ No clause.
 
 #### `distinct`
 
-*def, `BlockRecord.lean`*
+*def, `Common.BlockRecord.lean`*
 
 ```lean
 def distinct : Clause Validator BlockId Payload := fun blk b =>
@@ -15797,7 +15802,7 @@ No two references share a creator.
 
 #### `selfParent`
 
-*def, `BlockRecord.lean`*
+*def, `Common.BlockRecord.lean`*
 
 ```lean
 def selfParent : Clause Validator BlockId Payload := fun blk b =>
@@ -15808,7 +15813,7 @@ A non-genesis block references a block by its own creator. Read by the core; not
 
 #### `and`
 
-*def, `BlockRecord.lean`*
+*def, `Common.BlockRecord.lean`*
 
 ```lean
 def and (C D : Clause Validator BlockId Payload) : Clause Validator BlockId Payload :=
@@ -15816,6 +15821,252 @@ def and (C D : Clause Validator BlockId Payload) : Clause Validator BlockId Payl
 ```
 
 Two clauses together.
+
+#### `commitSeq`
+
+*def, `Common.Ledger.lean`*
+
+```lean
+def commitSeq (g : ℕ → Option BlockId) (n : ℕ) : List BlockId :=
+  (List.range n).filterMap g
+```
+
+The blocks committed at slots `0, …, n-1`, in slot order, with skipped slots dropped. `g` is a validator's verdict assignment.
+
+#### `ledgerSet`
+
+*def, `Common.Ledger.lean`*
+
+```lean
+def ledgerSet (U : BlockRecord Validator BlockId Payload P honest)
+    (g : ℕ → Option BlockId) (n : ℕ) : Set BlockId :=
+  {b | ∃ k, k < n ∧ ∃ L, g k = some L ∧ Reaches U L b}
+```
+
+The blocks output after settling slots `0, …, n-1`: everything in the causal history of a committed leader.
+
+#### `OutputAt`
+
+*def, `Common.Ledger.lean`*
+
+```lean
+def OutputAt (U : BlockRecord Validator BlockId Payload P honest)
+    (g : ℕ → Option BlockId) (b : BlockId) (k : ℕ) : Prop :=
+  (∃ L, g k = some L ∧ Reaches U L b) ∧
+    ∀ j, j < k → ∀ L, g j = some L → ¬ Reaches U L b
+```
+
+`b` enters the ledger at slot `k`: the first committed slot whose leader reaches it.
+
+#### `chop`
+
+*def, `Common.Record.Chop.lean`*
+
+```lean
+def chop (U : BlockRecord Validator BlockId Payload P honest) (G : ℕ) :
+    BlockRecord Validator BlockId Payload P honest where
+  ids := U.ids.filter fun i => G ≤ (U.block i).round
+  block := chopBlk U.block G
+  complete := by
+    intro i hi j hj
+    rw [Finset.mem_filter] at hi
+    rcases Nat.lt_or_ge G (U.block i).round with h | h
+    · rw [chopBlk_refs_of_lt h] at hj
+      have hjr := Validity.Mechanised.pred U.block (U.block i) (U.valid i hi.1) j hj
+      exact Finset.mem_filter.mpr ⟨U.complete i hi.1 j hj, by omega⟩
+    · rw [chopBlk_refs_of_le h] at hj
+      exact absurd hj (Finset.notMem_empty j)
+  valid := by
+    intro i hi
+    rw [Finset.mem_filter] at hi
+    rcases Nat.lt_or_ge G (U.block i).round with h | h
+    · rw [chopBlk_of_lt h]
+      exact Validity.Mechanised.chops U.block G (U.block i) (U.valid i hi.1) h
+    · apply Validity.Mechanised.base
+      · rw [chopBlk_round]; omega
+      · exact chopBlk_refs_of_le h
+  no_equivocation := by
+    intro i hi j hj hic hcc hrr
+    rw [Finset.mem_filter] at hi hj
+    simp only [chopBlk_creator, chopBlk_round] at hic hcc hrr
+    exact U.no_equivocation i hi.1 j hj.1 hic hcc (by omega)
+```
+
+**The cut.**
+
+#### `View.chop`
+
+*def, `Common.Record.Chop.lean`*
+
+```lean
+def View.chop (V : U.View) (G : ℕ) : (U.chop G).View where
+  ids := V.ids.filter fun i => G ≤ (U.block i).round
+  subset_ids := Finset.filter_subset_filter _ V.subset_ids
+  complete := by
+    intro i hi j hj
+    rw [Finset.mem_filter] at hi
+    change j ∈ (chopBlk U.block G i).refs at hj
+    rcases Nat.lt_or_ge G (U.block i).round with h | h
+    · rw [chopBlk_refs_of_lt h] at hj
+      have hjr := Validity.Mechanised.pred U.block (U.block i)
+        (U.valid i (V.subset_ids hi.1)) j hj
+      exact Finset.mem_filter.mpr ⟨V.complete i hi.1 j hj, by omega⟩
+    · rw [chopBlk_refs_of_le h] at hj
+      exact absurd hj (Finset.notMem_empty j)
+```
+
+**A view, truncated at the horizon**: keep what clears the cut.
+
+#### `addGenesis`
+
+*def, `Common.Record.Genesis.lean`*
+
+```lean
+def addGenesis (U : BlockRecord Validator BlockId Payload P honest) (v : Validator)
+    (g : BlockId) (p : Payload) (hg : g ∉ U.ids)
+    (hsev : ∀ b ∈ U.ids, (U.block b).creator ≠ v) :
+    BlockRecord Validator BlockId Payload P honest where
+  ids := insert g U.ids
+  block b := if b ∈ U.ids then U.block b else ⟨0, v, ∅, p⟩
+  complete := by
+    intro i hi j hj
+    rcases Finset.mem_insert.mp hi with rfl | ho
+    · rw [if_neg hg] at hj
+      exact absurd hj (Finset.notMem_empty j)
+    · rw [if_pos ho] at hj
+      exact Finset.mem_insert_of_mem (U.complete i ho j hj)
+  valid := by
+    intro i hi
+    rcases Finset.mem_insert.mp hi with rfl | ho
+    · rw [if_neg hg]
+      exact Validity.Mechanised.base _ _ rfl rfl
+    · rw [if_pos ho]
+      exact Validity.Mechanised.reads U.block _ U.ids (U.block i) U.complete
+        (U.complete i ho) (fun j hj => if_pos hj) (U.valid i ho)
+  no_equivocation := by
+    intro i hi j hj hic hcc hrr
+    rcases Finset.mem_insert.mp hi with rfl | ho <;>
+      rcases Finset.mem_insert.mp hj with rfl | ho'
+    · rfl
+    · rw [if_neg hg, if_pos ho'] at hcc
+      exact absurd hcc.symm (hsev j ho')
+    · rw [if_pos ho, if_neg hg] at hcc
+      exact absurd hcc (hsev i ho)
+    · rw [if_pos ho] at hic hcc hrr
+      rw [if_pos ho'] at hcc hrr
+      exact U.no_equivocation i ho j ho' hic hcc hrr
+```
+
+**Re-genesis.**
+
+#### `Invariant.Mechanised`
+
+*class, `Common.Record.Invariant.lean`*
+
+```lean
+class Invariant.Mechanised [P.Mechanised]
+    (I : BlockRecord Validator BlockId Payload P honest → Prop) : Prop where
+  /-- It survives the cut. -/
+  chop : ∀ {W : BlockRecord Validator BlockId Payload P honest} (G : ℕ), I W → I (W.chop G)
+  /-- It survives the copy fill. -/
+  copyFill : ∀ [P.CopyStable] {W : BlockRecord Validator BlockId Payload P honest}
+    (sk : SkipData W.ids W.block), I W → I (BlockRecord.copyFill W sk)
+  /-- It survives re-genesis. -/
+  addGenesis : ∀ {W : BlockRecord Validator BlockId Payload P honest} (v : Validator)
+    (g : BlockId) (p : Payload) (hg : g ∉ W.ids) (hsev : ∀ b ∈ W.ids, (W.block b).creator ≠ v),
+    I W → I (W.addGenesis v g p hg hsev)
+```
+
+**What an invariant owes the mechanisms.**
+
+#### `Slots`
+
+*class, `Common.Slots.lean`*
+
+```lean
+class Slots (Validator : Type*) where
+  /-- The round at which slot `k` is proposed. -/
+  slotRound : ℕ → ℕ
+  /-- The validator whose block is the slot-`k` candidate. -/
+  leader : ℕ → Validator
+  /-- Slots are enumerated in round order. -/
+  mono : Monotone slotRound
+  /-- Slot rounds are unbounded. -/
+  unbounded : ∀ n, ∃ k, n ≤ slotRound k
+  /-- Distinct slots differ in round or in leader. -/
+  keyed : Function.Injective (fun k => (slotRound k, leader k))
+```
+
+The leader schedule: which validator proposes at which round, as a sequence of slots.
+
+Slots need **not** be three rounds apart. Under pipelining consecutive slots are one round apart, and under multiple leaders per round they share a round, so all that is required of `slotRound` is that it be monotone. The three-round separation M4's commit half needs is no longer a property of *consecutive* slots and is therefore not derivable here; it is required instead of the particular pairs that use it, by `Eligible` below.
+
+`unbounded` was a theorem under three-round spacing (`3 * k ≤ slotRound k`) and is underivable from `mono` alone — a schedule parking every slot at one round is monotone. Liveness needs it, so it is assumed.
+
+`keyed` says distinct slots differ in round or in leader. It too held under three-round spacing, which makes `slotRound` injective outright. Under multiple leaders it is a real condition on the schedule: the proposers of a round must be distinct validators. Without it one block would be the candidate for two slots, and the ledger would deliver it twice.
+
+#### `uniform`
+
+*def, `Common.Slots.lean`*
+
+```lean
+def uniform (p m : ℕ) (hp : 0 < p) (hm : 0 < m) (elect : ℕ → Validator)
+    (hblock : ∀ k₁ k₂, k₁ / m = k₂ / m → elect k₁ = elect k₂ → k₁ = k₂) :
+    Slots Validator where
+  slotRound k := p * (k / m)
+  leader k := elect k
+  mono := fun _ _ hab => Nat.mul_le_mul_left p (Nat.div_le_div_right hab)
+  unbounded := fun n => ⟨m * n, by
+    rw [Nat.mul_div_cancel_left n hm]
+    exact Nat.le_mul_of_pos_left n hp⟩
+  keyed := by
+    intro k₁ k₂ h
+    simp only [Prod.mk.injEq] at h
+    exact hblock k₁ k₂ (Nat.eq_of_mul_eq_mul_left hp h.1) h.2
+```
+
+**The uniform schedule**: `m` leaders in every `p`-th round, slot `k` proposed by `elect k`.
+
+`hblock` is the one real condition — the `m` proposers sharing a round are distinct validators. Round-robin `elect k = k % n` satisfies it whenever `m ≤ n`. Without it a single block would be the candidate for two slots and the ledger would deliver it twice.
+
+#### `uniformSingle`
+
+*def, `Common.Slots.lean`*
+
+```lean
+def uniformSingle (p : ℕ) (hp : 0 < p) (elect : ℕ → Validator) : Slots Validator :=
+  uniform p 1 hp Nat.one_pos elect (one_hblock elect)
+```
+
+**One leader every `p` rounds.** `p = 3` is the schedule the development had before pipelining; `p = 1` is pipelined single-leader.
+
+#### `Slots.identity`
+
+*def, `Common.Slots.lean`*
+
+```lean
+def Slots.identity {Validator : Type*} (leader : ℕ → Validator) : Slots Validator :=
+  ⟨id, leader, fun _ _ h => h, fun n => ⟨n, le_rfl⟩, fun _ _ h => congrArg Prod.fst h⟩
+```
+
+**The identity schedule** with a given leader map: one slot per round. The three laws are immediate.
+
+#### `waveRobin`
+
+*def, `Common.Slots.lean`*
+
+```lean
+def waveRobin (n : ℕ) (hn : 0 < n) : Slots (Fin n) where
+  slotRound k := k
+  leader k := ⟨k / 3 % n, Nat.mod_lt _ hn⟩
+  mono := fun _ _ h => h
+  unbounded := fun m => ⟨m, le_refl m⟩
+  keyed := fun _ _ h => congrArg Prod.fst h
+```
+
+**The wave-aligned round-robin schedule** on `n` validators: pipelined (one slot per round), with the leader holding for a whole wave — three consecutive slots — before the rotation advances.
+
+Written out field by field so that `slotRound k = k` holds by `rfl`, which Hydrozoan's grounding reads definitionally. A `def` rather than an `instance`, like `rrSlots` in the witness files: a second `Slots` instance on the same type would make synthesis ambiguous, so every use passes `(S := waveRobin n hn)` explicitly.
 
 #### `Decided`
 
@@ -15875,45 +16126,9 @@ def optOnRecord :
 
 **Optimal-Hydrozoan's carrier, on the record**: Hydrozoan's adapter, under `Excluded`.
 
-#### `commitSeq`
-
-*def, `Ledger.lean`*
-
-```lean
-def commitSeq (g : ℕ → Option BlockId) (n : ℕ) : List BlockId :=
-  (List.range n).filterMap g
-```
-
-The blocks committed at slots `0, …, n-1`, in slot order, with skipped slots dropped. `g` is a validator's verdict assignment.
-
-#### `ledgerSet`
-
-*def, `Ledger.lean`*
-
-```lean
-def ledgerSet (U : BlockRecord Validator BlockId Payload P honest)
-    (g : ℕ → Option BlockId) (n : ℕ) : Set BlockId :=
-  {b | ∃ k, k < n ∧ ∃ L, g k = some L ∧ Reaches U L b}
-```
-
-The blocks output after settling slots `0, …, n-1`: everything in the causal history of a committed leader.
-
-#### `OutputAt`
-
-*def, `Ledger.lean`*
-
-```lean
-def OutputAt (U : BlockRecord Validator BlockId Payload P honest)
-    (g : ℕ → Option BlockId) (b : BlockId) (k : ℕ) : Prop :=
-  (∃ L, g k = some L ∧ Reaches U L b) ∧
-    ∀ j, j < k → ∀ L, g j = some L → ¬ Reaches U L b
-```
-
-`b` enters the ledger at slot `k`: the first committed slot whose leader reaches it.
-
 #### `mysticetiRule`
 
-*def, `MysticetiProperties.lean`*
+*def, `Mysticeti.Properties.lean`*
 
 ```lean
 def mysticetiRule : DagRule Validator BlockId Payload :=
@@ -15924,7 +16139,7 @@ def mysticetiRule : DagRule Validator BlockId Payload :=
 
 #### `DecidedWithin`
 
-*abbrev, `MysticetiProperties.lean`*
+*abbrev, `Mysticeti.Properties.lean`*
 
 ```lean
 abbrev DecidedWithin (U : BlockUniverse Validator BlockId Payload)
@@ -15936,7 +16151,7 @@ abbrev DecidedWithin (U : BlockUniverse Validator BlockId Payload)
 
 #### `certLive`
 
-*def, `MysticetiProperties.lean`*
+*def, `Mysticeti.Properties.lean`*
 
 ```lean
 def certLive (S : Slots Validator) {U : BlockUniverse Validator BlockId Payload}
@@ -16471,127 +16686,6 @@ The two clauses that distinguish this from a pure shift are `mem` and `refs`. Me
 
 Both clauses are `RebasedAbove`'s, read at `R₀ = G`. That was not how this started: `Truncates` was written with its own four block clauses, and they were found to be the same four a mechanism already owed under `Sustains`. What is left here is the schedule half.
 
-#### `chop`
-
-*def, `Record.Chop.lean`*
-
-```lean
-def chop (U : BlockRecord Validator BlockId Payload P honest) (G : ℕ) :
-    BlockRecord Validator BlockId Payload P honest where
-  ids := U.ids.filter fun i => G ≤ (U.block i).round
-  block := chopBlk U.block G
-  complete := by
-    intro i hi j hj
-    rw [Finset.mem_filter] at hi
-    rcases Nat.lt_or_ge G (U.block i).round with h | h
-    · rw [chopBlk_refs_of_lt h] at hj
-      have hjr := Validity.Mechanised.pred U.block (U.block i) (U.valid i hi.1) j hj
-      exact Finset.mem_filter.mpr ⟨U.complete i hi.1 j hj, by omega⟩
-    · rw [chopBlk_refs_of_le h] at hj
-      exact absurd hj (Finset.notMem_empty j)
-  valid := by
-    intro i hi
-    rw [Finset.mem_filter] at hi
-    rcases Nat.lt_or_ge G (U.block i).round with h | h
-    · rw [chopBlk_of_lt h]
-      exact Validity.Mechanised.chops U.block G (U.block i) (U.valid i hi.1) h
-    · apply Validity.Mechanised.base
-      · rw [chopBlk_round]; omega
-      · exact chopBlk_refs_of_le h
-  no_equivocation := by
-    intro i hi j hj hic hcc hrr
-    rw [Finset.mem_filter] at hi hj
-    simp only [chopBlk_creator, chopBlk_round] at hic hcc hrr
-    exact U.no_equivocation i hi.1 j hj.1 hic hcc (by omega)
-```
-
-**The cut.**
-
-#### `View.chop`
-
-*def, `Record.Chop.lean`*
-
-```lean
-def View.chop (V : U.View) (G : ℕ) : (U.chop G).View where
-  ids := V.ids.filter fun i => G ≤ (U.block i).round
-  subset_ids := Finset.filter_subset_filter _ V.subset_ids
-  complete := by
-    intro i hi j hj
-    rw [Finset.mem_filter] at hi
-    change j ∈ (chopBlk U.block G i).refs at hj
-    rcases Nat.lt_or_ge G (U.block i).round with h | h
-    · rw [chopBlk_refs_of_lt h] at hj
-      have hjr := Validity.Mechanised.pred U.block (U.block i)
-        (U.valid i (V.subset_ids hi.1)) j hj
-      exact Finset.mem_filter.mpr ⟨V.complete i hi.1 j hj, by omega⟩
-    · rw [chopBlk_refs_of_le h] at hj
-      exact absurd hj (Finset.notMem_empty j)
-```
-
-**A view, truncated at the horizon**: keep what clears the cut.
-
-#### `addGenesis`
-
-*def, `Record.Genesis.lean`*
-
-```lean
-def addGenesis (U : BlockRecord Validator BlockId Payload P honest) (v : Validator)
-    (g : BlockId) (p : Payload) (hg : g ∉ U.ids)
-    (hsev : ∀ b ∈ U.ids, (U.block b).creator ≠ v) :
-    BlockRecord Validator BlockId Payload P honest where
-  ids := insert g U.ids
-  block b := if b ∈ U.ids then U.block b else ⟨0, v, ∅, p⟩
-  complete := by
-    intro i hi j hj
-    rcases Finset.mem_insert.mp hi with rfl | ho
-    · rw [if_neg hg] at hj
-      exact absurd hj (Finset.notMem_empty j)
-    · rw [if_pos ho] at hj
-      exact Finset.mem_insert_of_mem (U.complete i ho j hj)
-  valid := by
-    intro i hi
-    rcases Finset.mem_insert.mp hi with rfl | ho
-    · rw [if_neg hg]
-      exact Validity.Mechanised.base _ _ rfl rfl
-    · rw [if_pos ho]
-      exact Validity.Mechanised.reads U.block _ U.ids (U.block i) U.complete
-        (U.complete i ho) (fun j hj => if_pos hj) (U.valid i ho)
-  no_equivocation := by
-    intro i hi j hj hic hcc hrr
-    rcases Finset.mem_insert.mp hi with rfl | ho <;>
-      rcases Finset.mem_insert.mp hj with rfl | ho'
-    · rfl
-    · rw [if_neg hg, if_pos ho'] at hcc
-      exact absurd hcc.symm (hsev j ho')
-    · rw [if_pos ho, if_neg hg] at hcc
-      exact absurd hcc (hsev i ho)
-    · rw [if_pos ho] at hic hcc hrr
-      rw [if_pos ho'] at hcc hrr
-      exact U.no_equivocation i ho j ho' hic hcc hrr
-```
-
-**Re-genesis.**
-
-#### `Invariant.Mechanised`
-
-*class, `Record.Invariant.lean`*
-
-```lean
-class Invariant.Mechanised [P.Mechanised]
-    (I : BlockRecord Validator BlockId Payload P honest → Prop) : Prop where
-  /-- It survives the cut. -/
-  chop : ∀ {W : BlockRecord Validator BlockId Payload P honest} (G : ℕ), I W → I (W.chop G)
-  /-- It survives the copy fill. -/
-  copyFill : ∀ [P.CopyStable] {W : BlockRecord Validator BlockId Payload P honest}
-    (sk : SkipData W.ids W.block), I W → I (BlockRecord.copyFill W sk)
-  /-- It survives re-genesis. -/
-  addGenesis : ∀ {W : BlockRecord Validator BlockId Payload P honest} (v : Validator)
-    (g : BlockId) (p : Payload) (hg : g ∉ W.ids) (hsev : ∀ b ∈ W.ids, (W.block b).creator ≠ v),
-    I W → I (W.addGenesis v g p hg hsev)
-```
-
-**What an invariant owes the mechanisms.**
-
 #### `r0`
 
 *def, `SafeSkip.Data.lean`*
@@ -16615,95 +16709,6 @@ def fillBlock (k : ℕ) : Block Validator BlockId Payload where
 ```
 
 The filled block at gap round `k`: `v2`'s references at that round, plus the added self reference.
-
-#### `Slots`
-
-*class, `Slots.lean`*
-
-```lean
-class Slots (Validator : Type*) where
-  /-- The round at which slot `k` is proposed. -/
-  slotRound : ℕ → ℕ
-  /-- The validator whose block is the slot-`k` candidate. -/
-  leader : ℕ → Validator
-  /-- Slots are enumerated in round order. -/
-  mono : Monotone slotRound
-  /-- Slot rounds are unbounded. -/
-  unbounded : ∀ n, ∃ k, n ≤ slotRound k
-  /-- Distinct slots differ in round or in leader. -/
-  keyed : Function.Injective (fun k => (slotRound k, leader k))
-```
-
-The leader schedule: which validator proposes at which round, as a sequence of slots.
-
-Slots need **not** be three rounds apart. Under pipelining consecutive slots are one round apart, and under multiple leaders per round they share a round, so all that is required of `slotRound` is that it be monotone. The three-round separation M4's commit half needs is no longer a property of *consecutive* slots and is therefore not derivable here; it is required instead of the particular pairs that use it, by `Eligible` below.
-
-`unbounded` was a theorem under three-round spacing (`3 * k ≤ slotRound k`) and is underivable from `mono` alone — a schedule parking every slot at one round is monotone. Liveness needs it, so it is assumed.
-
-`keyed` says distinct slots differ in round or in leader. It too held under three-round spacing, which makes `slotRound` injective outright. Under multiple leaders it is a real condition on the schedule: the proposers of a round must be distinct validators. Without it one block would be the candidate for two slots, and the ledger would deliver it twice.
-
-#### `uniform`
-
-*def, `Slots.lean`*
-
-```lean
-def uniform (p m : ℕ) (hp : 0 < p) (hm : 0 < m) (elect : ℕ → Validator)
-    (hblock : ∀ k₁ k₂, k₁ / m = k₂ / m → elect k₁ = elect k₂ → k₁ = k₂) :
-    Slots Validator where
-  slotRound k := p * (k / m)
-  leader k := elect k
-  mono := fun _ _ hab => Nat.mul_le_mul_left p (Nat.div_le_div_right hab)
-  unbounded := fun n => ⟨m * n, by
-    rw [Nat.mul_div_cancel_left n hm]
-    exact Nat.le_mul_of_pos_left n hp⟩
-  keyed := by
-    intro k₁ k₂ h
-    simp only [Prod.mk.injEq] at h
-    exact hblock k₁ k₂ (Nat.eq_of_mul_eq_mul_left hp h.1) h.2
-```
-
-**The uniform schedule**: `m` leaders in every `p`-th round, slot `k` proposed by `elect k`.
-
-`hblock` is the one real condition — the `m` proposers sharing a round are distinct validators. Round-robin `elect k = k % n` satisfies it whenever `m ≤ n`. Without it a single block would be the candidate for two slots and the ledger would deliver it twice.
-
-#### `uniformSingle`
-
-*def, `Slots.lean`*
-
-```lean
-def uniformSingle (p : ℕ) (hp : 0 < p) (elect : ℕ → Validator) : Slots Validator :=
-  uniform p 1 hp Nat.one_pos elect (one_hblock elect)
-```
-
-**One leader every `p` rounds.** `p = 3` is the schedule the development had before pipelining; `p = 1` is pipelined single-leader.
-
-#### `Slots.identity`
-
-*def, `Slots.lean`*
-
-```lean
-def Slots.identity {Validator : Type*} (leader : ℕ → Validator) : Slots Validator :=
-  ⟨id, leader, fun _ _ h => h, fun n => ⟨n, le_rfl⟩, fun _ _ h => congrArg Prod.fst h⟩
-```
-
-**The identity schedule** with a given leader map: one slot per round. The three laws are immediate.
-
-#### `waveRobin`
-
-*def, `Slots.lean`*
-
-```lean
-def waveRobin (n : ℕ) (hn : 0 < n) : Slots (Fin n) where
-  slotRound k := k
-  leader k := ⟨k / 3 % n, Nat.mod_lt _ hn⟩
-  mono := fun _ _ h => h
-  unbounded := fun m => ⟨m, le_refl m⟩
-  keyed := fun _ _ h => congrArg Prod.fst h
-```
-
-**The wave-aligned round-robin schedule** on `n` validators: pipelined (one slot per round), with the leader holding for a whole wave — three consecutive slots — before the rotation advances.
-
-Written out field by field so that `slotRound k = k` holds by `rfl`, which Hydrozoan's grounding reads definitionally. A `def` rather than an `instance`, like `rrSlots` in the witness files: a second `Slots` instance on the same type would make synthesis ambiguous, so every use passes `(S := waveRobin n hn)` explicitly.
 
 #### `SynchronisedOn`
 
@@ -16764,7 +16769,7 @@ reference.
 
 #### `reliable_eq_correct`
 
-*theorem, `Validators.lean`*
+*theorem, `Common.Validators.lean`*
 
 ```lean
 theorem reliable_eq_correct {T : Finset Validator} (hfull : F.byzantine.card = F.f)
@@ -16779,7 +16784,7 @@ So the generality has bite only below full fault load, and `T := Correct` (`comm
 
 #### `exists_correct_mem_inter`
 
-*theorem, `Validators.lean`*
+*theorem, `Common.Validators.lean`*
 
 ```lean
 theorem exists_correct_mem_inter {Q₁ Q₂ : Finset Validator}
@@ -16794,7 +16799,7 @@ theorem exists_correct_mem_inter {Q₁ Q₂ : Finset Validator}
 
 #### `exists_correct_mem_creators_inter`
 
-*theorem, `Block.lean`*
+*theorem, `Common.Block.lean`*
 
 ```lean
 theorem exists_correct_mem_creators_inter
@@ -16810,7 +16815,7 @@ Stated on bare `Finset BlockId`s rather than on blocks, because that is what eve
 
 #### `ValidWrt.iff_validAt`
 
-*theorem, `BlockDag.lean`*
+*theorem, `Common.BlockDag.lean`*
 
 ```lean
 theorem ValidWrt.iff_validAt (blk : BlockId → Block Validator BlockId Payload)
@@ -16824,7 +16829,7 @@ theorem ValidWrt.iff_validAt (blk : BlockId → Block Validator BlockId Payload)
 
 #### `round_le_of_reaches`
 
-*theorem, `Causality.lean`*
+*theorem, `Common.Causality.lean`*
 
 ```lean
 theorem round_le_of_reaches (C : CausalStructure blk ids)
@@ -16836,7 +16841,7 @@ theorem round_le_of_reaches (C : CausalStructure blk ids)
 
 #### `BlockRecord.causal`
 
-*theorem, `CausalHistory.lean`*
+*theorem, `Common.CausalHistory.lean`*
 
 ```lean
 theorem BlockRecord.causal [P.Mechanised] (U : BlockRecord Validator BlockId Payload P honest) :
@@ -16847,7 +16852,7 @@ theorem BlockRecord.causal [P.Mechanised] (U : BlockRecord Validator BlockId Pay
 
 #### `round_le_of_reaches`
 
-*theorem, `CausalHistory.lean`*
+*theorem, `Common.CausalHistory.lean`*
 
 ```lean
 theorem round_le_of_reaches {c b : BlockId} (hc : c ∈ U.ids) (h : Reaches U c b) :
@@ -16860,7 +16865,7 @@ This is the substantive half of T2 — reflexivity, single steps and transitivit
 
 #### `View.mem_of_reaches`
 
-*theorem, `CausalHistory.lean`*
+*theorem, `Common.CausalHistory.lean`*
 
 ```lean
 theorem View.mem_of_reaches {U : BlockRecord Validator BlockId Payload P honest}
@@ -16872,7 +16877,7 @@ theorem View.mem_of_reaches {U : BlockRecord Validator BlockId Payload P honest}
 
 #### `View.exists_reaches_iff`
 
-*theorem, `CausalHistory.lean`*
+*theorem, `Common.CausalHistory.lean`*
 
 ```lean
 theorem View.exists_reaches_iff {U : BlockRecord Validator BlockId Payload P honest}
@@ -16887,7 +16892,7 @@ This is what makes a view-relative certificate check well defined: two validator
 
 #### `authorsAt_eq_authorsIn`
 
-*theorem, `Support.lean`*
+*theorem, `Common.Support.lean`*
 
 ```lean
 theorem authorsAt_eq_authorsIn (U : BlockRecord Validator BlockId Payload P honest) (n : ℕ) :
@@ -16898,7 +16903,7 @@ theorem authorsAt_eq_authorsIn (U : BlockRecord Validator BlockId Payload P hone
 
 #### `supportersIn_eq_toRecord`
 
-*theorem, `Support.lean`*
+*theorem, `Common.Support.lean`*
 
 ```lean
 theorem supportersIn_eq_toRecord {V : U.View} {b : BlockId} {n : ℕ} :
@@ -16909,7 +16914,7 @@ The view's count is the record's count at the view as a record.
 
 #### `exists_mem_refs_of_correct_support_of_card`
 
-*theorem, `Support.lean`*
+*theorem, `Common.Support.lean`*
 
 ```lean
 theorem exists_mem_refs_of_correct_support_of_card
@@ -16925,7 +16930,7 @@ theorem exists_mem_refs_of_correct_support_of_card
 
 #### `reaches_pred_of_round_le`
 
-*theorem, `Support.lean`*
+*theorem, `Common.Support.lean`*
 
 ```lean
 theorem reaches_pred_of_round_le {P : BlockId → Prop} {N : ℕ}
@@ -16940,7 +16945,7 @@ Shared by T3 and M2, both of which are otherwise just a base case. The step need
 
 #### `reaches_of_correct_support_of_card`
 
-*theorem, `Support.lean`*
+*theorem, `Common.Support.lean`*
 
 ```lean
 theorem reaches_of_correct_support_of_card
@@ -16959,7 +16964,7 @@ This is the form to use when supporters come from a quorum rather than from coun
 
 #### `blames_inter_supporters_subset_byzantine`
 
-*theorem, `Support.lean`*
+*theorem, `Common.Support.lean`*
 
 ```lean
 theorem blames_inter_supporters_subset_byzantine {L : BlockId} {n : ℕ} :
@@ -16972,7 +16977,7 @@ This is the only place non-equivocation enters M3, and it is what stops a Byzant
 
 #### `card_supporters_le_of_card_blames`
 
-*theorem, `Support.lean`*
+*theorem, `Common.Support.lean`*
 
 ```lean
 theorem card_supporters_le_of_card_blames {L : BlockId} {n : ℕ}
@@ -16986,7 +16991,7 @@ A correct validator sits on at most one side, so the overlap is confined to the 
 
 #### `exists_correct_common_support`
 
-*theorem, `CommonCore.lean`*
+*theorem, `Common.CommonCore.lean`*
 
 ```lean
 theorem exists_correct_common_support {r : ℕ}
@@ -17003,7 +17008,7 @@ Double counting: each correct round-`(r+1)` block names at least `(n-f) - b` cor
 
 #### `exists_common_correct_ancestor`
 
-*theorem, `CommonCore.lean`*
+*theorem, `Common.CommonCore.lean`*
 
 ```lean
 theorem exists_common_correct_ancestor {r : ℕ} {c₀ : BlockId}
@@ -17021,7 +17026,7 @@ Note the statement mentions no `Finset BlockId` operation, so unlike T3a it does
 
 #### `mem_ids_and_round_of_quorum_support`
 
-*theorem, `Persistence.lean`*
+*theorem, `Common.Persistence.lean`*
 
 ```lean
 theorem mem_ids_and_round_of_quorum_support
@@ -17036,7 +17041,7 @@ The quorum hypothesis already forces `b` into the universe at round `r`, so T3 n
 
 #### `reaches_of_quorum_support`
 
-*theorem, `Persistence.lean`*
+*theorem, `Common.Persistence.lean`*
 
 ```lean
 theorem reaches_of_quorum_support
@@ -17057,7 +17062,7 @@ Neither `b ∈ U.ids` nor `(U.block b).round = r` is assumed: both follow from t
 
 #### `certificates_eq_empty_of_directSkip`
 
-*theorem, `Mysticeti.lean`*
+*theorem, `Mysticeti.Rule.lean`*
 
 ```lean
 theorem certificates_eq_empty_of_directSkip {L : BlockId} {r : ℕ}
@@ -17072,7 +17077,7 @@ Universe-wide is the right strength: it is why a skip needs no anchor to justify
 
 #### `not_directCommit_of_directSkip`
 
-*theorem, `Mysticeti.lean`*
+*theorem, `Mysticeti.Rule.lean`*
 
 ```lean
 theorem not_directCommit_of_directSkip {L : BlockId} {r : ℕ}
@@ -17085,7 +17090,7 @@ Immediate from M3: a skip leaves no certificates at all, and a commit needs `2f+
 
 #### `exists_certificate_reaches_of_directCommit`
 
-*theorem, `Mysticeti.lean`*
+*theorem, `Mysticeti.Rule.lean`*
 
 ```lean
 theorem exists_certificate_reaches_of_directCommit {L : BlockId} {r : ℕ}
@@ -17102,7 +17107,7 @@ This is what makes the indirect rule agree with the direct one, and it is why th
 
 #### `eq_of_certificates_nonempty`
 
-*theorem, `Mysticeti.lean`*
+*theorem, `Mysticeti.Rule.lean`*
 
 ```lean
 theorem eq_of_certificates_nonempty {L₁ L₂ : BlockId} {r : ℕ}
@@ -17121,7 +17126,7 @@ The rounds need no hypothesis: a voter for `L₁` sits at round `r+1` and refere
 
 #### `eq_of_directCommit_of_creator_eq`
 
-*theorem, `Mysticeti.lean`*
+*theorem, `Mysticeti.Rule.lean`*
 
 ```lean
 theorem eq_of_directCommit_of_creator_eq {L₁ L₂ : BlockId} {r : ℕ}
@@ -17136,7 +17141,7 @@ Now a corollary of M5′: a direct commit implies a certificate exists. Note the
 
 #### `certifiedIn_of_directCommit`
 
-*theorem, `Mysticeti.lean`*
+*theorem, `Mysticeti.Rule.lean`*
 
 ```lean
 theorem certifiedIn_of_directCommit {L : BlockId} {r : ℕ} (h : DirectCommit U L r)
@@ -17148,7 +17153,7 @@ theorem certifiedIn_of_directCommit {L : BlockId} {r : ℕ} (h : DirectCommit U 
 
 #### `indirect_agrees_with_direct`
 
-*theorem, `Mysticeti.lean`*
+*theorem, `Mysticeti.Rule.lean`*
 
 ```lean
 theorem indirect_agrees_with_direct {L : BlockId} {r : ℕ}
@@ -17163,7 +17168,7 @@ The asymmetry between the halves is worth noting. Commit needs the anchor to be 
 
 #### `certifiedIn_iff_of_view`
 
-*theorem, `Mysticeti.lean`*
+*theorem, `Mysticeti.Rule.lean`*
 
 ```lean
 theorem certifiedIn_iff_of_view {V : View Validator BlockId Payload U} {A L : BlockId} {r : ℕ}
@@ -17177,7 +17182,7 @@ T6a in action — the certificate could never have lain outside the view, so con
 
 #### `directCommit_of_directCommitIn`
 
-*theorem, `Mysticeti.lean`*
+*theorem, `Mysticeti.Rule.lean`*
 
 ```lean
 theorem directCommit_of_directCommitIn {V : View Validator BlockId Payload U}
@@ -17190,7 +17195,7 @@ This one line is what lets all of Stage A be reused unchanged: M2, M4 and M5 are
 
 #### `directSkip_of_directSkipIn`
 
-*theorem, `Mysticeti.lean`*
+*theorem, `Mysticeti.Rule.lean`*
 
 ```lean
 theorem directSkip_of_directSkipIn {V : View Validator BlockId Payload U}
@@ -17199,7 +17204,7 @@ theorem directSkip_of_directSkipIn {V : View Validator BlockId Payload U}
 
 #### `directSkipIn_of_directSkipSlotIn`
 
-*theorem, `Mysticeti.lean`*
+*theorem, `Mysticeti.Rule.lean`*
 
 ```lean
 theorem directSkipIn_of_directSkipSlotIn {V : View Validator BlockId Payload U} {k : ℕ}
@@ -17211,7 +17216,7 @@ theorem directSkipIn_of_directSkipSlotIn {V : View Validator BlockId Payload U} 
 
 #### `coreLaws`
 
-*theorem, `Mysticeti.lean`*
+*theorem, `Mysticeti.Rule.lean`*
 
 ```lean
 theorem coreLaws : (coreAnchored Validator BlockId Payload).Laws where
@@ -17222,7 +17227,7 @@ theorem coreLaws : (coreAnchored Validator BlockId Payload).Laws where
 
 #### `exists_least`
 
-*theorem, `Mysticeti.lean`*
+*theorem, `Mysticeti.Rule.lean`*
 
 ```lean
 theorem exists_least {S : Slots Validator} {U : BlockUniverse Validator BlockId Payload}
@@ -17240,7 +17245,7 @@ No tie: any certified candidate is the rung's choice.
 
 #### `SynchronisedOn.mono`
 
-*theorem, `Participation.lean`*
+*theorem, `Common.Participation.lean`*
 
 ```lean
 theorem SynchronisedOn.mono {T T' : Finset Validator} {R : ℕ} (hsub : T ⊆ T')
@@ -17251,7 +17256,7 @@ Coverage is antitone too.
 
 #### `card_authorsAt_of_lt`
 
-*theorem, `Liveness.lean`*
+*theorem, `Mysticeti.Liveness.lean`*
 
 ```lean
 theorem card_authorsAt_of_lt {r n : ℕ} (hn : n < r) {i : BlockId}
@@ -17267,7 +17272,7 @@ The induction runs on the gap rather than on `r` itself because the statement is
 
 #### `votesAt_of_synchronisedOn`
 
-*theorem, `Liveness.lean`*
+*theorem, `Mysticeti.Liveness.lean`*
 
 ```lean
 theorem votesAt_of_synchronisedOn (hs : SynchronisedOn U T R) (hRr : R ≤ r)
@@ -17280,7 +17285,7 @@ Coverage gives the votes: the instantiation of `SynchronisedOn` at `n = r`, with
 
 #### `certifies_of_synchronisedOn`
 
-*theorem, `Liveness.lean`*
+*theorem, `Mysticeti.Liveness.lean`*
 
 ```lean
 theorem certifies_of_synchronisedOn (hcard : quorumCard Validator ≤ T.card)
@@ -17298,7 +17303,7 @@ This is both layers at once: `q` references `L` by coverage at `n = r`, and `C` 
 
 #### `certifiesAt_of_synchronisedOn`
 
-*theorem, `Liveness.lean`*
+*theorem, `Mysticeti.Liveness.lean`*
 
 ```lean
 theorem certifiesAt_of_synchronisedOn
@@ -17314,7 +17319,7 @@ Coverage gives the certificates, through the vote layer: the `CertifiesAt` form 
 
 #### `directCommit_of_certifiesAt`
 
-*theorem, `Liveness.lean`*
+*theorem, `Mysticeti.Liveness.lean`*
 
 ```lean
 theorem directCommit_of_certifiesAt
@@ -17328,7 +17333,7 @@ theorem directCommit_of_certifiesAt
 
 #### `directCommit_of_synchronisedOn`
 
-*theorem, `Liveness.lean`*
+*theorem, `Mysticeti.Liveness.lean`*
 
 ```lean
 theorem directCommit_of_synchronisedOn (hcard : quorumCard Validator ≤ T.card)
@@ -17344,7 +17349,7 @@ Stated without `Slots`: nothing in the argument cares that `L` is a leader block
 
 #### `directCommit_of_leader_mem`
 
-*theorem, `Liveness.lean`*
+*theorem, `Mysticeti.Liveness.lean`*
 
 ```lean
 theorem directCommit_of_leader_mem (hcard : quorumCard Validator ≤ T.card)
@@ -17360,7 +17365,7 @@ theorem directCommit_of_leader_mem (hcard : quorumCard Validator ≤ T.card)
 
 #### `directCommit_of_correct_leader`
 
-*theorem, `Liveness.lean`*
+*theorem, `Mysticeti.Liveness.lean`*
 
 ```lean
 theorem directCommit_of_correct_leader (hs : Synchronised U R)
@@ -17376,7 +17381,7 @@ theorem directCommit_of_correct_leader (hs : Synchronised U R)
 
 #### `decided_of_leader_mem`
 
-*theorem, `Liveness.lean`*
+*theorem, `Mysticeti.Liveness.lean`*
 
 ```lean
 theorem decided_of_leader_mem (hcard : quorumCard Validator ≤ T.card)
@@ -17392,7 +17397,7 @@ theorem decided_of_leader_mem (hcard : quorumCard Validator ≤ T.card)
 
 #### `decided_of_correct_leader`
 
-*theorem, `Liveness.lean`*
+*theorem, `Mysticeti.Liveness.lean`*
 
 ```lean
 theorem decided_of_correct_leader (hs : Synchronised U R)
@@ -17408,7 +17413,7 @@ The same at `T := Correct`.
 
 #### `decided_none_of_leader_absent`
 
-*theorem, `Liveness.lean`*
+*theorem, `Mysticeti.Liveness.lean`*
 
 ```lean
 theorem decided_none_of_leader_absent {V : View Validator BlockId Payload U}
@@ -17423,7 +17428,7 @@ theorem decided_none_of_leader_absent {V : View Validator BlockId Payload U}
 
 #### `commits_recur_on`
 
-*theorem, `Liveness.lean`*
+*theorem, `Mysticeti.Liveness.lean`*
 
 ```lean
 theorem commits_recur_on (hT : T ⊆ (Correct : Finset Validator))
@@ -17438,7 +17443,7 @@ Note the conclusion quantifies over `U` and `N` *inside* the existential: the sl
 
 #### `commits_recur`
 
-*theorem, `Liveness.lean`*
+*theorem, `Mysticeti.Liveness.lean`*
 
 ```lean
 theorem commits_recur (fair : FairSchedule (Validator := Validator)) (R : ℕ) (k : ℕ) :
@@ -17450,7 +17455,7 @@ theorem commits_recur (fair : FairSchedule (Validator := Validator)) (R : ℕ) (
 
 #### `decided_of_first_eligible_commit`
 
-*theorem, `Liveness.lean`*
+*theorem, `Mysticeti.Liveness.lean`*
 
 ```lean
 theorem decided_of_first_eligible_commit {V : View Validator BlockId Payload U}
@@ -17469,7 +17474,7 @@ No hypothesis on the schedule, and none on synchrony: like L8 this is pure decis
 
 #### `decided_of_committed_above`
 
-*theorem, `Liveness.lean`*
+*theorem, `Mysticeti.Liveness.lean`*
 
 ```lean
 theorem decided_of_committed_above
@@ -17487,7 +17492,7 @@ Note the proof never consults the direct rules. It does not need to: where the d
 
 #### `all_decided_below_of_spacing`
 
-*theorem, `Liveness.lean`*
+*theorem, `Mysticeti.Liveness.lean`*
 
 ```lean
 theorem all_decided_below_of_spacing
@@ -17509,7 +17514,7 @@ theorem all_decided_below_of_spacing
 
 #### `backoff_ge_of_rate`
 
-*theorem, `Quantitative.lean`*
+*theorem, `Mysticeti.Quantitative.lean`*
 
 ```lean
 theorem backoff_ge_of_rate {timeout : ℕ → ℕ} (hrate : Rated timeout) (m : ℕ) :
@@ -17522,7 +17527,7 @@ Monotonicity is not used here — the bound at `n` comes from `n` itself, so it 
 
 #### `unbounded_of_rated`
 
-*theorem, `Quantitative.lean`*
+*theorem, `Mysticeti.Quantitative.lean`*
 
 ```lean
 theorem unbounded_of_rated {timeout : ℕ → ℕ} (hrate : Rated timeout) :
@@ -17533,7 +17538,7 @@ Every rated backoff is unbounded, so `Rated` really is a strengthening of the re
 
 #### `FairWithin.fairScheduleOn`
 
-*theorem, `Quantitative.lean`*
+*theorem, `Mysticeti.Quantitative.lean`*
 
 ```lean
 theorem FairWithin.fairScheduleOn {w : ℕ} (h : FairWithin T w) : FairScheduleOn T
@@ -17543,7 +17548,7 @@ A rated schedule is a fair one, so everything already proved from `FairScheduleO
 
 #### `commits_recur_within`
 
-*theorem, `Quantitative.lean`*
+*theorem, `Mysticeti.Quantitative.lean`*
 
 ```lean
 theorem commits_recur_within (hT : T ⊆ (Correct : Finset Validator))
@@ -17561,7 +17566,7 @@ The starting point is not slack: the slot must clear both the caller's `k` and t
 
 #### `commits_recur_by_round`
 
-*theorem, `Quantitative.lean`*
+*theorem, `Mysticeti.Quantitative.lean`*
 
 ```lean
 theorem commits_recur_by_round {s : ℕ} (hT : T ⊆ (Correct : Finset Validator))
@@ -17587,7 +17592,7 @@ At the standard settings — round-robin over `3f+1` so `w = f + 1`, and slots e
 
 #### `convergesWithin_iff_bounded`
 
-*theorem, `ViewPace.lean`*
+*theorem, `Mysticeti.ViewPace.lean`*
 
 ```lean
 theorem convergesWithin_iff_bounded
@@ -17601,7 +17606,7 @@ theorem convergesWithin_iff_bounded
 
 #### `reached`
 
-*theorem, `ViewPace.lean`*
+*theorem, `Mysticeti.ViewPace.lean`*
 
 ```lean
 theorem reached (hcard : quorumCard Validator ≤ T.card) :
@@ -17614,7 +17619,7 @@ Proved on the trunk, so every pacing discipline inherits it: nothing here mentio
 
 #### `populatedOn`
 
-*theorem, `ViewPace.lean`*
+*theorem, `Mysticeti.ViewPace.lean`*
 
 ```lean
 theorem populatedOn (pc : PaceCore U T N)
@@ -17626,7 +17631,7 @@ theorem populatedOn (pc : PaceCore U T N)
 
 #### `viewAt_ids`
 
-*theorem, `ViewPace.lean`*
+*theorem, `Mysticeti.ViewPace.lean`*
 
 ```lean
 theorem viewAt_ids (pc : PaceCore U T N) {v : Validator} (hv : v ∈ T) (t : ℕ) :
@@ -17637,7 +17642,7 @@ theorem viewAt_ids (pc : PaceCore U T N) {v : Validator} (hv : v ∈ T) (t : ℕ
 
 #### `holds_roundBlocks`
 
-*theorem, `ViewPace.lean`*
+*theorem, `Mysticeti.ViewPace.lean`*
 
 ```lean
 theorem holds_roundBlocks (pc : PaceCore U T N) {n : ℕ} (hn : n ≤ N)
@@ -17650,7 +17655,7 @@ theorem holds_roundBlocks (pc : PaceCore U T N) {n : ℕ} (hn : n ≤ N)
 
 #### `driftOn_of_catchup`
 
-*theorem, `ViewPace.lean`*
+*theorem, `Mysticeti.ViewPace.lean`*
 
 ```lean
 theorem driftOn_of_catchup {R : ℕ}
@@ -17663,7 +17668,7 @@ The collapsed spread, in the form the coverage argument consumes — with no bas
 
 #### `covers_of_converges`
 
-*theorem, `ViewPace.lean`*
+*theorem, `Mysticeti.ViewPace.lean`*
 
 ```lean
 theorem covers_of_converges {n : ℕ} (hn : n < N)
@@ -17683,7 +17688,7 @@ This is where report §4.3's claim that the network's whole contribution is one 
 
 #### `le_built`
 
-*theorem, `ViewPace.lean`*
+*theorem, `Mysticeti.ViewPace.lean`*
 
 ```lean
 theorem le_built {v : Validator} (hv : v ∈ T) : ∀ n ≤ vp.top v, n ≤ vp.built v n
@@ -17693,7 +17698,7 @@ Rounds advance real time, over the rounds a validator reached.
 
 #### `reached`
 
-*theorem, `ViewPace.lean`*
+*theorem, `Mysticeti.ViewPace.lean`*
 
 ```lean
 theorem reached (vp : ViewPace U T N)
@@ -17709,7 +17714,7 @@ The step is the familiar one with the deadline removed. Each `w ∈ T` reached r
 
 #### `populatedOn`
 
-*theorem, `ViewPace.lean`*
+*theorem, `Mysticeti.ViewPace.lean`*
 
 ```lean
 theorem populatedOn (vp : ViewPace U T N)
@@ -17721,7 +17726,7 @@ theorem populatedOn (vp : ViewPace U T N)
 
 #### `driftOn_of_catchup`
 
-*theorem, `ViewPace.lean`*
+*theorem, `Mysticeti.ViewPace.lean`*
 
 ```lean
 theorem driftOn_of_catchup (vp : ViewPace U T N) {R : ℕ}
@@ -17733,7 +17738,7 @@ theorem driftOn_of_catchup (vp : ViewPace U T N) {R : ℕ}
 
 #### `synchronisedOn_of_driftOn`
 
-*theorem, `ViewPace.lean`*
+*theorem, `Mysticeti.ViewPace.lean`*
 
 ```lean
 theorem synchronisedOn_of_driftOn {R D : ℕ}
@@ -17748,7 +17753,7 @@ This needs neither production, nor the quorum bound, nor `T ⊆ Correct`: `refer
 
 #### `commits_recur_via_pace`
 
-*theorem, `ViewPace.lean`*
+*theorem, `Mysticeti.ViewPace.lean`*
 
 ```lean
 theorem commits_recur_via_pace (hT : T ⊆ (Correct : Finset Validator))
@@ -17769,7 +17774,7 @@ What is assumed divides cleanly. The network contributes `converges` and `vp.gst
 
 #### `commits_recur_local`
 
-*theorem, `ViewPace.lean`*
+*theorem, `Mysticeti.ViewPace.lean`*
 
 ```lean
 theorem commits_recur_local (hcard : quorumCard Validator ≤ T.card)
@@ -17789,7 +17794,7 @@ The quantifier order of `commits_recur_via_pace` is preserved --- the slot is fi
 
 #### `decided_of_local`
 
-*theorem, `ViewPace.lean`*
+*theorem, `Mysticeti.ViewPace.lean`*
 
 ```lean
 theorem decided_of_local (vp : ViewPace U T N)
@@ -17804,7 +17809,7 @@ theorem decided_of_local (vp : ViewPace U T N)
 
 #### `exists_reliable_parent`
 
-*theorem, `ViewPace.lean`*
+*theorem, `Mysticeti.ViewPace.lean`*
 
 ```lean
 theorem exists_reliable_parent
@@ -17818,7 +17823,7 @@ theorem exists_reliable_parent
 
 #### `PaceCore.round_le_top_succ`
 
-*theorem, `ViewPace.lean`*
+*theorem, `Mysticeti.ViewPace.lean`*
 
 ```lean
 theorem PaceCore.round_le_top_succ (pc : PaceCore U T N)
@@ -17831,7 +17836,7 @@ theorem PaceCore.round_le_top_succ (pc : PaceCore U T N)
 
 #### `ViewPace.exists_honest_floor`
 
-*theorem, `ViewPace.lean`*
+*theorem, `Mysticeti.ViewPace.lean`*
 
 ```lean
 theorem ViewPace.exists_honest_floor (vp : ViewPace U T N)
@@ -17846,7 +17851,7 @@ theorem ViewPace.exists_honest_floor (vp : ViewPace U T N)
 
 #### `decided_of_wait`
 
-*theorem, `ViewPace.lean`*
+*theorem, `Mysticeti.ViewPace.lean`*
 
 ```lean
 theorem decided_of_wait (vp : ViewPace U T N)
@@ -17862,7 +17867,7 @@ theorem decided_of_wait (vp : ViewPace U T N)
 
 #### `directCommit_of_wait_two_delay`
 
-*theorem, `ViewPace.lean`*
+*theorem, `Mysticeti.ViewPace.lean`*
 
 ```lean
 theorem directCommit_of_wait_two_delay (vp : ViewPace U T N)
@@ -17878,7 +17883,7 @@ theorem directCommit_of_wait_two_delay (vp : ViewPace U T N)
 
 #### `heldOf_inj`
 
-*theorem, `PaceDelivery.lean`*
+*theorem, `Mysticeti.PaceDelivery.lean`*
 
 ```lean
 theorem heldOf_inj {v : Validator} (hv : v ∈ (Correct : Finset Validator))
@@ -22070,260 +22075,6 @@ theorem adaptiveRun_exists (hT : T ⊆ (Correct : Finset Validator))
 
 **AL5: the adaptive fixpoint exists.** On a DAG synchronised over a quorum of reliable validators and populated at every round, under a policy that places runs, a total adaptive run exists on every view caught up to every horizon. With `adaptiveRun_agree` it is THE fixpoint: adaptive Mysticeti decides every slot, and uniquely.
 
-#### `agree`
-
-*theorem, `Anchored.Band.lean`*
-
-```lean
-theorem agree (hl : R.Laws) : Agree R.toDagRule
-```
-
-**Two views decide alike.**
-
-#### `indirect`
-
-*theorem, `Anchored.Band.lean`*
-
-```lean
-theorem indirect (hcongr : R.LinkCongr)
-    (hleast : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
-      {A : BlockId} {i k : ℕ}, i < R.rungs →
-      (∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k) →
-      ∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k ∧
-        R.Least (S := S) U A i k L) :
-    Indirect R.toDagRule (fun sr i j => sr i + R.wave + 1 ≤ sr j)
-```
-
-**The indirect rule is a property.** Given the anchor, the verdict is determined by the rungs: the first rung holding a candidate commits the tie-break's choice, and no rung holding any skips. The verdict survives a reassignment of leaders elsewhere, since the case split reads only slot `i`'s candidates and the anchor's history. What it needs of the tie is that a nonempty rung has a choice, `hleast`.
-
-#### `agree`
-
-*theorem, `Anchored.Bounded.lean`*
-
-```lean
-theorem agree (hl : R.Laws I) (hI : I S U) {V₁ V₂ : U.View} {B₁ B₂ k : ℕ}
-    {v₁ v₂ : Option BlockId} (h₁ : R.DecidedWithin U V₁ B₁ k v₁)
-    (h₂ : R.DecidedWithin U V₂ B₂ k v₂) : v₁ = v₂
-```
-
-Two bounded verdicts agree — agreement, through the embedding.
-
-#### `decidedWithin_congr_of_slotRound`
-
-*theorem, `Anchored.Bounded.lean`*
-
-```lean
-theorem decidedWithin_congr_of_slotRound (hl : R.Laws I) {S₁ S₂ : Slots Validator} (hI : I S₁ U)
-    (hround : S₁.slotRound = S₂.slotRound) {V : U.View} {B k : ℕ} {v : Option BlockId}
-    (ha : ∀ m, m < B → S₁.leader m = S₂.leader m)
-    (h : R.DecidedWithin (S := S₁) U V B k v) : R.DecidedWithin (S := S₂) U V B k v
-```
-
-**The bounded relation moves with the schedule**, for any two schedules naming the same rounds and the same leaders below the bound: the candidate set reads the schedule only through `IsLeaderBlock`, the direct skip only at its slot, and the links not at all.
-
-#### `exists_decided_of_anchor`
-
-*theorem, `Anchored.Bounded.lean`*
-
-```lean
-theorem exists_decided_of_anchor
-    (hleast : ∀ {A : BlockId} {i k : ℕ}, i < R.rungs →
-      (∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k) →
-      ∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k ∧
-        R.Least (S := S) U A i k L)
-    {V : U.View} {k j : ℕ} {A : BlockId} (helig : R.Eligible (S := S) k j)
-    (hj : R.Decided (S := S) U V j (some A))
-    (hmid : ∀ m, k < m → m < j → R.Eligible (S := S) k m → R.Decided (S := S) U V m none) :
-    ∃ v, R.Decided (S := S) U V k v
-```
-
-**Under the nearest eligible committed anchor the slot is decided**: the first nonempty rung's choice commits, or every rung is empty and the slot skips.
-
-#### `decided_below_of_committed_run`
-
-*theorem, `Anchored.Bounded.lean`*
-
-```lean
-theorem decided_below_of_committed_run
-    (hleast : ∀ {A : BlockId} {i k : ℕ}, i < R.rungs →
-      (∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k) →
-      ∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k ∧
-        R.Least (S := S) U A i k L)
-    {V : U.View} {b n : ℕ} (hbn : b ≤ n)
-    (hspan : ∀ i, i < b → R.Eligible (S := S) i n)
-    (hrun : ∀ j, b ≤ j → j ≤ n → ∃ L, R.Decided (S := S) U V j (some L)) :
-    ∀ i, i < b → ∃ v, R.Decided (S := S) U V i v
-```
-
-**The descent, unbounded**: every derivation is bounded, so the run sits within one bound and the bounded descent applies.
-
-#### `eligibleAt_of_lt_of_spacing`
-
-*theorem, `Anchored.lean`*
-
-```lean
-theorem eligibleAt_of_lt_of_spacing {wave : ℕ}
-    (hsp : ∀ k, S.slotRound k + wave + 1 ≤ S.slotRound (k + 1)) {k j : ℕ} (h : k < j) :
-    EligibleAt (S := S) wave k j
-```
-
-Under a schedule whose consecutive slots are spaced past the wave, every later slot is an eligible anchor.
-
-#### `spansEligible_of_identity`
-
-*theorem, `Anchored.lean`*
-
-```lean
-theorem spansEligible_of_identity (hid : ∀ s, S.slotRound s = s) :
-    R.SpansEligible (R.wave + 1)
-```
-
-Under an identity-round schedule, `wave + 1` consecutive slots span.
-
-#### `Decided.indirectCommit_single`
-
-*theorem, `Anchored.lean`*
-
-```lean
-theorem Decided.indirectCommit_single {U : BlockRecord Validator BlockId Payload P honest}
-    {V : U.View} (h1 : R.rungs = 1) (hno : ∀ L L', ¬ R.tie 0 L L') {k j : ℕ} {A L : BlockId}
-    (hkj : k < j) (helig : R.Eligible k j) (hj : R.Decided U V j (some A))
-    (hmid : ∀ m, k < m → m < j → R.Eligible k m → R.Decided U V m none)
-    (hL : IsLeaderBlock U k L) (hlink : R.Link 0 U A L S k) :
-    R.Decided U V k (some L)
-```
-
-**The indirect commit at a single rung with no tie**: the shape the core, Nemo and Mahi-Mahi take.
-
-#### `Decided.indirectSkip_single`
-
-*theorem, `Anchored.lean`*
-
-```lean
-theorem Decided.indirectSkip_single {U : BlockRecord Validator BlockId Payload P honest}
-    {V : U.View} (h1 : R.rungs = 1) {k j : ℕ} {A : BlockId}
-    (hkj : k < j) (helig : R.Eligible k j) (hj : R.Decided U V j (some A))
-    (hmid : ∀ m, k < m → m < j → R.Eligible k m → R.Decided U V m none)
-    (hnone : ∀ L, IsLeaderBlock U k L → ¬ R.Link 0 U A L S k) :
-    R.Decided U V k none
-```
-
-**The indirect skip at a single rung.**
-
-#### `eq_of_indirect`
-
-*theorem, `Anchored.lean`*
-
-```lean
-theorem eq_of_indirect (hl : R.Laws I) (hI : I S U) {k j i₁ i₂ : ℕ} {L₁ L₂ A : BlockId}
-    (hL₁ : IsLeaderBlock U k L₁) (hL₂ : IsLeaderBlock U k L₂)
-    (hA : IsLeaderBlock U j A) (helig : R.Eligible k j)
-    (hi₁ : i₁ < R.rungs) (hemp₁ : ∀ i', i' < i₁ → R.RungEmpty U A i' k)
-    (hlink₁ : R.Link i₁ U A L₁ S k) (hmin₁ : R.Least U A i₁ k L₁)
-    (hi₂ : i₂ < R.rungs) (hemp₂ : ∀ i', i' < i₂ → R.RungEmpty U A i' k)
-    (hlink₂ : R.Link i₂ U A L₂ S k) (hmin₂ : R.Least U A i₂ k L₂) :
-    L₁ = L₂
-```
-
-Two tie-break choices at two rungs from one anchor are one block: at one rung by `link_unique`, and at different rungs the higher rung's emptiness premise contradicts the lower rung's link.
-
-#### `decided_unique`
-
-*theorem, `Anchored.lean`*
-
-```lean
-theorem decided_unique (hl : R.Laws I) (hI : I S U) {V₁ : U.View} {k : ℕ} {v₁ : Option BlockId}
-    (h₁ : R.Decided U V₁ k v₁) :
-    ∀ (V₂ : U.View) (v₂ : Option BlockId), R.Decided U V₂ k v₂ → v₁ = v₂
-```
-
-**Agreement.** No two validators reach conflicting decisions for a slot, whatever views they hold and whichever routes they took. Structural induction on the first derivation: every commit-against-commit case closes by a uniqueness law, the direct-against-indirect crossings by visibility or by the skip law, and the one real case — indirect against indirect — by comparing the two anchors.
-
-#### `decided_agree`
-
-*theorem, `Anchored.lean`*
-
-```lean
-theorem decided_agree (hl : R.Laws I) (hI : I S U) {V₁ V₂ : U.View} {k : ℕ} {v₁ v₂ : Option BlockId}
-    (h₁ : R.Decided U V₁ k v₁) (h₂ : R.Decided U V₂ k v₂) : v₁ = v₂
-```
-
-Agreement, in the shape callers want.
-
-#### `eq_of_decided_commit`
-
-*theorem, `Anchored.lean`*
-
-```lean
-theorem eq_of_decided_commit (hl : R.Laws I) (hI : I S U) {V₁ V₂ : U.View} {k : ℕ} {L₁ L₂ : BlockId}
-    (h₁ : R.Decided U V₁ k (some L₁)) (h₂ : R.Decided U V₂ k (some L₂)) : L₁ = L₂
-```
-
-No two validators commit *different* blocks for one slot.
-
-#### `not_decided_skip_of_decided_commit`
-
-*theorem, `Anchored.lean`*
-
-```lean
-theorem not_decided_skip_of_decided_commit (hl : R.Laws I) (hI : I S U)
-    {V₁ V₂ : U.View} {k : ℕ}
-    {L : BlockId} (h₁ : R.Decided U V₁ k (some L)) (h₂ : R.Decided U V₂ k none) : False
-```
-
-No validator commits a slot another has skipped.
-
-#### `decided_full`
-
-*theorem, `Anchored.lean`*
-
-```lean
-theorem decided_full (hl : R.Laws I) (hI : I S U) {V : U.View} {k : ℕ} {v : Option BlockId}
-    (h : R.Decided U V k v) : R.Decided U (BlockRecord.View.full U) k v
-```
-
-Whatever any validator decides on any view, the same verdict holds on the full view.
-
-#### `commitSeq_agree`
-
-*theorem, `Anchored.lean`*
-
-```lean
-theorem commitSeq_agree (hl : R.Laws I) (hI : I S U) {V₁ V₂ : U.View} {n : ℕ} {g₁ g₂ : ℕ → Option BlockId}
-    (h₁ : ∀ k, k < n → R.Decided U V₁ k (g₁ k))
-    (h₂ : ∀ k, k < n → R.Decided U V₂ k (g₂ k)) :
-    commitSeq g₁ n = commitSeq g₂ n
-```
-
-**The committed-leader sequence is agreed.**
-
-#### `ledgerSet_agree`
-
-*theorem, `Anchored.lean`*
-
-```lean
-theorem ledgerSet_agree (hl : R.Laws I) (hI : I S U) {V₁ V₂ : U.View} {n : ℕ} {g₁ g₂ : ℕ → Option BlockId}
-    (h₁ : ∀ k, k < n → R.Decided U V₁ k (g₁ k))
-    (h₂ : ∀ k, k < n → R.Decided U V₂ k (g₂ k)) :
-    ledgerSet U g₁ n = ledgerSet U g₂ n
-```
-
-**Two validators output the same blocks.**
-
-#### `outputAt_agree`
-
-*theorem, `Anchored.lean`*
-
-```lean
-theorem outputAt_agree (hl : R.Laws I) (hI : I S U) {V₁ V₂ : U.View} {n : ℕ} {g₁ g₂ : ℕ → Option BlockId}
-    {b : BlockId} {k : ℕ}
-    (h₁ : ∀ j, j < n → R.Decided U V₁ j (g₁ j))
-    (h₂ : ∀ j, j < n → R.Decided U V₂ j (g₂ j))
-    (hk : k < n) (ho : OutputAt U g₁ b k) : OutputAt U g₂ b k
-```
-
-**And validators agree on which slot a block enters at.**
-
 #### `holds`
 
 *theorem, `Barnacle.FinWhale.Proof.lean`*
@@ -22486,9 +22237,263 @@ theorem holds : Statement
 theorem holds : Statement
 ```
 
+#### `agree`
+
+*theorem, `Common.Anchored.Band.lean`*
+
+```lean
+theorem agree (hl : R.Laws) : Agree R.toDagRule
+```
+
+**Two views decide alike.**
+
+#### `indirect`
+
+*theorem, `Common.Anchored.Band.lean`*
+
+```lean
+theorem indirect (hcongr : R.LinkCongr)
+    (hleast : ∀ {S : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
+      {A : BlockId} {i k : ℕ}, i < R.rungs →
+      (∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k) →
+      ∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k ∧
+        R.Least (S := S) U A i k L) :
+    Indirect R.toDagRule (fun sr i j => sr i + R.wave + 1 ≤ sr j)
+```
+
+**The indirect rule is a property.** Given the anchor, the verdict is determined by the rungs: the first rung holding a candidate commits the tie-break's choice, and no rung holding any skips. The verdict survives a reassignment of leaders elsewhere, since the case split reads only slot `i`'s candidates and the anchor's history. What it needs of the tie is that a nonempty rung has a choice, `hleast`.
+
+#### `agree`
+
+*theorem, `Common.Anchored.Bounded.lean`*
+
+```lean
+theorem agree (hl : R.Laws I) (hI : I S U) {V₁ V₂ : U.View} {B₁ B₂ k : ℕ}
+    {v₁ v₂ : Option BlockId} (h₁ : R.DecidedWithin U V₁ B₁ k v₁)
+    (h₂ : R.DecidedWithin U V₂ B₂ k v₂) : v₁ = v₂
+```
+
+Two bounded verdicts agree — agreement, through the embedding.
+
+#### `decidedWithin_congr_of_slotRound`
+
+*theorem, `Common.Anchored.Bounded.lean`*
+
+```lean
+theorem decidedWithin_congr_of_slotRound (hl : R.Laws I) {S₁ S₂ : Slots Validator} (hI : I S₁ U)
+    (hround : S₁.slotRound = S₂.slotRound) {V : U.View} {B k : ℕ} {v : Option BlockId}
+    (ha : ∀ m, m < B → S₁.leader m = S₂.leader m)
+    (h : R.DecidedWithin (S := S₁) U V B k v) : R.DecidedWithin (S := S₂) U V B k v
+```
+
+**The bounded relation moves with the schedule**, for any two schedules naming the same rounds and the same leaders below the bound: the candidate set reads the schedule only through `IsLeaderBlock`, the direct skip only at its slot, and the links not at all.
+
+#### `exists_decided_of_anchor`
+
+*theorem, `Common.Anchored.Bounded.lean`*
+
+```lean
+theorem exists_decided_of_anchor
+    (hleast : ∀ {A : BlockId} {i k : ℕ}, i < R.rungs →
+      (∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k) →
+      ∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k ∧
+        R.Least (S := S) U A i k L)
+    {V : U.View} {k j : ℕ} {A : BlockId} (helig : R.Eligible (S := S) k j)
+    (hj : R.Decided (S := S) U V j (some A))
+    (hmid : ∀ m, k < m → m < j → R.Eligible (S := S) k m → R.Decided (S := S) U V m none) :
+    ∃ v, R.Decided (S := S) U V k v
+```
+
+**Under the nearest eligible committed anchor the slot is decided**: the first nonempty rung's choice commits, or every rung is empty and the slot skips.
+
+#### `decided_below_of_committed_run`
+
+*theorem, `Common.Anchored.Bounded.lean`*
+
+```lean
+theorem decided_below_of_committed_run
+    (hleast : ∀ {A : BlockId} {i k : ℕ}, i < R.rungs →
+      (∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k) →
+      ∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k ∧
+        R.Least (S := S) U A i k L)
+    {V : U.View} {b n : ℕ} (hbn : b ≤ n)
+    (hspan : ∀ i, i < b → R.Eligible (S := S) i n)
+    (hrun : ∀ j, b ≤ j → j ≤ n → ∃ L, R.Decided (S := S) U V j (some L)) :
+    ∀ i, i < b → ∃ v, R.Decided (S := S) U V i v
+```
+
+**The descent, unbounded**: every derivation is bounded, so the run sits within one bound and the bounded descent applies.
+
+#### `eligibleAt_of_lt_of_spacing`
+
+*theorem, `Common.Anchored.lean`*
+
+```lean
+theorem eligibleAt_of_lt_of_spacing {wave : ℕ}
+    (hsp : ∀ k, S.slotRound k + wave + 1 ≤ S.slotRound (k + 1)) {k j : ℕ} (h : k < j) :
+    EligibleAt (S := S) wave k j
+```
+
+Under a schedule whose consecutive slots are spaced past the wave, every later slot is an eligible anchor.
+
+#### `spansEligible_of_identity`
+
+*theorem, `Common.Anchored.lean`*
+
+```lean
+theorem spansEligible_of_identity (hid : ∀ s, S.slotRound s = s) :
+    R.SpansEligible (R.wave + 1)
+```
+
+Under an identity-round schedule, `wave + 1` consecutive slots span.
+
+#### `Decided.indirectCommit_single`
+
+*theorem, `Common.Anchored.lean`*
+
+```lean
+theorem Decided.indirectCommit_single {U : BlockRecord Validator BlockId Payload P honest}
+    {V : U.View} (h1 : R.rungs = 1) (hno : ∀ L L', ¬ R.tie 0 L L') {k j : ℕ} {A L : BlockId}
+    (hkj : k < j) (helig : R.Eligible k j) (hj : R.Decided U V j (some A))
+    (hmid : ∀ m, k < m → m < j → R.Eligible k m → R.Decided U V m none)
+    (hL : IsLeaderBlock U k L) (hlink : R.Link 0 U A L S k) :
+    R.Decided U V k (some L)
+```
+
+**The indirect commit at a single rung with no tie**: the shape the core, Nemo and Mahi-Mahi take.
+
+#### `Decided.indirectSkip_single`
+
+*theorem, `Common.Anchored.lean`*
+
+```lean
+theorem Decided.indirectSkip_single {U : BlockRecord Validator BlockId Payload P honest}
+    {V : U.View} (h1 : R.rungs = 1) {k j : ℕ} {A : BlockId}
+    (hkj : k < j) (helig : R.Eligible k j) (hj : R.Decided U V j (some A))
+    (hmid : ∀ m, k < m → m < j → R.Eligible k m → R.Decided U V m none)
+    (hnone : ∀ L, IsLeaderBlock U k L → ¬ R.Link 0 U A L S k) :
+    R.Decided U V k none
+```
+
+**The indirect skip at a single rung.**
+
+#### `eq_of_indirect`
+
+*theorem, `Common.Anchored.lean`*
+
+```lean
+theorem eq_of_indirect (hl : R.Laws I) (hI : I S U) {k j i₁ i₂ : ℕ} {L₁ L₂ A : BlockId}
+    (hL₁ : IsLeaderBlock U k L₁) (hL₂ : IsLeaderBlock U k L₂)
+    (hA : IsLeaderBlock U j A) (helig : R.Eligible k j)
+    (hi₁ : i₁ < R.rungs) (hemp₁ : ∀ i', i' < i₁ → R.RungEmpty U A i' k)
+    (hlink₁ : R.Link i₁ U A L₁ S k) (hmin₁ : R.Least U A i₁ k L₁)
+    (hi₂ : i₂ < R.rungs) (hemp₂ : ∀ i', i' < i₂ → R.RungEmpty U A i' k)
+    (hlink₂ : R.Link i₂ U A L₂ S k) (hmin₂ : R.Least U A i₂ k L₂) :
+    L₁ = L₂
+```
+
+Two tie-break choices at two rungs from one anchor are one block: at one rung by `link_unique`, and at different rungs the higher rung's emptiness premise contradicts the lower rung's link.
+
+#### `decided_unique`
+
+*theorem, `Common.Anchored.lean`*
+
+```lean
+theorem decided_unique (hl : R.Laws I) (hI : I S U) {V₁ : U.View} {k : ℕ} {v₁ : Option BlockId}
+    (h₁ : R.Decided U V₁ k v₁) :
+    ∀ (V₂ : U.View) (v₂ : Option BlockId), R.Decided U V₂ k v₂ → v₁ = v₂
+```
+
+**Agreement.** No two validators reach conflicting decisions for a slot, whatever views they hold and whichever routes they took. Structural induction on the first derivation: every commit-against-commit case closes by a uniqueness law, the direct-against-indirect crossings by visibility or by the skip law, and the one real case — indirect against indirect — by comparing the two anchors.
+
+#### `decided_agree`
+
+*theorem, `Common.Anchored.lean`*
+
+```lean
+theorem decided_agree (hl : R.Laws I) (hI : I S U) {V₁ V₂ : U.View} {k : ℕ} {v₁ v₂ : Option BlockId}
+    (h₁ : R.Decided U V₁ k v₁) (h₂ : R.Decided U V₂ k v₂) : v₁ = v₂
+```
+
+Agreement, in the shape callers want.
+
+#### `eq_of_decided_commit`
+
+*theorem, `Common.Anchored.lean`*
+
+```lean
+theorem eq_of_decided_commit (hl : R.Laws I) (hI : I S U) {V₁ V₂ : U.View} {k : ℕ} {L₁ L₂ : BlockId}
+    (h₁ : R.Decided U V₁ k (some L₁)) (h₂ : R.Decided U V₂ k (some L₂)) : L₁ = L₂
+```
+
+No two validators commit *different* blocks for one slot.
+
+#### `not_decided_skip_of_decided_commit`
+
+*theorem, `Common.Anchored.lean`*
+
+```lean
+theorem not_decided_skip_of_decided_commit (hl : R.Laws I) (hI : I S U)
+    {V₁ V₂ : U.View} {k : ℕ}
+    {L : BlockId} (h₁ : R.Decided U V₁ k (some L)) (h₂ : R.Decided U V₂ k none) : False
+```
+
+No validator commits a slot another has skipped.
+
+#### `decided_full`
+
+*theorem, `Common.Anchored.lean`*
+
+```lean
+theorem decided_full (hl : R.Laws I) (hI : I S U) {V : U.View} {k : ℕ} {v : Option BlockId}
+    (h : R.Decided U V k v) : R.Decided U (BlockRecord.View.full U) k v
+```
+
+Whatever any validator decides on any view, the same verdict holds on the full view.
+
+#### `commitSeq_agree`
+
+*theorem, `Common.Anchored.lean`*
+
+```lean
+theorem commitSeq_agree (hl : R.Laws I) (hI : I S U) {V₁ V₂ : U.View} {n : ℕ} {g₁ g₂ : ℕ → Option BlockId}
+    (h₁ : ∀ k, k < n → R.Decided U V₁ k (g₁ k))
+    (h₂ : ∀ k, k < n → R.Decided U V₂ k (g₂ k)) :
+    commitSeq g₁ n = commitSeq g₂ n
+```
+
+**The committed-leader sequence is agreed.**
+
+#### `ledgerSet_agree`
+
+*theorem, `Common.Anchored.lean`*
+
+```lean
+theorem ledgerSet_agree (hl : R.Laws I) (hI : I S U) {V₁ V₂ : U.View} {n : ℕ} {g₁ g₂ : ℕ → Option BlockId}
+    (h₁ : ∀ k, k < n → R.Decided U V₁ k (g₁ k))
+    (h₂ : ∀ k, k < n → R.Decided U V₂ k (g₂ k)) :
+    ledgerSet U g₁ n = ledgerSet U g₂ n
+```
+
+**Two validators output the same blocks.**
+
+#### `outputAt_agree`
+
+*theorem, `Common.Anchored.lean`*
+
+```lean
+theorem outputAt_agree (hl : R.Laws I) (hI : I S U) {V₁ V₂ : U.View} {n : ℕ} {g₁ g₂ : ℕ → Option BlockId}
+    {b : BlockId} {k : ℕ}
+    (h₁ : ∀ j, j < n → R.Decided U V₁ j (g₁ j))
+    (h₂ : ∀ j, j < n → R.Decided U V₂ j (g₂ j))
+    (hk : k < n) (ho : OutputAt U g₁ b k) : OutputAt U g₂ b k
+```
+
+**And validators agree on which slot a block enters at.**
+
 #### `View.coversUpto_full`
 
-*theorem, `BlockRecord.lean`*
+*theorem, `Common.BlockRecord.lean`*
 
 ```lean
 theorem View.coversUpto_full (U : BlockRecord Validator BlockId Payload P honest) (N : ℕ) :
@@ -22499,7 +22504,7 @@ The full view is caught up to every horizon.
 
 #### `Mechanised.of_iff`
 
-*theorem, `BlockRecord.lean`*
+*theorem, `Common.BlockRecord.lean`*
 
 ```lean
 theorem Mechanised.of_iff {Q : Validity Validator BlockId Payload} [Q.Mechanised]
@@ -22508,6 +22513,86 @@ theorem Mechanised.of_iff {Q : Validity Validator BlockId Payload} [Q.Mechanised
 ```
 
 The obligations transfer along an equivalence of predicates.
+
+#### `ledgerSet_mono`
+
+*theorem, `Common.Ledger.lean`*
+
+```lean
+theorem ledgerSet_mono {g : ℕ → Option BlockId} {n m : ℕ} (h : n ≤ m) :
+    ledgerSet U g n ⊆ ledgerSet U g m
+```
+
+**Nothing is ever dropped.** The ledger only grows as more slots settle.
+
+#### `ledgerSet_agree_of`
+
+*theorem, `Common.Ledger.lean`*
+
+```lean
+theorem ledgerSet_agree_of {g₁ g₂ : ℕ → Option BlockId} {n : ℕ}
+    (hg : ∀ k, k < n → g₁ k = g₂ k) : ledgerSet U g₁ n = ledgerSet U g₂ n
+```
+
+Two assignments that agree below `n` output the same blocks.
+
+#### `outputAt_unique`
+
+*theorem, `Common.Ledger.lean`*
+
+```lean
+theorem outputAt_unique {g : ℕ → Option BlockId} {b : BlockId} {k₁ k₂ : ℕ}
+    (h₁ : OutputAt U g b k₁) (h₂ : OutputAt U g b k₂) : k₁ = k₂
+```
+
+**A block enters the ledger once.** Its position is not merely stable over time — there is no second slot it could have entered at.
+
+#### `outputAt_agree_of`
+
+*theorem, `Common.Ledger.lean`*
+
+```lean
+theorem outputAt_agree_of {g₁ g₂ : ℕ → Option BlockId} {n : ℕ} {b : BlockId} {k : ℕ}
+    (hg : ∀ j, j < n → g₁ j = g₂ j) (hk : k < n) (ho : OutputAt U g₁ b k) :
+    OutputAt U g₂ b k
+```
+
+Two assignments that agree below `n` concur on the slot a block enters at.
+
+#### `waveRobin_fairRun`
+
+*theorem, `Common.WaveRobin.lean`*
+
+```lean
+theorem waveRobin_fairRun (n : ℕ) (hn : 0 < n) [F : Faults (Fin n)] :
+    FairRunOn (S := waveRobin n hn) (Correct : Finset (Fin n)) 3
+```
+
+**A fair schedule exists — wave-aligned rotation, unconditionally.**
+
+The witness for slot `k` is the correct validator `v`'s wave in the `k`-th rotation cycle: slot `3 * (v + n * k)` opens a wave led by `v`, lies past `k`, and its three slots are all `v`-led. This is `FairRunOn` produced with no premise at all, where per-slot rotation would need the pigeonhole argument recorded on `FairRunOn` — which is exactly why the wave-aligned schedule is the canonical witness.
+
+#### `waveRobin_spansEligible`
+
+*theorem, `Common.WaveRobin.lean`*
+
+```lean
+theorem waveRobin_spansEligible (n : ℕ) (hn : 0 < n) :
+    SpansEligibleAt (S := waveRobin n hn) 2 3
+```
+
+**`SpansEligibleAt 2 3`, the core's pipelined shape, at every `n`.** A run of three consecutive slots reaches three rounds past everything below it — the same arithmetic as `pipe_spansEligible`, freed of the committee.
+
+#### `waveRobin_fairSchedule`
+
+*theorem, `Common.WaveRobin.lean`*
+
+```lean
+theorem waveRobin_fairSchedule (n : ℕ) (hn : 0 < n) [F : Faults (Fin n)] :
+    FairScheduleOn (S := waveRobin n hn) (Correct : Finset (Fin n))
+```
+
+The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `ViewPace` results apply to it unchanged.
 
 #### `directSkip`
 
@@ -22597,7 +22682,7 @@ theorem agree {k : ℕ} (hk : Hybrid.Admissible Validator k) :
 
 #### `indirect`
 
-*theorem, `HybridProperties.lean`*
+*theorem, `Hybrid.Properties.lean`*
 
 ```lean
 theorem indirect (kt : ℕ) :
@@ -22610,7 +22695,7 @@ theorem indirect (kt : ℕ) :
 
 #### `safety`
 
-*theorem, `HybridProperties.lean`*
+*theorem, `Hybrid.Properties.lean`*
 
 ```lean
 theorem safety {kt : ℕ} (hpos : 0 < kt) (hk : Hybrid.Admissible Validator kt) :
@@ -22743,51 +22828,6 @@ theorem stack_core (sk : SkipMsg U) (hd : G ≤ S.slotRound d) :
 
 **The core's fill-then-cut is a stack**, settling at the later of the gap's top and the horizon, shifted by the horizon, re-indexed from the base slot.
 
-#### `ledgerSet_mono`
-
-*theorem, `Ledger.lean`*
-
-```lean
-theorem ledgerSet_mono {g : ℕ → Option BlockId} {n m : ℕ} (h : n ≤ m) :
-    ledgerSet U g n ⊆ ledgerSet U g m
-```
-
-**Nothing is ever dropped.** The ledger only grows as more slots settle.
-
-#### `ledgerSet_agree_of`
-
-*theorem, `Ledger.lean`*
-
-```lean
-theorem ledgerSet_agree_of {g₁ g₂ : ℕ → Option BlockId} {n : ℕ}
-    (hg : ∀ k, k < n → g₁ k = g₂ k) : ledgerSet U g₁ n = ledgerSet U g₂ n
-```
-
-Two assignments that agree below `n` output the same blocks.
-
-#### `outputAt_unique`
-
-*theorem, `Ledger.lean`*
-
-```lean
-theorem outputAt_unique {g : ℕ → Option BlockId} {b : BlockId} {k₁ k₂ : ℕ}
-    (h₁ : OutputAt U g b k₁) (h₂ : OutputAt U g b k₂) : k₁ = k₂
-```
-
-**A block enters the ledger once.** Its position is not merely stable over time — there is no second slot it could have entered at.
-
-#### `outputAt_agree_of`
-
-*theorem, `Ledger.lean`*
-
-```lean
-theorem outputAt_agree_of {g₁ g₂ : ℕ → Option BlockId} {n : ℕ} {b : BlockId} {k : ℕ}
-    (hg : ∀ j, j < n → g₁ j = g₂ j) (hk : k < n) (ho : OutputAt U g₁ b k) :
-    OutputAt U g₂ b k
-```
-
-Two assignments that agree below `n` concur on the slot a block enters at.
-
 #### `selfParent`
 
 *theorem, `MahiMahi.Carrier.lean`*
@@ -22812,7 +22852,7 @@ theorem agree {w : ℕ} (hw : 2 ≤ w) :
 
 #### `indirect`
 
-*theorem, `MahiMahiProperties.lean`*
+*theorem, `MahiMahi.Properties.lean`*
 
 ```lean
 theorem indirect {w : ℕ} (hw : 1 ≤ w) :
@@ -22824,7 +22864,7 @@ theorem indirect {w : ℕ} (hw : 1 ≤ w) :
 
 #### `safety`
 
-*theorem, `MahiMahiProperties.lean`*
+*theorem, `MahiMahi.Properties.lean`*
 
 ```lean
 theorem safety (hw : 2 ≤ w) : Properties.Safe (mahiMahiRule (Validator := Validator)
@@ -22833,7 +22873,7 @@ theorem safety (hw : 2 ≤ w) : Properties.Safe (mahiMahiRule (Validator := Vali
 
 #### `selfParent`
 
-*theorem, `MysticetiProperties.lean`*
+*theorem, `Mysticeti.Properties.lean`*
 
 ```lean
 theorem selfParent : SelfParent (mysticetiRule (Validator := Validator) (BlockId := BlockId)
@@ -22844,7 +22884,7 @@ theorem selfParent : SelfParent (mysticetiRule (Validator := Validator) (BlockId
 
 #### `agree`
 
-*theorem, `MysticetiProperties.lean`*
+*theorem, `Mysticeti.Properties.lean`*
 
 ```lean
 theorem agree :
@@ -22855,7 +22895,7 @@ theorem agree :
 
 #### `certLive_of_coreLive`
 
-*theorem, `MysticetiProperties.lean`*
+*theorem, `Mysticeti.Properties.lean`*
 
 ```lean
 theorem certLive_of_coreLive {S : Slots Validator}
@@ -22868,7 +22908,7 @@ theorem certLive_of_coreLive {S : Slots Validator}
 
 #### `indirect`
 
-*theorem, `MysticetiProperties.lean`*
+*theorem, `Mysticeti.Properties.lean`*
 
 ```lean
 theorem indirect :
@@ -22880,7 +22920,7 @@ theorem indirect :
 
 #### `all_decided_below_of_fairRun`
 
-*theorem, `MysticetiProperties.lean`*
+*theorem, `Mysticeti.Properties.lean`*
 
 ```lean
 theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
@@ -22900,7 +22940,7 @@ This is what "the ledger does not stall" means operationally: `commitSeq` reads 
 
 #### `safety`
 
-*theorem, `MysticetiProperties.lean`*
+*theorem, `Mysticeti.Properties.lean`*
 
 ```lean
 theorem safety : Properties.Safe (mysticetiRule (Validator := Validator) (BlockId := BlockId)
@@ -22922,7 +22962,7 @@ theorem agree : Agree (nemoRule (Validator := Validator) (BlockId := BlockId)
 
 #### `indirect`
 
-*theorem, `NemoProperties.lean`*
+*theorem, `Nemo.Properties.lean`*
 
 ```lean
 theorem indirect :
@@ -22934,7 +22974,7 @@ theorem indirect :
 
 #### `all_decided_below_of_fairRun`
 
-*theorem, `NemoProperties.lean`*
+*theorem, `Nemo.Properties.lean`*
 
 ```lean
 theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
@@ -22956,7 +22996,7 @@ The quantifier order is the content: the slot `b` is fixed by the *schedule* alo
 
 #### `all_decided_below_of_fairRun_live`
 
-*theorem, `NemoProperties.lean`*
+*theorem, `Nemo.Properties.lean`*
 
 ```lean
 theorem all_decided_below_of_fairRun_live {c : ℕ} (hc : 0 < c)
@@ -22974,7 +23014,7 @@ theorem all_decided_below_of_fairRun_live {c : ℕ} (hc : 0 < c)
 
 #### `safety`
 
-*theorem, `NemoProperties.lean`*
+*theorem, `Nemo.Properties.lean`*
 
 ```lean
 theorem safety : Properties.Safe (nemoRule (Validator := Validator) (BlockId := BlockId)
@@ -22983,7 +23023,7 @@ theorem safety : Properties.Safe (nemoRule (Validator := Validator) (BlockId := 
 
 #### `progress`
 
-*theorem, `NemoProperties.lean`*
+*theorem, `Nemo.Properties.lean`*
 
 ```lean
 theorem progress (hn : 0 < Fintype.card Validator) :
@@ -23015,7 +23055,7 @@ theorem agree : Agree (odontocetiRule (Validator := Validator) (BlockId := Block
 
 #### `indirect`
 
-*theorem, `OdontocetiProperties.lean`*
+*theorem, `Odontoceti.Properties.lean`*
 
 ```lean
 theorem indirect :
@@ -23028,7 +23068,7 @@ theorem indirect :
 
 #### `all_decided_below_of_fairRun`
 
-*theorem, `OdontocetiProperties.lean`*
+*theorem, `Odontoceti.Properties.lean`*
 
 ```lean
 theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
@@ -23048,7 +23088,7 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
 
 #### `safety`
 
-*theorem, `OdontocetiProperties.lean`*
+*theorem, `Odontoceti.Properties.lean`*
 
 ```lean
 theorem safety : Properties.Safe (odontocetiRule (Validator := Validator) (BlockId := BlockId)
@@ -23728,40 +23768,5 @@ theorem synchronisedOn_of_extends {U U' : R.Universe} (he : Extends R U U')
 ```
 
 **An extension preserves coverage** for a set holding no author of a novel block: every block the clause reaches is old, and old blocks are unchanged.
-
-#### `waveRobin_fairRun`
-
-*theorem, `WaveRobin.lean`*
-
-```lean
-theorem waveRobin_fairRun (n : ℕ) (hn : 0 < n) [F : Faults (Fin n)] :
-    FairRunOn (S := waveRobin n hn) (Correct : Finset (Fin n)) 3
-```
-
-**A fair schedule exists — wave-aligned rotation, unconditionally.**
-
-The witness for slot `k` is the correct validator `v`'s wave in the `k`-th rotation cycle: slot `3 * (v + n * k)` opens a wave led by `v`, lies past `k`, and its three slots are all `v`-led. This is `FairRunOn` produced with no premise at all, where per-slot rotation would need the pigeonhole argument recorded on `FairRunOn` — which is exactly why the wave-aligned schedule is the canonical witness.
-
-#### `waveRobin_spansEligible`
-
-*theorem, `WaveRobin.lean`*
-
-```lean
-theorem waveRobin_spansEligible (n : ℕ) (hn : 0 < n) :
-    SpansEligibleAt (S := waveRobin n hn) 2 3
-```
-
-**`SpansEligibleAt 2 3`, the core's pipelined shape, at every `n`.** A run of three consecutive slots reaches three rounds past everything below it — the same arithmetic as `pipe_spansEligible`, freed of the committee.
-
-#### `waveRobin_fairSchedule`
-
-*theorem, `WaveRobin.lean`*
-
-```lean
-theorem waveRobin_fairSchedule (n : ℕ) (hn : 0 < n) [F : Faults (Fin n)] :
-    FairScheduleOn (S := waveRobin n hn) (Correct : Finset (Fin n))
-```
-
-The wave-aligned rotation is fair in the single-slot sense too, so L6 and the `ViewPace` results apply to it unchanged.
 
 <!-- END GENERATED REFERENCE -->

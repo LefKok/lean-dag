@@ -1,5 +1,4 @@
 import LeanDag.FinWhale.Model.Decision
-
 /-!
 # FinWhale — the anchor, and the indirect commit rule
 

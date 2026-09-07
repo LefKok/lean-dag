@@ -1,7 +1,6 @@
 import LeanDag.Hydrozoan.Model.Decided
 import LeanDag.Hydrozoan.Helpers.DirectRules
-import LeanDag.Anchored.Bounded
-
+import LeanDag.Common.Anchored.Bounded
 /-!
 # Helpers: indirect liveness
 

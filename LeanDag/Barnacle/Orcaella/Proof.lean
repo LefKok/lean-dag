@@ -1,6 +1,5 @@
 import LeanDag.Barnacle.Orcaella.Statement
 import LeanDag.Barnacle.Helpers.Orcaella
-
 /-!
 # Barnacle over Orcaella — proof
 

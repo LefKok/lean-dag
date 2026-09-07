@@ -1,5 +1,4 @@
 import LeanDag.Hybrid.Checkpoint.RecoveryProofs
-
 /-!
 # Adversarial checkpoint and recovery witnesses
 

@@ -1213,7 +1213,7 @@ differences it does have should have been the only work.
 same universe type; `Agree` is O5; `CommitsCandidate` is
 `isLeaderBlock_of_decided`; `CommitsDirect` is `Decided.directCommit`.
 All four are one line each at a native carrier
-(`LeanDag/OdontocetiProperties.lean`), and the carrier is native rather
+(`LeanDag/Odontoceti/Properties.lean`), and the carrier is native rather
 than `Barnacle.odontocetiRule` because a protocol's conformance should
 not route through a mechanism (§8).
 
@@ -1478,7 +1478,7 @@ exists to remove.
 **One induction where there were going to be several.** Density and the
 correct backbone read `blk`, `ids`, `CausalStructure` and `QuorateOn`
 and nothing else, so they are stated over the raw block data in
-`LeanDag/Density.lean`; the DoS arc, which proved density first, now
+`LeanDag/Common/Density.lean`; the DoS arc, which proved density first, now
 names its instance of them, and `Properties/Arcs/Quality.lean` names
 another. `DoS/Density.lean` and `DoS/Exclusion.lean` each lost an
 induction to it.
@@ -1899,7 +1899,7 @@ LeanDag/OptimalHydrozoan/Properties/{Statement,Proof}.lean
 LeanDag/MahiMahi/Properties/{Statement,Proof}.lean
 LeanDag/FinWhale/Properties/{Statement,Proof}.lean
 LeanDag/{Odontoceti,Nemo,Hybrid}/Properties.lean
-LeanDag/MysticetiProperties.lean
+LeanDag/Mysticeti/Properties.lean
 LeanDag/Reactive/MysticetiProperties.lean
 ```
 
@@ -3878,7 +3878,7 @@ resolution: files in the Optimal namespace that once saw a single
 `BlockUniverse`, `View`, `Faults` or `Correct` now qualify Hydrozoan's.
 
 **One schedule.** `Slots` moves from `Mysticeti.lean` to
-`LeanDag/Slots.lean`, below every protocol, and `Hydrozoan.Slots`,
+`LeanDag/Common/Slots.lean`, below every protocol, and `Hydrozoan.Slots`,
 `ofCoreSlots` and `toCoreSlots` are deleted; Hydrozoan's rules take the
 shared class. FinWhale's `Sched` is the shared class too: `Sched` is an
 abbreviation of `Slots`, its `round` is `slotRound`, `schedOf` is
@@ -4100,7 +4100,7 @@ Net: about three hundred and fifty Lean lines fewer.
 
 The fourth and fifth clusters of §11.26, done for all eight rules.
 
-**The relation.** `LeanDag/Anchored.lean` states the decision relation
+**The relation.** `LeanDag/Common/Anchored.lean` states the decision relation
 once, over a record `AnchoredRule` of what varies between rules: the
 wave, the direct commit and skip as a view evaluates them, a number of
 graded rungs each a link from the anchor to a candidate, and a tie at
@@ -4169,6 +4169,47 @@ was not, which its filters over candidates depended on; the shared one
 is now reducible too.
 
 **What is left of §11.26** is the adaptive instantiations.
+
+### 11.30 The tree: a common layer, the core as one rule, properties beside each rule
+
+Until now the root of `LeanDag/` held three kinds of file side by side:
+the common substrate every rule is defined in terms of (`Validators`,
+`Slots`, `BlockRecord`, `Support`, `Ledger`, `Anchored`, …), the core
+protocol (`Mysticeti`, `Liveness`, `ViewPace`, `Quantitative`, …), and
+one `<Rule>Properties.lean` per rule holding that rule's band laws and
+headline properties. Every other rule already had a directory; the core
+and the substrate did not, so the layout said the core was the library
+and the rest were additions, which §11.29 made false.
+
+**What moved.** Twenty-three modules went to `Common/`: the fault model,
+slots and the schedule constructors, blocks and the block record with
+its `Record/` operations, the causal structure (`Causality`,
+`CausalHistory`, `History`), counting (`Support`, `Density`,
+`CommonCore`, `Participation`), the ledger, persistence, the wave-aligned
+rotation, and the anchored relation with its band and bounded forms. Six
+went to `Mysticeti/`: the rule (`Mysticeti.lean` is now
+`Mysticeti/Rule.lean`), its properties, liveness, the pacing route,
+delivery and the rated bounds. The four `<Rule>Properties.lean` files
+became `<Rule>/Properties.lean`, the name Hydrozoan already used.
+Namespaces are unchanged: `LeanDag.decided_unique` is still
+`LeanDag.decided_unique`; only import paths moved, in 413 files.
+
+**What did not happen.** The plan was to fold each `<Rule>Properties`
+into its `<Rule>/Carrier.lean`. That is a cycle for Odontoceti, whose
+properties import `Adaptive/Odontoceti.lean`, which imports the carrier;
+and for every rule it would pull the timed and arc layers under the
+Barnacle statement files that import the carrier alone. The carrier
+stays the thin instance and `Properties.lean` the layer above it.
+
+**Placement rule.** A module goes to `Common/` when it names no rule and
+is imported by more than one; `Density` and `CommonCore` are there on
+that criterion even though the core proved them first. A module the core
+alone owns goes to `Mysticeti/` even when other rules import it:
+`Mysticeti/Liveness.lean` has twenty-one importers, but what they take
+from it are the core's committed-run results at the core's schedule
+shapes, not a shared notion. When a rule needs one of those results as a
+shared notion, the notion moves to `Common/`, as §11.28 did for the
+liveness predicates.
 
 ### 11.5 Next steps, in order
 

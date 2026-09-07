@@ -1,6 +1,5 @@
-import LeanDag.Block
+import LeanDag.Common.Block
 import LeanDag.Hydrozoan.Model.Faults
-
 /-!
 # Blocks and validity
 

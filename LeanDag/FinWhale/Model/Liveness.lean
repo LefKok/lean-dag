@@ -1,6 +1,5 @@
 import LeanDag.FinWhale.Model.Decision
-import LeanDag.ViewPace
-
+import LeanDag.Mysticeti.ViewPace
 /-!
 # FinWhale — the interfaces liveness supplies and safety consumes
 

@@ -1,7 +1,6 @@
 import LeanDagTest.Barnacle.Progress
 import LeanDag.Barnacle.Heads.Proof
 import LeanDag.Barnacle.MysticetiLive.Proof
-
 /-!
 # Barnacle witnesses — the heads descent on data
 

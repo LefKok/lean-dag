@@ -1,9 +1,7 @@
 import LeanDag.Barnacle.Model.Heads
 import LeanDag.Barnacle.Helpers.Mysticeti
 import LeanDag.Hybrid.Liveness
-
 import LeanDag.Hybrid.Carrier
-
 /-!
 # Barnacle over Orcaella — statement
 

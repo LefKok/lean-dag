@@ -1,6 +1,5 @@
 import LeanDag.OptimalHydrozoan.Model.DirectRules
 import LeanDag.Hydrozoan.Model.IndirectRules
-
 /-!
 # Optimal-Hydrozoan: the graded indirect rule's second rung
 

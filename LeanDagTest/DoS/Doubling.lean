@@ -1,6 +1,5 @@
 import LeanDag.DoS.Pedigree
 import LeanDag.DoS.Density
-
 /-!
 # The doubling step, machine-checked
 

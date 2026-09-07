@@ -1,7 +1,6 @@
 import LeanDag.Reactive.Mysticeti
-import LeanDag.MysticetiProperties
+import LeanDag.Mysticeti.Properties
 import LeanDag.Properties.Arcs.Quality
-
 /-!
 # Reactive Mysticeti conforms to the schedule family
 

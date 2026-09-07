@@ -4,7 +4,6 @@ import LeanDag.Hydrozoan.Helpers.Record
 import LeanDag.Properties.Arcs.Record
 import LeanDag.Properties.Arcs.Liveness
 import LeanDag.Timed.Extension
-
 /-!
 # Garbage collection, crash recovery and re-genesis for Hydrozoan
 

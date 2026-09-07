@@ -1,7 +1,6 @@
 import LeanDag.OptimalHydrozoan.Model.DirectRules
 import LeanDag.Hydrozoan.Helpers.Counting
 import LeanDag.Hydrozoan.Helpers.DirectRules
-
 /-!
 # Optimal-Hydrozoan: counting lemmas
 

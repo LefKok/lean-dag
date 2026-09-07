@@ -1,6 +1,5 @@
 import LeanDag.BlackMarlin.Model.Descent
 import LeanDag.BlackMarlin.Helpers.Ledger
-
 /-!
 # Black Marlin — the descent layer
 

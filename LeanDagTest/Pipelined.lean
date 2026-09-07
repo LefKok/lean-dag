@@ -1,8 +1,7 @@
-import LeanDag.MysticetiProperties
-import LeanDag.Schedule
-import LeanDag.Liveness
+import LeanDag.Mysticeti.Properties
+import LeanDag.Common.Schedule
+import LeanDag.Mysticeti.Liveness
 import LeanDag.Network.Quorum
-
 /-!
 # Pipelined and multi-leader schedules — the witnesses
 

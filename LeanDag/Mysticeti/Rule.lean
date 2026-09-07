@@ -1,0 +1,635 @@
+import LeanDag.Common.Support
+import LeanDag.Common.Ledger
+import LeanDag.Common.Anchored
+import LeanDag.Common.Slots
+/-!
+# Uncertified DAGs: the Mysticeti commit rules
+
+`spec.md` §4, Phase 2 — Stage A.
+
+A certified DAG (DAG-Rider, Bullshark, Narwhal) admits a block only once
+2f+1 validators have signed it, so the block *is* a certificate and
+"referenced by 2f+1 validators next round" is the whole commit rule.
+Mysticeti drops that round for latency, so blocks carry no authority of
+their own and it has to be rebuilt inside the DAG, one round further on:
+
+* a round-`(r+1)` block **votes** for a round-`r` block `L` when `L ∈ refs`,
+  and **blames** otherwise;
+* a round-`(r+2)` block **certifies** `L` when its own references include
+  votes for `L` from 2f+1 *distinct* validators;
+* `L` is **directly committed** when certificates for it come from 2f+1
+  distinct validators, and **directly skipped** when blames do.
+
+This file is Stage A: everything here is universe-level, so it needs neither
+views nor a leader schedule. `L` is an arbitrary block — nothing in M1–M3
+cares that it is a leader — and M5 is stated as *same round, same creator*
+rather than *same slot*, which is what "same slot" means operationally.
+Views, the slot schedule, and the indirect rule arrive in Stages B and C.
+-/
+
+namespace LeanDag
+
+variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable [F : Faults Validator]
+variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
+variable {U : BlockUniverse Validator BlockId Payload}
+
+/-- The references of `C` that vote for `L`. -/
+def votesIn (U : BlockUniverse Validator BlockId Payload) (C L : BlockId) : Finset BlockId :=
+  (U.block C).refs.filter (fun q => L ∈ (U.block q).refs)
+
+/-- A round-`(r+2)` block certifies `L` when its votes for `L` come from a
+quorum of distinct validators. -/
+def Certifies (U : BlockUniverse Validator BlockId Payload) (C L : BlockId) : Prop :=
+  quorumCard Validator ≤ (creatorsOf U.block (votesIn U C L)).card
+
+/-- All three rule predicates are cardinality comparisons and so decidable,
+but as `Prop`-valued `def`s Lean will not see that unaided. `certificates`
+needs this to filter on `Certifies`, and concrete models need it to settle
+the rules by `decide`. -/
+instance decidableCertifies (C L : BlockId) : Decidable (Certifies U C L) :=
+  inferInstanceAs (Decidable (quorumCard Validator ≤ (creatorsOf U.block (votesIn U C L)).card))
+
+/-- The certificates for a round-`r` block `L`: the round-`(r+2)` blocks that
+certify it. -/
+def certificates (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (r : ℕ) :
+    Finset BlockId :=
+  (blocksAt U (r + 2)).filter (fun C => Certifies U C L)
+
+/-- Membership in `certificates`, unfolded: a round-`r+2` block that certifies `L`. -/
+@[simp]
+theorem mem_certificates {C L : BlockId} {r : ℕ} :
+    C ∈ certificates U L r ↔ C ∈ U.ids ∧ (U.block C).round = r + 2 ∧ Certifies U C L := by
+  simp [certificates, and_assoc]
+
+/-- A vote counted by a round-`(r+2)` certificate really is a round-`(r+1)`
+block of the universe that references `L`. Used wherever a certificate has to
+be turned back into the supporters behind it. -/
+theorem mem_votesIn_spec {C L q : BlockId} {r : ℕ}
+    (hC : C ∈ U.ids) (hCr : (U.block C).round = r + 2) (hq : q ∈ votesIn U C L) :
+    q ∈ U.ids ∧ (U.block q).round = r + 1 ∧ L ∈ (U.block q).refs := by
+  rw [votesIn, Finset.mem_filter] at hq
+  refine ⟨U.complete C hC q hq.1, ?_, hq.2⟩
+  have := U.round_of_mem_refs hC hq.1
+  omega
+
+/-- `L` is directly committed when its certificates come from a quorum of
+distinct validators. -/
+def DirectCommit (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (r : ℕ) : Prop :=
+  quorumCard Validator ≤ (creatorsOf U.block (certificates U L r)).card
+
+/-- `L` is directly skipped when a quorum of distinct validators declined to
+vote for it. -/
+def DirectSkip (U : BlockUniverse Validator BlockId Payload) (L : BlockId) (r : ℕ) : Prop :=
+  quorumCard Validator ≤ (blames U L (r + 1)).card
+
+instance decidableDirectCommit (L : BlockId) (r : ℕ) : Decidable (DirectCommit U L r) :=
+  inferInstanceAs (Decidable (quorumCard Validator ≤ (creatorsOf U.block (certificates U L r)).card))
+
+instance decidableDirectSkip (L : BlockId) (r : ℕ) : Decidable (DirectSkip U L r) :=
+  inferInstanceAs (Decidable (quorumCard Validator ≤ (blames U L (r + 1)).card))
+
+/-- **M3.** A directly skipped block has **no certificate anywhere** in the
+universe — not merely none in some view.
+
+With `2f+1` blamers, and correct validators unable to sit on both sides, the
+supporters number at most `(3f+1) - (2f+1) + f = 2f`. A certificate needs
+`2f+1` distinct vote-creators, and every voter among a round-`(r+2)` block's
+references is a genuine supporter, so no such block can exist.
+
+Universe-wide is the right strength: it is why a skip needs no anchor to
+justify it, and it is what makes the indirect rule agree with the direct one
+(M4). -/
+theorem certificates_eq_empty_of_directSkip {L : BlockId} {r : ℕ}
+    (h : DirectSkip U L r) : certificates U L r = ∅ := by
+  -- A quorum of blamers caps the supporters below a quorum (Support.lean) ...
+  have hcap := card_supporters_le_of_card_blames (U := U) (L := L) (n := r + 1) h
+  rw [Finset.eq_empty_iff_forall_notMem]
+  intro C hC
+  rw [mem_certificates] at hC
+  obtain ⟨hC_ids, hC_round, hCert⟩ := hC
+  rw [Certifies] at hCert
+  -- ... and every vote a certificate counts is a genuine supporter.
+  have hsub : creatorsOf U.block (votesIn U C L) ⊆ supporters U L (r + 1) := by
+    intro v hv
+    rw [mem_creatorsOf] at hv
+    obtain ⟨q, hq, hq_creator⟩ := hv
+    obtain ⟨hq_ids, hq_round, hq_ref⟩ := mem_votesIn_spec hC_ids hC_round hq
+    exact mem_supporters.mpr ⟨q, hq_ids, hq_round, hq_ref, hq_creator⟩
+  have := Finset.card_le_card hsub
+  have := F.card_validators
+  omega
+
+/-- **M1.** No block is both directly committed and directly skipped.
+
+Immediate from M3: a skip leaves no certificates at all, and a commit needs
+`2f+1` distinct certificate authors. -/
+theorem not_directCommit_of_directSkip {L : BlockId} {r : ℕ}
+    (h : DirectSkip U L r) : ¬ DirectCommit U L r := by
+  rw [DirectCommit, certificates_eq_empty_of_directSkip h]
+  simp only [creatorsOf, Finset.image_empty, Finset.card_empty]
+  have := F.card_validators
+  omega
+
+/-- **M2.** Once a block is directly committed, its certificate becomes
+unavoidable: every block from round `r+3` on has one in its causal history.
+
+The bound is `r+3` and it is **tight**. Certificates sit at round `r+2`, and
+a round-`(r+2)` block's own references sit at `r+1`, so a round-`(r+2)` block
+that is not itself a certificate reaches none. One round above the
+certificates is needed before the intersection argument bites — the same
+phenomenon as T3's `r+2`.
+
+This is what makes the indirect rule agree with the direct one, and it is
+why the slot schedule must space leaders at least 3 rounds apart: that is
+exactly what puts every anchor at round `≥ r+3`. -/
+theorem exists_certificate_reaches_of_directCommit {L : BlockId} {r : ℕ}
+    (h : DirectCommit U L r)
+    {c : BlockId} (hc : c ∈ U.ids) (hcr : r + 3 ≤ (U.block c).round) :
+    ∃ C ∈ certificates U L r, Reaches U c C := by
+  -- Base case at `r+3`: the certificates' correct authors cannot be dodged.
+  have hbase : ∀ c' ∈ U.ids, (U.block c').round = r + 3 →
+      ∃ C, C ∈ certificates U L r ∧ Reaches U c' C := by
+    intro c' hc' hc'r
+    set T := creatorsOf U.block (certificates U L r) ∩ (Correct : Finset Validator) with hT_def
+    have hT : ∀ v ∈ T, ∃ q ∈ U.ids,
+        (U.block q).round = r + 2 ∧ q ∈ certificates U L r ∧ (U.block q).creator = v := by
+      intro v hv
+      rw [hT_def, Finset.mem_inter, mem_creatorsOf] at hv
+      obtain ⟨⟨q, hq_cert, hq_creator⟩, _⟩ := hv
+      obtain ⟨hq_ids, hq_round, -⟩ := mem_certificates.mp hq_cert
+      exact ⟨q, hq_ids, hq_round, hq_cert, hq_creator⟩
+    have hTc : ∀ v ∈ T, v ∈ (Correct : Finset Validator) :=
+      fun _ hv => Finset.mem_of_mem_inter_right hv
+    have hcard : F.f + 1 ≤ T.card := card_inter_correct_of_quorum h
+    obtain ⟨C, hC_mem, hC_cert⟩ :=
+      exists_mem_refs_of_correct_support_of_card
+        (P := fun q => q ∈ certificates U L r) hT hTc hcard hc' (by omega)
+    exact ⟨C, hC_cert, Reaches.single hC_mem⟩
+  exact reaches_pred_of_round_le hbase hc hcr
+
+/-- A direct commit needs `2f+1` distinct certificate authors, so in
+particular at least one certificate. -/
+theorem certificates_nonempty_of_directCommit {L : BlockId} {r : ℕ}
+    (h : DirectCommit U L r) : (certificates U L r).Nonempty := by
+  rw [Finset.nonempty_iff_ne_empty]
+  rintro hempty
+  rw [DirectCommit, hempty] at h
+  simp only [creatorsOf, Finset.image_empty, Finset.card_empty] at h
+  have := F.card_validators
+  omega
+
+/-- **M5′ (certificate uniqueness).** A slot admits at most one *certifiable*
+block: if certificates exist for two round-`r` blocks by the same author,
+those blocks coincide.
+
+Stronger than M5, and the form the indirect rule needs — the indirect rule
+commits on the strength of a *single* certificate lying in reach, not on a
+quorum of them.
+
+The proof needs no relationship between the two certificates. Each names
+n−f distinct voters, so the two voter sets intersect in a correct `w` (T0');
+`w`'s single round-`(r+1)` block votes for both (T1); and **distinctness**
+forbids one block referencing two round-`r` blocks by one author. That last
+step is the one place in the development where distinctness is indispensable.
+
+The rounds need no hypothesis: a voter for `L₁` sits at round `r+1` and
+references it, which pins `L₁` to round `r`, and likewise for `L₂`. -/
+theorem eq_of_certificates_nonempty {L₁ L₂ : BlockId} {r : ℕ}
+    (h₁ : (certificates U L₁ r).Nonempty) (h₂ : (certificates U L₂ r).Nonempty)
+    (hcreator : (U.block L₁).creator = (U.block L₂).creator) :
+    L₁ = L₂ := by
+  obtain ⟨C₁, hC₁⟩ := h₁
+  obtain ⟨C₂, hC₂⟩ := h₂
+  rw [mem_certificates] at hC₁ hC₂
+  obtain ⟨hC₁_ids, hC₁_round, hC₁_cert⟩ := hC₁
+  obtain ⟨hC₂_ids, hC₂_round, hC₂_cert⟩ := hC₂
+  -- The two vote quorums share a block: one round-`(r+1)` block votes for
+  -- both candidates.
+  obtain ⟨q, hq₁, hq₂⟩ :=
+    U.exists_common_mem_of_quorums (n := r + 1)
+      (fun _ hq => ⟨(mem_votesIn_spec hC₁_ids hC₁_round hq).1,
+        (mem_votesIn_spec hC₁_ids hC₁_round hq).2.1⟩)
+      (fun _ hq => ⟨(mem_votesIn_spec hC₂_ids hC₂_round hq).1,
+        (mem_votesIn_spec hC₂_ids hC₂_round hq).2.1⟩)
+      hC₁_cert hC₂_cert
+  -- Distinctness forbids it referencing two round-`r` blocks by one author.
+  exact (U.valid q (mem_votesIn_spec hC₁_ids hC₁_round hq₁).1).distinct_creators
+    L₁ (mem_votesIn_spec hC₁_ids hC₁_round hq₁).2.2
+    L₂ (mem_votesIn_spec hC₂_ids hC₂_round hq₂).2.2 hcreator
+
+/-- **M5.** At most one block per slot is directly committed.
+
+Now a corollary of M5′: a direct commit implies a certificate exists. Note
+the outer certificate-quorum intersection this proof used to perform is not
+needed — M5′ never requires the two certificates to be the same block. -/
+theorem eq_of_directCommit_of_creator_eq {L₁ L₂ : BlockId} {r : ℕ}
+    (h₁ : DirectCommit U L₁ r) (h₂ : DirectCommit U L₂ r)
+    (hcreator : (U.block L₁).creator = (U.block L₂).creator) :
+    L₁ = L₂ :=
+  eq_of_certificates_nonempty (certificates_nonempty_of_directCommit h₁)
+    (certificates_nonempty_of_directCommit h₂) hcreator
+
+/-! ## The indirect rule's test
+
+An undecided slot is settled by looking into the causal history of a later,
+directly committed *anchor*: commit if a certificate for the slot lies in
+that subgraph, skip otherwise. M4 is the statement that this never
+contradicts the direct rule. -/
+
+/-- The indirect rule's test: does a certificate for `L` lie in the causal
+history of the anchor block `A`? -/
+def CertifiedIn (U : BlockUniverse Validator BlockId Payload) (A L : BlockId) (r : ℕ) : Prop :=
+  ∃ C ∈ certificates U L r, Reaches U A C
+
+/-- A certificate in reach is, in particular, a certificate that exists. This
+is what lets M5′ compare an *indirect* commit against anything else. -/
+theorem certificates_nonempty_of_certifiedIn {A L : BlockId} {r : ℕ}
+    (h : CertifiedIn U A L r) : (certificates U L r).Nonempty := by
+  obtain ⟨C, hC, -⟩ := h
+  exact ⟨C, hC⟩
+
+/-- **M4, commit half.** A directly committed block is found by *every*
+anchor from round `r+3` on. This is M2 restated as the indirect rule's test,
+and it is why the slot schedule must space leaders at least three rounds
+apart — that spacing is exactly what puts every anchor in range. -/
+theorem certifiedIn_of_directCommit {L : BlockId} {r : ℕ} (h : DirectCommit U L r)
+    {A : BlockId} (hA : A ∈ U.ids) (hAr : r + 3 ≤ (U.block A).round) :
+    CertifiedIn U A L r :=
+  exists_certificate_reaches_of_directCommit h hA hAr
+
+/-- **M4, skip half.** A directly skipped block is found by *no* anchor
+whatsoever — no round hypothesis needed, because M3 rules out the
+certificate universe-wide rather than merely out of reach. -/
+theorem not_certifiedIn_of_directSkip {L : BlockId} {r : ℕ} (h : DirectSkip U L r)
+    {A : BlockId} : ¬ CertifiedIn U A L r := by
+  rintro ⟨C, hC, -⟩
+  rw [certificates_eq_empty_of_directSkip h] at hC
+  exact absurd hC (Finset.notMem_empty C)
+
+/-- **M4.** Where the direct rule decides, the indirect rule agrees.
+
+The asymmetry between the halves is worth noting. Commit needs the anchor to
+be far enough along (`r+3`), since the certificate must be *reachable*. Skip
+needs nothing at all, since there is no certificate anywhere to reach. -/
+theorem indirect_agrees_with_direct {L : BlockId} {r : ℕ}
+    {A : BlockId} (hA : A ∈ U.ids) (hAr : r + 3 ≤ (U.block A).round) :
+    (DirectCommit U L r → CertifiedIn U A L r) ∧
+      (DirectSkip U L r → ¬ CertifiedIn U A L r) :=
+  ⟨fun h => certifiedIn_of_directCommit h hA hAr, fun h => not_certifiedIn_of_directSkip h⟩
+
+/-- The indirect test is **view-independent**: a validator holding the anchor
+computes the same verdict from its own local DAG as from the whole universe.
+
+T6a in action — the certificate could never have lain outside the view, so
+confining the search to it changes nothing. This is what stops two validators
+with different views but the same anchor from disagreeing. -/
+theorem certifiedIn_iff_of_view {V : View Validator BlockId Payload U} {A L : BlockId} {r : ℕ}
+    (hA : A ∈ V.ids) :
+    (∃ C, C ∈ V.ids ∧ C ∈ certificates U L r ∧ Reaches U A C) ↔ CertifiedIn U A L r :=
+  View.exists_reaches_iff hA
+
+/-! ## Stage C1 — the slot schedule and the decision relation -/
+
+
+variable [S : Slots Validator]
+
+variable (Validator) in
+/-! **Eligibility** is the relation's, at wave two (`EligibleAt 2`,
+`Anchored.lean`): `j` may anchor `k` when its proposal lies past `k`'s
+decision round, `slotRound k + 2` — one round for votes, one for
+certificates, one to separate them, which is exactly M4's `r + 3`
+hypothesis and Algorithm 3's anchor filter `r_decision < s.round`. It is
+a predicate on the pair of slots alone, which is what makes agreement go
+through. **Conservativity**: under a schedule whose consecutive slots are
+three rounds apart, every later slot is eligible
+(`eligibleAt_of_lt_of_spacing`). -/
+
+/-- The certificates for `L` that a view actually holds. -/
+def certificatesIn (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Finset BlockId :=
+  certificates U L r ∩ V.ids
+
+/-- Direct commit, as judged from a single view. -/
+def DirectCommitIn (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
+  quorumCard Validator ≤ (creatorsOf U.block (certificatesIn U V L r)).card
+
+/-- Direct skip, as judged from a single view: the record's `blamesIn`
+at the round above `L`. -/
+def DirectSkipIn (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
+  quorumCard Validator ≤ (blamesIn U V L (r + 1)).card
+
+omit S in
+instance decidableDirectCommitIn (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) :
+    Decidable (DirectCommitIn U V L r) :=
+  inferInstanceAs (Decidable (quorumCard Validator ≤ (creatorsOf U.block (certificatesIn U V L r)).card))
+
+instance decidableDirectSkipIn (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) :
+    Decidable (DirectSkipIn U V L r) :=
+  inferInstanceAs (Decidable (quorumCard Validator ≤
+    (creatorsOf U.block
+      (((blocksAt U (r + 1)).filter (fun q => L ∉ (U.block q).refs)) ∩ V.ids)).card))
+
+omit S in
+/-- **A view can only under-report.** Everything it sees is real, so a
+view-relative direct commit is a genuine one.
+
+This one line is what lets all of Stage A be reused unchanged: M2, M4 and M5
+are stated universe-level, and a validator's local judgement feeds straight
+into them. -/
+theorem directCommit_of_directCommitIn {V : View Validator BlockId Payload U}
+    {L : BlockId} {r : ℕ} (h : DirectCommitIn U V L r) : DirectCommit U L r :=
+  le_trans h (Finset.card_le_card (Finset.image_subset_image Finset.inter_subset_left))
+
+omit S in
+theorem directSkip_of_directSkipIn {V : View Validator BlockId Payload U}
+    {L : BlockId} {r : ℕ} (h : DirectSkipIn U V L r) : DirectSkip U L r :=
+  le_trans h (Finset.card_le_card (Finset.image_subset_image Finset.inter_subset_left))
+
+/-! ### The slot-level skip
+
+A blame is the **absence of any candidate** from a voting-round block's
+references, as the reference implementation's `enough_leader_blame` has
+it, and not the absence of one named candidate.
+
+The distinction is invisible inside a fixed universe and decisive
+across universes. A premise quantified over the candidates a universe
+*holds* is discharged vacuously by a slot holding none, so a validator
+that has seen nothing could settle the slot; a later block then supplies
+a candidate, another validator commits it, and the two verdicts stand in
+different universes where no uniqueness theorem compares them. The
+count below is required whatever the slot holds, so the blockers are
+blocks that exist, and a candidate arriving afterwards is referenced by
+none of them. That is what makes a skip final, which is the whole
+purpose of a skip rule. -/
+
+/-- The round-`(r+1)` blocks that reference **no candidate** of slot `k`. -/
+def slotBlamers (U : BlockUniverse Validator BlockId Payload) (k : ℕ) : Finset BlockId :=
+  (blocksAt U (S.slotRound k + 1)).filter
+    (fun q => ∀ j ∈ (U.block q).refs, ¬ IsLeaderBlock U k j)
+
+/-- **The slot is directly skipped, as judged from a view**: a quorum of
+distinct validators holds a voting-round block, in view, that references
+no candidate of the slot.
+
+Strictly stronger than the per-candidate `DirectSkipIn`, which it
+implies (`directSkipIn_of_directSkipSlotIn`) and which a slot with no
+candidate satisfies for nothing. -/
+def DirectSkipSlotIn (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (k : ℕ) : Prop :=
+  quorumCard Validator ≤ (creatorsOf U.block (slotBlamers U k ∩ V.ids)).card
+
+instance decidableDirectSkipSlotIn (V : View Validator BlockId Payload U) (k : ℕ) :
+    Decidable (DirectSkipSlotIn U V k) :=
+  inferInstanceAs (Decidable (quorumCard Validator ≤
+    (creatorsOf U.block (slotBlamers U k ∩ V.ids)).card))
+
+/-- **The slot-level skip implies the per-candidate one**, so every
+theorem stated over `DirectSkipIn` — M1 and M3 in particular — applies
+to it unchanged. A block referencing no candidate references not `L`. -/
+theorem directSkipIn_of_directSkipSlotIn {V : View Validator BlockId Payload U} {k : ℕ}
+    (h : DirectSkipSlotIn U V k) {L : BlockId} (hL : IsLeaderBlock U k L) :
+    DirectSkipIn U V L (S.slotRound k) := by
+  refine le_trans h (Finset.card_le_card (Finset.image_subset_image ?_))
+  intro q hq
+  rw [Finset.mem_inter] at hq
+  rw [Finset.mem_inter, Finset.mem_filter]
+  obtain ⟨hq1, hq2⟩ := hq
+  rw [slotBlamers, Finset.mem_filter] at hq1
+  exact ⟨⟨hq1.1, fun hmem => hq1.2 L hmem hL⟩, hq2⟩
+
+/-- A larger view only sees more blamers. -/
+theorem directSkipSlotIn_mono {V V' : View Validator BlockId Payload U} {k : ℕ}
+    (hsub : V.ids ⊆ V'.ids) (h : DirectSkipSlotIn U V k) : DirectSkipSlotIn U V' k :=
+  le_trans h (Finset.card_le_card (Finset.image_subset_image
+    (Finset.inter_subset_inter Finset.Subset.rfl hsub)))
+
+/-- **A slot with no candidate is blamed by every voting-round block**, so
+the skip reduces to a quorum being present at that round. This is the
+form the liveness statements use. -/
+theorem directSkipSlotIn_of_no_candidate {V : View Validator BlockId Payload U} {k : ℕ}
+    (hnone : ∀ L, ¬ IsLeaderBlock U k L)
+    (hq : quorumCard Validator ≤
+      (creatorsOf U.block (blocksAt U (S.slotRound k + 1) ∩ V.ids)).card) :
+    DirectSkipSlotIn U V k := by
+  refine le_trans hq (Finset.card_le_card (Finset.image_subset_image ?_))
+  intro q hqm
+  rw [Finset.mem_inter] at hqm
+  rw [Finset.mem_inter, slotBlamers, Finset.mem_filter]
+  exact ⟨⟨hqm.1, fun j _ => hnone j⟩, hqm.2⟩
+
+/-! ### The decision relation
+
+`Decided U V k v` — a validator holding `V` has settled slot `k`, with `v`
+naming the committed block or `none` for a skip — is the anchored
+relation (`Anchored.lean`) at the core's data: wavelength two, the
+certificate-quorum direct commit, the slot-level direct skip, and one
+rung of link, a certificate in the anchor's cone, with no tie to break
+since two certificates at one slot name the same candidate (M5′).
+
+A **relation**, not a function: a `decide` function would recurse upward
+in slot index with no a-priori bound, needing fuel or partiality for
+nothing, and the relation is what the safety argument reads. -/
+
+omit S in
+/-- **The core as an anchored rule.** -/
+def coreAnchored (Validator BlockId Payload : Type*) [Fintype Validator]
+    [DecidableEq Validator] [Faults Validator] [DecidableEq BlockId] :
+    AnchoredRule Validator BlockId Payload ValidWrt Correct where
+  wave := 2
+  Commit := fun U V L r => DirectCommitIn U V L r
+  Skip := fun U V S k => DirectSkipSlotIn (S := S) U V k
+  rungs := 1
+  Link := fun _ U A L S k => CertifiedIn U A L (S.slotRound k)
+  tie := fun _ _ _ => False
+
+omit S in
+@[simp] theorem coreAnchored_wave :
+    (coreAnchored Validator BlockId Payload).wave = 2 := rfl
+omit S in
+@[simp] theorem coreAnchored_rungs :
+    (coreAnchored Validator BlockId Payload).rungs = 1 := rfl
+
+instance {V : View Validator BlockId Payload U} (L : BlockId) (r : ℕ) :
+    Decidable ((coreAnchored Validator BlockId Payload).Commit U V L r) :=
+  inferInstanceAs (Decidable (DirectCommitIn U V L r))
+
+instance {V : View Validator BlockId Payload U} (k : ℕ) :
+    Decidable ((coreAnchored Validator BlockId Payload).Skip U V S k) :=
+  inferInstanceAs (Decidable (DirectSkipSlotIn (S := S) U V k))
+
+/-- **The decision relation**: the anchored relation at the core's data. -/
+abbrev Decided (U : BlockUniverse Validator BlockId Payload) (V : View Validator BlockId Payload U) :
+    ℕ → Option BlockId → Prop :=
+  (coreAnchored Validator BlockId Payload).Decided (S := S) U V
+
+namespace Decided
+export AnchoredRule.Decided (directCommit directSkip indirectCommit indirectSkip)
+end Decided
+
+/-! ## Stage C2 — the direct rules, lifted to views
+
+Everything here is a corollary of Stage A composed with monotonicity. No
+counting is redone: a view can only under-report, so its verdicts are
+genuine universe-level ones and the Stage A theorems apply directly. -/
+
+/-- Cross-view M1: one validator cannot directly commit what another
+directly skips. -/
+theorem not_directSkipIn_of_directCommitIn {V₁ V₂ : View Validator BlockId Payload U}
+    {L : BlockId} {r : ℕ} (h₁ : DirectCommitIn U V₁ L r) (h₂ : DirectSkipIn U V₂ L r) :
+    False :=
+  not_directCommit_of_directSkip (directSkip_of_directSkipIn h₂)
+    (directCommit_of_directCommitIn h₁)
+
+/-- Cross-view M5: two validators cannot directly commit *different* blocks
+for one slot. Both candidates are authored by `leader k`, which is the
+same-creator hypothesis M5 needs. -/
+theorem eq_of_directCommitIn {V₁ V₂ : View Validator BlockId Payload U}
+    {k : ℕ} {L₁ L₂ : BlockId}
+    (hL₁ : IsLeaderBlock U k L₁) (hL₂ : IsLeaderBlock U k L₂)
+    (h₁ : DirectCommitIn U V₁ L₁ (S.slotRound k))
+    (h₂ : DirectCommitIn U V₂ L₂ (S.slotRound k)) :
+    L₁ = L₂ :=
+  eq_of_directCommit_of_creator_eq (directCommit_of_directCommitIn h₁)
+    (directCommit_of_directCommitIn h₂) (by rw [hL₁.2.2, hL₂.2.2])
+
+/-- **The engine of M6.** A direct commit made in *any* view is visible from
+*every* later slot's leader block. A validator that missed the direct commit
+therefore recovers it indirectly, which is what stops anchors from
+diverging.
+
+Eligibility is what discharges the round hypothesis, and it is now taken as a
+premise rather than derived from `k < j`: under pipelining the next slot is
+one round on, not three, and a block there reaches no certificate for `k`. -/
+theorem certifiedIn_of_directCommitIn {V : View Validator BlockId Payload U}
+    {k j : ℕ} {L A : BlockId}
+    (h : DirectCommitIn U V L (S.slotRound k))
+    (hA : A ∈ U.ids) (hAr : (U.block A).round = S.slotRound j)
+    (helig : EligibleAt (S := S) 2 k j) :
+    CertifiedIn U A L (S.slotRound k) := by
+  refine certifiedIn_of_directCommit (directCommit_of_directCommitIn h) hA ?_
+  rw [eligibleAt_iff] at helig
+  omega
+
+omit S in
+/-- A direct skip made in any view is invisible from every anchor — no round
+hypothesis needed, since M3 rules the certificate out universe-wide. -/
+theorem not_certifiedIn_of_directSkipIn {V : View Validator BlockId Payload U}
+    {L : BlockId} {r : ℕ} (h : DirectSkipIn U V L r) {A : BlockId} :
+    ¬ CertifiedIn U A L r :=
+  not_certifiedIn_of_directSkip (directSkip_of_directSkipIn h)
+
+/-- **Direct decisions agree across views.** If one validator directly
+commits a slot, no other validator can directly skip it — the argument
+here being exactly the premise of `Decided.directSkip`. -/
+theorem not_directSkip_of_directCommitIn {V₁ V₂ : View Validator BlockId Payload U}
+    {k : ℕ} {L : BlockId} (hL : IsLeaderBlock U k L)
+    (h₁ : DirectCommitIn U V₁ L (S.slotRound k))
+    (h₂ : DirectSkipSlotIn U V₂ k) :
+    False :=
+  not_directSkipIn_of_directCommitIn h₁ (directSkipIn_of_directSkipSlotIn h₂ hL)
+
+/-! ### Schedule congruence
+
+The slot-level skip reads the schedule only at its own slot, so two
+schedules naming the same round and the same leader there agree on it. -/
+
+omit S in
+/-- **The slot-level skip reads the schedule only at its own slot**, so
+two schedules naming the same round and the same leader there agree on
+whether the slot is skipped. -/
+theorem slotBlamers_congr {S₁ S₂ : Slots Validator} {k : ℕ}
+    (hround : S₁.slotRound k = S₂.slotRound k) (hk : S₁.leader k = S₂.leader k) :
+    slotBlamers (S := S₁) U k = slotBlamers (S := S₂) U k := by
+  ext q
+  simp only [slotBlamers, Finset.mem_filter, mem_blocksAt, hround]
+  constructor
+  · rintro ⟨hqb, hqn⟩
+    exact ⟨hqb, fun j hj hjL => hqn j hj (isLeaderBlock_congr hround.symm hk.symm hjL)⟩
+  · rintro ⟨hqb, hqn⟩
+    exact ⟨hqb, fun j hj hjL => hqn j hj (isLeaderBlock_congr hround hk hjL)⟩
+
+omit S in
+/-- The count that reads it is therefore the same count. -/
+theorem directSkipSlotIn_congr {S₁ S₂ : Slots Validator}
+    {V : View Validator BlockId Payload U} {k : ℕ}
+    (hround : S₁.slotRound k = S₂.slotRound k) (hk : S₁.leader k = S₂.leader k)
+    (h : DirectSkipSlotIn (S := S₁) U V k) : DirectSkipSlotIn (S := S₂) U V k := by
+  unfold DirectSkipSlotIn at h ⊢
+  rwa [slotBlamers_congr hround hk] at h
+
+
+/-! ## Stage C3 — agreement
+
+M6 — no two validators reach conflicting decisions for a slot, whatever
+views they hold and whichever routes they took — is the relation's
+`decided_unique` at `coreLaws`: every commit-versus-commit case by M5′,
+the direct-versus-indirect crossings by cross-view M1, the visibility
+lemma and M3, and the one real case, indirect commit against indirect
+skip, by comparing the two anchors (`anchor_eq`). That is why "nearest
+anchor" had to be stated positively, and why eligibility may not be
+view-relative: the intermediate premise ranges over eligible slots only,
+and invoking the other validator's copy of it needs `Eligible k j` as a
+side condition, discharged by *this* validator's own eligibility premise
+for the same pair. -/
+
+/-- Two commits for one slot agree, however each was reached. Both routes
+yield a certificate, so this is M5′ with the plumbing done. -/
+theorem eq_of_hasCertificate {k : ℕ} {L₁ L₂ : BlockId}
+    (hL₁ : IsLeaderBlock U k L₁) (hL₂ : IsLeaderBlock U k L₂)
+    (h₁ : (certificates U L₁ (S.slotRound k)).Nonempty)
+    (h₂ : (certificates U L₂ (S.slotRound k)).Nonempty) :
+    L₁ = L₂ :=
+  eq_of_certificates_nonempty h₁ h₂ (by rw [hL₁.2.2, hL₂.2.2])
+
+omit S in
+/-- **The core's laws.** Every commit-against-commit case is certificate
+uniqueness; the crossings are cross-view M1, the visibility lemma and M3. -/
+theorem coreLaws : (coreAnchored Validator BlockId Payload).Laws where
+  commit_unique := fun _ hL₁ hL₂ h₁ h₂ => eq_of_directCommitIn hL₁ hL₂ h₁ h₂
+  commit_skip := fun _ hL h hskip => not_directSkip_of_directCommitIn hL h hskip
+  commit_link := fun _ _ h hA helig => ⟨0, Nat.one_pos,
+    certifiedIn_of_directCommitIn h hA.1 hA.2.1 helig⟩
+  commit_link_unique := by
+    intro S U V k j i L₁ L₂ A _ hL₁ hL₂ h _ _ _ _ hlink _
+    exact eq_of_hasCertificate hL₁ hL₂
+      (certificates_nonempty_of_directCommit (directCommit_of_directCommitIn h))
+      (certificates_nonempty_of_certifiedIn hlink)
+  skip_link := fun _ hskip hL _ =>
+    not_certifiedIn_of_directSkipIn (directSkipIn_of_directSkipSlotIn hskip hL)
+  link_unique := by
+    intro S U k j i L₁ L₂ A _ hL₁ hL₂ _ _ _ _ hl₁ hl₂ _ _
+    exact eq_of_hasCertificate hL₁ hL₂ (certificates_nonempty_of_certifiedIn hl₁)
+      (certificates_nonempty_of_certifiedIn hl₂)
+  commit_mono := fun _ hsub h => le_trans h (Finset.card_le_card (Finset.image_subset_image
+    (Finset.inter_subset_inter Finset.Subset.rfl hsub)))
+  skip_mono := fun _ hsub h => directSkipSlotIn_mono hsub h
+  skip_congr := fun _ hround hk h => directSkipSlotIn_congr hround hk h
+  link_congr := fun hround _ h => by
+    change CertifiedIn _ _ _ _ at h ⊢
+    rwa [← hround]
+
+omit S in
+/-- No tie: any certified candidate is the rung's choice. -/
+theorem exists_least {S : Slots Validator} {U : BlockUniverse Validator BlockId Payload}
+    {A : BlockId} {i k : ℕ} (_ : i < (coreAnchored Validator BlockId Payload).rungs)
+    (h : ∃ L, IsLeaderBlock (S := S) U k L ∧
+      (coreAnchored Validator BlockId Payload).Link i U A L S k) :
+    ∃ L, IsLeaderBlock (S := S) U k L ∧
+      (coreAnchored Validator BlockId Payload).Link i U A L S k ∧
+      (coreAnchored Validator BlockId Payload).Least (S := S) U A i k L :=
+  let ⟨L, hL, hl⟩ := h
+  ⟨L, hL, hl, fun _ _ _ h => h⟩
+
+/-! The committed-leader sequence (M7) and the ledger (M8, M9) are the
+relation's `commitSeq_agree`, `ledgerSet_agree` and `outputAt_agree` at
+`coreLaws`: two validators that have settled the first `n` slots read off
+the same list, output the same blocks, and agree on the slot each block
+enters at. This is the leader half of total-order safety, a corollary
+rather than a theorem; the block half needs a deterministic order
+*within* each flush, which the development deliberately does not
+assume. -/
+
+end LeanDag

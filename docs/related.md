@@ -168,7 +168,7 @@ latency reduction.
 
 This is the design the present formalisation targets. The commit rule — direct
 commit, direct skip, and the indirect rule that resolves undecided slots from
-later certificates — is the object of `LeanDag/Mysticeti.lean`.
+later certificates — is the object of `LeanDag/Mysticeti/Rule.lean`.
 
 ---
 
@@ -532,7 +532,7 @@ Three observations for the report.
 ## 8. The pacemaker against the liveness assumptions here
 
 This section compares Starfish's pacemaker (§4.3) and Qiu et al.'s round-jumping
-rule (§4.3.1) against `LeanDag/Timing.lean`, `LeanDag/Liveness.lean` and the
+rule (§4.3.1) against `LeanDag/Timing.lean`, `LeanDag/Mysticeti/Liveness.lean` and the
 trust boundary of report §4.
 
 ### 8.1 The correspondence

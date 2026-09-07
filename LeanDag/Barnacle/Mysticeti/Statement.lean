@@ -1,8 +1,6 @@
 import LeanDag.Barnacle.Model.Rule
 import LeanDag.Barnacle.Helpers.Mysticeti
-
-import LeanDag.MysticetiProperties
-
+import LeanDag.Mysticeti.Properties
 /-!
 # Barnacle over Mysticeti — statement
 

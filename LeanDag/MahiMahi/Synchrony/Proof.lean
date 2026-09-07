@@ -1,6 +1,5 @@
 import LeanDag.MahiMahi.Synchrony.Statement
 import LeanDag.MahiMahi.Helpers.Synchrony
-
 /-!
 # Partial synchrony, recovered — proof
 

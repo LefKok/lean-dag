@@ -1,6 +1,5 @@
 import LeanDagTest.BlackMarlin.Model
 import LeanDag.BlackMarlin.Liveness.Proof
-
 /-!
 # Black Marlin witnesses — liveness on data
 

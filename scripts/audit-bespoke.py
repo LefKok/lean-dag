@@ -32,9 +32,9 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 # Modules that *are* a protocol: its model, its rules, its own theorems.
 PROTOCOL = (
-    "LeanDag.Mysticeti", "LeanDag.Liveness", "LeanDag.Persistence",
-    "LeanDag.Support", "LeanDag.Schedule", "LeanDag.WaveRobin",
-    "LeanDag.Participation", "LeanDag.Hydrozoan.", "LeanDag.Odontoceti.",
+    "LeanDag.Mysticeti.Rule", "LeanDag.Mysticeti.Liveness", "LeanDag.Common.Persistence",
+    "LeanDag.Common.Support", "LeanDag.Common.Schedule", "LeanDag.Common.WaveRobin",
+    "LeanDag.Common.Participation", "LeanDag.Hydrozoan.", "LeanDag.Odontoceti.",
     "LeanDag.Nemo.", "LeanDag.Hybrid.", "LeanDag.MahiMahi.",
     "LeanDag.FinWhale.", "LeanDag.BlackMarlin.", "LeanDag.OptimalHydrozoan.",
     "LeanDag.Reactive.Mysticeti", "LeanDag.Reactive.Odontoceti",
@@ -45,13 +45,13 @@ PROTOCOL = (
 # A mechanism reaching a protocol through one of these is going the right
 # way round, so these are barriers rather than targets.
 CONFORMANCE = (
-    "LeanDag.MysticetiProperties", "LeanDag.OdontocetiProperties",
+    "LeanDag.Mysticeti.Properties", "LeanDag.Odontoceti.Properties",
     "LeanDag.Reactive.MysticetiProperties", "LeanDag.Hydrozoan.Properties",
     "LeanDag.Hydrozoan.Helpers.Commit", "LeanDag.Hydrozoan.Helpers.Banded",
     "LeanDag.Hydrozoan.Helpers.Carrier", "LeanDag.Hydrozoan.Helpers.Skippability",
     "LeanDag.Odontoceti.Carrier",
-    "LeanDag.Nemo.Carrier", "LeanDag.NemoProperties",
-    "LeanDag.Hybrid.Carrier", "LeanDag.HybridProperties",
+    "LeanDag.Nemo.Carrier", "LeanDag.Nemo.Properties",
+    "LeanDag.Hybrid.Carrier", "LeanDag.Hybrid.Properties",
     "LeanDag.OptimalHydrozoan.Carrier", "LeanDag.OptimalHydrozoan.Helpers.Banded",
     "LeanDag.Barnacle.Helpers.DagRule", "LeanDag.Barnacle.Helpers.Descent",
 )
@@ -59,9 +59,9 @@ CONFORMANCE = (
 # The rules that show the six required properties: for these, and only
 # these, a bespoke link is a gap rather than a necessity.
 CONFORMING = (
-    "LeanDag.Mysticeti", "LeanDag.Liveness", "LeanDag.Persistence",
-    "LeanDag.Support", "LeanDag.Schedule", "LeanDag.WaveRobin",
-    "LeanDag.Participation", "LeanDag.Hydrozoan.", "LeanDag.Odontoceti.",
+    "LeanDag.Mysticeti.Rule", "LeanDag.Mysticeti.Liveness", "LeanDag.Common.Persistence",
+    "LeanDag.Common.Support", "LeanDag.Common.Schedule", "LeanDag.Common.WaveRobin",
+    "LeanDag.Common.Participation", "LeanDag.Hydrozoan.", "LeanDag.Odontoceti.",
     "LeanDag.Nemo.", "LeanDag.Hybrid.", "LeanDag.OptimalHydrozoan.",
     "LeanDag.Reactive.Mysticeti", "LeanDag.Reactive.Odontoceti",
 )

@@ -1,7 +1,6 @@
 import LeanDag.FinWhale.Pass
 import LeanDag.FinWhale.Model.Liveness
-import LeanDag.ViewPace
-
+import LeanDag.Mysticeti.ViewPace
 /-!
 # FinWhale — a validator's holdings are its view
 

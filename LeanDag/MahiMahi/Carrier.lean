@@ -4,7 +4,6 @@ import LeanDag.Properties.Candidate
 import LeanDag.Properties.Optional.Direct
 import LeanDag.Properties.Optional.Quorate
 import LeanDag.Properties.Optional.SelfParent
-
 /-!
 # Mahi-Mahi as a carrier, and the properties its rules give
 

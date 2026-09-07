@@ -1,7 +1,6 @@
 import LeanDagTest.Hybrid
 import LeanDag.Barnacle.Orcaella.Proof
 import LeanDag.Barnacle.Helpers.Cover
-
 /-!
 # Barnacle over Orcaella — round-robin liveness, witnessed
 

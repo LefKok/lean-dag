@@ -2,7 +2,6 @@ import LeanDag.Properties.Truncate
 import LeanDag.Properties.Sustain
 import LeanDag.Properties.Agreement
 import LeanDag.Properties.Band
-
 /-!
 # Transport composes
 

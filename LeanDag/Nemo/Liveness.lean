@@ -1,6 +1,5 @@
 import LeanDag.Nemo.Decision
-import LeanDag.Liveness
-
+import LeanDag.Mysticeti.Liveness
 /-!
 # Nemo-Nemo: crash liveness
 

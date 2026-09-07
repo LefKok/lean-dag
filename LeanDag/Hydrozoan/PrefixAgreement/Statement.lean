@@ -1,6 +1,5 @@
 import LeanDag.Hydrozoan.Model.Decided
-import LeanDag.Ledger
-
+import LeanDag.Common.Ledger
 /-!
 # Prefix agreement — statement
 

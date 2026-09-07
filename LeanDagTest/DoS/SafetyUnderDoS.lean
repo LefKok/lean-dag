@@ -1,6 +1,5 @@
 import LeanDag.DoS.Counting
-import LeanDag.Persistence
-
+import LeanDag.Common.Persistence
 /-!
 # Safety and the DoS condition do not interact
 

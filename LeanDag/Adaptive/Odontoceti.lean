@@ -1,7 +1,6 @@
 import LeanDag.Adaptive.Mysticeti
 import LeanDag.Odontoceti.Liveness
 import LeanDag.Odontoceti.Carrier
-
 /-!
 # Adaptive leaders under the two-round rule
 

@@ -1,7 +1,6 @@
 import LeanDag.Barnacle.FinWhale.Statement
 import LeanDag.Barnacle.Helpers.Heads
 import LeanDag.Barnacle.Helpers.Descent
-
 /-!
 # Barnacle over FinWhale — proof
 

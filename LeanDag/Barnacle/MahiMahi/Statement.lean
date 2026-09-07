@@ -1,7 +1,6 @@
 import LeanDag.Barnacle.Model.Heads
 import LeanDag.Barnacle.Helpers.Mysticeti
 import LeanDag.MahiMahi.Carrier
-
 /-!
 # Barnacle over Mahi-Mahi — statement
 

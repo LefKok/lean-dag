@@ -1,6 +1,5 @@
 import LeanDag.Integration.Margin
-import LeanDag.CommonCore
-
+import LeanDag.Common.CommonCore
 /-!
 # I19 — Safe Skip against a common-core target
 

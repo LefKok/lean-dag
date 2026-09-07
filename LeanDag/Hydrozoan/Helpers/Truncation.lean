@@ -1,6 +1,5 @@
 import LeanDag.Hydrozoan.Helpers.Banded
 import LeanDag.Properties.Truncate
-
 /-!
 # Hydrozoan's rules across a truncation
 

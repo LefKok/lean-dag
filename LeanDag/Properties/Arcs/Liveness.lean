@@ -2,7 +2,6 @@ import LeanDag.Properties.Support
 import LeanDag.Properties.Derived.LeaderCommits
 import LeanDag.Properties.Derived.Progress
 import LeanDag.Properties.Truncate
-
 /-!
 # Liveness, from a support: on a covered DAG, and across a mechanism
 

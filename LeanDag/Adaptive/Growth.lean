@@ -1,7 +1,6 @@
 import LeanDag.Adaptive.Run
 import LeanDag.Properties.Extends
 import LeanDag.Properties.Derived.Persist
-
 /-!
 # The fixpoint under growth of the DAG
 

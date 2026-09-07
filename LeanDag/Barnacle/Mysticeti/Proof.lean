@@ -1,7 +1,6 @@
 import LeanDag.Barnacle.Mysticeti.Statement
-import LeanDag.Liveness
-import LeanDag.MysticetiProperties
-
+import LeanDag.Mysticeti.Liveness
+import LeanDag.Mysticeti.Properties
 /-!
 # Barnacle over Mysticeti — proof
 

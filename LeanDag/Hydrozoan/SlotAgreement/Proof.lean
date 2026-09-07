@@ -2,7 +2,6 @@ import LeanDag.Hydrozoan.SlotAgreement.Statement
 import LeanDag.Hydrozoan.Helpers.SlotAgreement
 import LeanDag.Hydrozoan.Helpers.DirectRules
 import LeanDag.Hydrozoan.DirectSafety.Proof
-
 /-!
 # Slot agreement — proof
 

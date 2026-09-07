@@ -1,7 +1,6 @@
 import LeanDag.Barnacle.Model.Rule
 import LeanDag.Hydrozoan.Model.Decided
 import LeanDag.Hydrozoan.Helpers.Carrier
-
 /-!
 # Hydrozoan instance helpers
 

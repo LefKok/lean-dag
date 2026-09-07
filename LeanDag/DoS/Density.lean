@@ -1,6 +1,5 @@
-import LeanDag.History
-import LeanDag.Density
-
+import LeanDag.Common.History
+import LeanDag.Common.Density
 /-!
 # Density: histories are almost all of the correct past
 

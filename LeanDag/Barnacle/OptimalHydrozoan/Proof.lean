@@ -1,6 +1,5 @@
 import LeanDag.Barnacle.OptimalHydrozoan.Statement
 import LeanDag.OptimalHydrozoan.Carrier
-
 /-!
 # Barnacle over Optimal-Hydrozoan — proof
 

@@ -1,5 +1,4 @@
 import LeanDag.Properties.Band
-
 /-!
 # What a view-level mechanism owes
 

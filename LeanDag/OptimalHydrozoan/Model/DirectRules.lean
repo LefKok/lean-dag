@@ -1,6 +1,5 @@
 import LeanDag.OptimalHydrozoan.Model.Faults
 import LeanDag.OptimalHydrozoan.Model.Universe
-
 /-!
 # Optimal-Hydrozoan: direct decision rules
 

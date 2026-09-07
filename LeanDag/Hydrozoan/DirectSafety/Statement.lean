@@ -1,5 +1,4 @@
 import LeanDag.Hydrozoan.Model.DirectRules
-
 /-!
 # Direct-rule safety — statement
 

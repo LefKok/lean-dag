@@ -1,7 +1,6 @@
 import LeanDag.Barnacle.Model.Rule
-import LeanDag.History
+import LeanDag.Common.History
 import LeanDag.Nemo.Liveness
-
 /-!
 # Nemo instance helpers
 

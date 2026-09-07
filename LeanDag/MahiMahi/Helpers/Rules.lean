@@ -1,5 +1,4 @@
 import LeanDag.MahiMahi.Model.Rules
-
 /-!
 # Helpers — the rule layer
 

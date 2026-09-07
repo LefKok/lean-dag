@@ -1,8 +1,6 @@
 import LeanDag.Barnacle.Model.Heads
 import LeanDag.Barnacle.Helpers.Nemo
-
 import LeanDag.Nemo.Carrier
-
 /-!
 # Barnacle over Nemo-Nemo — statement
 

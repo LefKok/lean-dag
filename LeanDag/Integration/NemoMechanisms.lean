@@ -1,6 +1,5 @@
 import LeanDag.Properties.Arcs.Record
-import LeanDag.NemoProperties
-
+import LeanDag.Nemo.Properties
 /-!
 # Garbage collection, crash recovery and re-genesis for Nemo
 

@@ -1,6 +1,5 @@
 import LeanDag.Hydrozoan.Model.DirectRules
-import LeanDag.CausalHistory
-
+import LeanDag.Common.CausalHistory
 /-!
 # The graded indirect rule's ingredients
 

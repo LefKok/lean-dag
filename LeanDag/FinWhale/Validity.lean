@@ -1,7 +1,6 @@
 import LeanDag.FinWhale.Decided
 import LeanDag.FinWhale.Rotation
 import LeanDag.FinWhale.Model.Schedule
-
 /-!
 # FinWhale — Validity, on any schedule
 

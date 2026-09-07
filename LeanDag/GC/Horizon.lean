@@ -1,5 +1,4 @@
 import LeanDag.GC.Bootstrap
-
 /-!
 # The horizon policy: heterogeneous cuts, one truth
 

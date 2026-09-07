@@ -1,6 +1,5 @@
 import LeanDag.BlackMarlin.Model.Decision
-import LeanDag.Liveness
-
+import LeanDag.Mysticeti.Liveness
 /-!
 # Black Marlin — liveness, stated
 

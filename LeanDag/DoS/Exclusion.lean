@@ -1,8 +1,7 @@
 import LeanDag.DoS.Density
 import LeanDag.DoS.Exposure
-import LeanDag.Liveness
-import LeanDag.CommonCore
-
+import LeanDag.Mysticeti.Liveness
+import LeanDag.Common.CommonCore
 /-!
 # Liveness survives exclusion
 

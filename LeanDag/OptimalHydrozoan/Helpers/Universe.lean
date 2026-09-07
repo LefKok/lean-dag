@@ -1,6 +1,5 @@
 import LeanDag.OptimalHydrozoan.Model.Universe
 import LeanDag.Hydrozoan.Helpers.Block
-
 /-!
 # Optimal-Hydrozoan: universe lemmas
 

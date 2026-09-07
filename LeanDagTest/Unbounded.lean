@@ -1,4 +1,4 @@
-import LeanDag.ViewPace
+import LeanDag.Mysticeti.ViewPace
 import LeanDagTest.Growth
 
 /-!

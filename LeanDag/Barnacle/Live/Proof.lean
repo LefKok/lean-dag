@@ -4,7 +4,6 @@ import LeanDag.Barnacle.Mysticeti.Proof
 import LeanDag.Barnacle.MysticetiLive.Proof
 import LeanDag.Barnacle.Odontoceti.Proof
 import LeanDag.Barnacle.Nemo.Proof
-
 /-!
 # BN11 — proof
 

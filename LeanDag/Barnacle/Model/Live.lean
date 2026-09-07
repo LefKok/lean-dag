@@ -1,5 +1,4 @@
 import LeanDag.Barnacle.Model.Run
-
 /-!
 # Barnacle: the liveness interface
 

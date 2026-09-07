@@ -1,6 +1,5 @@
 import LeanDag.Hydrozoan.IndirectLiveness.Statement
 import LeanDag.Hydrozoan.Model.Liveness
-
 /-!
 # Statement: eventual decision — the ledger does not stall
 

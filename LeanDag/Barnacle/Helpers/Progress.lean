@@ -1,7 +1,6 @@
 import LeanDag.Barnacle.Helpers.DagRule
 import LeanDag.Barnacle.Model.Live
 import LeanDag.Barnacle.Helpers.Schedule
-
 /-!
 # Progress helpers
 

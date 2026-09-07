@@ -1,6 +1,5 @@
 import LeanDag.OptimalHydrozoan.Model.Decided
 import LeanDag.Hydrozoan.PrefixAgreement.Statement
-
 /-!
 # Optimal-Hydrozoan: prefix agreement — statement
 

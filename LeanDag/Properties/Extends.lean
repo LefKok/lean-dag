@@ -1,5 +1,4 @@
 import LeanDag.Properties.Candidate
-
 /-!
 # Persistence: verdicts survive a growing DAG
 

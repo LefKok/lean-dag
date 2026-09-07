@@ -1,6 +1,5 @@
 import LeanDagTest.Model
 import LeanDag.MahiMahi.Counting.Statement
-
 /-!
 # Mahi-Mahi witnesses — the counting lemma on data
 

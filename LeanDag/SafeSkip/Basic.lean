@@ -1,6 +1,5 @@
-import LeanDag.Liveness
-import LeanDag.Record.Fill
-
+import LeanDag.Mysticeti.Liveness
+import LeanDag.Common.Record.Fill
 /-!
 # Safe Skip: rejoining after a crash, in one message
 

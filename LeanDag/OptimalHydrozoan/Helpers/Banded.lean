@@ -1,6 +1,5 @@
 import LeanDag.Hydrozoan.Helpers.Banded
 import LeanDag.OptimalHydrozoan.Helpers.SlotAgreement
-
 /-!
 # Optimal-Hydrozoan's rules read a band of rounds
 

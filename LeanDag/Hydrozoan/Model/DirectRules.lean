@@ -1,6 +1,5 @@
 import LeanDag.Hydrozoan.Model.Slots
 import LeanDag.Hydrozoan.Model.View
-
 /-!
 # Direct decision rules
 

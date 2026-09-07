@@ -1,5 +1,4 @@
 import LeanDag.Barnacle.Model.Run
-
 /-!
 # BN6 — conservativity
 

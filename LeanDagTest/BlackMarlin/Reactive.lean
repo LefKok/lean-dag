@@ -1,7 +1,6 @@
 import LeanDagTest.BlackMarlin.Liveness
 import LeanDagTest.Reactive
 import LeanDag.BlackMarlin.Reactive.Proof
-
 /-!
 # Black Marlin witnesses — the reactive schedule on data
 

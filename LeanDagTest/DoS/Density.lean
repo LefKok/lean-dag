@@ -1,7 +1,6 @@
 import LeanDagTest.Model
 import LeanDag.DoS.Density
 import LeanDag.DoS.Pedigree
-
 /-!
 # Density, and the anchor factor made real
 

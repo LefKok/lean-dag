@@ -1,6 +1,5 @@
 import LeanDag.Hybrid.Conservativity
-import LeanDag.Schedule
-
+import LeanDag.Common.Schedule
 /-!
 # H10 — the hybrid bound is necessary
 

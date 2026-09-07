@@ -1,9 +1,8 @@
 import LeanDag.Hydrozoan.Model.Decided
-import LeanDag.Anchored.Band
+import LeanDag.Common.Anchored.Band
 import LeanDag.Properties.Extends
 import LeanDag.Properties.Derived.Persist
 import LeanDag.Properties.Optional.Quorate
-
 /-!
 # Hydrozoan as a `Properties.DagRule`
 

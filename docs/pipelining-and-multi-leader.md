@@ -656,7 +656,7 @@ paper by keeping `numOfProposers` small.
 
 ## 11. What is in the code
 
-**Schedule layer** — `LeanDag/Mysticeti.lean`, `LeanDag/Schedule.lean`:
+**Schedule layer** — `LeanDag/Mysticeti/Rule.lean`, `LeanDag/Common/Schedule.lean`:
 
 | | |
 |---|---|
@@ -668,7 +668,7 @@ paper by keeping `numOfProposers` small.
 | `uniform_slotRound`, `uniform_leader`, `uniformSingle_slotRound` | closed forms |
 | `Slots.uniformSingle_spacing` | `uniformSingle 3` satisfies the old field |
 
-**Safety** — `LeanDag/Mysticeti.lean`:
+**Safety** — `LeanDag/Mysticeti/Rule.lean`:
 
 | | |
 |---|---|
@@ -678,7 +678,7 @@ paper by keeping `numOfProposers` small.
 | `eq_of_decided_commit`, `not_decided_skip_of_decided_commit` | its usable shapes |
 | `slot_eq_of_isLeaderBlock`, `slot_eq_of_decided_commit` | a block belongs to one slot |
 
-**Liveness** — `LeanDag/Liveness.lean`:
+**Liveness** — `LeanDag/Mysticeti/Liveness.lean`:
 
 | | |
 |---|---|
@@ -692,7 +692,7 @@ paper by keeping `numOfProposers` small.
 | `all_decided_below_of_fairRun`, `…_correct` | **L10** (§9.5) |
 | `notMem_stuck_of_decided`, `stuck_empty_below_commit_of_spacing` | the obstruction (§9.6) |
 
-`LeanDag/Quantitative.lean` carries the restated `commits_recur_within` and
+`LeanDag/Mysticeti/Quantitative.lean` carries the restated `commits_recur_within` and
 `commits_recur_by_round`.
 
 **Witnesses** — `LeanDagTest/Pipelined.lean`, three `local instance` schedules so
@@ -717,7 +717,7 @@ rather than caught downstream.
 
 An axiom audit covers eighteen results, new and reproved.
 
-`LeanDag/WaveRobin.lean` frees the pipelined pair of the committee: the
+`LeanDag/Common/WaveRobin.lean` frees the pipelined pair of the committee: the
 wave-aligned rotation `waveRobin` — pipelined, the leader holding for a
 three-slot wave before the rotation advances — satisfies `FairRunOn Correct 3`
 and `SpansEligible 3` at *every* `n` and every fault configuration, with no

@@ -1,6 +1,5 @@
 import LeanDag.BlackMarlin.Model.Ledger
 import LeanDag.BlackMarlin.Helpers.Rules
-
 /-!
 # Black Marlin — the flush layer
 

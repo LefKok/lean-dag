@@ -1,6 +1,5 @@
 import LeanDag.Properties.Arcs.Record
 import LeanDag.FinWhale.Carrier
-
 /-!
 # Garbage collection, crash recovery and re-genesis for FinWhale
 

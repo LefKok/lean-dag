@@ -1,8 +1,6 @@
 import LeanDag.Barnacle.Helpers.Hydrozoan
 import LeanDag.Hydrozoan.Model.Liveness
-
 import LeanDag.Hydrozoan.Helpers.Carrier
-
 /-!
 # Barnacle over Hydrozoan — statement
 

@@ -1,7 +1,7 @@
 import LeanDag.OptimalHydrozoan.SlotAgreement.Proof
 import LeanDag.OptimalHydrozoan.Helpers.Banded
 import LeanDag.OptimalHydrozoan.Helpers.Decided
-import LeanDag.Anchored.Band
+import LeanDag.Common.Anchored.Band
 import LeanDag.Hydrozoan.Helpers.Carrier
 import LeanDag.Hydrozoan.Helpers.Commit
 import LeanDag.OptimalHydrozoan.DirectLiveness.Proof
@@ -12,11 +12,8 @@ import LeanDag.Properties.Agree
 import LeanDag.Properties.Candidate
 import LeanDag.Properties.Optional.Direct
 import LeanDag.Properties.Optional.Quorate
-
 import LeanDag.Timed.Coverage
-
 import LeanDag.Properties.Arcs.Headline
-
 /-!
 # Optimal-Hydrozoan as a carrier, and the three properties its rules give
 

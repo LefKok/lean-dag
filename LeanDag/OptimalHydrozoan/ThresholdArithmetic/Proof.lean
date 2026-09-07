@@ -1,5 +1,4 @@
 import LeanDag.OptimalHydrozoan.ThresholdArithmetic.Statement
-
 /-!
 # Optimal-Hydrozoan: threshold arithmetic — proof
 

@@ -1,7 +1,6 @@
 import LeanDag.FinWhale.Protocol
 import LeanDag.FinWhale.Reactive
 import LeanDag.DoS.Exposure
-
 /-!
 # A DoS-valid Mysticeti universe is a FinWhale DAG
 

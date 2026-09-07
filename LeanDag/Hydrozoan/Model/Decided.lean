@@ -1,6 +1,5 @@
 import LeanDag.Hydrozoan.Model.IndirectRules
-import LeanDag.Anchored
-
+import LeanDag.Common.Anchored
 /-!
 # The decision relation
 

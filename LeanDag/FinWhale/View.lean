@@ -1,7 +1,6 @@
 import LeanDag.FinWhale.Decided
 import LeanDag.FinWhale.Model.View
 import LeanDag.FinWhale.Consistency
-
 /-!
 # FinWhale — views, and the direct rules relative to one
 

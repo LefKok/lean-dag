@@ -278,7 +278,7 @@ because it reads only the anchor and the round. Giving both validators
 the same direct predicates would make the theorem trivial.
 
 What two views must satisfy against each other is the shared anchored
-relation's `Laws` (`LeanDag/Anchored.lean`), discharged for FinWhale
+relation's `Laws` (`LeanDag/Common/Anchored.lean`), discharged for FinWhale
 in `View.lean` (`finWhaleLaws`): the commit is unique across views, a
 commit in one bars a skip in the other, a direct commit is linked from
 every eligible anchor and is the only block the tie-break can choose

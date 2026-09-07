@@ -4,7 +4,6 @@ import LeanDag.Properties.Candidate
 import LeanDag.Properties.Optional.Direct
 import LeanDag.Properties.Optional.Quorate
 import LeanDag.Properties.Optional.SelfParent
-
 /-!
 # Nemo as a carrier, and the three properties its own rules give
 

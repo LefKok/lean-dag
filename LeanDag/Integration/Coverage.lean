@@ -2,7 +2,6 @@ import LeanDag.Integration.Preservation
 import LeanDag.Properties.Arcs.SafeSkip
 import LeanDag.Properties.Arcs.GC
 import LeanDag.Timed.Extension
-
 /-!
 # I4 — the fill does not restore coverage, and why that is correct
 

@@ -1,8 +1,7 @@
 import LeanDag.MahiMahi.Model.Decision
 import LeanDag.MahiMahi.Helpers.Rules
-import LeanDag.Anchored.Bounded
-import LeanDag.Mysticeti
-
+import LeanDag.Common.Anchored.Bounded
+import LeanDag.Mysticeti.Rule
 /-!
 # Helpers — the decision layer
 

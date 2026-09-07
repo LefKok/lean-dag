@@ -1,6 +1,5 @@
 import LeanDagTest.Model
 import LeanDag.MahiMahi.Model.Decision
-
 /-!
 # Mahi-Mahi witnesses — the rule at wave `w` on data
 

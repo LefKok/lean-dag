@@ -1,6 +1,5 @@
 import LeanDag.Barnacle.Model.Rule
-import LeanDag.Schedule
-
+import LeanDag.Common.Schedule
 /-!
 # Barnacle: the schedule of a configuration
 

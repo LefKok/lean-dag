@@ -1,6 +1,5 @@
 import LeanDag.Hydrozoan.IndirectLiveness.Statement
 import LeanDag.Hydrozoan.Helpers.IndirectLiveness
-
 /-!
 # Proof: indirect liveness
 

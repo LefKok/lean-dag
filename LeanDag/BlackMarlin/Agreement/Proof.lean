@@ -1,6 +1,5 @@
 import LeanDag.BlackMarlin.Agreement.Statement
 import LeanDag.BlackMarlin.Helpers.Agreement
-
 /-!
 # Black Marlin — agreement, proved
 

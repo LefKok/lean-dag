@@ -1,6 +1,5 @@
 import LeanDag.FinWhale.Model.Anchor
-import LeanDag.Anchored
-
+import LeanDag.Common.Anchored
 /-!
 # FinWhale — the decision relation
 

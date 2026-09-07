@@ -1,4 +1,4 @@
-import LeanDag.Slots
+import LeanDag.Common.Slots
 import LeanDag.Hydrozoan.Helpers.DirectRules
 import LeanDagTest.Hydrozoan.CausalHistory
 

@@ -1,6 +1,5 @@
 import LeanDag.Hydrozoan.Model.Liveness
 import LeanDag.Hydrozoan.Model.Decided
-
 /-!
 # Direct-commit liveness — statement
 

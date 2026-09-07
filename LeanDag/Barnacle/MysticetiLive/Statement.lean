@@ -1,7 +1,6 @@
 import LeanDag.Barnacle.Model.Heads
 import LeanDag.Barnacle.Mysticeti.Statement
-import LeanDag.Liveness
-
+import LeanDag.Mysticeti.Liveness
 /-!
 # Barnacle over Mysticeti — liveness
 

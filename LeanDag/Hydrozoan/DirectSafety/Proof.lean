@@ -1,7 +1,6 @@
 import LeanDag.Hydrozoan.DirectSafety.Statement
 import LeanDag.Hydrozoan.Helpers.Counting
 import LeanDag.Hydrozoan.Helpers.DirectRules
-
 /-!
 # Direct-rule safety — proof
 

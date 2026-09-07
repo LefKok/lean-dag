@@ -1,5 +1,4 @@
 import LeanDag.Properties.Agreement
-
 /-!
 # Truncation: pruning below a horizon, and renumbering from it
 

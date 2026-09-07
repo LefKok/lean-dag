@@ -3,7 +3,6 @@ import LeanDag.Properties.Arcs.GC
 import LeanDag.Properties.Arcs.SafeSkip
 import LeanDag.Integration.NemoMechanisms
 import LeanDag.Integration.FinWhaleMechanisms
-
 /-!
 # Stacks, at the rules
 

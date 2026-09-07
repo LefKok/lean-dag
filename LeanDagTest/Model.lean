@@ -1,8 +1,8 @@
-import LeanDag.Persistence
-import LeanDag.CommonCore
-import LeanDag.Mysticeti
-import LeanDag.Schedule
-import LeanDag.Liveness
+import LeanDag.Common.Persistence
+import LeanDag.Common.CommonCore
+import LeanDag.Mysticeti.Rule
+import LeanDag.Common.Schedule
+import LeanDag.Mysticeti.Liveness
 open LeanDag
 
 #print axioms LeanDag.BlockUniverse.eq_of_creator_eq

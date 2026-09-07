@@ -2,7 +2,6 @@ import LeanDag.GC.Window
 import LeanDag.GC.AttestedBase
 import LeanDag.GC.ChopDecided
 import LeanDag.Properties.Arcs.GC
-
 /-!
 # Bootstrap: the joiner's view, assembled and bounded
 

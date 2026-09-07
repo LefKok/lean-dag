@@ -1,6 +1,5 @@
 import LeanDag.BlackMarlin.Model.Decision
-import LeanDag.Ledger
-
+import LeanDag.Common.Ledger
 /-!
 # Black Marlin — the flush record
 

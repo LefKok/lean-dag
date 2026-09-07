@@ -1,5 +1,4 @@
 import LeanDag.Hydrozoan.Model.Decided
-
 /-!
 # Direct-rule instances and bridges
 

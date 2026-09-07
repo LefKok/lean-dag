@@ -2,7 +2,6 @@ import LeanDag.Barnacle.OptimalHydrozoanLive.Statement
 import LeanDag.Barnacle.Helpers.Heads
 import LeanDag.Barnacle.Helpers.Descent
 import LeanDag.OptimalHydrozoan.Carrier
-
 /-!
 # Barnacle over Optimal-Hydrozoan — the live rule, proof
 

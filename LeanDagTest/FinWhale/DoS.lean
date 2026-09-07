@@ -1,6 +1,5 @@
 import LeanDagTest.DoS.Density
 import LeanDag.FinWhale.DoSBridge
-
 /-!
 # FinWhale witnesses — a DoS-valid universe, read as a FinWhale DAG
 

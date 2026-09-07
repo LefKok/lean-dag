@@ -1,6 +1,5 @@
 import LeanDag.OptimalHydrozoan.Model.Decided
 import LeanDag.Hydrozoan.IndirectLiveness.Statement
-
 /-!
 # Optimal-Hydrozoan: indirect liveness — the graded rule is total
 

@@ -1,6 +1,5 @@
 import LeanDag.DoS.Exclusion
 import LeanDag.DoS.Counting
-
 /-!
 # A model at `f = 2`
 

@@ -1,5 +1,4 @@
 import LeanDag.Hydrozoan.Model.BlockUniverse
-
 /-!
 # Block lemmas and decidability
 

@@ -1,6 +1,5 @@
 import LeanDag.OptimalHydrozoan.Model.IndirectRules
-import LeanDag.Anchored
-
+import LeanDag.Common.Anchored
 /-!
 # Optimal-Hydrozoan: the decision relation
 

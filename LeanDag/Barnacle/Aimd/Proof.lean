@@ -1,5 +1,4 @@
 import LeanDag.Barnacle.Aimd.Statement
-
 /-!
 # BN7 — proof
 

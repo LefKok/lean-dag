@@ -1,9 +1,8 @@
 import LeanDag.Properties.Truncate
 import LeanDag.Properties.Sustain
 import LeanDag.Properties.Extends
-import LeanDag.Record.Invariant
+import LeanDag.Common.Record.Invariant
 import LeanDag.GC.ChopDecided
-
 /-!
 # A carrier on the block record, and the witnesses every mechanism owes
 

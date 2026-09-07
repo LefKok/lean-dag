@@ -6,7 +6,6 @@ import LeanDagTest.DoS.Exposure
 import LeanDagTest.DoS.Exclusion
 import LeanDagTest.DoS.Novelty
 import LeanDag.Network.Quorum
-
 /-!
 # The horizon, witnessed
 

@@ -1,6 +1,5 @@
 import LeanDag.Reactive.Basic
 import LeanDag.Odontoceti.Liveness
-
 /-!
 # Reactive Odontoceti
 

@@ -1,7 +1,6 @@
 import LeanDagTest.DoS.TwoFaults
 import LeanDagTest.DoS.Exposure
 import LeanDag.DoS.Pedigree
-
 /-!
 # The general bound at `f = 2`
 

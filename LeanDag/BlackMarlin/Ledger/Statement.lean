@@ -1,5 +1,4 @@
 import LeanDag.BlackMarlin.Model.Ledger
-
 /-!
 # Black Marlin — the delivered order, stated
 

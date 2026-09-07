@@ -1,7 +1,6 @@
 import LeanDag.Hydrozoan.EventualDecision.Statement
 import LeanDag.Hydrozoan.DirectLiveness.Proof
 import LeanDag.Hydrozoan.Helpers.IndirectLiveness
-
 /-!
 # Helpers: eventual decision
 

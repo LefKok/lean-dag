@@ -1,5 +1,4 @@
 import LeanDag.Hybrid.Checkpoint.BaseSpec
-
 /-!
 # Machine-checked checkpoint safety derivations
 

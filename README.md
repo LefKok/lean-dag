@@ -70,7 +70,7 @@ move the committee — `n ≥ 5f+1` for two-round commitment,
   a spread of ten and collapses to exactly three. A valid block cannot
   outrun the honest schedule, so the author-blind rule a deployment runs
   is safe (`exists_honest_floor`).
-- **The view a validator holds** (`LeanDag/PaceDelivery.lean`): the
+- **The view a validator holds** (`LeanDag/Mysticeti/PaceDelivery.lean`): the
   commit rules are view-relative and the pacing line reasons about
   time-indexed holdings; the two are now joined. A validator's holdings
   *are* a view (`viewAt_ids`), which is what makes liveness local; and a
@@ -339,8 +339,8 @@ the set of declarations changes. `make help` lists them.
 
 - `LeanDag/` — theorem/definition source: the core DAG and Mysticeti
   development at the top level, with the pacing structures in
-  `ViewPace.lean` and the delivery layer they induce in
-  `PaceDelivery.lean`; `Causality.lean` and `Participation.lean` hold the
+  `Mysticeti/ViewPace.lean` and the delivery layer they induce in
+  `Mysticeti/PaceDelivery.lean`; `Common/Causality.lean` and `Common/Participation.lean` hold the
   fault-agnostic vocabulary — reachability, the finite cone, production
   and coverage — stated over the raw block data, so the Byzantine and
   crash universes instantiate one set of definitions rather than

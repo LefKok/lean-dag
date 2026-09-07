@@ -1,7 +1,6 @@
 import LeanDag.Barnacle.Hydrozoan.Statement
 import LeanDag.Hydrozoan.Helpers.Commit
 import LeanDag.Hydrozoan.SlotAgreement.Proof
-
 /-!
 # Barnacle over Hydrozoan — proof
 

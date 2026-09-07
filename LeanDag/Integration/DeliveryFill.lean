@@ -1,6 +1,5 @@
 import LeanDag.Integration.Exposure
 import LeanDag.DoS.Novelty
-
 /-!
 # I15 — the delivery layer, and the storage budgets under the fill
 

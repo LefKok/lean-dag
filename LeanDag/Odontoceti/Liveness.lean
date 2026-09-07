@@ -1,5 +1,5 @@
 import LeanDag.Odontoceti.Decision
-import LeanDag.Liveness
+import LeanDag.Mysticeti.Liveness
 import Mathlib.Data.Finset.Max
 
 /-!

@@ -1,6 +1,5 @@
 import LeanDag.FinWhale.Decided
 import LeanDag.FinWhale.Model.Creation
-
 /-!
 # FinWhale — the block-creation rule, and the votes it forces
 

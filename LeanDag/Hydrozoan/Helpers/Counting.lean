@@ -1,6 +1,5 @@
 import LeanDag.Hydrozoan.Model.DirectRules
 import LeanDag.Hydrozoan.Helpers.Faults
-
 /-!
 # The quorum-counting toolkit
 

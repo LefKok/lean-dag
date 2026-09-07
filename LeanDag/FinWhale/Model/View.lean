@@ -1,5 +1,4 @@
 import LeanDag.FinWhale.Model.Decision
-
 /-!
 # FinWhale — a validator's view, and the rules relative to one
 

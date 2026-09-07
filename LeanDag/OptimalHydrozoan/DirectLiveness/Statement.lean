@@ -1,6 +1,5 @@
 import LeanDag.OptimalHydrozoan.Model.Decided
 import LeanDag.Hydrozoan.Model.Liveness
-
 /-!
 # Optimal-Hydrozoan: direct liveness — statement
 

@@ -1,9 +1,8 @@
 import Mathlib
-import LeanDag.Schedule
-import LeanDag.Liveness
-import LeanDag.ViewPace
+import LeanDag.Common.Schedule
+import LeanDag.Mysticeti.Liveness
+import LeanDag.Mysticeti.ViewPace
 import LeanDag.Network.Quorum
-
 /-!
 # `Ugrow` — a witness family for `Live`
 

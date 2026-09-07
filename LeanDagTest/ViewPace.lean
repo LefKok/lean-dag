@@ -1,5 +1,5 @@
-import LeanDag.ViewPace
-import LeanDag.PaceDelivery
+import LeanDag.Mysticeti.ViewPace
+import LeanDag.Mysticeti.PaceDelivery
 import LeanDagTest.Quantitative
 
 /-!

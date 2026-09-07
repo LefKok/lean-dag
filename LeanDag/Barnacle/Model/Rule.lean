@@ -1,7 +1,6 @@
-import LeanDag.Mysticeti
-import LeanDag.Causality
+import LeanDag.Mysticeti.Rule
+import LeanDag.Common.Causality
 import LeanDag.Properties.Carrier
-
 /-!
 # Barnacle: the base-protocol interface
 

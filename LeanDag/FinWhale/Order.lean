@@ -1,6 +1,5 @@
 import LeanDag.FinWhale.Consistency
 import LeanDag.FinWhale.Model.Order
-
 /-!
 # FinWhale — commit sequences and the delivered order
 

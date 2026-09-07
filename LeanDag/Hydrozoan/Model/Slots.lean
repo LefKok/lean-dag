@@ -1,7 +1,6 @@
 import LeanDag.Hydrozoan.Model.BlockUniverse
-import LeanDag.Slots
-import LeanDag.Anchored
-
+import LeanDag.Common.Slots
+import LeanDag.Common.Anchored
 /-!
 # Slots and the leader schedule
 

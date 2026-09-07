@@ -1,6 +1,5 @@
 import LeanDag.Barnacle.Helpers.DagRule
 import LeanDag.Barnacle.Model.Run
-
 /-!
 # BN3 — the configuration sequence is agreed
 

@@ -1,7 +1,6 @@
 import LeanDag.DoS.Density
-import LeanDag.MysticetiProperties
+import LeanDag.Mysticeti.Properties
 import LeanDag.Properties.Arcs.Quality
-
 /-!
 # Chain quality: asynchronous coverage
 

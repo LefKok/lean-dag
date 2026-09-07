@@ -1,7 +1,6 @@
 import LeanDagTest.MahiMahi.Model
 import LeanDagTest.MahiMahi.Counting
 import LeanDag.MahiMahi.Liveness.Statement
-
 /-!
 # Mahi-Mahi witnesses — the clause on data
 

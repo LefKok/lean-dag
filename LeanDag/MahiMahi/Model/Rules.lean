@@ -1,6 +1,5 @@
-import LeanDag.Mysticeti
-import LeanDag.History
-
+import LeanDag.Mysticeti.Rule
+import LeanDag.Common.History
 /-!
 # Mahi-Mahi — the rule at wave `w`
 

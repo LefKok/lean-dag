@@ -1,6 +1,5 @@
 import LeanDag.OptimalHydrozoan.Model.Decided
 import LeanDag.Hydrozoan.DirectSafety.Statement
-
 /-!
 # Optimal-Hydrozoan: direct-rule safety — statement
 

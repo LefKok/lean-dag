@@ -4,7 +4,6 @@ import LeanDag.OptimalHydrozoan.Helpers.Decided
 import LeanDag.OptimalHydrozoan.Helpers.DirectRules
 import LeanDag.OptimalHydrozoan.DirectSafety.Proof
 import LeanDag.Hydrozoan.Helpers.SlotAgreement
-
 /-!
 # Optimal-Hydrozoan: the seam lemmas
 

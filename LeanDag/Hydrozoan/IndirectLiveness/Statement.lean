@@ -1,5 +1,4 @@
 import LeanDag.Hydrozoan.Model.Decided
-
 /-!
 # Statement: indirect liveness — the graded rule is total
 

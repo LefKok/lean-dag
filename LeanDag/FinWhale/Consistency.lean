@@ -1,8 +1,7 @@
 import LeanDag.FinWhale.Anchor
 import LeanDag.FinWhale.Model.Verdict
 import LeanDag.FinWhale.Model.Decided
-import LeanDag.Anchored.Bounded
-
+import LeanDag.Common.Anchored.Bounded
 /-!
 # FinWhale — the reverse pass lands in the relation
 

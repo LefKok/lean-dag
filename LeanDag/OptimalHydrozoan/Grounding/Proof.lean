@@ -1,5 +1,4 @@
 import LeanDag.OptimalHydrozoan.Helpers.Grounding
-
 /-!
 # Optimal-Hydrozoan: grounding — proof
 

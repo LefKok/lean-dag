@@ -1,5 +1,4 @@
-import LeanDag.BlockRecord
-
+import LeanDag.Common.BlockRecord
 /-!
 # Safe Skip: the data of a fill
 

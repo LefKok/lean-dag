@@ -1,7 +1,6 @@
 import LeanDag.Properties.Truncate
 import LeanDag.Properties.Compose
 import LeanDag.Properties.Band
-
 /-!
 # Truncation invariance
 

@@ -3,7 +3,6 @@ import LeanDag.Hydrozoan.Helpers.Counting
 import LeanDag.Hydrozoan.Helpers.CausalHistory
 import LeanDag.Hydrozoan.Helpers.DirectRules
 import LeanDag.Hydrozoan.Helpers.IndirectRules
-
 /-!
 # The seam toolkit
 

@@ -1,6 +1,5 @@
 import LeanDag.Barnacle.Hydrozoan.Statement
 import LeanDag.Barnacle.Model.Heads
-
 /-!
 # Barnacle over Hydrozoan — the live rule, statement
 

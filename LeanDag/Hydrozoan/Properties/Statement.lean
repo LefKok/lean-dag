@@ -1,7 +1,6 @@
 import LeanDag.Hydrozoan.Helpers.Banded
 import LeanDag.Hydrozoan.Helpers.Truncation
 import LeanDag.Hydrozoan.Helpers.Skippability
-
 /-!
 # Hydrozoan conforms to the target properties — statement
 
