@@ -24,7 +24,7 @@ theorem holds : Statement := by
   · intro r L₁ L₂ hw h₁ h₂ hc hr
     exact eq_of_certificates_nonempty (by omega) h₁ h₂ hc hr
   · intro V₁ V₂ k v₁ v₂ hw h₁ h₂
-    exact decided_unique (by omega) h₁ V₂ v₂ h₂
+    exact AnchoredRule.decided_unique (mahiMahiLaws (by omega)) trivial h₁ V₂ v₂ h₂
   · intro V k v h
     exact core_decided_of_decided h
   · intro L r _ hLr

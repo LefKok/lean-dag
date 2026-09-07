@@ -43,23 +43,15 @@ variable [F : Faults Validator]
 variable {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
 
 /-- **Mahi-Mahi as a carrier**, one per wave width. -/
-def mahiMahiRule (w : ℕ) : DagRule Validator BlockId Payload where
-  Universe := BlockUniverse Validator BlockId Payload
-  View := fun U => View Validator BlockId Payload U
-  block := fun U i => U.block i
-  ids := fun U => U.ids
-  viewIds := fun V => V.ids
-  viewSound := fun V => V.subset_ids
-  viewComplete := fun V => V.complete
-  causal := fun U => U.causal
-  Decided := fun S _ V k v => MahiMahi.Decided (S := S) w _ V k v
+def mahiMahiRule (w : ℕ) : DagRule Validator BlockId Payload :=
+  (MahiMahi.mahiMahiAnchored Validator BlockId Payload w).toDagRule
 
 /-- **And they are quorate**, at the core's fault model: validity's
 counting clause read at the carrier, which is what chain quality reads
 (`Properties/Arcs/Quality.lean`). -/
 theorem quorate (w : ℕ) : Quorate (mahiMahiRule (Validator := Validator) (BlockId := BlockId)
     (Payload := Payload) w) (coreReliability Validator) :=
-  fun U => U.quorateOn
+  fun U => BlockUniverse.quorateOn U
 
 /-- **P3′ at the carrier.** -/
 theorem selfParent (w : ℕ) : SelfParent (mahiMahiRule (Validator := Validator)
@@ -75,14 +67,14 @@ theorem noEquiv (w : ℕ) : NoEquiv (mahiMahiRule (Validator := Validator) (Bloc
 widths its safety arc covers. -/
 theorem agree {w : ℕ} (hw : 2 ≤ w) :
     Agree (mahiMahiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload) w) :=
-  fun S _ V₁ V₂ _ _ _ h₁ h₂ => MahiMahi.decided_unique (S := S) hw h₁ V₂ _ h₂
+  AnchoredRule.agree (MahiMahi.mahiMahiLaws hw)
 
 /-- **A commit names the slot's candidate.** Both committing
 constructors carry `IsLeaderBlock`. -/
 theorem commitsCandidate (w : ℕ) :
     CommitsCandidate (mahiMahiRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload) w) :=
-  fun S _ _ _ _ hd => MahiMahi.isLeaderBlock_of_decided (S := S) hd
+  AnchoredRule.commitsCandidate
 
 /-- **And a direct commit is a verdict**, at Mahi-Mahi's own direct
 predicate. -/
@@ -90,7 +82,7 @@ theorem commitsDirect (w : ℕ) :
     CommitsDirect (mahiMahiRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload) w)
       (fun {U} V L r => MahiMahi.DirectCommitIn U V w L r) :=
-  fun S _ _ _ _ hL hc => MahiMahi.Decided.directCommit (S := S) hL hc
+  AnchoredRule.commitsDirect
 
 end MahiMahiProperties
 

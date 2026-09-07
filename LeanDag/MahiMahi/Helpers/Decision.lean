@@ -1,5 +1,7 @@
 import LeanDag.MahiMahi.Model.Decision
 import LeanDag.MahiMahi.Helpers.Rules
+import LeanDag.Anchored.Bounded
+import LeanDag.Mysticeti
 
 /-!
 # Helpers — the decision layer
@@ -15,9 +17,9 @@ namespace LeanDag
 
 namespace MahiMahi
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator]
-variable {BlockId : Type*} [LinearOrder BlockId] {Payload : Type*}
+variable {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
 variable {U : BlockUniverse Validator BlockId Payload}
 
 /-! ## A view can only under-report -/
@@ -56,25 +58,21 @@ section Slots
 
 variable [S : Slots Validator]
 
-omit [Fintype Validator] [DecidableEq Validator] F in
-theorem decisionRound_eq (w k : ℕ) :
-    decisionRound Validator w k = decisionRoundAt w (S.slotRound k) := rfl
+omit S in
+@[simp] theorem mahiMahiAnchored_wave (w : ℕ) :
+    (mahiMahiAnchored Validator BlockId Payload w).wave = w - 1 := rfl
+omit S in
+@[simp] theorem mahiMahiAnchored_rungs (w : ℕ) :
+    (mahiMahiAnchored Validator BlockId Payload w).rungs = 1 := rfl
 
-omit [LinearOrder BlockId] in
-/-- An eligible anchor's block sits above the slot's decision round. -/
-theorem anchor_round {w k j : ℕ} {A : BlockId} (hA : IsLeaderBlock U j A)
-    (helig : Eligible Validator w k j) :
-    decisionRoundAt w (S.slotRound k) + 1 ≤ (U.block A).round := by
-  rw [hA.2.1]
-  unfold Eligible at helig
-  rw [decisionRound_eq] at helig
+/-- The relation's decision round is Mahi-Mahi's, at any wave of at
+least one round. -/
+theorem mahiMahiAnchored_decisionRound {w : ℕ} (hw : 1 ≤ w) (k : ℕ) :
+    (mahiMahiAnchored Validator BlockId Payload w).decisionRound k
+      = decisionRoundAt w (S.slotRound k) := by
+  unfold AnchoredRule.decisionRound decisionRoundAt
+  simp only [mahiMahiAnchored_wave]
   omega
-
-theorem isLeaderBlock_of_decided {w : ℕ} {V : View Validator BlockId Payload U} {j : ℕ}
-    {A : BlockId} (h : Decided w U V j (some A)) : IsLeaderBlock U j A := by
-  cases h with
-  | directCommit hL _ => exact hL
-  | indirectCommit _ _ _ _ hL _ => exact hL
 
 /-- Two candidates of one slot with certificates coincide. -/
 theorem eq_of_hasCertificate {w k : ℕ} {L₁ L₂ : BlockId} (hw : 2 ≤ w)
@@ -101,79 +99,65 @@ theorem not_directSkipIn_of_directCommitIn {w : ℕ} {V₁ V₂ : View Validator
   rw [certificates_eq_empty_of_directSkip hw (directSkip_of_directSkipIn h₂) hL.2.2 hL.2.1] at hne
   exact Finset.not_nonempty_empty hne
 
-/-- A direct commit is seen from any eligible anchor. -/
-theorem certifiedIn_of_directCommitIn_at_anchor {w : ℕ}
-    {V W : View Validator BlockId Payload U} {k j : ℕ} {L A : BlockId}
-    (h : DirectCommitIn U V w L (S.slotRound k))
-    (hj : Decided w U W j (some A)) (helig : Eligible Validator w k j) :
+/-- A direct commit is seen from any candidate anchor of any eligible
+slot. -/
+theorem certifiedIn_of_directCommitIn_at_anchor {w : ℕ} (hw : 1 ≤ w)
+    {V : View Validator BlockId Payload U} {k j : ℕ} {L A : BlockId}
+    (h : DirectCommitIn U V w L (S.slotRound k)) (hA : IsLeaderBlock U j A)
+    (helig : (mahiMahiAnchored Validator BlockId Payload w).Eligible k j) :
     CertifiedIn U w A L (S.slotRound k) :=
-  certifiedIn_of_directCommit (directCommit_of_directCommitIn h)
-    (isLeaderBlock_of_decided hj).1 (anchor_round (isLeaderBlock_of_decided hj) helig)
+  certifiedIn_of_directCommit (directCommit_of_directCommitIn h) hA.1 (by
+    have := (mahiMahiAnchored Validator BlockId Payload w).anchor_round_le hA helig
+    simp only [mahiMahiAnchored_wave] at this
+    unfold decisionRoundAt; omega)
 
-/-- **Agreement** (the core's M6 at wave `w`): structural induction on the
-first derivation; the one real case compares anchors through the core's
-`anchor_eq`. -/
-theorem decided_unique {w : ℕ} (hw : 2 ≤ w) {V₁ : View Validator BlockId Payload U} {k : ℕ}
-    {v₁ : Option BlockId} (h₁ : Decided w U V₁ k v₁) :
-    ∀ (V₂ : View Validator BlockId Payload U) (v₂ : Option BlockId),
-      Decided w U V₂ k v₂ → v₁ = v₂ := by
-  induction h₁ with
-  | @directCommit k L hL h =>
-    intro V₂ v₂ h₂
-    cases h₂ with
-    | directCommit hL₂ h₂ => exact congrArg some (eq_of_directCommitIn hw hL hL₂ h h₂)
-    | directSkip hskip => exact absurd (not_directSkipIn_of_directCommitIn hw hL h hskip) not_false
-    | indirectCommit _ _ _ _ hL₂ hcert₂ =>
-      exact congrArg some (eq_of_hasCertificate hw hL hL₂
-        (certificates_nonempty_of_directCommit (directCommit_of_directCommitIn h))
-        (certificates_nonempty_of_certifiedIn hcert₂))
-    | @indirectSkip _ j A _ helig hj _ hnone =>
-      exact absurd (certifiedIn_of_directCommitIn_at_anchor h hj helig) (hnone _ hL)
-  | @directSkip k hskip =>
-    intro V₂ v₂ h₂
-    cases h₂ with
-    | directCommit hL₂ h₂ =>
-      exact absurd (not_directSkipIn_of_directCommitIn hw hL₂ h₂ hskip) not_false
-    | directSkip _ => rfl
-    | indirectCommit _ _ _ _ hL₂ hcert₂ =>
-      exact absurd hcert₂
-        (not_certifiedIn_of_directSkip hw (directSkip_of_directSkipIn hskip) hL₂.2.2 hL₂.2.1)
-    | indirectSkip _ _ _ _ _ => rfl
-  | @indirectCommit k j A L hkj helig hj hmid hL hcert ihj ihmid =>
-    intro V₂ v₂ h₂
-    cases h₂ with
-    | directCommit hL₂ h₂ =>
-      exact congrArg some (eq_of_hasCertificate hw hL hL₂
-        (certificates_nonempty_of_certifiedIn hcert)
-        (certificates_nonempty_of_directCommit (directCommit_of_directCommitIn h₂)))
-    | directSkip hskip₂ =>
-      exact absurd hcert
-        (not_certifiedIn_of_directSkip hw (directSkip_of_directSkipIn hskip₂) hL.2.2 hL.2.1)
-    | indirectCommit _ _ _ _ hL₂ hcert₂ =>
-      exact congrArg some (eq_of_hasCertificate hw hL hL₂
-        (certificates_nonempty_of_certifiedIn hcert)
-        (certificates_nonempty_of_certifiedIn hcert₂))
-    | @indirectSkip _ j₂ A₂ hkj₂ helig₂ hj₂ hmid₂ hnone₂ =>
-      obtain ⟨rfl, rfl⟩ := anchor_eq hkj helig hkj₂ helig₂ hj₂ hmid₂ ihj ihmid
-      exact absurd hcert (hnone₂ _ hL)
-  | @indirectSkip k j A hkj helig hj hmid hnone ihj ihmid =>
-    intro V₂ v₂ h₂
-    cases h₂ with
-    | directCommit hL₂ h₂ =>
-      exact absurd (certifiedIn_of_directCommitIn_at_anchor h₂ hj helig) (hnone _ hL₂)
-    | directSkip _ => rfl
-    | @indirectCommit _ j₂ A₂ L₂ hkj₂ helig₂ hj₂ hmid₂ hL₂ hcert₂ =>
-      obtain ⟨rfl, rfl⟩ := anchor_eq hkj helig hkj₂ helig₂ hj₂ hmid₂ ihj ihmid
-      exact absurd hcert₂ (hnone _ hL₂)
-    | indirectSkip _ _ _ _ _ => rfl
+omit S in
+/-- **Mahi-Mahi's laws** at any wave of at least two rounds: the core's
+M6 cases at wave `w`, every commit-against-commit case by certificate
+uniqueness. -/
+theorem mahiMahiLaws {w : ℕ} (hw : 2 ≤ w) :
+    (mahiMahiAnchored Validator BlockId Payload w).Laws where
+  commit_unique := fun _ hL₁ hL₂ h₁ h₂ => eq_of_directCommitIn hw hL₁ hL₂ h₁ h₂
+  commit_skip := fun _ hL h hskip => not_directSkipIn_of_directCommitIn hw hL h hskip
+  commit_link := fun _ _ h hA helig => ⟨0, Nat.one_pos,
+    certifiedIn_of_directCommitIn_at_anchor (by omega) h hA helig⟩
+  commit_link_unique := by
+    intro S U V k j i L₁ L₂ A _ hL₁ hL₂ h _ _ _ _ hlink _
+    exact eq_of_hasCertificate hw hL₁ hL₂
+      (certificates_nonempty_of_directCommit (directCommit_of_directCommitIn h))
+      (certificates_nonempty_of_certifiedIn hlink)
+  skip_link := fun _ hskip hL _ =>
+    not_certifiedIn_of_directSkip hw (directSkip_of_directSkipIn hskip) hL.2.2 hL.2.1
+  link_unique := by
+    intro S U k j i L₁ L₂ A _ hL₁ hL₂ _ _ _ _ hl₁ hl₂ _ _
+    exact eq_of_hasCertificate hw hL₁ hL₂ (certificates_nonempty_of_certifiedIn hl₁)
+      (certificates_nonempty_of_certifiedIn hl₂)
+  commit_mono := fun _ hsub h => le_trans h (Finset.card_le_card (Finset.image_subset_image
+    (Finset.inter_subset_inter Finset.Subset.rfl hsub)))
+  skip_mono := fun _ hsub h => le_trans h (Finset.card_le_card (Finset.image_subset_image
+    (Finset.inter_subset_inter Finset.Subset.rfl hsub)))
+  skip_congr := fun _ hround hk h => by
+    show DirectSkipIn _ _ _ _ _
+    rw [← hround, ← hk]; exact h
+
+/-- No tie: any linked candidate is the rung's choice. -/
+theorem exists_least {w : ℕ} {S : Slots Validator} {U : BlockUniverse Validator BlockId Payload}
+    {A : BlockId} {i k : ℕ} (_ : i < (mahiMahiAnchored Validator BlockId Payload w).rungs)
+    (h : ∃ L, IsLeaderBlock (S := S) U k L ∧
+      (mahiMahiAnchored Validator BlockId Payload w).Link i U A L (S.slotRound k)) :
+    ∃ L, IsLeaderBlock (S := S) U k L ∧
+      (mahiMahiAnchored Validator BlockId Payload w).Link i U A L (S.slotRound k) ∧
+      (mahiMahiAnchored Validator BlockId Payload w).Least (S := S) U A i k L :=
+  let ⟨L, hL, hl⟩ := h
+  ⟨L, hL, hl, fun _ _ _ h => h⟩
 
 /-! ## Wave three is the core's relation -/
 
-omit [Fintype Validator] [DecidableEq Validator] F in
 theorem eligible_three_iff {k j : ℕ} :
-    Eligible Validator 3 k j ↔ LeanDag.Eligible Validator k j := by
-  unfold Eligible decisionRound LeanDag.Eligible LeanDag.decisionRound
-  omega
+    (mahiMahiAnchored Validator BlockId Payload 3).Eligible k j ↔
+      LeanDag.Eligible Validator k j := by
+  unfold AnchoredRule.Eligible AnchoredRule.decisionRound LeanDag.Eligible LeanDag.decisionRound
+  simp only [mahiMahiAnchored_wave] <;> omega
 
 omit S in
 theorem certifiedIn_three_iff {A L : BlockId} {r : ℕ} (hLr : (U.block L).round = r) :
@@ -224,14 +208,14 @@ theorem core_decided_of_decided {V : View Validator BlockId Payload U} {k : ℕ}
     exact LeanDag.Decided.directCommit hL ((directCommitIn_three_iff hL.2.1).mp h)
   | @directSkip k hskip =>
     exact LeanDag.Decided.directSkip (core_directSkipSlotIn_of_directSkipIn hskip)
-  | @indirectCommit k j A L hkj helig hj hmid hL hcert ihj ihmid =>
+  | @indirectCommit k j A L i hkj helig hj hmid _ _ hL hcert _ ihj ihmid =>
     exact LeanDag.Decided.indirectCommit hkj (eligible_three_iff.mp helig) ihj
       (fun i h1 h2 he => ihmid i h1 h2 (eligible_three_iff.mpr he)) hL
       ((certifiedIn_three_iff hL.2.1).mp hcert)
   | @indirectSkip k j A hkj helig hj hmid hnone ihj ihmid =>
     exact LeanDag.Decided.indirectSkip hkj (eligible_three_iff.mp helig) ihj
       (fun i h1 h2 he => ihmid i h1 h2 (eligible_three_iff.mpr he))
-      (fun L hL hc => hnone L hL ((certifiedIn_three_iff hL.2.1).mpr hc))
+      (fun L hL hc => hnone 0 Nat.one_pos L hL ((certifiedIn_three_iff hL.2.1).mpr hc))
 
 end Slots
 

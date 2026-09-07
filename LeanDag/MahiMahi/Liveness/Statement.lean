@@ -57,7 +57,7 @@ def CommitsWithin (U : BlockUniverse Validator BlockId Payload) (w : ℕ) : Prop
     -- the single-hit clause, with window c below horizon N
     UnpredictableWithin U w c N →
     -- for every window below the horizon ...
-    ∀ k, decisionRound Validator w (k + c) ≤ N →
+    ∀ k, (mahiMahiAnchored Validator BlockId Payload w).decisionRound (k + c) ≤ N →
       -- ... some slot of it commits
       ∃ k', k ≤ k' ∧ k' < k + c ∧
         ∃ L, IsLeaderBlock U k' L ∧ Decided w U (View.full U) k' (some L)
@@ -68,11 +68,11 @@ def AllDecidedBelow (U : BlockUniverse Validator BlockId Payload) (w : ℕ) : Pr
     -- a wave has at least one round (what `k < j` for an eligible anchor needs)
     1 ≤ w →
     -- a run of d slots spans eligibility
-    SpansEligible Validator w d →
+    (mahiMahiAnchored Validator BlockId Payload w).SpansEligible d →
     -- the run form of the clause
     UnpredictableRunWithin U w c d N →
     -- for every window below the horizon ...
-    ∀ k, decisionRound Validator w (k + c + d - 1) ≤ N →
+    ∀ k, (mahiMahiAnchored Validator BlockId Payload w).decisionRound (k + c + d - 1) ≤ N →
       -- ... there is a slot b at or past k below which every slot is decided
       ∃ b, k ≤ b ∧ ∀ i, i < b → ∃ v, Decided w U (View.full U) i v
 
@@ -81,16 +81,18 @@ def LocalCommit (U : BlockUniverse Validator BlockId Payload) (w : ℕ) : Prop :
   ∀ (T : Finset Validator) (N : ℕ) (pc : PaceCore U T N),
     -- T is a quorum (its correctness is the pacing structure's own)
     quorumCard Validator ≤ T.card →
+    -- at a wave of at least one round
+    1 ≤ w →
     ∀ (k : ℕ) (L : BlockId),
       -- L is slot k's candidate, and its decision round is within the horizon
-      IsLeaderBlock U k L → decisionRound Validator w k ≤ N →
+      IsLeaderBlock U k L → (mahiMahiAnchored Validator BlockId Payload w).decisionRound k ≤ N →
       -- every reliable decision-round block certifies L
       (∀ u ∈ T, ∀ C ∈ U.ids, (U.block C).creator = u →
-        (U.block C).round = decisionRound Validator w k → Certifies U C L) →
+        (U.block C).round = (mahiMahiAnchored Validator BlockId Payload w).decisionRound k → Certifies U C L) →
       -- then every reliable validator commits L on its own view, by the time
       -- the decision round's reliable blocks have converged
       ∀ v ∈ T, Decided w U
-        (pc.viewAt v (max (pc.latest (decisionRound Validator w k)) pc.gst + pc.delay))
+        (pc.viewAt v (max (pc.latest ((mahiMahiAnchored Validator BlockId Payload w).decisionRound k)) pc.gst + pc.delay))
         k (some L)
 
 /-- **MM2′, measurability of `good`.** -/

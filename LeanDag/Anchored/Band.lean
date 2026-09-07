@@ -295,6 +295,7 @@ structure BandLaws : Prop where
     S.slotRound k + g = S'.slotRound k' + g' → S.leader k = S'.leader k' →
     lo = S.slotRound k + g → S.slotRound k + R.wave + g ≤ hi →
     (∀ b, b ∈ V.ids → lo ≤ (U.block b).round + g → (U.block b).round + g ≤ hi → b ∈ V'.ids) →
+    IsLeaderBlock (S := S) U k L →
     R.Commit U V L (S.slotRound k) → R.Commit U' V' L (S'.slotRound k')
   skip_band : ∀ {S S' : Slots Validator} {U U' : BlockRecord Validator BlockId Payload P honest}
     {lo hi g g' : ℕ} {V : U.View} {V' : U'.View} {k k' : ℕ},
@@ -310,6 +311,7 @@ structure BandLaws : Prop where
     lo ≤ (U.block A).round + g → (U.block A).round + g ≤ hi →
     S.slotRound k + g = S'.slotRound k' + g' →
     lo ≤ S.slotRound k + g → S.slotRound k + R.wave + g ≤ hi → i < R.rungs →
+    IsLeaderBlock (S := S) U k L →
     (R.Link i U' A L (S'.slotRound k') ↔ R.Link i U A L (S.slotRound k))
   /-- A candidate the band did not carry is linked from no old anchor. -/
   link_novel : ∀ {S S' : Slots Validator} {U U' : BlockRecord Validator BlockId Payload P honest}
@@ -318,7 +320,7 @@ structure BandLaws : Prop where
     lo ≤ (U.block A).round + g → (U.block A).round + g ≤ hi →
     S.slotRound k + g = S'.slotRound k' + g' →
     lo ≤ S.slotRound k + g → S.slotRound k + R.wave + g ≤ hi → i < R.rungs →
-    L ∉ U.ids → ¬ R.Link i U' A L (S'.slotRound k')
+    IsLeaderBlock (S := S') U' k' L → L ∉ U.ids → ¬ R.Link i U' A L (S'.slotRound k')
 
 variable (hb : R.BandLaws)
 include hb
@@ -331,9 +333,9 @@ theorem rungEmpty_band (h : AgreeBand R.toDagRule U U' lo hi g g') {A : BlockId}
     (he : R.RungEmpty (S := S) U A i k) : R.RungEmpty (S := S') U' A i k' := by
   intro L hL hlink
   by_cases hLo : L ∈ U.ids
-  · exact he L (isLeaderBlock_band_old h hkk hlk hlo (by omega) hLo hL)
-      ((hb.link_band h hA hAlo hAhi hkk hlo hhi hi).mp hlink)
-  · exact hb.link_novel h hA hAlo hAhi hkk hlo hhi hi hLo hlink
+  · have hL' := isLeaderBlock_band_old h hkk hlk hlo (by omega) hLo hL
+    exact he L hL' ((hb.link_band h hA hAlo hAhi hkk hlo hhi hi hL').mp hlink)
+  · exact hb.link_novel h hA hAlo hAhi hkk hlo hhi hi hL hLo hlink
 
 /-- The tie-break's choice carries across the band. -/
 theorem least_band (h : AgreeBand R.toDagRule U U' lo hi g g') {A L : BlockId} {k k' i : ℕ}
@@ -343,9 +345,9 @@ theorem least_band (h : AgreeBand R.toDagRule U U' lo hi g g') {A L : BlockId} {
     (hm : R.Least (S := S) U A i k L) : R.Least (S := S') U' A i k' L := by
   intro L' hL' hlink
   by_cases hLo : L' ∈ U.ids
-  · exact hm L' (isLeaderBlock_band_old h hkk hlk hlo (by omega) hLo hL')
-      ((hb.link_band h hA hAlo hAhi hkk hlo hhi hi).mp hlink)
-  · exact absurd hlink (hb.link_novel h hA hAlo hAhi hkk hlo hhi hi hLo)
+  · have hL'' := isLeaderBlock_band_old h hkk hlk hlo (by omega) hLo hL'
+    exact hm L' hL'' ((hb.link_band h hA hAlo hAhi hkk hlo hhi hi hL'').mp hlink)
+  · exact absurd hlink (hb.link_novel h hA hAlo hAhi hkk hlo hhi hi hL' hLo)
 
 /-- **Every verdict reads a band of rounds.** One induction over the
 derivation. The direct cases read the slot's wave and stop; the indirect
@@ -373,7 +375,7 @@ theorem banded_aux {V : U.View} {k : ℕ} {v : Option BlockId}
       exact Decided.directCommit (S := S')
         (isLeaderBlock_band hab hkk hlk (by omega) (by omega) hL)
         (hb.commit_band hab hkk hlk rfl (by omega)
-          (fun b hb h1 h2 => hV b hb (by omega) (by omega)) hc)
+          (fun b hb h1 h2 => hV b hb (by omega) (by omega)) hL hc)
   | @directSkip k hs =>
       refine ⟨S.slotRound k + R.wave, le_refl _, ?_⟩
       intro g g' d d' S' U' V' k' hkd hsch hlead hab hV
@@ -432,7 +434,7 @@ theorem banded_aux {V : U.View} {k : ℕ} {v : Option BlockId}
       · intro i' hi'
         exact rungEmpty_band hb hab hAL.1 hAlo hAhi hkk hlk (by omega) (by omega)
           (lt_trans hi' hi) (hemp i' hi')
-      · exact (hb.link_band hab hAL.1 hAlo hAhi hkk (by omega) (by omega) hi).mpr hlink
+      · exact (hb.link_band hab hAL.1 hAlo hAhi hkk (by omega) (by omega) hi hL).mpr hlink
       · exact least_band hb hab hAL.1 hAlo hAhi hkk hlk (by omega) (by omega) hi hmin
   | @indirectSkip k j A hkj helig hanchor hmid hnone ihj ihmid =>
       obtain ⟨topj, htopj, hjt⟩ := ihj

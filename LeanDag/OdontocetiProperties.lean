@@ -210,16 +210,16 @@ slot's wave, and a candidate the band did not carry is thick-linked from
 no old anchor. -/
 theorem odontocetiBandLaws :
     (Odontoceti.odontocetiAnchored Validator BlockId Payload).BandLaws where
-  commit_band := fun h hkk _ hlo hhi hV hc =>
+  commit_band := fun h hkk _ hlo hhi hV _ hc =>
     directCommitIn_band h hkk (by omega)
       (by simp only [Odontoceti.odontocetiAnchored_wave] at hhi; omega) hV hc
   skip_band := fun h hkk hlk hlo hhi hV hs =>
     AnchoredRule.directSkipSlotIn_band h hkk hlk hlo
       (by simp only [Odontoceti.odontocetiAnchored_wave] at hhi; omega) hV hs
-  link_band := fun h hA hAlo hAhi hkk hlo hhi _ =>
+  link_band := fun h hA hAlo hAhi hkk hlo hhi _ _ =>
     thickLink_band h hA hAlo hAhi hkk hlo
       (by simp only [Odontoceti.odontocetiAnchored_wave] at hhi; omega)
-  link_novel := fun h hA hAlo hAhi hkk hlo hhi _ hL =>
+  link_novel := fun h hA hAlo hAhi hkk hlo hhi _ _ hL =>
     not_thickLink_band_novel h hA hAlo hAhi hkk hlo
       (by simp only [Odontoceti.odontocetiAnchored_wave] at hhi; omega) hL
       thickLink_threshold_pos

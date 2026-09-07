@@ -20,9 +20,8 @@ import LeanDag.Properties.Arcs.Headline
 "needs a carrier per width" — that Hybrid had already answered and
 nobody re-read (`MahiMahi/Carrier.lean`).
 
-**Mahi-Mahi shares the core's block vocabulary**, so the core's band
-lemmas apply once the carriers are identified, which `toCore` does by
-the three fields. What is Mahi-Mahi's own is that every rule reads a
+**Mahi-Mahi shares the core's block vocabulary**, so the relation's
+band lemmas apply at its carrier directly. What is Mahi-Mahi's own is that every rule reads a
 *cone*: a vote is the least block of its author and round in the voting
 block's causal history, and a blame is the absence of any such block.
 `MahiMahi.candidatesAt` is where that lands, and it is the one transport this
@@ -50,54 +49,48 @@ variable {U U' : BlockUniverse Validator BlockId Payload} {lo hi g g' w : ℕ}
 
 /-! ## The band, across a shifted universe -/
 
-/-- The two carriers project identically, so a band for one is a band
-for the other. -/
-theorem toCore (h : AgreeBand (mahiMahiRule (Payload := Payload) w) U U' lo hi g g') :
-    AgreeBand (MysticetiProperties.mysticetiRule (Payload := Payload)) U U' lo hi g g' :=
-  ⟨h.mem, h.block, h.refs⟩
-
 /-- **The candidates a block's cone holds at a round are the ones it
 held.** Both inclusions: a block inside an old cone at a band round is
 old, by `reaches_old`, and an old one stays inside it, by `reaches_of`.
 This is the transport every Mahi-Mahi rule rests on — votes, blames,
 certificates and the indirect test all read this set. -/
-theorem candidatesAt_band (h : AgreeBand (mahiMahiRule (Payload := Payload) w) U U' lo hi g g')
+theorem candidatesAt_band (h : AgreeBand (MahiMahi.mahiMahiAnchored Validator BlockId Payload w).toDagRule U U' lo hi g g')
     {q : BlockId} (hq : q ∈ U.ids) (hqlo : lo ≤ (U.block q).round + g)
     (hqhi : (U.block q).round + g ≤ hi) {a : Validator} {r r' : ℕ}
     (hrr : r + g = r' + g') (hr : lo ≤ r + g) (hhi : r + g ≤ hi) :
     MahiMahi.candidatesAt U' q a r' = MahiMahi.candidatesAt U q a r := by
-  have hq' : q ∈ U'.ids := MysticetiProperties.band_mem (toCore h) hq hqlo hqhi
+  have hq' : q ∈ U'.ids := AnchoredRule.band_mem h hq hqlo hqhi
   ext b
   simp only [MahiMahi.candidatesAt, Finset.mem_filter, mem_blocksAt]
   constructor
   · rintro ⟨⟨hbU', hbr'⟩, hba, hbh⟩
     have hbre : ReachesFrom U'.block q b := (mem_history_iff (U := U') hq').mp hbh
     obtain ⟨hbU, hbreU, hbeq⟩ :=
-      AgreeBand.reaches_old (toCore h) hq hqlo hqhi hbre
+      AgreeBand.reaches_old h hq hqlo hqhi hbre
         (by show lo ≤ (U'.block b).round + g'; omega)
     have hbeq' : (U.block b).round + g = (U'.block b).round + g' := hbeq
-    have hbb := MysticetiProperties.band_block (toCore h) hbU (by omega) (by omega)
+    have hbb := AnchoredRule.band_block h hbU (by omega) (by omega)
     exact ⟨⟨hbU, by omega⟩, by rw [← hbb.2]; exact hba,
       (mem_history_iff (U := U) hq).mpr hbreU⟩
   · rintro ⟨⟨hbU, hbr⟩, hba, hbh⟩
     have hbre : ReachesFrom U.block q b := (mem_history_iff (U := U) hq).mp hbh
-    have hbb := MysticetiProperties.band_block (toCore h) hbU (by omega) (by omega)
-    refine ⟨⟨MysticetiProperties.band_mem (toCore h) hbU (by omega) (by omega), by omega⟩,
+    have hbb := AnchoredRule.band_block h hbU (by omega) (by omega)
+    refine ⟨⟨AnchoredRule.band_mem h hbU (by omega) (by omega), by omega⟩,
       by rw [hbb.2]; exact hba, ?_⟩
     exact (mem_history_iff (U := U') hq').mpr
-      (AgreeBand.reaches_of (toCore h) hq hqhi hbre
+      (AgreeBand.reaches_of h hq hqhi hbre
         (by show lo ≤ (U.block b).round + g; omega))
 
 /-- **A vote is the vote it was.** Both clauses read the same cone, and
 `candidatesAt_band` settles it as an equality rather than a
 containment. -/
-theorem votes_band (h : AgreeBand (mahiMahiRule (Payload := Payload) w) U U' lo hi g g')
+theorem votes_band (h : AgreeBand (MahiMahi.mahiMahiAnchored Validator BlockId Payload w).toDagRule U U' lo hi g g')
     {q : BlockId} (hq : q ∈ U.ids) (hqlo : lo ≤ (U.block q).round + g)
     (hqhi : (U.block q).round + g ≤ hi)
     {L : BlockId} (hL : L ∈ U.ids) (hLlo : lo ≤ (U.block L).round + g)
     (hLhi : (U.block L).round + g ≤ hi) :
     MahiMahi.Votes U' q L ↔ MahiMahi.Votes U q L := by
-  have hLb := MysticetiProperties.band_block (toCore h) hL hLlo hLhi
+  have hLb := AnchoredRule.band_block h hL hLlo hLhi
   have hset : MahiMahi.candidatesAt U' q (U'.block L).creator (U'.block L).round
       = MahiMahi.candidatesAt U q (U.block L).creator (U.block L).round := by
     rw [hLb.2]
@@ -111,7 +104,7 @@ in both directions — so the shape `docs/target-properties.md` §3.2
 recorded as a defect, a negative clause a larger DAG can falsify, does
 not arise here at all. A candidate the band added is in no old block's
 history. -/
-theorem blames_band (h : AgreeBand (mahiMahiRule (Payload := Payload) w) U U' lo hi g g')
+theorem blames_band (h : AgreeBand (MahiMahi.mahiMahiAnchored Validator BlockId Payload w).toDagRule U U' lo hi g g')
     {q : BlockId} (hq : q ∈ U.ids) (hqlo : lo ≤ (U.block q).round + g)
     (hqhi : (U.block q).round + g ≤ hi) {a : Validator} {r r' : ℕ}
     (hrr : r + g = r' + g') (hr : lo ≤ r + g) (hhi : r + g ≤ hi) :
@@ -122,7 +115,7 @@ theorem blames_band (h : AgreeBand (mahiMahiRule (Payload := Payload) w) U U' lo
 /-- **A certificate certifies what it certified.** Its votes are cast by
 its own references, one round below it, and each of those reads a cone
 the band settles. -/
-theorem certifies_band (h : AgreeBand (mahiMahiRule (Payload := Payload) w) U U' lo hi g g')
+theorem certifies_band (h : AgreeBand (MahiMahi.mahiMahiAnchored Validator BlockId Payload w).toDagRule U U' lo hi g g')
     {C : BlockId} (hC : C ∈ U.ids) (hClo : lo < (U.block C).round + g)
     (hChi : (U.block C).round + g ≤ hi)
     {L : BlockId} (hL : L ∈ U.ids) (hLlo : lo ≤ (U.block L).round + g)
@@ -132,12 +125,12 @@ theorem certifies_band (h : AgreeBand (mahiMahiRule (Payload := Payload) w) U U'
     fun q hqm => ⟨U.complete C hC q hqm, U.round_of_mem_refs hC hqm⟩
   have hset : MahiMahi.votesIn U' C L = MahiMahi.votesIn U C L := by
     unfold MahiMahi.votesIn
-    rw [MysticetiProperties.band_refs (toCore h) hC hClo hChi]
+    rw [AnchoredRule.band_refs h hC hClo hChi]
     refine Finset.filter_congr fun q hqm => ?_
     exact votes_band h (hq q hqm).1 (by have := (hq q hqm).2; omega)
       (by have := (hq q hqm).2; omega) hL hLlo hLhi
   unfold MahiMahi.Certifies
-  rw [hset, MysticetiProperties.creatorsOf_band (toCore h)]
+  rw [hset, AnchoredRule.creatorsOf_band h]
   intro b hb
   have hbp := (Finset.mem_filter.mp hb).1
   exact ⟨(hq b hbp).1, by have := (hq b hbp).2; omega, by have := (hq b hbp).2; omega⟩
@@ -149,7 +142,7 @@ was met is met still. The skip needs no separate argument for a
 candidate the band added, `blames_band` being an equivalence. -/
 
 /-- Certificates survive the band. -/
-theorem certificates_band (h : AgreeBand (mahiMahiRule (Payload := Payload) w) U U' lo hi g g')
+theorem certificates_band (h : AgreeBand (MahiMahi.mahiMahiAnchored Validator BlockId Payload w).toDagRule U U' lo hi g g')
     (hw : 2 ≤ w) {L : BlockId} (hL : L ∈ U.ids) {r r' : ℕ}
     (hLr : (U.block L).round = r) (hrr : r + g = r' + g') (hr : lo ≤ r + g)
     (hhi : r + w - 1 + g ≤ hi) :
@@ -161,11 +154,11 @@ theorem certificates_band (h : AgreeBand (mahiMahiRule (Payload := Payload) w) U
   have hdr : MahiMahi.decisionRoundAt w r = r + w - 1 := rfl
   have hdr' : MahiMahi.decisionRoundAt w r' = r' + w - 1 := rfl
   refine Finset.mem_filter.mpr ⟨?_, ?_⟩
-  · exact MysticetiProperties.blocksAt_band (toCore h) (by omega) (by omega) (by omega) hCA
+  · exact AnchoredRule.blocksAt_band h (by omega) (by omega) (by omega) hCA
   · exact (certifies_band h hCU (by omega) (by omega) hL (by omega) (by omega)).mpr hCc
 
 /-- **And so does the direct commit.** -/
-theorem directCommitIn_band (h : AgreeBand (mahiMahiRule (Payload := Payload) w) U U' lo hi g g')
+theorem directCommitIn_band (h : AgreeBand (MahiMahi.mahiMahiAnchored Validator BlockId Payload w).toDagRule U U' lo hi g g')
     (hw : 2 ≤ w) {V : View Validator BlockId Payload U} {V' : View Validator BlockId Payload U'}
     (hV : ∀ b, b ∈ V.ids → lo ≤ (U.block b).round + g → (U.block b).round + g ≤ hi →
       b ∈ V'.ids)
@@ -183,12 +176,12 @@ theorem directCommitIn_band (h : AgreeBand (mahiMahiRule (Payload := Payload) w)
   have hdr : MahiMahi.decisionRoundAt w r = r + w - 1 := rfl
   refine Finset.mem_image.mpr ⟨C, Finset.mem_inter.mpr
     ⟨certificates_band h hw hL hLr hrr hr hhi hCc, hV C hCV (by omega) (by omega)⟩, ?_⟩
-  rw [(MysticetiProperties.band_block (toCore h) hCU (by omega) (by omega)).2]; exact hCa
+  rw [(AnchoredRule.band_block h hCU (by omega) (by omega)).2]; exact hCa
 
 /-- **And the direct skip.** A blamer stays a blamer, and a candidate
 the band added changes nothing: the blame reads the blamer's cone, which
 the band settles both ways. -/
-theorem directSkipIn_band (h : AgreeBand (mahiMahiRule (Payload := Payload) w) U U' lo hi g g')
+theorem directSkipIn_band (h : AgreeBand (MahiMahi.mahiMahiAnchored Validator BlockId Payload w).toDagRule U U' lo hi g g')
     (hw : 2 ≤ w) {V : View Validator BlockId Payload U} {V' : View Validator BlockId Payload U'}
     (hV : ∀ b, b ∈ V.ids → lo ≤ (U.block b).round + g → (U.block b).round + g ≤ hi →
       b ∈ V'.ids)
@@ -205,10 +198,10 @@ theorem directSkipIn_band (h : AgreeBand (mahiMahiRule (Payload := Payload) w) U
   have hvr : MahiMahi.votingRound w r = r + w - 2 := rfl
   have hvr' : MahiMahi.votingRound w r' = r' + w - 2 := rfl
   refine Finset.mem_image.mpr ⟨q, Finset.mem_inter.mpr ⟨Finset.mem_filter.mpr
-    ⟨MysticetiProperties.blocksAt_band (toCore h) (by omega) (by omega) (by omega) hqA, ?_⟩,
+    ⟨AnchoredRule.blocksAt_band h (by omega) (by omega) (by omega) hqA, ?_⟩,
     hV q hqV (by omega) (by omega)⟩, ?_⟩
   · exact (blames_band h hqU (by omega) (by omega) hrr hr (by omega)).mpr hqb
-  · rw [(MysticetiProperties.band_block (toCore h) hqU (by omega) (by omega)).2]; exact hqv
+  · rw [(AnchoredRule.band_block h hqU (by omega) (by omega)).2]; exact hqv
 
 /-! ## The anchored test
 
@@ -217,13 +210,13 @@ candidate the band did not carry is certified from no old anchor,
 because the certificate would have to lie in the anchor's cone and an
 old cone holds only old blocks. -/
 
-theorem certifiedIn_band (h : AgreeBand (mahiMahiRule (Payload := Payload) w) U U' lo hi g g')
+theorem certifiedIn_band (h : AgreeBand (MahiMahi.mahiMahiAnchored Validator BlockId Payload w).toDagRule U U' lo hi g g')
     (hw : 2 ≤ w) {A : BlockId} (hA : A ∈ U.ids) (hAlo : lo ≤ (U.block A).round + g)
     (hAhi : (U.block A).round + g ≤ hi)
     {L : BlockId} (hL : L ∈ U.ids) {r r' : ℕ} (hLr : (U.block L).round = r)
     (hrr : r + g = r' + g') (hr : lo ≤ r + g) (hhi : r + w - 1 + g ≤ hi) :
     MahiMahi.CertifiedIn U' w A L r' ↔ MahiMahi.CertifiedIn U w A L r := by
-  have hA' : A ∈ U'.ids := MysticetiProperties.band_mem (toCore h) hA hAlo hAhi
+  have hA' : A ∈ U'.ids := AnchoredRule.band_mem h hA hAlo hAhi
   have hdr : MahiMahi.decisionRoundAt w r = r + w - 1 := rfl
   have hdr' : MahiMahi.decisionRoundAt w r' = r' + w - 1 := rfl
   constructor
@@ -232,7 +225,7 @@ theorem certifiedIn_band (h : AgreeBand (mahiMahiRule (Payload := Payload) w) U 
     have hCr' : (U'.block C).round = r' + w - 1 := by
       have := (mem_blocksAt.mp hCA).2; omega
     obtain ⟨hCU, hreU, hCeq⟩ :=
-      AgreeBand.reaches_old (toCore h) hA hAlo hAhi hre
+      AgreeBand.reaches_old h hA hAlo hAhi hre
         (by show lo ≤ (U'.block C).round + g'; omega)
     have hCeq' : (U.block C).round + g = (U'.block C).round + g' := hCeq
     exact ⟨C, Finset.mem_filter.mpr ⟨mem_blocksAt.mpr ⟨hCU, by omega⟩,
@@ -242,11 +235,11 @@ theorem certifiedIn_band (h : AgreeBand (mahiMahiRule (Payload := Payload) w) U 
     have hCU : C ∈ U.ids := (mem_blocksAt.mp hCA).1
     have hCr : (U.block C).round = r + w - 1 := by have := (mem_blocksAt.mp hCA).2; omega
     exact ⟨C, certificates_band h hw hL hLr hrr hr hhi hC,
-      AgreeBand.reaches_of (toCore h) hA hAhi hre
+      AgreeBand.reaches_of h hA hAhi hre
         (by show lo ≤ (U.block C).round + g; omega)⟩
 
 theorem not_certifiedIn_band_novel
-    (h : AgreeBand (mahiMahiRule (Payload := Payload) w) U U' lo hi g g')
+    (h : AgreeBand (MahiMahi.mahiMahiAnchored Validator BlockId Payload w).toDagRule U U' lo hi g g')
     (hw : 2 ≤ w) {A : BlockId} (hA : A ∈ U.ids) (hAlo : lo ≤ (U.block A).round + g)
     (hAhi : (U.block A).round + g ≤ hi)
     {L : BlockId} (hLo : L ∉ U.ids) {r r' : ℕ} (hLr : (U'.block L).round = r')
@@ -257,7 +250,7 @@ theorem not_certifiedIn_band_novel
   obtain ⟨hCA, hCc⟩ := Finset.mem_filter.mp hC
   have hCr' : (U'.block C).round = r' + w - 1 := by have := (mem_blocksAt.mp hCA).2; omega
   obtain ⟨hCU, -, hCeq⟩ :=
-    AgreeBand.reaches_old (toCore h) hA hAlo hAhi hre
+    AgreeBand.reaches_old h hA hAlo hAhi hre
       (by show lo ≤ (U'.block C).round + g'; omega)
   have hCeq' : (U.block C).round + g = (U'.block C).round + g' := hCeq
   have hCround : (U.block C).round = r + w - 1 := by omega
@@ -271,200 +264,50 @@ theorem not_certifiedIn_band_novel
     omega
   obtain ⟨q, hq⟩ := Finset.card_pos.1 hpos
   obtain ⟨hqm, hqv⟩ := Finset.mem_filter.mp hq
-  rw [MysticetiProperties.band_refs (toCore h) hCU
+  rw [AnchoredRule.band_refs h hCU
     (by show lo < (U.block C).round + g; omega)
     (by show (U.block C).round + g ≤ hi; omega)] at hqm
   have hqU : q ∈ U.ids := U.complete C hCU q hqm
   have hqr : (U.block q).round + 1 = (U.block C).round := U.round_of_mem_refs hCU hqm
-  have hq' : q ∈ U'.ids := MysticetiProperties.band_mem (toCore h) hqU
+  have hq' : q ∈ U'.ids := AnchoredRule.band_mem h hqU
     (by show lo ≤ (U.block q).round + g; omega)
     (by show (U.block q).round + g ≤ hi; omega)
   -- `L` is in an old block's cone, so `L` is old
   have hLh : L ∈ history U' q := (Finset.mem_filter.mp hqv.1).2.2
   obtain ⟨hLU, -, -⟩ :=
-    AgreeBand.reaches_old (toCore h) hqU
+    AgreeBand.reaches_old h hqU
       (by show lo ≤ (U.block q).round + g; omega)
       (by show (U.block q).round + g ≤ hi; omega)
       ((mem_history_iff (U := U') hq').mp hLh) (by show lo ≤ (U'.block L).round + g'; omega)
   exact hLo hLU
 
-/-! ## The band a verdict reads
-
-One induction, four cases. The direct cases read to the decision round
-`slotRound k + w − 1` and stop; the indirect cases read their anchor's
-derivation and the intermediates', and the top is the largest of those.
-
-`2 ≤ w` is the whole of what `docs/target-properties.md` §3.4c said
-this band needed, and it enters
-exactly where the truncated wave rounds do. Nothing here supposes the
-larger universe adds no candidates: where one appears the anchor cannot
-see it (`not_certifiedIn_band_novel`), and the slot-level skip does not
-look for it at all — it reads the blamers' cones, which the band settles
-both ways. -/
-theorem banded_aux [S : Slots Validator] (hw : 2 ≤ w)
-    {U : BlockUniverse Validator BlockId Payload}
-    {V : View Validator BlockId Payload U} {k : ℕ} {v : Option BlockId}
-    (hd : MahiMahi.Decided w U V k v) :
-    ∃ top, S.slotRound k + w - 1 ≤ top ∧
-      ∀ (g g' d d' : ℕ) (S' : Slots Validator)
-        (U' : BlockUniverse Validator BlockId Payload)
-        (V' : View Validator BlockId Payload U') (k' : ℕ),
-        k + d' = k' + d →
-        (∀ m m', m + d' = m' + d → S.slotRound m + g = S'.slotRound m' + g') →
-        (∀ m m', m + d' = m' + d → S.slotRound m ≤ top → S.leader m = S'.leader m') →
-        AgreeBand (mahiMahiRule (Payload := Payload) w) U U'
-          (S.slotRound k + g) (top + g) g g' →
-        (∀ b, b ∈ V.ids → S.slotRound k ≤ (U.block b).round →
-          (U.block b).round ≤ top → b ∈ V'.ids) →
-        MahiMahi.Decided (S := S') w U' V' k' v := by
-  classical
-  induction hd with
-  | @directCommit k L hL hc =>
-      refine ⟨S.slotRound k + w - 1, le_refl _, ?_⟩
-      intro g g' d d' S' U' V' k' hkd hsch hlead hab hV
-      have hkk : S.slotRound k + g = S'.slotRound k' + g' := hsch k k' hkd
-      have hlk : S.leader k = S'.leader k' := hlead k k' hkd (by omega)
-      refine MahiMahi.Decided.directCommit (S := S')
-        (MysticetiProperties.isLeaderBlock_band (toCore hab) hkk hlk (by omega) (by omega) hL) ?_
-      exact directCommitIn_band hab hw
-        (fun b hb h1 h2 => hV b hb (by omega) (by omega)) hL.1 hL.2.1 hkk (by omega) (by omega) hc
-  | @directSkip k hs =>
-      refine ⟨S.slotRound k + w - 1, le_refl _, ?_⟩
-      intro g g' d d' S' U' V' k' hkd hsch hlead hab hV
-      have hkk : S.slotRound k + g = S'.slotRound k' + g' := hsch k k' hkd
-      have hlk : S.leader k = S'.leader k' := hlead k k' hkd (by omega)
-      refine MahiMahi.Decided.directSkip (S := S') ?_
-      rw [← hlk]
-      exact directSkipIn_band hab hw (fun b hb h1 h2 => hV b hb (by omega) (by omega))
-        hkk (by omega) (by omega) hs
-  | @indirectCommit k j A L hkj helig hanchor hmid hL hcert ihj ihmid =>
-      obtain ⟨topj, htopj, hjt⟩ := ihj
-      set f : ℕ → ℕ := fun i =>
-        if hh : k < i ∧ i < j ∧ MahiMahi.Eligible Validator w k i then
-          (ihmid i hh.1 hh.2.1 hh.2.2).choose else 0 with hf
-      set top := max topj ((Finset.Ico (k + 1) j).sup f) with htop
-      have hkj' : S.slotRound k ≤ S.slotRound j := S.mono (le_of_lt hkj)
-      have hAL : IsLeaderBlock U j A := MahiMahi.isLeaderBlock_of_decided hanchor
-      have hkey : ∀ i (h1 : k < i) (h2 : i < j) (h3 : MahiMahi.Eligible Validator w k i),
-          (ihmid i h1 h2 h3).choose ≤ top := by
-        intro i h1 h2 h3
-        have heqf : f i = (ihmid i h1 h2 h3).choose := by
-          simp only [hf]; exact dif_pos ⟨h1, h2, h3⟩
-        rw [← heqf, htop]
-        exact le_trans (Finset.le_sup (Finset.mem_Ico.mpr ⟨by omega, h2⟩)) (le_max_right _ _)
-      have htj : topj ≤ top := by rw [htop]; exact le_max_left _ _
-      have helig' := helig
-      unfold MahiMahi.Eligible MahiMahi.decisionRound at helig'
-      have htopk : S.slotRound k + w - 1 ≤ top := by omega
-      refine ⟨top, htopk, ?_⟩
-      intro g g' d d' S' U' V' k' hkd hsch hlead hab hV
-      have hkk : S.slotRound k + g = S'.slotRound k' + g' := hsch k k' hkd
-      have hlk : S.leader k = S'.leader k' := hlead k k' hkd (by omega)
-      have hjd : j + d' = (j - k + k') + d := by omega
-      have hjj : S.slotRound j + g = S'.slotRound (j - k + k') + g' := hsch j _ hjd
-      have hAhi : (U.block A).round + g ≤ top + g := by rw [hAL.2.1]; omega
-      have hAlo : S.slotRound k + g ≤ (U.block A).round + g := by rw [hAL.2.1]; omega
-      have hanch := hjt g g' d d' S' U' V' (j - k + k') hjd hsch
-        (fun m m' hm hb => hlead m m' hm (by omega))
-        (hab.mono (by omega) (by omega))
-        (fun b hb h1 h2 => hV b hb (by omega) (by omega))
-      have hmid' : ∀ i', k' < i' → i' < j - k + k' →
-          MahiMahi.Eligible Validator w (S := S') k' i' →
-          MahiMahi.Decided (S := S') w U' V' i' none := by
-        intro i' h1 h2 h3
-        have hi'd : (i' - k' + k) + d' = i' + d := by omega
-        have hki : k < i' - k' + k := by omega
-        have hij : i' - k' + k < j := by omega
-        have helg : MahiMahi.Eligible Validator w (S := S) k (i' - k' + k) := by
-          have hii := hsch _ i' hi'd
-          have := h3
-          unfold MahiMahi.Eligible MahiMahi.decisionRound at this ⊢; omega
-        have hk2 := hkey _ hki hij helg
-        obtain ⟨htopi, hit⟩ := (ihmid _ hki hij helg).choose_spec
-        have hkr : S.slotRound k ≤ S.slotRound (i' - k' + k) := S.mono (by omega)
-        exact hit g g' d d' S' U' V' i' hi'd hsch
-          (fun m m' hm hb => hlead m m' hm (by omega))
-          (hab.mono (by omega) (by omega))
-          (fun b hb ha1 ha2 => hV b hb (by omega) (by omega))
-      have helig'' : MahiMahi.Eligible Validator w (S := S') k' (j - k + k') := by
-        unfold MahiMahi.Eligible MahiMahi.decisionRound; omega
-      exact MahiMahi.Decided.indirectCommit (S := S') (by omega) helig'' hanch hmid'
-        (MysticetiProperties.isLeaderBlock_band (toCore hab) hkk hlk (by omega) (by omega) hL)
-        ((certifiedIn_band hab hw hAL.1 hAlo hAhi hL.1 hL.2.1 hkk (by omega) (by omega)).mpr hcert)
-  | @indirectSkip k j A hkj helig hanchor hmid hnone ihj ihmid =>
-      obtain ⟨topj, htopj, hjt⟩ := ihj
-      set f : ℕ → ℕ := fun i =>
-        if hh : k < i ∧ i < j ∧ MahiMahi.Eligible Validator w k i then
-          (ihmid i hh.1 hh.2.1 hh.2.2).choose else 0 with hf
-      set top := max topj ((Finset.Ico (k + 1) j).sup f) with htop
-      have hkj' : S.slotRound k ≤ S.slotRound j := S.mono (le_of_lt hkj)
-      have hAL : IsLeaderBlock U j A := MahiMahi.isLeaderBlock_of_decided hanchor
-      have hkey : ∀ i (h1 : k < i) (h2 : i < j) (h3 : MahiMahi.Eligible Validator w k i),
-          (ihmid i h1 h2 h3).choose ≤ top := by
-        intro i h1 h2 h3
-        have heqf : f i = (ihmid i h1 h2 h3).choose := by
-          simp only [hf]; exact dif_pos ⟨h1, h2, h3⟩
-        rw [← heqf, htop]
-        exact le_trans (Finset.le_sup (Finset.mem_Ico.mpr ⟨by omega, h2⟩)) (le_max_right _ _)
-      have htj : topj ≤ top := by rw [htop]; exact le_max_left _ _
-      have helig' := helig
-      unfold MahiMahi.Eligible MahiMahi.decisionRound at helig'
-      have htopk : S.slotRound k + w - 1 ≤ top := by omega
-      refine ⟨top, htopk, ?_⟩
-      intro g g' d d' S' U' V' k' hkd hsch hlead hab hV
-      have hkk : S.slotRound k + g = S'.slotRound k' + g' := hsch k k' hkd
-      have hlk : S.leader k = S'.leader k' := hlead k k' hkd (by omega)
-      have hjd : j + d' = (j - k + k') + d := by omega
-      have hjj : S.slotRound j + g = S'.slotRound (j - k + k') + g' := hsch j _ hjd
-      have hAhi : (U.block A).round + g ≤ top + g := by rw [hAL.2.1]; omega
-      have hAlo : S.slotRound k + g ≤ (U.block A).round + g := by rw [hAL.2.1]; omega
-      have hanch := hjt g g' d d' S' U' V' (j - k + k') hjd hsch
-        (fun m m' hm hb => hlead m m' hm (by omega))
-        (hab.mono (by omega) (by omega))
-        (fun b hb h1 h2 => hV b hb (by omega) (by omega))
-      have hmid' : ∀ i', k' < i' → i' < j - k + k' →
-          MahiMahi.Eligible Validator w (S := S') k' i' →
-          MahiMahi.Decided (S := S') w U' V' i' none := by
-        intro i' h1 h2 h3
-        have hi'd : (i' - k' + k) + d' = i' + d := by omega
-        have hki : k < i' - k' + k := by omega
-        have hij : i' - k' + k < j := by omega
-        have helg : MahiMahi.Eligible Validator w (S := S) k (i' - k' + k) := by
-          have hii := hsch _ i' hi'd
-          have := h3
-          unfold MahiMahi.Eligible MahiMahi.decisionRound at this ⊢; omega
-        have hk2 := hkey _ hki hij helg
-        obtain ⟨htopi, hit⟩ := (ihmid _ hki hij helg).choose_spec
-        have hkr : S.slotRound k ≤ S.slotRound (i' - k' + k) := S.mono (by omega)
-        exact hit g g' d d' S' U' V' i' hi'd hsch
-          (fun m m' hm hb => hlead m m' hm (by omega))
-          (hab.mono (by omega) (by omega))
-          (fun b hb ha1 ha2 => hV b hb (by omega) (by omega))
-      have helig'' : MahiMahi.Eligible Validator w (S := S') k' (j - k + k') := by
-        unfold MahiMahi.Eligible MahiMahi.decisionRound; omega
-      refine MahiMahi.Decided.indirectSkip (S := S') (by omega) helig'' hanch hmid' ?_
-      intro L' hL' hc'
-      by_cases hLo : L' ∈ U.ids
-      · exact hnone L' (MysticetiProperties.isLeaderBlock_band_old (toCore hab) hkk hlk
-          (by omega) (by omega) hLo hL')
-          ((certifiedIn_band hab hw hAL.1 hAlo hAhi hLo
-            (by
-              have := MysticetiProperties.isLeaderBlock_band_old (toCore hab) hkk hlk
-                (by omega) (by omega) hLo hL'
-              exact this.2.1)
-            hkk (by omega) (by omega)).mp hc')
-      · exact absurd hc' (not_certifiedIn_band_novel hab hw hAL.1 hAlo hAhi hLo hL'.2.1
-          hkk (by omega) (by omega))
+/-- **What Mahi-Mahi owes the band** at a wave of at least two: its
+direct commit, its slot blame and the certificate in the anchor's cone
+carry across a band covering the slot's wave, and a candidate the band
+did not carry is certified from no old anchor. -/
+theorem mahiMahiBandLaws (hw : 2 ≤ w) :
+    (MahiMahi.mahiMahiAnchored Validator BlockId Payload w).BandLaws where
+  commit_band := fun h hkk _ hlo hhi hV hL hc =>
+    directCommitIn_band h hw hV hL.1 hL.2.1 hkk (by omega)
+      (by simp only [MahiMahi.mahiMahiAnchored_wave] at hhi; omega) hc
+  skip_band := fun h hkk hlk hlo hhi hV hs => by
+    show MahiMahi.DirectSkipIn _ _ _ _ _
+    rw [← hlk]
+    exact directSkipIn_band h hw hV hkk (by omega)
+      (by simp only [MahiMahi.mahiMahiAnchored_wave] at hhi; omega) hs
+  link_band := fun h hA hAlo hAhi hkk hlo hhi _ hL =>
+    certifiedIn_band h hw hA hAlo hAhi hL.1 hL.2.1 hkk hlo
+      (by simp only [MahiMahi.mahiMahiAnchored_wave] at hhi; omega)
+  link_novel := fun h hA hAlo hAhi hkk hlo hhi _ hL hLo =>
+    not_certifiedIn_band_novel h hw hA hAlo hAhi hLo hL.2.1 hkk hlo
+      (by simp only [MahiMahi.mahiMahiAnchored_wave] at hhi; omega)
 
 /-- **Mahi-Mahi reads a band**, at every width its rules are stated
 for. -/
 theorem banded (hw : 2 ≤ w) :
     Banded (mahiMahiRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload) w) := by
-  intro S U V k v hd
-  obtain ⟨top, -, ht⟩ := banded_aux (S := S) hw hd
-  exact ⟨top, fun g g' d d' S' U' V' k' hkd hsch hlead hab hV =>
-    ht g g' d d' S' U' V' k' hkd hsch hlead hab hV⟩
+      (Payload := Payload) w) :=
+  AnchoredRule.banded (mahiMahiBandLaws hw)
 
 /-! ## The two liveness properties
 
@@ -590,56 +433,13 @@ theorem mmSupport_commits {w : ℕ} (hw : 2 ≤ w) :
     rw [hround]; exact hin
 
 open Classical in
-/-- **The indirect rule, with its bound.** The anchor is the committed
-slot `j`; the eligible slots between are skipped, so `j` is the nearest.
-The case split reads slot `i`'s candidates and the anchor's cone, and a
-schedule naming the same leader at `i` and the same rounds changes
-neither — which is the second quantifier.
-
-Shorter than Odontoceti's by a clause: the indirect test is "a
-certificate in the anchor's cone", and two certificates at one slot name
-the same candidate, so there is no tie-break to preserve. -/
+/-- **MM-A3 as a property**: the relation's indirect property, with no
+tie to break — two certificates at one slot name the same candidate. -/
 theorem indirect {w : ℕ} (hw : 1 ≤ w) :
-    Indirect (mahiMahiRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload) w) (fun sr i j => sr i + w ≤ sr j) := by
-  classical
-  intro S U V i j A helig hj hmid
-  letI := S
-  have he : MahiMahi.Eligible Validator w i j := by
-    unfold MahiMahi.Eligible MahiMahi.decisionRound; omega
-  have hlt : i < j := MahiMahi.lt_of_eligible hw he
-  have heligS : ∀ (S' : Slots Validator), S'.slotRound = S.slotRound →
-      ∀ x y, MahiMahi.Eligible Validator w (S := S') x y ↔
-        MahiMahi.Eligible Validator w (S := S) x y := by
-    intro S' hround x y
-    simp only [MahiMahi.Eligible, MahiMahi.decisionRound, hround]
-  have hback : ∀ x y, MahiMahi.Eligible Validator w (S := S) x y →
-      S.slotRound x + w ≤ S.slotRound y := by
-    intro x y hxy
-    unfold MahiMahi.Eligible MahiMahi.decisionRound at hxy
-    have := S.mono (le_of_lt (MahiMahi.lt_of_eligible hw hxy))
-    omega
-  by_cases hc : ∃ L, IsLeaderBlock U i L ∧ MahiMahi.CertifiedIn U w A L (S.slotRound i)
-  · obtain ⟨L, hL, hcert⟩ := hc
-    refine ⟨some L, fun S' hround hlead hj' hmid' => ?_⟩
-    refine MahiMahi.Decided.indirectCommit (S := S') hlt ((heligS S' hround i j).mpr he) hj'
-      (fun i' h1 h2 h3 => hmid' i' h1 h2 (hback i i' ((heligS S' hround i i').mp h3)))
-      ?_ ?_
-    · obtain ⟨hm, hr, hcr⟩ := hL
-      exact ⟨hm, by rw [hround]; exact hr, by rw [hlead]; exact hcr⟩
-    · show MahiMahi.CertifiedIn U w A L (S'.slotRound i)
-      rw [hround]; exact hcert
-  · push Not at hc
-    refine ⟨none, fun S' hround hlead hj' hmid' => ?_⟩
-    refine MahiMahi.Decided.indirectSkip (S := S') hlt ((heligS S' hround i j).mpr he) hj'
-      (fun i' h1 h2 h3 => hmid' i' h1 h2 (hback i i' ((heligS S' hround i i').mp h3))) ?_
-    intro L hL'
-    obtain ⟨hm, hr, hcr⟩ := hL'
-    have hLS : IsLeaderBlock (S := S) U i L :=
-      ⟨hm, by rw [← hround]; exact hr, by rw [← hlead]; exact hcr⟩
-    show ¬ MahiMahi.CertifiedIn U w A L (S'.slotRound i)
-    rw [hround]
-    exact hc L hLS
+    Indirect (mahiMahiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload) w)
+      (fun sr i j => sr i + w ≤ sr j) :=
+  (AnchoredRule.indirect fun hi h => MahiMahi.exists_least hi h).congr
+    (fun _ _ _ => by simp only [MahiMahi.mahiMahiAnchored_wave]; omega)
 
 /-! ## The headlines -/
 

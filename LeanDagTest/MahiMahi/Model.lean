@@ -76,12 +76,12 @@ example : MahiMahi.votingRound 4 1 = 3 := by decide
 example : MahiMahi.decisionRoundAt 4 1 = 4 := by decide
 example : MahiMahi.votingRound 3 1 = 2 := by decide
 example : MahiMahi.decisionRoundAt 3 1 = 3 := by decide
-example : MahiMahi.decisionRound (Fin 4) 4 1 = 4 := by decide
-example : MahiMahi.decisionRound (Fin 4) 5 1 = 5 := by decide
+example : (MahiMahi.mahiMahiAnchored (Fin 4) (Fin 24) Unit 4).decisionRound 1 = 4 := by decide
+example : (MahiMahi.mahiMahiAnchored (Fin 4) (Fin 24) Unit 5).decisionRound 1 = 5 := by decide
 
 -- Slot `5` may anchor slot `1` at `w = 4`; slot `4` may not.
-example : MahiMahi.Eligible (Fin 4) 4 1 5 := by decide
-example : ¬ MahiMahi.Eligible (Fin 4) 4 1 4 := by decide
+example : (MahiMahi.mahiMahiAnchored (Fin 4) (Fin 24) Unit 4).Eligible 1 5 := by decide
+example : ¬ (MahiMahi.mahiMahiAnchored (Fin 4) (Fin 24) Unit 4).Eligible 1 4 := by decide
 
 /-! ### Support through the cone -/
 
@@ -184,8 +184,10 @@ example : MahiMahi.DirectCommit full4 3 10 2 ↔ LeanDag.DirectCommit full4 10 2
 example : MahiMahi.DirectSkip full4 3 1 1 ↔ LeanDag.DirectSkip full4 5 1 := by decide
 example : MahiMahi.certificates full4 3 5 1 = LeanDag.certificates full4 5 1 := by decide
 example : MahiMahi.votesIn full4 12 5 = LeanDag.votesIn full4 12 5 := by decide
-example : MahiMahi.Eligible (Fin 4) 3 1 4 ↔ LeanDag.Eligible (Fin 4) 1 4 := by decide
-example : ¬ MahiMahi.Eligible (Fin 4) 3 1 3 ∧ ¬ LeanDag.Eligible (Fin 4) 1 3 := by decide
+example : (MahiMahi.mahiMahiAnchored (Fin 4) (Fin 24) Unit 3).Eligible 1 4 ↔
+    LeanDag.Eligible (Fin 4) 1 4 := by decide
+example : ¬ (MahiMahi.mahiMahiAnchored (Fin 4) (Fin 24) Unit 3).Eligible 1 3 ∧
+    ¬ LeanDag.Eligible (Fin 4) 1 3 := by decide
 
 -- The same verdict on slot `1` from both relations.
 example : MahiMahi.Decided 3 full4 (View.full full4) 1 (some 5) :=
