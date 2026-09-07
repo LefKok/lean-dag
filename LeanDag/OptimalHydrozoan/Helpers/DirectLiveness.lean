@@ -50,7 +50,7 @@ theorem subset_blamesInView_of_coversUpto
     (hcov : V.CoversUpto (S.slotRound k + 1)) :
     T ⊆ blamesInView U V k := by
   intro v hv
-  obtain ⟨b, hb, hbr, hba⟩ := hpop v hv
+  obtain ⟨b, hb, hba, hbr⟩ := hpop v hv
   simp only [blamesInView, mem_creatorsOf]
   refine ⟨b, Finset.mem_inter.mpr
     ⟨Finset.mem_filter.mpr ⟨mem_blocksAt.mpr ⟨hb, hbr⟩, ?_⟩,
@@ -75,7 +75,7 @@ theorem noEvidenceQuorumInView_of_coversUpto
   · have hsub : T ⊆ creatorsOf U.block ((blocksAt U (decisionRound Replica k)).filter
         (fun b => (U.block b).creator ∈ T)) := by
       intro v hv
-      obtain ⟨b, hb, hbr, hba⟩ := hpop v hv
+      obtain ⟨b, hb, hba, hbr⟩ := hpop v hv
       exact mem_creatorsOf.mpr ⟨b, Finset.mem_filter.mpr
         ⟨mem_blocksAt.mpr ⟨hb, by simp only [decisionRound]; exact hbr⟩, hba ▸ hv⟩, hba⟩
     have h1 := Finset.card_le_card hsub

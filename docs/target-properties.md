@@ -3944,9 +3944,9 @@ what the copies occupy; the order is the order to take them in.
 
 | Cluster | Where the copies are | Lines |
 |:---|:---|---:|
-| view-restricted counting | `supportersIn` (Nemo, Odontoceti, Hybrid, Black Marlin), `blamesIn`, `slotBlamers`, `certificatesIn`, `votesIn`, FinWhale's `voters` | ~200 |
-| liveness predicates at the universe | `Nemo/Liveness.lean` and `Hydrozoan/Model/Liveness.lean` restating `PopulatedOn`, `SynchronisedOn`, `View.full`, `View.CoversUpto` | ~250 |
-| the ledger | `commitSeq`, `ledgerSet`, `OutputAt` and their theorems in `Mysticeti.lean`, `Nemo/Decision.lean`, `BlackMarlin/*/Ledger.lean`, `FinWhale/Model/Order.lean` | ~330 |
+| view-restricted counting (**done**, §11.27) | `supportersIn` (Nemo, Odontoceti, Hybrid, Black Marlin), `blamesIn`, `slotBlamers`, `certificatesIn`, `votesIn`, FinWhale's `voters` | ~200 |
+| liveness predicates at the universe (**done**, §11.27) | `Nemo/Liveness.lean` and `Hydrozoan/Model/Liveness.lean` restating `PopulatedOn`, `SynchronisedOn`, `View.full`, `View.CoversUpto` | ~250 |
+| the ledger (**done**, §11.27) | `commitSeq`, `ledgerSet`, `OutputAt` and their theorems in `Mysticeti.lean`, `Nemo/Decision.lean`, `BlackMarlin/*/Ledger.lean`, `FinWhale/Model/Order.lean` | ~330 |
 | the anchored decision procedure | `Decided`, `decisionRound`, `Eligible`, `anchor_round_le`, `decided_unique`, `decided_agree` in `Nemo/Decision.lean`, `Odontoceti/Decision.lean`, `Hybrid/Decision.lean`, `MahiMahi/*/Decision.lean`, `Mysticeti.lean` | ~1,900 |
 | band and liveness proofs per rule | `banded_aux`, `directCommitIn_band`, `supportersIn_band`, `certifiedIn_band`, `all_decided_below_of_fairRun` in the five `*Properties.lean` files; `decided_of_leader_mem`, `decided_below_of_committed_run` in the `*/Liveness.lean` files | ~4,800 |
 | adaptive instantiations | `toPartial`, `partialRun_agree`, `epoch_closes`, `exists_partialRun`, `adaptiveRun_exists` in `Adaptive/Mysticeti.lean` and `Adaptive/Odontoceti.lean` | ~750 |
@@ -3994,6 +3994,57 @@ arithmetic is the protocols' content; the reactive layer, restated for
 Black Marlin and FinWhale over different pace types; and the Barnacle
 statement-and-proof pairs, which are the partition, not duplication.
 
+### 11.27 Counting on a view, the liveness predicates and the ledger
+
+The first three clusters of §11.26, each a definition moved to the
+record and its copies deleted.
+
+**Counting on a view.** `Support.lean` states `supportersIn` and
+`blamesIn` at any block record — the record's `supporters` and `blames`
+restricted to a view's ids — with membership, monotonicity in the view,
+the full-view equations and `supportersIn_eq_toRecord`, the count at
+the view read as a record (§11.25). Nemo, Odontoceti, Hybrid and Black
+Marlin's `supportersIn`, Odontoceti and Hybrid's `blamesIn` and
+Hybrid's `slotBlamers` are deleted, their direct rules stated at the
+record's forms; the three rules that indexed by the leader's round now
+count at `r + 1` explicitly, as Black Marlin always did. The core's
+`DirectSkipIn` is `blamesIn` at the round above, and FinWhale's
+`voters` is `supporters` at it. What stays per rule is what differs per
+rule: the core's and Mahi-Mahi's `certificatesIn` and `votesIn` count
+certificates under two different vote predicates, and Hydrozoan's
+counting is stated over its paper's `IsVote` vocabulary throughout.
+
+**Liveness predicates at the record.** `PopulatedOn` and
+`SynchronisedOn` are stated at any block record in
+`Participation.lean`, with the decidable instance and the
+antitonicity lemmas; `View.full` and `View.CoversUpto`, with
+`coversUpto_full` and `CoversUpto.mono`, in `BlockRecord.lean`. The
+core's, Nemo's and Hydrozoan's copies are deleted, as are Hydrozoan's
+helper copies of the two `CoversUpto` lemmas and the DoS arc's
+duplicate decidability instance; the per-rule `Populated` and
+`Synchronised` abbreviations stay, since each names its own honest set.
+One resolution detail is recorded: `View.full` and
+`View.coversUpto_full` are exported into the `View` namespace so that
+the spelling `View.full U` reads at every rule, while `CoversUpto` is
+reached by dot notation only, which resolves through each rule's `View`
+abbreviation; an export of it would shadow that resolution at the core.
+Hydrozoan's population predicate had its conjuncts in the other order,
+and its proofs are adjusted.
+
+**One ledger.** `Ledger.lean` states `commitSeq`, `ledgerSet` and
+`OutputAt` at any block record, proves monotonicity and uniqueness of
+any assignment, and agreement of two assignments that agree below the
+horizon (`commitSeq_agree_of`, `ledgerSet_agree_of`,
+`outputAt_agree_of`). The core's and Nemo's `commitSeq_agree`,
+`ledgerSet_agree` and `outputAt_agree` are those at their
+`decided_agree`, one line each; Black Marlin's `ledgerSet` and
+`OutputAt` are the record's at a flush's blocks, its four ledger
+theorems the record's; Hydrozoan's `commitSeq` is the record's.
+FinWhale's `commitSeq` stays, since it reads a three-valued verdict
+rather than an optional block.
+
+Net: about two hundred Lean lines fewer, with two files added.
+
 ### 11.5 Next steps, in order
 
 1. **~~`Compose.lean`~~** (**done**, §11.3). The three composition
@@ -4032,7 +4083,7 @@ statement-and-proof pairs, which are the partition, not duplication.
     Orcaella — each with `Agree` and `CommitsCandidate` from `Laws`.
     What it did not give is what item 3 is now for: `Causal` and
     `Banded` are per-rule, and `Banded` is the one that matters.
-11. **The six clusters of §11.26**: counting on a view, the liveness
-    predicates and the ledger first, then the anchored decision
-    procedure with the band and liveness proofs behind it, then the
-    adaptive instantiations.
+11. **The six clusters of §11.26**: ~~counting on a view, the liveness
+    predicates and the ledger~~ (**done**, §11.27), then the anchored
+    decision procedure with the band and liveness proofs behind it,
+    then the adaptive instantiations.

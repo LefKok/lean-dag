@@ -216,13 +216,13 @@ theorem horizonUniverse_populated (T : Finset Replica) (hm : 0 < T.card)
       Nat.mul_le_mul_right _ (by omega)
     have hstep : (r + 1) * T.card = r * T.card + T.card := Nat.succ_mul r _
     omega
+  · rw [horizonUniverse_block, horizonBlock_creator]
+    exact cyclicCreator_index T hm hv r
   · rw [horizonUniverse_block, horizonBlock_round]
     have hlt := (T.equivFin ⟨v, hv⟩).isLt
     apply div_eq_of_between hm (Nat.le_add_right _ _)
     rw [Nat.succ_mul]
     omega
-  · rw [horizonUniverse_block, horizonBlock_creator]
-    exact cyclicCreator_index T hm hv r
 
 /-- The horizon universe is internally synchronised from round `0`:
 every block's refs are ALL of the previous round's blocks, `T`'s or

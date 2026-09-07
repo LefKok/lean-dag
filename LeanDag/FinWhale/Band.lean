@@ -344,7 +344,7 @@ theorem voters_subset {l : BlockId} (hlD : l ∈ D.ids)
     (h1 : lo ≤ (D.block l).round + g) (h2 : (D.block l).round + g + 1 ≤ hi) :
     voters D l ⊆ voters D' l := by
   intro v hv
-  simp only [voters, creatorsOf, Finset.mem_image, Finset.mem_filter, blocksAt] at hv ⊢
+  simp only [voters, supporters, creatorsOf, Finset.mem_image, Finset.mem_filter, blocksAt] at hv ⊢
   obtain ⟨q, ⟨⟨hqD, hqr⟩, hql⟩, hqc⟩ := hv
   have hlb := hb.block l hlD h1 (by omega)
   have hqb := hb.block q hqD (by omega) (by omega)

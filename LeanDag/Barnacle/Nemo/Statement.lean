@@ -31,7 +31,7 @@ commit predicate counts a majority of supporters at the next round. No
 fault class: the crash-fault universe's safety needs none. -/
 def nemo : BaseRule Validator BlockId Payload where
   toDagRule := NemoProperties.nemoRule
-  full := fun U => Nemo.View.full U
+  full := fun U => View.full U
   historyView := fun U A hA => nemoHistoryViewOf U A hA
   waveLength := 2
   DirectCommitIn := fun V L r => Nemo.DirectCommitIn _ V L r
@@ -42,8 +42,8 @@ validators is synchronised from `Rnd` and populates the rounds to `N`. -/
 def nemoLive [Nemo.CrashFaults Validator] : LiveRule Validator BlockId Payload :=
   { nemo with
     Good := fun U Rnd N => ∃ T ⊆ Nemo.Live Validator,
-      Nemo.majority Validator ≤ T.card ∧ Nemo.SynchronisedOn U T Rnd ∧
-      ∀ r, Rnd ≤ r → r ≤ N → Nemo.PopulatedOn U T r }
+      Nemo.majority Validator ≤ T.card ∧ SynchronisedOn U T Rnd ∧
+      ∀ r, Rnd ≤ r → r ≤ N → PopulatedOn U T r }
 
 namespace Nemo
 

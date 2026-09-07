@@ -60,7 +60,7 @@ theorem supportersIn_band (h : AgreeBand (hybridRule (Payload := Payload) k) U U
     (hV : ∀ b, b ∈ V.ids → lo ≤ (U.val.block b).round + g →
       (U.val.block b).round + g ≤ hi → b ∈ V'.ids)
     {L : BlockId} :
-    Hybrid.supportersIn U.val V L r ⊆ Hybrid.supportersIn U'.val V' L r' := by
+    supportersIn U.val V L (r + 1) ⊆ supportersIn U'.val V' L (r' + 1) := by
   intro w hw
   obtain ⟨q, hq, hvq⟩ := Finset.mem_image.mp hw
   obtain ⟨hqf, hqV⟩ := Finset.mem_inter.mp hq
@@ -175,12 +175,12 @@ theorem directSkipSlotIn_band (h : AgreeBand (hybridRule (Payload := Payload) k)
   intro w hw
   obtain ⟨q, hq, hvq⟩ := Finset.mem_image.mp hw
   obtain ⟨hqf, hqV⟩ := Finset.mem_inter.mp hq
-  simp only [Hybrid.slotBlamers, Finset.mem_filter] at hqf
+  simp only [slotBlamers, Finset.mem_filter] at hqf
   obtain ⟨hqA, hqn⟩ := hqf
   have hqU : q ∈ U.val.ids := (mem_blocksAt.mp hqA).1
   have hqr : (U.val.block q).round = S.slotRound s + 1 := (mem_blocksAt.mp hqA).2
   refine Finset.mem_image.mpr ⟨q, ?_, ?_⟩
-  · simp only [Finset.mem_inter, Hybrid.slotBlamers, Finset.mem_filter]
+  · simp only [Finset.mem_inter, slotBlamers, Finset.mem_filter]
     refine ⟨⟨MysticetiProperties.blocksAt_band (toCore h) (by omega) (by omega) (by omega) hqA,
       ?_⟩, hV q hqV (by omega) (by omega)⟩
     rw [MysticetiProperties.band_refs (toCore h) hqU (by omega) (by omega)]
@@ -372,7 +372,7 @@ theorem skipsUnsupported (kt : ℕ) :
   obtain ⟨c, hcV, hcc, hcr⟩ := hpres v hv
   have hcU : c ∈ U.val.ids := V.subset_ids hcV
   refine Finset.mem_image.mpr ⟨c, ?_, hcc⟩
-  rw [Finset.mem_inter, Hybrid.slotBlamers, Finset.mem_filter]
+  rw [Finset.mem_inter, slotBlamers, Finset.mem_filter]
   exact ⟨⟨mem_blocksAt.mpr ⟨hcU, hcr⟩,
     fun j hj hjL => huns c hcV (by rw [hcc]; exact hv) hcr j hjL hj⟩, hcV⟩
 

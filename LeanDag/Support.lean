@@ -146,6 +146,95 @@ theorem mem_blames {L : BlockId} {n : ℕ} {v : Validator} :
   simp [blames, mem_creatorsOf]
   tauto
 
+/-! ### Counted in a view
+
+What a validator holds is a view, and a rule judges from it: the
+supporters and blamers it actually holds. Both are the record's counts
+at the view read as a record (`supportersIn_eq_toRecord`), and a view
+can only under-report. -/
+
+/-- The supporters of `b` at round `n` that a view holds. -/
+def supportersIn (U : BlockRecord Validator BlockId Payload P honest) (V : U.View)
+    (b : BlockId) (n : ℕ) : Finset Validator :=
+  creatorsOf U.block (((blocksAt U n).filter (fun q => b ∈ (U.block q).refs)) ∩ V.ids)
+
+/-- The blamers of `L` at round `n` that a view holds. -/
+def blamesIn (U : BlockRecord Validator BlockId Payload P honest) (V : U.View)
+    (L : BlockId) (n : ℕ) : Finset Validator :=
+  creatorsOf U.block (((blocksAt U n).filter (fun q => L ∉ (U.block q).refs)) ∩ V.ids)
+
+theorem mem_supportersIn {V : U.View} {b : BlockId} {n : ℕ} {v : Validator} :
+    v ∈ supportersIn U V b n ↔
+      ∃ q ∈ V.ids, (U.block q).round = n ∧ b ∈ (U.block q).refs ∧ (U.block q).creator = v := by
+  rw [supportersIn, mem_creatorsOf]
+  constructor
+  · rintro ⟨q, hq, hc⟩
+    obtain ⟨hf, hV⟩ := Finset.mem_inter.mp hq
+    obtain ⟨hbl, hb⟩ := Finset.mem_filter.mp hf
+    exact ⟨q, hV, (mem_blocksAt.mp hbl).2, hb, hc⟩
+  · rintro ⟨q, hV, hr, hb, hc⟩
+    exact ⟨q, Finset.mem_inter.mpr
+      ⟨Finset.mem_filter.mpr ⟨mem_blocksAt.mpr ⟨V.subset_ids hV, hr⟩, hb⟩, hV⟩, hc⟩
+
+theorem mem_blamesIn {V : U.View} {L : BlockId} {n : ℕ} {v : Validator} :
+    v ∈ blamesIn U V L n ↔
+      ∃ q ∈ V.ids, (U.block q).round = n ∧ L ∉ (U.block q).refs ∧ (U.block q).creator = v := by
+  rw [blamesIn, mem_creatorsOf]
+  constructor
+  · rintro ⟨q, hq, hc⟩
+    obtain ⟨hf, hV⟩ := Finset.mem_inter.mp hq
+    obtain ⟨hbl, hb⟩ := Finset.mem_filter.mp hf
+    exact ⟨q, hV, (mem_blocksAt.mp hbl).2, hb, hc⟩
+  · rintro ⟨q, hV, hr, hb, hc⟩
+    exact ⟨q, Finset.mem_inter.mpr
+      ⟨Finset.mem_filter.mpr ⟨mem_blocksAt.mpr ⟨V.subset_ids hV, hr⟩, hb⟩, hV⟩, hc⟩
+
+/-- The view's count is the record's count at the view as a record. -/
+theorem supportersIn_eq_toRecord {V : U.View} {b : BlockId} {n : ℕ} :
+    supportersIn U V b n = supporters V.toRecord b n := by
+  ext v
+  rw [mem_supportersIn, mem_supporters]
+  rfl
+
+theorem blamesIn_eq_toRecord {V : U.View} {L : BlockId} {n : ℕ} :
+    blamesIn U V L n = blames V.toRecord L n := by
+  ext v
+  rw [mem_blamesIn, mem_blames]
+  rfl
+
+/-- A view can only under-report support. -/
+theorem supportersIn_subset_supporters {V : U.View} {b : BlockId} {n : ℕ} :
+    supportersIn U V b n ⊆ supporters U b n :=
+  Finset.image_subset_image Finset.inter_subset_left
+
+theorem blamesIn_subset_blames {V : U.View} {L : BlockId} {n : ℕ} :
+    blamesIn U V L n ⊆ blames U L n :=
+  Finset.image_subset_image Finset.inter_subset_left
+
+/-- A larger view holds more supporters. -/
+theorem supportersIn_mono {V V' : U.View} (h : V.ids ⊆ V'.ids) {b : BlockId} {n : ℕ} :
+    supportersIn U V b n ⊆ supportersIn U V' b n :=
+  Finset.image_subset_image (Finset.inter_subset_inter_left h)
+
+theorem blamesIn_mono {V V' : U.View} (h : V.ids ⊆ V'.ids) {L : BlockId} {n : ℕ} :
+    blamesIn U V L n ⊆ blamesIn U V' L n :=
+  Finset.image_subset_image (Finset.inter_subset_inter_left h)
+
+/-- The full view holds every supporter there is. -/
+theorem supportersIn_full (U : BlockRecord Validator BlockId Payload P honest)
+    (b : BlockId) (n : ℕ) : supportersIn U (View.full U) b n = supporters U b n := by
+  unfold supportersIn supporters
+  congr 1
+  refine Finset.inter_eq_left.mpr fun q hq => ?_
+  exact (mem_blocksAt.mp (Finset.mem_filter.mp hq).1).1
+
+theorem blamesIn_full (U : BlockRecord Validator BlockId Payload P honest)
+    (L : BlockId) (n : ℕ) : blamesIn U (View.full U) L n = blames U L n := by
+  unfold blamesIn blames
+  congr 1
+  refine Finset.inter_eq_left.mpr fun q hq => ?_
+  exact (mem_blocksAt.mp (Finset.mem_filter.mp hq).1).1
+
 end Generic
 
 /-! ## The core's thresholds -/

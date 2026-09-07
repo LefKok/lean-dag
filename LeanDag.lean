@@ -11,6 +11,7 @@ import LeanDag.Participation
 import LeanDag.BlockDag
 import LeanDag.CausalHistory
 import LeanDag.Support
+import LeanDag.Ledger
 import LeanDag.Persistence
 import LeanDag.CommonCore
 import LeanDag.Mysticeti

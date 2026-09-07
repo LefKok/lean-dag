@@ -20,7 +20,7 @@ open LeanDag.Hydrozoan
 
 namespace PrefixAgreement
 
-open LeanDag.Hydrozoan.PrefixAgreement (commitSeq ledger commitSeq_prefix isPrefix_flatMap)
+open LeanDag.Hydrozoan.PrefixAgreement (ledger commitSeq_prefix isPrefix_flatMap)
 
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
   [DecidableEq BlockId] [O : OptimalFaults Replica] [S : Slots Replica]

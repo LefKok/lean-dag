@@ -85,7 +85,7 @@ omit [DecidableEq BlockId] in
 theorem exists_isLeaderBlock_of_populated
     (hpop : PopulatedOn U T (S.slotRound k)) (hlead : S.leader k ∈ T) :
     ∃ L, IsLeaderBlock U k L := by
-  obtain ⟨L, hL, hLr, hLa⟩ := hpop _ hlead
+  obtain ⟨L, hL, hLa, hLr⟩ := hpop _ hlead
   exact ⟨L, hL, hLr, hLa⟩
 
 /-- Every `T`-member supports the leader block at the voting round. -/
@@ -96,7 +96,7 @@ theorem subset_supporters_of_synchronised
     (hLT : (U.block L).creator ∈ T) :
     T ⊆ supporters U L (S.slotRound k + 1) := by
   intro v hv
-  obtain ⟨b, hb, hbr, hba⟩ := hpop1 v hv
+  obtain ⟨b, hb, hba, hbr⟩ := hpop1 v hv
   have hvote : L ∈ (U.block b).refs :=
     hs (S.slotRound k) hRk b hb hbr (by rw [hba]; exact hv)
       L hL.1 hL.2.1 hLT
@@ -115,7 +115,7 @@ theorem isCertificate_of_synchronised
     IsCertificate U C L := by
   have hsub : T ⊆ creatorsOf U.block (voteBlocks U C L) := by
     intro v hv
-    obtain ⟨b, hb, hbr, hba⟩ := hpop1 v hv
+    obtain ⟨b, hb, hba, hbr⟩ := hpop1 v hv
     have href : b ∈ (U.block C).refs :=
       hs (S.slotRound k + 1) (by omega) C hC hCr hCa
         b hb hbr (by rw [hba]; exact hv)
@@ -138,7 +138,7 @@ theorem slowCommit_of_synchronised
     SlowCommit U L (S.slotRound k) := by
   have hsub : T ⊆ certifiers U L (S.slotRound k) := by
     intro v hv
-    obtain ⟨C, hC, hCr, hCa⟩ := hpop2 v hv
+    obtain ⟨C, hC, hCa, hCr⟩ := hpop2 v hv
     have hcert : IsCertificate U C L :=
       isCertificate_of_synchronised hcard hs hRk hpop1 hL hLT hC hCr
         (by rw [hCa]; exact hv)
@@ -153,17 +153,6 @@ end Wave
 theorem certificates_subset_ids {U : BlockUniverse Replica BlockId}
     {L : BlockId} {r : ℕ} : certificates U L r ⊆ U.ids :=
   fun _ hC => (mem_certificates.mp hC).1
-
-/-- The eventual view is caught up to every horizon. -/
-theorem View.coversUpto_full (U : BlockUniverse Replica BlockId) (N : ℕ) :
-    (View.full U).CoversUpto N :=
-  fun _ hb _ => hb
-
-/-- Caught up to `N` is caught up to every lower horizon. -/
-theorem View.CoversUpto.mono {U : BlockUniverse Replica BlockId}
-    {V : View U} {M N : ℕ}
-    (h : V.CoversUpto N) (hMN : M ≤ N) : V.CoversUpto M :=
-  fun b hb hr => h b hb (le_trans hr hMN)
 
 /-- A view caught up to the decision round holds every certificate, so
 a universe-level slow commit is a slow commit in that view. -/

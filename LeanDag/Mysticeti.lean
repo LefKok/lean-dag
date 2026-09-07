@@ -1,4 +1,5 @@
 import LeanDag.Support
+import LeanDag.Ledger
 import LeanDag.Slots
 
 /-!
@@ -392,12 +393,11 @@ def DirectCommitIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
   quorumCard Validator ≤ (creatorsOf U.block (certificatesIn U V L r)).card
 
-/-- Direct skip, as judged from a single view. -/
+/-- Direct skip, as judged from a single view: the record's `blamesIn`
+at the round above `L`. -/
 def DirectSkipIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  quorumCard Validator ≤
-    (creatorsOf U.block
-      (((blocksAt U (r + 1)).filter (fun q => L ∉ (U.block q).refs)) ∩ V.ids)).card
+  quorumCard Validator ≤ (blamesIn U V L (r + 1)).card
 
 omit S in
 instance decidableDirectCommitIn (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) :
@@ -841,11 +841,6 @@ history into a ledger — needs a deterministic order *within* each flush, and
 so a `LinearOrder` on ids or an equivalent tie-break, which the development
 deliberately does not assume. -/
 
-/-- The blocks committed at slots `0, …, n-1`, in slot order, with skipped
-slots dropped. `g` is a validator's verdict assignment. -/
-def commitSeq (g : ℕ → Option BlockId) (n : ℕ) : List BlockId :=
-  (List.range n).filterMap g
-
 /-- **The committed-leader sequence is agreed.** Two validators that have
 settled the first `n` slots — on whatever views, by whatever mix of direct
 and indirect routes — read off the same list of committed blocks. -/
@@ -853,88 +848,31 @@ theorem commitSeq_agree {V₁ V₂ : View Validator BlockId Payload U} {n : ℕ}
     {g₁ g₂ : ℕ → Option BlockId}
     (h₁ : ∀ k, k < n → Decided U V₁ k (g₁ k))
     (h₂ : ∀ k, k < n → Decided U V₂ k (g₂ k)) :
-    commitSeq g₁ n = commitSeq g₂ n := by
-  have h : ∀ k ∈ List.range n, g₁ k = g₂ k := by
-    intro k hk
-    rw [List.mem_range] at hk
-    exact decided_agree (h₁ k hk) (h₂ k hk)
-  simp only [commitSeq]
-  exact List.filterMap_congr h
+    commitSeq g₁ n = commitSeq g₂ n :=
+  commitSeq_agree_of fun k hk => decided_agree (h₁ k hk) (h₂ k hk)
 
 /-! ## No retraction
 
 A ledger holds every block, not just leaders: committing the leader of slot
-`k` outputs everything in its causal history. Ordering *within* one such
-flush needs a tie-break the development deliberately does not assume, but
-**whether** and **when** a block is output needs no order at all — and that
-is what retraction would violate.
-
-Three statements, none of which mentions an order on ids:
-
-* `ledgerSet_mono` — nothing already output is ever dropped;
-* `ledgerSet_agree` — two validators output the same blocks;
-* `OutputAt` is unique and agreed — each block enters at exactly one slot,
-  and validators concur on which.
-
-Together: a block, once written, stays written, in the same place. -/
-
-/-- The blocks output after settling slots `0, …, n-1`: everything in the
-causal history of a committed leader. -/
-def ledgerSet (U : BlockUniverse Validator BlockId Payload)
-    (g : ℕ → Option BlockId) (n : ℕ) : Set BlockId :=
-  {b | ∃ k, k < n ∧ ∃ L, g k = some L ∧ Reaches U L b}
-
-omit [DecidableEq BlockId] S in
-/-- **Nothing is ever dropped.** The ledger only grows as more slots settle. -/
-theorem ledgerSet_mono {g : ℕ → Option BlockId} {n m : ℕ} (h : n ≤ m) :
-    ledgerSet U g n ⊆ ledgerSet U g m := by
-  rintro b ⟨k, hk, hrest⟩
-  exact ⟨k, by omega, hrest⟩
+`k` outputs everything in its causal history. The ledger is the record's
+(`Ledger.lean`): `ledgerSet_mono` and `outputAt_unique` hold of any
+assignment, and the two agreement statements below are its `_of` forms at
+M6. Together: a block, once written, stays written, in the same place. -/
 
 /-- **Two validators output the same blocks.** -/
 theorem ledgerSet_agree {V₁ V₂ : View Validator BlockId Payload U} {n : ℕ}
     {g₁ g₂ : ℕ → Option BlockId}
     (h₁ : ∀ k, k < n → Decided U V₁ k (g₁ k))
     (h₂ : ∀ k, k < n → Decided U V₂ k (g₂ k)) :
-    ledgerSet U g₁ n = ledgerSet U g₂ n := by
-  have hg : ∀ k, k < n → g₁ k = g₂ k := fun k hk => decided_agree (h₁ k hk) (h₂ k hk)
-  ext b
-  constructor
-  · rintro ⟨k, hk, L, hL, hr⟩
-    exact ⟨k, hk, L, (hg k hk) ▸ hL, hr⟩
-  · rintro ⟨k, hk, L, hL, hr⟩
-    exact ⟨k, hk, L, (hg k hk).symm ▸ hL, hr⟩
+    ledgerSet U g₁ n = ledgerSet U g₂ n :=
+  ledgerSet_agree_of fun k hk => decided_agree (h₁ k hk) (h₂ k hk)
 
-/-- `b` enters the ledger at slot `k`: the first committed slot whose leader
-reaches it. -/
-def OutputAt (U : BlockUniverse Validator BlockId Payload)
-    (g : ℕ → Option BlockId) (b : BlockId) (k : ℕ) : Prop :=
-  (∃ L, g k = some L ∧ Reaches U L b) ∧
-    ∀ j, j < k → ∀ L, g j = some L → ¬ Reaches U L b
-
-omit [DecidableEq BlockId] S in
-/-- **A block enters the ledger once.** Its position is not merely stable
-over time — there is no second slot it could have entered at. -/
-theorem outputAt_unique {g : ℕ → Option BlockId} {b : BlockId} {k₁ k₂ : ℕ}
-    (h₁ : OutputAt U g b k₁) (h₂ : OutputAt U g b k₂) : k₁ = k₂ := by
-  rcases lt_trichotomy k₁ k₂ with h | h | h
-  · obtain ⟨L, hL, hr⟩ := h₁.1
-    exact absurd hr (h₂.2 k₁ h L hL)
-  · exact h
-  · obtain ⟨L, hL, hr⟩ := h₂.1
-    exact absurd hr (h₁.2 k₂ h L hL)
-
-/-- **And validators agree on which slot that is.** -/
+/-- **And validators agree on which slot a block enters at.** -/
 theorem outputAt_agree {V₁ V₂ : View Validator BlockId Payload U} {n : ℕ}
     {g₁ g₂ : ℕ → Option BlockId} {b : BlockId} {k : ℕ}
     (h₁ : ∀ j, j < n → Decided U V₁ j (g₁ j))
     (h₂ : ∀ j, j < n → Decided U V₂ j (g₂ j))
-    (hk : k < n) (ho : OutputAt U g₁ b k) : OutputAt U g₂ b k := by
-  have hg : ∀ j, j < n → g₁ j = g₂ j := fun j hj => decided_agree (h₁ j hj) (h₂ j hj)
-  refine ⟨?_, ?_⟩
-  · obtain ⟨L, hL, hr⟩ := ho.1
-    exact ⟨L, (hg k hk) ▸ hL, hr⟩
-  · intro j hj L hL hr
-    exact ho.2 j hj L ((hg j (by omega)).symm ▸ hL) hr
+    (hk : k < n) (ho : OutputAt U g₁ b k) : OutputAt U g₂ b k :=
+  outputAt_agree_of (fun j hj => decided_agree (h₁ j hj) (h₂ j hj)) hk ho
 
 end LeanDag

@@ -91,7 +91,39 @@ def View.toRecord (V : U.View) : BlockRecord Validator BlockId Payload P honest 
 @[simp] theorem View.toRecord_ids (V : U.View) : V.toRecord.ids = V.ids := rfl
 @[simp] theorem View.toRecord_block (V : U.View) : V.toRecord.block = U.block := rfl
 
+/-- **The full view**: every block of the record. Every honest
+validator's eventual view, downward-closed by `U.complete`. -/
+def View.full (U : BlockRecord Validator BlockId Payload P honest) : U.View :=
+  ⟨U.ids, Finset.Subset.rfl, U.complete⟩
+
+@[simp] theorem View.full_ids (U : BlockRecord Validator BlockId Payload P honest) :
+    (View.full U).ids = U.ids := rfl
+
+/-- **A view caught up to round `N`**: it holds every block of the
+record at a round at or below `N`. What a validator that has received
+everything up to `N` holds, and the hypothesis under which a liveness
+result holds of a validator's own view rather than of the full view. -/
+def View.CoversUpto (V : U.View) (N : ℕ) : Prop :=
+  ∀ b ∈ U.ids, (U.block b).round ≤ N → b ∈ V.ids
+
+/-- The full view is caught up to every horizon. -/
+theorem View.coversUpto_full (U : BlockRecord Validator BlockId Payload P honest) (N : ℕ) :
+    (View.full U).CoversUpto N :=
+  fun _ hb _ => hb
+
+/-- Caught up to `N` is caught up to every lower horizon. -/
+theorem View.CoversUpto.mono {V : U.View} {M N : ℕ} (h : V.CoversUpto N) (hMN : M ≤ N) :
+    V.CoversUpto M :=
+  fun b hb hr => h b hb (le_trans hr hMN)
+
 end BlockRecord
+
+/-! `View.full` and `View.coversUpto_full` are spelled without the
+record prefix at every rule; `CoversUpto` itself is reached by dot
+notation only, which resolves through each rule's `View` abbreviation. -/
+namespace View
+export BlockRecord.View (full full_ids coversUpto_full)
+end View
 
 /-! ## The cut, over raw block data
 

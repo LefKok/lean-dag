@@ -166,10 +166,10 @@ def _root_.LeanDag.Slots.Elig (S : Slots Validator) (r a : ℕ) : Prop :=
 instance (S : Slots Validator) : DecidableRel S.Elig :=
   fun _ _ => inferInstanceAs (Decidable (_ ≤ _))
 
-/-- The validators whose round-`(r+1)` block references `l`: `l`'s voters. -/
+/-- The validators whose round-`(r+1)` block references `l`: `l`'s voters,
+the record's `supporters` at the round above `l`. -/
 def voters (D : Dag Validator BlockId Payload) (l : BlockId) : Finset Validator :=
-  creatorsOf D.block ((blocksAt D ((D.block l).round + 1)).filter
-    (fun q => l ∈ (D.block q).refs))
+  supporters D l ((D.block l).round + 1)
 
 /-- The parents of `b`, as validators. -/
 def parentSet (D : Dag Validator BlockId Payload) (b : BlockId) : Finset Validator :=

@@ -104,17 +104,11 @@ theorem anchor_round_le {k j : ℕ} {A : BlockId} (hA : IsLeaderBlock U j A)
 
 /-! ## The view-relative direct rule -/
 
-/-- The supporters a view actually holds. -/
-def supportersIn (U : Universe Validator BlockId Payload)
-    (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) :
-    Finset Validator :=
-  creatorsOf U.block
-    (((blocksAt U (r + 1)).filter (fun p => L ∈ (U.block p).refs)) ∩ V.ids)
-
-/-- Direct commit, as judged from a single view. -/
+/-- Direct commit, as judged from a single view: the record's
+`supportersIn`, at the round above `L`. -/
 def DirectCommitIn (U : Universe Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  majority Validator ≤ (supportersIn U V L r).card
+  majority Validator ≤ (supportersIn U V L (r + 1)).card
 
 instance {V : View Validator BlockId Payload U} (L : BlockId) (r : ℕ) :
     Decidable (DirectCommitIn U V L r) :=
@@ -271,84 +265,30 @@ theorem not_decided_skip_of_decided_commit {V₁ V₂ : View Validator BlockId P
 and mentions no universe — so only the agreement statement is restated over
 the crash `Decided`. -/
 
-/-- **The committed-leader sequence is agreed.** Two validators that have
-settled the first `n` slots — on whatever views, by whatever mix of direct
-and indirect routes — read off the same list of committed blocks. -/
+/-- **The committed-leader sequence is agreed**, the record's
+`commitSeq_agree_of` at the crash `decided_agree`. -/
 theorem commitSeq_agree {V₁ V₂ : View Validator BlockId Payload U} {n : ℕ}
     {g₁ g₂ : ℕ → Option BlockId}
     (h₁ : ∀ k, k < n → Decided U V₁ k (g₁ k))
     (h₂ : ∀ k, k < n → Decided U V₂ k (g₂ k)) :
-    commitSeq g₁ n = commitSeq g₂ n := by
-  have h : ∀ k ∈ List.range n, g₁ k = g₂ k := by
-    intro k hk
-    rw [List.mem_range] at hk
-    exact decided_agree (h₁ k hk) (h₂ k hk)
-  simp only [commitSeq]
-  exact List.filterMap_congr h
-
-/-! ## No retraction
-
-The ledger statements, ported from the core: whether and when a block is
-output needs no order on ids, and that is what retraction would violate. -/
-
-/-- The blocks output after settling slots `0, …, n-1`: everything in the
-causal history of a committed leader. -/
-def ledgerSet (U : Universe Validator BlockId Payload)
-    (g : ℕ → Option BlockId) (n : ℕ) : Set BlockId :=
-  {b | ∃ k, k < n ∧ ∃ L, g k = some L ∧ Reaches U L b}
-
-omit [DecidableEq BlockId] S in
-/-- **Nothing is ever dropped.** The ledger only grows as more slots settle. -/
-theorem ledgerSet_mono {g : ℕ → Option BlockId} {n m : ℕ} (h : n ≤ m) :
-    ledgerSet U g n ⊆ ledgerSet U g m := by
-  rintro b ⟨k, hk, hrest⟩
-  exact ⟨k, by omega, hrest⟩
+    commitSeq g₁ n = commitSeq g₂ n :=
+  commitSeq_agree_of fun k hk => decided_agree (h₁ k hk) (h₂ k hk)
 
 /-- **Two validators output the same blocks.** -/
 theorem ledgerSet_agree {V₁ V₂ : View Validator BlockId Payload U} {n : ℕ}
     {g₁ g₂ : ℕ → Option BlockId}
     (h₁ : ∀ k, k < n → Decided U V₁ k (g₁ k))
     (h₂ : ∀ k, k < n → Decided U V₂ k (g₂ k)) :
-    ledgerSet U g₁ n = ledgerSet U g₂ n := by
-  have hg : ∀ k, k < n → g₁ k = g₂ k := fun k hk => decided_agree (h₁ k hk) (h₂ k hk)
-  ext b
-  constructor
-  · rintro ⟨k, hk, L, hL, hr⟩
-    exact ⟨k, hk, L, (hg k hk) ▸ hL, hr⟩
-  · rintro ⟨k, hk, L, hL, hr⟩
-    exact ⟨k, hk, L, (hg k hk).symm ▸ hL, hr⟩
+    ledgerSet U g₁ n = ledgerSet U g₂ n :=
+  ledgerSet_agree_of fun k hk => decided_agree (h₁ k hk) (h₂ k hk)
 
-/-- `b` enters the ledger at slot `k`: the first committed slot whose leader
-reaches it. -/
-def OutputAt (U : Universe Validator BlockId Payload)
-    (g : ℕ → Option BlockId) (b : BlockId) (k : ℕ) : Prop :=
-  (∃ L, g k = some L ∧ Reaches U L b) ∧
-    ∀ j, j < k → ∀ L, g j = some L → ¬ Reaches U L b
-
-omit [DecidableEq BlockId] S in
-/-- **A block enters the ledger once.** Its position is not merely stable
-over time — there is no second slot it could have entered at. -/
-theorem outputAt_unique {g : ℕ → Option BlockId} {b : BlockId} {k₁ k₂ : ℕ}
-    (h₁ : OutputAt U g b k₁) (h₂ : OutputAt U g b k₂) : k₁ = k₂ := by
-  rcases lt_trichotomy k₁ k₂ with h | h | h
-  · obtain ⟨L, hL, hr⟩ := h₁.1
-    exact absurd hr (h₂.2 k₁ h L hL)
-  · exact h
-  · obtain ⟨L, hL, hr⟩ := h₂.1
-    exact absurd hr (h₁.2 k₂ h L hL)
-
-/-- **And validators agree on which slot that is.** -/
+/-- **And validators agree on which slot a block enters at.** -/
 theorem outputAt_agree {V₁ V₂ : View Validator BlockId Payload U} {n : ℕ}
     {g₁ g₂ : ℕ → Option BlockId} {b : BlockId} {k : ℕ}
     (h₁ : ∀ j, j < n → Decided U V₁ j (g₁ j))
     (h₂ : ∀ j, j < n → Decided U V₂ j (g₂ j))
-    (hk : k < n) (ho : OutputAt U g₁ b k) : OutputAt U g₂ b k := by
-  have hg : ∀ j, j < n → g₁ j = g₂ j := fun j hj => decided_agree (h₁ j hj) (h₂ j hj)
-  refine ⟨?_, ?_⟩
-  · obtain ⟨L, hL, hr⟩ := ho.1
-    exact ⟨L, (hg k hk) ▸ hL, hr⟩
-  · intro j hj L hL hr
-    exact ho.2 j hj L ((hg j (by omega)).symm ▸ hL) hr
+    (hk : k < n) (ho : OutputAt U g₁ b k) : OutputAt U g₂ b k :=
+  outputAt_agree_of (fun j hj => decided_agree (h₁ j hj) (h₂ j hj)) hk ho
 
 end Nemo
 

@@ -100,34 +100,18 @@ cannot mention a `BlockUniverse` anyway, since `BlockUniverse`'s own type
 requires `Faults`.
 -/
 
-omit [DecidableEq BlockId] in
-/-- What L4 actually needs of a round: every validator in `T` has a block
-there.
-
-Local and finite — no growth, no horizon. Splitting this out is what keeps
-the horizon `N` out of L4 entirely, so the only hard proof in the plan is
-independent of how production is framed.
-
-**Why a set `T` rather than all of `Correct`.** L4 counts to `2f+1` and never
-higher, so it needs a *quorum* of reliable validators, not every one of them.
-Demanding all of `Correct` makes the theorem lapse when a single correct
-validator misses a single round — a GC pause, a restart — although the
-protocol still commits. See `liveness.md` §8 Q2. -/
-def PopulatedOn (U : BlockUniverse Validator BlockId Payload)
-    (T : Finset Validator) (r : ℕ) : Prop :=
-  PopulatedFrom U.block U.ids T r
+/-! **What L4 actually needs of a round** is `PopulatedOn`
+(`Participation.lean`): every validator in `T` has a block there. Local
+and finite — no growth, no horizon — which is what keeps the horizon `N`
+out of L4 entirely. And a set `T` rather than all of `Correct`: L4
+counts to `2f+1` and never higher, so it needs a *quorum* of reliable
+validators; demanding all of `Correct` would make the theorem lapse
+when a single correct validator misses a single round (`liveness.md`
+§8 Q2). -/
 
 /-- The all-of-`Correct` case, which is what L1 produces. -/
 abbrev Populated (U : BlockUniverse Validator BlockId Payload) (r : ℕ) : Prop :=
   PopulatedOn U (Correct : Finset Validator) r
-
-omit [DecidableEq BlockId] in
-/-- Population is **antitone**: a smaller set is easier to populate. This is
-what lets L1 keep concluding about all of `Correct` while L4 consumes only a
-quorum. -/
-theorem PopulatedOn.mono {T T' : Finset Validator} {r : ℕ} (hsub : T ⊆ T')
-    (h : PopulatedOn U T' r) : PopulatedOn U T r :=
-  PopulatedFrom.mono hsub h
 
 /-! ## The delivery layer
 
@@ -205,20 +189,9 @@ theorem card_authorsAt_of_populated {r : ℕ} (h : Populated U r) :
 
 
 omit [DecidableEq BlockId] in
-/-- From round `R` on, a correct block references every correct block of the
-round below.
-
-`R` is **not** GST: it is the round from which synchrony has fully taken
-effect — GST plus however long catch-up ran (`liveness.md` §4.2). It is a
-round index, not a clock; there is no Δ here.
-
-**Both quantifiers are restricted to `Correct`, and deliberately.** A
-Byzantine validator may publish nothing at all, or publish and reveal to only
-some validators, so no assumption about referencing its blocks would be
-sound — and none is needed: L4 counts only correct certificates, and there
-are `2f+1` correct validators. Getting this wrong in the *strong* direction,
-by demanding that all blocks be referenced, would assume Byzantine validators
-behave.
+/-! **`SynchronisedOn`** (`Participation.lean`) is the post-stabilisation
+coverage assumption: from round `R` on, every `T`-authored block
+references every `T`-authored block of the round below.
 
 **This does not follow from view convergence.** A block's references are
 frozen when it is built: a correct validator waits for `2f+1` round-`n`
@@ -226,21 +199,10 @@ blocks, and the arrival of the `2f+1`st says nothing about the rest having
 arrived. Views converging later does not retroactively enlarge blocks. So
 this is an assumption, not a theorem — see `liveness.md` §4.3, and its
 §8 question 8 for how it is meant to be split and derived. -/
-def SynchronisedOn (U : BlockUniverse Validator BlockId Payload)
-    (T : Finset Validator) (R : ℕ) : Prop :=
-  SynchronisedFrom U.block U.ids T R
 
 /-- The all-of-`Correct` case. -/
 abbrev Synchronised (U : BlockUniverse Validator BlockId Payload) (R : ℕ) : Prop :=
   SynchronisedOn U (Correct : Finset Validator) R
-
-omit [DecidableEq BlockId] in
-/-- Coverage is **antitone** too: mutual coverage among a larger set implies
-it among any subset. So existing witnesses of `Synchronised` feed the
-quorum-relative L4 unchanged. -/
-theorem SynchronisedOn.mono {T T' : Finset Validator} {R : ℕ} (hsub : T ⊆ T')
-    (h : SynchronisedOn U T' R) : SynchronisedOn U T R :=
-  SynchronisedFrom.mono hsub h
 
 /-! ## L7 — `Synchronised`, derived
 
@@ -334,15 +296,6 @@ what remains is L2 instantiated. It also fixes what `U` means — not every
 block anyone ever wrote, but every block some correct validator ever held. A
 Byzantine block revealed to nobody is simply not in the universe. -/
 
-omit [DecidableEq BlockId] in
-/-- Every correct validator's *eventual* view. Downward-closed by
-`U.complete`. -/
-def View.full (U : BlockUniverse Validator BlockId Payload) :
-    View Validator BlockId Payload U where
-  ids := U.ids
-  subset_ids := Finset.Subset.rfl
-  complete := U.complete
-
 /-- **L3 — commit propagation.** Whatever any validator decides on any view,
 the same verdict holds on the full view.
 
@@ -352,28 +305,13 @@ theorem decided_full {V : View Validator BlockId Payload U} {k : ℕ}
     {v : Option BlockId} (h : Decided U V k v) : Decided U (View.full U) k v :=
   decided_mono V.subset_ids h
 
-omit [DecidableEq BlockId] in
-/-- **A view caught up to round `N`**: it holds every block of the
-universe at a round at or below `N`. What a validator that has received
-everything up to `N` holds — under eventual DAG synchrony
-(`liveness.md` §4.2) every correct validator's view, once delivery has
-caught up that far — and the hypothesis under which a liveness result
-holds of a validator's own view rather than of the full view. The full
-view satisfies it at every `N`. -/
-def View.CoversUpto (V : View Validator BlockId Payload U) (N : ℕ) : Prop :=
-  ∀ b ∈ U.ids, (U.block b).round ≤ N → b ∈ V.ids
-
-omit S [DecidableEq BlockId] in
-/-- The full view is caught up to every horizon. -/
-theorem View.coversUpto_full (U : BlockUniverse Validator BlockId Payload) (N : ℕ) :
-    (View.full U).CoversUpto N :=
-  fun _ hb _ => hb
-
-omit S [DecidableEq BlockId] in
-/-- Caught up to `N` is caught up to every lower horizon. -/
-theorem View.CoversUpto.mono {V : View Validator BlockId Payload U} {M N : ℕ}
-    (h : V.CoversUpto N) (hMN : M ≤ N) : V.CoversUpto M :=
-  fun b hb hr => h b hb (le_trans hr hMN)
+/-! **A view caught up to round `N`** is `View.CoversUpto`
+(`BlockRecord.lean`): it holds every block of the universe at a round at
+or below `N`. Under eventual DAG synchrony (`liveness.md` §4.2) every
+correct validator's view, once delivery has caught up that far, and the
+hypothesis under which a liveness result holds of a validator's own view
+rather than of the full view; `View.coversUpto_full` says the full view
+satisfies it at every `N`. -/
 
 /-! ## L4 — a correct leader commits
 

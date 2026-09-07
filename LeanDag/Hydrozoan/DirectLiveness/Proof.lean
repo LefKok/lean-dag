@@ -53,7 +53,7 @@ theorem skipLatency :
   intro Replica BlockId _ _ _ _ _ _ U k hfaults hpop hnolead
   have hsub : (Correct : Finset Replica) ⊆ blames U k := by
     intro v hv
-    obtain ⟨b, hb, hbr, hba⟩ := hpop v hv
+    obtain ⟨b, hb, hba, hbr⟩ := hpop v hv
     exact mem_blames.mpr ⟨b, hb, hbr, fun j _ => hnolead j, hba⟩
   have h1 := Finset.card_le_card hsub
   have h2 := qFast_le_card_correct hfaults

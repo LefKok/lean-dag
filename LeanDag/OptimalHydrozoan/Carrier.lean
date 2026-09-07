@@ -158,9 +158,9 @@ def optLive (S : LeanDag.Slots Replica)
     (V : LeanDag.Hydrozoan.View U.val) (T : Finset Replica) (lo K : ℕ) : Prop :=
   T ⊆ (LeanDag.Hydrozoan.Correct : Finset Replica) ∧
     LeanDag.Hydrozoan.q Replica ≤ T.card ∧
-    ∃ R₀ N, LeanDag.Hydrozoan.SynchronisedOn U.val T R₀ ∧ R₀ ≤ S.slotRound lo ∧
-      (∀ r, R₀ ≤ r → r ≤ N → LeanDag.Hydrozoan.PopulatedOn U.val T r) ∧
-      LeanDag.Hydrozoan.View.CoversUpto V N ∧
+    ∃ R₀ N, SynchronisedOn U.val T R₀ ∧ R₀ ≤ S.slotRound lo ∧
+      (∀ r, R₀ ≤ r → r ≤ N → PopulatedOn U.val T r) ∧
+      V.CoversUpto N ∧
       ∀ k, k < K → S.slotRound k + 2 ≤ N
 
 /-! ## Optimal-Hydrozoan's support shape
@@ -239,7 +239,7 @@ theorem optSupport_live_of_optLive {S : LeanDag.Slots Replica}
   have hpop' : ∀ n, R₀ ≤ n → n ≤ N →
       Properties.PopulatedOn (optimalRule (Replica := Replica) (BlockId := BlockId)) U T n := by
     intro n h1 h2 v hv
-    obtain ⟨b, hb, hbr, hba⟩ := hpop n h1 h2 v hv
+    obtain ⟨b, hb, hba, hbr⟩ := hpop n h1 h2 v hv
     exact ⟨b, hb, hba, hbr⟩
   refine ⟨hq, N, hcov, hN, ?_⟩
   intro k hlo hK hlead

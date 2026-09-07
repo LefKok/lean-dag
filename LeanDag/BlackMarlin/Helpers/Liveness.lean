@@ -84,15 +84,6 @@ theorem committed_of_run (hcard : quorumCard Validator ≤ T.card)
 /-! ## The full view -/
 
 omit Rot in
-/-- The full view holds every supporter there is. -/
-theorem supportersIn_full {n : ℕ} :
-    supportersIn U (View.full U) L n = supporters U L n := by
-  unfold supportersIn supporters
-  congr 1
-  refine Finset.inter_eq_left.mpr fun q hq => ?_
-  exact (mem_blocksAt.mp (Finset.mem_filter.mp hq).1).1
-
-omit Rot in
 /-- So it counts the same quorum. -/
 theorem supportedIn_full : SupportedIn U (View.full U) L r ↔ Supported U L r := by
   unfold SupportedIn Supported

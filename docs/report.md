@@ -715,6 +715,16 @@ Hydrozoan (§22) with distinct creators alone. The self-parent clause is
 the one that reads the author, which is why the core's fill adds a self
 reference where the other three take the copy fill.
 
+**What else is stated once at the record.** The full view `View.full` and
+a view caught up to a round, `View.CoversUpto`, live in `BlockRecord.lean`;
+the two liveness hypotheses `PopulatedOn` and `SynchronisedOn` in
+`Participation.lean`; the supporters and blamers a view holds,
+`supportersIn` and `blamesIn`, in `Support.lean`, each equal to the
+record's count at the view read as a record (`supportersIn_eq_toRecord`);
+and the ledger in `Ledger.lean` (§5.6). Every rule's direct rules,
+liveness hypotheses and ledger are these at its record, with no copy of
+its own.
+
 Non-equivocation is stated at the level of the universe, and must be. A
 per-view formulation is strictly weaker: two views could each satisfy "at most
 one block per correct author per round" while holding *different* such blocks,
@@ -1719,6 +1729,13 @@ of committed leaders; the ledger grows monotonically; the two validators output
 the same set of blocks; and each block enters at exactly one slot, on which they
 agree.
 
+`commitSeq`, `ledgerSet` and `OutputAt` are stated once at the block record
+(`Ledger.lean`), where monotonicity and uniqueness hold of any verdict
+assignment and agreement of any two assignments that agree below `n`
+(`ledgerSet_agree_of`, `outputAt_agree_of`). M7–M9 are those forms at M6;
+Nemo's ledger (§15) and Black Marlin's flush record (§19) are the same
+statements at their own assignments.
+
 None of these statements mentions an order on identifiers. Ordering the blocks
 released by a single commit requires a tie-break — a linear order on identifiers
 or an equivalent — which the development deliberately does not assume. Whether
@@ -1911,7 +1928,8 @@ the universe-level formulation of the indirect test (§3.3).
 
 **L3.**
 ```lean
-def View.full (U) : View Validator BlockId Payload U   -- ids := U.ids
+def View.full (U : BlockRecord Validator BlockId Payload P honest) : U.View :=
+  ⟨U.ids, Finset.Subset.rfl, U.complete⟩
 theorem decided_full (h : Decided U V k v) : Decided U (View.full U) k v
 ```
 
@@ -5038,7 +5056,7 @@ window into `live` for a rule that has a synchronous story.
 theorem live_of_coverage (sp : Support R) {rel : Reliability Validator}
     (hcov : OfCoverage sp rel) {U : R.Universe} {T : Finset Validator}
     (hq : rel.IsQuorum T) {Rnd N : ℕ} (hs : SynchronisedOn R U T Rnd)
-    (hpop : ∀ r, Rnd ≤ r → r ≤ N → PopulatedOn R U T r)
+    (hpop : ∀ r, Rnd ≤ r → r ≤ N → Properties.PopulatedOn R U T r)
     (S : Slots Validator) (V : R.View U) {lo K : ℕ} (hV : CoversUpto R V N)
     (hRnd : Rnd ≤ S.slotRound lo) (hN : ∀ k, k < K → S.slotRound k + sp.wave ≤ N) :
     sp.live rel S V T lo K
@@ -9791,11 +9809,13 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `Record/Chop.lean`, `Record/Fill.lean`, `Record/Genesis.lean` | the cut, the fill and re-genesis, built once at the record |
 | `BlockDag.lean` | `BlockUniverse` and `View` as the record at `ValidWrt`; the core's validity is mechanised; T1 |
 | `CausalHistory.lean` | `Reaches` at any block record; T2, T6a |
-| `Support.lean` | counting vocabulary at any block record; the core's hitting, propagation and coverage lemmas |
+| `Support.lean` | counting vocabulary at any block record, in the record and in a view (`supportersIn`, `blamesIn`); the core's hitting, propagation and coverage lemmas |
+| `Participation.lean` | `PopulatedOn` and `SynchronisedOn`, at raw block data and at any block record |
+| `Ledger.lean` | the ledger at any block record: `commitSeq`, `ledgerSet`, `OutputAt`; monotonicity, uniqueness, and agreement of agreeing assignments |
 | `History.lean` | causal history as a `Finset`, at any block record |
 | `Persistence.lean` | T3 |
 | `CommonCore.lean` | T3a, T3c |
-| `Mysticeti.lean` | the commit rule; eligibility; M1–M6; the ledger |
+| `Mysticeti.lean` | the commit rule; eligibility; M1–M6; M7–M9 as the record's ledger at M6 |
 | `Schedule.lean` | conservativity of the pipelined schedule |
 | `Liveness.lean` | L0, L2–L6; the committed-run results |
 | `Network/Quorum.lean` | the DoS capstones, production bundled with the storage bound |
@@ -10816,7 +10836,7 @@ reused.
 
 ## Appendix B. The definition reference
 
-The 345 definitions and structures the report names, in
+The 336 definitions and structures the report names, in
 the order a reader meets them. Each entry is the source text,
 unabridged, with the explanation the source carries. This
 appendix is generated from the compiled development by
@@ -11024,6 +11044,30 @@ The validators whose round-`n` block declines to reference `L`.
 
 The complement of `supporters U L n` *within the round-`n` author pool* — but only for correct validators. A Byzantine author can appear in both, by publishing one round-`n` block that votes and another that does not; ruling that out for correct validators is exactly what `blames_inter_supporters_subset_byzantine` does, and is the whole content of M3.
 
+#### `supportersIn`
+
+*def, `Support.lean`*
+
+```lean
+def supportersIn (U : BlockRecord Validator BlockId Payload P honest) (V : U.View)
+    (b : BlockId) (n : ℕ) : Finset Validator :=
+  creatorsOf U.block (((blocksAt U n).filter (fun q => b ∈ (U.block q).refs)) ∩ V.ids)
+```
+
+The supporters of `b` at round `n` that a view holds.
+
+#### `blamesIn`
+
+*def, `Support.lean`*
+
+```lean
+def blamesIn (U : BlockRecord Validator BlockId Payload P honest) (V : U.View)
+    (L : BlockId) (n : ℕ) : Finset Validator :=
+  creatorsOf U.block (((blocksAt U n).filter (fun q => L ∉ (U.block q).refs)) ∩ V.ids)
+```
+
+The blamers of `L` at round `n` that a view holds.
+
 ### The commit rule, and the ledger
 
 #### `DirectCommit`
@@ -11083,12 +11127,10 @@ Direct commit, as judged from a single view.
 ```lean
 def DirectSkipIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  quorumCard Validator ≤
-    (creatorsOf U.block
-      (((blocksAt U (r + 1)).filter (fun q => L ∉ (U.block q).refs)) ∩ V.ids)).card
+  quorumCard Validator ≤ (blamesIn U V L (r + 1)).card
 ```
 
-Direct skip, as judged from a single view.
+Direct skip, as judged from a single view: the record's `blamesIn` at the round above `L`.
 
 #### `DirectSkipSlotIn`
 
@@ -11145,42 +11187,6 @@ Four rules, in two pairs. The *direct* pair reads the slot's own certificates: a
 
 The relation is indexed by a view, so two validators may reach different verdicts by the letter of the definition; M6 (`decided_unique`) is the theorem that they cannot.
 
-#### `commitSeq`
-
-*def, `Mysticeti.lean`*
-
-```lean
-def commitSeq (g : ℕ → Option BlockId) (n : ℕ) : List BlockId :=
-  (List.range n).filterMap g
-```
-
-The blocks committed at slots `0, …, n-1`, in slot order, with skipped slots dropped. `g` is a validator's verdict assignment.
-
-#### `ledgerSet`
-
-*def, `Mysticeti.lean`*
-
-```lean
-def ledgerSet (U : BlockUniverse Validator BlockId Payload)
-    (g : ℕ → Option BlockId) (n : ℕ) : Set BlockId :=
-  {b | ∃ k, k < n ∧ ∃ L, g k = some L ∧ Reaches U L b}
-```
-
-The blocks output after settling slots `0, …, n-1`: everything in the causal history of a committed leader.
-
-#### `OutputAt`
-
-*def, `Mysticeti.lean`*
-
-```lean
-def OutputAt (U : BlockUniverse Validator BlockId Payload)
-    (g : ℕ → Option BlockId) (b : BlockId) (k : ℕ) : Prop :=
-  (∃ L, g k = some L ∧ Reaches U L b) ∧
-    ∀ j, j < k → ∀ L, g j = some L → ¬ Reaches U L b
-```
-
-`b` enters the ledger at slot `k`: the first committed slot whose leader reaches it.
-
 ### Delivery, growth, and coverage
 
 #### `PopulatedFrom`
@@ -11210,19 +11216,27 @@ From round `R` on, every `T`-authored block references every `T`-authored block 
 
 #### `PopulatedOn`
 
-*def, `Liveness.lean`*
+*def, `Participation.lean`*
 
 ```lean
-def PopulatedOn (U : BlockUniverse Validator BlockId Payload)
+def PopulatedOn (U : BlockRecord Validator BlockId Payload P honest)
     (T : Finset Validator) (r : ℕ) : Prop :=
   PopulatedFrom U.block U.ids T r
 ```
 
-What L4 actually needs of a round: every validator in `T` has a block there.
+Every validator in `T` has a block at round `r`.
 
-Local and finite — no growth, no horizon. Splitting this out is what keeps the horizon `N` out of L4 entirely, so the only hard proof in the plan is independent of how production is framed.
+#### `SynchronisedOn`
 
-**Why a set `T` rather than all of `Correct`.** L4 counts to `2f+1` and never higher, so it needs a *quorum* of reliable validators, not every one of them. Demanding all of `Correct` makes the theorem lapse when a single correct validator misses a single round — a GC pause, a restart — although the protocol still commits. See `liveness.md` §8 Q2.
+*def, `Participation.lean`*
+
+```lean
+def SynchronisedOn (U : BlockRecord Validator BlockId Payload P honest)
+    (T : Finset Validator) (R : ℕ) : Prop :=
+  SynchronisedFrom U.block U.ids T R
+```
+
+From round `R` on, every `T`-authored block references every `T`-authored block of the round below. An assumption about the network after stabilisation, not a theorem: a block's references are frozen when it is built.
 
 #### `Populated`
 
@@ -11274,24 +11288,6 @@ What each validator had in hand, one round at a time — and which of it it chos
 
 `held` must *not* be deduplicated: `U` is defined as every block some correct validator held (`liveness.md` §4.2), so pruning at the delivery layer would put the second half of an equivocation outside the universe altogether. The choice of which half to accept is left unspecified, exactly as the timeout is — the model says what was in hand and what was built on, never how either was decided.
 
-#### `SynchronisedOn`
-
-*def, `Liveness.lean`*
-
-```lean
-def SynchronisedOn (U : BlockUniverse Validator BlockId Payload)
-    (T : Finset Validator) (R : ℕ) : Prop :=
-  SynchronisedFrom U.block U.ids T R
-```
-
-From round `R` on, a correct block references every correct block of the round below.
-
-`R` is **not** GST: it is the round from which synchrony has fully taken effect — GST plus however long catch-up ran (`liveness.md` §4.2). It is a round index, not a clock; there is no Δ here.
-
-**Both quantifiers are restricted to `Correct`, and deliberately.** A Byzantine validator may publish nothing at all, or publish and reveal to only some validators, so no assumption about referencing its blocks would be sound — and none is needed: L4 counts only correct certificates, and there are `2f+1` correct validators. Getting this wrong in the *strong* direction, by demanding that all blocks be referenced, would assume Byzantine validators behave.
-
-**This does not follow from view convergence.** A block's references are frozen when it is built: a correct validator waits for `2f+1` round-`n` blocks, and the arrival of the `2f+1`st says nothing about the rest having arrived. Views converging later does not retroactively enlarge blocks. So this is an assumption, not a theorem — see `liveness.md` §4.3, and its §8 question 8 for how it is meant to be split and derived.
-
 #### `Synchronised`
 
 *abbrev, `Liveness.lean`*
@@ -11315,31 +11311,6 @@ def EventuallyDelivers (D : Delivery U) (R : ℕ) : Prop :=
 ```
 
 **The network assumption**: after `R`, correct blocks reach correct validators in time to be built on. This is eventual DAG synchrony proper — pure delivery, no protocol content.
-
-#### `View.full`
-
-*def, `Liveness.lean`*
-
-```lean
-def View.full (U : BlockUniverse Validator BlockId Payload) :
-    View Validator BlockId Payload U where
-  ids := U.ids
-  subset_ids := Finset.Subset.rfl
-  complete := U.complete
-```
-
-Every correct validator's *eventual* view. Downward-closed by `U.complete`.
-
-#### `View.CoversUpto`
-
-*def, `Liveness.lean`*
-
-```lean
-def View.CoversUpto (V : View Validator BlockId Payload U) (N : ℕ) : Prop :=
-  ∀ b ∈ U.ids, (U.block b).round ≤ N → b ∈ V.ids
-```
-
-**A view caught up to round `N`**: it holds every block of the universe at a round at or below `N`. What a validator that has received everything up to `N` holds — under eventual DAG synchrony (`liveness.md` §4.2) every correct validator's view, once delivery has caught up that far — and the hypothesis under which a liveness result holds of a validator's own view rather than of the full view. The full view satisfies it at every `N`.
 
 #### `VotesAt`
 
@@ -11992,10 +11963,10 @@ def Eligible (k j : ℕ) : Prop := decisionRound Validator k < S.slotRound j
 ```lean
 def DirectCommitIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  quorumCard Validator ≤ (supportersIn U V L r).card
+  quorumCard Validator ≤ (supportersIn U V L (r + 1)).card
 ```
 
-Direct commit, as judged from a single view.
+Direct commit, as judged from a single view: the record's `supportersIn`, at the round above `L`.
 
 #### `DirectSkipIn`
 
@@ -12004,10 +11975,10 @@ Direct commit, as judged from a single view.
 ```lean
 def DirectSkipIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  quorumCard Validator ≤ (blamesIn U V L r).card
+  quorumCard Validator ≤ (blamesIn U V L (r + 1)).card
 ```
 
-Direct skip, as judged from a single view.
+Direct skip, as judged from a single view: the record's `blamesIn`.
 
 #### `Decided`
 
@@ -12553,10 +12524,10 @@ def Eligible (k j : ℕ) : Prop := decisionRound Validator k < S.slotRound j
 ```lean
 def DirectCommitIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  q Validator ≤ (supportersIn U V L r).card
+  q Validator ≤ (supportersIn U V L (r + 1)).card
 ```
 
-Direct commit, as judged from a single view.
+Direct commit, as judged from a single view: the record's `supportersIn`, at the round above `L`.
 
 #### `DirectSkipIn`
 
@@ -12565,10 +12536,10 @@ Direct commit, as judged from a single view.
 ```lean
 def DirectSkipIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  q Validator ≤ (blamesIn U V L r).card
+  q Validator ≤ (blamesIn U V L (r + 1)).card
 ```
 
-Direct skip, as judged from a single view.
+Direct skip, as judged from a single view: the record's `blamesIn`.
 
 #### `DirectSkipSlotIn`
 
@@ -12903,10 +12874,10 @@ def IsLeaderBlock (U : Universe Validator BlockId Payload) (k : ℕ) (L : BlockI
 ```lean
 def DirectCommitIn (U : Universe Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  majority Validator ≤ (supportersIn U V L r).card
+  majority Validator ≤ (supportersIn U V L (r + 1)).card
 ```
 
-Direct commit, as judged from a single view.
+Direct commit, as judged from a single view: the record's `supportersIn`, at the round above `L`.
 
 #### `Decided`
 
@@ -12944,31 +12915,6 @@ The `indirectSkip` premise still quantifies over candidates even though a slot h
 
 The relation is indexed by a view, so two validators may reach different verdicts by the letter of the definition; `decided_unique` is the theorem that they cannot.
 
-#### `ledgerSet`
-
-*def, `Nemo.Decision.lean`*
-
-```lean
-def ledgerSet (U : Universe Validator BlockId Payload)
-    (g : ℕ → Option BlockId) (n : ℕ) : Set BlockId :=
-  {b | ∃ k, k < n ∧ ∃ L, g k = some L ∧ Reaches U L b}
-```
-
-The blocks output after settling slots `0, …, n-1`: everything in the causal history of a committed leader.
-
-#### `OutputAt`
-
-*def, `Nemo.Decision.lean`*
-
-```lean
-def OutputAt (U : Universe Validator BlockId Payload)
-    (g : ℕ → Option BlockId) (b : BlockId) (k : ℕ) : Prop :=
-  (∃ L, g k = some L ∧ Reaches U L b) ∧
-    ∀ j, j < k → ∀ L, g j = some L → ¬ Reaches U L b
-```
-
-`b` enters the ledger at slot `k`: the first committed slot whose leader reaches it.
-
 #### `CrashFaults`
 
 *class, `Nemo.Liveness.lean`*
@@ -12996,55 +12942,6 @@ def Live : Finset Validator := (C.crashed)ᶜ
 ```
 
 The live validators: everyone outside the crashed set.
-
-#### `PopulatedOn`
-
-*def, `Nemo.Liveness.lean`*
-
-```lean
-def PopulatedOn (U : Universe Validator BlockId Payload)
-    (T : Finset Validator) (r : ℕ) : Prop :=
-  PopulatedFrom U.block U.ids T r
-```
-
-Every validator in `T` has a block at round `r` — the shared `PopulatedFrom` at the crash universe's data. A *quorum* of reliable validators, not all of `Live`: demanding the whole class would make the theorems lapse when a single live validator misses a single round.
-
-#### `SynchronisedOn`
-
-*def, `Nemo.Liveness.lean`*
-
-```lean
-def SynchronisedOn (U : Universe Validator BlockId Payload)
-    (T : Finset Validator) (R : ℕ) : Prop :=
-  SynchronisedFrom U.block U.ids T R
-```
-
-From round `R` on, every `T`-authored block references every `T`-authored block of the round below — the shared `SynchronisedFrom` at the crash universe's data, the post-GST coverage assumption.
-
-#### `View.full`
-
-*def, `Nemo.Liveness.lean`*
-
-```lean
-def View.full (U : Universe Validator BlockId Payload) :
-    View Validator BlockId Payload U where
-  ids := U.ids
-  subset_ids := Finset.Subset.rfl
-  complete := U.complete
-```
-
-Every live validator's *eventual* view. Downward-closed by `U.complete`.
-
-#### `View.CoversUpto`
-
-*def, `Nemo.Liveness.lean`*
-
-```lean
-def View.CoversUpto (V : View Validator BlockId Payload U) (N : ℕ) : Prop :=
-  ∀ b ∈ U.ids, (U.block b).round ≤ N → b ∈ V.ids
-```
-
-**A view caught up to round `N`**: it holds every block of the universe at a round at or below `N` — the crash arc's copy of the core's `View.CoversUpto`, the hypothesis under which a liveness result holds of a validator's own view rather than of the full view. The full view satisfies it at every `N`.
 
 #### `SpansEligible`
 
@@ -13308,7 +13205,7 @@ def SupportedIn (U : BlockUniverse Validator BlockId Payload)
   quorumCard Validator ≤ (supportersIn U V L (r + 1)).card
 ```
 
-`supp(L) ≥ n − f`, counted in a view.
+`supp(L) ≥ n − f`, counted in a view: the record's `supportersIn`.
 
 #### `LinkedIn`
 
@@ -13450,28 +13347,27 @@ structure Flush (U : BlockUniverse Validator BlockId Payload) where
 
 #### `ledgerSet`
 
-*def, `BlackMarlin.Model.Ledger.lean`*
+*abbrev, `BlackMarlin.Model.Ledger.lean`*
 
 ```lean
-def ledgerSet (U : BlockUniverse Validator BlockId Payload) (f : Flush U) (n : ℕ) :
+abbrev ledgerSet (U : BlockUniverse Validator BlockId Payload) (f : Flush U) (n : ℕ) :
     Set BlockId :=
-  {b | ∃ ρ, ρ < n ∧ ∃ L, f.block ρ = some L ∧ Reaches U L b}
+  LeanDag.ledgerSet U f.block n
 ```
 
-The blocks a record has output through round `n`: everything in the causal history of an anchor it flushed below `n`. Ordering *within* a segment is the deterministic sort `τ`, which the rule does not constrain and this arc does not model, so the ledger is a set and the record's rounds are its positions.
+The blocks a record has output through round `n`: everything in the causal history of an anchor it flushed below `n` — the record's ledger (`Ledger.lean`) at the flush's blocks. Ordering *within* a segment is the deterministic sort `τ`, which the rule does not constrain and this arc does not model, so the ledger is a set and the record's rounds are its positions.
 
 #### `OutputAt`
 
-*def, `BlackMarlin.Model.Ledger.lean`*
+*abbrev, `BlackMarlin.Model.Ledger.lean`*
 
 ```lean
-def OutputAt (U : BlockUniverse Validator BlockId Payload) (f : Flush U)
+abbrev OutputAt (U : BlockUniverse Validator BlockId Payload) (f : Flush U)
     (b : BlockId) (ρ : ℕ) : Prop :=
-  (∃ L, f.block ρ = some L ∧ Reaches U L b) ∧
-    ∀ σ, σ < ρ → ∀ L, f.block σ = some L → ¬ Reaches U L b
+  LeanDag.OutputAt U f.block b ρ
 ```
 
-`b` enters the ledger at round `ρ`: the first flushed anchor whose causal history holds it. This is a block's position in the delivered sequence, at the granularity of segments.
+`b` enters the ledger at round `ρ`: the first flushed anchor whose causal history holds it — the record's `OutputAt`. This is a block's position in the delivered sequence, at the granularity of segments.
 
 #### `StepUnique`
 
@@ -14749,22 +14645,6 @@ def blames (U : BlockUniverse Replica BlockId) (k : ℕ) : Finset Replica :=
 
 The replicas whose voting-round block blames slot `k`: none of its refs is a candidate for `k`. Blames target the leader slot, not a specific block, so a vote for *any* equivocating copy is not a blame.
 
-#### `PopulatedOn`
-
-*def, `Hydrozoan.Model.Liveness.lean`*
-
-```lean
-def PopulatedOn (U : BlockUniverse Replica BlockId)
-    (T : Finset Replica) (r : ℕ) : Prop :=
-  ∀ v ∈ T, ∃ b ∈ U.ids, (U.block b).round = r ∧ (U.block b).creator = v
-```
-
-Every replica in `T` creators a block at round `r`.
-
-`T`-relative rather than all-of-`Correct`, deliberately: liveness counts to quorums, never to every correct replica, and demanding all of `Correct` would void the theorems whenever a single correct replica misses a single round — a GC pause, a restart. Nothing is said about uniqueness (universe non-equivocation already gives it for non-Byzantine creators) or about references.
-
-Nothing here constrains `T`: the requirements `T ⊆ Correct` and `q ≤ T.card` are explicit hypotheses of the consuming theorems (the subset condition alone would admit `T = ∅`) — asserting this predicate for a `T` containing a Byzantine replica is asserting Byzantine behavior, which no theorem does. Reducible so witness models can settle it by `decide`.
-
 #### `Populated`
 
 *abbrev, `Hydrozoan.Model.Liveness.lean`*
@@ -14776,37 +14656,6 @@ abbrev Populated (U : BlockUniverse Replica BlockId) (r : ℕ) : Prop :=
 
 The all-of-`Correct` case.
 
-#### `SynchronisedOn`
-
-*def, `Hydrozoan.Model.Liveness.lean`*
-
-```lean
-def SynchronisedOn (U : BlockUniverse Replica BlockId)
-    (T : Finset Replica) (R : ℕ) : Prop :=
-  ∀ n, R ≤ n →                       -- at every round n from R on:
-  ∀ b ∈ U.ids,                       -- every existing block b ...
-    (U.block b).round = n + 1 →      -- ... sitting one round above n ...
-    (U.block b).creator ∈ T →         -- ... authored by a member of T,
-  ∀ a ∈ U.ids,                       -- and every existing block a ...
-    (U.block a).round = n →          -- ... sitting at round n ...
-    (U.block a).creator ∈ T →         -- ... also authored by a member of T:
-    a ∈ (U.block b).refs          -- a is among b's refs
-```
-
-From round `R` on, every `T`-authored block references every `T`-authored block of the round below. Precisely: the constrained blocks are those at rounds `≥ R + 1` — a round-`R` block owes nothing to round `R − 1`.
-
-**An assumption, not a theorem.** A block's references are frozen when it is built: a replica that builds on the first quorum it holds can miss a slow correct block forever, even under perfect view convergence. What makes this true of the deployed system in good periods is the protocol's waiting rule — a correct replica builds a full timeout after entering a round, never as soon as a quorum arrives — together with timely post-stabilization delivery. Deriving it from those primitives is future work; here it is assumed.
-
-**`R` is not GST.** It is a round index — stabilization plus however long catch-up ran. No clock and no `Δ` appear anywhere in the model.
-
-`T` is a parameter, not a defined notion: it is instantiated as a quorum of correct replicas participating steadily through the window — authoring every round from `R` on and receiving peers' blocks in time — and those properties are exactly what the hypotheses about `T` assert.
-
-**Both quantifiers are `T`-restricted, deliberately.** A Byzantine replica may publish nothing, or reveal blocks to only some replicas, so assuming its blocks get referenced would assume Byzantine replicas behave; and no crashed replica is mentioned — the hybrid model's `Correct` pool is exactly the population liveness may lean on.
-
-Compatibility with validity: when round `n` is `T`-populated, a block referencing all of a quorum-sized `T`'s round-`n` blocks carries ≥ `q` distinct creators, so `ValidWrt.quorum` is satisfiable alongside — the witness models prove it.
-
-**Known limitation — round-jumping recovery is not modeled.** `T` is fixed across the whole suffix from `R`, so a correct replica that recovers by jumping to the frontier round (authoring nothing for the rounds it skipped) must sit outside `T` permanently, even after it has rejoined the steady quorum. A finer, wave-scoped form (a per-round-pair `SynchronisedAt` with a per-wave `T`) would readmit such a replica for every wave it actually participates in; deliberately deferred.
-
 #### `Synchronised`
 
 *abbrev, `Hydrozoan.Model.Liveness.lean`*
@@ -14817,29 +14666,6 @@ abbrev Synchronised (U : BlockUniverse Replica BlockId) (R : ℕ) : Prop :=
 ```
 
 The all-of-`Correct` case.
-
-#### `View.full`
-
-*def, `Hydrozoan.Model.Liveness.lean`*
-
-```lean
-def View.full (U : BlockUniverse Replica BlockId) : View U :=
-  ⟨U.ids, Finset.Subset.rfl, U.complete⟩
-```
-
-Every correct replica's *eventual* view: the whole universe, packaged as a `View`. The structural rendering of "eventually every correct replica holds everything" — decision monotonicity transports any view's verdicts into it, and it discharges every `CoversUpto` hypothesis. Adds no information beyond `U` itself.
-
-#### `View.CoversUpto`
-
-*def, `Hydrozoan.Model.Liveness.lean`*
-
-```lean
-def View.CoversUpto {U : BlockUniverse Replica BlockId}
-    (V : View U) (N : ℕ) : Prop :=
-  ∀ b ∈ U.ids, (U.block b).round ≤ N → b ∈ V.ids
-```
-
-**A view caught up to round `N`**: it holds every block of the universe at a round at or below `N`. What a replica that has received everything up to `N` holds — and the hypothesis under which a liveness result holds of a replica's own view rather than of the eventual view. The eventual view satisfies it at every `N` (`coversUpto_full`, `Helpers/DirectLiveness.lean`).
 
 #### `WeakLinked`
 
@@ -14958,17 +14784,6 @@ def FastUniqueness : Prop :=
 ```
 
 **No two conflicting fast commits**, `2·q_fast > n + f`: two fast quorums must overlap in a non-Byzantine replica, so no two conflicting leaders are both fast-committed.
-
-#### `commitSeq`
-
-*def, `Hydrozoan.PrefixAgreement.Statement.lean`*
-
-```lean
-def commitSeq (g : ℕ → Option BlockId) (n : ℕ) : List BlockId :=
-  (List.range n).filterMap g
-```
-
-The committed leaders below slot `n`, in slot order, skips dropped — the output shape of the paper's `ExtendCommitSeq`.
 
 #### `ledger`
 
@@ -15983,6 +15798,28 @@ def View.toRecord (V : U.View) : BlockRecord Validator BlockId Payload P honest 
 
 **A view is a record.** Its ids under the universe's block map: closure is the view's, validity and non-equivocation are inherited, since the block map is unchanged. This is what a rule evaluates its rules on when it reads a view as a DAG in its own right.
 
+#### `View.full`
+
+*def, `BlockRecord.lean`*
+
+```lean
+def View.full (U : BlockRecord Validator BlockId Payload P honest) : U.View :=
+  ⟨U.ids, Finset.Subset.rfl, U.complete⟩
+```
+
+**The full view**: every block of the record. Every honest validator's eventual view, downward-closed by `U.complete`.
+
+#### `View.CoversUpto`
+
+*def, `BlockRecord.lean`*
+
+```lean
+def View.CoversUpto (V : U.View) (N : ℕ) : Prop :=
+  ∀ b ∈ U.ids, (U.block b).round ≤ N → b ∈ V.ids
+```
+
+**A view caught up to round `N`**: it holds every block of the record at a round at or below `N`. What a validator that has received everything up to `N` holds, and the hypothesis under which a liveness result holds of a validator's own view rather than of the full view.
+
 #### `chopBlk`
 
 *def, `BlockRecord.lean`*
@@ -16238,6 +16075,42 @@ def addGenesisOpt (W : (OptimalHydrozoanProperties.optimalRule (Replica := Repli
 ```
 
 **Re-genesis, at Optimal-Hydrozoan's carrier**: the record's.
+
+#### `commitSeq`
+
+*def, `Ledger.lean`*
+
+```lean
+def commitSeq (g : ℕ → Option BlockId) (n : ℕ) : List BlockId :=
+  (List.range n).filterMap g
+```
+
+The blocks committed at slots `0, …, n-1`, in slot order, with skipped slots dropped. `g` is a validator's verdict assignment.
+
+#### `ledgerSet`
+
+*def, `Ledger.lean`*
+
+```lean
+def ledgerSet (U : BlockRecord Validator BlockId Payload P honest)
+    (g : ℕ → Option BlockId) (n : ℕ) : Set BlockId :=
+  {b | ∃ k, k < n ∧ ∃ L, g k = some L ∧ Reaches U L b}
+```
+
+The blocks output after settling slots `0, …, n-1`: everything in the causal history of a committed leader.
+
+#### `OutputAt`
+
+*def, `Ledger.lean`*
+
+```lean
+def OutputAt (U : BlockRecord Validator BlockId Payload P honest)
+    (g : ℕ → Option BlockId) (b : BlockId) (k : ℕ) : Prop :=
+  (∃ L, g k = some L ∧ Reaches U L b) ∧
+    ∀ j, j < k → ∀ L, g j = some L → ¬ Reaches U L b
+```
+
+`b` enters the ledger at slot `k`: the first committed slot whose leader reaches it.
 
 #### `mysticetiRule`
 
@@ -17108,7 +16981,7 @@ def CoversToward (R : DagRule Validator BlockId Payload) (U : R.Universe)
 def OfCoverage (sp : Support R) (rel : Reliability Validator) : Prop :=
   ∀ (U : R.Universe) (T : Finset Validator), rel.IsQuorum T →
     ∀ (r : ℕ) (L : BlockId),
-    (∀ n, r ≤ n → n ≤ r + sp.wave → PopulatedOn R U T n) →
+    (∀ n, r ≤ n → n ≤ r + sp.wave → Properties.PopulatedOn R U T n) →
     CoversToward R U T r sp.wave L →
     L ∈ R.ids U → (R.block U L).round = r → (R.block U L).creator ∈ T →
     ∀ c, c ∈ R.ids U → (R.block U c).creator ∈ T → (R.block U c).round = r + sp.wave →
@@ -17122,7 +16995,7 @@ def OfCoverage (sp : Support R) (rel : Reliability Validator) : Prop :=
 
 ## Appendix C. The theorem reference
 
-The 532 theorems the body or Appendix A names, each
+The 530 theorems the body or Appendix A names, each
 the source statement, unabridged. Generated with Appendix B;
 a theorem the report does not name is a step of an argument
 rather than a result it presents, and the source is its
@@ -17263,6 +17136,17 @@ theorem authorsAt_eq_authorsIn (U : BlockRecord Validator BlockId Payload P hone
 ```
 
 `authorsAt` is `authorsIn` over the whole universe: L0's density and the progress rule's trigger are one measure, read off `U.ids` there and off a validator's holdings here.
+
+#### `supportersIn_eq_toRecord`
+
+*theorem, `Support.lean`*
+
+```lean
+theorem supportersIn_eq_toRecord {V : U.View} {b : BlockId} {n : ℕ} :
+    supportersIn U V b n = supporters V.toRecord b n
+```
+
+The view's count is the record's count at the view as a record.
 
 #### `exists_mem_refs_of_correct_support_of_card`
 
@@ -17686,17 +17570,6 @@ theorem commitSeq_agree {V₁ V₂ : View Validator BlockId Payload U} {n : ℕ}
 
 **The committed-leader sequence is agreed.** Two validators that have settled the first `n` slots — on whatever views, by whatever mix of direct and indirect routes — read off the same list of committed blocks.
 
-#### `ledgerSet_mono`
-
-*theorem, `Mysticeti.lean`*
-
-```lean
-theorem ledgerSet_mono {g : ℕ → Option BlockId} {n m : ℕ} (h : n ≤ m) :
-    ledgerSet U g n ⊆ ledgerSet U g m
-```
-
-**Nothing is ever dropped.** The ledger only grows as more slots settle.
-
 #### `ledgerSet_agree`
 
 *theorem, `Mysticeti.lean`*
@@ -17711,17 +17584,6 @@ theorem ledgerSet_agree {V₁ V₂ : View Validator BlockId Payload U} {n : ℕ}
 
 **Two validators output the same blocks.**
 
-#### `outputAt_unique`
-
-*theorem, `Mysticeti.lean`*
-
-```lean
-theorem outputAt_unique {g : ℕ → Option BlockId} {b : BlockId} {k₁ k₂ : ℕ}
-    (h₁ : OutputAt U g b k₁) (h₂ : OutputAt U g b k₂) : k₁ = k₂
-```
-
-**A block enters the ledger once.** Its position is not merely stable over time — there is no second slot it could have entered at.
-
 #### `outputAt_agree`
 
 *theorem, `Mysticeti.lean`*
@@ -17734,9 +17596,20 @@ theorem outputAt_agree {V₁ V₂ : View Validator BlockId Payload U} {n : ℕ}
     (hk : k < n) (ho : OutputAt U g₁ b k) : OutputAt U g₂ b k
 ```
 
-**And validators agree on which slot that is.**
+**And validators agree on which slot a block enters at.**
 
 ### Delivery, growth, and coverage
+
+#### `SynchronisedOn.mono`
+
+*theorem, `Participation.lean`*
+
+```lean
+theorem SynchronisedOn.mono {T T' : Finset Validator} {R : ℕ} (hsub : T ⊆ T')
+    (h : SynchronisedOn U T' R) : SynchronisedOn U T R
+```
+
+Coverage is antitone too.
 
 #### `card_authorsAt_of_lt`
 
@@ -17753,17 +17626,6 @@ theorem card_authorsAt_of_lt {r n : ℕ} (hn : n < r) {i : BlockId}
 Downward induction on the gap `r - n`. The step is where the two lemmas above meet: the inductive hypothesis gives a quorum of authors one round higher, that quorum is nonempty so some block sits there, and `card_authorsAt_of_succ` walks it down one more round.
 
 The induction runs on the gap rather than on `r` itself because the statement is not about `r`: nothing distinguishes the block's own round, and generalising over `n` is what lets the step re-enter at `n+1`.
-
-#### `SynchronisedOn.mono`
-
-*theorem, `Liveness.lean`*
-
-```lean
-theorem SynchronisedOn.mono {T T' : Finset Validator} {R : ℕ} (hsub : T ⊆ T')
-    (h : SynchronisedOn U T' R) : SynchronisedOn U T R
-```
-
-Coverage is **antitone** too: mutual coverage among a larger set implies it among any subset. So existing witnesses of `Synchronised` feed the quorum-relative L4 unchanged.
 
 #### `decided_mono`
 
@@ -17791,17 +17653,6 @@ theorem decided_full {V : View Validator BlockId Payload U} {k : ℕ}
 **L3 — commit propagation.** Whatever any validator decides on any view, the same verdict holds on the full view.
 
 Since the full view is every correct validator's eventual view (`liveness.md` §4.2), this *is* "all correct validators eventually reach the same decision".
-
-#### `View.coversUpto_full`
-
-*theorem, `Liveness.lean`*
-
-```lean
-theorem View.coversUpto_full (U : BlockUniverse Validator BlockId Payload) (N : ℕ) :
-    (View.full U).CoversUpto N
-```
-
-The full view is caught up to every horizon.
 
 #### `votesAt_of_synchronisedOn`
 
@@ -20496,18 +20347,7 @@ theorem commitSeq_agree {V₁ V₂ : View Validator BlockId Payload U} {n : ℕ}
     commitSeq g₁ n = commitSeq g₂ n
 ```
 
-**The committed-leader sequence is agreed.** Two validators that have settled the first `n` slots — on whatever views, by whatever mix of direct and indirect routes — read off the same list of committed blocks.
-
-#### `ledgerSet_mono`
-
-*theorem, `Nemo.Decision.lean`*
-
-```lean
-theorem ledgerSet_mono {g : ℕ → Option BlockId} {n m : ℕ} (h : n ≤ m) :
-    ledgerSet U g n ⊆ ledgerSet U g m
-```
-
-**Nothing is ever dropped.** The ledger only grows as more slots settle.
+**The committed-leader sequence is agreed**, the record's `commitSeq_agree_of` at the crash `decided_agree`.
 
 #### `ledgerSet_agree`
 
@@ -20523,17 +20363,6 @@ theorem ledgerSet_agree {V₁ V₂ : View Validator BlockId Payload U} {n : ℕ}
 
 **Two validators output the same blocks.**
 
-#### `outputAt_unique`
-
-*theorem, `Nemo.Decision.lean`*
-
-```lean
-theorem outputAt_unique {g : ℕ → Option BlockId} {b : BlockId} {k₁ k₂ : ℕ}
-    (h₁ : OutputAt U g b k₁) (h₂ : OutputAt U g b k₂) : k₁ = k₂
-```
-
-**A block enters the ledger once.** Its position is not merely stable over time — there is no second slot it could have entered at.
-
 #### `outputAt_agree`
 
 *theorem, `Nemo.Decision.lean`*
@@ -20546,7 +20375,7 @@ theorem outputAt_agree {V₁ V₂ : View Validator BlockId Payload U} {n : ℕ}
     (hk : k < n) (ho : OutputAt U g₁ b k) : OutputAt U g₂ b k
 ```
 
-**And validators agree on which slot that is.**
+**And validators agree on which slot a block enters at.**
 
 #### `majority_le_card_live`
 
@@ -20557,28 +20386,6 @@ theorem majority_le_card_live : majority Validator ≤ (Live Validator).card
 ```
 
 **The bridge** — the arc's only consumer of the fault bound: the live class carries the majority quorum, since `n − f ≥ n/2 + 1` whenever `2f + 1 ≤ n`.
-
-#### `SynchronisedOn.mono`
-
-*theorem, `Nemo.Liveness.lean`*
-
-```lean
-theorem SynchronisedOn.mono {T T' : Finset Validator} {R : ℕ} (hsub : T ⊆ T')
-    (h : SynchronisedOn U T' R) : SynchronisedOn U T R
-```
-
-Coverage is antitone too.
-
-#### `View.coversUpto_full`
-
-*theorem, `Nemo.Liveness.lean`*
-
-```lean
-theorem View.coversUpto_full (U : Universe Validator BlockId Payload) (N : ℕ) :
-    (View.full U).CoversUpto N
-```
-
-The full view is caught up to every horizon.
 
 #### `decided_mono`
 
@@ -22396,17 +22203,6 @@ theorem holds : Statement
 theorem holds : Statement
 ```
 
-#### `View.coversUpto_full`
-
-*theorem, `Hydrozoan.Helpers.DirectLiveness.lean`*
-
-```lean
-theorem View.coversUpto_full (U : BlockUniverse Replica BlockId) (N : ℕ) :
-    (View.full U).CoversUpto N
-```
-
-The eventual view is caught up to every horizon.
-
 #### `holds`
 
 *theorem, `Hydrozoan.DirectLiveness.Proof.lean`*
@@ -23061,6 +22857,17 @@ theorem holds : Statement
 theorem holds : Statement
 ```
 
+#### `View.coversUpto_full`
+
+*theorem, `BlockRecord.lean`*
+
+```lean
+theorem View.coversUpto_full (U : BlockRecord Validator BlockId Payload P honest) (N : ℕ) :
+    (View.full U).CoversUpto N
+```
+
+The full view is caught up to every horizon.
+
 #### `Mechanised.of_iff`
 
 *theorem, `BlockRecord.lean`*
@@ -23319,6 +23126,51 @@ theorem stack_core (sk : SkipMsg U) (hd : G ≤ S.slotRound d) :
 ```
 
 **The core's fill-then-cut is a stack**, settling at the later of the gap's top and the horizon, shifted by the horizon, re-indexed from the base slot.
+
+#### `ledgerSet_mono`
+
+*theorem, `Ledger.lean`*
+
+```lean
+theorem ledgerSet_mono {g : ℕ → Option BlockId} {n m : ℕ} (h : n ≤ m) :
+    ledgerSet U g n ⊆ ledgerSet U g m
+```
+
+**Nothing is ever dropped.** The ledger only grows as more slots settle.
+
+#### `ledgerSet_agree_of`
+
+*theorem, `Ledger.lean`*
+
+```lean
+theorem ledgerSet_agree_of {g₁ g₂ : ℕ → Option BlockId} {n : ℕ}
+    (hg : ∀ k, k < n → g₁ k = g₂ k) : ledgerSet U g₁ n = ledgerSet U g₂ n
+```
+
+Two assignments that agree below `n` output the same blocks.
+
+#### `outputAt_unique`
+
+*theorem, `Ledger.lean`*
+
+```lean
+theorem outputAt_unique {g : ℕ → Option BlockId} {b : BlockId} {k₁ k₂ : ℕ}
+    (h₁ : OutputAt U g b k₁) (h₂ : OutputAt U g b k₂) : k₁ = k₂
+```
+
+**A block enters the ledger once.** Its position is not merely stable over time — there is no second slot it could have entered at.
+
+#### `outputAt_agree_of`
+
+*theorem, `Ledger.lean`*
+
+```lean
+theorem outputAt_agree_of {g₁ g₂ : ℕ → Option BlockId} {n : ℕ} {b : BlockId} {k : ℕ}
+    (hg : ∀ j, j < n → g₁ j = g₂ j) (hk : k < n) (ho : OutputAt U g₁ b k) :
+    OutputAt U g₂ b k
+```
+
+Two assignments that agree below `n` concur on the slot a block enters at.
 
 #### `selfParent`
 

@@ -80,7 +80,7 @@ direct routes, each judged from the view. -/
 def hydrozoan [LeanDag.Hydrozoan.Faults Replica] :
     BaseRule Replica BlockId Unit where
   toDagRule := LeanDag.Hydrozoan.rule
-  full := fun U => LeanDag.Hydrozoan.View.full U
+  full := fun U => View.full U
   historyView := fun U A hA => Hydrozoan.historyView U A hA
   waveLength := 3
   DirectCommitIn := fun {U} V L r =>

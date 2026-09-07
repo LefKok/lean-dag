@@ -66,34 +66,19 @@ theorem anchor_round_le {j : ℕ} (hA : IsLeaderBlock U j A)
 
 /-! ## The view-relative direct rules -/
 
-/-- The supporters a view actually holds. -/
-def supportersIn (U : BlockUniverse Validator BlockId Payload)
-    (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) :
-    Finset Validator :=
-  creatorsOf U.block
-    (((blocksAt U (r + 1)).filter (fun p => L ∈ (U.block p).refs)) ∩ V.ids)
-
-/-- The blamers a view actually holds. -/
-def blamesIn (U : BlockUniverse Validator BlockId Payload)
-    (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) :
-    Finset Validator :=
-  creatorsOf U.block
-    (((blocksAt U (r + 1)).filter (fun p => L ∉ (U.block p).refs)) ∩ V.ids)
-
-/-- Direct commit, as judged from a single view. -/
+/-- Direct commit, as judged from a single view: the record's
+`supportersIn`, at the round above `L`. -/
 def DirectCommitIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  q Validator ≤ (supportersIn U V L r).card
+  q Validator ≤ (supportersIn U V L (r + 1)).card
 
-/-- Direct skip, as judged from a single view. -/
+/-- Direct skip, as judged from a single view: the record's `blamesIn`. -/
 def DirectSkipIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  q Validator ≤ (blamesIn U V L r).card
+  q Validator ≤ (blamesIn U V L (r + 1)).card
 
-/-- The voting-round blocks that reference **no** candidate of the slot. -/
-def slotBlamers (U : BlockUniverse Validator BlockId Payload) (s : ℕ) : Finset BlockId :=
-  (blocksAt U (S.slotRound s + 1)).filter
-    (fun p => ∀ j ∈ (U.block p).refs, ¬ IsLeaderBlock U s j)
+/-! The voting-round blocks that reference no candidate of the slot are
+the core's `slotBlamers`: the same set, over the same `IsLeaderBlock`. -/
 
 /-- **The slot is directly skipped, as judged from a view**: a hybrid
 quorum of distinct validators holds a voting-round block, in view, that

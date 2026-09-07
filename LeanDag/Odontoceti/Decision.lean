@@ -87,29 +87,16 @@ theorem anchor_round_le {j : ℕ} (hA : IsLeaderBlock U j A)
 
 /-! ## The view-relative direct rules -/
 
-/-- The supporters a view actually holds. -/
-def supportersIn (U : BlockUniverse Validator BlockId Payload)
-    (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) :
-    Finset Validator :=
-  creatorsOf U.block
-    (((blocksAt U (r + 1)).filter (fun q => L ∈ (U.block q).refs)) ∩ V.ids)
-
-/-- The blamers a view actually holds. -/
-def blamesIn (U : BlockUniverse Validator BlockId Payload)
-    (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) :
-    Finset Validator :=
-  creatorsOf U.block
-    (((blocksAt U (r + 1)).filter (fun q => L ∉ (U.block q).refs)) ∩ V.ids)
-
-/-- Direct commit, as judged from a single view. -/
+/-- Direct commit, as judged from a single view: the record's
+`supportersIn`, at the round above `L`. -/
 def DirectCommitIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  quorumCard Validator ≤ (supportersIn U V L r).card
+  quorumCard Validator ≤ (supportersIn U V L (r + 1)).card
 
-/-- Direct skip, as judged from a single view. -/
+/-- Direct skip, as judged from a single view: the record's `blamesIn`. -/
 def DirectSkipIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  quorumCard Validator ≤ (blamesIn U V L r).card
+  quorumCard Validator ≤ (blamesIn U V L (r + 1)).card
 
 instance {V : View Validator BlockId Payload U} :
     Decidable (DirectCommitIn U V L r) :=

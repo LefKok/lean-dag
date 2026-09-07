@@ -185,7 +185,7 @@ example (R k : ℕ) :
     Nemo.all_decided_below_of_fairRun_live (BlockId := Fin 14) (Payload := Unit)
       (by omega) (Nemo.spansEligible_two nemoSlots_slotRound) nemo_fairRun R k
   exact ⟨b, hk, hR, fun U N hpop hs hN =>
-    hrest U N (Nemo.View.full U) hpop hs hN (Nemo.View.coversUpto_full U N)⟩
+    hrest U N (View.full U) hpop hs hN (View.coversUpto_full U N)⟩
 
 /-! ## Axiom hygiene
 

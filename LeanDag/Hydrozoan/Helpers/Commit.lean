@@ -54,9 +54,9 @@ holds under every schedule with the same rounds. -/
 def hzLive (S : LeanDag.Slots Replica) {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
     (V : LeanDag.Hydrozoan.View U) (T : Finset Replica) (lo K : ℕ) : Prop :=
   T ⊆ (Correct : Finset Replica) ∧ LeanDag.Hydrozoan.q Replica ≤ T.card ∧
-    ∃ R₀ N, LeanDag.Hydrozoan.SynchronisedOn U T R₀ ∧ R₀ ≤ S.slotRound lo ∧
-      (∀ r, R₀ ≤ r → r ≤ N → LeanDag.Hydrozoan.PopulatedOn U T r) ∧
-      LeanDag.Hydrozoan.View.CoversUpto V N ∧
+    ∃ R₀ N, SynchronisedOn U T R₀ ∧ R₀ ≤ S.slotRound lo ∧
+      (∀ r, R₀ ≤ r → r ≤ N → PopulatedOn U T r) ∧
+      V.CoversUpto N ∧
       ∀ k, k < K → S.slotRound k + 2 ≤ N
 
 /-! ## Hydrozoan's support shape
@@ -168,7 +168,7 @@ theorem hzSupport_live_of_hzLive {S : LeanDag.Slots Replica}
   have hpop' : ∀ n, R₀ ≤ n → n ≤ N →
       Properties.PopulatedOn (rule (Replica := Replica) (BlockId := BlockId)) U T n := by
     intro n h1 h2 v hv
-    obtain ⟨b, hb, hbr, hba⟩ := hpop n h1 h2 v hv
+    obtain ⟨b, hb, hba, hbr⟩ := hpop n h1 h2 v hv
     exact ⟨b, hb, hba, hbr⟩
   refine ⟨hq, N, hcov, hN, ?_⟩
   intro k hlo hK hlead

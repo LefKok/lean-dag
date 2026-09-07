@@ -93,7 +93,7 @@ theorem supportersIn_band (h : AgreeBand (nemoRule (Payload := Payload)) U U' lo
     (hV : ∀ b, b ∈ V.ids → lo ≤ (U.block b).round + g → (U.block b).round + g ≤ hi →
       b ∈ V'.ids)
     {L : BlockId} :
-    Nemo.supportersIn U V L r ⊆ Nemo.supportersIn U' V' L r' := by
+    supportersIn U V L (r + 1) ⊆ supportersIn U' V' L (r' + 1) := by
   intro w hw
   obtain ⟨q, hq, hvq⟩ := Finset.mem_image.mp hw
   obtain ⟨hqf, hqV⟩ := Finset.mem_inter.mp hq

@@ -48,7 +48,7 @@ slow one. -/
 def optimalHydrozoan [LeanDag.OptimalHydrozoan.OptimalFaults Replica] :
     BaseRule Replica BlockId Unit where
   toDagRule := OptimalHydrozoanProperties.optimalRule
-  full := fun U => LeanDag.Hydrozoan.View.full U.val
+  full := fun U => View.full U.val
   historyView := fun U A hA => Hydrozoan.historyView U.val A hA
   waveLength := 3
   DirectCommitIn := fun {U} V L r =>

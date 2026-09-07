@@ -54,8 +54,8 @@ def hydrozoanLive [LeanDag.Hydrozoan.Faults Replica] :
     Good := fun U Rnd N =>
       ∃ T ⊆ (LeanDag.Hydrozoan.Correct : Finset Replica),
         LeanDag.Hydrozoan.q Replica ≤ T.card ∧
-        LeanDag.Hydrozoan.SynchronisedOn U T Rnd ∧
-        ∀ r, Rnd ≤ r → r ≤ N → LeanDag.Hydrozoan.PopulatedOn U T r }
+        SynchronisedOn U T Rnd ∧
+        ∀ r, Rnd ≤ r → r ≤ N → PopulatedOn U T r }
 
 namespace HydrozoanLive
 

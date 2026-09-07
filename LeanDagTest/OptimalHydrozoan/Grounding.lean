@@ -145,7 +145,7 @@ example : ¬ ∃ U : OptUniverse (Fin 4) ℕ,
     (∀ b ∈ U.ids, (U.block b).creator ∈ ({1, 2} : Finset (Fin 4))) ∧
     PopulatedOn U.toBlockRecord {1, 2} 1 := by
   rintro ⟨U, hT, hpop⟩
-  obtain ⟨b, hb, hround, -⟩ := hpop 1 (by decide)
+  obtain ⟨b, hb, -, hround⟩ := hpop 1 (by decide)
   have hq := (U.valid b hb).quorum (by rw [hround]; exact Nat.one_pos)
   have hsub : creators U.block (U.block b) ⊆ {1, 2} := by
     intro a ha

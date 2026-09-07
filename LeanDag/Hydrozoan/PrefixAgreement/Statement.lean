@@ -1,4 +1,5 @@
 import LeanDag.Hydrozoan.Model.Decided
+import LeanDag.Ledger
 
 /-!
 # Prefix agreement — statement
@@ -29,10 +30,9 @@ section Sequences
 
 variable {BlockId : Type*}
 
-/-- The committed leaders below slot `n`, in slot order, skips
-dropped — the output shape of the paper's `ExtendCommitSeq`. -/
-def commitSeq (g : ℕ → Option BlockId) (n : ℕ) : List BlockId :=
-  (List.range n).filterMap g
+/-! The committed leaders below slot `n`, in slot order, skips
+dropped — the output shape of the paper's `ExtendCommitSeq` — is the
+record's `commitSeq` (`Ledger.lean`). -/
 
 /-- A ledger: every committed leader flattened by a linearizer — the
 paper's `LinearizeSubDags`, abstracted to an arbitrary function. -/

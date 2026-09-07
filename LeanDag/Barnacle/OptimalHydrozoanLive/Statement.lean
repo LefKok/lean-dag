@@ -35,8 +35,8 @@ def optimalHydrozoanLive [LeanDag.OptimalHydrozoan.OptimalFaults Replica] :
     Good := fun U Rnd N =>
       ∃ T ⊆ (LeanDag.Hydrozoan.Correct : Finset Replica),
         LeanDag.Hydrozoan.q Replica ≤ T.card ∧
-        LeanDag.Hydrozoan.SynchronisedOn U.val T Rnd ∧
-        ∀ r, Rnd ≤ r → r ≤ N → LeanDag.Hydrozoan.PopulatedOn U.val T r }
+        SynchronisedOn U.val T Rnd ∧
+        ∀ r, Rnd ≤ r → r ≤ N → PopulatedOn U.val T r }
 
 namespace OptimalHydrozoanLive
 

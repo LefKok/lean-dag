@@ -139,41 +139,26 @@ theorem coneAnchors_succ_nonempty_of_committed (h : Committed U L ρ)
 /-- **Nothing is ever dropped.** The ledger only grows as the record
 reaches higher rounds. -/
 theorem ledgerSet_mono (f : Flush U) {n m : ℕ} (h : n ≤ m) :
-    ledgerSet U f n ⊆ ledgerSet U f m := by
-  rintro b ⟨ρ, hρ, hrest⟩
-  exact ⟨ρ, by omega, hrest⟩
+    ledgerSet U f n ⊆ ledgerSet U f m :=
+  LeanDag.ledgerSet_mono h
 
 /-- **Two records that agree output the same blocks.** -/
 theorem ledgerSet_agree {f₁ f₂ : Flush U} {n : ℕ}
     (h : ∀ ρ, ρ < n → f₁.block ρ = f₂.block ρ) :
-    ledgerSet U f₁ n = ledgerSet U f₂ n := by
-  ext b
-  constructor
-  · rintro ⟨ρ, hρ, L, hL, hr⟩
-    exact ⟨ρ, hρ, L, (h ρ hρ) ▸ hL, hr⟩
-  · rintro ⟨ρ, hρ, L, hL, hr⟩
-    exact ⟨ρ, hρ, L, (h ρ hρ).symm ▸ hL, hr⟩
+    ledgerSet U f₁ n = ledgerSet U f₂ n :=
+  ledgerSet_agree_of h
 
 /-- **A block enters the ledger once.** Its position is not merely stable
 over time — there is no second round it could have entered at. -/
 theorem outputAt_unique {f : Flush U} {b : BlockId} {ρ₁ ρ₂ : ℕ}
-    (h₁ : OutputAt U f b ρ₁) (h₂ : OutputAt U f b ρ₂) : ρ₁ = ρ₂ := by
-  rcases lt_trichotomy ρ₁ ρ₂ with h | h | h
-  · obtain ⟨L, hL, hr⟩ := h₁.1
-    exact absurd hr (h₂.2 ρ₁ h L hL)
-  · exact h
-  · obtain ⟨L, hL, hr⟩ := h₂.1
-    exact absurd hr (h₁.2 ρ₂ h L hL)
+    (h₁ : OutputAt U f b ρ₁) (h₂ : OutputAt U f b ρ₂) : ρ₁ = ρ₂ :=
+  LeanDag.outputAt_unique h₁ h₂
 
 /-- **And two records that agree concur on which round that is.** -/
 theorem outputAt_agree {f₁ f₂ : Flush U} {n : ℕ} {b : BlockId} {ρ : ℕ}
     (h : ∀ σ, σ < n → f₁.block σ = f₂.block σ) (hρ : ρ < n)
-    (ho : OutputAt U f₁ b ρ) : OutputAt U f₂ b ρ := by
-  refine ⟨?_, ?_⟩
-  · obtain ⟨L, hL, hr⟩ := ho.1
-    exact ⟨L, (h ρ hρ) ▸ hL, hr⟩
-  · intro σ hσ L hL hr
-    exact ho.2 σ hσ L ((h σ (by omega)).symm ▸ hL) hr
+    (ho : OutputAt U f₁ b ρ) : OutputAt U f₂ b ρ :=
+  outputAt_agree_of h hρ ho
 
 /-- **A flushed anchor's cone is in the ledger.** The link between the
 record and what it delivers, and with the recurrence of committed anchors

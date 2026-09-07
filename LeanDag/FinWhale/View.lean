@@ -75,7 +75,7 @@ theorem slotBlocks_restrict {r : ℕ} : slotBlocks S (restrict D V hV) r ⊆ slo
 /-- Fewer blocks, fewer voters. -/
 theorem voters_restrict {l : BlockId} : voters (restrict D V hV) l ⊆ voters D l := by
   intro v hv
-  simp only [voters, mem_creatorsOf, Finset.mem_filter] at hv ⊢
+  simp only [voters, supporters, mem_creatorsOf, Finset.mem_filter] at hv ⊢
   obtain ⟨q, ⟨hq, hqref⟩, hqv⟩ := hv
   exact ⟨q, ⟨blocksAt_restrict hq, hqref⟩, hqv⟩
 
@@ -206,7 +206,7 @@ theorem voters_restrict_eq {l : BlockId}
     (hV1 : blocksAt D ((D.block l).round + 1) ⊆ V) :
     voters (restrict D V hV) l = voters D l := by
   refine Finset.Subset.antisymm voters_restrict fun v hv => ?_
-  simp only [voters, mem_creatorsOf, Finset.mem_filter] at hv ⊢
+  simp only [voters, supporters, mem_creatorsOf, Finset.mem_filter] at hv ⊢
   obtain ⟨q, ⟨hq, hqref⟩, hqv⟩ := hv
   refine ⟨q, ⟨?_, hqref⟩, hqv⟩
   simp only [blocksAt, restrict_ids, restrict_block, Finset.mem_filter]

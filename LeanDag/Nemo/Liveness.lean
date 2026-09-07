@@ -110,66 +110,9 @@ end CrashModel
 
 /-! ## Participation and coverage -/
 
-/-- Every validator in `T` has a block at round `r` — the shared
-`PopulatedFrom` at the crash universe's data. A *quorum* of reliable
-validators, not all of `Live`: demanding the whole class would make the
-theorems lapse when a single live validator misses a single round. -/
-def PopulatedOn (U : Universe Validator BlockId Payload)
-    (T : Finset Validator) (r : ℕ) : Prop :=
-  PopulatedFrom U.block U.ids T r
-
-/-- Decidable on concrete data, so a model can settle it by `decide`. -/
-instance decidablePopulatedOn (r : ℕ) : Decidable (PopulatedOn U T r) :=
-  inferInstanceAs (Decidable (PopulatedFrom U.block U.ids T r))
-
-omit [DecidableEq BlockId] in
-/-- Population is antitone: a smaller set is easier to populate. -/
-theorem PopulatedOn.mono {T T' : Finset Validator} {r : ℕ} (hsub : T ⊆ T')
-    (h : PopulatedOn U T' r) : PopulatedOn U T r :=
-  PopulatedFrom.mono hsub h
-
-/-- From round `R` on, every `T`-authored block references every `T`-authored
-block of the round below — the shared `SynchronisedFrom` at the crash
-universe's data, the post-GST coverage assumption. -/
-def SynchronisedOn (U : Universe Validator BlockId Payload)
-    (T : Finset Validator) (R : ℕ) : Prop :=
-  SynchronisedFrom U.block U.ids T R
-
-omit [DecidableEq BlockId] in
-/-- Coverage is antitone too. -/
-theorem SynchronisedOn.mono {T T' : Finset Validator} {R : ℕ} (hsub : T ⊆ T')
-    (h : SynchronisedOn U T' R) : SynchronisedOn U T R :=
-  SynchronisedFrom.mono hsub h
-
-omit [DecidableEq BlockId] in
-/-- Every live validator's *eventual* view. Downward-closed by
-`U.complete`. -/
-def View.full (U : Universe Validator BlockId Payload) :
-    View Validator BlockId Payload U where
-  ids := U.ids
-  subset_ids := Finset.Subset.rfl
-  complete := U.complete
-
-omit [DecidableEq BlockId] in
-/-- **A view caught up to round `N`**: it holds every block of the
-universe at a round at or below `N` — the crash arc's copy of the
-core's `View.CoversUpto`, the hypothesis under which a liveness result
-holds of a validator's own view rather than of the full view. The full
-view satisfies it at every `N`. -/
-def View.CoversUpto (V : View Validator BlockId Payload U) (N : ℕ) : Prop :=
-  ∀ b ∈ U.ids, (U.block b).round ≤ N → b ∈ V.ids
-
-omit [DecidableEq BlockId] in
-/-- The full view is caught up to every horizon. -/
-theorem View.coversUpto_full (U : Universe Validator BlockId Payload) (N : ℕ) :
-    (View.full U).CoversUpto N :=
-  fun _ hb _ => hb
-
-omit [DecidableEq BlockId] in
-/-- Caught up to `N` is caught up to every lower horizon. -/
-theorem View.CoversUpto.mono {V : View Validator BlockId Payload U} {M N : ℕ}
-    (h : V.CoversUpto N) (hMN : M ≤ N) : V.CoversUpto M :=
-  fun b hb hr => h b hb (le_trans hr hMN)
+/-! `PopulatedOn` and `SynchronisedOn` are the record's
+(`Participation.lean`), at the crash universe's data; `View.full` and
+`View.CoversUpto` are the record's (`BlockRecord.lean`). -/
 
 /-! ## Decisions are monotone in the view -/
 

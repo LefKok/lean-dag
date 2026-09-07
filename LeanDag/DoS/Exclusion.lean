@@ -37,14 +37,6 @@ variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 variable {U : BlockUniverse Validator BlockId Payload}
 variable {b : BlockId} {n : ℕ}
 
-/-- Decidable on concrete data: `PopulatedOn` is a bounded quantifier over two
-`Finset`s, so a model can settle it by `decide`. Stated here rather than beside
-the definition because it is the witnesses of `dos-equivocation-and-growth.md` §4 that need it. -/
-instance decidablePopulatedOn (T : Finset Validator) (r : ℕ) :
-    Decidable (PopulatedOn U T r) :=
-  inferInstanceAs (Decidable (∀ v ∈ T, ∃ b ∈ U.ids,
-    (U.block b).creator = v ∧ (U.block b).round = r))
-
 omit [DecidableEq BlockId] in
 /-- A populated round carries every correct validator among its correct blocks'
 authors. -/
