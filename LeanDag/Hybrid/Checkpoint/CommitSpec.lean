@@ -21,7 +21,7 @@ reviews the whole bridge.
 
 namespace LeanDag.Hybrid.Checkpoint
 
-variable {Validator BlockId Payload Value : Type*}
+variable {Validator BlockId Payload : Type} {Value : Type*}
 variable [Fintype Validator] [DecidableEq Validator]
 variable [H : HybridFaults Validator]
 variable [LinearOrder BlockId]
@@ -93,7 +93,7 @@ def RecoveryCorrectQuorum : Prop :=
 its own view has a first-phase certificate. Base safety makes the
 validators' verdicts agree with the given commit, so the rule's
 proposals are all for the same checkpoint. -/
-def CommitCertified (Payload : Type*)
+def CommitCertified (Payload : Type)
     (vm : DeterministicVM (BlockId := BlockId) (Value := Value)) : Prop :=
   ∀ {U : BlockUniverse Validator BlockId Payload} {k : ℕ}
     (P : SigningRule M E U k vm),
@@ -107,7 +107,7 @@ def CommitCertified (Payload : Type*)
 
 /-- Claim: a commit that every online correct validator has settled on
 its own view has a finality certificate. -/
-def CommitFinalized (Payload : Type*)
+def CommitFinalized (Payload : Type)
     (vm : DeterministicVM (BlockId := BlockId) (Value := Value)) : Prop :=
   ∀ {U : BlockUniverse Validator BlockId Payload} {k : ℕ}
     (P : SigningRule M E U k vm),
@@ -124,7 +124,7 @@ hypotheses of `Hybrid.decided_of_leader_mem` over the online correct
 validators, a slot led by one of them reaches checkpoint finality. No
 commit is assumed; the proof derives the decisions it needs from
 production, synchrony, and caught-up views. -/
-def LiveCommitFinalized (Payload : Type*)
+def LiveCommitFinalized (Payload : Type)
     (vm : DeterministicVM (BlockId := BlockId) (Value := Value)) : Prop :=
   ∀ {U : BlockUniverse Validator BlockId Payload} {k : ℕ}
     (P : SigningRule M E U k vm) {R slot : ℕ},
@@ -150,7 +150,7 @@ hypotheses of `Hybrid.decided_agree`, commits for one slot in any two
 views yield the same checkpoint content. This claim is about the VM and
 base consensus alone, so it mentions neither the fault model nor an
 execution. -/
-def CommitCheckpointUnique (Payload : Type*)
+def CommitCheckpointUnique (Payload : Type)
     (vm : DeterministicVM (BlockId := BlockId) (Value := Value)) : Prop :=
   ∀ {U : BlockUniverse Validator BlockId Payload} {k : ℕ},
     HonestNoEquiv U → Hybrid.Admissible Validator k →

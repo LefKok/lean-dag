@@ -1,4 +1,4 @@
-import LeanDagTest.Hybrid
+import LeanDagTest.Hybrid.Model
 import LeanDag.Hybrid.Checkpoint.CommitProofs
 
 /-!
@@ -65,7 +65,7 @@ def partialView : View (Fin 9) (Fin 18) Unit Uhyb9 where
 
 example : partialView.ids ≠ (View.full Uhyb9).ids := by decide
 example :
-    (Hybrid.supportersIn Uhyb9 partialView 0 0).card = Hybrid.q (Fin 9) := by
+    (supportersIn Uhyb9 partialView 0 1).card = Hybrid.q (Fin 9) := by
   decide
 
 /-- The partial view also commits slot `0`, at the tight quorum. -/
@@ -89,7 +89,7 @@ round would exceed the universe's two rounds. -/
 theorem uhyb9_decided_eq {V : View (Fin 9) (Fin 18) Unit Uhyb9}
     {s : ℕ} {b : Fin 18} (h : Hybrid.Decided 4 Uhyb9 V s (some b)) :
     s = 0 ∧ b = 0 := by
-  have hL := Hybrid.isLeaderBlock_of_decided h
+  have hL := AnchoredRule.isLeaderBlock_of_decided h
   have hround := uhyb9_round_le b
   have hs : s ≤ 1 := by
     have := hL.2.1
@@ -97,17 +97,17 @@ theorem uhyb9_decided_eq {V : View (Fin 9) (Fin 18) Unit Uhyb9}
     omega
   interval_cases s
   · exact ⟨rfl, Option.some.inj
-      (Hybrid.decided_agree (by decide) (by decide) h uhyb9_slot0)⟩
+      (AnchoredRule.decided_agree (Hybrid.hybridLaws (by decide)) (by decide)
+        h uhyb9_slot0)⟩
   · exfalso
     cases h with
     | directCommit _ hdc =>
-      have hempty : blocksAt Uhyb9 2 = ∅ := by decide
-      have hfaults :
-          HybridFaults.fb (Fin 9) + HybridFaults.fc (Fin 9) = 2 := rfl
-      simp [Hybrid.DirectCommitIn, Hybrid.supportersIn, hempty,
-        creatorsOf, Hybrid.q, hfaults] at hdc
-    | @indirectCommit _ j A _ hlt _ hj _ _ _ _ =>
-      have hA := (Hybrid.isLeaderBlock_of_decided hj).2.1
+      have hnc : ∀ L : Fin 18,
+          ¬ Hybrid.DirectCommit Uhyb9 L (Slots.slotRound (Fin 9) 1) := by
+        decide
+      exact hnc b (Hybrid.directCommit_of_directCommitIn hdc)
+    | @indirectCommit _ j A _ _ hlt helig hj _ _ _ _ _ _ =>
+      have hA := (AnchoredRule.isLeaderBlock_of_decided hj).2.1
       have hAr := uhyb9_round_le A
       simp at hA
       omega
@@ -325,7 +325,7 @@ safety against `usync9_slot1`, and slot `2` lacks a supporter round. -/
 theorem usync9_decided_eq {V : View (Fin 9) (Fin 21) Unit Usync9}
     {s : ℕ} {b : Fin 21} (h : Hybrid.Decided 4 Usync9 V s (some b)) :
     s = 1 ∧ b = 7 := by
-  have hL := Hybrid.isLeaderBlock_of_decided h
+  have hL := AnchoredRule.isLeaderBlock_of_decided h
   have hround := usync9_round_le b
   have hs : s ≤ 2 := by
     have := hL.2.1
@@ -336,17 +336,17 @@ theorem usync9_decided_eq {V : View (Fin 9) (Fin 21) Unit Usync9}
     have hnone : ∀ L, ¬ IsLeaderBlock Usync9 0 L := by decide
     exact hnone b hL
   · exact ⟨rfl, Option.some.inj
-      (Hybrid.decided_agree (by decide) (by decide) h usync9_slot1)⟩
+      (AnchoredRule.decided_agree (Hybrid.hybridLaws (by decide)) (by decide)
+        h usync9_slot1)⟩
   · exfalso
     cases h with
     | directCommit _ hdc =>
-      have hempty : blocksAt Usync9 3 = ∅ := by decide
-      have hfaults :
-          HybridFaults.fb (Fin 9) + HybridFaults.fc (Fin 9) = 2 := rfl
-      simp [Hybrid.DirectCommitIn, Hybrid.supportersIn, hempty,
-        creatorsOf, Hybrid.q, hfaults] at hdc
-    | @indirectCommit _ j A _ hlt _ hj _ _ _ _ =>
-      have hA := (Hybrid.isLeaderBlock_of_decided hj).2.1
+      have hnc : ∀ L : Fin 21,
+          ¬ Hybrid.DirectCommit Usync9 L (Slots.slotRound (Fin 9) 2) := by
+        decide
+      exact hnc b (Hybrid.directCommit_of_directCommitIn hdc)
+    | @indirectCommit _ j A _ _ hlt helig hj _ _ _ _ _ _ =>
+      have hA := (AnchoredRule.isLeaderBlock_of_decided hj).2.1
       have hAr := usync9_round_le A
       simp at hA
       omega

@@ -11,7 +11,7 @@ names it proves.
 
 namespace LeanDag.Hybrid.Checkpoint
 
-variable {Validator BlockId Payload Value : Type*}
+variable {Validator BlockId Payload : Type} {Value : Type*}
 variable [Fintype Validator] [DecidableEq Validator]
 variable [H : HybridFaults Validator]
 variable [LinearOrder BlockId]
@@ -55,7 +55,8 @@ theorem emitted_of_decided (P : SigningRule M E U k vm)
     (hb : Hybrid.Decided k U (P.view v) slot (some b)) :
     E.emitted ⟨v, vm.checkpointAfterCommit slot block⟩ := by
   have heq : b = block :=
-    Option.some.inj (Hybrid.decided_agree hne hk hb commit)
+    Option.some.inj
+      (AnchoredRule.decided_agree (Hybrid.hybridLaws hk) hne hb commit)
   subst heq
   exact P.proposes v hv hb
 
@@ -128,13 +129,14 @@ end FlexibleFaults
 
 variable (Validator)
 
-/-- Proof of `CommitCheckpointUnique`: rewrite with
-`Hybrid.decided_agree`. -/
+/-- Proof of `CommitCheckpointUnique`: rewrite with the anchored
+relation's agreement at Hybrid's laws. -/
 theorem commitCheckpointUnique
-    (Payload : Type*)
+    (Payload : Type)
     (vm : DeterministicVM (BlockId := BlockId) (Value := Value)) :
     CommitCheckpointUnique Validator Payload vm := by
   intro U k hne hk V₁ V₂ slot block₁ block₂ commit₁ commit₂
-  rw [Option.some.inj (Hybrid.decided_agree hne hk commit₁ commit₂)]
+  rw [Option.some.inj
+    (AnchoredRule.decided_agree (Hybrid.hybridLaws hk) hne commit₁ commit₂)]
 
 end LeanDag.Hybrid.Checkpoint
