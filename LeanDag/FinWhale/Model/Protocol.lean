@@ -1,13 +1,13 @@
 import LeanDag.FinWhale.Model.Liveness
 import LeanDag.FinWhale.Model.Schedule
 import LeanDag.FinWhale.Model.Verdict
-
 /-!
 # FinWhale — one execution, and what a validator reads off it
 
 `Run` collects everything a deployment fixes: the blocks, the schedule
-and network that carried them, the rotation, the tie-break, the
-self-parent edge, and the liveness input of `Model/Liveness.lean`. It is
+and network that carried them, the rotation, the self-parent edge, and
+the liveness input of `Model/Liveness.lean`. The tie-break among an
+anchor's candidates is the least one, `chooseLeast`. It is
 the object the four guarantees are stated over, so that none of them has
 to mention a verdict assignment, a view, a well-formedness condition or a
 bound.
@@ -31,9 +31,8 @@ variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type} [DecidableEq BlockId] [LinearOrder BlockId] {Payload : Type}
 
 /-- **A run of FinWhale.** The blocks every correct validator ever holds,
-the schedule and network that carried them, and the two rules a
-validator applies: the rotation that names leaders and the tie-break that
-resolves an anchor's candidates. -/
+the schedule and network that carried them, and the rotation that names
+leaders. -/
 structure Run (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
     [Faults Validator] [Params Validator] [DecidableEq BlockId] [LinearOrder BlockId] where
   /-- Every block any correct validator holds. -/
@@ -57,10 +56,10 @@ structure Run (Validator BlockId Payload : Type) [Fintype Validator] [DecidableE
   /-- The leader schedule the execution runs. It belongs to the
   execution rather than to the DAG: a DAG is blocks, and a schedule is
   not (`docs/porting-plan.md`). -/
-  sched : Sched Validator
+  sched : Slots Validator
   /-- FinWhale runs one slot per round, which is what the reverse pass
   enumerates. -/
-  roundId : ∀ k, sched.round k = k
+  roundId : ∀ k, sched.slotRound k = k
   /-- The network has stabilised by this round. -/
   stable : ℕ
   /-- Which is past GST. -/
@@ -76,10 +75,6 @@ structure Run (Validator BlockId Payload : Type) [Fintype Validator] [DecidableE
   roundRobin : RoundRobin sched.leader
   /-- Every block references its author's previous block. -/
   selfParented : SelfParented dag
-  /-- The deterministic rule among an anchor's candidates. -/
-  choose : BlockId → ℕ → Option BlockId
-  /-- Which names only candidates, and names one where there is one. -/
-  chooseSound : ChooseSound sched dag choose
 
 namespace Run
 

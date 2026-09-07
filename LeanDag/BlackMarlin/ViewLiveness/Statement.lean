@@ -1,5 +1,4 @@
 import LeanDag.BlackMarlin.Agreement.Statement
-
 /-!
 # Black Marlin — liveness at a validator's view, stated
 

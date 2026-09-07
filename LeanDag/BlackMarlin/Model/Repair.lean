@@ -1,5 +1,4 @@
 import LeanDag.BlackMarlin.Model.Descent
-
 /-!
 # Black Marlin — the descent, repaired
 

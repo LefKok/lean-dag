@@ -1,5 +1,4 @@
 import LeanDag.Hydrozoan.ThresholdArithmetic.Statement
-
 /-!
 # Threshold arithmetic — proof
 

@@ -1,5 +1,4 @@
 import LeanDag.Hybrid.Checkpoint.BaseSpec
-
 /-!
 # Human-reviewed recovery specification
 

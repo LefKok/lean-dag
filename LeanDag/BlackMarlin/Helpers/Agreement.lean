@@ -1,5 +1,4 @@
 import LeanDag.BlackMarlin.Helpers.Reactive
-
 /-!
 # Black Marlin — the agreement layer
 

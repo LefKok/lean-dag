@@ -1,6 +1,5 @@
-import LeanDag.Validators
-import LeanDag.Causality
-
+import LeanDag.Common.Validators
+import LeanDag.Common.Causality
 /-!
 # Minnow — the commit rule `crs*`, as the paper defines it
 

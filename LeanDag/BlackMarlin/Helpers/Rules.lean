@@ -1,5 +1,4 @@
 import LeanDag.BlackMarlin.Model.Decision
-
 /-!
 # Black Marlin — the counting layer
 

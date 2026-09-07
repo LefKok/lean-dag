@@ -1,11 +1,12 @@
 import LeanDag.Hydrozoan.Model.DirectRules
-import LeanDag.Hydrozoan.Model.CausalHistory
-
+import LeanDag.Common.CausalHistory
 /-!
 # The graded indirect rule's ingredients
 
-Trusted core: anchor eligibility and the two rung tests of the paper's
-`DecideFromAnchor` (`sections/algorithms.tex`). Rung 1 asks for an
+Trusted core: the two rung tests of the paper's `DecideFromAnchor`
+(`sections/algorithms.tex`); anchor eligibility is the shared
+`EligibleAt` at wave two, the anchor's propose round strictly past the
+slot's decision round. Rung 1 asks for an
 anchor-linked certificate; rung 2 asks for `q_weak` anchor-linked votes —
 the fast path's weak footprint, read by the indirect rule. The strict
 rung ordering (certificate before weak) is not encoded here; it lives in
@@ -23,22 +24,10 @@ namespace LeanDag
 
 namespace Hydrozoan
 
-section Eligibility
-
-variable (Replica : Type*) [S : Slots Replica]
-
-/-- Slot `j` may anchor slot `k`: `j`'s propose round lies strictly past
-`k`'s decision round (the paper's `r_decision < s.round` in
-`TryIndirectDecide`) — anchors sit at round ≥ propose + 3. -/
-def EligibleAsAnchor (k j : ℕ) : Prop :=
-  decisionRound Replica k < S.slotRound j
-
-end Eligibility
-
 section RungTests
 
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
-  [DecidableEq BlockId] [F : Faults Replica]
+  [DecidableEq BlockId] [F : LeanDag.Hydrozoan.Faults Replica]
 
 /-- Rung 1's test: a certificate for `L` lies in the anchor's causal
 history — the paper's `∃ b : Link(b, b_anchor) ∧ IsCertificate(b, b_leader)`,
@@ -47,18 +36,18 @@ def CertifiedIn (U : BlockUniverse Replica BlockId) (A L : BlockId)
     (r : ℕ) : Prop :=
   ∃ C ∈ certificates U L r, Reaches U A C
 
-/-- Rung 2's test: `q_weak` distinct authors of anchor-reachable votes
+/-- Rung 2's test: `q_weak` distinct creators of anchor-reachable votes
 for `L` at the voting round — the paper's
-`|{b.author : Link(b, b_anchor) ∧ IsVote(b, b_leader)}| ≥ q_weak`.
+`|{b.creator : Link(b, b_anchor) ∧ IsVote(b, b_leader)}| ≥ q_weak`.
 
 Stated via an explicit witness set of vote blocks (see the module
 docstring): some set of voting-round blocks, each voting for `L` and
-reachable from the anchor `A`, carries `q_weak` distinct authors. -/
+reachable from the anchor `A`, carries `q_weak` distinct creators. -/
 def WeakLinked (U : BlockUniverse Replica BlockId) (A L : BlockId)
     (r : ℕ) : Prop :=
   ∃ s : Finset BlockId,
     (∀ b ∈ s, b ∈ blocksAt U (r + 1) ∧ IsVote U b L ∧ Reaches U A b) ∧
-    qWeak Replica ≤ (authorsOf U.block s).card
+    qWeak Replica ≤ (creatorsOf U.block s).card
 
 end RungTests
 

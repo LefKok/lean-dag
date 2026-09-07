@@ -1,7 +1,6 @@
 import LeanDagTest.Barnacle.Progress
 import LeanDag.Barnacle.Heads.Proof
 import LeanDag.Barnacle.MysticetiLive.Proof
-
 /-!
 # Barnacle witnesses — the heads descent on data
 
@@ -209,7 +208,7 @@ theorem bnLiveSk_descent : bnLiveSk.Descent 1 where
     obtain ⟨L, hL⟩ := usk_goodT S κ h1 h2 h3
     -- every block of `Usk` lies at a round the view covers
     have hround : ∀ b ∈ Usk.ids, (Usk.block b).round ≤ 8 := by decide
-    exact ⟨L, decided_mono (S := S) (fun b hb => hcov b hb (hround b hb)) hL⟩
+    exact ⟨L, AnchoredRule.decided_mono coreLaws trivial (S := S) (fun b hb => hcov b hb (hround b hb)) hL⟩
   indirect := mysticetiLive_descent.indirect
 
 /-- Slot `2` of `Sched 1` is directly skipped on `Usk`. -/

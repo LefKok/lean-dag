@@ -1,5 +1,4 @@
 import LeanDag.MahiMahi.Model.Good
-
 /-!
 # Mahi-Mahi — the unpredictable-leader clause
 
@@ -35,9 +34,9 @@ namespace LeanDag
 
 namespace MahiMahi
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator]
-variable {BlockId : Type*} [LinearOrder BlockId] {Payload : Type*}
+variable {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
 
 /-- **Two universes agree up to round `d`**: the same ids at rounds `≤ d`,
 denoting the same blocks. What the measurability result MM2′ consumes —
@@ -61,7 +60,7 @@ def UnpredictableWithin (U : BlockUniverse Validator BlockId Payload)
     (w c N : ℕ) : Prop :=
   ∀ k,
     -- the window's last decision round lies below the horizon
-    decisionRound Validator w (k + c) ≤ N →
+    (mahiMahiAnchored Validator BlockId Payload w).decisionRound (k + c) ≤ N →
     -- some slot of the window is led by a validator whose block commits
     ∃ k', k ≤ k' ∧ k' < k + c ∧ S.leader k' ∈ good U w k'
 
@@ -73,16 +72,13 @@ def UnpredictableRunWithin (U : BlockUniverse Validator BlockId Payload)
     (w c d N : ℕ) : Prop :=
   ∀ k,
     -- the latest run's last decision round lies below the horizon
-    decisionRound Validator w (k + c + d - 1) ≤ N →
+    (mahiMahiAnchored Validator BlockId Payload w).decisionRound (k + c + d - 1) ≤ N →
     -- some run of d slots starting in the window is led by committed candidates
     ∃ k', k ≤ k' ∧ k' < k + c ∧ ∀ i < d, S.leader (k' + i) ∈ good U w (k' + i)
 
-variable (Validator) in
-/-- **A run of `c` slots spans eligibility**: every slot below its start
-is eligible for its last slot. The core's `SpansEligible` at wave `w`;
-at one leader per round it holds for `c = w`. -/
-def SpansEligible (w c : ℕ) : Prop :=
-  ∀ b i : ℕ, i < b → Eligible Validator w i (b + c - 1)
+/-! A run of `c` slots spanning eligibility — every slot below its start
+eligible for its last slot — is the relation's `SpansEligible` at wave
+`w`; at one leader per round it holds for `c = w`. -/
 
 end Slots
 

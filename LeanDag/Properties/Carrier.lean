@@ -1,6 +1,5 @@
-import LeanDag.Causality
-import LeanDag.Schedule
-
+import LeanDag.Common.Causality
+import LeanDag.Common.Schedule
 /-!
 # The carrier a target property talks about
 
@@ -24,16 +23,13 @@ recovery, chain quality — to the adaptive leader count. A protocol
 shows conformance to `DagRule`; each mechanism reads only `DagRule` and
 the properties; no mechanism refers to another.
 
-**Why a record of uses is enough here, when `hydrozoan-integration.md`
-§9 says it is not.** That section argues no `BaseRule`-shaped interface
-can carry `decided_chop`, because `BaseRule.Decided` is a field with no
-constructors while the transport proof is a structural induction over
-derivations. The argument is correct and it does not apply to this arc,
-because **nothing here inducts on `Decided`**. Locality and persistence
-are *hypotheses*; a protocol discharges them by induction over its own
+**Why a record of uses is enough.** `DagRule.Decided` is a field with no
+constructors, so nothing stated over a `DagRule` can induct on a
+derivation. Nothing here needs to: locality and persistence are
+*hypotheses*, which a protocol discharges by induction over its own
 relation, where the constructors are available, and the mechanism
-theorems then consume them without induction. §9 blocks deriving the
-properties from the interface, not assuming them over it.
+theorems then consume them without induction. The interface assumes
+the properties over the carrier; it does not derive them from it.
 
 Three things this file supplies:
 

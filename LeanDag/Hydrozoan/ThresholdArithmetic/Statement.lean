@@ -1,5 +1,4 @@
 import LeanDag.Hydrozoan.Model.Faults
-
 /-!
 # Threshold arithmetic — statement
 
@@ -24,7 +23,7 @@ namespace Hydrozoan
 
 namespace ThresholdArithmetic
 
-variable (Replica : Type*) [Fintype Replica] [DecidableEq Replica] [F : Faults Replica]
+variable (Replica : Type*) [Fintype Replica] [DecidableEq Replica] [F : LeanDag.Hydrozoan.Faults Replica]
 
 /-- **Certificate uniqueness**, `2·q_cert > n + f`: two certificate vote
 sets must overlap in a non-Byzantine replica, so no two conflicting blocks
@@ -47,19 +46,19 @@ def FastStarvation : Prop :=
   Fintype.card Replica + F.f < qFast Replica + qWeak Replica
 
 /-- **The slow path is collectible**, `q_cert ≤ q`: a decision-round block
-references `q` parents, so a certificate's `q_cert` votes fit among them —
+references `q` refs, so a certificate's `q_cert` votes fit among them —
 the certificate threshold never outruns what a single block can carry. -/
 def SlowCollectible : Prop :=
   qCert Replica ≤ q Replica
 
 /-- **An anchor sees any slow commit**, `q + q_slow > n + f` (the note's
-identity `Q + SLOW = n + f + 1`): an anchor's `q` parents meet the
+identity `Q + SLOW = n + f + 1`): an anchor's `q` refs meet the
 `q_slow` certificates of any slow commit in a non-Byzantine replica. -/
 def AnchorSeesSlow : Prop :=
   Fintype.card Replica + F.f < q Replica + qSlow Replica
 
 /-- **An anchor sees the fast footprint**: a fast quorum (`q_fast`
-voters) and an anchor's parent set (`q` authors) always intersect in at
+voters) and an anchor's parent set (`q` creators) always intersect in at
 least `q_weak` replicas — and that intersection is exactly the
 anchor-linked votes the graded indirect rule counts. So for a
 fast-committed leader every anchor reaches at least the weak rung, and
@@ -75,7 +74,7 @@ def AnchorSeesFast : Prop :=
 /-- The full slack-cap table, for every fault configuration the model
 admits — no analogue of Hydrangea's Theorem 1 slack cap is assumed. -/
 def Statement : Prop :=
-  ∀ (Replica : Type) [Fintype Replica] [DecidableEq Replica] [Faults Replica],
+  ∀ (Replica : Type) [Fintype Replica] [DecidableEq Replica] [LeanDag.Hydrozoan.Faults Replica],
     CertUniqueness Replica ∧ FastUniqueness Replica ∧ FastStarvation Replica ∧
       SlowCollectible Replica ∧ AnchorSeesSlow Replica ∧ AnchorSeesFast Replica
 

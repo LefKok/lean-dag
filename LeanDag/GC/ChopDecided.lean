@@ -1,6 +1,5 @@
 import LeanDag.GC.Chop
-import LeanDag.Liveness
-
+import LeanDag.Mysticeti.Liveness
 /-!
 # Decisions survive the cut
 
@@ -57,29 +56,8 @@ variable {G : ℕ}
 
 /-! ## The truncated view -/
 
-/-- A validator's view, truncated at the horizon: keep what clears the cut.
-Closure survives: a retained block's references sit one round below it,
-hence at or above the cut — except at the base layer, where they are gone. -/
-def View.chop (V : View Validator BlockId Payload U) (G : ℕ) :
-    View Validator BlockId Payload (chop U G) where
-  ids := V.ids.filter fun i => G ≤ (U.block i).round
-  subset_ids := by
-    intro i hi
-    rw [Finset.mem_filter] at hi
-    exact mem_chop_ids.mpr ⟨V.subset_ids hi.1, hi.2⟩
-  complete := by
-    intro i hi j hj
-    rw [Finset.mem_filter] at hi
-    rw [chop_block_eq] at hj
-    rcases Nat.lt_or_ge G (U.block i).round with hlt | hge
-    · rw [chopBlock_refs_of_lt hlt] at hj
-      have := U.round_of_mem_refs (V.subset_ids hi.1) hj
-      exact Finset.mem_filter.mpr ⟨V.complete i hi.1 j hj, by omega⟩
-    · rw [chopBlock_refs_of_le hge] at hj
-      simp at hj
-
-theorem View.chop_ids (V : View Validator BlockId Payload U) :
-    (V.chop G).ids = V.ids.filter fun i => G ≤ (U.block i).round := rfl
+/-! A validator's view, truncated at the horizon, is the record's
+`View.chop` (`Record/Chop.lean`): keep what clears the cut. -/
 
 /-! ## The induced schedule -/
 

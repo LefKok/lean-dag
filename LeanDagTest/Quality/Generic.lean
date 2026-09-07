@@ -6,7 +6,6 @@ import LeanDag.Nemo.Carrier
 import LeanDag.Hybrid.Carrier
 import LeanDag.OptimalHydrozoan.Carrier
 import LeanDag.MahiMahi.Carrier
-
 /-!
 # Chain quality for a second and third rule
 

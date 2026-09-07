@@ -1,6 +1,5 @@
 import LeanDag.Barnacle.Heads.Statement
 import LeanDag.Barnacle.Helpers.Heads
-
 /-!
 # BN9 — proof
 

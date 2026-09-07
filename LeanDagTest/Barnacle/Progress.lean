@@ -74,7 +74,7 @@ theorem transport_full {V : bnLive.View Usun}
     {v : Option (Fin 32)} (h : Decided (S := S) Usun (View.full Usun) κ v) :
     Decided (S := S) Usun V κ v := by
   have hround : ∀ b ∈ Usun.ids, (Usun.block b).round ≤ 8 := by decide
-  exact decided_mono (S := S) (fun b hb => hcov b hb (hround b hb)) h
+  exact AnchoredRule.decided_mono coreLaws trivial (S := S) (fun b hb => hcov b hb (hround b hb)) h
 
 /-- `LiveOn` at count `1`, gap `0`, on `Usun`: slots `1`–`5` commit directly. -/
 theorem bnLive_liveOn : bnLive.LiveOn sched1 0 := by
@@ -345,7 +345,7 @@ theorem no_commit6 : ∀ L, ¬ bnRule32.Decided sched1 (bnLive9.full Usun) 6 (so
   | directCommit hcand hdir =>
     have := hall6 L hcand; subst this
     exact absurd hdir (by decide)
-  | indirectCommit _ _ _ _ hcand hcert =>
+  | indirectCommit _ _ _ _ _ _ hcand hcert _ =>
     have := hall6 L hcand; subst this
     obtain ⟨C, hC⟩ := certificates_nonempty_of_certifiedIn hcert
     simp only [Sched_slotRound, Nat.div_one, cert26] at hC
@@ -420,7 +420,7 @@ theorem transport_full_sk {V : bnLiveSk.View Usk}
     {v : Option (Fin 32)} (h : Decided (S := S) Usk (View.full Usk) κ v) :
     Decided (S := S) Usk V κ v := by
   have hround : ∀ b ∈ Usk.ids, (Usk.block b).round ≤ 8 := by decide
-  exact decided_mono (S := S) (fun b hb => hcov b hb (hround b hb)) h
+  exact AnchoredRule.decided_mono coreLaws trivial (S := S) (fun b hb => hcov b hb (hround b hb)) h
 
 /-- Gap `1`: the round-`2` window is answered by slot `3`. -/
 theorem bnLiveSk_liveOn1 : bnLiveSk.LiveOn sched1 1 := by

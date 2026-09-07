@@ -1,115 +1,53 @@
 import LeanDag.Odontoceti.Rules
-import LeanDag.Liveness
-
+import LeanDag.Common.Anchored.Bounded
 /-!
-# Odontoceti: the decision relation, and agreement
+# Odontoceti: the decision relation
 
-`odontoceti.md` §4, OP3 — `Decided`, its view layer, and **O5**
-(`decided_unique`, the M6 analogue): no two validators reach conflicting
-decisions for a slot, whatever views they hold and whichever routes they
-took.
+`odontoceti.md` §4, OP3. Odontoceti decides by the anchored relation
+(`Anchored.lean`) at its data: wavelength one — supports at the decision
+round are the whole story, there is no certificate round — the
+supporter-quorum direct commit, the core's slot-level direct skip, and
+one rung of link, `ThickLink`, with the **least** linked candidate
+committed. That tie-break is not decoration — it is a gap in the thesis
+made explicit. Lemma 5's proof asserts that sharing an anchor yields
+agreement, but nothing in the quorum arithmetic prevents two
+equivocating candidates from *both* passing `ThickLink` at one anchor
+(the witness file realises exactly that configuration on data at
+`n = 5f+1`); the implementation's determinism — the iteration order of
+`GetLeaderBlocks` — is what actually arbitrates, and the tie is that
+determinism as mathematics, under `[LinearOrder BlockId]`.
 
-The relation mirrors Mysticeti's constructor for constructor — direct
-commit, direct skip quantified over all candidate blocks, and the
-indirect rules through the nearest eligible anchor with the positive
-intermediate premise — with two deliberate differences:
-
-* **The wavelength.** `decisionRound k = slotRound k + 1`: supports at
-  the decision round are the whole story, there is no certificate
-  round, and eligibility starts one round earlier
-  (`Eligible k j ↔ slotRound k + 2 ≤ slotRound j`).
-* **The canonical candidate.** `indirectCommit` carries a minimality
-  premise: the committed block is the `≤`-least candidate passing the
-  indirect test at the anchor. This is not decoration — it is a **gap
-  in the thesis** made explicit. Lemma 5's proof asserts that sharing
-  an anchor yields agreement, but nothing in the quorum arithmetic
-  prevents two equivocating candidates from *both* passing ThickLink at
-  one anchor (the witness file realises exactly that configuration on
-  data at `n = 5f+1`); the implementation's determinism — the iteration
-  order of `GetLeaderBlocks` — is what actually arbitrates, and the
-  minimality premise is that determinism as mathematics, under
-  `[LinearOrder BlockId]` (hash order, in an implementation). Every
-  *other* pairing closes by counting alone: direct-vs-direct by O1/O1′,
-  the direct-vs-indirect crossings by O2/O3/O4′ — a directly committed
-  block is the unique candidate that can pass the test anywhere, which
-  is why the direct verdicts need no canonicity.
+What Odontoceti proves is `odontocetiLaws`: the direct/direct cases by
+O1/O1′, the direct-versus-indirect crossings by O2/O3/O4′ — a directly
+committed block is the unique candidate that can pass the test
+anywhere, which is why the direct verdicts need no tie — and two
+tie-break choices equal by antisymmetry. Agreement (O5), the band and
+the descent are the relation's.
 -/
 
 namespace LeanDag
 
 namespace Odontoceti
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults5 Validator]
-variable {BlockId : Type*} [LinearOrder BlockId] {Payload : Type*}
+variable {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
 variable {U : BlockUniverse Validator BlockId Payload}
 variable [S : Slots Validator]
 variable {L A : BlockId} {r k : ℕ}
 
-/-! ## Eligibility at wavelength two -/
-
-variable (Validator) in
-/-- The round at which a slot's verdict is settled: its supports live
-here. One round, not two — there is no certificate round. -/
-def decisionRound (k : ℕ) : ℕ := S.slotRound k + 1
-
-variable (Validator) in
-/-- `j` may anchor `k`: its proposal lies past `k`'s decision round. A
-predicate on the slot pair alone — which is what lets the agreement
-induction match two validators' premises against each other. -/
-def Eligible (k j : ℕ) : Prop := decisionRound Validator k < S.slotRound j
-
-omit [Fintype Validator] [DecidableEq Validator] F in
-/-- Eligibility, unfolded. Two rounds rather than Mysticeti's three, which is what the stronger committee affords. -/
-theorem eligible_iff {k j : ℕ} :
-    Eligible Validator k j ↔ S.slotRound k + 2 ≤ S.slotRound j := by
-  simp [Eligible, decisionRound]
-  omega
-
-instance decidableEligible (k j : ℕ) : Decidable (Eligible Validator k j) :=
-  inferInstanceAs (Decidable (decisionRound Validator k < S.slotRound j))
-
-omit [Fintype Validator] [DecidableEq Validator] F in
-/-- An eligible anchor is a later slot. -/
-theorem lt_of_eligible {k j : ℕ} (h : Eligible Validator k j) : k < j := by
-  by_contra hle
-  have : S.slotRound j ≤ S.slotRound k := S.mono (by omega)
-  rw [eligible_iff] at h
-  omega
-
-/-- The anchor's round clears the slot's decision round by one — enough
-for O3 to read the whole certificate out of its cone. -/
-theorem anchor_round_le {j : ℕ} (hA : IsLeaderBlock U j A)
-    (helig : Eligible Validator k j) :
-    S.slotRound k + 2 ≤ (U.block A).round := by
-  rw [hA.2.1]
-  exact eligible_iff.mp helig
-
 /-! ## The view-relative direct rules -/
 
-/-- The supporters a view actually holds. -/
-def supportersIn (U : BlockUniverse Validator BlockId Payload)
-    (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) :
-    Finset Validator :=
-  creatorsOf U.block
-    (((blocksAt U (r + 1)).filter (fun q => L ∈ (U.block q).refs)) ∩ V.ids)
-
-/-- The blamers a view actually holds. -/
-def blamesIn (U : BlockUniverse Validator BlockId Payload)
-    (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) :
-    Finset Validator :=
-  creatorsOf U.block
-    (((blocksAt U (r + 1)).filter (fun q => L ∉ (U.block q).refs)) ∩ V.ids)
-
-/-- Direct commit, as judged from a single view. -/
+/-- Direct commit, as judged from a single view: the record's
+`supportersIn`, at the round above `L`. -/
 def DirectCommitIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  quorumCard Validator ≤ (supportersIn U V L r).card
+  quorumCard Validator ≤ (supportersIn U V L (r + 1)).card
 
-/-- Direct skip, as judged from a single view. -/
+/-- Direct skip, as judged from a single view: the record's `blamesIn`. -/
 def DirectSkipIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  quorumCard Validator ≤ (blamesIn U V L r).card
+  quorumCard Validator ≤ (blamesIn U V L (r + 1)).card
 
 instance {V : View Validator BlockId Payload U} :
     Decidable (DirectCommitIn U V L r) :=
@@ -174,147 +112,93 @@ theorem eq_of_directCommitIn_of_thickLink
   eq_of_directCommit_of_thickLink (directCommit_of_directCommitIn h₁) ht
     (by rw [hL₁.2.2, hL₂.2.2])
 
-/-! ## The decision relation -/
+/-! ## The relation -/
 
-/-- `Decided U V k v` — a validator holding `V` has settled slot `k`.
+omit S in
+/-- **Odontoceti as an anchored rule.** -/
+def odontocetiAnchored (Validator BlockId Payload : Type) [Fintype Validator]
+    [DecidableEq Validator] [Faults5 Validator] [LinearOrder BlockId] :
+    AnchoredRule Validator BlockId Payload ValidWrt Correct where
+  wave := 1
+  Commit := fun U V L r => Odontoceti.DirectCommitIn U V L r
+  Skip := fun U V S k => DirectSkipSlotIn (S := S) U V k
+  rungs := 1
+  Link := fun _ U A L S k => ThickLink U A L (S.slotRound k)
+  tie := fun _ L L' => L < L'
 
-Mirrors Mysticeti's relation: the anchor is the **nearest eligible**
-committed slot (the intermediate premise, stated positively), and the
-skip case quantifies over all candidate blocks. The one new element is
-the canonicity premise on `indirectCommit` — the committed candidate is
-the `≤`-least one passing the test at the anchor — which is the
-implementation's deterministic iteration order made explicit; see the
-module docstring for why agreement is unprovable without it. -/
-inductive Decided (U : BlockUniverse Validator BlockId Payload)
-    (V : View Validator BlockId Payload U) : ℕ → Option BlockId → Prop
-  /-- The direct rule commits a candidate outright. -/
-  | directCommit {k : ℕ} {L : BlockId} :
-      IsLeaderBlock U k L → DirectCommitIn U V L (S.slotRound k) →
-      Decided U V k (some L)
-  /-- The direct rule skips the slot: a quorum of voting-round blocks in
-  view references no candidate of it. Required whatever the slot holds,
-  an absent leader included, which is what makes a skip final.
+omit S in
+@[simp] theorem odontocetiAnchored_wave :
+    (odontocetiAnchored Validator BlockId Payload).wave = 1 := rfl
+omit S in
+@[simp] theorem odontocetiAnchored_rungs :
+    (odontocetiAnchored Validator BlockId Payload).rungs = 1 := rfl
 
-  `DirectSkipSlotIn` is the core's, reused unchanged: both rules blame
-  at `slotRound k + 1` and both count creators against `quorumCard`, so
-  the repaired premise is literally the same predicate. -/
-  | directSkip {k : ℕ} :
-      DirectSkipSlotIn U V k →
-      Decided U V k none
-  /-- Anchored on the nearest eligible committed slot, the least
-  candidate passing the indirect test is committed. -/
-  | indirectCommit {k j : ℕ} {A L : BlockId} :
-      k < j → Eligible Validator k j → Decided U V j (some A) →
-      (∀ i, k < i → i < j → Eligible Validator k i → Decided U V i none) →
-      IsLeaderBlock U k L → ThickLink U A L (S.slotRound k) →
-      (∀ L', IsLeaderBlock U k L' → ThickLink U A L' (S.slotRound k) →
-        ¬ L' < L) →
-      Decided U V k (some L)
-  /-- Anchored on the nearest eligible committed slot, no candidate
-  passes the indirect test. -/
-  | indirectSkip {k j : ℕ} {A : BlockId} :
-      k < j → Eligible Validator k j → Decided U V j (some A) →
-      (∀ i, k < i → i < j → Eligible Validator k i → Decided U V i none) →
-      (∀ L, IsLeaderBlock U k L → ¬ ThickLink U A L (S.slotRound k)) →
-      Decided U V k none
+instance {V : View Validator BlockId Payload U} (L : BlockId) (r : ℕ) :
+    Decidable ((odontocetiAnchored Validator BlockId Payload).Commit U V L r) :=
+  inferInstanceAs (Decidable (Odontoceti.DirectCommitIn U V L r))
 
-/-- A committed slot's block is a candidate of that slot. -/
-theorem isLeaderBlock_of_decided {V : View Validator BlockId Payload U}
-    {j : ℕ} {A : BlockId} (h : Decided U V j (some A)) :
-    IsLeaderBlock U j A := by
-  cases h with
-  | directCommit hL _ => exact hL
-  | indirectCommit _ _ _ _ hL _ _ => exact hL
+instance {V : View Validator BlockId Payload U} (k : ℕ) :
+    Decidable ((odontocetiAnchored Validator BlockId Payload).Skip U V S k) :=
+  inferInstanceAs (Decidable (DirectSkipSlotIn (S := S) U V k))
 
-/-! ## O5 — agreement -/
+instance (i : ℕ) (A L : BlockId) (S : Slots Validator) (k : ℕ) :
+    Decidable ((odontocetiAnchored Validator BlockId Payload).Link i U A L S k) :=
+  inferInstanceAs (Decidable (ThickLink U A L (S.slotRound k)))
 
-/-- **Visibility from an anchor.** A slot committed directly carries a
-thick link at any eligible anchor above it — the two-round counterpart of
-`certifiedIn_of_directCommitIn_at_anchor`, with `anchor_round_le`
-supplying the round gap that eligibility guarantees.
+/-- **The decision relation**: the anchored relation at Odontoceti's data. -/
+abbrev Decided (U : BlockUniverse Validator BlockId Payload) (V : View Validator BlockId Payload U) :
+    ℕ → Option BlockId → Prop :=
+  (odontocetiAnchored Validator BlockId Payload).Decided (S := S) U V
 
-This is what rules out the mixed cases, where one validator commits
-directly and the other skips indirectly: the skipper's own anchor is
-where the commit becomes visible. -/
-theorem thickLink_of_directCommitIn_at_anchor
-    {V W : View Validator BlockId Payload U} {k j : ℕ} {L A : BlockId}
-    (h : DirectCommitIn U V L (S.slotRound k))
-    (hj : Decided U W j (some A)) (helig : Eligible Validator k j) :
-    ThickLink U A L (S.slotRound k) :=
-  thickLink_of_directCommitIn h (isLeaderBlock_of_decided hj).1
-    (anchor_round_le (isLeaderBlock_of_decided hj) helig)
+namespace Decided
+export AnchoredRule.Decided (directCommit directSkip indirectCommit indirectSkip)
+end Decided
 
-/-- **O5 (thesis Lemma 5; the M6 analogue).** No two validators reach
-conflicting decisions for a slot, whatever views they hold and
-whichever routes they took.
+/-- **The bounded relation**, at Odontoceti's data. -/
+abbrev DecidedWithin (U : BlockUniverse Validator BlockId Payload)
+    (V : View Validator BlockId Payload U) (B : ℕ) : ℕ → Option BlockId → Prop :=
+  (odontocetiAnchored Validator BlockId Payload).DecidedWithin (S := S) U V B
 
-Structural induction on the first derivation, exactly M6's shape. The
-direct/direct diagonal closes by O1/O1′; every direct-versus-indirect
-crossing closes by O2/O3/O4′ — the two-round replacements for
-M2/M3/M4/M5′; and the one real case, indirect against indirect, closes
-by the anchor trichotomy: an earlier anchor is covered by the *other*
-validator's intermediate-skip premise, and a shared anchor forces a
-shared verdict — skip against commit by the `hnone` premise, commit
-against commit by canonicity, which is the step the thesis's Lemma 5
-takes silently. -/
-theorem decided_unique {V₁ : View Validator BlockId Payload U} {k : ℕ}
-    {v₁ : Option BlockId} (h₁ : Decided U V₁ k v₁) :
-    ∀ (V₂ : View Validator BlockId Payload U) (v₂ : Option BlockId),
-      Decided U V₂ k v₂ → v₁ = v₂ := by
-  induction h₁ with
-  | @directCommit k L hL h =>
-    intro V₂ v₂ h₂
-    cases h₂ with
-    | directCommit hL₂ h₂ =>
-      exact congrArg some (eq_of_directCommitIn hL hL₂ h h₂)
-    | directSkip hskip =>
-      exact absurd (not_directSkipIn_of_directCommitIn h
-        (directSkipIn_of_directSkipSlotIn hskip hL))
-        not_false
-    | indirectCommit _ _ _ _ hL₂ ht₂ _ =>
-      exact congrArg some (eq_of_directCommitIn_of_thickLink hL hL₂ h ht₂)
-    | @indirectSkip _ j A hkj helig hj hmid hnone =>
-      -- visibility: our commit is seen from their anchor
-      exact absurd (thickLink_of_directCommitIn_at_anchor h hj helig) (hnone _ hL)
-  | @directSkip k hskip =>
-    intro V₂ v₂ h₂
-    cases h₂ with
-    | @directCommit _ L₂ hL₂ h₂ =>
-      exact absurd (not_directSkipIn_of_directCommitIn h₂
-        (directSkipIn_of_directSkipSlotIn hskip hL₂))
-        not_false
-    | directSkip _ => rfl
-    | indirectCommit _ _ _ _ hL₂ ht₂ _ =>
-      exact absurd ht₂ (not_thickLink_of_directSkipIn
-        (directSkipIn_of_directSkipSlotIn hskip hL₂) _)
-    | indirectSkip _ _ _ _ _ => rfl
-  | @indirectCommit k j A L hkj helig hj hmid hL ht hmin ihj ihmid =>
-    intro V₂ v₂ h₂
-    cases h₂ with
-    | directCommit hL₂ h₂ =>
-      exact congrArg some
-        (eq_of_directCommitIn_of_thickLink hL₂ hL h₂ ht).symm
-    | directSkip hskip₂ =>
-      exact absurd ht (not_thickLink_of_directSkipIn
-        (directSkipIn_of_directSkipSlotIn hskip₂ hL) _)
-    | @indirectCommit _ j₂ A₂ L₂ hkj₂ helig₂ hj₂ hmid₂ hL₂ ht₂ hmin₂ =>
-      obtain ⟨rfl, rfl⟩ := anchor_eq hkj helig hkj₂ helig₂ hj₂ hmid₂ ihj ihmid
-      -- shared anchor: canonicity arbitrates
-      exact congrArg some (le_antisymm
-        (not_lt.mp (hmin L₂ hL₂ ht₂)) (not_lt.mp (hmin₂ L hL ht)))
-    | @indirectSkip _ j₂ A₂ hkj₂ helig₂ hj₂ hmid₂ hnone₂ =>
-      obtain ⟨rfl, rfl⟩ := anchor_eq hkj helig hkj₂ helig₂ hj₂ hmid₂ ihj ihmid
-      exact absurd ht (hnone₂ _ hL)
-  | @indirectSkip k j A hkj helig hj hmid hnone ihj ihmid =>
-    intro V₂ v₂ h₂
-    cases h₂ with
-    | directCommit hL₂ h₂ =>
-      exact absurd (thickLink_of_directCommitIn_at_anchor h₂ hj helig) (hnone _ hL₂)
-    | directSkip _ => rfl
-    | @indirectCommit _ j₂ A₂ L₂ hkj₂ helig₂ hj₂ hmid₂ hL₂ ht₂ hmin₂ =>
-      obtain ⟨rfl, rfl⟩ := anchor_eq hkj helig hkj₂ helig₂ hj₂ hmid₂ ihj ihmid
-      exact absurd ht₂ (hnone _ hL₂)
-    | indirectSkip _ _ _ _ _ => rfl
+namespace DecidedWithin
+export AnchoredRule.DecidedWithin (directCommit directSkip indirectCommit indirectSkip)
+end DecidedWithin
+
+omit S in
+/-- **Odontoceti's laws.** -/
+theorem odontocetiLaws : (odontocetiAnchored Validator BlockId Payload).Laws where
+  commit_unique := fun _ hL₁ hL₂ h₁ h₂ => eq_of_directCommitIn hL₁ hL₂ h₁ h₂
+  commit_skip := fun _ hL h hskip =>
+    not_directSkipIn_of_directCommitIn h (directSkipIn_of_directSkipSlotIn hskip hL)
+  commit_link := fun _ _ h hA helig => ⟨0, Nat.one_pos, thickLink_of_directCommitIn h hA.1 (by
+    have := (odontocetiAnchored Validator BlockId Payload).anchor_round_le hA helig
+    simp only [odontocetiAnchored_wave] at this; omega)⟩
+  commit_link_unique := by
+    intro S U V k j i L₁ L₂ A _ hL₁ hL₂ h _ _ _ _ hlink _
+    exact eq_of_directCommitIn_of_thickLink hL₁ hL₂ h hlink
+  skip_link := fun _ hskip hL _ =>
+    not_thickLink_of_directSkipIn (directSkipIn_of_directSkipSlotIn hskip hL) _
+  link_unique := by
+    intro S U k j i L₁ L₂ A _ hL₁ hL₂ _ _ _ _ hl₁ hl₂ hm₁ hm₂
+    exact le_antisymm (not_lt.mp (show ¬ L₂ < L₁ from hm₁ L₂ hL₂ hl₂))
+      (not_lt.mp (show ¬ L₁ < L₂ from hm₂ L₁ hL₁ hl₁))
+  commit_mono := fun _ hsub h => le_trans h (Finset.card_le_card (supportersIn_mono hsub))
+  skip_mono := fun _ hsub h => directSkipSlotIn_mono hsub h
+  skip_congr := fun _ hround hk h => directSkipSlotIn_congr hround hk h
+  link_congr := fun hround _ h => by
+    change ThickLink _ _ _ _ at h ⊢
+    rwa [← hround]
+
+omit S in
+/-- The rung's tie is the order, so a nonempty rung has a least
+candidate. -/
+theorem exists_least {S : Slots Validator} {U : BlockUniverse Validator BlockId Payload}
+    {A : BlockId} {i k : ℕ} (_ : i < (odontocetiAnchored Validator BlockId Payload).rungs)
+    (h : ∃ L, IsLeaderBlock (S := S) U k L ∧
+      (odontocetiAnchored Validator BlockId Payload).Link i U A L S k) :
+    ∃ L, IsLeaderBlock (S := S) U k L ∧
+      (odontocetiAnchored Validator BlockId Payload).Link i U A L S k ∧
+      (odontocetiAnchored Validator BlockId Payload).Least (S := S) U A i k L :=
+  AnchoredRule.exists_least_of_lt (fun _ _ => Iff.rfl) h
 
 end Odontoceti
 

@@ -1,7 +1,6 @@
 import LeanDag.Properties.Arcs.Stack
 import LeanDag.Properties.Arcs.Quality
 import LeanDag.Properties.Derived.FromBand
-
 /-!
 # The headline theorems: safety and liveness, from the properties
 

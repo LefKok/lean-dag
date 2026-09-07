@@ -1,6 +1,5 @@
 import LeanDag.DoS.Counting
-import LeanDag.Persistence
-
+import LeanDag.Common.Persistence
 /-!
 # Safety and the DoS condition do not interact
 
@@ -82,13 +81,13 @@ variable [S : Slots Validator]
 /-- **M6 (agreement)** under the condition. -/
 example (_hdos : DoSValid U) {V₁ V₂ : View Validator BlockId Payload U} {k : ℕ}
     {v₁ v₂ : Option BlockId} (h₁ : Decided U V₁ k v₁) (h₂ : Decided U V₂ k v₂) : v₁ = v₂ :=
-  decided_agree h₁ h₂
+  AnchoredRule.decided_agree coreLaws trivial h₁ h₂
 
 /-- **L2 (decisions are monotone in the view)** under the condition. -/
 example (_hdos : DoSValid U) {V V' : View Validator BlockId Payload U}
     (hsub : V.ids ⊆ V'.ids) {k : ℕ} {v : Option BlockId} (h : Decided U V k v) :
     Decided U V' k v :=
-  decided_mono hsub h
+  AnchoredRule.decided_mono coreLaws trivial hsub h
 
 /-! ## And in the other direction
 

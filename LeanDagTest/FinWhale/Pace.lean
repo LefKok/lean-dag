@@ -1,11 +1,10 @@
-import LeanDagTest.ViewPace
-import LeanDagTest.Reactive
+import LeanDagTest.Mysticeti.ViewPace
+import LeanDagTest.Reactive.Model
 import LeanDag.FinWhale.View
 import LeanDag.FinWhale.Reactive
 import LeanDag.FinWhale.Validity
 import LeanDag.FinWhale.Creation
 import LeanDag.FinWhale.Protocol
-
 /-!
 # FinWhale witnesses — the pacing structure under liveness
 
@@ -72,7 +71,7 @@ def DgrowFor (lead : ℕ → Fin 4) (N : ℕ) : Dag (Fin 4) ℕ Unit where
       have := congrArg (fun (v : Fin 4) => (v : ℕ)) (hxl.trans hyl.symm)
       simpa [ugrow_block] using this
     omega
-  correct_single := (Ugrow N).no_equivocation
+  no_equivocation := (Ugrow N).no_equivocation
 
 @[simp] theorem dgrowFor_ids (lead : ℕ → Fin 4) (N : ℕ) :
     (DgrowFor lead N).ids = (Ugrow N).ids := rfl
@@ -232,8 +231,9 @@ def fwReactiveCorrect (N : ℕ) : ReactiveM (Ugrow N) (Correct : Finset (Fin 4))
 /-- **The liveness interface, off the reactive schedule.** Every
 correct-led slot below the horizon carries a direct commit — with no
 coverage assumption anywhere, since a reactive builder has none. -/
-example (N : ℕ) : CommitsCorrectLeaders ⟨id, reactLeader⟩ (Dreact N) 0 N :=
-  commits_of_reactive (D := Dreact N) (fwReactiveCorrect N) rfl rfl
+example (N : ℕ) : CommitsCorrectLeaders (Slots.identity reactLeader) (Dreact N) 0 N :=
+  commits_of_reactive (FS := Slots.identity reactLeader) (D := Dreact N) (fwReactiveCorrect N)
+    rfl rfl
     (fun k => by simp) (fun _ => rfl) (fun k => rfl) rfl (Nat.le_refl _)
     (fun n _ => Nat.le_refl _)
 
@@ -431,8 +431,9 @@ def fwCreation (N : ℕ) : Creation (Ugrow N) {1, 2, 3} N reactLeader :=
 
 /-- **The liveness interface, from the creation rule.** No wait clause is
 assumed: the votes and the certificates come out of C1 and C3. -/
-theorem fwCommits (N : ℕ) : CommitsCorrectLeaders ⟨id, reactLeader⟩ (Dreact N) 0 N :=
-  commits_of_creation (D := Dreact N) (fwCreation N) rfl rfl (by decide)
+theorem fwCommits (N : ℕ) : CommitsCorrectLeaders (Slots.identity reactLeader) (Dreact N) 0 N :=
+  commits_of_creation (S := Slots.identity reactLeader) (D := Dreact N) (fwCreation N) rfl rfl
+    (by decide)
     (fun _ => rfl) (Nat.le_refl _) (fun n _ => Nat.le_refl _)
 
 /-- The rotation of this execution is round robin. -/
@@ -454,7 +455,7 @@ and a structure nothing satisfies would make every property above it
 vacuous. -/
 noncomputable def fwRun (N : ℕ) : Run (Fin 4) ℕ Unit where
   dag := Dreact N
-  sched := ⟨id, reactLeader⟩
+  sched := (Slots.identity reactLeader)
   roundId := fun _ => rfl
   paced := Ugrow N
   ids_eq := rfl
@@ -478,8 +479,6 @@ noncomputable def fwRun (N : ℕ) : Run (Fin 4) ℕ Unit where
   live_le := Nat.le_refl _
   roundRobin := fwDreactRoundRobin N
   selfParented := selfParented_Dreact N
-  choose := chooseLeast ⟨id, reactLeader⟩ (Dreact N)
-  chooseSound := chooseSound_least
 
 /-- **Agreement on data.** Two correct validators of the run deliver the
 same sequence. The horizon is what Lemma 22's window asks for: `3f + 5`

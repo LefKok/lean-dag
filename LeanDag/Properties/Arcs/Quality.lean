@@ -4,7 +4,6 @@ import LeanDag.Properties.Commit
 import LeanDag.Properties.Derived.LeaderCommits
 import LeanDag.Properties.Derived.Descent
 import LeanDag.Properties.Optional.SelfParent
-
 /-!
 # Chain quality, for any protocol with a quorum law
 

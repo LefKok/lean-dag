@@ -1,5 +1,4 @@
 import LeanDag.Hydrozoan.Model.DirectRules
-
 /-!
 # Direct-rule safety — statement
 
@@ -27,7 +26,7 @@ namespace Hydrozoan
 namespace DirectSafety
 
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
-  [DecidableEq BlockId] [F : Faults Replica] [S : Slots Replica]
+  [DecidableEq BlockId] [F : LeanDag.Hydrozoan.Faults Replica] [S : Slots Replica]
 
 /-- **Fast/fast agreement**: two fast commits for one slot, in any two
 views, name the same block (`2·q_fast > n + f`). -/
@@ -81,7 +80,7 @@ def CommitSkipExclusion (U : BlockUniverse Replica BlockId) : Prop :=
 schedule, and block universe the model admits. -/
 def Statement : Prop :=
   ∀ (Replica BlockId : Type) [Fintype Replica] [DecidableEq Replica]
-    [DecidableEq BlockId] [Faults Replica] [Slots Replica]
+    [DecidableEq BlockId] [LeanDag.Hydrozoan.Faults Replica] [Slots Replica]
     (U : BlockUniverse Replica BlockId),
     FastFastAgreement U ∧ CertUniqueness U ∧ SlowSlowAgreement U ∧
       FastSlowAgreement U ∧ CommitSkipExclusion U

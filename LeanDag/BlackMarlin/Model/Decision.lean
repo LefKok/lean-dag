@@ -1,5 +1,4 @@
 import LeanDag.BlackMarlin.Model.Rules
-
 /-!
 # Black Marlin — the rule as a validator applies it
 
@@ -34,12 +33,7 @@ variable [F : Faults Validator] [Rot : Rotation Validator]
 variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 variable {U : BlockUniverse Validator BlockId Payload}
 
-/-- The supporters of `L` at round `n` that a view actually holds. -/
-def supportersIn (U : BlockUniverse Validator BlockId Payload)
-    (V : View Validator BlockId Payload U) (L : BlockId) (n : ℕ) : Finset Validator :=
-  creatorsOf U.block (((blocksAt U n).filter (fun q => L ∈ (U.block q).refs)) ∩ V.ids)
-
-/-- `supp(L) ≥ n − f`, counted in a view. -/
+/-- `supp(L) ≥ n − f`, counted in a view: the record's `supportersIn`. -/
 def SupportedIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
   quorumCard Validator ≤ (supportersIn U V L (r + 1)).card

@@ -1,8 +1,7 @@
 import LeanDag.Barnacle.Odontoceti.Statement
 import LeanDag.Barnacle.Helpers.Heads
 import LeanDag.Barnacle.Helpers.Descent
-import LeanDag.OdontocetiProperties
-
+import LeanDag.Odontoceti.Properties
 /-!
 # Odontoceti instance helpers
 

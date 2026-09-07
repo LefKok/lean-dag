@@ -3,7 +3,6 @@ import LeanDag.DoS.Composition
 import LeanDagTest.DoS.Density
 import LeanDagTest.DoS.Doubling
 import LeanDag.Network.Quorum
-
 /-!
 # The novelty budget, witnessed
 

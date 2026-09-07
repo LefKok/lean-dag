@@ -1,5 +1,4 @@
 import LeanDag.Barnacle.Model.Window
-
 /-!
 # Barnacle: the run
 

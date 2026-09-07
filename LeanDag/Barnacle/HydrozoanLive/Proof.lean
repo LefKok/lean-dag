@@ -2,7 +2,6 @@ import LeanDag.Barnacle.HydrozoanLive.Statement
 import LeanDag.Barnacle.Helpers.Heads
 import LeanDag.Barnacle.Helpers.Descent
 import LeanDag.Hydrozoan.Helpers.Commit
-
 /-!
 # Barnacle over Hydrozoan — the live rule, proof
 
@@ -36,7 +35,7 @@ theorem goodOf (Replica BlockId : Type) [Fintype Replica] [DecidableEq Replica]
       (LeanDag.Hydrozoan.Faults.f Replica + LeanDag.Hydrozoan.Faults.c Replica) ≤ T.card
     unfold LeanDag.Hydrozoan.q at hcard; omega
   · intro r h1 h2 v hv
-    obtain ⟨b, hb, hbr, hba⟩ := hpop r h1 h2 v hv
+    obtain ⟨b, hb, hba, hbr⟩ := hpop r h1 h2 v hv
     exact ⟨b, hb, hba, hbr⟩
 
 theorem descent : Descent := by

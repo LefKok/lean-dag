@@ -1,6 +1,5 @@
 import LeanDag.Barnacle.Conservativity.Statement
 import LeanDag.Barnacle.Helpers.Schedule
-
 /-!
 # BN6 — proof
 

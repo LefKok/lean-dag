@@ -1,13 +1,11 @@
 import LeanDag.Barnacle.Hydrozoan.Statement
 import LeanDag.Barnacle.Model.Heads
-
 /-!
 # Barnacle over Hydrozoan — the live rule, statement
 
 The liveness half of the fifth instantiation: Hydrozoan as a
 `LiveRule`, its descent laws at slack `f + c`, and the paper's A4 for
-it under round-robin. P2 of `docs/hydrozoan-integration.md` §13; the
-base rule and its laws are P1 (`Barnacle/Hydrozoan/`).
+it under round-robin (`docs/hydrozoan-integration.md` §3); the base rule and its laws are `Barnacle/Hydrozoan/`.
 
 **A good DAG is Hydrozoan's own liveness package.** `Good U Rnd N` is
 a quorum-sized set of correct replicas, synchronised from `Rnd` and
@@ -29,10 +27,7 @@ three the interface's `slotRound i + 3 ≤ slotRound j` *is*
 
 **Round-robin liveness is where the committee condition appears.**
 `liveOn_roundRobin` needs `waveLength * slack + 1 ≤ n`, here
-`3·(f + c) + 1 ≤ n` — the same inequality
-`docs/hydrozoan-integration.md` §2 derives from the fault projection,
-reached here by a route that mentions neither the core's quorum nor its
-intersection argument. Hydrozoan's own committee bound
+`3·(f + c) + 1 ≤ n` — the same inequality the hybrid committee bound states, reached here by a route that mentions neither the core's quorum nor its intersection argument (`docs/hydrozoan-integration.md` §3). Hydrozoan's own committee bound
 `3f + 2c + k + 1 ≤ n` gives it when `c ≤ k`, but that is sufficient
 rather than necessary, so the bound is the hypothesis and the slack
 condition is not. It is a hypothesis of `RoundRobinLive` and of nothing
@@ -58,8 +53,8 @@ def hydrozoanLive [LeanDag.Hydrozoan.Faults Replica] :
     Good := fun U Rnd N =>
       ∃ T ⊆ (LeanDag.Hydrozoan.Correct : Finset Replica),
         LeanDag.Hydrozoan.q Replica ≤ T.card ∧
-        LeanDag.Hydrozoan.SynchronisedOn U T Rnd ∧
-        ∀ r, Rnd ≤ r → r ≤ N → LeanDag.Hydrozoan.PopulatedOn U T r }
+        SynchronisedOn U T Rnd ∧
+        ∀ r, Rnd ≤ r → r ≤ N → PopulatedOn U T r }
 
 namespace HydrozoanLive
 

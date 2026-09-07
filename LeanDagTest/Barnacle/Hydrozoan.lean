@@ -1,8 +1,7 @@
 import LeanDagTest.Hydrozoan.Decided
 import LeanDag.Barnacle.Hydrozoan.Proof
 import LeanDag.Barnacle.Model.Window
-import LeanDag.Schedule
-
+import LeanDag.Common.Schedule
 /-!
 # Barnacle over Hydrozoan — the base witnesses
 
@@ -15,7 +14,7 @@ at round `k`, leader `(k + 2) % 7`).
 What is pinned:
 
 * **the adapter is faithful** — round, creator and refs of an adapted
-  block are the round, author and parents of the original, by `rfl`,
+  block are the round, creator and refs of the original, by `rfl`,
   so the interface reads Hydrozoan's blocks and not a copy of them;
 * **the two candidate predicates agree** — the interface's
   `IsLeaderBlock`, computed through the adapter, is Hydrozoan's;
@@ -30,8 +29,7 @@ What is pinned:
 Every Hydrozoan name is written out. The witness universe's own
 `Slots (Fin 7)` instance is in scope, and so is the rule's namespace;
 each statement below fixes the schedule explicitly as `S7`, so nothing
-depends on which instance resolution would otherwise pick — the
-discipline `docs/hydrozoan-integration.md` §12 records for this arc.
+depends on which instance resolution would otherwise pick — the discipline `docs/hydrozoan-integration.md` §5 records for this arc.
 -/
 
 namespace LeanDagTest
@@ -55,9 +53,9 @@ abbrev R7 : LeanDag.Barnacle.BaseRule (Fin 7) (Fin 32) Unit :=
 example : (R7.block LeanDagTest.Hydrozoan.U3 24).round
     = (LeanDagTest.Hydrozoan.U3.block 24).round := rfl
 example : (R7.block LeanDagTest.Hydrozoan.U3 24).creator
-    = (LeanDagTest.Hydrozoan.U3.block 24).author := rfl
+    = (LeanDagTest.Hydrozoan.U3.block 24).creator := rfl
 example : (R7.block LeanDagTest.Hydrozoan.U3 24).refs
-    = (LeanDagTest.Hydrozoan.U3.block 24).parents := rfl
+    = (LeanDagTest.Hydrozoan.U3.block 24).refs := rfl
 
 /-! ## The candidate predicates agree, and are decidable through the interface -/
 

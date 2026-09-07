@@ -1,5 +1,4 @@
 import LeanDag.OptimalHydrozoan.Model.Decided
-
 /-!
 # Optimal-Hydrozoan: slot agreement — statement
 
@@ -25,9 +24,9 @@ block fast evidence for the committed block (`EvidencePlain`,
 `OptUniverse`), every eligible anchor therefore reaches an evidence quorum
 (`SlowCollectible`, `q ≥ qCert`), a decision-round block is evidence for
 at most one candidate, and two evidence quorums at one anchor share a
-non-Byzantine author (`CertUniqueness`) — which is why the evidence rung
-needs no tie-break. A direct skip's `qCert` blames and no-evidence blocks
-exclude certificates and evidence quorums the same way.
+non-Byzantine creator (`CertUniqueness`) — which is why the evidence rung
+needs no tie-break. A direct skip's `qCert` LeanDag.Hydrozoan.blames and no-evidence blocks
+exclude LeanDag.Hydrozoan.certificates and evidence quorums the same way.
 -/
 
 namespace LeanDag
@@ -45,7 +44,7 @@ variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
 (fast, slow, direct skip, certificate rung, evidence rung, indirect
 skip). -/
 def DecidedUnique (U : OptUniverse Replica BlockId) : Prop :=
-  ∀ (V₁ V₂ : View U.toBlockUniverse) (k : ℕ) (v₁ v₂ : Option BlockId),
+  ∀ (V₁ V₂ : LeanDag.Hydrozoan.View U.toBlockRecord) (k : ℕ) (v₁ v₂ : Option BlockId),
     DecidedOpt U V₁ k v₁ → DecidedOpt U V₂ k v₂ → v₁ = v₂
 
 /-- Slot agreement, over every fault configuration, schedule, and

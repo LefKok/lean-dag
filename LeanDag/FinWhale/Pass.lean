@@ -1,7 +1,6 @@
 import LeanDag.FinWhale.View
 import Mathlib.Order.Interval.Finset.Nat
 import LeanDag.FinWhale.Model.Pass
-
 /-!
 # FinWhale — the reverse pass, as a procedure
 
@@ -36,7 +35,7 @@ variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type} [DecidableEq BlockId] [LinearOrder BlockId] {Payload : Type}
 
 variable {D : Dag Validator BlockId Payload} {choose : BlockId → ℕ → Option BlockId} {N : ℕ}
-variable {S : Sched Validator}
+variable {S : Slots Validator}
 variable {Elig : ℕ → ℕ → Prop} [DecidableRel Elig]
 
 /-- Above the horizon nothing is decided. -/
@@ -125,7 +124,7 @@ omit [LinearOrder BlockId] in
 /-- A slot with a direct skip lies two rounds below the horizon: the skip
 exhibits round-`(r+2)` blocks. -/
 theorem round_le_of_directSkip {N r : ℕ} (hN : ∀ b ∈ D.ids, (D.block b).round ≤ N)
-    (h : DirectSkip S D r) : S.round r + 2 ≤ N := by
+    (h : DirectSkip S D r) : S.slotRound r + 2 ≤ N := by
   obtain ⟨-, nonev, hnon, hnonb⟩ := h
   have := params_arith (Validator := Validator)
   have hpos : 0 < nonev.card := by simp only [spQuorum] at hnon; omega
@@ -185,13 +184,13 @@ own, and `choose` is whatever deterministic rule the validator applies.
 `hN` is the horizon: no block of the view sits above it. -/
 theorem wellFormed_decOf {N M : ℕ} (hN : ∀ b ∈ D.ids, (D.block b).round ≤ N)
     (hlt : ∀ r a, Elig r a → r < a)
-    (hrle : ∀ r, S.round r ≤ N → r ≤ M)
+    (hrle : ∀ r, S.slotRound r ≤ N → r ≤ M)
     (choose : BlockId → ℕ → Option BlockId) :
     WellFormed Elig (fun r l => l ∈ slotBlocks S D r ∧ DirectCommit D l)
       (fun r => DirectSkip S D r) choose (decOf S Elig D choose M) where
   direct_commit r l := by
     rintro ⟨hslot, hcom⟩
-    have hru : (D.block l).round = S.round r ∧ l ∈ D.ids := by
+    have hru : (D.block l).round = S.slotRound r ∧ l ∈ D.ids := by
       simp only [slotBlocks, blocksAt, Finset.mem_filter] at hslot
       exact ⟨hslot.1.2, hslot.1.1⟩
     have hr : r ≤ M := hrle r (by have := hN l hru.2; omega)
@@ -289,37 +288,6 @@ theorem mem_slotBlocks_of_decOf {D' : Dag Validator BlockId Payload} {N : ℕ}
       · simp only [hv] at h
         cases h
     · rw [dif_neg hc] at h; cases h
-
-/-- **Safety, with the verdicts computed rather than assumed.** Two
-validators running the reverse pass on their own views of one DAG deliver
-prefix-comparable sequences.
-
-Three of `safety_of_views`' hypotheses are gone: `WellFormed`, because
-the pass satisfies it; the slot condition, because the pass names only
-slot blocks; and finiteness, because nothing above the horizon is
-decided. What is left is `hk` — how far each validator's sequence runs —
-which is a choice of horizon, and `all_decided` is what establishes
-it. -/
-theorem safety_of_pass {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsView D V')
-    {choose : BlockId → ℕ → Option BlockId} (hch : ChooseSound S D choose) {N M : ℕ}
-    (hNV : ∀ b ∈ V, (D.block b).round ≤ N) (hNV' : ∀ b ∈ V', (D.block b).round ≤ N)
-    {k k' : ℕ}
-    (hk : ∀ s, s < k → decOf S Elig (restrict D V hV) choose M s ≠ Verdict.undecided)
-    (hk' : ∀ s, s < k' → decOf S Elig (restrict D V' hV') choose M s ≠ Verdict.undecided)
-    (hlt : ∀ r a, Elig r a → r < a) (hrle : ∀ r, S.round r ≤ N → r ≤ M)
-    (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ k, S.round k = k)
-    (hist : BlockId → List BlockId) :
-    linearise hist (commitSeq (decOf S Elig (restrict D V hV) choose M) k) <+:
-        linearise hist (commitSeq (decOf S Elig (restrict D V' hV') choose M) k') ∨
-      linearise hist (commitSeq (decOf S Elig (restrict D V' hV') choose M) k') <+:
-        linearise hist (commitSeq (decOf S Elig (restrict D V hV) choose M) k) :=
-  safety_of_views hV hV' (wellFormed_decOf hNV hlt hrle choose)
-    (wellFormed_decOf hNV' hlt hrle choose) hch
-    (fun _ _ h => mem_slotBlocks_of_decOf (fun _ => slotBlocks_restrict) hch hlt h)
-    (fun _ _ h => mem_slotBlocks_of_decOf (fun _ => slotBlocks_restrict) hch hlt h)
-    (fun s (hs : M + 1 ≤ s) => ⟨decOf_of_gt (by omega), decOf_of_gt (by omega)⟩)
-    hk hk' hEl hid hist
-
 
 end FinWhale
 

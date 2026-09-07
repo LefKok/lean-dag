@@ -1,5 +1,4 @@
 import LeanDag.Properties.Carrier
-
 /-!
 # Self-reference, and one block per reliable author per round
 

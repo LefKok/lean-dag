@@ -1,5 +1,4 @@
 import LeanDag.Hydrozoan.Model.Faults
-
 /-!
 # Witness: the fault model is satisfiable
 
@@ -25,7 +24,7 @@ open LeanDag LeanDag.Hydrozoan
 
 /-- Seven replicas: replica `0` Byzantine, replica `1` crashed, slack one
 (`3f + 2c + k + 1 = 7 = n`, tight). -/
-instance sevenReplicas : Faults (Fin 7) where
+instance sevenReplicas : LeanDag.Hydrozoan.Faults (Fin 7) where
   f := 1
   c := 1
   k := 1

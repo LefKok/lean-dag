@@ -1,5 +1,5 @@
-import LeanDag.Block
-
+import LeanDag.Common.Block
+import LeanDag.Common.BlockRecord
 /-!
 # Nemo-Nemo: the crash-fault DAG foundation
 
@@ -79,32 +79,35 @@ theorem refs_nonempty (h : ValidWrt blk b) (h0 : 0 < b.round) : b.refs.Nonempty 
 
 end ValidWrt
 
-/-- The crash block universe: majority-parent validity and **universal**
-non-equivocation — every validator is honest, so there is no Byzantine exemption.
-No `Faults` instance is needed. -/
-structure Universe (Validator BlockId Payload : Type*)
-    [Fintype Validator] [DecidableEq Validator] where
-  /-- Which blocks exist. -/
-  ids : Finset BlockId
-  /-- What each id denotes. -/
-  block : BlockId → Block Validator BlockId Payload
-  /-- Every referenced block is present. -/
-  complete : ∀ i ∈ ids, ∀ j ∈ (block i).refs, j ∈ ids
-  /-- Every block present is valid (majority parents). -/
-  valid : ∀ i ∈ ids, ValidWrt block (block i)
-  /-- **No validator equivocates** — one block per author per round, for everyone. -/
-  no_equivocation : ∀ i ∈ ids, ∀ j ∈ ids,
-    (block i).creator = (block j).creator → (block i).round = (block j).round → i = j
+/-- **Nemo's validity is the family** at the majority, with no clause. -/
+theorem ValidWrt.iff_validAt (blk : BlockId → Block Validator BlockId Payload)
+    (b : Block Validator BlockId Payload) :
+    ValidWrt blk b ↔ ValidAt (majority Validator) Clause.none blk b :=
+  ⟨fun h => ⟨h.predecessor, h.quorum, True.intro⟩, fun h => ⟨h.predecessor, h.quorum⟩⟩
+
+/-- **Nemo's validity is mechanised**, along the family. -/
+instance ValidWrt.mechanised :
+    Validity.Mechanised
+      (ValidWrt (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
+  Validity.Mechanised.of_iff ValidWrt.iff_validAt
+
+/-- **And does not read the creator.** -/
+instance ValidWrt.copyStable :
+    Validity.CopyStable
+      (ValidWrt (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
+  Validity.CopyStable.of_iff ValidWrt.iff_validAt
+
+/-- **Nemo's universe**: the block record at Nemo's validity, with
+non-equivocation asked of everyone — the crash model has no Byzantine
+validators. -/
+abbrev Universe (Validator BlockId Payload : Type*)
+    [Fintype Validator] [DecidableEq Validator] :=
+  BlockRecord Validator BlockId Payload ValidWrt (Finset.univ : Finset Validator)
 
 /-- A view: one validator's local, reference-closed sub-DAG. -/
-structure View (Validator BlockId Payload : Type*) [Fintype Validator]
-    [DecidableEq Validator] (U : Universe Validator BlockId Payload) where
-  /-- The ids this validator holds. -/
-  ids : Finset BlockId
-  /-- A view holds only blocks that exist. -/
-  subset_ids : ids ⊆ U.ids
-  /-- A view is closed under references. -/
-  complete : ∀ i ∈ ids, ∀ j ∈ (U.block i).refs, j ∈ ids
+abbrev View (Validator BlockId Payload : Type*) [Fintype Validator]
+    [DecidableEq Validator] (U : Universe Validator BlockId Payload) :=
+  BlockRecord.View U
 
 namespace Universe
 
@@ -115,7 +118,7 @@ correctness hypothesis (the crash simplification of the core's T1). -/
 theorem eq_of_creator_eq {i j : BlockId} (hi : i ∈ U.ids) (hj : j ∈ U.ids)
     (hc : (U.block i).creator = (U.block j).creator)
     (hround : (U.block i).round = (U.block j).round) : i = j :=
-  U.no_equivocation i hi j hj hc hround
+  U.no_equivocation i hi j hj (Finset.mem_univ _) hc hround
 
 /-- Completeness, as a subset statement. -/
 theorem refs_subset {i : BlockId} (hi : i ∈ U.ids) : (U.block i).refs ⊆ U.ids :=

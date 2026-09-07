@@ -1,5 +1,5 @@
 import LeanDag.Hydrozoan.Model.Decided
-
+import LeanDag.Common.Ledger
 /-!
 # Prefix agreement — statement
 
@@ -29,10 +29,9 @@ section Sequences
 
 variable {BlockId : Type*}
 
-/-- The committed leaders below slot `n`, in slot order, skips
-dropped — the output shape of the paper's `ExtendCommitSeq`. -/
-def commitSeq (g : ℕ → Option BlockId) (n : ℕ) : List BlockId :=
-  (List.range n).filterMap g
+/-! The committed leaders below slot `n`, in slot order, skips
+dropped — the output shape of the paper's `ExtendCommitSeq` — is the
+record's `commitSeq` (`Ledger.lean`). -/
 
 /-- A ledger: every committed leader flattened by a linearizer — the
 paper's `LinearizeSubDags`, abstracted to an arbitrary function. -/
@@ -45,7 +44,7 @@ end Sequences
 section Claims
 
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
-  [DecidableEq BlockId] [LinearOrder BlockId] [F : Faults Replica]
+  [DecidableEq BlockId] [LinearOrder BlockId] [F : LeanDag.Hydrozoan.Faults Replica]
   [S : Slots Replica]
 
 /-- `g` records a decided verdict for every slot below `n`, as judged
@@ -79,7 +78,7 @@ def LedgerPrefixConsistency (U : BlockUniverse Replica BlockId) : Prop :=
 order, and block universe the model admits. -/
 def Statement : Prop :=
   ∀ (Replica BlockId : Type) [Fintype Replica] [DecidableEq Replica]
-    [DecidableEq BlockId] [LinearOrder BlockId] [Faults Replica]
+    [DecidableEq BlockId] [LinearOrder BlockId] [LeanDag.Hydrozoan.Faults Replica]
     [Slots Replica] (U : BlockUniverse Replica BlockId),
     SeqAgreement U ∧ PrefixConsistency U ∧ LedgerPrefixConsistency U
 

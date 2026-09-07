@@ -1,7 +1,6 @@
 import LeanDag.Adaptive.Liveness
 import LeanDag.Adaptive.Growth
-import LeanDag.MysticetiProperties
-
+import LeanDag.Mysticeti.Properties
 /-!
 # Adaptive Mysticeti: the core as an instance
 
@@ -71,7 +70,8 @@ theorem decidedWithin_congr {hinj : Function.Injective S.slotRound}
     {v : Option BlockId} (ha : ∀ m, m < B → a₁ m = a₂ m)
     (h : DecidedWithin (S := slotsOf hinj a₁) U V B k v) :
     DecidedWithin (S := slotsOf hinj a₂) U V B k v :=
-  decidedWithin_congr_of_slotRound (S₁ := slotsOf hinj a₁) (S₂ := slotsOf hinj a₂) rfl ha h
+  AnchoredRule.decidedWithin_congr_of_slotRound coreLaws trivial (S₁ := slotsOf hinj a₁)
+    (S₂ := slotsOf hinj a₂) rfl ha h
 
 /-! ## Runs -/
 
@@ -150,8 +150,8 @@ omit [Fintype Validator] [DecidableEq Validator] F [DecidableEq BlockId] in
 the spanning property transfers to every induced instance verbatim. -/
 theorem spansEligible_slotsOf {hinj : Function.Injective S.slotRound}
     {a : ℕ → Validator} {c : ℕ}
-    (h : SpansEligible (Validator := Validator) c) :
-    SpansEligible (Validator := Validator) (S := slotsOf hinj a) c := h
+    (h : SpansEligibleAt (S := S) 2 c) :
+    SpansEligibleAt (S := slotsOf hinj a) 2 c := h
 
 section Existence
 
@@ -159,7 +159,7 @@ variable {P : AdaptivePolicy Validator BlockId Payload}
 variable {T : Finset Validator} {c R N : ℕ}
 
 /-- The core's descent, at every induced schedule. -/
-theorem descends_slotsOf (hc : 0 < c) (hspans : SpansEligible (Validator := Validator) c)
+theorem descends_slotsOf (hc : 0 < c) (hspans : (coreAnchored Validator BlockId Payload).SpansEligible c)
     (a : ℕ → Validator) :
     Descends (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
       (slotsOf P.inj a) c :=
@@ -170,7 +170,7 @@ theorem descends_slotsOf (hc : 0 < c) (hspans : SpansEligible (Validator := Vali
 theorem epoch_closes (hT : T ⊆ (Correct : Finset Validator))
     (hcard : quorumCard Validator ≤ T.card)
     (hc : 0 < c) (hruns : PlacesRuns P T c)
-    (hspans : SpansEligible (Validator := Validator) c)
+    (hspans : (coreAnchored Validator BlockId Payload).SpansEligible c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
     (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r)
     (V : View Validator BlockId Payload U) (hcov : V.CoversUpto N)
@@ -193,7 +193,7 @@ theorem epoch_closes (hT : T ⊆ (Correct : Finset Validator))
 theorem exists_partialRun (hT : T ⊆ (Correct : Finset Validator))
     (hcard : quorumCard Validator ≤ T.card)
     (hc : 0 < c) (hruns : PlacesRuns P T c)
-    (hspans : SpansEligible (Validator := Validator) c)
+    (hspans : (coreAnchored Validator BlockId Payload).SpansEligible c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
     (hpop : ∀ r, R ≤ r → r ≤ N → PopulatedOn U T r)
     (V : View Validator BlockId Payload U) (hcov : V.CoversUpto N) (E : ℕ)
@@ -216,7 +216,7 @@ adaptive Mysticeti decides every slot, and uniquely. -/
 theorem adaptiveRun_exists (hT : T ⊆ (Correct : Finset Validator))
     (hcard : quorumCard Validator ≤ T.card)
     (hc : 0 < c) (hruns : PlacesRuns P T c)
-    (hspans : SpansEligible (Validator := Validator) c)
+    (hspans : (coreAnchored Validator BlockId Payload).SpansEligible c)
     (hs : SynchronisedOn U T R) (hRW : R ≤ S.slotRound P.W)
     (hpop : ∀ r, Populated U r)
     (V : View Validator BlockId Payload U) (hcov : ∀ N, V.CoversUpto N) :

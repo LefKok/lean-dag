@@ -1,8 +1,7 @@
 import LeanDag.Barnacle.Nemo.Statement
 import LeanDag.Barnacle.Helpers.Heads
 import LeanDag.Barnacle.Helpers.Descent
-import LeanDag.NemoProperties
-
+import LeanDag.Nemo.Properties
 /-!
 # Nemo instance helpers — the laws
 

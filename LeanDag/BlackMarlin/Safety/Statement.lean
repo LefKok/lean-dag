@@ -1,6 +1,5 @@
 import LeanDag.BlackMarlin.Model.Decision
-import LeanDag.Schedule
-
+import LeanDag.Common.Schedule
 /-!
 # Black Marlin — safety of the commit rule, stated
 

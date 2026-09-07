@@ -1,7 +1,8 @@
 import LeanDag.MahiMahi.Model.Unpredictable
 import LeanDag.MahiMahi.Helpers.Counting
-import LeanDag.ViewPace
-
+import LeanDag.MahiMahi.Helpers.Decision
+import LeanDag.Common.Anchored.Bounded
+import LeanDag.Mysticeti.ViewPace
 /-!
 # Helpers — the liveness layer
 
@@ -41,19 +42,6 @@ section Slots
 
 variable [S : Slots Validator]
 
-/-! ## Eligibility at wave `w` -/
-
-omit [Fintype Validator] [DecidableEq Validator] F [LinearOrder BlockId] in
-/-- An eligible anchor lies strictly above the slot; the one property of
-eligibility the descent uses. Needs a wave of at least one round: at
-`w = 0` truncated subtraction lets a slot anchor itself. -/
-theorem lt_of_eligible {w k j : ℕ} (hw : 1 ≤ w) (h : Eligible Validator w k j) : k < j := by
-  by_contra hle
-  push Not at hle
-  have := S.mono hle
-  unfold Eligible decisionRound at h
-  omega
-
 /-! ## A good leader commits -/
 
 /-- **MM3a.** -/
@@ -64,64 +52,25 @@ theorem decided_of_mem_good {w k : ℕ} (h : S.leader k ∈ good U w k) :
   obtain ⟨L, hL, hLr, hLc, hcommit⟩ := h
   exact ⟨L, ⟨hL, hLr, hLc⟩, Decided.directCommit ⟨hL, hLr, hLc⟩ (directCommitIn_full hcommit)⟩
 
-/-! ## The descent from a committed run -/
+/-! ## The descent from a committed run
 
-open Classical in
-/-- **Every slot below a committed run is decided** — the core's
-`decided_below_of_committed_run` at wave `w`, verbatim up to the
-relation: strong induction on the distance to the run, each slot
-anchored on the nearest eligible committed slot, the eligible slots
-between it being skipped by the induction hypothesis. -/
-theorem decided_below_of_committed_run {w : ℕ} (hw : 1 ≤ w)
-    {V : View Validator BlockId Payload U} {b n : ℕ} (hbn : b ≤ n)
-    (hspan : ∀ i, i < b → Eligible Validator w i n)
-    (hrun : ∀ j, b ≤ j → j ≤ n → ∃ B, Decided w U V j (some B)) :
-    ∀ i, i < b → ∃ v, Decided w U V i v := by
-  classical
-  have key : ∀ d i, i < b → b - i ≤ d → ∃ v, Decided w U V i v := by
-    intro d
-    induction d with
-    | zero => intro i hi hd; omega
-    | succ d ih =>
-      intro i hi hd
-      have hex : ∃ j, Eligible Validator w i j ∧ ∃ B, Decided w U V j (some B) :=
-        ⟨n, hspan i hi, hrun n hbn (le_refl n)⟩
-      have hle : Nat.find hex ≤ n :=
-        Nat.find_le ⟨hspan i hi, hrun n hbn (le_refl n)⟩
-      obtain ⟨helig, B, hB⟩ := Nat.find_spec hex
-      have hmid : ∀ i', i < i' → i' < Nat.find hex → Eligible Validator w i i' →
-          Decided w U V i' none := by
-        intro i' h1 h2 h3
-        have hnc : ¬ ∃ C, Decided w U V i' (some C) :=
-          fun hc => Nat.find_min hex h2 ⟨h3, hc⟩
-        have hi'b : i' < b := by
-          by_contra hge
-          exact hnc (hrun i' (by omega) (by omega))
-        obtain ⟨v, hv⟩ := ih i' hi'b (by omega)
-        cases v with
-        | none => exact hv
-        | some C => exact absurd ⟨C, hv⟩ hnc
-      by_cases hc : ∃ L, IsLeaderBlock U i L ∧ CertifiedIn U w B L (S.slotRound i)
-      · obtain ⟨L, hL, hcert⟩ := hc
-        exact ⟨some L, Decided.indirectCommit (lt_of_eligible hw helig) helig hB hmid hL hcert⟩
-      · push Not at hc
-        exact ⟨none, Decided.indirectSkip (lt_of_eligible hw helig) helig hB hmid hc⟩
-  intro i hi
-  exact key (b - i) i hi (le_refl _)
+Every slot below a committed run is decided: the relation's
+`decided_below_of_committed_run` at wave `w`, with no tie to break. -/
 
 /-- **MM3c.** The run form supplies the committed run; the descent does
 the rest. A spanning run has at least one slot. -/
-theorem allDecidedBelow {w c d N : ℕ} (hw : 1 ≤ w)
-    (hspan : SpansEligible Validator w d) (hrun : UnpredictableRunWithin U w c d N)
-    (k : ℕ) (hk : decisionRound Validator w (k + c + d - 1) ≤ N) :
+theorem allDecidedBelow {w c d N : ℕ}
+    (hspan : (mahiMahiAnchored Validator BlockId Payload w).SpansEligible d)
+    (hrun : UnpredictableRunWithin U w c d N) (k : ℕ)
+    (hk : (mahiMahiAnchored Validator BlockId Payload w).decisionRound (k + c + d - 1) ≤ N) :
     ∃ b, k ≤ b ∧ ∀ i, i < b → ∃ v, Decided w U (View.full U) i v := by
   obtain ⟨k', hk1, hk2, hgood⟩ := hrun k hk
   have hd : 1 ≤ d := by
-    have := lt_of_eligible hw (hspan 1 0 (by omega))
+    have := (mahiMahiAnchored Validator BlockId Payload w).lt_of_eligible (hspan 1 0 (by omega))
     omega
   refine ⟨k', hk1, ?_⟩
-  refine decided_below_of_committed_run hw (b := k') (n := k' + d - 1) (by omega)
-    (fun i hi => hspan k' i hi) ?_
+  refine AnchoredRule.decided_below_of_committed_run (fun hi h => exists_least hi h)
+    (b := k') (n := k' + d - 1) (by omega) (fun i hi => hspan k' i hi) ?_
   intro j hj1 hj2
   have hj : S.leader j ∈ good U w j := by
     have := hgood (j - k') (by omega)
@@ -150,15 +99,16 @@ theorem holds_roundBlocks_eventually {T : Finset Validator} {N : ℕ} (pc : Pace
 /-- **MM3d.** The counting re-run inside the view: production gives every
 reliable validator a decision-round block, the premise makes each a
 certificate, and eventual delivery puts each in the view. -/
-theorem localCommit {w : ℕ} {T : Finset Validator} {N : ℕ} (pc : PaceCore U T N)
+theorem localCommit {w : ℕ} (hw : 1 ≤ w) {T : Finset Validator} {N : ℕ} (pc : PaceCore U T N)
     (hcard : quorumCard Validator ≤ T.card) {k : ℕ} {L : BlockId}
-    (hL : IsLeaderBlock U k L) (hN : decisionRound Validator w k ≤ N)
+    (hL : IsLeaderBlock U k L) (hN : (mahiMahiAnchored Validator BlockId Payload w).decisionRound k ≤ N)
     (hcert : ∀ u ∈ T, ∀ C ∈ U.ids, (U.block C).creator = u →
-      (U.block C).round = decisionRound Validator w k → Certifies U C L) :
+      (U.block C).round = (mahiMahiAnchored Validator BlockId Payload w).decisionRound k → Certifies U C L) :
     ∀ v ∈ T, Decided w U
-      (pc.viewAt v (max (pc.latest (decisionRound Validator w k)) pc.gst + pc.delay))
+      (pc.viewAt v (max (pc.latest ((mahiMahiAnchored Validator BlockId Payload w).decisionRound k)) pc.gst + pc.delay))
       k (some L) := by
-  have hpop := pc.populatedOn hcard (decisionRound Validator w k) hN
+  rw [mahiMahiAnchored_decisionRound hw] at hN hcert ⊢
+  have hpop := pc.populatedOn hcard _ hN
   intro v hv
   refine Decided.directCommit hL (le_trans hcard (Finset.card_le_card ?_))
   intro u hu

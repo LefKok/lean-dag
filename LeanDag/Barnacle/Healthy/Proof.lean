@@ -1,5 +1,4 @@
 import LeanDag.Barnacle.Healthy.Statement
-
 /-!
 # BN12 — proof
 

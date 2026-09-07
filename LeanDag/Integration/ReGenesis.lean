@@ -1,8 +1,8 @@
 import LeanDag.Integration.Retention
 import LeanDag.GC.Horizon
 import LeanDag.Properties.Compose
+import LeanDag.Common.Record.Genesis
 import LeanDag.Properties.Arcs.GC
-
 /-!
 # Re-genesis: restarting a severed chain at the cut
 
@@ -35,7 +35,7 @@ on the cut, so this is a genuine interaction rather than a detail: a
 re-genesis convention needs the *lagging* validators — those retaining
 more history — to accept a block their own rules reject. That is the
 one thing the construction below cannot supply, and it is recorded in
-`integration.md` report §5.7 rather than papered over.
+`integration.md` §3.3 rather than papered over.
 -/
 
 namespace LeanDag
@@ -46,86 +46,15 @@ variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 
-/-- **Re-genesis.** A universe extended with one reference-free block at
-round `0`, for a validator that has none.
-
-The hypotheses are exactly what the construction needs and no more: the
-identifier must be fresh, and the validator must be absent — which for
-a stranded validator is `severed_of_pruned_anchor`. -/
-def addGenesis (V : BlockUniverse Validator BlockId Payload) (v : Validator)
-    (g : BlockId) (p : Payload) (hg : g ∉ V.ids)
-    (hsev : ∀ b ∈ V.ids, (V.block b).creator ≠ v) :
-    BlockUniverse Validator BlockId Payload where
-  ids := insert g V.ids
-  block b := if b ∈ V.ids then V.block b else ⟨0, v, ∅, p⟩
-  complete := by
-    intro i hi j hj
-    rcases Finset.mem_insert.mp hi with rfl | ho
-    · -- the new block references nothing
-      rw [if_neg hg] at hj
-      exact absurd hj (Finset.notMem_empty j)
-    · rw [if_pos ho] at hj
-      exact Finset.mem_insert_of_mem (V.complete i ho j hj)
-  valid := by
-    intro i hi
-    rcases Finset.mem_insert.mp hi with rfl | ho
-    · -- round `0` with no references: every clause is vacuous
-      rw [if_neg hg]
-      refine ⟨?_, ?_, ?_, ?_⟩ <;>
-        first
-          | (intro j hj; exact absurd hj (Finset.notMem_empty j))
-          | (intro hr; exact absurd hr (by simp))
-    · rw [if_pos ho]
-      have hv := V.valid i ho
-      refine ⟨?_, ?_, ?_, ?_⟩
-      · intro j hj
-        rw [if_pos (V.complete i ho j hj)]
-        exact hv.predecessor j hj
-      · intro a ha b hb hab
-        rw [if_pos (V.complete i ho a ha), if_pos (V.complete i ho b hb)] at hab
-        exact hv.distinct_creators a ha b hb hab
-      · intro hr
-        refine le_trans (hv.quorum hr) (Finset.card_le_card ?_)
-        intro c hc
-        unfold creators creatorsOf at hc ⊢
-        obtain ⟨j, hj, hjc⟩ := Finset.mem_image.mp hc
-        refine Finset.mem_image.mpr ⟨j, hj, ?_⟩
-        simp only
-        rw [if_pos (V.complete i ho j hj)]
-        exact hjc
-      · intro hr
-        obtain ⟨j, hj, hjc⟩ := hv.self_parent hr
-        exact ⟨j, hj, by rw [if_pos (V.complete i ho j hj)]; exact hjc⟩
-  no_equivocation := by
-    intro i hi j hj hic hcc hrr
-    rcases Finset.mem_insert.mp hi with rfl | ho <;>
-      rcases Finset.mem_insert.mp hj with rfl | ho'
-    · rfl
-    · -- the new block against an old one: the old author cannot be `v`
-      rw [if_neg hg] at hcc
-      rw [if_pos ho'] at hcc
-      exact absurd hcc.symm (hsev j ho')
-    · rw [if_pos ho] at hcc
-      rw [if_neg hg] at hcc
-      exact absurd hcc (hsev i ho)
-    · rw [if_pos ho] at hic hcc hrr
-      rw [if_pos ho'] at hcc hrr
-      exact V.no_equivocation i ho j ho' hic hcc hrr
+/-! **Re-genesis** — a universe extended with one reference-free block at
+round `0`, for a validator that has none — is the block record's
+(`Record/Genesis.lean`). The hypotheses are exactly what the construction
+needs and no more: the identifier must be fresh, and the validator must
+be absent — which for a stranded validator is `severed_of_pruned_anchor`. -/
+export BlockRecord (addGenesis addGenesis_block_old addGenesis_block_new mem_addGenesis)
 
 variable {V : BlockUniverse Validator BlockId Payload} {v : Validator}
 variable {g : BlockId} {p : Payload}
-
-@[simp] theorem addGenesis_block_old {hg : g ∉ V.ids}
-    {hsev : ∀ b ∈ V.ids, (V.block b).creator ≠ v} {b : BlockId} (hb : b ∈ V.ids) :
-    (addGenesis V v g p hg hsev).block b = V.block b := if_pos hb
-
-@[simp] theorem addGenesis_block_new {hg : g ∉ V.ids}
-    {hsev : ∀ b ∈ V.ids, (V.block b).creator ≠ v} :
-    (addGenesis V v g p hg hsev).block g = ⟨0, v, ∅, p⟩ := if_neg hg
-
-theorem mem_addGenesis {hg : g ∉ V.ids}
-    {hsev : ∀ b ∈ V.ids, (V.block b).creator ≠ v} :
-    g ∈ (addGenesis V v g p hg hsev).ids := Finset.mem_insert_self _ _
 
 /-! ## Re-genesis through the properties
 
@@ -146,10 +75,9 @@ variable {hg : g ∉ V.ids} {hsev : ∀ b ∈ V.ids, (V.block b).creator ≠ v}
 other, which is the whole of the safety side. -/
 theorem extends_addGenesis :
     Properties.Extends (MysticetiProperties.mysticetiRule (Payload := Payload))
-      V (addGenesis V v g p hg hsev) where
-  subset := fun b hb => Finset.mem_insert_of_mem hb
-  block := fun b hb =>
-    addGenesis_block_old (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev) hb
+      V (addGenesis V v g p hg hsev) :=
+  Properties.Arcs.coreOnRecord.extends_addGenesis (U := V) (v := v) (g := g) (p := p)
+    (hg := hg) (hsev := hsev)
 
 /-- **And it rebases from round one at no offset.** The block it adds
 sits at round zero, so at and above round one the two universes hold the
@@ -157,39 +85,10 @@ same blocks. Below that the relation says nothing, which is exactly
 where the mechanism does its work. -/
 theorem sustains_addGenesis :
     Properties.Sustains (MysticetiProperties.mysticetiRule (Payload := Payload))
-      V (addGenesis V v g p hg hsev) 0 1 where
-  mem := fun b => by
-    show (b ∈ V.ids ∧ 1 ≤ (V.block b).round) ↔
-      (b ∈ (addGenesis V v g p hg hsev).ids ∧
-        1 ≤ ((addGenesis V v g p hg hsev).block b).round + 0)
-    constructor
-    · rintro ⟨hb, hr⟩
-      exact ⟨Finset.mem_insert_of_mem hb, by
-        rw [addGenesis_block_old (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev) hb]
-        omega⟩
-    · rintro ⟨hb, hr⟩
-      rcases Finset.mem_insert.mp hb with rfl | ho
-      · rw [addGenesis_block_new (v := v) (p := p) (hg := hg) (hsev := hsev)] at hr
-        simp at hr
-      · refine ⟨ho, ?_⟩
-        rw [addGenesis_block_old (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev) ho] at hr
-        omega
-  round := fun b hb _ => by
-    show ((addGenesis V v g p hg hsev).block b).round + 0 = (V.block b).round
-    rw [addGenesis_block_old (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev) hb]
-    omega
-  creator := fun b hb _ => by
-    show ((addGenesis V v g p hg hsev).block b).creator = (V.block b).creator
-    rw [addGenesis_block_old (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev) hb]
-  refs := fun b hb _ => by
-    show ((addGenesis V v g p hg hsev).block b).refs = (V.block b).refs
-    rw [addGenesis_block_old (v := v) (g := g) (p := p) (hg := hg) (hsev := hsev) hb]
+      V (addGenesis V v g p hg hsev) 0 1 :=
+  Properties.Arcs.coreOnRecord.sustains_addGenesis (U := V) (v := v) (g := g) (p := p)
+    (hg := hg) (hsev := hsev)
 
-/-- **Verdicts survive re-genesis.** The result this arc did not have:
-before the witnesses it said nothing about `Decided` at all, so a
-validator that rejoined had no guarantee that what it had already
-output still stood. One application of `Persist`, which is itself the
-band applied. -/
 theorem decided_addGenesis [S : Slots Validator]
     {W : View Validator BlockId Payload V}
     {W' : View Validator BlockId Payload (addGenesis V v g p hg hsev)}
@@ -270,8 +169,8 @@ theorem stack_block_fresh_horizon (hG1 : sk.r0 < G) (hG2 : G ≤ sk.r) :
   have hround : (sk.skipFill.block (sk.fresh G)).round = G := by
     rw [sk.skipFill_block_fresh]; rfl
   refine ⟨mem_chop_ids.mpr ⟨hmem, by omega⟩, ?_⟩
-  rw [chop_block_eq]
-  unfold chopBlock chopBlk
+  rw [chop_block]
+  unfold chopBlk
   rw [sk.skipFill_block_fresh]
   simp only [SkipData.fillBlock, le_refl, if_pos, Nat.sub_self]
 
@@ -297,8 +196,8 @@ theorem addGenesis_sub_stack (hG1 : sk.r0 < G) (hG2 : G ≤ sk.r)
     obtain ⟨hbU, hbr⟩ := mem_chop_ids.mp hbo
     have hfill : sk.skipFill.block b = U.block b := sk.skipFill_block_old hbU
     refine ⟨mem_chop_ids.mpr ⟨Finset.mem_union_left _ hbU, by rw [hfill]; exact hbr⟩, ?_⟩
-    rw [addGenesis_block_old hbo, chop_block_eq, chop_block_eq]
-    unfold chopBlock chopBlk
+    rw [addGenesis_block_old hbo, chop_block, chop_block]
+    unfold chopBlk
     rw [hfill]
 
 /-- **A restart is a genesis block, necessarily.** If a validator has any
@@ -445,7 +344,7 @@ theorem chop_addGenesis (hd : 0 < d)
       exact ⟨Finset.mem_insert_of_mem hb, by rw [addGenesis_block_old hb]; exact hbr⟩
   · intro b hb
     rw [mem_chop_ids] at hb
-    simp only [chop_block_eq, chopBlock, chopBlk, addGenesis_block_old hb.1]
+    simp only [chop_block, chopBlk, addGenesis_block_old hb.1]
 
 /-- **The convergence.** A validator at horizon `G₁`, truncating on to a
 later horizon `G₂`, holds exactly the blocks of a validator that cut at

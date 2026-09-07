@@ -1,7 +1,6 @@
 import LeanDag.OptimalHydrozoan.Model.Faults
 import LeanDagTest.Hydrozoan.Model
 import LeanDagTest.Hydrozoan.Thresholds
-
 /-!
 # Witness: the Optimal-Hydrozoan fault model and thresholds
 
@@ -253,7 +252,7 @@ example :
 /-- The trivial fault model: one replica, no fault of any kind. A valid
 `Faults` instance (`3·0 + 2·0 + 0 + 1 = 1 ≤ 1`) ... -/
 @[instance_reducible]
-def oneReplicaTrivial : Faults (Fin 1) where
+def oneReplicaTrivial : LeanDag.Hydrozoan.Faults (Fin 1) where
   f := 0
   c := 0
   k := 0
@@ -290,7 +289,7 @@ example : IsEmpty (OptimalFaults (Fin 2)) :=
 /-- Three replicas, `f = c = 0, k = 2` (tight): a valid `Faults`, with
 slack but no fault ... -/
 @[instance_reducible]
-def threeReplicasTrivialSlack : Faults (Fin 3) := tight 0 0 2
+def threeReplicasTrivialSlack : LeanDag.Hydrozoan.Faults (Fin 3) := tight 0 0 2
 
 -- ... that no `OptimalFaults` extends: the field reads `f + c`, not
 -- `k`. Stated both against this instance and for every `f = c = 0`.

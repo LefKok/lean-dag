@@ -1,6 +1,5 @@
 import LeanDag.GC.Chop
 import LeanDag.DoS.Novelty
-
 /-!
 # The window: storage and liveness above the horizon
 
@@ -74,26 +73,26 @@ def chopD (D : Delivery U) (G : ℕ) : Delivery (chop U G) where
     intro v m i hi
     obtain ⟨h1, h2⟩ := D.held_spec v (G + m) i hi
     refine ⟨mem_chop_ids.mpr ⟨h1, by omega⟩, ?_⟩
-    rw [chop_block_eq, chopBlock_round]
+    rw [chop_block, chopBlk_round]
     omega
   accepted v m := D.accepted v (G + m)
   accepted_sub v m := D.accepted_sub v (G + m)
   accepted_inj := by
     intro v m i hi j hj hij
-    rw [chop_block_eq, chopBlock_creator, chopBlock_creator] at hij
+    rw [chop_block, chopBlk_creator, chopBlk_creator] at hij
     exact D.accepted_inj v (G + m) i hi j hj hij
   accepts_correct := by
     intro v hv m a ha hac
-    rw [chop_block_eq, chopBlock_creator] at hac
+    rw [chop_block, chopBlk_creator] at hac
     exact D.accepts_correct v hv (G + m) a ha hac
   includes := by
     intro v hv m b hb hbc hbr
     rw [mem_chop_ids] at hb
-    rw [chop_block_eq, chopBlock_creator] at hbc
-    rw [chop_block_eq, chopBlock_round] at hbr
+    rw [chop_block, chopBlk_creator] at hbc
+    rw [chop_block, chopBlk_round] at hbr
     have hsub := D.includes v hv (G + m) b hb.1 hbc (by omega)
     intro i hi
-    rw [chop_block_eq, chopBlock_refs_of_lt (by omega)]
+    rw [chop_block, chopBlk_refs_of_lt (by omega)]
     exact hsub hi
 
 /-- The truncated delivery accepts at round `m` what the original accepted at `G + m`. -/
@@ -156,7 +155,7 @@ theorem novelty_chop_anti {G' : ℕ} (hGG : G ≤ G') (hb : b ∈ (chop U G').id
 theorem byzBudget_chopD {κ : ℕ} (hbyz : ByzBudget D κ) :
     ByzBudget (chopD D G) κ := by
   intro v hv m b hb hbc
-  rw [chop_block_eq, chopBlock_creator] at hbc
+  rw [chop_block, chopBlk_creator] at hbc
   have h := hbyz v hv (G + m) b hb hbc
   refine le_trans (Finset.card_le_card ?_) h
   intro x hx
@@ -174,11 +173,11 @@ theorem refsAccepted_chopD (hra : RefsAccepted D) :
     RefsAccepted (chopD D G) := by
   intro w hw m b hb hbc hbr
   rw [mem_chop_ids] at hb
-  rw [chop_block_eq, chopBlock_creator] at hbc
-  rw [chop_block_eq, chopBlock_round] at hbr
+  rw [chop_block, chopBlk_creator] at hbc
+  rw [chop_block, chopBlk_round] at hbr
   have hsub := hra w hw (G + m) b hb.1 hbc (by omega)
   intro i hi
-  rw [chop_block_eq, chopBlock_refs_of_lt (by omega)] at hi
+  rw [chop_block, chopBlk_refs_of_lt (by omega)] at hi
   rw [chopD_accepted]
   exact hsub hi
 
@@ -194,8 +193,8 @@ theorem populated_chop {N : ℕ} (hpop : ∀ r ≤ N, Populated U r) (hG : G ≤
   intro r hr v hv
   obtain ⟨b, hb, hbc, hbr⟩ := hpop (G + r) (by omega) v hv
   refine ⟨b, mem_chop_ids.mpr ⟨hb, by omega⟩, ?_, ?_⟩
-  · rw [chop_block_eq, chopBlock_creator]; exact hbc
-  · rw [chop_block_eq, chopBlock_round]; omega
+  · rw [chop_block, chopBlk_creator]; exact hbc
+  · rw [chop_block, chopBlk_round]; omega
 
 /-! ## G6 — bounded storage, the headline -/
 

@@ -1,6 +1,5 @@
 import LeanDag.Adaptive.Basic
 import LeanDag.Properties.Carrier
-
 /-!
 # The adaptive policy
 

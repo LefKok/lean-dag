@@ -2,7 +2,6 @@ import LeanDag.BlackMarlin.Order.Statement
 import LeanDag.BlackMarlin.Helpers.Order
 import LeanDag.BlackMarlin.Helpers.Descent
 import LeanDag.BlackMarlin.Helpers.Liveness
-
 /-!
 # Black Marlin — the delivered sequence, proved
 

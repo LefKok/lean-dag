@@ -83,10 +83,10 @@ Three consequences shape the arc.
 |:---|:---|
 | Model and thresholds (`algorithms.tex`) | `Model/Faults.lean` — `Faults`, `p`, `q`, `qFast`, `qCert`, `qSlow`, `qWeak`, `Correct`, `NonByzantine` |
 | DAG-building layer (`algorithms.tex`) | `Model/Block.lean` (`ValidWrt`), `Model/BlockUniverse.lean`, `Model/View.lean` |
-| `Link` | `Model/CausalHistory.lean` — `Reaches` |
+| `Link` | the shared `Reaches` (`LeanDag/Common/CausalHistory.lean`) |
 | Waves and pipelining, `ProposeRound`, `VotingRound`, `DecisionRound`, `GetLeaderBlocks` | `Model/Slots.lean` — `Slots`, `votingRound`, `decisionRound`, `IsLeaderBlock` |
 | `IsVote`, `IsCertificate`, `FastCommittedLeader`, `SlowCommittedLeader`, `SkippedLeader` | `Model/DirectRules.lean` |
-| `TryIndirectDecide`, `DecideFromAnchor` | `Model/IndirectRules.lean` (`EligibleAsAnchor`, `CertifiedIn`, `WeakLinked`), `Model/Decided.lean` (`Decided`) |
+| `TryIndirectDecide`, `DecideFromAnchor` | `Model/IndirectRules.lean` (`CertifiedIn`, `WeakLinked`), `Model/Decided.lean` (`hydrozoanAnchored`, the rule as an instance of the shared anchored relation `LeanDag/Common/Anchored.lean`, whose eligibility `EligibleAt` at wave two is the paper's `r_decision < s.round`; `Decided`) |
 | after GST | `Model/Liveness.lean` — `PopulatedOn`, `SynchronisedOn`, `View.full`, `View.CoversUpto` |
 | `lem:thresholds` (the slack-cap table) | `ThresholdArithmetic/` (HZ1) |
 | slot safety, the two-case consistency argument | `DirectSafety/` (HZ2), `SlotAgreement/` (HZ3) |
@@ -130,9 +130,9 @@ a predicate on `(blk, b)`:
 ```lean
 structure ValidWrt (blk : BlockId → Block Replica BlockId)
     (b : Block Replica BlockId) : Prop where
-  predecessor : ∀ i ∈ b.parents, (blk i).round + 1 = b.round
-  distinct_authors : ∀ i ∈ b.parents, ∀ j ∈ b.parents,
-    (blk i).author = (blk j).author → i = j
+  predecessor : ∀ i ∈ b.refs, (blk i).round + 1 = b.round
+  distinct_creators : ∀ i ∈ b.refs, ∀ j ∈ b.refs,
+    (blk i).creator = (blk j).creator → i = j
   quorum : 0 < b.round → q Replica ≤ (authors blk b).card
 ```
 
@@ -216,7 +216,7 @@ def WeakLinked (U : BlockUniverse Replica BlockId) (A L : BlockId)
     (r : ℕ) : Prop :=
   ∃ s : Finset BlockId,
     (∀ b ∈ s, b ∈ blocksAt U (r + 1) ∧ IsVote U b L ∧ Reaches U A b) ∧
-    qWeak Replica ≤ (authorsOf U.block s).card
+    qWeak Replica ≤ (creatorsOf U.block s).card
 ```
 
 `Decided U V k v` is an inductive relation with six constructors: the

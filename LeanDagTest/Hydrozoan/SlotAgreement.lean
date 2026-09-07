@@ -1,7 +1,6 @@
 import LeanDag.Hydrozoan.SlotAgreement.Statement
 import LeanDag.Hydrozoan.Helpers.IndirectRules
 import LeanDagTest.Hydrozoan.DirectRules
-
 /-!
 # Witness: the hardening universe
 
@@ -25,7 +24,7 @@ verifier finding at once:
 
 Round-1 keeps the equivocating pair (both copies vote for the slot-0
 leader here); every round-2 block certifies the slot-0 leader, so slot 0
-resolves via rung 1. Crashed replica 1 authors only its genesis block.
+resolves via rung 1. Crashed replica 1 creators only its genesis block.
 Thresholds at `n = 7`: `q = 5`, `q_fast = 6`, `q_cert = 5`, `q_slow = 4`,
 `q_weak = 3`.
 -/
@@ -39,44 +38,44 @@ open LeanDag LeanDag.Hydrozoan
 set_option maxRecDepth 16384
 
 /-- Thirty-eight blocks over six rounds (id 38 is junk, outside the
-universe). Ids 0–6: genesis (author = id). Ids 7/8: the equivocating
+universe). Ids 0–6: genesis (creator = id). Ids 7/8: the equivocating
 pair by Byzantine 0 (both vote for genesis 2). Ids 9–13: round 1 by
-replicas 2–6. Ids 14–19 (round 2, authors 0, 2, 3, 4, 5, 6): parents
-`{7, 9, 11, 12, 13}` — five distinct authors, all voting for id 2
+replicas 2–6. Ids 14–19 (round 2, creators 0, 2, 3, 4, 5, 6): refs
+`{7, 9, 11, 12, 13}` — five distinct creators, all voting for id 2
 (every round-2 block is a certificate for the slot-0 leader) and
 **omitting id 10** (slot 1's candidate gets no votes). Ids 20–25
-(round 3): parents `{14, 15, 16, 18, 19}`, containing certificate 15.
-Ids 26–31 (round 4): parents `{20, 21, 22, 23, 25}` — **omitting
+(round 3): refs `{14, 15, 16, 18, 19}`, containing certificate 15.
+Ids 26–31 (round 4): refs `{20, 21, 22, 23, 25}` — **omitting
 id 24**, slot 3's candidate: slot 3 is skipped. Ids 32–37 (round 5):
-parents `{26, 27, 28, 29, 31}`, containing the anchor id 31 — six
+refs `{26, 27, 28, 29, 31}`, containing the anchor id 31 — six
 votes fast-commit slot 4. -/
 def lk5 : Fin 39 → Block (Fin 7) (Fin 39) := fun i =>
   if h : (i : ℕ) < 7 then
-    { round := 0, author := ⟨i, by omega⟩, parents := ∅ }
+    { round := 0, creator := ⟨i, by omega⟩, refs := ∅, payload := () }
   else if (i : ℕ) = 7 then
-    { round := 1, author := 0, parents := {0, 1, 2, 3, 4} }
+    { round := 1, creator := 0, refs := {0, 1, 2, 3, 4}, payload := () }
   else if (i : ℕ) = 8 then
-    { round := 1, author := 0, parents := {0, 1, 2, 3, 5} }
+    { round := 1, creator := 0, refs := {0, 1, 2, 3, 5}, payload := () }
   else if h : (i : ℕ) < 14 then
-    { round := 1, author := ⟨(i : ℕ) - 7, by omega⟩, parents := {0, 1, 2, 3, 4} }
+    { round := 1, creator := ⟨(i : ℕ) - 7, by omega⟩, refs := {0, 1, 2, 3, 4}, payload := () }
   else if (i : ℕ) = 14 then
-    { round := 2, author := 0, parents := {7, 9, 11, 12, 13} }
+    { round := 2, creator := 0, refs := {7, 9, 11, 12, 13}, payload := () }
   else if h : (i : ℕ) < 20 then
-    { round := 2, author := ⟨(i : ℕ) - 13, by omega⟩, parents := {7, 9, 11, 12, 13} }
+    { round := 2, creator := ⟨(i : ℕ) - 13, by omega⟩, refs := {7, 9, 11, 12, 13}, payload := () }
   else if (i : ℕ) = 20 then
-    { round := 3, author := 0, parents := {14, 15, 16, 18, 19} }
+    { round := 3, creator := 0, refs := {14, 15, 16, 18, 19}, payload := () }
   else if h : (i : ℕ) < 26 then
-    { round := 3, author := ⟨(i : ℕ) - 19, by omega⟩, parents := {14, 15, 16, 18, 19} }
+    { round := 3, creator := ⟨(i : ℕ) - 19, by omega⟩, refs := {14, 15, 16, 18, 19}, payload := () }
   else if (i : ℕ) = 26 then
-    { round := 4, author := 0, parents := {20, 21, 22, 23, 25} }
+    { round := 4, creator := 0, refs := {20, 21, 22, 23, 25}, payload := () }
   else if h : (i : ℕ) < 32 then
-    { round := 4, author := ⟨(i : ℕ) - 25, by omega⟩, parents := {20, 21, 22, 23, 25} }
+    { round := 4, creator := ⟨(i : ℕ) - 25, by omega⟩, refs := {20, 21, 22, 23, 25}, payload := () }
   else if (i : ℕ) = 32 then
-    { round := 5, author := 0, parents := {26, 27, 28, 29, 31} }
+    { round := 5, creator := 0, refs := {26, 27, 28, 29, 31}, payload := () }
   else if h : (i : ℕ) < 38 then
-    { round := 5, author := ⟨(i : ℕ) - 31, by omega⟩, parents := {26, 27, 28, 29, 31} }
+    { round := 5, creator := ⟨(i : ℕ) - 31, by omega⟩, refs := {26, 27, 28, 29, 31}, payload := () }
   else
-    { round := 0, author := 0, parents := ∅ }
+    { round := 0, creator := 0, refs := ∅, payload := () }
 
 /-- The hardening universe: every id except the junk id 38. -/
 def U5 : BlockUniverse (Fin 7) (Fin 39) where
@@ -109,7 +108,7 @@ example : IsLeaderBlock U5 4 31 := by decide
 example : FastCommitInView U5 Vfull5 31 4 := by decide
 
 -- Slot 3 is skipped: its candidate id 24 is referenced by no round-4
--- block, so all six round-4 authors blame it.
+-- block, so all six round-4 creators blame it.
 example : IsLeaderBlock U5 3 24 := by decide
 example : SkippedLeaderInView U5 Vfull5 3 := by decide
 
@@ -117,21 +116,21 @@ example : SkippedLeaderInView U5 Vfull5 3 := by decide
 -- ahead to anchor it — so a derivation anchored on slot 4 must
 -- POSITIVELY dispose of slot 3 in between. Slots 1 and 2 are not
 -- eligible.
-example : EligibleAsAnchor (Fin 7) 0 4 := by decide
-example : EligibleAsAnchor (Fin 7) 0 3 := by decide
-example : ¬ EligibleAsAnchor (Fin 7) 0 2 := by decide
+example : EligibleAt (Validator := Fin 7) 2 0 4 := by decide
+example : EligibleAt (Validator := Fin 7) 2 0 3 := by decide
+example : ¬ EligibleAt (Validator := Fin 7) 2 0 2 := by decide
 
 -- Slot 0's candidate is certified by every round-2 block (all five of
--- their parents vote for id 2).
+-- their refs vote for id 2).
 example : IsLeaderBlock U5 0 2 := by decide
-example : certificates U5 2 0 = {14, 15, 16, 17, 18, 19} := by decide
+example : LeanDag.Hydrozoan.certificates U5 2 0 = {14, 15, 16, 17, 18, 19} := by decide
 
 -- Slot 1's candidate id 10 is voteless: no round-2 block references
--- it, so it has no supporters, no certificates — nothing either rung
+-- it, so it has no LeanDag.Hydrozoan.supporters, no LeanDag.Hydrozoan.certificates — nothing either rung
 -- could ever find.
 example : IsLeaderBlock U5 1 10 := by decide
-example : supporters U5 10 2 = ∅ := by decide
-example : certificates U5 10 1 = ∅ := by decide
+example : LeanDag.Hydrozoan.supporters U5 10 2 = ∅ := by decide
+example : LeanDag.Hydrozoan.certificates U5 10 1 = ∅ := by decide
 
 -- The second view genuinely differs: the equivocation's second copy is
 -- withheld.
@@ -141,45 +140,48 @@ example : (7 : Fin 39) ∈ V5b.ids ∧ (8 : Fin 39) ∉ V5b.ids := by decide
 example : Decided U5 Vfull5 3 none := Decided.directSkip (by decide)
 
 -- The seam with a NON-vacuous in-between premise: slot 0 commits via
--- rung 1 anchored on slot 4; the eligible slot 3 in between is
+-- rung 0 anchored on slot 4; the eligible slot 3 in between is
 -- positively disposed of by its own skip derivation.
 example : Decided U5 Vfull5 0 (some 2) :=
-  Decided.indirectCert (j := 4) (A := 31) (by omega) (by decide)
-    (Decided.directFast (by decide) (by decide))
+  Decided.indirectCommit (j := 4) (A := 31) (i := 0) (by omega) (by decide)
+    (Decided.directCommit (by decide) (Or.inl (by decide)))
     (fun i h1 h2 h3 => by
       have hi : i = 1 ∨ i = 2 ∨ i = 3 := by omega
       rcases hi with rfl | rfl | rfl
       · exact absurd h3 (by decide)
       · exact absurd h3 (by decide)
       · exact Decided.directSkip (by decide))
+    (by decide) (fun _ h => absurd h (Nat.not_lt_zero _))
     (by decide)
-    ⟨15, by decide, Reaches.of_mem_parents (i := 31) (j := 20) (by decide)
-      (Reaches.single (by decide))⟩
+    (show LeanDag.Hydrozoan.CertifiedIn U5 31 2 0 from ⟨15, by decide,
+      Reaches.of_mem_refs (i := 31) (j := 20) (by decide) (Reaches.single (by decide))⟩)
+    (fun _ _ _ h => h)
 
 -- indirectSkip end-to-end: slot 1's candidate is voteless, so both
 -- rungs are empty at the anchor.
 example : Decided U5 Vfull5 1 none := by
   have hall : ∀ M : Fin 39, IsLeaderBlock U5 1 M → M = 10 := by decide
   refine Decided.indirectSkip (j := 4) (A := 31) (by omega) (by decide)
-    (Decided.directFast (by decide) (by decide))
+    (Decided.directCommit (by decide) (Or.inl (by decide)))
     (fun i h1 h2 h3 => by
       have hi : i = 2 ∨ i = 3 := by omega
       rcases hi with rfl | rfl
       · exact absurd h3 (by decide)
       · exact absurd h3 (by decide))
-    (fun L hL hcert => by
+    (fun i hi L hL => by
       have := hall L hL
       subst this
-      exact absurd ((certifiedIn_iff_history (by decide)).mp hcert) (by decide))
-    (fun L hL hweak => by
-      have := hall L hL
-      subst this
-      exact absurd ((weakLinked_iff_history (by decide)).mp hweak) (by decide))
+      rcases i with _ | _ | i
+      · exact fun hcert =>
+          absurd ((certifiedIn_iff_history (by decide)).mp hcert) (by decide)
+      · exact fun hweak =>
+          absurd ((weakLinked_iff_history (by decide)).mp hweak) (by decide)
+      · exact absurd hi (by change ¬ (i + 1 + 1 < 2); omega))
 
 -- The same slot from a different view, by a different route (V5b still
 -- holds six voters, so the direct fast path fires there), same verdict.
 example : Decided U5 V5b 0 (some 2) :=
-  Decided.directFast (by decide) (by decide)
+  Decided.directCommit (by decide) (Or.inl (by decide))
 
 end Hydrozoan
 

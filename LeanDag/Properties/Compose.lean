@@ -2,7 +2,6 @@ import LeanDag.Properties.Truncate
 import LeanDag.Properties.Sustain
 import LeanDag.Properties.Agreement
 import LeanDag.Properties.Band
-
 /-!
 # Transport composes
 
@@ -26,11 +25,10 @@ band the second mechanism never promised.
 rather than moving them, and it lives beside `Extends`; these live here
 because the offset is what makes them worth stating together.
 
-**The consumer is `Integration/Stack.lean`**, which transports honest
-non-equivocation, coverage and production across a fill followed by a
-cut, one lemma per invariant. `sustains_stack` there is this file
-applied, and the reactive commit crossing the whole stack is what it
-buys that the hand-written chain did not have.
+**The consumer is `Arcs/Stack.lean`**: a `Stack` of mechanisms is a
+finite sequence of `Rebased` steps, and `Stack.rebased` composes them
+with these lemmas into one `Rebased`, which every verdict and the
+liveness precondition then cross at once.
 -/
 
 namespace LeanDag

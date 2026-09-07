@@ -1,5 +1,4 @@
 import LeanDag.MahiMahi.Model.Decision
-
 /-!
 # Safety at wave `w` — statement
 
@@ -41,8 +40,8 @@ namespace MahiMahi
 
 namespace Safety
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
-  [F : Faults Validator] {BlockId : Type*} [LinearOrder BlockId] {Payload : Type*}
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
+  [F : Faults Validator] {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
   [S : Slots Validator]
 
 /-- **MM1a, skip excludes certificates**: a directly skipped slot `(a, r)`

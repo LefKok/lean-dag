@@ -1,4 +1,5 @@
 import LeanDag.Odontoceti.Decision
+import LeanDag.Mysticeti.Liveness
 import Mathlib.Data.Finset.Max
 
 /-!
@@ -46,9 +47,9 @@ namespace LeanDag
 
 namespace Odontoceti
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults5 Validator]
-variable {BlockId : Type*} [LinearOrder BlockId] {Payload : Type*}
+variable {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
 variable {U : BlockUniverse Validator BlockId Payload}
 variable [S : Slots Validator]
 variable {T : Finset Validator} {L : BlockId} {k R N : ℕ}
@@ -128,84 +129,16 @@ theorem decided_of_correct_leader (hs : Synchronised U R)
     ∃ L, IsLeaderBlock U k L ∧ Decided U V k (some L) :=
   decided_of_leader_mem card_correct hs hR hpop0 hpop1 V hcov hlead
 
-/-! ## O8 — a run of two spans eligibility -/
+/-! ## O8, O9 — spanning and the descent
 
-variable (Validator) in
-/-- A run of `c` slots reaches past everything below it: the last slot
-of a run starting at `b` is an eligible anchor for every slot below
-`b`. -/
-def SpansEligible (c : ℕ) : Prop :=
-  ∀ b i : ℕ, i < b → Eligible Validator i (b + c - 1)
-
-omit [Fintype Validator] [DecidableEq Validator] F in
-/-- **O8.** Under a pipelined identity-round schedule, `c = 2` spans:
-slot `b − 1` cannot anchor on slot `b` — one round is one too close —
-but slot `b + 1` clears `slotRound + 2`. This is why the thesis's
-Lemma 10 asks for **two consecutive** honest leaders. -/
-theorem spansEligible_two (hid : ∀ k, S.slotRound k = k) :
-    SpansEligible Validator 2 := by
-  intro b i hi
-  rw [eligible_iff, hid, hid]
-  omega
-
-/-! ## O9 — a committed run clears everything below it -/
-
-/-- **O9 (thesis Lemma 11).** Every slot below a committed run of
-eligible span is decided: walk down from the run, anchoring each slot
-on the nearest eligible committed slot above it — whose intermediate
-premise the induction supplies — and commit the **least** candidate
-passing the indirect test, exactly what the canonicity premise asks
-for. -/
-theorem decided_below_of_committed_run
-    {V : View Validator BlockId Payload U} {b n : ℕ} (hbn : b ≤ n)
-    (hspan : ∀ i, i < b → Eligible Validator i n)
-    (hrun : ∀ j, b ≤ j → j ≤ n → ∃ B, Decided U V j (some B)) :
-    ∀ i, i < b → ∃ v, Decided U V i v := by
-  classical
-  have key : ∀ d i, i < b → b - i ≤ d → ∃ v, Decided U V i v := by
-    intro d
-    induction d with
-    | zero => intro i hi hd; omega
-    | succ d ih =>
-      intro i hi hd
-      -- the nearest slot above `i` that is both eligible for it and committed
-      have hex : ∃ j, Eligible Validator i j ∧ ∃ B, Decided U V j (some B) :=
-        ⟨n, hspan i hi, hrun n hbn (le_refl n)⟩
-      obtain ⟨helig, B, hB⟩ := Nat.find_spec hex
-      have hmid : ∀ i', i < i' → i' < Nat.find hex →
-          Eligible Validator i i' → Decided U V i' none := by
-        intro i' h1 h2 h3
-        have hnc : ¬ ∃ C, Decided U V i' (some C) := fun hc =>
-          Nat.find_min hex h2 ⟨h3, hc⟩
-        have hi'b : i' < b := by
-          by_contra hge
-          have hle : Nat.find hex ≤ n :=
-            Nat.find_le ⟨hspan i hi, hrun n hbn (le_refl n)⟩
-          exact hnc (hrun i' (by omega) (by omega))
-        obtain ⟨v, hv⟩ := ih i' hi'b (by omega)
-        cases v with
-        | none => exact hv
-        | some C => exact absurd ⟨C, hv⟩ hnc
-      by_cases hc : ∃ L, IsLeaderBlock U i L ∧ ThickLink U B L (S.slotRound i)
-      · -- commit a minimal passing candidate
-        have hCne : (U.ids.filter fun L => IsLeaderBlock U i L ∧
-            ThickLink U B L (S.slotRound i)).Nonempty := by
-          obtain ⟨L, hL, ht⟩ := hc
-          exact ⟨L, Finset.mem_filter.mpr ⟨hL.1, hL, ht⟩⟩
-        have hmem := Finset.min'_mem _ hCne
-        rw [Finset.mem_filter] at hmem
-        refine ⟨some ((U.ids.filter fun L => IsLeaderBlock U i L ∧
-            ThickLink U B L (S.slotRound i)).min' hCne),
-          Decided.indirectCommit (lt_of_eligible helig)
-            helig hB hmid hmem.2.1 hmem.2.2 ?_⟩
-        intro L' hL' ht' hlt
-        exact absurd hlt (not_lt.mpr (Finset.min'_le _ L'
-          (Finset.mem_filter.mpr ⟨hL'.1, hL', ht'⟩)))
-      · push Not at hc
-        exact ⟨none, Decided.indirectSkip (lt_of_eligible helig) helig hB
-          hmid hc⟩
-  intro i hi
-  exact key (b - i) i hi (le_refl _)
+A run of `c` slots spanning eligibility is the relation's
+`AnchoredRule.SpansEligible`; under a pipelined identity-round schedule
+`c = 2` spans (`spansEligible_of_identity`): slot `b − 1` cannot anchor
+on slot `b` — one round is one too close — but slot `b + 1` clears
+`slotRound + 2`, which is why the thesis's Lemma 10 asks for **two
+consecutive** honest leaders. And O9 (thesis Lemma 11), that every slot
+below a committed run of eligible span is decided, is the relation's
+`decided_below_of_committed_run` at `Odontoceti.exists_least`. -/
 
 end Odontoceti
 

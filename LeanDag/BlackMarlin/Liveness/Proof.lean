@@ -1,5 +1,4 @@
 import LeanDag.BlackMarlin.Helpers.Liveness
-
 /-!
 # Black Marlin — liveness, proved
 

@@ -1,7 +1,6 @@
 import LeanDag.Hydrozoan.EventualDecision.Statement
 import LeanDag.Hydrozoan.DirectLiveness.Proof
 import LeanDag.Hydrozoan.Helpers.IndirectLiveness
-
 /-!
 # Helpers: eventual decision
 
@@ -28,7 +27,7 @@ theorem runsRecur (Replica : Type*) [S : Slots Replica] :
     le_trans hk₀ (S.mono (le_trans (le_max_right _ _) hb)), hlead⟩
 
 variable {Replica BlockId : Type} [Fintype Replica] [DecidableEq Replica]
-  [DecidableEq BlockId] [LinearOrder BlockId] [F : Faults Replica]
+  [DecidableEq BlockId] [LinearOrder BlockId] [F : LeanDag.Hydrozoan.Faults Replica]
   [S : Slots Replica]
 
 /-- The composition: direct liveness commits each run slot (its round,
@@ -54,7 +53,7 @@ theorem runDecidesBelow (U : BlockUniverse Replica BlockId) :
         (hpop _ hbj (by omega)) (hpop _ (by omega) (by omega))
         (hpop _ (by omega) (by omega)) hleadj V (hcov.mono (by omega))
     exact ⟨L, hdec⟩
-  exact decided_below_of_committed_run (by omega)
+  exact AnchoredRule.decided_below_of_committed_run exists_least (by omega)
     (fun i' hi' => hspan b i' hi') hrun i hi
 
 end EventualDecision

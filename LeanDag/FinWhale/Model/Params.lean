@@ -1,5 +1,4 @@
-import LeanDag.Validators
-
+import LeanDag.Common.Validators
 /-!
 # FinWhale — the committee, and the two thresholds it fixes
 

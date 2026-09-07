@@ -1,7 +1,6 @@
 import LeanDag.Properties.Extends
 import LeanDag.Properties.Truncate
-import LeanDag.Participation
-
+import LeanDag.Common.Participation
 /-!
 # What a mechanism owes a protocol, so liveness survives
 

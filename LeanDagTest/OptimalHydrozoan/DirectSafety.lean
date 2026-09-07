@@ -1,7 +1,6 @@
 import LeanDag.OptimalHydrozoan.DirectSafety.Proof
 import LeanDag.OptimalHydrozoan.Helpers.Decided
 import LeanDagTest.OptimalHydrozoan.Decided
-
 /-!
 # Witness: Optimal direct-rule safety, applied
 
@@ -24,8 +23,8 @@ so that its consequences are seen on data:
   route.
 
 Deferred (needs an equivocation in `UD`, or `n ≥ 5`): a Byzantine replica
-voting and blaming at once (three votes, two blames), a skip with exactly
-`qCert < qFast` blames, and an `f = 0` universe for fast/fast's
+voting and blaming at once (three votes, two LeanDag.Hydrozoan.blames), a skip with exactly
+`qCert < qFast` LeanDag.Hydrozoan.blames, and an `f = 0` universe for fast/fast's
 non-equivocation branch.
 -/
 
@@ -42,50 +41,50 @@ set_option maxRecDepth 16384
 -- Fast/fast with a rival: slot 1 of OX has candidates 4 and 5 (the
 -- Byzantine leader's two copies); 4 gathers exactly qFastOpt votes.
 example :
-    IsLeaderBlock UX 1 4 ∧ IsLeaderBlock UX 1 5 ∧ supporters UX 4 2 = {0, 1, 3} ∧
-      supporters UX 5 2 = {2} := by
+    IsLeaderBlock UX 1 4 ∧ IsLeaderBlock UX 1 5 ∧ LeanDag.Hydrozoan.supporters UX 4 2 = {0, 1, 3} ∧
+      LeanDag.Hydrozoan.supporters UX 5 2 = {2} := by
   decide
-example : FastCommitOptInView OX.toBlockUniverse VX 4 (Slots.slotRound (Fin 4) 1) := by
+example : FastCommitOptInView OX.toBlockRecord VX 4 (Slots.slotRound (Fin 4) 1) := by
   decide
 
 -- So every fast-committing candidate of slot 1 is 4 — not 5, which the
 -- premise `IsLeaderBlock` alone would allow.
 example :
-    ∀ L, IsLeaderBlock OX.toBlockUniverse 1 L →
-      FastCommitOptInView OX.toBlockUniverse VX L (Slots.slotRound (Fin 4) 1) → L = 4 :=
+    ∀ L, IsLeaderBlock OX.toBlockRecord 1 L →
+      FastCommitOptInView OX.toBlockRecord VX L (Slots.slotRound (Fin 4) 1) → L = 4 :=
   fun L hL h =>
     (OptimalHydrozoan.DirectSafety.holds (Fin 4) (Fin 16) OX).1 VX VX 1 L 4 hL (by decide) h
       (by decide)
 
 -- Fast/fast agreement at slot 6 of OD: whatever fast-commits there is 22.
 example :
-    ∀ L, IsLeaderBlock OD.toBlockUniverse 6 L →
-      FastCommitOptInView OD.toBlockUniverse VD L (Slots.slotRound (Fin 4) 6) → L = 22 :=
+    ∀ L, IsLeaderBlock OD.toBlockRecord 6 L →
+      FastCommitOptInView OD.toBlockRecord VD L (Slots.slotRound (Fin 4) 6) → L = 22 :=
   fun L hL h =>
     (OptimalHydrozoan.DirectSafety.holds (Fin 4) (Fin 30) OD).1 VD VD 6 L 22 hL (by decide) h
       (by decide)
 
 /-- The one-vote-short view of `UD`, typed at the projection. -/
-def VDs : View OD.toBlockUniverse := VDm
+def VDs : LeanDag.Hydrozoan.View OD.toBlockRecord := VDm
 
 -- The inherited rows on slot 0 of OD: certificate uniqueness (universe
 -- level) and slow/slow agreement across two distinct views.
 example :
-    ∀ L, IsLeaderBlock OD.toBlockUniverse 0 L →
-      (certificates OD.toBlockUniverse L (Slots.slotRound (Fin 4) 0)).Nonempty → L = 3 :=
+    ∀ L, IsLeaderBlock OD.toBlockRecord 0 L →
+      (LeanDag.Hydrozoan.certificates OD.toBlockRecord L (Slots.slotRound (Fin 4) 0)).Nonempty → L = 3 :=
   fun L hL h =>
     (OptimalHydrozoan.DirectSafety.holds (Fin 4) (Fin 30) OD).2.1 0 L 3 hL (by decide) h (by decide)
 example :
-    ∀ L, IsLeaderBlock OD.toBlockUniverse 0 L →
-      SlowCommitInView OD.toBlockUniverse VD L (Slots.slotRound (Fin 4) 0) → L = 3 :=
+    ∀ L, IsLeaderBlock OD.toBlockRecord 0 L →
+      SlowCommitInView OD.toBlockRecord VD L (Slots.slotRound (Fin 4) 0) → L = 3 :=
   fun L hL h =>
     (OptimalHydrozoan.DirectSafety.holds (Fin 4) (Fin 30) OD).2.2.1 VD VDs 0 L 3 hL (by decide) h
       (by decide)
 
 -- Fast/slow agreement at slot 3 of OD, where both routes fire on 13.
 example :
-    ∀ L, IsLeaderBlock OD.toBlockUniverse 3 L →
-      SlowCommitInView OD.toBlockUniverse VD L (Slots.slotRound (Fin 4) 3) → L = 13 :=
+    ∀ L, IsLeaderBlock OD.toBlockRecord 3 L →
+      SlowCommitInView OD.toBlockRecord VD L (Slots.slotRound (Fin 4) 3) → L = 13 :=
   fun L hL h =>
     ((OptimalHydrozoan.DirectSafety.holds (Fin 4) (Fin 30) OD).2.2.2.1 VD VD 3 13 L (by decide) hL
       (by decide) h).symm
@@ -93,14 +92,14 @@ example :
 -- Commit/skip exclusion at slot 0 of OX: the direct skip holds in the
 -- full view, so neither direct commit of candidate 3 can — in ANY view.
 example :
-    ∀ V : View OX.toBlockUniverse,
-      ¬ FastCommitOptInView OX.toBlockUniverse V 3 (Slots.slotRound (Fin 4) 0) :=
+    ∀ V : LeanDag.Hydrozoan.View OX.toBlockRecord,
+      ¬ FastCommitOptInView OX.toBlockRecord V 3 (Slots.slotRound (Fin 4) 0) :=
   fun V h =>
     (OptimalHydrozoan.DirectSafety.holds (Fin 4) (Fin 16) OX).2.2.2.2 V VX 0 3 (by decide)
       (Or.inl h) (by decide)
 example :
-    ∀ V : View OX.toBlockUniverse,
-      ¬ SlowCommitInView OX.toBlockUniverse V 3 (Slots.slotRound (Fin 4) 0) :=
+    ∀ V : LeanDag.Hydrozoan.View OX.toBlockRecord,
+      ¬ SlowCommitInView OX.toBlockRecord V 3 (Slots.slotRound (Fin 4) 0) :=
   fun V h =>
     (OptimalHydrozoan.DirectSafety.holds (Fin 4) (Fin 16) OX).2.2.2.2 V VX 0 3 (by decide)
       (Or.inr h) (by decide)
@@ -109,7 +108,7 @@ example :
 -- replica 2, whose round-3 block is exactly the excluded id 15 — so
 -- nothing can anchor an indirect decision of slot 0 ...
 theorem ox_no_anchor {j : ℕ} {A : Fin 16} (hj : 2 < j)
-    (hA : IsLeaderBlock OX.toBlockUniverse j A) : False := by
+    (hA : IsLeaderBlock OX.toBlockRecord j A) : False := by
   have hr : ∀ A ∈ UX.ids, (UX.block A).round ≤ 3 := by decide
   have h1 := hr A hA.1
   have h2 : (UX.block A).round = j := hA.2.1
@@ -120,16 +119,11 @@ theorem ox_no_anchor {j : ℕ} {A : Fin 16} (hj : 2 < j)
 -- ... hence the skipped slot commits its candidate by no route at all.
 example : ¬ DecidedOpt OX VX 0 (some 3) := fun h => by
   cases h with
-  | directFast hL hf =>
-    exact (OptimalHydrozoan.DirectSafety.holds (Fin 4) (Fin 16) OX).2.2.2.2 VX VX 0 3 hL (Or.inl hf)
+  | directCommit hL hc =>
+    exact (OptimalHydrozoan.DirectSafety.holds (Fin 4) (Fin 16) OX).2.2.2.2 VX VX 0 3 hL hc
       (by decide)
-  | directSlow hL hs =>
-    exact (OptimalHydrozoan.DirectSafety.holds (Fin 4) (Fin 16) OX).2.2.2.2 VX VX 0 3 hL (Or.inr hs)
-      (by decide)
-  | indirectCert hkj helig hanchor _ _ _ =>
-    exact ox_no_anchor helig (isLeaderBlock_of_decidedOpt hanchor)
-  | indirectEvidence hkj helig hanchor _ _ _ _ =>
-    exact ox_no_anchor helig (isLeaderBlock_of_decidedOpt hanchor)
+  | indirectCommit hkj helig hanchor _ _ _ _ _ _ =>
+    exact ox_no_anchor helig (AnchoredRule.isLeaderBlock_of_decided hanchor)
 
 end OptimalHydrozoan
 

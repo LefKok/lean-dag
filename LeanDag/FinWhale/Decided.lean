@@ -2,12 +2,13 @@ import LeanDag.FinWhale.Order
 import LeanDag.FinWhale.Model.Liveness
 import Mathlib.Data.Finset.Sort
 import LeanDag.FinWhale.Rotation
-
 /-!
 # FinWhale — every slot is decided, and what follows
 
-Lemma 23 and Theorems 24 and 26. Lemma 12 said two validators never
-disagree; these say they eventually agree about *everything*.
+Lemma 23 and Theorems 24 and 26. The relation's agreement says two
+validators never disagree; these say they eventually agree about
+*everything*. The end-to-end form, `agreement_of_commits`, is in
+`View.lean`, where the views are.
 
 **Lemma 23 is a statement about one DAG, not about time.** The paper
 reads it as "after GST any undecided slot eventually gets decided", where
@@ -117,11 +118,11 @@ section Triple
 
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
-variable {Payload : Type} {D : Dag Validator BlockId Payload} {S : Sched Validator}
+variable {Payload : Type} {D : Dag Validator BlockId Payload} {S : Slots Validator}
 
 /-- The commit the interface carries. -/
 theorem directCommit_of_commits {R N : ℕ} (h : CommitsCorrectLeaders S D R N) {s : ℕ}
-    (hR : R ≤ S.round s) (hN : S.round s + 2 ≤ N)
+    (hR : R ≤ S.slotRound s) (hN : S.slotRound s + 2 ≤ N)
     (hlead : S.leader s ∈ (Correct : Finset Validator)) :
     ∃ l ∈ slotBlocks S D s, DirectCommit D l := by
   obtain ⟨l, hslot, hby⟩ := h s hR hN hlead
@@ -139,7 +140,7 @@ theorem committed_triple {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
     (hwf : WellFormed Elig dc ds choose dec) {R N t : ℕ}
     (hsees : SeesCommits S D dc R N)
-    (hrr : RoundRobin S.leader) (hid : ∀ s, S.round s = s)
+    (hrr : RoundRobin S.leader) (hid : ∀ s, S.slotRound s = s)
     (hR : R ≤ t) (hN : t + (3 * F.f + 5) ≤ N) :
     ∃ a, t < a ∧ a + 4 ≤ N ∧
       ∀ s, a ≤ s → s ≤ a + 2 →
@@ -162,7 +163,7 @@ theorem all_decided {dc : ℕ → BlockId → Prop} {ds : ℕ → Prop}
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
     (hwf : WellFormed Elig dc ds choose dec) {R N r : ℕ}
     (hsees : SeesCommits S D dc R N)
-    (hrr : RoundRobin S.leader) (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ s, S.round s = s)
+    (hrr : RoundRobin S.leader) (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ s, S.slotRound s = s)
     (hN : max r R + (3 * F.f + 5) ≤ N) :
     dec r ≠ Verdict.undecided := by
   obtain ⟨a, hlo, -, htri⟩ :=
@@ -246,7 +247,7 @@ section Order
 
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
-variable {Payload : Type} {D : Dag Validator BlockId Payload} {S : Sched Validator}
+variable {Payload : Type} {D : Dag Validator BlockId Payload} {S : Slots Validator}
 
 /-- `histOf` is the causal history: the faithfulness condition Theorem 26
 asks for, discharged. -/
@@ -265,62 +266,6 @@ theorem nodup_delivery [LinearOrder BlockId] (ls : List BlockId) :
   theorem15 _ (fun _ => nodup_histOf) ls
 
 end Order
-
-/-! ## The two theorems, end to end -/
-
-section Capstone
-
-variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
-variable [F : Faults Validator] [P : Params Validator]
-variable {Payload : Type} {D : Dag Validator BlockId Payload} {S : Sched Validator}
-
-/-- **Theorem 24 (Agreement), end to end.** Two validators of one DAG
-deliver the same sequence at every horizon the DAG supports.
-
-Both halves are consumed here: Lemma 12 makes the verdicts agree wherever
-both are decided, and Lemma 23 makes them decided. `hcommits` is the
-liveness interface, and the schedule that supplies it does not appear.
-The two finiteness conditions sit together rather than in conflict —
-`hbound` says nothing above `M` is decided, and the horizon is placed
-below what the DAG's own reach decides. -/
-theorem agreement_of_commits {R N : ℕ}
-    (hrr : RoundRobin S.leader)
-    {dc dc' : ℕ → BlockId → Prop} {ds ds' : ℕ → Prop}
-    {choose : BlockId → ℕ → Option BlockId} {dec dec' : ℕ → Verdict BlockId}
-    (hwf : WellFormed Elig dc ds choose dec) (hwf' : WellFormed Elig dc' ds' choose dec')
-    (hch : ChooseSound S D choose)
-    (hdc : ∀ r l, dc r l → l ∈ slotBlocks S D r ∧ DirectCommit D l)
-    (hdc' : ∀ r l, dc' r l → l ∈ slotBlocks S D r ∧ DirectCommit D l)
-    (hds : ∀ r, ds r → DirectSkip S D r) (hds' : ∀ r, ds' r → DirectSkip S D r)
-    (hsees : SeesCommits S D dc R N) (hsees' : SeesCommits S D dc' R N)
-    (hslot : ∀ r A, dec r = Verdict.commit A → A ∈ slotBlocks S D r)
-    (hslot' : ∀ r A, dec' r = Verdict.commit A → A ∈ slotBlocks S D r)
-    {M : ℕ} (hbound : ∀ s, M ≤ s → dec s = Verdict.undecided ∧ dec' s = Verdict.undecided)
-    (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ s, S.round s = s)
-    {k : ℕ} (hkN : max k R + (3 * F.f + 5) ≤ N)
-    (hist : BlockId → List BlockId) :
-    linearise hist (commitSeq dec k) = linearise hist (commitSeq dec' k) := by
-  have habove : ∀ (dq : ℕ → Verdict BlockId),
-      (∀ r A, dq r = Verdict.commit A → A ∈ slotBlocks S D r) →
-      ∀ r a A, Elig r a → dq a = Verdict.commit A → A ∈ D.ids ∧ S.round r + 3 ≤ (D.block A).round := by
-    intro dq hq r a A hra' hcom
-    have hra := (hEl r a).mp hra'
-    have hA := hq a A hcom
-    simp only [slotBlocks, blocksAt, Finset.mem_filter] at hA
-    exact ⟨hA.1.1, by simp only [hid] at hA ⊢; omega⟩
-  refine theorem24
-    (lemma12 hwf hwf' (exclusions_of_dag hch hdc hdc' hds hds')
-      (fun r a h => by have := (hEl r a).mp h; omega)
-      (habove dec hslot) (habove dec' hslot') hbound)
-    (fun s hs => all_decided hwf hsees hrr hEl hid (by
-      have : max s R ≤ max k R := max_le_max (by omega) le_rfl
-      omega))
-    (fun s hs => all_decided hwf' hsees' hrr hEl hid (by
-      have : max s R ≤ max k R := max_le_max (by omega) le_rfl
-      omega))
-    hist
-
-end Capstone
 
 end FinWhale
 

@@ -2,7 +2,6 @@ import LeanDag.OptimalHydrozoan.Model.Decided
 import LeanDag.OptimalHydrozoan.Helpers.DirectRules
 import LeanDag.OptimalHydrozoan.Helpers.SlotAgreement
 import LeanDag.Hydrozoan.Helpers.DirectLiveness
-
 /-!
 # Optimal-Hydrozoan: direct-liveness lemmas
 
@@ -10,7 +9,7 @@ Generated proof infrastructure; not part of the audit surface. The slow
 path reuses Hydrozoan's wave chain (`Helpers/DirectLiveness.lean`)
 unchanged. New here: the Optimal fast quorum from the fault count, and
 the guaranteed skip of a candidate-less slot — `T`'s voting-round blocks
-are blames, `T`'s decision-round blocks are (vacuously) no-evidence, and
+are LeanDag.Hydrozoan.blames, `T`'s decision-round blocks are (vacuously) no-evidence, and
 `q_cert ≤ q ≤ |T|`.
 -/
 
@@ -28,8 +27,8 @@ omit [DecidableEq BlockId] in
 the Optimal fast quorum. -/
 theorem qFastOpt_le_card_correct
     (h : (O.byzantine ∪ O.crashed).card ≤ pOpt Replica) :
-    qFastOpt Replica ≤ (Correct : Finset Replica).card := by
-  have hcompl : (Correct : Finset Replica).card
+    qFastOpt Replica ≤ (LeanDag.Hydrozoan.Correct : Finset Replica).card := by
+  have hcompl : (LeanDag.Hydrozoan.Correct : Finset Replica).card
       = Fintype.card Replica - (O.byzantine ∪ O.crashed).card :=
     Finset.card_compl _
   have hle : (O.byzantine ∪ O.crashed).card ≤ Fintype.card Replica :=
@@ -39,21 +38,21 @@ theorem qFastOpt_le_card_correct
 
 section Skip
 
-variable [S : Slots Replica] {U : BlockUniverse Replica BlockId}
-  {V : View U} {T : Finset Replica} {k : ℕ}
+variable [S : Slots Replica] {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
+  {V : LeanDag.Hydrozoan.View U} {T : Finset Replica} {k : ℕ}
 
-/-- Every `T`-authored voting-round block blames a candidate-less slot, in
+/-- Every `T`-authored voting-round block LeanDag.Hydrozoan.blames a candidate-less slot, in
 any view caught up to the voting round. -/
 theorem subset_blamesInView_of_coversUpto
     (hpop : PopulatedOn U T (S.slotRound k + 1))
     (hnolead : ∀ L, ¬ IsLeaderBlock U k L)
     (hcov : V.CoversUpto (S.slotRound k + 1)) :
-    T ⊆ blamesInView U V k := by
+    T ⊆ LeanDag.Hydrozoan.blamesInView U V k := by
   intro v hv
-  obtain ⟨b, hb, hbr, hba⟩ := hpop v hv
-  simp only [blamesInView, mem_authorsOf]
+  obtain ⟨b, hb, hba, hbr⟩ := hpop v hv
+  simp only [LeanDag.Hydrozoan.blamesInView, mem_creatorsOf]
   refine ⟨b, Finset.mem_inter.mpr
-    ⟨Finset.mem_filter.mpr ⟨mem_blocksAt.mpr ⟨hb, hbr⟩, ?_⟩,
+    ⟨Finset.mem_filter.mpr ⟨LeanDag.Hydrozoan.mem_blocksAt.mpr ⟨hb, hbr⟩, ?_⟩,
       hcov b hb (le_of_eq hbr)⟩, hba⟩
   intro j _ hj
   exact hnolead j hj
@@ -67,17 +66,17 @@ theorem noEvidenceQuorumInView_of_coversUpto
     (hnolead : ∀ L, ¬ IsLeaderBlock U k L)
     (hcov : V.CoversUpto (S.slotRound k + 2)) :
     NoEvidenceQuorumInView U V k := by
-  refine ⟨(blocksAt U (decisionRound Replica k)).filter
-    (fun b => (U.block b).author ∈ T), fun b hb => ?_, ?_⟩
+  refine ⟨(LeanDag.Hydrozoan.blocksAt U (LeanDag.Hydrozoan.decisionRound Replica k)).filter
+    (fun b => (U.block b).creator ∈ T), fun b hb => ?_, ?_⟩
   · obtain ⟨hb1, -⟩ := Finset.mem_filter.mp hb
-    obtain ⟨hbu, hbr⟩ := mem_blocksAt.mp hb1
+    obtain ⟨hbu, hbr⟩ := LeanDag.Hydrozoan.mem_blocksAt.mp hb1
     exact ⟨hb1, hcov b hbu (le_of_eq hbr), fun L hL _ => hnolead L hL⟩
-  · have hsub : T ⊆ authorsOf U.block ((blocksAt U (decisionRound Replica k)).filter
-        (fun b => (U.block b).author ∈ T)) := by
+  · have hsub : T ⊆ creatorsOf U.block ((LeanDag.Hydrozoan.blocksAt U (LeanDag.Hydrozoan.decisionRound Replica k)).filter
+        (fun b => (U.block b).creator ∈ T)) := by
       intro v hv
-      obtain ⟨b, hb, hbr, hba⟩ := hpop v hv
-      exact mem_authorsOf.mpr ⟨b, Finset.mem_filter.mpr
-        ⟨mem_blocksAt.mpr ⟨hb, by simp only [decisionRound]; exact hbr⟩, hba ▸ hv⟩, hba⟩
+      obtain ⟨b, hb, hba, hbr⟩ := hpop v hv
+      exact mem_creatorsOf.mpr ⟨b, Finset.mem_filter.mpr
+        ⟨LeanDag.Hydrozoan.mem_blocksAt.mpr ⟨hb, by simp only [LeanDag.Hydrozoan.decisionRound]; exact hbr⟩, hba ▸ hv⟩, hba⟩
     have h1 := Finset.card_le_card hsub
     have h2 := qCert_le_q_opt (Replica := Replica)
     omega

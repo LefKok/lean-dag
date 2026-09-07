@@ -1,5 +1,4 @@
 import LeanDag.BlackMarlin.Model.Round
-
 /-!
 # Black Marlin — the reactive schedule, stated
 

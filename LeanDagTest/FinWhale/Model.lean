@@ -76,7 +76,7 @@ def fastBlk : Fin 36 → Block (Fin 9) (Fin 36) Unit := fun i =>
     payload := () }
 
 /-- The schedule the witnesses run: one slot a round. -/
-def fwSched : Sched (Fin 9) := ⟨id, fwLeader⟩
+def fwSched : Slots (Fin 9) := Slots.identity fwLeader
 
 set_option maxHeartbeats 4000000 in
 theorem fastValid : ∀ i : Fin 36, ValidHere fastBlk (fastBlk i) := by
@@ -89,7 +89,7 @@ def Dfast : Dag (Fin 9) (Fin 36) Unit where
   block := fastBlk
   complete := by decide
   valid := fun i _ => fastValid i
-  correct_single := by decide
+  no_equivocation := by decide
 
 /-! ### The votes
 
@@ -200,18 +200,18 @@ theorem eqValid : ∀ i : Fin 28, ValidHere eqBlk (eqBlk i) := by
   refine ⟨?_, ?_, ?_, ?_⟩ <;> revert i <;> decide
 
 /-- The equivocating execution. Validator `0` is Byzantine, so
-`correct_single` still holds. -/
+`no_equivocation` still holds. -/
 def Dequiv : Dag (Fin 9) (Fin 28) Unit where
   ids := Finset.univ
   block := eqBlk
   complete := by decide
   valid := fun i _ => eqValid i
-  correct_single := by decide
+  no_equivocation := by decide
 
 /-- The slot has two blocks, and they conflict. -/
 example : slotBlocks fwSched Dequiv 0 = {0, 27} ∧ Conflicting Dequiv 0 27 := by decide
 
-/-- The author of both is Byzantine — the only way `correct_single`
+/-- The author of both is Byzantine — the only way `no_equivocation`
 admits the pair. -/
 example : (Dequiv.block 0).creator ∉ (Correct : Finset (Fin 9)) := by decide
 
@@ -285,7 +285,7 @@ def Dskip : Dag (Fin 9) (Fin 27) Unit where
   block := skipBlk
   complete := by decide
   valid := fun i _ => skipValid i
-  correct_single := by decide
+  no_equivocation := by decide
 
 example : slotBlocks fwSched Dskip 0 = {0} ∧ voters Dskip 0 = ∅ := by decide
 
@@ -376,7 +376,7 @@ def syncBlk : Fin 27 → Block (Fin 9) (Fin 27) Unit := fun i =>
     payload := () }
 
 /-- And the synchronous witness's. -/
-def syncSched : Sched (Fin 9) := ⟨id, syncLeader⟩
+def syncSched : Slots (Fin 9) := Slots.identity syncLeader
 
 set_option maxHeartbeats 4000000 in
 theorem syncValid : ∀ i : Fin 27, ValidHere syncBlk (syncBlk i) := by
@@ -389,7 +389,7 @@ def Dsync : Dag (Fin 9) (Fin 27) Unit where
   block := syncBlk
   complete := by decide
   valid := fun i _ => syncValid i
-  correct_single := by decide
+  no_equivocation := by decide
 
 /-- No block sits above round `2`, which is what makes coverage a finite
 check. -/
@@ -611,15 +611,13 @@ has two blocks, and this view sees one. -/
 it, directly or through a parent. -/
 def Vpart : Finset (Fin 28) := Finset.univ \ {14, 15, 18, 20, 27}
 
-theorem isViewPart : IsView Dequiv Vpart := by
-  constructor
-  · decide
-  · decide
+/-- As a view of `Dequiv`. -/
+def VpartView : Dequiv.View := ⟨Vpart, by decide, by decide⟩
 
 /-- **The slot looks different from inside.** The universe has two blocks
 of slot `0`; the view has one. -/
 example : slotBlocks fwSched Dequiv 0 = {0, 27} ∧
-    slotBlocks fwSched (restrict Dequiv Vpart isViewPart) 0 = {0} := by decide
+    slotBlocks fwSched (VpartView.toRecord) 0 = {0} := by decide
 
 /-- The view is smaller, and genuinely so. -/
 example : (27 : Fin 28) ∈ Dequiv.ids ∧ (27 : Fin 28) ∉ Vpart := by decide
@@ -640,17 +638,17 @@ example {c : Fin 28} (hc : c ∈ Dequiv.ids) (h0 : (0 : Fin 28) ∈ (Dequiv.bloc
 /-- What a block's parents say does not change with the view, which is
 why FP-evidence transfers: block `19` reads the same parents either
 way. -/
-example : parentsVoting (restrict Dequiv Vpart isViewPart) 19 0 = parentsVoting Dequiv 19 0 :=
+example : parentsVoting (VpartView.toRecord) 19 0 = parentsVoting Dequiv 19 0 :=
   rfl
 
 /-- And the rules the view can evaluate agree with the universe's where
 the view holds the rounds they read. On `Dsync`, which holds everything,
 the whole DAG is a view and the direct commit is seen there. -/
-theorem isViewFull : IsView Dsync Finset.univ :=
-  ⟨fun _ _ => Finset.mem_univ _, fun _ _ _ _ => Finset.mem_univ _⟩
+def fullView : Dsync.View :=
+  ⟨Finset.univ, fun _ _ => Finset.mem_univ _, fun _ _ _ _ => Finset.mem_univ _⟩
 
-example : DirectCommit (restrict Dsync Finset.univ isViewFull) 2 :=
-  directCommit_of_holds (hV := isViewFull) (fun _ _ => Finset.mem_univ _)
+example : DirectCommit fullView.toRecord 2 :=
+  directCommit_of_holds (V := fullView) (fun _ _ => Finset.mem_univ _)
     (fun _ _ => Finset.mem_univ _) (Or.inl (by decide))
 
 /-! ## The pass, on data
@@ -684,11 +682,10 @@ example (choose : Fin 27 → ℕ → Option (Fin 27)) :
 
 /-! ## The arc's axioms -/
 
-#print axioms LeanDag.FinWhale.lemma12
+#print axioms LeanDag.FinWhale.finWhaleLaws
+#print axioms LeanDag.FinWhale.decided_of_wellFormed
 #print axioms LeanDag.FinWhale.lemma22
 #print axioms LeanDag.FinWhale.agreement_of_commits
-#print axioms LeanDag.FinWhale.safety_of_views
-#print axioms LeanDag.FinWhale.agreement_of_views
 
 end FinWhale
 

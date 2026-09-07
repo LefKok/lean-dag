@@ -1,6 +1,5 @@
 import LeanDag.FinWhale.Consequences
 import LeanDag.FinWhale.Model.Skip
-
 /-!
 # FinWhale — why a commit rules the skip out
 
@@ -41,11 +40,11 @@ block is one block, and either references `l` or does not. -/
 theorem not_nonVoter_of_voter {l : BlockId} :
     ∀ v ∈ voters D l, v ∈ (Correct : Finset Validator) → v ∉ nonVoters D l := by
   intro v hv hcorr hnv
-  simp only [voters, nonVoters, mem_creatorsOf, blocksAt, Finset.mem_filter] at hv hnv
+  simp only [voters, supporters, nonVoters, mem_creatorsOf, blocksAt, Finset.mem_filter] at hv hnv
   obtain ⟨q, ⟨⟨hqids, hqr⟩, hqref⟩, hqv⟩ := hv
   obtain ⟨q', ⟨⟨hq'ids, hq'r⟩, hq'ref⟩, hq'v⟩ := hnv
   have heq : q = q' :=
-    D.correct_single q hqids q' hq'ids (by rw [hqv]; exact hcorr) (by rw [hqv, hq'v])
+    D.no_equivocation q hqids q' hq'ids (by rw [hqv]; exact hcorr) (by rw [hqv, hq'v])
       (by rw [hqr, hq'r])
   exact hq'ref (heq ▸ hqref)
 
@@ -89,7 +88,7 @@ theorem no_skip_of_fpEvidence {l : BlockId} {slot : Finset BlockId}
   -- a correct author's round-`(r+2)` block is one block
   simp only [blocksAt, Finset.mem_filter] at hb hb'
   have heq : b = b' :=
-    D.correct_single b hb.1 b' hb'.1 (by rw [hbv]; exact hvc) (by rw [hbv, hb'v])
+    D.no_equivocation b hb.1 b' hb'.1 (by rw [hbv]; exact hvc) (by rw [hbv, hb'v])
       (by rw [hb.2, hb'.2])
   exact hb'non l hl (heq ▸ hbev)
 

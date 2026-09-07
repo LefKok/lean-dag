@@ -1,6 +1,5 @@
-import LeanDagTest.Model
+import LeanDagTest.Mysticeti.Model
 import LeanDag.DoS.Exposure
-
 /-!
 # Exposure on concrete DAGs
 

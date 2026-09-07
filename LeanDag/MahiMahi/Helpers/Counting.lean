@@ -1,8 +1,7 @@
 import LeanDag.MahiMahi.Model.Good
 import LeanDag.MahiMahi.Helpers.Rules
-import LeanDag.CommonCore
-import LeanDag.Liveness
-
+import LeanDag.Common.CommonCore
+import LeanDag.Mysticeti.Liveness
 /-!
 # Helpers — the counting layer
 

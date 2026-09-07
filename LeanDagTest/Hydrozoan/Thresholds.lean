@@ -1,5 +1,4 @@
 import LeanDag.Hydrozoan.Model.Faults
-
 /-!
 # Witness: the slack-cap threshold table
 
@@ -25,7 +24,7 @@ open LeanDag LeanDag.Hydrozoan
 /-- A fault configuration at the tight replica count with empty actual
 fault sets — the thresholds only read the bounds `f`, `c`, `k`. -/
 @[instance_reducible]
-def tight (f c k : ℕ) : Faults (Fin (3 * f + 2 * c + k + 1)) where
+def tight (f c k : ℕ) : LeanDag.Hydrozoan.Faults (Fin (3 * f + 2 * c + k + 1)) where
   f := f
   c := c
   k := k
@@ -36,11 +35,11 @@ def tight (f c k : ℕ) : Faults (Fin (3 * f + 2 * c + k + 1)) where
   card_byzantine := by simp
   card_crashed := by simp
 
-instance : Faults (Fin 99) := tight 10 34 0
-instance : Faults (Fin 100) := tight 10 34 1
-instance : Faults (Fin 101) := tight 10 34 2
-instance : Faults (Fin 103) := tight 10 34 4
-instance : Faults (Fin 109) := tight 10 34 10
+instance : LeanDag.Hydrozoan.Faults (Fin 99) := tight 10 34 0
+instance : LeanDag.Hydrozoan.Faults (Fin 100) := tight 10 34 1
+instance : LeanDag.Hydrozoan.Faults (Fin 101) := tight 10 34 2
+instance : LeanDag.Hydrozoan.Faults (Fin 103) := tight 10 34 4
+instance : LeanDag.Hydrozoan.Faults (Fin 109) := tight 10 34 10
 
 -- k = 0 (n = 99): the three quorums coincide.
 example : q (Fin 99) = 55 ∧ qCert (Fin 99) = 55 ∧ qSlow (Fin 99) = 55 := by decide

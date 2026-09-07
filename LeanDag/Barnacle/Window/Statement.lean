@@ -1,5 +1,4 @@
 import LeanDag.Barnacle.Model.Window
-
 /-!
 # BN2 — the window is agreed
 

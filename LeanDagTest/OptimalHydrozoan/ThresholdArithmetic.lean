@@ -1,6 +1,5 @@
 import LeanDag.OptimalHydrozoan.ThresholdArithmetic.Statement
 import LeanDagTest.OptimalHydrozoan.Thresholds
-
 /-!
 # Witness: the Optimal-Hydrozoan threshold table, row by row
 

@@ -1,6 +1,5 @@
 import LeanDag.Barnacle.Helpers.DagRule
 import LeanDag.Barnacle.Model.Live
-
 /-!
 # BN8 — the configuration sequence exists
 

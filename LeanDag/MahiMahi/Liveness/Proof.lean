@@ -1,6 +1,5 @@
 import LeanDag.MahiMahi.Liveness.Statement
 import LeanDag.MahiMahi.Helpers.Liveness
-
 /-!
 # Liveness under the clause — proof
 
@@ -23,9 +22,9 @@ theorem holds : Statement := by
     obtain ⟨k', hk1, hk2, hgood⟩ := hclause k hk
     exact ⟨k', hk1, hk2, decided_of_mem_good hgood⟩
   · intro c d N hw hspan hrun k hk
-    exact allDecidedBelow hw hspan hrun k hk
-  · intro T N pc hcard k L hL hN hcert
-    exact localCommit pc hcard hL hN hcert
+    exact allDecidedBelow hspan hrun k hk
+  · intro T N pc hcard hw k L hL hN hcert
+    exact localCommit hw pc hcard hL hN hcert
   · intro U₁ U₂ w r hw h
     exact h.goodAt_eq (by omega) (le_refl _)
 

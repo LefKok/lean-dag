@@ -1,6 +1,8 @@
 import LeanDag.FinWhale.Model.Params
-import LeanDag.Causality
-
+import LeanDag.Common.Causality
+import LeanDag.Common.BlockRecord
+import LeanDag.Common.Support
+import LeanDag.Common.Slots
 /-!
 # FinWhale — the fast path, as the paper defines it
 
@@ -73,66 +75,91 @@ structure ValidHere (blk : BlockId → Block Validator BlockId Payload)
       (blk x).creator = v → (blk y).creator = v → x = y)
     ∨ (∀ i ∈ b.refs, (blk i).creator ≠ v)
 
-/-- A DAG the communication component can build. Equivocating blocks are
-admitted, of faulty validators only. -/
-structure Dag (Validator BlockId Payload : Type*) [Fintype Validator]
-    [DecidableEq Validator] [Faults Validator] [Params Validator] [DecidableEq BlockId] where
-  /-- Which blocks exist. -/
-  ids : Finset BlockId
-  /-- What each identifier denotes. -/
-  block : BlockId → Block Validator BlockId Payload
-  /-- The DAG is closed under edges. -/
-  complete : ∀ i ∈ ids, ∀ j ∈ (block i).refs, j ∈ ids
-  /-- Every block is valid. -/
-  valid : ∀ i ∈ ids, ValidHere block (block i)
-  /-- Only a faulty validator issues two blocks in one round. -/
-  correct_single : ∀ i ∈ ids, ∀ j ∈ ids,
-    (block i).creator ∈ (Correct : Finset Validator) →
-    (block i).creator = (block j).creator →
-    (block i).round = (block j).round → i = j
+/-- **FinWhale's clause**, as a clause of the validity family: either the
+parent set is consistent about `v` or `v`'s block is not among the
+parents. -/
+def leaderClause : Clause Validator BlockId Payload := fun blk b =>
+  ∀ v : Validator,
+    (∀ i ∈ b.refs, ∀ j ∈ b.refs, ∀ x ∈ (blk i).refs, ∀ y ∈ (blk j).refs,
+      (blk x).creator = v → (blk y).creator = v → x = y)
+    ∨ (∀ i ∈ b.refs, (blk i).creator ≠ v)
+
+/-- The clause reads two levels of references and no creator of `b`. -/
+instance leaderClause.mechanised :
+    Clause.Mechanised
+      (leaderClause (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) where
+  reads := by
+    intro blk blk' ids b hcl hb hagree h v
+    rcases h v with h1 | h2
+    · left
+      intro i hi j hj x hx y hy hxv hyv
+      rw [hagree i (hb i hi)] at hx
+      rw [hagree j (hb j hj)] at hy
+      rw [hagree x (hcl i (hb i hi) x hx)] at hxv
+      rw [hagree y (hcl j (hb j hj) y hy)] at hyv
+      exact h1 i hi j hj x hx y hy hxv hyv
+    · right
+      intro i hi
+      rw [hagree i (hb i hi)]
+      exact h2 i hi
+  base := fun _ b _ hr v => Or.inr fun i hi => by
+    rw [hr] at hi; exact absurd hi (Finset.notMem_empty i)
+  chops := by
+    intro blk G b h _ _ v
+    rcases h v with h1 | h2
+    · left
+      intro i hi j hj x hx y hy hxv hyv
+      simp only [chopBlk_creator] at hxv hyv
+      exact h1 i hi j hj x (chopBlk_refs_subset hx) y (chopBlk_refs_subset hy) hxv hyv
+    · right
+      intro i hi
+      rw [chopBlk_creator]
+      exact h2 i hi
+
+instance leaderClause.copyStable :
+    Clause.CopyStable
+      (leaderClause (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) where
+  copy := fun _ _ _ h => h
+
+/-- **FinWhale's validity is the family** at the core's quorum, with distinct
+creators and the leader clause, and so is mechanised. -/
+instance ValidHere.mechanised :
+    Validity.Mechanised
+      (ValidHere (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
+  Validity.Mechanised.of_iff
+    (Q := ValidAt (quorumCard Validator) (Clause.distinct.and leaderClause)) fun _ _ =>
+    ⟨fun h => ⟨h.predecessor, h.quorum, h.distinct_creators, h.leader_clause⟩,
+     fun h => ⟨h.predecessor, h.clause.1, h.quorum, h.clause.2⟩⟩
+
+/-- **And does not read the creator**, so the copy fill is valid. -/
+instance ValidHere.copyStable :
+    Validity.CopyStable
+      (ValidHere (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
+  Validity.CopyStable.of_iff
+    (Q := ValidAt (quorumCard Validator) (Clause.distinct.and leaderClause)) fun _ _ =>
+    ⟨fun h => ⟨h.predecessor, h.quorum, h.distinct_creators, h.leader_clause⟩,
+     fun h => ⟨h.predecessor, h.clause.1, h.quorum, h.clause.2⟩⟩
+
+/-- **A DAG the communication component can build**: the block record
+at FinWhale's validity, with non-equivocation asked of the correct
+validators. Equivocating blocks are admitted, of faulty validators
+only. -/
+abbrev Dag (Validator BlockId Payload : Type*) [Fintype Validator]
+    [DecidableEq Validator] [Faults Validator] :=
+  BlockRecord Validator BlockId Payload ValidHere (Correct : Finset Validator)
 
 variable {D : Dag Validator BlockId Payload}
 
-/-- **A schedule**: which round a slot proposes at, and who leads it.
+/-! **Which slots may anchor which** is the shared `EligibleAt` at wave
+two: the rules that let the reverse pass read an earlier slot's verdict
+off a later one live two rounds above the candidate, so the anchor's own
+candidate must sit at least three rounds up. Under the identity schedule
+this is `r + 2 < a`, which is the shape the protocol's runs meet it in. -/
 
-FinWhale runs one slot per round, so `round` is the identity in every
-execution here. It is a *parameter* rather than an identity because the
-properties index by slot and supply the map (`Properties.Slots`), and a
-rule that reads absolute rounds cannot carry an offset band
-(`docs/target-properties.md` §3.4c). Keeping it abstract is what lets
-FinWhale's carrier take the schedule it is given instead of pinning one.
-
-It is FinWhale's own record rather than `LeanDag.Slots` so that the
-model stays independent of Mysticeti's; the carrier maps one to the
-other. -/
-structure Sched (Validator : Type*) where
-  /-- The round a slot's candidate proposes at. -/
-  round : ℕ → ℕ
-  /-- Who leads the slot. -/
-  leader : ℕ → Validator
-
-/-- **Which slots may anchor which.** The reverse pass reads an earlier
-slot's verdict off a later one, and the rules that let it do so live two
-rounds above the candidate, so the anchor's own candidate must sit at
-least three rounds up. Under the identity schedule this is `r + 2 < a`,
-which is the shape the protocol's runs meet it in.
-
-The pass is stated over an arbitrary eligibility and this is the one
-FinWhale supplies. Keeping it here, rather than at the conformance
-file, is what lets the protocol and the carrier run the same pass. -/
-def Sched.Elig (S : Sched Validator) (r a : ℕ) : Prop := S.round r + 3 ≤ S.round a
-
-instance (S : Sched Validator) : DecidableRel S.Elig :=
-  fun _ _ => inferInstanceAs (Decidable (_ ≤ _))
-
-/-- The blocks of a round. -/
-def blocksAt (D : Dag Validator BlockId Payload) (r : ℕ) : Finset BlockId :=
-  D.ids.filter (fun b => (D.block b).round = r)
-
-/-- The validators whose round-`(r+1)` block references `l`: `l`'s voters. -/
+/-- The validators whose round-`(r+1)` block references `l`: `l`'s voters,
+the record's `supporters` at the round above `l`. -/
 def voters (D : Dag Validator BlockId Payload) (l : BlockId) : Finset Validator :=
-  creatorsOf D.block ((blocksAt D ((D.block l).round + 1)).filter
-    (fun q => l ∈ (D.block q).refs))
+  supporters D l ((D.block l).round + 1)
 
 /-- The parents of `b`, as validators. -/
 def parentSet (D : Dag Validator BlockId Payload) (b : BlockId) : Finset Validator :=

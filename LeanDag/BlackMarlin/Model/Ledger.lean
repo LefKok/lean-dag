@@ -1,5 +1,5 @@
 import LeanDag.BlackMarlin.Model.Decision
-
+import LeanDag.Common.Ledger
 /-!
 # Black Marlin — the flush record
 
@@ -68,22 +68,15 @@ structure Flush (U : BlockUniverse Validator BlockId Payload) where
   dense : ∀ ρ M, block (ρ + 1) = some M → (coneAnchors U M ρ).Nonempty →
     (block ρ).isSome
 
-/-- The blocks a record has output through round `n`: everything in the
-causal history of an anchor it flushed below `n`. Ordering *within* a
-segment is the deterministic sort `τ`, which the rule does not constrain
-and this arc does not model, so the ledger is a set and the record's
-rounds are its positions. -/
-def ledgerSet (U : BlockUniverse Validator BlockId Payload) (f : Flush U) (n : ℕ) :
-    Set BlockId :=
-  {b | ∃ ρ, ρ < n ∧ ∃ L, f.block ρ = some L ∧ Reaches U L b}
-
-/-- `b` enters the ledger at round `ρ`: the first flushed anchor whose
-causal history holds it. This is a block's position in the delivered
-sequence, at the granularity of segments. -/
-def OutputAt (U : BlockUniverse Validator BlockId Payload) (f : Flush U)
-    (b : BlockId) (ρ : ℕ) : Prop :=
-  (∃ L, f.block ρ = some L ∧ Reaches U L b) ∧
-    ∀ σ, σ < ρ → ∀ L, f.block σ = some L → ¬ Reaches U L b
+/-! **What a record outputs** is the record's ledger (`Ledger.lean`) at
+the flush's blocks: `ledgerSet U f.block n` holds everything in the
+causal history of an anchor flushed below `n`, and `OutputAt U f.block b
+ρ` says `b` enters at round `ρ`, the first flushed anchor whose causal
+history holds it — a block's position in the delivered sequence, at the
+granularity of segments. Ordering *within* a segment is the
+deterministic sort `τ`, which the rule does not constrain and this arc
+does not model, so the ledger is a set and the record's rounds are its
+positions. -/
 
 end BlackMarlin
 

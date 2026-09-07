@@ -1,7 +1,6 @@
 import LeanDag.Barnacle.MysticetiLive.Statement
 import LeanDag.Barnacle.Helpers.Descent
-import LeanDag.MysticetiProperties
-
+import LeanDag.Mysticeti.Properties
 /-!
 # Mysticeti liveness helpers
 

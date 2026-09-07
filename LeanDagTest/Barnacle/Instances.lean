@@ -1,8 +1,7 @@
 import LeanDagTest.Barnacle.Model
 import LeanDag.Barnacle.Odontoceti.Proof
 import LeanDag.Barnacle.Nemo.Proof
-import LeanDagTest.Nemo
-
+import LeanDagTest.Nemo.Model
 /-!
 # Barnacle witnesses — the two-round rules on data
 
@@ -182,12 +181,13 @@ theorem twin'_indirect : ∃ v, O25.Decided odoSlots (View.full Utwin6') 0 v :=
 
 /-- … and by hand the least twin commits: the `¬ L' < 0` clause is trivial. -/
 theorem twin'_slot0 : Odontoceti.Decided Utwin6' (View.full Utwin6') 0 (some 0) :=
-  Odontoceti.Decided.indirectCommit (by omega) (by decide) twin'_slot2
+  Odontoceti.Decided.indirectCommit (i := 0) (by omega) (by decide) twin'_slot2
     (fun i h1 h2 h3 => by
       have : i = 1 := by omega
       subst this
       exact absurd h3 (by decide))
-    (by decide) (by decide) (fun _ _ _ hlt => absurd hlt (Nat.not_lt_zero _))
+    (by decide) (fun i' hi' => absurd hi' (Nat.not_lt_zero _)) (by decide) (by decide)
+    (fun _ _ _ hlt => absurd (show _ < (0 : Fin 25) from hlt) (Nat.not_lt_zero _))
 
 /-- So the law's verdict is the least twin, and the greater twin is refused. -/
 theorem twin'_least :
@@ -222,7 +222,7 @@ def bnPn : Params := ⟨3, 3, 96, 100, by decide, by decide⟩
 example : observed bnNemo bnPn bnLeader3 bnWin3 Unemo 11 1 (by decide) (by decide) = 1 := by
   decide
 example : expected bnNemo bnPn 1 = 2 := by decide
-example : Aimd.rule bnNemo bnPn bnLeader3 bnWin3 1 0 Unemo (LeanDag.Nemo.View.full Unemo) 11 = (1, 1) := by decide
+example : Aimd.rule bnNemo bnPn bnLeader3 bnWin3 1 0 Unemo (View.full Unemo) 11 = (1, 1) := by decide
 -- At count `3` every validator leads every round: round `1` scores three
 -- slots, round `2` two (validator `2` has no block), round `3` none.
 example : observed bnNemo bnPn bnLeader3 bnWin3 Unemo 11 3 (by decide) (by decide) = 5 := by
@@ -230,7 +230,7 @@ example : observed bnNemo bnPn bnLeader3 bnWin3 Unemo 11 3 (by decide) (by decid
 example : expected bnNemo bnPn 3 = 6 := by decide
 
 /-- The model's own synchrony from round `0`, over the live pair. -/
-theorem unemo_sync : LeanDag.Nemo.SynchronisedOn Unemo {0, 1} 1 := by
+theorem unemo_sync : SynchronisedOn Unemo {0, 1} 1 := by
   have h : LeanDag.Nemo.Live (Fin 3) = {0, 1} := by decide
   rw [← h]
   exact fun n hn => unemo_synchronised n (by omega)
@@ -240,17 +240,17 @@ theorem unemo_good :
   ⟨{0, 1}, by decide, by decide, unemo_sync, fun r h1 h2 => by interval_cases r <;> decide⟩
 
 -- Not to round `6`: the universe ends at round `5`.
-example : ¬ LeanDag.Nemo.PopulatedOn Unemo {0, 1} 6 := by decide
+example : ¬ PopulatedOn Unemo {0, 1} 6 := by decide
 
 /-- Through `Nemo.holds`: the good set — two of three, by cardinality
 alone — commits a round-`1` slot at count `3`, where every validator
 leads one; the crashed validator's round-`1` block is supported too. -/
 example : ∃ κ, (Sched bnLeader3 bnWin3 3 (by decide) (by decide)).slotRound κ = 1 ∧
     ∃ L, bnNemo.Decided (Sched bnLeader3 bnWin3 3 (by decide) (by decide))
-      (LeanDag.Nemo.View.full Unemo) κ (some L) := by
+      (View.full Unemo) κ (some L) := by
   obtain ⟨T, hcard, hT0⟩ :=
     (Nemo.holds.2.1 (Fin 3) (Fin 14) Unit).goodLeaders Unemo 1 5 unemo_good
-  have hT := fun S κ => hT0 S (LeanDag.Nemo.View.full Unemo) κ
+  have hT := fun S κ => hT0 S (View.full Unemo) κ
     (coversUpto_full (Nemo.holds.1 (Fin 3) (Fin 14) Unit) Unemo 5)
   have h2 : 2 ≤ T.card := by
     have h := hcard
@@ -267,7 +267,7 @@ example : ∃ κ, (Sched bnLeader3 bnWin3 3 (by decide) (by decide)).slotRound �
 skips on every view. -/
 example : ∀ (V : LeanDag.Nemo.View (Fin 3) (Fin 14) Unit Unemo) (v : Option (Fin 14)),
     bnNemo.Decided nemoSlots V 2 v → v = none := fun V v h =>
-  (Nemo.holds.1 (Fin 3) (Fin 14) Unit).agree nemoSlots V (LeanDag.Nemo.View.full Unemo) 2 v none h
+  (Nemo.holds.1 (Fin 3) (Fin 14) Unit).agree nemoSlots V (View.full Unemo) 2 v none h
     nemo_slot2
 
 /-! ## `Good` has a horizon, and the slack in numbers -/
@@ -285,7 +285,7 @@ theorem unemo_not_good_6 :
 
 /-- On `Unemo`, `T ⊆ Live` never bites: the non-live majority `{0, 2}` fails
 `PopulatedOn` at round 2 already. -/
-example : ¬ LeanDag.Nemo.PopulatedOn Unemo {0, 2} 2 := by decide
+example : ¬ PopulatedOn Unemo {0, 2} 2 := by decide
 
 /-! ### The slack, arithmetically -/
 

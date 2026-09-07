@@ -1,6 +1,5 @@
 import LeanDag.BlackMarlin.Descent.Statement
 import LeanDag.BlackMarlin.Helpers.Descent
-
 /-!
 # Black Marlin — the descent computed, proved
 

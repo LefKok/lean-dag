@@ -1,6 +1,5 @@
 import LeanDag.MahiMahi.Model.Unpredictable
-import LeanDag.Quantitative
-
+import LeanDag.Mysticeti.Quantitative
 /-!
 # Partial synchrony, recovered — statement
 
@@ -45,7 +44,7 @@ def GoodOfSynchrony (U : BlockUniverse Validator BlockId Payload) (w : ℕ) : Pr
     SynchronisedOn U T R → R ≤ S.slotRound k →
     -- T populates the proposal round, the round above it, and the decision round
     PopulatedOn U T (S.slotRound k) → PopulatedOn U T (S.slotRound k + 1) →
-    PopulatedOn U T (decisionRound Validator w k) →
+    PopulatedOn U T ((mahiMahiAnchored Validator BlockId Payload w).decisionRound k) →
     -- the slot's leader is reliable
     S.leader k ∈ T →
     -- then the leader is a committed candidate of its round

@@ -1,7 +1,6 @@
-import LeanDagTest.Hybrid
+import LeanDagTest.Hybrid.Model
 import LeanDag.Barnacle.Orcaella.Proof
 import LeanDag.Barnacle.Helpers.Cover
-
 /-!
 # Barnacle over Orcaella — the base witnesses
 

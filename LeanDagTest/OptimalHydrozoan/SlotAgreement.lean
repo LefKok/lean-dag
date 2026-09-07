@@ -1,6 +1,5 @@
 import LeanDag.OptimalHydrozoan.SlotAgreement.Proof
 import LeanDagTest.OptimalHydrozoan.Decided
-
 /-!
 # Witness: Optimal slot agreement, applied
 
@@ -50,23 +49,27 @@ set_option maxRecDepth 16384
 theorem). -/
 theorem od_slot2_evidence : DecidedOpt OD VD 2 (some 8) := by
   have hall : ∀ M : Fin 30, IsLeaderBlock UD 2 M → M = 8 := by decide
-  refine DecidedOpt.indirectEvidence (j := 6) (A := 22) (by omega) (by decide)
-    (DecidedOpt.directFast (by decide) (by decide))
+  refine DecidedOpt.indirectCommit (j := 6) (A := 22) (i := 1) (by omega) (by decide)
+    (DecidedOpt.directCommit (by decide) (Or.inl (by decide)))
     (fun i h1 h2 h3 => by
       have hi : i = 3 ∨ i = 4 ∨ i = 5 := by omega
       rcases hi with rfl | rfl | rfl
       · exact absurd h3 (by decide)
       · exact absurd h3 (by decide)
       · exact skipD5)
-    (fun L' hL' hcert => by
+    (by decide)
+    (fun i hi L' hL' hcert => by
       have := hall L' hL'
+      subst this
+      have : i = 0 := by omega
       subst this
       exact absurd ((certifiedIn_iff_history (by decide)).mp hcert) (by decide))
     (by decide)
-    ((evidenceLinked_iff_history (by decide)).mpr (by decide))
+    (show EvidenceLinked UD 22 8 2 from (evidenceLinked_iff_history (by decide)).mpr (by decide))
+    (fun _ _ _ h => h)
 
 -- The evidence-rung verdict is the only one, in every view.
-example : ∀ (V : View OD.toBlockUniverse) v, DecidedOpt OD V 2 v → v = some 8 :=
+example : ∀ (V : LeanDag.Hydrozoan.View OD.toBlockRecord) v, DecidedOpt OD V 2 v → v = some 8 :=
   fun V v h =>
     (OptimalHydrozoan.SlotAgreement.holds (Fin 4) (Fin 30) OD VD V 2 _ v od_slot2_evidence h).symm
 example : ¬ DecidedOpt OD VD 2 none := fun h =>
@@ -78,35 +81,35 @@ example : ∀ L, DecidedOpt OD VD 2 (some L) → L = 8 := fun L h =>
 
 -- Slot 0 fast-commits 3, so no view ever skips it (fast vs. skip, both
 -- direct and indirect).
-example : ∀ V : View OD.toBlockUniverse, ¬ DecidedOpt OD V 0 none := fun V h =>
+example : ∀ V : LeanDag.Hydrozoan.View OD.toBlockRecord, ¬ DecidedOpt OD V 0 none := fun V h =>
   Option.some_ne_none 3 (OptimalHydrozoan.SlotAgreement.holds (Fin 4) (Fin 30) OD VD V 0 _ none
-    (DecidedOpt.directFast (by decide) (by decide)) h)
+    (DecidedOpt.directCommit (by decide) (Or.inl (by decide))) h)
 
 /-- The one-vote-short view of `UD`, typed at the projection. -/
-def VDs' : View OD.toBlockUniverse := VDm
+def VDs' : LeanDag.Hydrozoan.View OD.toBlockRecord := VDm
 
 -- The anchor 22 fast-commits in the full view; the one-vote-short view
 -- cannot fast-commit it (two of three votes), yet whatever verdict it
 -- reaches on slot 6 — by whatever route — is that commit.
-example : ¬ FastCommitOptInView OD.toBlockUniverse VDs' 22 (Slots.slotRound (Fin 4) 6) := by
+example : ¬ FastCommitOptInView OD.toBlockRecord VDs' 22 (Slots.slotRound (Fin 4) 6) := by
   decide
 example : ∀ v, DecidedOpt OD VDs' 6 v → v = some 22 := fun v h =>
   (OptimalHydrozoan.SlotAgreement.holds (Fin 4) (Fin 30) OD VD VDs' 6 _ v
-    (DecidedOpt.directFast (by decide) (by decide)) h).symm
+    (DecidedOpt.directCommit (by decide) (Or.inl (by decide))) h).symm
 
 -- Slot 1 of OX: copy 4 fast-commits, so its rival copy 5 is never a
 -- verdict, in any view. (OX holds no anchor, so the data alone already
 -- forbids 5; the headline version, with an anchor, is OE below.)
 theorem ox_slot1_fast : DecidedOpt OX VX 1 (some 4) :=
-  DecidedOpt.directFast (by decide) (by decide)
-example : ∀ V : View OX.toBlockUniverse, ¬ DecidedOpt OX V 1 (some 5) := fun V h =>
+  DecidedOpt.directCommit (by decide) (Or.inl (by decide))
+example : ∀ V : LeanDag.Hydrozoan.View OX.toBlockRecord, ¬ DecidedOpt OX V 1 (some 5) := fun V h =>
   absurd (Option.some.inj (OptimalHydrozoan.SlotAgreement.holds (Fin 4) (Fin 16) OX VX V 1 _ _
     ox_slot1_fast h)) (by decide)
 
 -- Slot 0 of OX is skipped in the full view; the sub-view VXs cannot skip
 -- it directly (and, holding no anchor, reaches no verdict on it at all),
 -- so the only verdict it could ever agree with is that skip.
-example : ¬ SkippedLeaderOptInView OX.toBlockUniverse VXs 0 := by decide
+example : ¬ SkippedLeaderOptInView OX.toBlockRecord VXs 0 := by decide
 example : ∀ v, DecidedOpt OX VXs 0 v → v = none := fun v h =>
   (OptimalHydrozoan.SlotAgreement.holds (Fin 4) (Fin 16) OX VX VXs 0 _ v
     (DecidedOpt.directSkip (by decide)) h).symm
@@ -125,27 +128,27 @@ leader's block 9. Round 4: 16, 17, 18 by `1`, `2`, `3` reference
 by `1`, `2`, `3` reference `{16, 17, 18}` — three votes for the anchor. -/
 def lkE : Fin 22 → Block (Fin 4) (Fin 22) := fun i =>
   if h : (i : ℕ) < 4 then
-    { round := 0, author := ⟨i, by omega⟩, parents := ∅ }
+    { round := 0, creator := ⟨i, by omega⟩, refs := ∅, payload := () }
   else if (i : ℕ) = 4 then
-    { round := 1, author := 0, parents := {0, 1, 2} }
+    { round := 1, creator := 0, refs := {0, 1, 2}, payload := () }
   else if (i : ℕ) = 5 then
-    { round := 1, author := 0, parents := {0, 1, 3} }
+    { round := 1, creator := 0, refs := {0, 1, 3}, payload := () }
   else if h : (i : ℕ) < 9 then
-    { round := 1, author := ⟨(i : ℕ) - 5, by omega⟩, parents := {0, 1, 2} }
+    { round := 1, creator := ⟨(i : ℕ) - 5, by omega⟩, refs := {0, 1, 2}, payload := () }
   else if (i : ℕ) = 9 then
-    { round := 2, author := 0, parents := {4, 6, 7} }
+    { round := 2, creator := 0, refs := {4, 6, 7}, payload := () }
   else if (i : ℕ) = 10 then
-    { round := 2, author := 1, parents := {4, 6, 7} }
+    { round := 2, creator := 1, refs := {4, 6, 7}, payload := () }
   else if (i : ℕ) = 11 then
-    { round := 2, author := 2, parents := {5, 6, 7} }
+    { round := 2, creator := 2, refs := {5, 6, 7}, payload := () }
   else if (i : ℕ) = 12 then
-    { round := 2, author := 3, parents := {4, 6, 8} }
+    { round := 2, creator := 3, refs := {4, 6, 8}, payload := () }
   else if h : (i : ℕ) < 16 then
-    { round := 3, author := ⟨(i : ℕ) - 12, by omega⟩, parents := {10, 11, 12} }
+    { round := 3, creator := ⟨(i : ℕ) - 12, by omega⟩, refs := {10, 11, 12}, payload := () }
   else if h : (i : ℕ) < 19 then
-    { round := 4, author := ⟨(i : ℕ) - 15, by omega⟩, parents := {13, 14, 15} }
+    { round := 4, creator := ⟨(i : ℕ) - 15, by omega⟩, refs := {13, 14, 15}, payload := () }
   else
-    { round := 5, author := ⟨(i : ℕ) - 18, by omega⟩, parents := {16, 17, 18} }
+    { round := 5, creator := ⟨(i : ℕ) - 18, by omega⟩, refs := {16, 17, 18}, payload := () }
 
 /-- The base universe: every id. -/
 def UE : BlockUniverse (Fin 4) (Fin 22) where
@@ -165,7 +168,7 @@ def OE : OptUniverse (Fin 4) (Fin 22) :=
         (by decide) (by decide) }
 
 /-- The full view, typed at the projection. -/
-def VE : View OE.toBlockUniverse := View.full UE
+def VE : LeanDag.Hydrozoan.View OE.toBlockRecord := View.full UE
 
 -- The seam on data: each decision-round block of slot 1 witnesses the
 -- equivocation, is evidence for copy 4 by the tEquiv case (two votes,
@@ -174,13 +177,13 @@ def VE : View OE.toBlockUniverse := View.full UE
 example :
     WitnessesEquivocation UE 1 13 ∧ IsFastEvidence UE 1 13 4 ∧ ¬ IsFastEvidence UE 1 13 5 ∧
       votesFor UE 13 4 = {1, 3} ∧ votesFor UE 13 5 = {2} ∧ ¬ IsCertificate UE 13 4 ∧
-      (∀ j ∈ (UE.block 13).parents, (UE.block j).author ≠ 0) ∧
-      certificates UE 4 1 = ∅ ∧ certificates UE 5 1 = ∅ := by
+      (∀ j ∈ (UE.block 13).refs, (UE.block j).creator ≠ 0) ∧
+      LeanDag.Hydrozoan.certificates UE 4 1 = ∅ ∧ LeanDag.Hydrozoan.certificates UE 5 1 = ∅ := by
   decide
 
 -- Slot 4's candidate 18 is the anchor, fast-committed by three votes; it
 -- reaches the three witnessing evidence blocks.
-example : IsLeaderBlock UE 4 18 ∧ supporters UE 18 5 = {1, 2, 3} := by decide
+example : IsLeaderBlock UE 4 18 ∧ LeanDag.Hydrozoan.supporters UE 18 5 = {1, 2, 3} := by decide
 example : EvidenceLinked UE 18 4 1 :=
   (evidenceLinked_iff_history (by decide)).mpr (by decide)
 
@@ -188,25 +191,29 @@ example : EvidenceLinked UE 18 4 1 :=
 with rung 1 refuted for both copies. -/
 theorem oe_slot1_evidence : DecidedOpt OE VE 1 (some 4) := by
   have hall : ∀ M : Fin 22, IsLeaderBlock UE 1 M → M = 4 ∨ M = 5 := by decide
-  refine DecidedOpt.indirectEvidence (j := 4) (A := 18) (by omega) (by decide)
-    (DecidedOpt.directFast (by decide) (by decide))
+  refine DecidedOpt.indirectCommit (j := 4) (A := 18) (i := 1) (by omega) (by decide)
+    (DecidedOpt.directCommit (by decide) (Or.inl (by decide)))
     (fun i h1 h2 h3 => by
       have hi : i = 2 ∨ i = 3 := by omega
       rcases hi with rfl | rfl
       · exact absurd h3 (by decide)
       · exact absurd h3 (by decide))
-    (fun L' hL' hcert => by
+    (by decide)
+    (fun i hi L' hL' hcert => by
+      have : i = 0 := by omega
+      subst this
       rcases hall L' hL' with rfl | rfl
       · exact absurd ((certifiedIn_iff_history (by decide)).mp hcert) (by decide)
       · exact absurd ((certifiedIn_iff_history (by decide)).mp hcert) (by decide))
     (by decide)
-    ((evidenceLinked_iff_history (by decide)).mpr (by decide))
+    (show EvidenceLinked UE 18 4 1 from (evidenceLinked_iff_history (by decide)).mpr (by decide))
+    (fun _ _ _ h => h)
 
 -- Hence copy 5 is never a verdict, and copy 4 the only one, in every view.
-example : ∀ V : View OE.toBlockUniverse, ¬ DecidedOpt OE V 1 (some 5) := fun V h =>
+example : ∀ V : LeanDag.Hydrozoan.View OE.toBlockRecord, ¬ DecidedOpt OE V 1 (some 5) := fun V h =>
   absurd (Option.some.inj (OptimalHydrozoan.SlotAgreement.holds (Fin 4) (Fin 22) OE VE V 1 _ _
     oe_slot1_evidence h)) (by decide)
-example : ∀ (V : View OE.toBlockUniverse) v, DecidedOpt OE V 1 v → v = some 4 :=
+example : ∀ (V : LeanDag.Hydrozoan.View OE.toBlockRecord) v, DecidedOpt OE V 1 v → v = some 4 :=
   fun V v h =>
     (OptimalHydrozoan.SlotAgreement.holds (Fin 4) (Fin 22) OE VE V 1 _ v oe_slot1_evidence h).symm
 

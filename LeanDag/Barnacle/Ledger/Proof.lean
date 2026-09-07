@@ -1,7 +1,6 @@
 import LeanDag.Barnacle.Ledger.Statement
 import LeanDag.Barnacle.Agreement.Proof
 import LeanDag.Barnacle.Helpers.Ledger
-
 /-!
 # BN5 — proof
 

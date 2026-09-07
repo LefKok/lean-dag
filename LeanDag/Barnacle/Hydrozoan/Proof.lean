@@ -1,7 +1,6 @@
 import LeanDag.Barnacle.Hydrozoan.Statement
 import LeanDag.Hydrozoan.Helpers.Commit
 import LeanDag.Hydrozoan.SlotAgreement.Proof
-
 /-!
 # Barnacle over Hydrozoan — proof
 
@@ -11,7 +10,7 @@ the `Decided` constructors; the seventh, `agree`, is HZ3 applied.
 `historyView_ids` and `full_ids` are `rfl`, which is what defining the
 history view *with* `historyFrom` as its ids was for
 (`Helpers/Hydrozoan.lean`). `view_complete` is Hydrozoan's own field
-because `(adaptBlk U i).refs` reduces to `(U.block i).parents`.
+because `(adaptBlk U i).refs` reduces to `(U.block i).refs`.
 -/
 
 namespace LeanDag

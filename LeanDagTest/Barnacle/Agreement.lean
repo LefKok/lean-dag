@@ -4,7 +4,6 @@ import LeanDag.Barnacle.Agreement.Proof
 import LeanDag.Barnacle.Ledger.Proof
 import LeanDag.Barnacle.Aimd.Proof
 import LeanDag.Barnacle.Conservativity.Proof
-
 /-!
 # Barnacle witnesses — the count moves, and two runs agree
 

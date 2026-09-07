@@ -1,7 +1,7 @@
 import LeanDag.MahiMahi.Helpers.Counting
 import LeanDag.MahiMahi.Model.Unpredictable
-import LeanDag.Quantitative
-
+import LeanDag.Mysticeti.Quantitative
+import LeanDag.MahiMahi.Helpers.Decision
 /-!
 # Helpers — partial synchrony
 
@@ -83,12 +83,13 @@ theorem good_of_synchronisedOn {w : ℕ} {T : Finset Validator} {R k : ℕ} (hw 
     (hT : T ⊆ (Correct : Finset Validator)) (hcard : quorumCard Validator ≤ T.card)
     (hs : SynchronisedOn U T R) (hR : R ≤ S.slotRound k)
     (hpop0 : PopulatedOn U T (S.slotRound k)) (hpop1 : PopulatedOn U T (S.slotRound k + 1))
-    (hpopd : PopulatedOn U T (decisionRound Validator w k))
+    (hpopd : PopulatedOn U T ((mahiMahiAnchored Validator BlockId Payload w).decisionRound k))
     (hlead : S.leader k ∈ T) : S.leader k ∈ good U w k := by
   obtain ⟨L, hL, hLc, hLr⟩ := hpop0 (S.leader k) hlead
   unfold good
   rw [mem_goodAt]
   refine ⟨L, hL, hLr, hLc, ?_⟩
+  rw [mahiMahiAnchored_decisionRound (by omega)] at hpopd
   refine directCommit_of_voting_reach (by omega) hcard hpopd hL (hT (hLc ▸ hlead)) ?_
   intro q hq hqr
   refine reaches_of_synchronisedOn hT hcard hs hR hpop1 hL hLr (hLc ▸ hlead) q hq ?_
@@ -104,12 +105,13 @@ theorem unpredictableWithin_of_synchronisedOn {w : ℕ} {T : Finset Validator} {
   obtain ⟨k', hk1, hk2, hlead⟩ := fair k
   refine ⟨k', hk1, hk2, ?_⟩
   have hmono : S.slotRound k' ≤ S.slotRound (k + c) := S.mono (by omega)
-  have hd : decisionRound Validator w k' ≤ N := by
-    unfold decisionRound at hk ⊢
+  have hd : (mahiMahiAnchored Validator BlockId Payload w).decisionRound k' ≤ N := by
+    unfold AnchoredRule.decisionRound at hk ⊢
+    simp only [mahiMahiAnchored_wave] at hk ⊢
     omega
   refine good_of_synchronisedOn hw hT hcard hs (Nat.zero_le _) ?_ ?_ (hpop _ hd) hlead
-  · exact hpop _ (by unfold decisionRound at hd; omega)
-  · exact hpop _ (by unfold decisionRound at hd; omega)
+  · exact hpop _ (by unfold AnchoredRule.decisionRound at hd; simp only [mahiMahiAnchored_wave] at hd; omega)
+  · exact hpop _ (by unfold AnchoredRule.decisionRound at hd; simp only [mahiMahiAnchored_wave] at hd; omega)
 
 end Slots
 

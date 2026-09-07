@@ -1,11 +1,9 @@
 import LeanDag.Hydrozoan.Model.IndirectRules
-import LeanDag.Hydrozoan.Helpers.History
-
+import LeanDag.Common.History
 /-!
 # Indirect-rule instances and the history characterizations
 
-Generated: decidability for `EligibleAsAnchor`, its arithmetic reading, and the
-decidable characterizations of both rung tests through the computable
+Generated: the decidable characterizations of both rung tests through the computable
 `history` surrogate — this is what lets witness models settle
 `CertifiedIn` / `WeakLinked` (positively and negatively) by `decide`.
 Nothing here is part of the audit surface.
@@ -15,24 +13,8 @@ namespace LeanDag
 
 namespace Hydrozoan
 
-section Eligibility
-
-variable (Replica : Type*) [S : Slots Replica]
-
-instance decidableEligibleAsAnchor (k j : ℕ) : Decidable (EligibleAsAnchor Replica k j) :=
-  inferInstanceAs (Decidable (decisionRound Replica k < S.slotRound j))
-
-/-- Eligibility in propose-round arithmetic: the anchor's round is at
-least three past the candidate's. -/
-theorem eligibleAsAnchor_iff {k j : ℕ} :
-    EligibleAsAnchor Replica k j ↔ S.slotRound k + 3 ≤ S.slotRound j := by
-  simp only [EligibleAsAnchor, decisionRound]
-  omega
-
-end Eligibility
-
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
-  [DecidableEq BlockId] [F : Faults Replica]
+  [DecidableEq BlockId] [F : LeanDag.Hydrozoan.Faults Replica]
   {U : BlockUniverse Replica BlockId}
 
 /-- Rung 1 through the history surrogate: decidable on concrete data. -/
@@ -50,7 +32,7 @@ is the canonical witness set, so the existential form collapses to a
 decidable cardinality bound. -/
 theorem weakLinked_iff_history {A L : BlockId} {r : ℕ} (hA : A ∈ U.ids) :
     WeakLinked U A L r ↔
-      qWeak Replica ≤ (authorsOf U.block ((blocksAt U (r + 1)).filter
+      qWeak Replica ≤ (creatorsOf U.block ((blocksAt U (r + 1)).filter
         fun b => IsVote U b L ∧ b ∈ history U A)).card := by
   constructor
   · rintro ⟨s, hs, hcard⟩

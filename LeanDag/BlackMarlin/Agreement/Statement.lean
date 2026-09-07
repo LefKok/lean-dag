@@ -1,6 +1,5 @@
 import LeanDag.BlackMarlin.Model.Round
 import LeanDag.BlackMarlin.Liveness.Statement
-
 /-!
 # Black Marlin — agreement, stated
 

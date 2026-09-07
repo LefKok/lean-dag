@@ -1,6 +1,5 @@
 import LeanDagTest.DoS.Density
 import LeanDag.FinWhale.DoSBridge
-
 /-!
 # FinWhale witnesses — a DoS-valid universe, read as a FinWhale DAG
 
@@ -41,9 +40,9 @@ def DfwTwin : Dag (Fin 4) (Fin 9) Unit :=
   Dag.ofDoSValid Utwin twinLeader utwin_dosValid
 
 /-- The slot of round `0` has both versions, and they conflict. -/
-example : slotBlocks ⟨id, twinLeader⟩ DfwTwin 0 = {0, 4} ∧ Conflicting DfwTwin 0 4 := by decide
+example : slotBlocks (Slots.identity twinLeader) DfwTwin 0 = {0, 4} ∧ Conflicting DfwTwin 0 4 := by decide
 
-/-- Their author is Byzantine, which is what `correct_single` — inherited
+/-- Their author is Byzantine, which is what `no_equivocation` — inherited
 from the universe's non-equivocation — leaves room for. -/
 example : (DfwTwin.block 0).creator ∉ (Correct : Finset (Fin 4)) := by decide
 

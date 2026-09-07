@@ -1,5 +1,4 @@
 import LeanDag.Nemo.Support
-
 /-!
 # Nemo-Nemo: the commit rule
 

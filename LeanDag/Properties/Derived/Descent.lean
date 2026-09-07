@@ -1,6 +1,5 @@
 import LeanDag.Properties.Commit
 import LeanDag.Properties.Derived.Bounded
-
 /-!
 # `Descends` from the indirect rule
 

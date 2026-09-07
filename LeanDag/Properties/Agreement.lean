@@ -1,5 +1,4 @@
 import LeanDag.Properties.Carrier
-
 /-!
 # Agreement above a round: the vocabulary locality is stated in
 

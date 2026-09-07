@@ -1,7 +1,6 @@
 import LeanDagTest.DoS.Exposure
 import LeanDagTest.DoS.Exclusion
 import LeanDag.DoS.SelfParent
-
 /-!
 # Self-parent chains on concrete DAGs
 

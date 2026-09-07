@@ -1,6 +1,5 @@
 import LeanDag.BlackMarlin.Model.Round
 import LeanDag.BlackMarlin.Helpers.Liveness
-
 /-!
 # Black Marlin — the reactive layer
 

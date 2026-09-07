@@ -1,6 +1,5 @@
 import LeanDag.FinWhale.Model.Rule
-import LeanDag.ViewPace
-
+import LeanDag.Mysticeti.ViewPace
 /-!
 # FinWhale — the block-creation conditions
 

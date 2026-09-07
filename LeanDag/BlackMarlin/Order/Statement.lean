@@ -1,7 +1,6 @@
 import LeanDag.BlackMarlin.Model.Order
 import LeanDag.BlackMarlin.Model.Descent
 import LeanDag.BlackMarlin.Liveness.Statement
-
 /-!
 # Black Marlin — the delivered sequence, stated
 

@@ -1,5 +1,4 @@
 import LeanDag.Properties.Extends
-
 /-!
 # Persistence
 

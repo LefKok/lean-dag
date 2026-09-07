@@ -1,5 +1,4 @@
 import LeanDag.Properties.Carrier
-
 /-!
 # Agreement: two views decide alike
 

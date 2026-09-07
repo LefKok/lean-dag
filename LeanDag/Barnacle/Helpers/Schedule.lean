@@ -57,8 +57,7 @@ theorem roundRobin_keyed (n : ℕ) (hn : 0 < n) : Keyed (roundRobin n hn) n :=
 are `{(r, getLeader (r + l)) : l < m}` — a set monotone in `m`. Any
 condition on a DAG that depends on a slot only through that pair
 therefore holds at every admissible count as soon as it holds at the
-largest, which is what `docs/hydrozoan-integration.md` §4.1 needs of
-Optimal-Hydrozoan's leader-exclusion rule. -/
+largest, which is what Optimal-Hydrozoan's leader-exclusion rule needs (`docs/hydrozoan-integration.md` §3). -/
 
 theorem slot_of_pair {w : ℕ} (hw : 0 < w) (r l : ℕ) (hl : l < w) :
     (r * w + l) / w = r ∧ (r * w + l) % w = l := by

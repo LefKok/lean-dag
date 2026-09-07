@@ -1,5 +1,4 @@
 import LeanDag.Hybrid.Rules
-
 /-!
 # Human-reviewed base specification for resilient checkpoints
 

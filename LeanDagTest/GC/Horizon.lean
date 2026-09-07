@@ -1,7 +1,6 @@
 import LeanDag.Properties.Arcs.GC
 import LeanDag.GC.Horizon
 import LeanDagTest.GC.Bootstrap
-
 /-!
 # The horizon policy, witnessed
 

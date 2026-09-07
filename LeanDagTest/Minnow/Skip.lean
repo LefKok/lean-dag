@@ -1,6 +1,5 @@
 import LeanDag.Minnow.Blocking
-import LeanDagTest.Model
-
+import LeanDagTest.Mysticeti.Model
 /-!
 # Minnow — the skip clause, counted as written, contradicts the quorum
 

@@ -44,7 +44,7 @@ policy, not the production route. Their liveness capstones sit in the
 interface-stated bucket. This distinction matters for §5 and is the single
 most important finding of the audit.
 
-`LeanDagTest/Routes.lean` discharges three arcs from one `ViewPace`,
+`LeanDagTest/Mysticeti/Routes.lean` discharges three arcs from one `ViewPace`,
 supplying nothing else: **Mysticeti L10**, **Odontoceti O10** (under
 `Faults5`), and **chain quality CQ6**. No `Live`, no `Delivery`, no
 `DeliversQuorum`, no `Timing` in any hypothesis. Compatibility is therefore

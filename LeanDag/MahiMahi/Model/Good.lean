@@ -1,5 +1,4 @@
 import LeanDag.MahiMahi.Model.Decision
-
 /-!
 # Mahi-Mahi — the committed candidates of a wave
 

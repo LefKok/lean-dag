@@ -1,7 +1,6 @@
 import LeanDag.FinWhale.Decided
 import LeanDag.FinWhale.Rotation
 import LeanDag.FinWhale.Model.Schedule
-
 /-!
 # FinWhale — Validity, on any schedule
 
@@ -36,7 +35,7 @@ variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 variable {Elig : ℕ → ℕ → Prop}
-variable {D : Dag Validator BlockId Payload} {S : Sched Validator}
+variable {D : Dag Validator BlockId Payload} {S : Slots Validator}
 
 /-- **A correct validator's blocks form a chain.** Each of its blocks
 reaches all its earlier ones: the self-parent edge steps down one round,
@@ -50,7 +49,7 @@ theorem reaches_own (hself : SelfParented D) :
   induction d with
   | zero =>
     intro b hb c hc hbc hcc hcr
-    have : c = b := D.correct_single c hc b hb (by rw [hcc]; exact hbc) hcc (by omega)
+    have : c = b := D.no_equivocation c hc b hb (by rw [hcc]; exact hbc) hcc (by omega)
     rw [this]
   | succ d ih =>
     intro b hb c hc hbc hcc hcr
@@ -81,7 +80,7 @@ theorem theorem26_of_selfParent (hself : SelfParented D)
     {choose : BlockId → ℕ → Option BlockId} {dec : ℕ → Verdict BlockId}
     (hwf : WellFormed Elig dc ds choose dec) {R N : ℕ}
     (hsees : SeesCommits S D dc R N)
-    (hrr : RoundRobin S.leader) (hid : ∀ s, S.round s = s) [LinearOrder BlockId]
+    (hrr : RoundRobin S.leader) (hid : ∀ s, S.slotRound s = s) [LinearOrder BlockId]
     {b : BlockId} {k : ℕ} (hb : b ∈ D.ids)
     (hbc : (D.block b).creator ∈ (Correct : Finset Validator))
     (hbound : max ((D.block b).round) R + Fintype.card Validator + 2 ≤ N)

@@ -1,5 +1,4 @@
 import LeanDag.Properties.Bounded
-
 /-!
 # The indirect rule
 
@@ -51,6 +50,17 @@ def Indirect (R : DagRule Validator BlockId Payload)
       R.Decided S' V j (some A) →
       (∀ i', i < i' → i' < j → Elig S.slotRound i i' → R.Decided S' V i' none) →
       R.Decided S' V i v
+
+/-- The indirect property transfers along an equivalence of eligibility
+relations. -/
+theorem Indirect.congr {R : DagRule Validator BlockId Payload}
+    {E₁ E₂ : (ℕ → ℕ) → ℕ → ℕ → Prop} (he : ∀ sr i j, E₁ sr i j ↔ E₂ sr i j)
+    (h : Indirect R E₁) : Indirect R E₂ := by
+  intro S U V i j A helig hj hmid
+  obtain ⟨v, hv⟩ := h S V i j A ((he _ i j).mpr helig) hj
+    (fun i' h1 h2 h3 => hmid i' h1 h2 ((he _ i i').mp h3))
+  exact ⟨v, fun S' hround hlead hj' hmid' => hv S' hround hlead hj'
+    (fun i' h1 h2 h3 => hmid' i' h1 h2 ((he _ i i').mp h3))⟩
 
 /-- **The plain indirect rule**, at the schedule it was given. -/
 theorem Indirect.decided {R : DagRule Validator BlockId Payload}

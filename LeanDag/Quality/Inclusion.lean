@@ -1,7 +1,6 @@
 import LeanDag.Quality.Coverage
 import LeanDag.DoS.Exclusion
-import LeanDag.MysticetiProperties
-
+import LeanDag.Mysticeti.Properties
 /-!
 # Chain quality: inclusion, from self-reference
 

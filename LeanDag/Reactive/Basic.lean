@@ -1,5 +1,4 @@
-import LeanDag.ViewPace
-
+import LeanDag.Mysticeti.ViewPace
 /-!
 # The reactive schedule
 

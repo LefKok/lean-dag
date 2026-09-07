@@ -3,7 +3,6 @@ import LeanDag.Properties.Carrier
 import LeanDag.Properties.Agree
 import LeanDag.Properties.Candidate
 import LeanDag.Properties.Optional.Direct
-
 /-!
 # A Barnacle rule is a `DagRule`
 

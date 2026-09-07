@@ -3,7 +3,6 @@ import LeanDag.Properties.Arcs.SafeSkip
 import LeanDag.Integration.ReGenesis
 import LeanDag.Reactive.MysticetiProperties
 import LeanDag.Properties.Arcs.Liveness
-
 /-!
 # The mechanisms over a reactive execution
 
@@ -96,7 +95,7 @@ theorem live_addGenesis_reactive {v : Validator} {g : BlockId} {p : Payload}
 of `c` reliably-led slots in the truncation decides everything below it
 there. -/
 theorem decidedBelow_of_run_chop_reactive {G d c b : ℕ} (hd : G ≤ S.slotRound d) (hc : 0 < c)
-    (hspans : SpansEligible (Validator := Validator) (S := S.chop G d hd) c)
+    (hspans : (coreAnchored Validator BlockId Payload).SpansEligible (S := S.chop G d hd) c)
     (h : MysticetiProperties.reactiveLive S (U := U) V T (d + b) (d + b + c))
     (hlead : ∀ i, i < c → (S.chop G d hd).leader (b + i) ∈ T) :
     ∀ i, i < b → ∃ w, DecidedBelow (MysticetiProperties.mysticetiRule (Payload := Payload))

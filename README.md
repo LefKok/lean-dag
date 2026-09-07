@@ -70,7 +70,7 @@ move the committee — `n ≥ 5f+1` for two-round commitment,
   a spread of ten and collapses to exactly three. A valid block cannot
   outrun the honest schedule, so the author-blind rule a deployment runs
   is safe (`exists_honest_floor`).
-- **The view a validator holds** (`LeanDag/PaceDelivery.lean`): the
+- **The view a validator holds** (`LeanDag/Mysticeti/PaceDelivery.lean`): the
   commit rules are view-relative and the pacing line reasons about
   time-indexed holdings; the two are now joined. A validator's holdings
   *are* a view (`viewAt_ids`), which is what makes liveness local; and a
@@ -339,8 +339,8 @@ the set of declarations changes. `make help` lists them.
 
 - `LeanDag/` — theorem/definition source: the core DAG and Mysticeti
   development at the top level, with the pacing structures in
-  `ViewPace.lean` and the delivery layer they induce in
-  `PaceDelivery.lean`; `Causality.lean` and `Participation.lean` hold the
+  `Mysticeti/ViewPace.lean` and the delivery layer they induce in
+  `Mysticeti/PaceDelivery.lean`; `Common/Causality.lean` and `Common/Participation.lean` hold the
   fault-agnostic vocabulary — reachability, the finite cone, production
   and coverage — stated over the raw block data, so the Byzantine and
   crash universes instantiate one set of definitions rather than
@@ -371,10 +371,14 @@ the set of declarations changes. `make help` lists them.
   and `depgraph.py` extract and draw the support diagrams
   (`docs/depgraph/README.md`); `svg2pdf.sh` renders them to PDF;
   `extract-decls.py` reads every declaration with its docstring and
-  statement, and `gen-reference.py` regenerates the report's reference
-  appendices from it; `audit-report.py` checks the report's
+  statement into `docs/decls.json`, and `gen-reference.py` regenerates
+  the report's reference appendices from it, selecting the declarations the body and the
+  statement index name; `audit-report.py` checks the report's
   cross-references, its Lean identifiers, and every displayed statement
-  verbatim against the compiled source. Regeneration is deterministic,
+  verbatim against the compiled source. `docs/decls.json` and
+  `docs/depgraph/deps.tsv` are extracted, not tracked; a fresh clone
+  builds, then runs the two extractors before the audits. Regeneration
+  is deterministic,
   so regenerate-and-diff is the pre-merge check. `check-arc-holes.py` enforces the statement/proof partition of the arcs that adopt it; `audit-rounds.py` closes each protocol's decision relation over the dependency graph and checks that no rule reads an absolute round, which is what the offset band needs (`docs/target-properties.md` §3.4c); `audit-conformance.py` recomputes which protocols have shown which properties (§11.2); and `black-marlin-figure.py` draws the execution that refutes Agreement (`docs/figures/`).
 
 ## Documents
@@ -399,9 +403,9 @@ the set of declarations changes. `make help` lists them.
 | [`docs/barnacle.md`](docs/barnacle.md) | the adaptive leader count: the interface A1–A4, the configuration-sequence model and why it needs no fixpoint, the liveness clause and its margin, the heads descent, the four instantiations, and the findings |
 | [`docs/hydrozoan.md`](docs/hydrozoan.md) | the dual-path rule under hybrid faults: the thresholds and their table, the two-case consistency argument as one statement, the slow path as the guaranteed one, the liveness package and its grounding, and the findings |
 | [`docs/optimal-hydrozoan.md`](docs/optimal-hydrozoan.md) | the fast path at Hydrangea's bound: the validity rule and per-block fast evidence, the seam that consumes the rule once, the skip as a liveness claim and FinWhale's attack on it, and the always-fast parametrisation |
-| [`docs/integration.md`](docs/integration.md) | composing the arcs: the invariant interface, and what composition revealed |
-| [`docs/hydrozoan-integration.md`](docs/hydrozoan-integration.md) | connecting the Hydrozoan arcs to the rest: the three layers, the committee bound the round-robin schedule needs, the missing self-parent clause, Hydrozoan as a Barnacle base rule, the transport of safety and liveness through a recovery and a horizon, and what the absent delivery layer costs |
-| [`docs/transformer-interface.md`](docs/transformer-interface.md) | what a protocol-generic transformer interface would take: the survey of the nine decision relations, the schema they share, and the semantic conditions a cut and a fill turn on |
+| [`docs/target-properties.md`](docs/target-properties.md) | the properties: what a rule shows and what it gets, the definitions displayed verbatim, the one-carrier-per-rule discipline, the audits, and the record of the passes that reached them |
+| [`docs/integration.md`](docs/integration.md) | the mechanisms at every rule: the cut and fill cells and the relation they witness, and the standing facts no property states — coverage under the fill, horizon placement, re-genesis, the exposure check, the storage budgets — with the deployment conditions they yield |
+| [`docs/hydrozoan-integration.md`](docs/hydrozoan-integration.md) | Hydrozoan and Optimal-Hydrozoan through the properties: the carriers and supports, the Barnacle instantiations and the committee bound round-robin needs, the schedule-free leader-exclusion clause, the native cut and fill |
 | [`docs/related.md`](docs/related.md) | a survey of consensus on uncertified DAGs |
 | [`docs/style.md`](docs/style.md) | writing conventions for the documents and the source |
 

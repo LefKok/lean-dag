@@ -1,7 +1,6 @@
 import LeanDag.DoS.Novelty
 import LeanDag.GC.Bootstrap
-import LeanDag.MysticetiProperties
-
+import LeanDag.Mysticeti.Properties
 /-!
 # The novelty budget delivers
 

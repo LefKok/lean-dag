@@ -1,5 +1,4 @@
 import LeanDag.Barnacle.Model.Rule
-
 /-!
 # Barnacle helpers — the full view is caught up
 

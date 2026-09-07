@@ -1,5 +1,4 @@
 import LeanDag.Minnow.Model.Rule
-
 /-!
 # Minnow — what blocks `crs*`
 

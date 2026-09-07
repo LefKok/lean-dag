@@ -23,11 +23,11 @@ namespace FinWhale
 variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type*} [DecidableEq BlockId] [LinearOrder BlockId] {Payload : Type*}
-variable {S : Sched Validator}
+variable {S : Slots Validator}
 
 /-- The blocks of a slot that are directly committed. At most one, by
 `direct_commit_unique`. -/
-def directCommits (S : Sched Validator) (D : Dag Validator BlockId Payload) (r : ℕ) : Finset BlockId :=
+def directCommits (S : Slots Validator) (D : Dag Validator BlockId Payload) (r : ℕ) : Finset BlockId :=
   (slotBlocks S D r).filter (fun l => DirectCommit D l)
 
 /-- The candidates for the anchor of `r`: the **eligible** slots below
@@ -60,7 +60,7 @@ def anchorVerdict (Elig : ℕ → ℕ → Prop) [DecidableRel Elig]
   else Verdict.undecided
 
 /-- **One slot's verdict, from the verdicts above it.** -/
-def slotVerdict (S : Sched Validator) (Elig : ℕ → ℕ → Prop) [DecidableRel Elig]
+def slotVerdict (S : Slots Validator) (Elig : ℕ → ℕ → Prop) [DecidableRel Elig]
     (D : Dag Validator BlockId Payload)
     (choose : BlockId → ℕ → Option BlockId) (N : ℕ)
     (above : ℕ → Verdict BlockId) (r : ℕ) : Verdict BlockId :=
@@ -71,7 +71,7 @@ def slotVerdict (S : Sched Validator) (Elig : ℕ → ℕ → Prop) [DecidableRe
 /-- **The pass, from slot `s` downward.** Slots below `s` are left
 undecided; slot `s` is decided from the verdicts above it, and those are
 what the pass from `s + 1` gives. -/
-def passFrom (S : Sched Validator) (Elig : ℕ → ℕ → Prop) [DecidableRel Elig]
+def passFrom (S : Slots Validator) (Elig : ℕ → ℕ → Prop) [DecidableRel Elig]
     (D : Dag Validator BlockId Payload)
     (choose : BlockId → ℕ → Option BlockId) (N : ℕ) (s : ℕ) : ℕ → Verdict BlockId :=
   if h : N < s then fun _ => Verdict.undecided
@@ -82,7 +82,7 @@ termination_by N + 1 - s
 decreasing_by all_goals omega
 
 /-- **The verdicts of a validator whose view is `D`.** -/
-def decOf (S : Sched Validator) (Elig : ℕ → ℕ → Prop) [DecidableRel Elig]
+def decOf (S : Slots Validator) (Elig : ℕ → ℕ → Prop) [DecidableRel Elig]
     (D : Dag Validator BlockId Payload)
     (choose : BlockId → ℕ → Option BlockId) (N : ℕ) : ℕ → Verdict BlockId :=
   passFrom S Elig D choose N 0

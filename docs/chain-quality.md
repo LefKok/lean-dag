@@ -185,7 +185,7 @@ use the standard axioms only.
 | `LeanDag/Quality/Inclusion.lean` | CQ5 (`mem_history_of_decided_commit`), CQ6 (`committed_of_correct_block`) |
 | `LeanDag/Quality/Capstone.lean` | CQ7: `committed_of_correct_block_within`, `…_by_round`, `chain_quality`; the CQ4 verdict |
 | `LeanDagTest/Quality/Model.lean` | `Ucens`; every result applied on data; the censorship exhibit |
-| `LeanDag/Density.lean` | `Reliability`, `QuorateOn`, density and the correct backbone over the raw block data |
+| `LeanDag/Common/Density.lean` | `Reliability`, `QuorateOn`, density and the correct backbone over the raw block data |
 | `LeanDag/Properties/Optional/Quorate.lean` | `Properties.Quorate` — the validity clause at the carrier |
 | `LeanDag/Properties/Arcs/Quality.lean` | the whole arc for any rule showing `Quorate`, `CommitsCandidate` and `LeaderCommits` |
 | `LeanDagTest/Quality/Generic.lean` | the arc applied to FinWhale and Hydrozoan |
@@ -197,7 +197,7 @@ core and is now an instance. Two things had to move for that.
 
 **Density is not a chain-quality result.** It reads a block assignment,
 a set of ids, the causal structure relating them, and one counting law
-about references — no verdicts, no views, no schedule. `LeanDag/Density.lean`
+about references — no verdicts, no views, no schedule. `LeanDag/Common/Density.lean`
 states it there, and the DoS arc, which proved it first, names its
 instance; both arcs lost an induction.
 

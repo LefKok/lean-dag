@@ -1,5 +1,4 @@
 import LeanDag.Hydrozoan.Model.Faults
-
 /-!
 # Optimal-Hydrozoan: fault model and thresholds
 
@@ -40,7 +39,7 @@ is not guaranteed — it fails, for instance, at `n = 1` — so it is
 excluded here by construction rather than assumed away in every
 statement. -/
 class OptimalFaults (Replica : Type*) [Fintype Replica] [DecidableEq Replica]
-    extends Faults Replica where
+    extends LeanDag.Hydrozoan.Faults Replica where
   /-- The fault model is non-trivial: at least one fault of some kind is
   tolerated (`f + c ≥ 1`). -/
   nontrivial : 1 ≤ f + c

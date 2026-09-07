@@ -1,6 +1,5 @@
 import LeanDag.Minnow.Blocking
-import LeanDagTest.Model
-
+import LeanDagTest.Mysticeti.Model
 /-!
 # Minnow — one twin resolves a slot the other later commits
 

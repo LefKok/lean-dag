@@ -1,5 +1,5 @@
 import LeanDag.Hydrozoan.Model.View
-
+import LeanDag.Common.Participation
 /-!
 # Liveness hypotheses
 
@@ -19,34 +19,22 @@ namespace LeanDag
 namespace Hydrozoan
 
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
-  [F : Faults Replica]
+  [F : LeanDag.Hydrozoan.Faults Replica]
 
-/-- Every replica in `T` authors a block at round `r`.
-
-`T`-relative rather than all-of-`Correct`, deliberately: liveness
-counts to quorums, never to every correct replica, and demanding all of
-`Correct` would void the theorems whenever a single correct replica
-misses a single round — a GC pause, a restart. Nothing is said about
-uniqueness (universe non-equivocation already gives it for
-non-Byzantine authors) or about references.
-
-Nothing here constrains `T`: the requirements `T ⊆ Correct` and
-`q ≤ T.card` are explicit hypotheses of the consuming theorems (the
-subset condition alone would admit `T = ∅`) — asserting this predicate
-for a `T` containing a Byzantine replica is asserting Byzantine
-behavior, which no theorem does. Reducible so witness models
-can settle it by `decide`. -/
-@[reducible]
-def PopulatedOn (U : BlockUniverse Replica BlockId)
-    (T : Finset Replica) (r : ℕ) : Prop :=
-  ∀ v ∈ T, ∃ b ∈ U.ids, (U.block b).round = r ∧ (U.block b).author = v
+/-! **`PopulatedOn U T r`** (`Participation.lean`): every replica in `T`
+authors a round-`r` block in `U`. Nothing here constrains `T`: the
+requirements `T ⊆ Correct` and `q ≤ T.card` are explicit hypotheses of
+the consuming theorems (the subset condition alone would admit
+`T = ∅`) — asserting this predicate for a `T` containing a Byzantine
+replica is asserting Byzantine behavior, which no theorem does. -/
 
 /-- The all-of-`Correct` case. -/
 abbrev Populated (U : BlockUniverse Replica BlockId) (r : ℕ) : Prop :=
   PopulatedOn U (Correct : Finset Replica) r
 
-/-- From round `R` on, every `T`-authored block references every
-`T`-authored block of the round below. Precisely: the constrained
+/-! **`SynchronisedOn U T R`** (`Participation.lean`): from round `R`
+on, every `T`-authored block references every `T`-authored block of
+the round below. Precisely: the constrained
 blocks are those at rounds `≥ R + 1` — a round-`R` block owes nothing
 to round `R − 1`.
 
@@ -75,7 +63,7 @@ behave; and no crashed replica is mentioned — the hybrid model's
 
 Compatibility with validity: when round `n` is `T`-populated, a block
 referencing all of a quorum-sized `T`'s round-`n` blocks carries ≥ `q`
-distinct authors, so `ValidWrt.quorum` is satisfiable alongside — the
+distinct creators, so `ValidWrt.quorum` is satisfiable alongside — the
 witness models prove it.
 
 **Known limitation — round-jumping recovery is not modeled.** `T` is
@@ -85,38 +73,16 @@ rounds it skipped) must sit outside `T` permanently, even after it has
 rejoined the steady quorum. A finer, wave-scoped form (a per-round-pair
 `SynchronisedAt` with a per-wave `T`) would readmit such a replica for
 every wave it actually participates in; deliberately deferred. -/
-def SynchronisedOn (U : BlockUniverse Replica BlockId)
-    (T : Finset Replica) (R : ℕ) : Prop :=
-  ∀ n, R ≤ n →                       -- at every round n from R on:
-  ∀ b ∈ U.ids,                       -- every existing block b ...
-    (U.block b).round = n + 1 →      -- ... sitting one round above n ...
-    (U.block b).author ∈ T →         -- ... authored by a member of T,
-  ∀ a ∈ U.ids,                       -- and every existing block a ...
-    (U.block a).round = n →          -- ... sitting at round n ...
-    (U.block a).author ∈ T →         -- ... also authored by a member of T:
-    a ∈ (U.block b).parents          -- a is among b's parents
 
 /-- The all-of-`Correct` case. -/
 abbrev Synchronised (U : BlockUniverse Replica BlockId) (R : ℕ) : Prop :=
   SynchronisedOn U (Correct : Finset Replica) R
 
-/-- Every correct replica's *eventual* view: the whole universe,
-packaged as a `View`. The structural rendering of "eventually every
-correct replica holds everything" — decision monotonicity transports
-any view's verdicts into it, and it discharges every `CoversUpto`
-hypothesis. Adds no information beyond `U` itself. -/
-def View.full (U : BlockUniverse Replica BlockId) : View U :=
-  ⟨U.ids, Finset.Subset.rfl, U.complete⟩
-
-/-- **A view caught up to round `N`**: it holds every block of the
-universe at a round at or below `N`. What a replica that has received
-everything up to `N` holds — and the hypothesis under which a liveness
-result holds of a replica's own view rather than of the eventual view.
-The eventual view satisfies it at every `N`
-(`coversUpto_full`, `Helpers/DirectLiveness.lean`). -/
-def View.CoversUpto {U : BlockUniverse Replica BlockId}
-    (V : View U) (N : ℕ) : Prop :=
-  ∀ b ∈ U.ids, (U.block b).round ≤ N → b ∈ V.ids
+/-! **The eventual view** is the record's `View.full`, and **a view
+caught up to round `N`** the record's `View.CoversUpto`
+(`BlockRecord.lean`): decision monotonicity transports any view's
+verdicts into the full view, and it discharges every `CoversUpto`
+hypothesis (`View.coversUpto_full`). -/
 
 end Hydrozoan
 

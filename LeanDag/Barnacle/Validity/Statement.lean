@@ -1,7 +1,6 @@
 import LeanDag.Barnacle.Helpers.DagRule
 import LeanDag.Barnacle.Model.Run
 import LeanDag.Barnacle.Model.Live
-
 /-!
 # BN14 — validity: a good author's block is delivered
 

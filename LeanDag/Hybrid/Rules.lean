@@ -1,7 +1,6 @@
 import LeanDag.Hybrid.Faults
-import LeanDag.Mysticeti
-import LeanDag.History
-
+import LeanDag.Mysticeti.Rule
+import LeanDag.Common.History
 /-!
 # The hybrid two-round rules, and the arithmetic core
 

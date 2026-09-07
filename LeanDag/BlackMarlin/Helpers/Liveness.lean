@@ -1,6 +1,5 @@
 import LeanDag.BlackMarlin.Liveness.Statement
 import LeanDag.BlackMarlin.Helpers.Decision
-
 /-!
 # Black Marlin — the liveness layer
 
@@ -82,15 +81,6 @@ theorem committed_of_run (hcard : quorumCard Validator ≤ T.card)
     (Rot.anchor (r + 1)) hlead1 L' haL'.1 haL'.2.2 haL'.2.1
 
 /-! ## The full view -/
-
-omit Rot in
-/-- The full view holds every supporter there is. -/
-theorem supportersIn_full {n : ℕ} :
-    supportersIn U (View.full U) L n = supporters U L n := by
-  unfold supportersIn supporters
-  congr 1
-  refine Finset.inter_eq_left.mpr fun q hq => ?_
-  exact (mem_blocksAt.mp (Finset.mem_filter.mp hq).1).1
 
 omit Rot in
 /-- So it counts the same quorum. -/

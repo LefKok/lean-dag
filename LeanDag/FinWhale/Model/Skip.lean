@@ -1,5 +1,4 @@
 import LeanDag.FinWhale.Model.Rule
-
 /-!
 # FinWhale — the direct skip rule
 

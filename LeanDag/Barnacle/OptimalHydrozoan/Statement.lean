@@ -1,9 +1,7 @@
-import LeanDag.Barnacle.Helpers.OptimalHydrozoan
+import LeanDag.Barnacle.Helpers.Hydrozoan
 import LeanDag.Barnacle.Hydrozoan.Statement
 import LeanDag.Hydrozoan.Model.Liveness
-
 import LeanDag.OptimalHydrozoan.Carrier
-
 /-!
 # Barnacle over Optimal-Hydrozoan — statement
 
@@ -19,7 +17,7 @@ mirror of `Barnacle/Hydrozoan/`, with three differences.
   `LeaderExcludedAll`, the same clause stated over a `(round, leader)`
   pair rather than a slot, from which `optUniverseOf` builds an
   `OptUniverse` at whatever schedule the interface hands
-  (`docs/hydrozoan-integration.md` §4.1).
+  (`docs/hydrozoan-integration.md` §3).
 * **No order on identifiers.** Optimal's evidence rung needs no
   tie-break (`optimal-hydrozoan.md` §7), so `DecidableEq` suffices
   where Hydrozoan's instantiation takes a `LinearOrder`.
@@ -48,7 +46,7 @@ slow one. -/
 def optimalHydrozoan [LeanDag.OptimalHydrozoan.OptimalFaults Replica] :
     BaseRule Replica BlockId Unit where
   toDagRule := OptimalHydrozoanProperties.optimalRule
-  full := fun U => LeanDag.Hydrozoan.View.full U.val
+  full := fun U => View.full U.val
   historyView := fun U A hA => Hydrozoan.historyView U.val A hA
   waveLength := 3
   DirectCommitIn := fun {U} V L r =>

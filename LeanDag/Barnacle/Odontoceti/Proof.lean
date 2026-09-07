@@ -1,6 +1,5 @@
 import LeanDag.Barnacle.Odontoceti.Statement
 import LeanDag.Barnacle.Helpers.Odontoceti
-
 /-!
 # Barnacle over Odontoceti — proof
 

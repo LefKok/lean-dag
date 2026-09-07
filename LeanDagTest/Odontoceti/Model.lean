@@ -1,6 +1,6 @@
-import LeanDag.OdontocetiProperties
+import LeanDag.Odontoceti.Properties
 import LeanDag.Odontoceti.Liveness
-import LeanDag.Schedule
+import LeanDag.Common.Schedule
 import LeanDag.DoS.Exclusion
 import Mathlib.Tactic.IntervalCases
 
@@ -174,8 +174,8 @@ rules and committed through the slot-3 anchor — the nearest eligible
 one, with nothing eligible between. -/
 theorem uskip_slot1 :
     Odontoceti.Decided Uskip (View.full Uskip) 1 (some 7) := by
-  refine Decided.indirectCommit (by omega) (by decide) uskip_slot3
-    ?_ (by decide) (by decide) ?_
+  refine Decided.indirectCommit (i := 0) (by omega) (by decide) uskip_slot3
+    ?_ (by decide) (fun i' hi' => absurd hi' (Nat.not_lt_zero _)) (by decide) (by decide) ?_
   · intro i h1 h2 h3
     have : i = 2 := by omega
     subst this
@@ -184,7 +184,7 @@ theorem uskip_slot1 :
     have hall : ∀ M : Fin 36, IsLeaderBlock Uskip 1 M → M = 7 := by decide
     have := hall L' hL'
     subst this
-    exact absurd hlt (lt_irrefl _)
+    exact absurd (show (7 : Fin 36) < 7 from hlt) (lt_irrefl _)
 
 -- Slot 2 (leader block 14): two supporters, four blamers — undecided,
 -- and two supporters cannot reach the threshold in **any** cone.
@@ -206,10 +206,11 @@ theorem uskip_slot2 :
     have : i = 3 := by omega
     subst this
     exact absurd h3 (by decide)
-  · intro L hL
+  · intro _ _ L hL
     have hall : ∀ M : Fin 36, IsLeaderBlock Uskip 2 M → M = 14 := by decide
     have := hall L hL
     subst this
+    show ¬ Odontoceti.ThickLink _ _ _ _
     decide
 
 /-! ## `Utwin6` — the thesis gap, on data -/
@@ -274,8 +275,8 @@ example : ¬ Odontoceti.ThickLink Utwin6 15 6 0 := by decide
 /-- …and the derivation commits the canonical twin. -/
 theorem utwin6_slot0 :
     Odontoceti.Decided Utwin6 (View.full Utwin6) 0 (some 0) := by
-  refine Decided.indirectCommit (by omega) (by decide) utwin6_slot2
-    ?_ (by decide) (by decide) ?_
+  refine Decided.indirectCommit (i := 0) (by omega) (by decide) utwin6_slot2
+    ?_ (by decide) (fun i' hi' => absurd hi' (Nat.not_lt_zero _)) (by decide) (by decide) ?_
   · intro i h1 h2 h3
     have : i = 1 := by omega
     subst this
@@ -284,8 +285,8 @@ theorem utwin6_slot0 :
     have hall : ∀ M : Fin 25, IsLeaderBlock Utwin6 0 M → M = 0 ∨ M = 6 := by
       decide
     rcases hall L' hL' with h | h <;> subst h
-    · exact absurd hlt (lt_irrefl _)
-    · exact absurd ht' (by decide)
+    · exact absurd (show (0 : Fin 25) < 0 from hlt) (lt_irrefl _)
+    · exact absurd (show Odontoceti.ThickLink _ _ _ _ from ht') (by decide)
 
 /-! ## Liveness on data -/
 
@@ -314,17 +315,18 @@ example : ∃ L, IsLeaderBlock Uodo 2 L ∧
     (View.full Uodo) (View.coversUpto_full Uodo _) (by decide)
 
 /-- **O8 applied**: the pipelined identity schedule spans at `c = 2`. -/
-example : Odontoceti.SpansEligible (Fin 6) 2 :=
-  Odontoceti.spansEligible_two odoSlots_slotRound
+example : (Odontoceti.odontocetiAnchored (Fin 6) (Fin 36) Unit).SpansEligible 2 :=
+  (Odontoceti.odontocetiAnchored (Fin 6) (Fin 36) Unit).spansEligible_of_identity
+    odoSlots_slotRound
 
 /-- **O9 applied**: slots 3 and 4 of `Uskip` are a committed run of
 two, and every slot below is decided. -/
 example : ∀ i, i < 3 → ∃ v,
     Odontoceti.Decided Uskip (View.full Uskip) i v :=
-  Odontoceti.decided_below_of_committed_run (b := 3) (n := 4)
-    (by omega)
+  AnchoredRule.decided_below_of_committed_run (fun hi h => Odontoceti.exists_least hi h)
+    (b := 3) (n := 4) (by omega)
     (fun i hi => by
-      rw [Odontoceti.eligible_iff]
+      rw [(Odontoceti.odontocetiAnchored (Fin 6) (Fin 36) Unit).eligible_iff]
       simp
       omega)
     (fun j hj1 hj2 => by
@@ -332,7 +334,7 @@ example : ∀ i, i < 3 → ∃ v,
       · exact ⟨21, uskip_slot3⟩
       · exact ⟨28, uskip_slot4⟩)
 
-#print axioms Odontoceti.decided_unique
+#print axioms LeanDag.AnchoredRule.decided_unique
 #print axioms LeanDag.OdontocetiProperties.safety
 #print axioms Odontoceti.all_decided_below_of_fairRun
 #print axioms utwin6_both_pass

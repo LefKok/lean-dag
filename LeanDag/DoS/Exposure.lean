@@ -1,5 +1,4 @@
-import LeanDag.History
-
+import LeanDag.Common.History
 /-!
 # Exposure, and the DoS-protection condition
 

@@ -1,6 +1,5 @@
 import LeanDag.MahiMahi.Counting.Statement
 import LeanDag.MahiMahi.Helpers.Counting
-
 /-!
 # The counting lemma — proof
 

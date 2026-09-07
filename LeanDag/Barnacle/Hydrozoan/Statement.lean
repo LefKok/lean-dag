@@ -1,21 +1,17 @@
 import LeanDag.Barnacle.Helpers.Hydrozoan
 import LeanDag.Hydrozoan.Model.Liveness
-
 import LeanDag.Hydrozoan.Helpers.Carrier
-
 /-!
 # Barnacle over Hydrozoan — statement
 
 The dual-path commit rule under hybrid faults (`LeanDag/Hydrozoan/`;
 `docs/hydrozoan.md`) as a base rule with its laws, so that the adaptive
-leader count of `LeanDag/Barnacle/` runs over it. The liveness half —
-`LiveRule`, `Good` and the descent laws — is P2
-(`docs/hydrozoan-integration.md` §13).
+leader count of `LeanDag/Barnacle/` runs over it. The liveness half — `LiveRule`, `Good` and the descent laws — is `Barnacle/HydrozoanLive/` (`docs/hydrozoan-integration.md` §3).
 
 **What this instantiation needs, and what it does not.** It reads
 Hydrozoan's arc through the block adapter of `Helpers/Hydrozoan.lean`
 and nothing else. In particular it needs **neither** the committee
-condition `c ≤ k` of `docs/hydrozoan-integration.md` §2 **nor** the
+condition `c ≤ k` **nor** the
 self-parent clause of its §3: `BaseRule.Universe` is an arbitrary type,
 so the interface never asks a Hydrozoan universe to be a core one, and
 the history layer it does ask for comes from `CausalStructure`, whose
@@ -76,22 +72,13 @@ namespace Barnacle
 variable {Replica : Type} [Fintype Replica] [DecidableEq Replica]
 variable {BlockId : Type} [LinearOrder BlockId]
 
-/-- **The schedules are one class.** `LeanDag.Slots` and
-`LeanDag.Hydrozoan.Slots` carry the same five fields, so the
-identification is field-for-field and every component is `rfl`. Stated
-here rather than in the helpers because a reader of the instantiation
-must see that the rule runs under the schedule the interface hands it,
-unchanged. -/
-abbrev slotsOf (S : Slots Replica) : LeanDag.Hydrozoan.Slots Replica :=
-  LeanDag.Hydrozoan.ofCoreSlots S
-
 /-- **Hydrozoan as a base rule.** The universe is Hydrozoan's own; wave
 length three; the direct commit predicate is the disjunction of the two
 direct routes, each judged from the view. -/
 def hydrozoan [LeanDag.Hydrozoan.Faults Replica] :
     BaseRule Replica BlockId Unit where
   toDagRule := LeanDag.Hydrozoan.rule
-  full := fun U => LeanDag.Hydrozoan.View.full U
+  full := fun U => View.full U
   historyView := fun U A hA => Hydrozoan.historyView U A hA
   waveLength := 3
   DirectCommitIn := fun {U} V L r =>

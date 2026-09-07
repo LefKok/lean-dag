@@ -1,7 +1,6 @@
 import LeanDagTest.OptimalHydrozoan.Universe
 import LeanDag.Barnacle.OptimalHydrozoan.Proof
 import LeanDag.Barnacle.OptimalHydrozoanLive.Proof
-
 /-!
 # Barnacle over Optimal-Hydrozoan — the witnesses
 
@@ -9,10 +8,7 @@ The sixth instantiation, on the sixteen-block universe of
 `LeanDagTest/OptimalHydrozoan/Universe.lean` where the Byzantine leader
 equivocates and a decision-round block has watched it.
 
-The point of interest is the carrier. `docs/hydrozoan-integration.md`
-§4.1 could not use `OptUniverse` as the interface's `Universe`, that
-type being indexed by a schedule, and the replacement is the same
-clause stated over a `(round, leader)` pair. These two `decide` calls
+The point of interest is the carrier. `OptUniverse` cannot be the interface's `Universe`, that type being indexed by a schedule, and the carrier is the same clause stated over a `(round, leader)` pair (`docs/hydrozoan-integration.md` §3). These two `decide` calls
 say the replacement separates exactly the universes the arc's own rule
 does: `UX`, which the arc exhibits as an `OptUniverse`, satisfies it,
 and `UbadX`, which the arc exhibits as a `BlockUniverse` that **no**

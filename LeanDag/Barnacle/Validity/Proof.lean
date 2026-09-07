@@ -1,6 +1,5 @@
 import LeanDag.Barnacle.Validity.Statement
 import LeanDag.Barnacle.Helpers.Schedule
-
 /-!
 # BN14 — proof
 

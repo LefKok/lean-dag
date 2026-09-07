@@ -1,7 +1,6 @@
 import LeanDag.Hydrozoan.Grounding.Proof
 import LeanDagTest.Hydrozoan.Model
 import LeanDagTest.Hydrozoan.DirectLiveness
-
 /-!
 # Witness: grounding
 
@@ -40,43 +39,43 @@ open LeanDag LeanDag.Hydrozoan
 
 -- The schedule is what its docstring says: pipelined rounds, leader
 -- constant across each wave of three slots, rotation advancing per wave.
-example : (Grounding.waveRobin 7 (by omega)).slotRound 5 = 5 := by decide
-example : (Grounding.waveRobin 7 (by omega)).leader 0 = 0 := by decide
-example : (Grounding.waveRobin 7 (by omega)).leader 2 = 0 := by decide
-example : (Grounding.waveRobin 7 (by omega)).leader 3 = 1 := by decide
-example : (Grounding.waveRobin 7 (by omega)).leader 20 = 6 := by decide
+example : (waveRobin 7 (by omega)).slotRound 5 = 5 := by decide
+example : (waveRobin 7 (by omega)).leader 0 = 0 := by decide
+example : (waveRobin 7 (by omega)).leader 2 = 0 := by decide
+example : (waveRobin 7 (by omega)).leader 3 = 1 := by decide
+example : (waveRobin 7 (by omega)).leader 20 = 6 := by decide
 -- The cycle re-enters: slot 21 opens replica 0's next wave.
-example : (Grounding.waveRobin 7 (by omega)).leader 21 = 0 := by decide
+example : (waveRobin 7 (by omega)).leader 21 = 0 := by decide
 
 -- A concrete correct wave, checked pointwise: slots 6, 7, 8 are all
 -- led by replica 2, and 2 ∈ Correct.
-example : (Grounding.waveRobin 7 (by omega)).leader 6 = 2 := by decide
-example : (Grounding.waveRobin 7 (by omega)).leader 7 = 2 := by decide
-example : (Grounding.waveRobin 7 (by omega)).leader 8 = 2 := by decide
-example : (Grounding.waveRobin 7 (by omega)).leader 6
+example : (waveRobin 7 (by omega)).leader 6 = 2 := by decide
+example : (waveRobin 7 (by omega)).leader 7 = 2 := by decide
+example : (waveRobin 7 (by omega)).leader 8 = 2 := by decide
+example : (waveRobin 7 (by omega)).leader 6
     ∈ (Correct : Finset (Fin 7)) := by decide
 
 -- End-to-end: fairness at the pinned configuration, premise-free.
 example : EventualDecision.FairRunOn (Fin 7)
-    (S := Grounding.waveRobin 7 (by omega)) (Correct : Finset (Fin 7)) 3 :=
+    (S := waveRobin 7 (by omega)) (Correct : Finset (Fin 7)) 3 :=
   Grounding.holds.1 7 (by omega)
 
 -- ... at a second configuration, pinning the ∀-over-n generality.
 example : EventualDecision.FairRunOn (Fin 4)
-    (S := Grounding.waveRobin 4 (by omega)) (Correct : Finset (Fin 4)) 3 :=
+    (S := waveRobin 4 (by omega)) (Correct : Finset (Fin 4)) 3 :=
   Grounding.holds.1 4 (by omega)
 
 -- ... and a run extracted past slot 5, with the conclusion's shape
 -- spelled out.
 example : ∃ k', 5 ≤ k' ∧ ∀ i, i < 3 →
-    (Grounding.waveRobin 7 (by omega)).leader (k' + i)
+    (waveRobin 7 (by omega)).leader (k' + i)
       ∈ (Correct : Finset (Fin 7)) :=
   Grounding.holds.1 7 (by omega) 5
 
 -- Negative: fairness is a claim about the leader set, not trivially
 -- true of every `T` — the empty set starves.
 example : ¬ EventualDecision.FairRunOn (Fin 7)
-    (S := Grounding.waveRobin 7 (by omega)) (∅ : Finset (Fin 7)) 3 := by
+    (S := waveRobin 7 (by omega)) (∅ : Finset (Fin 7)) 3 := by
   intro h
   obtain ⟨k', -, hlead⟩ := h 0
   have := hlead 0 (by omega)
@@ -87,16 +86,16 @@ example : ¬ EventualDecision.FairRunOn (Fin 7)
 -- `T ⊆ Correct` strengthening of the claim would break this
 -- application.
 example : ∃ U : BlockUniverse (Fin 7) ℕ,
-    (∀ b ∈ U.ids, (U.block b).author ∈ (Finset.univ : Finset (Fin 7))) ∧
+    (∀ b ∈ U.ids, (U.block b).creator ∈ (Finset.univ : Finset (Fin 7))) ∧
     (∀ r, r ≤ 10 → PopulatedOn U (Finset.univ : Finset (Fin 7)) r) ∧
     SynchronisedOn U (Finset.univ : Finset (Fin 7)) 0 :=
   Grounding.holds.2.1 (Fin 7) Finset.univ 10 (by decide)
 
 -- ... and at the exact-quorum boundary: T = Correct with |T| = 5 = q,
--- the T-only clause biting hardest (five authors must sustain every
+-- the T-only clause biting hardest (five creators must sustain every
 -- round's quorum by themselves).
 example : ∃ U : BlockUniverse (Fin 7) ℕ,
-    (∀ b ∈ U.ids, (U.block b).author ∈ (Correct : Finset (Fin 7))) ∧
+    (∀ b ∈ U.ids, (U.block b).creator ∈ (Correct : Finset (Fin 7))) ∧
     (∀ r, r ≤ 6 → PopulatedOn U (Correct : Finset (Fin 7)) r) ∧
     SynchronisedOn U (Correct : Finset (Fin 7)) 0 :=
   Grounding.holds.2.1 (Fin 7) (Correct : Finset (Fin 7)) 6 (by decide)
@@ -105,9 +104,9 @@ example : ∃ U : BlockUniverse (Fin 7) ℕ,
 -- clauses — the commit at the bound and the decisions below it —
 -- spelled out.
 example : ∃ b, 5 ≤ b ∧ ∃ U : BlockUniverse (Fin 7) ℕ,
-    (∃ L, Decided (S := Grounding.waveRobin 7 (by omega)) U
+    (∃ L, Decided (S := waveRobin 7 (by omega)) U
       (View.full U) b (some L)) ∧
-    ∀ i, i < b → ∃ v, Decided (S := Grounding.waveRobin 7 (by omega)) U
+    ∀ i, i < b → ∃ v, Decided (S := waveRobin 7 (by omega)) U
       (View.full U) i v := by
   obtain ⟨b, hk, U, h⟩ := Grounding.holds.2.2 7 (by omega) 5
   exact ⟨b, hk, U, h (View.full U) (View.coversUpto_full U _)⟩
@@ -116,9 +115,9 @@ example : ∃ b, 5 ≤ b ∧ ∃ U : BlockUniverse (Fin 7) ℕ,
 -- nothing below to decide, the commit clause still demands a real
 -- verdict.
 example : ∃ b, 0 ≤ b ∧ ∃ U : BlockUniverse (Fin 4) ℕ,
-    (∃ L, Decided (S := Grounding.waveRobin 4 (by omega)) U
+    (∃ L, Decided (S := waveRobin 4 (by omega)) U
       (View.full U) b (some L)) ∧
-    ∀ i, i < b → ∃ v, Decided (S := Grounding.waveRobin 4 (by omega)) U
+    ∀ i, i < b → ∃ v, Decided (S := waveRobin 4 (by omega)) U
       (View.full U) i v := by
   obtain ⟨b, hk, U, h⟩ := Grounding.holds.2.2 4 (by omega) 0
   exact ⟨b, hk, U, h (View.full U) (View.coversUpto_full U _)⟩
@@ -133,7 +132,7 @@ Every window of three consecutive residues mod 5 hits 0 or 3, so no
 correct 3-run ever forms — per-slot rotation is UNFAIR at the hybrid
 bound, which is exactly why `waveRobin` rotates at wave grain. -/
 
-instance fiveCrashy : Faults (Fin 5) where
+instance fiveCrashy : LeanDag.Hydrozoan.Faults (Fin 5) where
   f := 0
   c := 2
   k := 0

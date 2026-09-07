@@ -1,7 +1,6 @@
 import LeanDag.Barnacle.Helpers.DagRule
 import LeanDag.Barnacle.Model.Run
 import LeanDag.Barnacle.Helpers.Schedule
-
 /-!
 # Agreement helpers
 

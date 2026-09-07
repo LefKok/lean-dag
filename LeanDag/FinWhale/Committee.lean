@@ -1,5 +1,4 @@
 import LeanDag.FinWhale.Model.Params
-
 /-!
 # FinWhale — the arithmetic of the committee
 

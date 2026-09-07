@@ -1,5 +1,4 @@
 import LeanDag.Reactive.Basic
-
 /-!
 # Reactive Mysticeti
 

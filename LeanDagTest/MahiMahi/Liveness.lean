@@ -1,7 +1,6 @@
 import LeanDagTest.MahiMahi.Model
 import LeanDagTest.MahiMahi.Counting
 import LeanDag.MahiMahi.Liveness.Statement
-
 /-!
 # Mahi-Mahi witnesses — the clause on data
 
@@ -48,8 +47,7 @@ horizon `5` are at `k = 0, 1`. -/
 example : MahiMahi.UnpredictableWithin full4 4 1 5 := by
   intro k hk
   have hk' : k ≤ 1 := by
-    unfold MahiMahi.decisionRound at hk
-    simp at hk
+    simp [AnchoredRule.decisionRound, MahiMahi.mahiMahiAnchored] at hk
     omega
   refine ⟨k, le_refl k, by omega, ?_⟩
   interval_cases k <;> decide
@@ -59,8 +57,7 @@ example : MahiMahi.UnpredictableWithin full4 4 1 5 := by
 example : MahiMahi.UnpredictableRunWithin full4 4 1 2 5 := by
   intro k hk
   have hk' : k = 0 := by
-    unfold MahiMahi.decisionRound at hk
-    simp at hk
+    simp [AnchoredRule.decisionRound, MahiMahi.mahiMahiAnchored] at hk
     omega
   subst hk'
   refine ⟨0, le_refl 0, by omega, ?_⟩
@@ -100,8 +97,7 @@ example : FairScheduleOn (S := mmSlotsL) (Correct : Finset (Fin 4)) := by
 example : MahiMahi.UnpredictableWithin aim4 4 2 5 := by
   intro k hk
   have hk' : k = 0 := by
-    unfold MahiMahi.decisionRound at hk
-    simp at hk
+    simp [AnchoredRule.decisionRound, MahiMahi.mahiMahiAnchored] at hk
     omega
   subst hk'
   exact ⟨0, le_refl 0, by omega, by decide⟩
@@ -119,11 +115,9 @@ example : ¬ MahiMahi.UnpredictableRunWithin aim4 4 1 2 5 := by
 
 /-- At one leader per round, a run of `w` slots spans eligibility: slot
 `i < b` has decision round `i + w − 1 < b + w − 1`. -/
-example : MahiMahi.SpansEligible (Fin 4) 4 4 := by
+example : (MahiMahi.mahiMahiAnchored (Fin 4) (Fin 24) Unit 4).SpansEligible 4 := by
   intro b i hi
-  change MahiMahi.decisionRound (Fin 4) 4 i < mmSlotsL.slotRound (b + 4 - 1)
-  unfold MahiMahi.decisionRound
-  simp
+  simp [AnchoredRule.Eligible, EligibleAt, MahiMahi.mahiMahiAnchored]
   omega
 
 /-! ## MM3a on data -/

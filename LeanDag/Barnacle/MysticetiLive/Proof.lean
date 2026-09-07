@@ -1,7 +1,6 @@
 import LeanDag.Barnacle.MysticetiLive.Statement
 import LeanDag.Barnacle.Helpers.MysticetiLive
 import LeanDag.Barnacle.Helpers.Heads
-
 /-!
 # Mysticeti liveness — proof
 

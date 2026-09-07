@@ -1,6 +1,5 @@
 import LeanDag.Hydrozoan.DirectLiveness.Statement
 import LeanDag.Hydrozoan.Helpers.DirectLiveness
-
 /-!
 # Direct-commit liveness — proof
 
@@ -18,7 +17,7 @@ namespace Hydrozoan
 namespace DirectLiveness
 
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
-  [DecidableEq BlockId] [LinearOrder BlockId] [F : Faults Replica]
+  [DecidableEq BlockId] [LinearOrder BlockId] [F : LeanDag.Hydrozoan.Faults Replica]
   [S : Slots Replica] {U : BlockUniverse Replica BlockId}
 
 theorem holds : Statement := by
@@ -28,11 +27,11 @@ theorem holds : Statement := by
   have hslow := slowCommit_of_synchronised hcard hs hRk hpop1 hpop2 hL
     (by rw [hL.2.2]; exact hlead)
   exact ⟨L, hL, hslow,
-    Decided.directSlow hL (slowCommitInView_of_coversUpto hslow hcov)⟩
+    Decided.directCommit hL (Or.inr (slowCommitInView_of_coversUpto hslow hcov))⟩
 
 theorem fastLatency :
     ∀ (Replica BlockId : Type) [Fintype Replica] [DecidableEq Replica]
-      [DecidableEq BlockId] [LinearOrder BlockId] [Faults Replica]
+      [DecidableEq BlockId] [LinearOrder BlockId] [LeanDag.Hydrozoan.Faults Replica]
       [Slots Replica] (U : BlockUniverse Replica BlockId),
       FastLatency U := by
   intro Replica BlockId _ _ _ _ _ _ U R k hfaults hs hRk hpop0 hpop1 hlead
@@ -47,13 +46,13 @@ theorem fastLatency :
 
 theorem skipLatency :
     ∀ (Replica BlockId : Type) [Fintype Replica] [DecidableEq Replica]
-      [DecidableEq BlockId] [LinearOrder BlockId] [Faults Replica]
+      [DecidableEq BlockId] [LinearOrder BlockId] [LeanDag.Hydrozoan.Faults Replica]
       [Slots Replica] (U : BlockUniverse Replica BlockId),
       SkipLatency U := by
   intro Replica BlockId _ _ _ _ _ _ U k hfaults hpop hnolead
   have hsub : (Correct : Finset Replica) ⊆ blames U k := by
     intro v hv
-    obtain ⟨b, hb, hbr, hba⟩ := hpop v hv
+    obtain ⟨b, hb, hba, hbr⟩ := hpop v hv
     exact mem_blames.mpr ⟨b, hb, hbr, fun j _ => hnolead j, hba⟩
   have h1 := Finset.card_le_card hsub
   have h2 := qFast_le_card_correct hfaults

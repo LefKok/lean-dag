@@ -23,7 +23,7 @@ leaders ahead, to favour validators observed live and fast — is safe and
 live for both commit rules of this development, Mysticeti (report §3)
 and Odontoceti (report §10). Results will carry **AL**-labels,
 continuing the house scheme; everything will live in `LeanDag/Adaptive/`
-with `decide` witnesses in `LeanDagTest/Adaptive.lean`, consuming the
+with `decide` witnesses in `LeanDagTest/Adaptive/Model.lean`, consuming the
 core read-only like every other arc.
 
 ## 1. The problem
@@ -279,7 +279,7 @@ an explicit hypothesis rather than a chosen constant.
 | `Adaptive/Run.lean` | `AdaptiveRun`; uniqueness/safety (AL3); conservativity (AL4); the ledger (AL6) |
 | `Adaptive/Liveness.lean` | the bounded committed-run lemma; existence (AL5) |
 | `Adaptive/Odontoceti.lean` | the two-round mirror (AL7) |
-| `LeanDagTest/Adaptive.lean` | demote-on-skip on the round-robin base (AL8) |
+| `LeanDagTest/Adaptive/Model.lean` | demote-on-skip on the round-robin base (AL8) |
 
 ## 6. Out of scope
 

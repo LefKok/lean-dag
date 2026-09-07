@@ -2,7 +2,6 @@ import LeanDag.Adaptive.Run
 import LeanDag.Properties.Commit
 import LeanDag.Properties.Derived.LeaderCommits
 import LeanDag.Properties.Derived.Descent
-
 /-!
 # Liveness: the adaptive fixpoint exists
 

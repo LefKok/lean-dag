@@ -21,7 +21,7 @@ is machine-checked safety and liveness of the two-round commit rule
 under this model, at the generalized bound `n ≥ 5f + 3c + 1`, collapsing
 onto the existing Odontoceti development at `c = 0`. Results will carry
 **H**-labels; everything will live in `LeanDag/Hybrid/` with `decide`
-witnesses in `LeanDagTest/Hybrid.lean`, consuming the core read-only.
+witnesses in `LeanDagTest/Hybrid/Model.lean`, consuming the core read-only.
 
 The DAG theorems below do not depend on checkpoint signatures. The
 additive `Hybrid/Checkpoint/` subarc is a separate assume-guarantee
@@ -272,8 +272,8 @@ on it.
 | `Hybrid/Checkpoint/RecoverySpec.lean` | **human review:** broadcast, validation, selection, and epoch-transition contracts |
 | `Hybrid/Checkpoint/SafetyProofs.lean` | **Lean-checked:** quorum, uniqueness, prefix consistency, and recorder derivations |
 | `Hybrid/Checkpoint/RecoveryProofs.lean` | **Lean-checked:** concrete selection, agreement, and preservation derivations |
-| `LeanDagTest/Hybrid.lean` | H9: the `n = 4` crash model and the `n = 9` hybrid model |
-| `LeanDagTest/HybridCheckpoint.lean` | concrete checkpoint certificate, finality certificate and recovery output |
+| `LeanDagTest/Hybrid/Model.lean` | H9: the `n = 4` crash model and the `n = 9` hybrid model |
+| `LeanDagTest/Hybrid/Checkpoint.lean` | concrete checkpoint certificate, finality certificate and recovery output |
 
 ## 6. Out of scope
 

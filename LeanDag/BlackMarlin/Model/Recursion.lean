@@ -1,6 +1,5 @@
 import LeanDag.BlackMarlin.Model.Order
 import LeanDag.BlackMarlin.Model.Descent
-
 /-!
 # Black Marlin — `commit(B)` as the paper writes it
 

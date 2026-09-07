@@ -1,6 +1,5 @@
 import LeanDag.Nemo.Decision
-import LeanDag.Liveness
-
+import LeanDag.Mysticeti.Liveness
 /-!
 # Nemo-Nemo: crash liveness
 
@@ -61,8 +60,8 @@ namespace LeanDag
 
 namespace Nemo
 
-variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
-variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
+variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
+variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 variable {U : Universe Validator BlockId Payload}
 variable {T : Finset Validator} {L : BlockId} {s R N : ℕ}
 
@@ -110,101 +109,16 @@ end CrashModel
 
 /-! ## Participation and coverage -/
 
-/-- Every validator in `T` has a block at round `r` — the shared
-`PopulatedFrom` at the crash universe's data. A *quorum* of reliable
-validators, not all of `Live`: demanding the whole class would make the
-theorems lapse when a single live validator misses a single round. -/
-def PopulatedOn (U : Universe Validator BlockId Payload)
-    (T : Finset Validator) (r : ℕ) : Prop :=
-  PopulatedFrom U.block U.ids T r
-
-/-- Decidable on concrete data, so a model can settle it by `decide`. -/
-instance decidablePopulatedOn (r : ℕ) : Decidable (PopulatedOn U T r) :=
-  inferInstanceAs (Decidable (PopulatedFrom U.block U.ids T r))
-
-omit [DecidableEq BlockId] in
-/-- Population is antitone: a smaller set is easier to populate. -/
-theorem PopulatedOn.mono {T T' : Finset Validator} {r : ℕ} (hsub : T ⊆ T')
-    (h : PopulatedOn U T' r) : PopulatedOn U T r :=
-  PopulatedFrom.mono hsub h
-
-/-- From round `R` on, every `T`-authored block references every `T`-authored
-block of the round below — the shared `SynchronisedFrom` at the crash
-universe's data, the post-GST coverage assumption. -/
-def SynchronisedOn (U : Universe Validator BlockId Payload)
-    (T : Finset Validator) (R : ℕ) : Prop :=
-  SynchronisedFrom U.block U.ids T R
-
-omit [DecidableEq BlockId] in
-/-- Coverage is antitone too. -/
-theorem SynchronisedOn.mono {T T' : Finset Validator} {R : ℕ} (hsub : T ⊆ T')
-    (h : SynchronisedOn U T' R) : SynchronisedOn U T R :=
-  SynchronisedFrom.mono hsub h
-
-omit [DecidableEq BlockId] in
-/-- Every live validator's *eventual* view. Downward-closed by
-`U.complete`. -/
-def View.full (U : Universe Validator BlockId Payload) :
-    View Validator BlockId Payload U where
-  ids := U.ids
-  subset_ids := Finset.Subset.rfl
-  complete := U.complete
-
-omit [DecidableEq BlockId] in
-/-- **A view caught up to round `N`**: it holds every block of the
-universe at a round at or below `N` — the crash arc's copy of the
-core's `View.CoversUpto`, the hypothesis under which a liveness result
-holds of a validator's own view rather than of the full view. The full
-view satisfies it at every `N`. -/
-def View.CoversUpto (V : View Validator BlockId Payload U) (N : ℕ) : Prop :=
-  ∀ b ∈ U.ids, (U.block b).round ≤ N → b ∈ V.ids
-
-omit [DecidableEq BlockId] in
-/-- The full view is caught up to every horizon. -/
-theorem View.coversUpto_full (U : Universe Validator BlockId Payload) (N : ℕ) :
-    (View.full U).CoversUpto N :=
-  fun _ hb _ => hb
-
-omit [DecidableEq BlockId] in
-/-- Caught up to `N` is caught up to every lower horizon. -/
-theorem View.CoversUpto.mono {V : View Validator BlockId Payload U} {M N : ℕ}
-    (h : V.CoversUpto N) (hMN : M ≤ N) : V.CoversUpto M :=
-  fun b hb hr => h b hb (le_trans hr hMN)
+/-! `PopulatedOn` and `SynchronisedOn` are the record's
+(`Participation.lean`), at the crash universe's data; `View.full` and
+`View.CoversUpto` are the record's (`BlockRecord.lean`). -/
 
 /-! ## Decisions are monotone in the view -/
 
 variable [S : Slots Validator]
 
-omit S in
-/-- A larger view can only see more supporters. -/
-theorem directCommitIn_mono {V V' : View Validator BlockId Payload U}
-    (hsub : V.ids ⊆ V'.ids) {L : BlockId} {r : ℕ} (h : DirectCommitIn U V L r) :
-    DirectCommitIn U V' L r :=
-  le_trans h (Finset.card_le_card (Finset.image_subset_image
-    (Finset.inter_subset_inter Finset.Subset.rfl hsub)))
-
-/-- **Decisions are monotone in the view.** Induction on the derivation:
-the direct case is the monotonicity lemma above, and the two indirect cases
-rebuild themselves from the inductive hypotheses, carrying their
-`CertifiedIn` premises across unchanged — the indirect test is
-universe-level, so growth cannot disturb it. -/
-theorem decided_mono {V V' : View Validator BlockId Payload U}
-    (hsub : V.ids ⊆ V'.ids) {k : ℕ} {v : Option BlockId} (h : Decided U V k v) :
-    Decided U V' k v := by
-  induction h with
-  | directCommit hL hdc => exact Decided.directCommit hL (directCommitIn_mono hsub hdc)
-  | indirectCommit hkj helig _ _ hL hcert ihj ihmid =>
-      exact Decided.indirectCommit hkj helig ihj ihmid hL hcert
-  | indirectSkip hkj helig _ _ hnc ihj ihmid =>
-      exact Decided.indirectSkip hkj helig ihj ihmid hnc
-
-/-- **Commit propagation.** Whatever any validator decides on any view, the
-same verdict holds on the full view — and the full view is every live
-validator's eventual view, so this *is* "all live validators eventually
-reach the same decision". -/
-theorem decided_full {V : View Validator BlockId Payload U} {k : ℕ}
-    {v : Option BlockId} (h : Decided U V k v) : Decided U (View.full U) k v :=
-  decided_mono V.subset_ids h
+/-! Monotonicity in the view and commit propagation are the relation's
+(`AnchoredRule.decided_mono`, `decided_full`, at `nemoLaws`). -/
 
 /-! ## A reliable leader commits directly -/
 
@@ -258,21 +172,10 @@ theorem decided_of_leader_mem
     directCommit_of_leader_mem hcard hs hR hpop0 hpop1 hlead
   exact ⟨L, hLb, Decided.directCommit hLb (directCommitIn_of_coversUpto hdc hcov)⟩
 
-/-! ## A run of two spans eligibility -/
-
-variable (Validator) in
-/-- A run of `c` slots reaches past everything below it. -/
-def SpansEligible (c : ℕ) : Prop :=
-  ∀ b i : ℕ, i < b → Eligible Validator i (b + c - 1)
-
-omit [Fintype Validator] [DecidableEq Validator] in
-/-- Under a pipelined identity-round schedule, `c = 2` spans — two
-consecutive reliable leaders suffice at wavelength two. -/
-theorem spansEligible_two (hid : ∀ s, S.slotRound s = s) :
-    SpansEligible Validator 2 := by
-  intro b i hi
-  rw [eligible_iff, hid, hid]
-  omega
+/-! A run of slots spanning eligibility is the relation's
+`AnchoredRule.SpansEligible`; under a pipelined identity-round schedule
+`c = 2` spans (`spansEligible_of_identity`), two consecutive reliable
+leaders sufficing at wavelength two. -/
 
 /-! ## The two all-of-`Live` cases
 

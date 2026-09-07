@@ -1,13 +1,12 @@
 import LeanDag.OptimalHydrozoan.EventualDecision.Proof
 import LeanDagTest.OptimalHydrozoan.IndirectLiveness
-
 /-!
 # Witness: Optimal eventual decision, applied
 
 None of the safety witnesses is `T`-synchronised with a `T`-led run of
 three slots under its schedule, so this file adds one steady-state
 universe `US` on `fourReplicasOpt` (replica `0` Byzantine and silent
-after genesis): the three correct replicas author every round from 1 to
+after genesis): the three correct replicas creator every round from 1 to
 6, each block referencing the three correct blocks of the round below.
 Under `fourSlotsOpt` (leader `(k + 3) % 4`) the slots led by `1`, `2`, `3`
 with a voting round in the table — `0, 2, 3, 4` — fast-commit at exactly
@@ -55,19 +54,19 @@ set_option maxRecDepth 16384
 referencing the three correct blocks of round `r − 1`. -/
 def lkS : Fin 22 → Block (Fin 4) (Fin 22) := fun i =>
   if h : (i : ℕ) < 4 then
-    { round := 0, author := ⟨i, by omega⟩, parents := ∅ }
+    { round := 0, creator := ⟨i, by omega⟩, refs := ∅, payload := () }
   else if h : (i : ℕ) < 7 then
-    { round := 1, author := ⟨(i : ℕ) - 3, by omega⟩, parents := {1, 2, 3} }
+    { round := 1, creator := ⟨(i : ℕ) - 3, by omega⟩, refs := {1, 2, 3}, payload := () }
   else if h : (i : ℕ) < 10 then
-    { round := 2, author := ⟨(i : ℕ) - 6, by omega⟩, parents := {4, 5, 6} }
+    { round := 2, creator := ⟨(i : ℕ) - 6, by omega⟩, refs := {4, 5, 6}, payload := () }
   else if h : (i : ℕ) < 13 then
-    { round := 3, author := ⟨(i : ℕ) - 9, by omega⟩, parents := {7, 8, 9} }
+    { round := 3, creator := ⟨(i : ℕ) - 9, by omega⟩, refs := {7, 8, 9}, payload := () }
   else if h : (i : ℕ) < 16 then
-    { round := 4, author := ⟨(i : ℕ) - 12, by omega⟩, parents := {10, 11, 12} }
+    { round := 4, creator := ⟨(i : ℕ) - 12, by omega⟩, refs := {10, 11, 12}, payload := () }
   else if h : (i : ℕ) < 19 then
-    { round := 5, author := ⟨(i : ℕ) - 15, by omega⟩, parents := {13, 14, 15} }
+    { round := 5, creator := ⟨(i : ℕ) - 15, by omega⟩, refs := {13, 14, 15}, payload := () }
   else
-    { round := 6, author := ⟨(i : ℕ) - 18, by omega⟩, parents := {16, 17, 18} }
+    { round := 6, creator := ⟨(i : ℕ) - 18, by omega⟩, refs := {16, 17, 18}, payload := () }
 
 /-- The base universe. -/
 def US : BlockUniverse (Fin 4) (Fin 22) where
@@ -88,7 +87,7 @@ example :
       (∀ L, ¬ IsLeaderBlock US 1 L) ∧ (∀ L, ¬ IsLeaderBlock US 5 L) := by
   decide
 
--- Synchronised from round 0 (the round-bounding pattern).
+-- LeanDag.Hydrozoan.Synchronised from round 0 (the round-bounding pattern).
 theorem us_synchronised : SynchronisedOn US {1, 2, 3} 0 := by
   intro n hn b hb hbr hbc a ha har hac
   have hmax : ∀ c : Fin 22, (US.block c).round ≤ 6 := by decide
@@ -99,8 +98,8 @@ theorem us_synchronised : SynchronisedOn US {1, 2, 3} 0 := by
     (revert b a; decide)
 
 -- The correct replicas fill every round of the run's span (rounds 2–6).
-theorem us_populated : ∀ r, Slots.slotRound (Replica := Fin 4) 2 ≤ r →
-    r ≤ Slots.slotRound (Replica := Fin 4) (2 + 3 - 1) + 2 →
+theorem us_populated : ∀ r, Slots.slotRound (Validator := Fin 4) 2 ≤ r →
+    r ≤ Slots.slotRound (Validator := Fin 4) (2 + 3 - 1) + 2 →
     PopulatedOn US {1, 2, 3} r := by
   intro r h1 h2
   change 2 ≤ r at h1
@@ -133,43 +132,44 @@ example : ∀ i, i < 2 → ∃ v, DecidedOpt OS (View.full US) i v :=
     us_populated (View.full US) (View.coversUpto_full US _)
 
 /-- The full view, typed at the projection. -/
-def VS : View OS.toBlockUniverse := View.full US
+def VS : LeanDag.Hydrozoan.View OS.toBlockRecord := View.full US
 
 -- What the descent actually derives: the ladder at the nearest eligible
 -- committed anchor. Slot 0 commits 3 through rung 1 anchored on slot 3
 -- (certificate 7 is a parent of 11); slot 1, candidate-less, is skipped
 -- through rung 3 anchored on slot 4 (15).
 theorem os_slot0_ladder : DecidedOpt OS VS 0 (some 3) :=
-  DecidedOpt.indirectCert (j := 3) (A := 11) (by omega) (by decide)
-    (DecidedOpt.directFast (by decide) (by decide))
+  DecidedOpt.indirectCommit (j := 3) (A := 11) (i := 0) (by omega) (by decide)
+    (DecidedOpt.directCommit (by decide) (Or.inl (by decide)))
     (fun i h1 h2 h3 => by
       have hi : i = 1 ∨ i = 2 := by omega
       rcases hi with rfl | rfl
       · exact absurd h3 (by decide)
       · exact absurd h3 (by decide))
+    (by decide) (fun _ h => absurd h (Nat.not_lt_zero _))
     (by decide)
-    ⟨7, by decide, Reaches.single (by decide)⟩
+    (show LeanDag.Hydrozoan.CertifiedIn US 11 3 0 from ⟨7, by decide, Reaches.single (by decide)⟩)
+    (fun _ _ _ h => h)
 theorem os_slot1_ladder : DecidedOpt OS VS 1 none :=
   DecidedOpt.indirectSkip (j := 4) (A := 15) (by omega) (by decide)
-    (DecidedOpt.directFast (by decide) (by decide))
+    (DecidedOpt.directCommit (by decide) (Or.inl (by decide)))
     (fun i h1 h2 h3 => by
       have hi : i = 2 ∨ i = 3 := by omega
       rcases hi with rfl | rfl
       · exact absurd h3 (by decide)
       · exact absurd h3 (by decide))
-    (fun L hL _ => absurd ⟨L, hL⟩ (by decide : ¬ ∃ L, IsLeaderBlock US 1 L))
-    (fun L hL _ => absurd ⟨L, hL⟩ (by decide : ¬ ∃ L, IsLeaderBlock US 1 L))
+    (fun _ _ L hL _ => absurd ⟨L, hL⟩ (by decide : ¬ ∃ L, IsLeaderBlock US 1 L))
 
 -- The direct routes reach the same verdicts, and slot agreement says
 -- they must: slot 0 fast-commits 3, slot 1 is directly skipped.
 example : ∀ v, DecidedOpt OS VS 0 v → v = some 3 := fun v h =>
   (OptimalHydrozoan.SlotAgreement.holds (Fin 4) (Fin 22) OS VS VS 0 _ v os_slot0_ladder h).symm
-example : DecidedOpt OS VS 0 (some 3) := DecidedOpt.directFast (by decide) (by decide)
+example : DecidedOpt OS VS 0 (some 3) := DecidedOpt.directCommit (by decide) (Or.inl (by decide))
 example : DecidedOpt OS VS 1 none := DecidedOpt.directSkip (by decide)
 
 -- Slot 6 has a candidate but no voting round: no direct route, and no
 -- anchor above — the table does not decide everything.
-example : IsLeaderBlock US 6 19 ∧ supporters US 19 7 = ∅ ∧ ¬ SkippedLeaderOpt US 6 := by
+example : IsLeaderBlock US 6 19 ∧ LeanDag.Hydrozoan.supporters US 19 7 = ∅ ∧ ¬ SkippedLeaderOpt US 6 := by
   decide
 
 -- Synchrony from R > 0 only: replica 1's round-1 block references the
@@ -177,7 +177,7 @@ example : IsLeaderBlock US 6 19 ∧ supporters US 19 7 = ∅ ∧ ¬ SkippedLeade
 
 /-- `lkS` with block 4 referencing `{0, 2, 3}`. -/
 def lkS' : Fin 22 → Block (Fin 4) (Fin 22) := fun i =>
-  if (i : ℕ) = 4 then { round := 1, author := 1, parents := {0, 2, 3} } else lkS i
+  if (i : ℕ) = 4 then { round := 1, creator := 1, refs := {0, 2, 3}, payload := () } else lkS i
 
 /-- The base universe. -/
 def US' : BlockUniverse (Fin 4) (Fin 22) where
@@ -207,8 +207,8 @@ theorem us'_synchronised : SynchronisedOn US' {1, 2, 3} 1 := by
   rcases hn2 with rfl | rfl | rfl | rfl | rfl <;>
     (revert b a; decide)
 
-theorem us'_populated : ∀ r, Slots.slotRound (Replica := Fin 4) 2 ≤ r →
-    r ≤ Slots.slotRound (Replica := Fin 4) (2 + 3 - 1) + 2 →
+theorem us'_populated : ∀ r, Slots.slotRound (Validator := Fin 4) 2 ≤ r →
+    r ≤ Slots.slotRound (Validator := Fin 4) (2 + 3 - 1) + 2 →
     PopulatedOn US' {1, 2, 3} r := by
   intro r h1 h2
   change 2 ≤ r at h1
@@ -250,24 +250,24 @@ theorem fairRun_fourOpt :
 
 -- End-to-end: RunsRecur applied concretely — fairness places a
 -- correct-led run past slot 5 at or after round 3.
-example : ∃ b, 5 ≤ b ∧ 3 ≤ Slots.slotRound (Replica := Fin 4) b ∧
-    ∀ i, i < 3 → Slots.leader (Replica := Fin 4) (b + i) ∈ ({1, 2, 3} : Finset (Fin 4)) :=
+example : ∃ b, 5 ≤ b ∧ 3 ≤ Slots.slotRound (Validator := Fin 4) b ∧
+    ∀ i, i < 3 → Slots.leader (Validator := Fin 4) (b + i) ∈ ({1, 2, 3} : Finset (Fin 4)) :=
   (OptimalHydrozoan.EventualDecision.holds (Fin 4) (Fin 22)).2 {1, 2, 3} 3 5 3 fairRun_fourOpt
 
 -- End-to-end: the composed headline, all hypotheses discharged.
-example : ∃ b, 5 ≤ b ∧ 3 ≤ Slots.slotRound (Replica := Fin 4) b ∧
+example : ∃ b, 5 ≤ b ∧ 3 ≤ Slots.slotRound (Validator := Fin 4) b ∧
     ∀ (U : OptUniverse (Fin 4) (Fin 22)),
-      SynchronisedOn U.toBlockUniverse {1, 2, 3} 3 →
-      (∀ r, Slots.slotRound (Replica := Fin 4) b ≤ r →
-        r ≤ Slots.slotRound (Replica := Fin 4) (b + 3 - 1) + 2 →
-        PopulatedOn U.toBlockUniverse {1, 2, 3} r) →
-      ∀ i, i < b → ∃ v, DecidedOpt U (View.full U.toBlockUniverse) i v := by
+      SynchronisedOn U.toBlockRecord {1, 2, 3} 3 →
+      (∀ r, Slots.slotRound (Validator := Fin 4) b ≤ r →
+        r ≤ Slots.slotRound (Validator := Fin 4) (b + 3 - 1) + 2 →
+        PopulatedOn U.toBlockRecord {1, 2, 3} r) →
+      ∀ i, i < b → ∃ v, DecidedOpt U (View.full U.toBlockRecord) i v := by
   obtain ⟨b, hk, hR, hrest⟩ :=
     OptimalHydrozoan.EventualDecision.ledgerProgress (Fin 4) (Fin 22) {1, 2, 3} 3 5 3
       (by decide) (by decide) (by omega) spansEligible_fourOpt fairRun_fourOpt
   exact ⟨b, hk, hR, fun U hsync hpop =>
-    hrest U hsync hpop (View.full U.toBlockUniverse)
-      (View.coversUpto_full U.toBlockUniverse _)⟩
+    hrest U hsync hpop (View.full U.toBlockRecord)
+      (View.coversUpto_full U.toBlockRecord _)⟩
 
 end OptimalHydrozoan
 

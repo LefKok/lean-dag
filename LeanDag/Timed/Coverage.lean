@@ -1,7 +1,6 @@
 import LeanDag.Properties.Sustain
 import LeanDag.Properties.Support
 import LeanDag.Properties.Arcs.Liveness
-
 /-!
 # The timed model: coverage, and the bridge into certification
 
@@ -95,7 +94,7 @@ does not owe it. -/
 def OfCoverage (sp : Support R) (rel : Reliability Validator) : Prop :=
   ∀ (U : R.Universe) (T : Finset Validator), rel.IsQuorum T →
     ∀ (r : ℕ) (L : BlockId),
-    (∀ n, r ≤ n → n ≤ r + sp.wave → PopulatedOn R U T n) →
+    (∀ n, r ≤ n → n ≤ r + sp.wave → Properties.PopulatedOn R U T n) →
     CoversToward R U T r sp.wave L →
     L ∈ R.ids U → (R.block U L).round = r → (R.block U L).creator ∈ T →
     ∀ c, c ∈ R.ids U → (R.block U c).creator ∈ T → (R.block U c).round = r + sp.wave →
@@ -117,7 +116,7 @@ turns synchrony into certification; everything after it is generic. -/
 theorem live_of_coverage (sp : Support R) {rel : Reliability Validator}
     (hcov : OfCoverage sp rel) {U : R.Universe} {T : Finset Validator}
     (hq : rel.IsQuorum T) {Rnd N : ℕ} (hs : SynchronisedOn R U T Rnd)
-    (hpop : ∀ r, Rnd ≤ r → r ≤ N → PopulatedOn R U T r)
+    (hpop : ∀ r, Rnd ≤ r → r ≤ N → Properties.PopulatedOn R U T r)
     (S : Slots Validator) (V : R.View U) {lo K : ℕ} (hV : CoversUpto R V N)
     (hRnd : Rnd ≤ S.slotRound lo) (hN : ∀ k, k < K → S.slotRound k + sp.wave ≤ N) :
     sp.live rel S V T lo K := by
@@ -137,7 +136,7 @@ theorem exists_decided_of_coverage (sp : Support R) {rel : Reliability Validator
     (hcov : OfCoverage sp rel) (hlc : sp.Commits rel)
     {U : R.Universe} {T : Finset Validator} (hq : rel.IsQuorum T) {Rnd N : ℕ}
     (hs : SynchronisedOn R U T Rnd)
-    (hpop : ∀ r, Rnd ≤ r → r ≤ N → PopulatedOn R U T r)
+    (hpop : ∀ r, Rnd ≤ r → r ≤ N → Properties.PopulatedOn R U T r)
     (S : Slots Validator) (V : R.View U) (k : ℕ) (hV : CoversUpto R V N)
     (hRnd : Rnd ≤ S.slotRound k) (hN : S.slotRound k + sp.wave ≤ N)
     (hlead : S.leader k ∈ T) :
@@ -158,7 +157,7 @@ theorem decidedBelow_of_fairRun (sp : Support R) {rel : Reliability Validator}
     (fair : ∀ k, ∃ k', k ≤ k' ∧ ∀ i, i < c → S.leader (k' + i) ∈ T) (Rnd k : ℕ) :
     ∃ b, k ≤ b ∧ Rnd ≤ S.slotRound b ∧
       ∀ {U : R.Universe} (V : R.View U) (N : ℕ),
-        SynchronisedOn R U T Rnd → (∀ r, Rnd ≤ r → r ≤ N → PopulatedOn R U T r) →
+        SynchronisedOn R U T Rnd → (∀ r, Rnd ≤ r → r ≤ N → Properties.PopulatedOn R U T r) →
         CoversUpto R V N → S.slotRound (b + c - 1) + sp.wave ≤ N →
         ∀ i, i < b → ∃ v, DecidedBelow R S (b + c) V i v := by
   obtain ⟨k₀, hk₀⟩ := S.unbounded Rnd

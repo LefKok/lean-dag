@@ -1,7 +1,6 @@
 import LeanDag.DoS.Acceptance
 import LeanDag.DoS.Exposure
-import LeanDag.Liveness
-
+import LeanDag.Mysticeti.Liveness
 /-!
 # Counting blocks
 

@@ -1,5 +1,4 @@
 import LeanDag.BlackMarlin.Order.Statement
-
 /-!
 # Black Marlin — the delivered order at a validator's view, stated
 

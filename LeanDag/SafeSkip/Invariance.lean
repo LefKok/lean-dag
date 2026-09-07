@@ -1,6 +1,5 @@
 import LeanDag.SafeSkip.Basic
-import LeanDag.Liveness
-
+import LeanDag.Mysticeti.Liveness
 /-!
 # The lifted view, and reachability across the fill
 
@@ -31,13 +30,8 @@ variable (sk : SkipMsg U)
 /-- A view of `U` is a view of the extension, unchanged: its blocks are
 old, and old references are preserved. -/
 def liftView (V : View Validator BlockId Payload U) :
-    View Validator BlockId Payload sk.skipFill where
-  ids := V.ids
-  subset_ids := V.subset_ids.trans sk.ids_subset_skipFill
-  complete := by
-    intro i hi j hj
-    rw [sk.skipFill_block_old (V.subset_ids hi)] at hj
-    exact V.complete i hi j hj
+    View Validator BlockId Payload sk.skipFill :=
+  BlockRecord.View.lift V
 
 @[simp] theorem liftView_ids (V : View Validator BlockId Payload U) :
     (sk.liftView V).ids = V.ids := rfl

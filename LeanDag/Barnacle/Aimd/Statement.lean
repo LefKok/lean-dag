@@ -1,5 +1,4 @@
 import LeanDag.Barnacle.Model.Window
-
 /-!
 # BN7 — the AIMD rule
 

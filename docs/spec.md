@@ -836,24 +836,24 @@ stages need very different machinery:
 
 ## 6. Layout
 
-- `LeanDag/Validators.lean` — §2 (all five fault-counting consequences), T0
-- `LeanDag/Block.lean` — §3.1 (`Block`), §3.2 (`creatorsOf`, `creators`,
+- `LeanDag/Common/Validators.lean` — §2 (all five fault-counting consequences), T0
+- `LeanDag/Common/Block.lean` — §3.1 (`Block`), §3.2 (`creatorsOf`, `creators`,
   `ValidWrt`), T0', and `nonempty_of_creatorsOf_card_pos` (a quorum of
   authors needs a nonempty id set — used in three files)
-- `LeanDag/BlockDag.lean` — §3.3 (universe), §3.5 (`View`), T1, and
+- `LeanDag/Common/BlockDag.lean` — §3.3 (universe), §3.5 (`View`), T1, and
   `BlockUniverse.exists_common_mem_of_quorums` (two quorum-backed sets of
   round-`n` blocks share a block — the "peel off one certification layer"
   step)
-- `LeanDag/CausalHistory.lean` — §3.4, T2, T6a
-- `LeanDag/Support.lean` — `blocksAt`, `authorsAt`, `supporters`,
+- `LeanDag/Common/CausalHistory.lean` — §3.4, T2, T6a
+- `LeanDag/Common/Support.lean` — `blocksAt`, `authorsAt`, `supporters`,
   `correctSupporters`, `blames`, the hitting/propagation/coverage lemmas
   (§4 *Coverage*), and the counting fact that a quorum of blamers caps
   supporters below a quorum. The whole "who backs what" layer: Mysticeti's
   *voters* are exactly `supporters` at the following round, and its *blames*
   are the complement.
-- `LeanDag/Persistence.lean` — T3
-- `LeanDag/CommonCore.lean` — `correctBlocksAt`, T3a and T3c (Phase 1b)
-- `LeanDag/Mysticeti.lean` — the whole of Phase 2: the vote/certificate
+- `LeanDag/Common/Persistence.lean` — T3
+- `LeanDag/Common/CommonCore.lean` — `correctBlocksAt`, T3a and T3c (Phase 1b)
+- `LeanDag/Mysticeti/Rule.lean` — the whole of Phase 2: the vote/certificate
   machinery and M1–M3, M5′, M5 (Stage A); the slot schedule, `DirectCommitIn`
   and the `Decided` relation (C1); the view-relative lifts (C2); M4 and M6
   (C3–C4). Plus the Phase 3 fragments that need no ordering assumption:

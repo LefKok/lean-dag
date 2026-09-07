@@ -1,6 +1,5 @@
 import LeanDag.Properties.Support
 import LeanDag.Properties.Derived.Bounded
-
 /-!
 # `LeaderCommits`, from a support
 

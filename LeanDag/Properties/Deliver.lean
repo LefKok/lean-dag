@@ -1,5 +1,4 @@
 import LeanDag.Properties.Band
-
 /-!
 # What a view-level mechanism owes
 
@@ -49,8 +48,8 @@ variable {R : DagRule Validator BlockId Payload}
 /-- **A view is caught up to round `N`**: it holds every block the
 universe has at or below that round.
 
-Four protocols define this separately as `View.CoversUpto` — the core,
-Hydrozoan, Nemo and Barnacle — with the same three lines each. -/
+The record states it once as `View.CoversUpto` (`BlockRecord.lean`);
+this is the same three lines at a carrier. -/
 def CoversUpto (R : DagRule Validator BlockId Payload) {U : R.Universe}
     (V : R.View U) (N : ℕ) : Prop :=
   ∀ b, b ∈ R.ids U → (R.block U b).round ≤ N → b ∈ R.viewIds V

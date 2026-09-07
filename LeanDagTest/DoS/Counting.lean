@@ -1,6 +1,5 @@
 import LeanDagTest.DoS.Acceptance
 import LeanDag.DoS.Counting
-
 /-!
 # The counting bounds on concrete DAGs
 

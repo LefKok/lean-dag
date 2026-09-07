@@ -1,5 +1,4 @@
 import LeanDag.Hydrozoan.Helpers.EventualDecision
-
 /-!
 # Proof: eventual decision
 
@@ -24,11 +23,11 @@ has every slot below `b` decided on any view caught up to the run's
 last decision round. -/
 theorem ledgerProgress :
     ∀ (Replica BlockId : Type) [Fintype Replica] [DecidableEq Replica]
-      [DecidableEq BlockId] [LinearOrder BlockId] [Faults Replica]
+      [DecidableEq BlockId] [LinearOrder BlockId] [LeanDag.Hydrozoan.Faults Replica]
       [S : Slots Replica],
     ∀ (T : Finset Replica) (R k c : ℕ),
       T ⊆ (Correct : Finset Replica) → q Replica ≤ T.card →
-      0 < c → IndirectLiveness.SpansEligible Replica c →
+      0 < c → (hydrozoanAnchored Replica BlockId).SpansEligible c →
       FairRunOn Replica T c →
       ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧
         ∀ (U : BlockUniverse Replica BlockId),

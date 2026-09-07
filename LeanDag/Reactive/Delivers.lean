@@ -1,7 +1,6 @@
-import LeanDag.ViewPace
-import LeanDag.MysticetiProperties
+import LeanDag.Mysticeti.ViewPace
+import LeanDag.Mysticeti.Properties
 import LeanDag.Properties.Deliver
-
 /-!
 # A paced validator delivers
 

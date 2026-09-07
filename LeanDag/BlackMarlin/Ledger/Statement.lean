@@ -1,5 +1,4 @@
 import LeanDag.BlackMarlin.Model.Ledger
-
 /-!
 # Black Marlin — the delivered order, stated
 
@@ -121,17 +120,17 @@ round; and records that agree concur on which. The last is total-order
 safety at the granularity of segments — the order *within* one needs
 `τ`. -/
 def Ledger (U : BlockUniverse Validator BlockId Payload) : Prop :=
-  (∀ (f : Flush U) (n m : ℕ), n ≤ m → ledgerSet U f n ⊆ ledgerSet U f m) ∧
+  (∀ (f : Flush U) (n m : ℕ), n ≤ m → ledgerSet U f.block n ⊆ ledgerSet U f.block m) ∧
   (∀ (f₁ f₂ : Flush U) (n : ℕ),
     (∀ ρ, ρ < n → f₁.block ρ = f₂.block ρ) →
-    ledgerSet U f₁ n = ledgerSet U f₂ n) ∧
+    ledgerSet U f₁.block n = ledgerSet U f₂.block n) ∧
   (∀ (f : Flush U) (b : BlockId) (ρ₁ ρ₂ : ℕ),
-    OutputAt U f b ρ₁ → OutputAt U f b ρ₂ → ρ₁ = ρ₂) ∧
+    OutputAt U f.block b ρ₁ → OutputAt U f.block b ρ₂ → ρ₁ = ρ₂) ∧
   (∀ (f₁ f₂ : Flush U) (n : ℕ) (b : BlockId) (ρ : ℕ),
     (∀ σ, σ < n → f₁.block σ = f₂.block σ) → ρ < n →
-    OutputAt U f₁ b ρ → OutputAt U f₂ b ρ) ∧
+    OutputAt U f₁.block b ρ → OutputAt U f₂.block b ρ) ∧
   (∀ (f : Flush U) (ρ : ℕ) (L b : BlockId),
-    f.block ρ = some L → Reaches U L b → b ∈ ledgerSet U f (ρ + 1))
+    f.block ρ = some L → Reaches U L b → b ∈ ledgerSet U f.block (ρ + 1))
 
 /-- The delivered order of the Black Marlin commit rule, over every fault
 configuration, rotation and block universe the model admits. -/

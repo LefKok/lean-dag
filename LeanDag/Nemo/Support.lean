@@ -1,5 +1,6 @@
-import LeanDag.Nemo.History
-
+import LeanDag.Nemo.Basic
+import LeanDag.Common.History
+import LeanDag.Common.Support
 /-!
 # Nemo-Nemo: support and coverage
 
@@ -37,45 +38,6 @@ namespace Nemo
 variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable {BlockId : Type*} {Payload : Type*}
 variable {U : Universe Validator BlockId Payload}
-
-/-- The ids present at a given round. -/
-def blocksAt (U : Universe Validator BlockId Payload) (n : ℕ) : Finset BlockId :=
-  U.ids.filter (fun i => (U.block i).round = n)
-
-/-- The validators holding a block at a given round — the pool `p`. -/
-def authorsAt (U : Universe Validator BlockId Payload) (n : ℕ) : Finset Validator :=
-  creatorsOf U.block (blocksAt U n)
-
-/-- Membership in `blocksAt`, unfolded. -/
-@[simp]
-theorem mem_blocksAt {i : BlockId} {n : ℕ} :
-    i ∈ blocksAt U n ↔ i ∈ U.ids ∧ (U.block i).round = n := by
-  simp [blocksAt]
-
-/-- Membership in `authorsAt`, unfolded: an author of a round is anyone with a block there. -/
-theorem mem_authorsAt {v : Validator} {n : ℕ} :
-    v ∈ authorsAt U n ↔ ∃ i ∈ U.ids, (U.block i).round = n ∧ (U.block i).creator = v := by
-  simp [authorsAt, mem_creatorsOf]
-  tauto
-
-/-- The author pool never exceeds the validator set. This is what turns the
-participation-sensitive threshold into the uniform `majority` one. -/
-theorem card_authorsAt_le_univ {n : ℕ} : (authorsAt U n).card ≤ Fintype.card Validator := by
-  rw [← Finset.card_univ]; exact Finset.card_le_univ _
-
-/-- The creators of a round-`(n+1)` block's references all hold round-`n`
-blocks. This is what confines a round-`(r+2)` block's choices to the same
-pool the threshold is measured against. -/
-theorem creators_refs_subset_authorsAt {c : BlockId} {n : ℕ}
-    (hc : c ∈ U.ids) (hcr : (U.block c).round = n + 1) :
-    creatorsOf U.block (U.block c).refs ⊆ authorsAt U n := by
-  intro v hv
-  rw [mem_creatorsOf] at hv
-  obtain ⟨i, hi_mem, hi_creator⟩ := hv
-  rw [mem_authorsAt]
-  refine ⟨i, U.complete c hc i hi_mem, ?_, hi_creator⟩
-  have := U.round_of_mem_refs hc hi_mem
-  omega
 
 /-- **The hitting lemma.** A round-`(n+1)` block cannot avoid referencing a
 block satisfying `P`, once enough validators have published round-`n` blocks
@@ -200,25 +162,6 @@ forming them needs decidable equality on ids. Under crash there is no
 a `blames` set: the crash protocol has no majority-blame direct skip (the
 implementation sets the direct-skip quorum to the full stake), so leaders are
 skipped only indirectly. -/
-
-variable [DecidableEq BlockId]
-
-/-- The validators whose round-`n` block references `b`. -/
-def supporters (U : Universe Validator BlockId Payload) (b : BlockId) (n : ℕ) :
-    Finset Validator :=
-  creatorsOf U.block ((blocksAt U n).filter (fun q => b ∈ (U.block q).refs))
-
-/-- Membership in `supporters`, unfolded: a supporter has a round-`n` block referencing `b`. -/
-theorem mem_supporters {b : BlockId} {n : ℕ} {v : Validator} :
-    v ∈ supporters U b n ↔
-      ∃ q ∈ U.ids, (U.block q).round = n ∧ b ∈ (U.block q).refs ∧ (U.block q).creator = v := by
-  simp [supporters, mem_creatorsOf]
-  tauto
-
-/-- Supporters are a subset of the round's authors. -/
-theorem supporters_subset_authorsAt {b : BlockId} {n : ℕ} :
-    supporters U b n ⊆ authorsAt U n :=
-  Finset.image_subset_image (Finset.filter_subset _ _)
 
 end Nemo
 

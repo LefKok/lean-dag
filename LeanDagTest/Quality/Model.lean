@@ -1,8 +1,7 @@
 import LeanDag.Quality.Inclusion
 import LeanDag.Quality.Capstone
 import LeanDagTest.DoS.Exclusion
-import LeanDagTest.Quantitative
-
+import LeanDagTest.Mysticeti.Quantitative
 /-!
 # Chain quality, witnessed
 
@@ -75,14 +74,14 @@ example : missingAt Ucens 13 2 = {3} := by decide
 example : (missingAt Ucens 13 0).card = Faults.f (Fin 4) := by decide
 
 -- Covered: exactly `|Correct| − f = 2` of the three correct validators.
-example : coveredAt Ucens 13 1 = {1, 2} := by decide
+example : Properties.Arcs.coveredAt MysticetiProperties.mysticetiRule (coreReliability (Fin 4)) Ucens 13 1 = {1, 2} := by decide
 
 -- CQ1 applied, and CQ2 applied: 3 ≤ 2·2.
 example : (Correct : Finset (Fin 4)).card - Faults.f (Fin 4) ≤
-    (coveredAt Ucens 13 1).card :=
+    (Properties.Arcs.coveredAt MysticetiProperties.mysticetiRule (coreReliability (Fin 4)) Ucens 13 1).card :=
   card_coveredAt_ge_of_decided ucens_slot1 (by decide)
 
-example : (Correct : Finset (Fin 4)).card ≤ 2 * (coveredAt Ucens 13 1).card :=
+example : (Correct : Finset (Fin 4)).card ≤ 2 * (Properties.Arcs.coveredAt MysticetiProperties.mysticetiRule (coreReliability (Fin 4)) Ucens 13 1).card :=
   card_correct_le_two_mul_coveredAt_of_decided ucens_slot1 (by decide)
 
 /-! ## The censorship, exhibited -/

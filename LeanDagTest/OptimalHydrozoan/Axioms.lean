@@ -6,7 +6,6 @@ import LeanDag.OptimalHydrozoan.DirectLiveness.Proof
 import LeanDag.OptimalHydrozoan.IndirectLiveness.Proof
 import LeanDag.OptimalHydrozoan.EventualDecision.Proof
 import LeanDag.OptimalHydrozoan.Grounding.Proof
-
 /-!
 # Optimal-Hydrozoan: the axioms tripwire
 

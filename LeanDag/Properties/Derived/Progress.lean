@@ -2,7 +2,6 @@ import LeanDag.Properties.Commit
 import LeanDag.Properties.Derived.LeaderCommits
 import LeanDag.Properties.Derived.Descent
 import LeanDag.Properties.Derived.Bounded
-
 /-!
 # A committed run decides everything below it
 

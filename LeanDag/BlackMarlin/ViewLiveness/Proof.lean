@@ -1,7 +1,6 @@
 import LeanDag.BlackMarlin.ViewLiveness.Statement
 import LeanDag.BlackMarlin.Agreement.Proof
 import LeanDag.BlackMarlin.Helpers.Liveness
-
 /-!
 # Black Marlin — liveness at a validator's view, proved
 

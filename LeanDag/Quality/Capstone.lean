@@ -1,6 +1,5 @@
 import LeanDag.Quality.Inclusion
-import LeanDag.Quantitative
-
+import LeanDag.Mysticeti.Quantitative
 /-!
 # Chain quality: the capstone, and the quantitative bounds
 
@@ -96,7 +95,9 @@ theorem chain_quality (hT : T ⊆ (Correct : Finset Validator))
     (∀ (U : BlockUniverse Validator BlockId Payload)
         (V : View Validator BlockId Payload U) (k : ℕ) (L : BlockId)
         (δ : ℕ), Decided U V k (some L) → δ < (U.block L).round →
-        (Correct : Finset Validator).card ≤ 2 * (coveredAt U L δ).card) ∧
+        (Correct : Finset Validator).card ≤
+          2 * (Properties.Arcs.coveredAt (MysticetiProperties.mysticetiRule (Payload := Payload))
+            (coreReliability Validator) U L δ).card) ∧
     ∀ v ∈ T, ∃ k', m ≤ S.slotRound k' ∧ S.leader k' = v ∧
       IncludesAt (Validator := Validator) BlockId Payload T m k' :=
   ⟨fun _ _ _ _ _ hdec hδ =>

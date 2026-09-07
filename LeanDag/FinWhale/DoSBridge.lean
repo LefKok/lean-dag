@@ -1,7 +1,6 @@
 import LeanDag.FinWhale.Protocol
 import LeanDag.FinWhale.Reactive
 import LeanDag.DoS.Exposure
-
 /-!
 # A DoS-valid Mysticeti universe is a FinWhale DAG
 
@@ -97,7 +96,7 @@ def Dag.ofDoSValid (U : BlockUniverse Validator BlockId Payload) (leader : ℕ �
       distinct_creators := (U.valid i hi).distinct_creators
       quorum := (U.valid i hi).quorum
       leader_clause := leaderClause_of_dosValid hdos hi }
-  correct_single := U.no_equivocation
+  no_equivocation := U.no_equivocation
 
 @[simp] theorem ofDoSValid_ids {leader : ℕ → Validator} (hdos : DoSValid U) :
     (Dag.ofDoSValid U leader hdos).ids = U.ids := rfl
@@ -137,14 +136,12 @@ def Run.ofDoSValid [LinearOrder BlockId] (U : BlockUniverse Validator BlockId Pa
     (paceHorizon : ℕ) (pace : PaceCore U (Correct : Finset Validator) paceHorizon)
     (rounds_advance : ∀ u ∈ (Correct : Finset Validator), ∀ n ≤ pace.top u, n ≤ pace.built u n)
     (stable : ℕ) (gst_le : pace.gst ≤ stable) (liveHorizon : ℕ)
-    (commits : CommitsCorrectLeaders ⟨id, leader⟩ (Dag.ofDoSValid U leader hdos)
+    (commits : CommitsCorrectLeaders (Slots.identity leader) (Dag.ofDoSValid U leader hdos)
       stable liveHorizon)
-    (live_le : liveHorizon ≤ paceHorizon) (roundRobin : RoundRobin leader)
-    (choose : BlockId → ℕ → Option BlockId)
-    (chooseSound : ChooseSound ⟨id, leader⟩ (Dag.ofDoSValid U leader hdos) choose) :
+    (live_le : liveHorizon ≤ paceHorizon) (roundRobin : RoundRobin leader) :
     Run Validator BlockId Payload where
   dag := Dag.ofDoSValid U leader hdos
-  sched := ⟨id, leader⟩
+  sched := (Slots.identity leader)
   roundId := fun _ => rfl
   paced := U
   ids_eq := rfl
@@ -161,8 +158,6 @@ def Run.ofDoSValid [LinearOrder BlockId] (U : BlockUniverse Validator BlockId Pa
   live_le := live_le
   roundRobin := roundRobin
   selfParented := selfParented_ofDoSValid hdos
-  choose := choose
-  chooseSound := chooseSound
 
 /-! ## A reactive deployment over a DoS-protected DAG
 
@@ -239,7 +234,7 @@ noncomputable def Run.ofDoSValidReactive [LinearOrder BlockId]
   Run.ofDoSValid U S.leader hdos horizon rounds_le N rm.toPaceCore rounds_advance
     stable hgst N
     (commits_of_reactive rm rfl rfl hround (fun _ => rfl) (fun _ => rfl) rfl hgst hto)
-    (le_refl N) hrr (chooseLeast _ _) chooseSound_least
+    (le_refl N) hrr
 
 end FinWhale
 

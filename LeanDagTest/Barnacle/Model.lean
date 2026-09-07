@@ -1,11 +1,10 @@
-import LeanDagTest.Model
+import LeanDagTest.Mysticeti.Model
 import LeanDagTest.Odontoceti.Model
 import LeanDag.Barnacle.Model.Run
 import LeanDag.Barnacle.Mysticeti.Proof
 import LeanDag.Barnacle.Helpers.Schedule
 import LeanDag.Barnacle.Helpers.Cover
 import LeanDag.Barnacle.Healthy.Proof
-
 /-!
 # Barnacle witnesses — the definitions on data
 

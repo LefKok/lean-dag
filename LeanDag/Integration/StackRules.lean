@@ -1,10 +1,8 @@
 import LeanDag.Properties.Arcs.Stack
 import LeanDag.Properties.Arcs.GC
 import LeanDag.Properties.Arcs.SafeSkip
-import LeanDag.Integration.ReGenesisRules
 import LeanDag.Integration.NemoMechanisms
 import LeanDag.Integration.FinWhaleMechanisms
-
 /-!
 # Stacks, at the rules
 
@@ -13,8 +11,8 @@ a rule contributes to it is nothing: the stack is assembled from the
 witnesses its mechanisms already have — `Rebased.of_sustains` on a fill
 or a re-genesis, `Rebased.of_truncates` on a cut — and
 `Stack.safe_and_live` reads it. Three rules are shown below, one with
-the core's universe and two with their own, and the deployment order
-of `Integration/Stack.lean`: fill, then cut. A longer stack is one more
+the core's universe and two with their own, in the order a deployment
+takes: fill, then cut. A longer stack is one more
 `Stack.step`.
 
 What a stack gives is read by the headline: `Properties.Safe`, which
@@ -61,12 +59,11 @@ variable {U : Nemo.Universe Validator BlockId Payload}
 
 theorem stack_nemo (sk : SkipData U.ids U.block) (hd : G ≤ S.slotRound d) :
     Stack (NemoProperties.nemoRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload)) U S (chopNemo (skipFillNemo U sk) G) (S.chop G d hd)
-      G (max (sk.r + 1) G) d := by
-  have st := Stack.step (Rebased.of_sustains (S := S) (sustains_skipFill_nemo (sk := sk)))
-    (Stack.step (Rebased.of_truncates (truncates_chop_nemo (U := skipFillNemo U sk) hd))
+      (Payload := Payload)) U S (nemoOnRecord.chop (nemoOnRecord.copyFill U sk) G)
+      (S.chop G d hd) G (max (sk.r + 1) G) d := by
+  simpa using Stack.step (Rebased.of_sustains (S := S) (nemoOnRecord.sustains_copyFill U sk))
+    (Stack.step (Rebased.of_truncates (nemoOnRecord.truncates_chop (nemoOnRecord.copyFill U sk) hd))
       Stack.nil)
-  simpa using st
 
 end Nemo
 
@@ -81,12 +78,11 @@ variable {B : Type} [LinearOrder B] {D : Dag Validator B Payload}
 
 theorem stack_finwhale (sk : SkipData D.ids D.block) (hd : G ≤ S.slotRound d) :
     Stack (FinWhaleProperties.finWhaleRule (Validator := Validator) (BlockId := B)
-      (Payload := Payload)) D S (chopFinWhale (skipFillFinWhale D sk) G) (S.chop G d hd)
-      G (max (sk.r + 1) G) d := by
-  have st := Stack.step (Rebased.of_sustains (S := S) (sustains_skipFill_finwhale (sk := sk)))
+      (Payload := Payload)) D S (finWhaleOnRecord.chop (finWhaleOnRecord.copyFill D sk) G)
+      (S.chop G d hd) G (max (sk.r + 1) G) d := by
+  simpa using Stack.step (Rebased.of_sustains (S := S) (finWhaleOnRecord.sustains_copyFill D sk))
     (Stack.step (Rebased.of_truncates
-      (truncates_chop_finwhale (D := skipFillFinWhale D sk) hd)) Stack.nil)
-  simpa using st
+      (finWhaleOnRecord.truncates_chop (finWhaleOnRecord.copyFill D sk) hd)) Stack.nil)
 
 end FinWhale
 

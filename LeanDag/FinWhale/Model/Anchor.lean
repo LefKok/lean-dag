@@ -1,5 +1,4 @@
 import LeanDag.FinWhale.Model.Decision
-
 /-!
 # FinWhale — the anchor, and the indirect commit rule
 
@@ -25,17 +24,17 @@ variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
 variable {D : Dag Validator BlockId Payload}
-variable {S : Sched Validator}
+variable {S : Slots Validator}
 
 /-- **The indirect commit condition**, as a predicate of the anchor `A`,
 the slot's round `r`, and the candidate block `b`. No view occurs in it:
 the anchor's causal history is a function of the anchor. -/
-def IndirectCommit (S : Sched Validator) (D : Dag Validator BlockId Payload) (A : BlockId)
+def IndirectCommit (S : Slots Validator) (D : Dag Validator BlockId Payload) (A : BlockId)
     (k : ℕ) (b : BlockId) : Prop :=
   b ∈ slotBlocks S D k ∧
-    ((∃ c ∈ blocksAt D (S.round k + 2), ReachesFrom D.block A c ∧ SPCertificate D c b) ∨
+    ((∃ c ∈ blocksAt D (S.slotRound k + 2), ReachesFrom D.block A c ∧ SPCertificate D c b) ∨
       (∃ ev : Finset Validator, spQuorum Validator ≤ ev.card ∧
-        ∀ v ∈ ev, ∃ c ∈ blocksAt D (S.round k + 2), ReachesFrom D.block A c ∧
+        ∀ v ∈ ev, ∃ c ∈ blocksAt D (S.slotRound k + 2), ReachesFrom D.block A c ∧
           (D.block c).creator = v ∧ FPEvidence D c b))
 
 /-- **The same condition, decidably.** `ReachesFrom` is a reflexive
@@ -44,15 +43,15 @@ transitive closure and settles nothing by computation;
 references with the round as its fuel. On a block of the DAG the two
 agree (`mem_history_iff`), so this is the rule a concrete model can
 check. -/
-def IndirectCommitOn (S : Sched Validator) (D : Dag Validator BlockId Payload) (A : BlockId)
+def IndirectCommitOn (S : Slots Validator) (D : Dag Validator BlockId Payload) (A : BlockId)
     (k : ℕ) (b : BlockId) : Prop :=
   b ∈ slotBlocks S D k ∧
-    ((∃ c ∈ blocksAt D (S.round k + 2), c ∈ historyFrom D.block A ∧ SPCertificate D c b) ∨
+    ((∃ c ∈ blocksAt D (S.slotRound k + 2), c ∈ historyFrom D.block A ∧ SPCertificate D c b) ∨
       (∃ ev : Finset Validator, spQuorum Validator ≤ ev.card ∧
-        ∀ v ∈ ev, ∃ c ∈ blocksAt D (S.round k + 2), c ∈ historyFrom D.block A ∧
+        ∀ v ∈ ev, ∃ c ∈ blocksAt D (S.slotRound k + 2), c ∈ historyFrom D.block A ∧
           (D.block c).creator = v ∧ FPEvidence D c b))
 
-instance (S : Sched Validator) (D : Dag Validator BlockId Payload) (A : BlockId) (k : ℕ)
+instance (S : Slots Validator) (D : Dag Validator BlockId Payload) (A : BlockId) (k : ℕ)
     (b : BlockId) : Decidable (IndirectCommitOn S D A k b) := by
   unfold IndirectCommitOn; infer_instance
 

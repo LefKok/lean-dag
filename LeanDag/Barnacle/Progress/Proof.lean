@@ -1,6 +1,5 @@
 import LeanDag.Barnacle.Progress.Statement
 import LeanDag.Barnacle.Helpers.Progress
-
 /-!
 # BN8 — proof
 

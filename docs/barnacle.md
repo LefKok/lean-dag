@@ -962,7 +962,7 @@ leader count with gap `n + 1` (`Orcaella/Statement.lean`, proofs in
 `Orcaella/Proof.lean` and `Helpers/Orcaella.lean`).
 
 The witnesses span three files, none of which may import
-`LeanDagTest.Model`'s competing `Faults (Fin 4)` instance (each file's
+`LeanDagTest.Mysticeti.Model`'s competing `Faults (Fin 4)` instance (each file's
 header says so, and instance pins guard the resolution):
 
 - `LeanDagTest/Barnacle/Orcaella.lean` — the subtype formed on

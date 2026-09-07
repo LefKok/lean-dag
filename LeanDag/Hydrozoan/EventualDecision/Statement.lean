@@ -1,6 +1,5 @@
 import LeanDag.Hydrozoan.IndirectLiveness.Statement
 import LeanDag.Hydrozoan.Model.Liveness
-
 /-!
 # Statement: eventual decision — the ledger does not stall
 
@@ -63,7 +62,7 @@ def RunsRecur : Prop :=
 end Schedule
 
 variable {Replica BlockId : Type*} [Fintype Replica] [DecidableEq Replica]
-  [DecidableEq BlockId] [LinearOrder BlockId] [F : Faults Replica]
+  [DecidableEq BlockId] [LinearOrder BlockId] [F : LeanDag.Hydrozoan.Faults Replica]
   [S : Slots Replica]
 
 /-- **A committed-to-be run decides everything below it.** The workhorse
@@ -75,7 +74,7 @@ def RunDecidesBelow (U : BlockUniverse Replica BlockId) : Prop :=
     q Replica ≤ T.card →                 -- ... of at least a DAG quorum,
     SynchronisedOn U T R →               -- internally synchronised from R,
     0 < c →                              -- a nonempty run of slots ...
-    IndirectLiveness.SpansEligible Replica c →  -- ... every run's end anchoring all below,
+    (hydrozoanAnchored Replica BlockId).SpansEligible c →  -- ... every run's end anchoring all below,
     R ≤ S.slotRound b →                  -- lying at or after R,
     (∀ i, i < c → S.leader (b + i) ∈ T) →  -- every run slot T-led,
     (∀ r, S.slotRound b ≤ r →            -- and T fills every round from
@@ -89,7 +88,7 @@ def RunDecidesBelow (U : BlockUniverse Replica BlockId) : Prop :=
 tie-break order, and block universe the model admits. -/
 def Statement : Prop :=
   ∀ (Replica BlockId : Type) [Fintype Replica] [DecidableEq Replica]
-    [DecidableEq BlockId] [LinearOrder BlockId] [Faults Replica]
+    [DecidableEq BlockId] [LinearOrder BlockId] [LeanDag.Hydrozoan.Faults Replica]
     [Slots Replica],
     (∀ U : BlockUniverse Replica BlockId, RunDecidesBelow U) ∧
       RunsRecur Replica

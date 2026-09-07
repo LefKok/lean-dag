@@ -1,6 +1,5 @@
 import LeanDag.Properties.Carrier
-import LeanDag.Density
-
+import LeanDag.Common.Density
 /-!
 # What a rule owes about its own validity
 

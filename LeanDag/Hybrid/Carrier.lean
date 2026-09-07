@@ -4,7 +4,6 @@ import LeanDag.Properties.Candidate
 import LeanDag.Properties.Optional.Direct
 import LeanDag.Properties.Optional.Quorate
 import LeanDag.Properties.Optional.SelfParent
-
 /-!
 # Hybrid as a carrier, and the three properties its own rules give
 
@@ -38,23 +37,15 @@ variable [H : HybridFaults Validator]
 variable {BlockId : Type} [LinearOrder BlockId] {Payload : Type}
 
 /-- **Hybrid as a carrier**, one per indirect threshold. -/
-def hybridRule (k : ℕ) : DagRule Validator BlockId Payload where
-  Universe := {U : BlockUniverse Validator BlockId Payload // HonestNoEquiv U}
-  View := fun U => View Validator BlockId Payload U.val
-  block := fun U i => U.val.block i
-  ids := fun U => U.val.ids
-  viewIds := fun V => V.ids
-  viewSound := fun V => V.subset_ids
-  viewComplete := fun V => V.complete
-  causal := fun U => U.val.causal
-  Decided := fun S U V s v => Hybrid.Decided (S := S) k U.val V s v
+def hybridRule (k : ℕ) : DagRule Validator BlockId Payload :=
+  (Hybrid.hybridAnchored Validator BlockId Payload k).toDagRuleOn HonestNoEquiv
 
 /-- **Hybrid's universes are quorate**, at the derived fault model:
 `f = fb + fc`, so a quorum of `n − fb − fc` distinct authors is what
 validity already asks for. -/
 theorem quorate (k : ℕ) : Quorate (hybridRule (Validator := Validator) (BlockId := BlockId)
     (Payload := Payload) k) (coreReliability Validator) :=
-  fun U => U.val.quorateOn
+  fun U => BlockUniverse.quorateOn U.val
 
 /-- **P3′ at the carrier.** -/
 theorem selfParent (k : ℕ) : SelfParent (hybridRule (Validator := Validator)
@@ -71,20 +62,19 @@ unconditional because non-equivocation is now a field of the universe
 rather than a premise. -/
 theorem agree {k : ℕ} (hk : Hybrid.Admissible Validator k) :
     Agree (hybridRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload) k) :=
-  fun S U V₁ V₂ _ _ _ h₁ h₂ =>
-    Hybrid.decided_unique (S := S) U.property hk h₁ V₂ _ h₂
+  AnchoredRule.agreeOn (Hybrid.hybridLaws hk) (fun _ _ h => h)
 
 /-- **A commit names the slot's candidate.** -/
 theorem commitsCandidate (k : ℕ) : CommitsCandidate
     (hybridRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload) k) :=
-  fun S _ _ _ _ hd => Hybrid.isLeaderBlock_of_decided (S := S) hd
+  AnchoredRule.commitsCandidateOn
 
 /-- **And a direct commit is a verdict**, at Hybrid's own direct
 predicate. -/
 theorem commitsDirect (k : ℕ) : CommitsDirect
     (hybridRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload) k)
     (fun {U} V L r => Hybrid.DirectCommitIn U.val V L r) :=
-  fun S _ _ _ _ hc hd => Hybrid.Decided.directCommit (S := S) hc hd
+  AnchoredRule.commitsDirectOn
 
 end HybridProperties
 

@@ -1,5 +1,4 @@
 import LeanDag.Barnacle.Window.Statement
-
 /-!
 # BN2 — proof
 
