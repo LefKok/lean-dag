@@ -46,37 +46,22 @@ def hybridOnRecord :
   viewIds_to := fun _ => rfl
   viewIds_of := fun _ => rfl
 
-/-- **The cut, at Hybrid's carrier**: the record's. -/
-def chopHybrid (U : (HybridProperties.hybridRule (Validator := Validator)
-    (BlockId := BlockId) (Payload := Payload) kt).Universe) (G : ℕ) :
-    (HybridProperties.hybridRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload) kt).Universe :=
-  hybridOnRecord.chop U G
-
 variable {U : (HybridProperties.hybridRule (Validator := Validator) (BlockId := BlockId)
   (Payload := Payload) kt).Universe}
 
-/-- **The fill, at Hybrid's carrier**: the core's self-referencing fill,
-with `honestNoEquiv_fill` as the invariant. -/
-def skipFillHybrid (U : (HybridProperties.hybridRule (Validator := Validator)
+/-- **The fill, at Hybrid's carrier**: the core's self-referencing fill
+through `hybridOnRecord`, with `honestNoEquiv_fill` as the invariant. -/
+def fillHybrid (U : (HybridProperties.hybridRule (Validator := Validator)
     (BlockId := BlockId) (Payload := Payload) kt).Universe) (sk : SkipMsg U.val) :
     (HybridProperties.hybridRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload) kt).Universe :=
   hybridOnRecord.fill U sk (sk.selfBlocks U.val.complete)
     (fun _ hk1 hk2 => sk.fillBlock_valid hk1 hk2) (honestNoEquiv_fill sk _ _ U.property)
 
-/-- **Re-genesis, at Hybrid's carrier**: the record's. -/
-def addGenesisHybrid (U : (HybridProperties.hybridRule (Validator := Validator)
-    (BlockId := BlockId) (Payload := Payload) kt).Universe) (v : Validator) (g : BlockId)
-    (p : Payload) (hg : g ∉ U.val.ids) (hsev : ∀ b ∈ U.val.ids, (U.val.block b).creator ≠ v) :
-    (HybridProperties.hybridRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload) kt).Universe :=
-  hybridOnRecord.addGenesis U v g p hg hsev
-
 /-- **The fill is an extension of Hybrid's carrier.** -/
 theorem extends_skipFill_hybrid (sk : SkipMsg U.val) :
     Extends (HybridProperties.hybridRule (Validator := Validator) (BlockId := BlockId)
-        (Payload := Payload) kt) U (skipFillHybrid U sk) :=
+        (Payload := Payload) kt) U (fillHybrid U sk) :=
   hybridOnRecord.extends_fill
 
 /-! ## Promptness: the fill cannot conjure a commit, for Hybrid -/
@@ -91,7 +76,7 @@ theorem decided_none_fresh_hybrid {U : (HybridProperties.hybridRule (Validator :
     (hpres : PresentAt (HybridProperties.hybridRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload) kt) V T (S.slotRound k + 1)) :
     (HybridProperties.hybridRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload) kt).Decided S (U := skipFillHybrid U sk) (sk.liftView V) k none :=
+      (Payload := Payload) kt).Decided S (U := fillHybrid U sk) (sk.liftView V) k none :=
   decided_none_of_novel (HybridProperties.skipsUnsupported kt) (extends_skipFill_hybrid sk) S hq
     (fun v hv => by
       obtain ⟨c, hcV, hcc, hcr⟩ := hpres v hv
@@ -116,7 +101,7 @@ theorem decided_none_fresh_agree_hybrid {U : (HybridProperties.hybridRule (Valid
     {U'' : (HybridProperties.hybridRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload) kt).Universe}
     (he' : Extends (HybridProperties.hybridRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload) kt) (skipFillHybrid U sk) U'')
+      (Payload := Payload) kt) (fillHybrid U sk) U'')
     {V'' W : View Validator BlockId Payload U''.val} (hsub : (sk.liftView V).ids ⊆ V''.ids)
     {v : Option BlockId}
     (hW : (HybridProperties.hybridRule (Validator := Validator) (BlockId := BlockId)

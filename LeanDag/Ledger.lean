@@ -79,6 +79,12 @@ theorem outputAt_unique {g : ℕ → Option BlockId} {b : BlockId} {k₁ k₂ : 
   · obtain ⟨L, hL, hr⟩ := h₂.1
     exact absurd hr (h₁.2 k₂ h L hL)
 
+/-- **A committed leader's cone is in the ledger** from the next horizon
+on: the link between an assignment and what it delivers. -/
+theorem mem_ledgerSet_of_some {g : ℕ → Option BlockId} {k : ℕ} {L b : BlockId}
+    (hg : g k = some L) (hb : Reaches U L b) : b ∈ ledgerSet U g (k + 1) :=
+  ⟨k, by omega, L, hg, hb⟩
+
 /-- Two assignments that agree below `n` concur on the slot a block enters at. -/
 theorem outputAt_agree_of {g₁ g₂ : ℕ → Option BlockId} {n : ℕ} {b : BlockId} {k : ℕ}
     (hg : ∀ j, j < n → g₁ j = g₂ j) (hk : k < n) (ho : OutputAt U g₁ b k) :

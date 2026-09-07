@@ -70,16 +70,16 @@ private theorem universe_eq_of {U₁ U₂ : BlockUniverse Validator BlockId Payl
 theorem chopBlk_chop {G₁ G₂ : ℕ} (hG : G₁ ≤ G₂) (i : BlockId) :
     chopBlk (chop U G₁).block (G₂ - G₁) i = chopBlk U.block G₂ i := by
   refine block_eq_of ?_ ?_ ?_ ?_
-  · rw [chopBlk_round, chopBlk_round, chop_block_eq, chopBlk_round]
+  · rw [chopBlk_round, chopBlk_round, chop_block, chopBlk_round]
     omega
-  · rw [chopBlk_creator, chopBlk_creator, chop_block_eq, chopBlk_creator]
+  · rw [chopBlk_creator, chopBlk_creator, chop_block, chopBlk_creator]
   · rcases Nat.lt_or_ge G₂ (U.block i).round with h2 | h2
-    · rw [chopBlk_refs_of_lt (by rw [chop_block_eq, chopBlk_round]; omega),
-        chopBlk_refs_of_lt h2, chop_block_eq,
+    · rw [chopBlk_refs_of_lt (by rw [chop_block, chopBlk_round]; omega),
+        chopBlk_refs_of_lt h2, chop_block,
         chopBlk_refs_of_lt (by omega)]
-    · rw [chopBlk_refs_of_le (by rw [chop_block_eq, chopBlk_round]; omega),
+    · rw [chopBlk_refs_of_le (by rw [chop_block, chopBlk_round]; omega),
         chopBlk_refs_of_le h2]
-  · rw [chopBlk_payload, chopBlk_payload, chop_block_eq, chopBlk_payload]
+  · rw [chopBlk_payload, chopBlk_payload, chop_block, chopBlk_payload]
 
 /-- **G8, the composition law.** A deeper cut is just another cut: two
 admissible horizons are always related by the one operator, so every
@@ -88,7 +88,7 @@ theorem chop_chop {G₁ G₂ : ℕ} (hG : G₁ ≤ G₂) :
     chop (chop U G₁) (G₂ - G₁) = chop U G₂ := by
   refine universe_eq_of ?_ (funext (chopBlk_chop hG))
   ext i
-  rw [mem_chop_ids, mem_chop_ids, mem_chop_ids, chop_block_eq, chopBlk_round]
+  rw [mem_chop_ids, mem_chop_ids, mem_chop_ids, chop_block, chopBlk_round]
   constructor
   · rintro ⟨⟨hi, h1⟩, h2⟩
     exact ⟨hi, by omega⟩

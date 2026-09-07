@@ -60,12 +60,11 @@ variable {U : Nemo.Universe Validator BlockId Payload}
 
 theorem stack_nemo (sk : SkipData U.ids U.block) (hd : G ≤ S.slotRound d) :
     Stack (NemoProperties.nemoRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload)) U S (chopNemo (skipFillNemo U sk) G) (S.chop G d hd)
-      G (max (sk.r + 1) G) d := by
-  have st := Stack.step (Rebased.of_sustains (S := S) (nemoOnRecord.sustains_copyFill U sk))
-    (Stack.step (Rebased.of_truncates (nemoOnRecord.truncates_chop (skipFillNemo U sk) hd))
+      (Payload := Payload)) U S (nemoOnRecord.chop (nemoOnRecord.copyFill U sk) G)
+      (S.chop G d hd) G (max (sk.r + 1) G) d := by
+  simpa using Stack.step (Rebased.of_sustains (S := S) (nemoOnRecord.sustains_copyFill U sk))
+    (Stack.step (Rebased.of_truncates (nemoOnRecord.truncates_chop (nemoOnRecord.copyFill U sk) hd))
       Stack.nil)
-  simpa [chopNemo] using st
 
 end Nemo
 
@@ -80,12 +79,11 @@ variable {B : Type} [LinearOrder B] {D : Dag Validator B Payload}
 
 theorem stack_finwhale (sk : SkipData D.ids D.block) (hd : G ≤ S.slotRound d) :
     Stack (FinWhaleProperties.finWhaleRule (Validator := Validator) (BlockId := B)
-      (Payload := Payload)) D S (chopFinWhale (skipFillFinWhale D sk) G) (S.chop G d hd)
-      G (max (sk.r + 1) G) d := by
-  have st := Stack.step (Rebased.of_sustains (S := S) (finWhaleOnRecord.sustains_copyFill D sk))
+      (Payload := Payload)) D S (finWhaleOnRecord.chop (finWhaleOnRecord.copyFill D sk) G)
+      (S.chop G d hd) G (max (sk.r + 1) G) d := by
+  simpa using Stack.step (Rebased.of_sustains (S := S) (finWhaleOnRecord.sustains_copyFill D sk))
     (Stack.step (Rebased.of_truncates
-      (finWhaleOnRecord.truncates_chop (skipFillFinWhale D sk) hd)) Stack.nil)
-  simpa [chopFinWhale] using st
+      (finWhaleOnRecord.truncates_chop (finWhaleOnRecord.copyFill D sk) hd)) Stack.nil)
 
 end FinWhale
 

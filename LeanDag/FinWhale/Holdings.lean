@@ -39,9 +39,14 @@ variable {U : BlockUniverse Validator BlockId Payload} {T : Finset Validator} {M
 
 /-- **A validator's holdings are a view.** `holds_sub` is the subset
 clause and `holds_closed` the closure clause. -/
-theorem isView_holds (pc : PaceCore U T M) (hids : D.ids = U.ids) (hblk : D.block = U.block)
-    {v : Validator} (hv : v ∈ T) (t : ℕ) : IsView D (pc.holds v t) :=
-  ⟨by rw [hids]; exact pc.holds_sub v t, by rw [hblk, hids] at *; exact pc.holds_closed v hv t⟩
+def holdsView (pc : PaceCore U T M) (hids : D.ids = U.ids) (hblk : D.block = U.block)
+    {v : Validator} (hv : v ∈ T) (t : ℕ) : D.View :=
+  ⟨pc.holds v t, by rw [hids]; exact pc.holds_sub v t,
+    by rw [hblk, hids] at *; exact pc.holds_closed v hv t⟩
+
+@[simp] theorem holdsView_ids (pc : PaceCore U T M) (hids : D.ids = U.ids)
+    (hblk : D.block = U.block) {v : Validator} (hv : v ∈ T) (t : ℕ) :
+    (holdsView (D := D) pc hids hblk hv t).ids = pc.holds v t := rfl
 
 /-- **And by then the view holds every reliable block from the coverage
 round up.** Byzantine authors are not covered, and no schedule covers
@@ -84,11 +89,11 @@ theorem all_decided_of_pass (pc : PaceCore U (Correct : Finset Validator) M)
     (hcommits : CommitsCorrectLeaders S D R N) (hrr : RoundRobin S.leader)
     (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ k, S.slotRound k = k) (hNM : N ≤ M)
     (hN : max r R + (3 * F.f + 5) ≤ N) :
-    decOf S Elig (restrict D (pc.holds v (settled pc)) (isView_holds pc hids hblk hv (settled pc)))
+    decOf S Elig (holdsView pc hids hblk hv (settled pc)).toRecord
       choose Np r ≠ Verdict.undecided := by
   have hlt : ∀ r a, Elig r a → r < a := fun r a h => by have := (hEl r a).1 h; omega
   have hrle : ∀ r, S.slotRound r ≤ Np → r ≤ Np := fun r h => by rwa [hid] at h
-  exact all_decided_of_view (isView_holds pc hids hblk hv (settled pc))
+  exact all_decided_of_view (V := holdsView pc hids hblk hv (settled pc))
     (wellFormed_decOf hhorizon hlt hrle choose)
     (fun n hRn hnN b hb hbc =>
       held_of_pace pc hids hblk hle card_correct hgst hv n hRn (by omega) b hb hbc)

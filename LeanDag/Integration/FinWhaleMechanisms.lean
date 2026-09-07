@@ -45,21 +45,8 @@ def finWhaleOnRecord :
   viewIds_to := fun _ => rfl
   viewIds_of := fun _ => rfl
 
-/-- **The cut, at FinWhale's DAG**: the record's. -/
-def chopFinWhale (D : Dag Validator BlockId Payload) (G : ℕ) :
-    Dag Validator BlockId Payload :=
-  finWhaleOnRecord.chop D G
-
-/-- **The recovery, at FinWhale's DAG**: the record's copy fill. -/
-def skipFillFinWhale (D : Dag Validator BlockId Payload)
-    (sk : SkipData D.ids D.block) : Dag Validator BlockId Payload :=
-  finWhaleOnRecord.copyFill D sk
-
-/-- **Re-genesis, at FinWhale's DAG**: the record's. -/
-def addGenesisFinWhale (D : Dag Validator BlockId Payload) (v : Validator) (g : BlockId)
-    (p : Payload) (hg : g ∉ D.ids) (hsev : ∀ b ∈ D.ids, (D.block b).creator ≠ v) :
-    Dag Validator BlockId Payload :=
-  finWhaleOnRecord.addGenesis D v g p hg hsev
+/-! The cut, the copy fill and re-genesis at FinWhale's DAG are the
+record's, through `finWhaleOnRecord`. -/
 
 end Integration
 

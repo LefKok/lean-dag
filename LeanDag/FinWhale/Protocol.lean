@@ -37,13 +37,13 @@ variable (run : Run Validator BlockId Payload) {v w : Validator}
 
 /-- And what it holds is a view: part of the run, closed under
 references. -/
-theorem isView (hv : v ∈ (Correct : Finset Validator)) : IsView run.dag (run.view v) :=
-  isView_holds run.pace run.ids_eq run.block_eq hv _
+def viewOf (hv : v ∈ (Correct : Finset Validator)) : run.dag.View :=
+  holdsView run.pace run.ids_eq run.block_eq hv (settled run.pace)
 
 /-- **The verdicts a validator reaches**, by running the reverse pass on
 its own view. -/
 noncomputable def verdicts (hv : v ∈ (Correct : Finset Validator)) : ℕ → Verdict BlockId :=
-  decOf run.sched run.sched.Elig (restrict run.dag (run.view v) (run.isView hv))
+  decOf run.sched run.sched.Elig (run.viewOf hv).toRecord
     run.choose run.horizon
 
 /-- **And what it delivers**: the causal histories of its committed
@@ -60,7 +60,7 @@ is a hypothesis of a run. -/
 /-- The blocks a validator holds sit below the run's horizon. -/
 theorem view_rounds_le (hv : v ∈ (Correct : Finset Validator)) :
     ∀ b ∈ run.view v, (run.dag.block b).round ≤ run.horizon :=
-  fun b hb => run.rounds_le b ((run.isView hv).subset hb)
+  fun b hb => run.rounds_le b ((run.viewOf hv).subset_ids hb)
 
 /-- A run's schedule is the identity, so eligibility is the pass's
 `r + 2 < a` — three rounds up is three slots up. -/
@@ -80,8 +80,8 @@ theorem slot_le : ∀ r, run.sched.slotRound r ≤ run.horizon → r ≤ run.hor
 
 /-- Its verdicts follow the reverse pass. -/
 theorem wellFormed (hv : v ∈ (Correct : Finset Validator)) :
-    WellFormed run.sched.Elig (viewCommit run.sched run.dag (run.view v) (run.isView hv))
-      (viewSkip run.sched run.dag (run.view v) (run.isView hv)) run.choose (run.verdicts hv) :=
+    WellFormed run.sched.Elig (viewCommit run.sched run.dag (run.viewOf hv))
+      (viewSkip run.sched run.dag (run.viewOf hv)) run.choose (run.verdicts hv) :=
   wellFormed_decOf (run.view_rounds_le hv) (fun _ _ => run.lt_of_elig) run.slot_le run.choose
 
 /-- A committed verdict names a block of its slot. -/
@@ -115,7 +115,7 @@ the anchor sits above, past the round the network stabilised. -/
 theorem decided (hv : v ∈ (Correct : Finset Validator)) {r : ℕ}
     (hr : max r run.stable + (3 * F.f + 5) ≤ run.liveHorizon) :
     run.verdicts hv r ≠ Verdict.undecided :=
-  all_decided_of_view (run.isView hv) (run.wellFormed hv) (run.held hv) run.commits
+  all_decided_of_view (V := run.viewOf hv) (run.wellFormed hv) (run.held hv) run.commits
     run.roundRobin (fun _ _ => run.elig_iff) run.roundId hr
 
 /-- Below a decided horizon a validator's sequence is complete. -/
@@ -135,7 +135,7 @@ theorem agreement (hv : v ∈ (Correct : Finset Validator))
     (hw : w ∈ (Correct : Finset Validator)) {k : ℕ}
     (hk : max k run.stable + (3 * F.f + 5) ≤ run.liveHorizon) :
     run.delivers hv k = run.delivers hw k :=
-  agreement_of_views (run.isView hv) (run.isView hw) (run.wellFormed hv) (run.wellFormed hw)
+  agreement_of_views (V := run.viewOf hv) (V' := run.viewOf hw) (run.wellFormed hv) (run.wellFormed hw)
     run.chooseSound (fun _ _ h => run.slot_of_verdicts hv h)
     (fun _ _ h => run.slot_of_verdicts hw h)
     (fun s (hs : run.horizon + 1 ≤ s) =>
@@ -150,7 +150,7 @@ theorem totalOrder (hv : v ∈ (Correct : Finset Validator))
     (hk : max k run.stable + (3 * F.f + 5) ≤ run.liveHorizon)
     (hk' : max k' run.stable + (3 * F.f + 5) ≤ run.liveHorizon) :
     run.delivers hv k <+: run.delivers hw k' ∨ run.delivers hw k' <+: run.delivers hv k :=
-  safety_of_pass (run.isView hv) (run.isView hw) run.chooseSound
+  safety_of_pass (V := run.viewOf hv) (V' := run.viewOf hw) run.chooseSound
     (run.view_rounds_le hv) (run.view_rounds_le hw)
     (run.decidedBelow hv hk) (run.decidedBelow hw hk') (fun _ _ => run.lt_of_elig) run.slot_le
     (fun _ _ => run.elig_iff) run.roundId (histOf run.dag)
@@ -174,7 +174,7 @@ theorem validity (hv : v ∈ (Correct : Finset Validator)) {b : BlockId} {k : �
     (hk : max ((run.dag.block b).round) run.stable + Fintype.card Validator < k) :
     b ∈ run.delivers hv k :=
   theorem26_of_selfParent run.selfParented (run.wellFormed hv)
-    (sees_of_commits_of_held (run.isView hv) run.commits (run.held hv))
+    (sees_of_commits_of_held (V := run.viewOf hv) run.commits (run.held hv))
     run.roundRobin run.roundId hb hbc hbound hk
 
 end Run

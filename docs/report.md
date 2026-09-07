@@ -723,7 +723,8 @@ the two liveness hypotheses `PopulatedOn` and `SynchronisedOn` in
 record's count at the view read as a record (`supportersIn_eq_toRecord`);
 and the ledger in `Ledger.lean` (§5.6). Every rule's direct rules,
 liveness hypotheses and ledger are these at its record, with no copy of
-its own.
+its own, and the core's `chop`, `addGenesis` and their lemmas are the
+record's names, exported rather than restated.
 
 Non-equivocation is stated at the level of the universe, and must be. A
 per-view formulation is strictly weaker: two views could each satisfy "at most
@@ -2728,12 +2729,16 @@ authors, and a committed leader's block is in particular valid — any
 commit route, any view:
 
 ```lean
-theorem card_coveredAt_ge_of_decided (h : Decided U V k (some L))
-    (hδ : δ < (U.block L).round) :
-    (Correct : Finset Validator).card - F.f ≤ (coveredAt U L δ).card
+theorem card_coveredAt_ge_of_decided {V : View Validator BlockId Payload U}
+    {k : ℕ} (h : Decided U V k (some L)) (hδ : δ < (U.block L).round) :
+    (Correct : Finset Validator).card - F.f ≤ (Arcs.coveredAt (MysticetiProperties.mysticetiRule (Payload := Payload))
+      (coreReliability Validator) U L δ).card
 
-theorem card_correct_le_two_mul_coveredAt_of_decided …
-    (Correct : Finset Validator).card ≤ 2 * (coveredAt U L δ).card
+theorem card_correct_le_two_mul_coveredAt_of_decided
+    {V : View Validator BlockId Payload U} {k : ℕ}
+    (h : Decided U V k (some L)) (hδ : δ < (U.block L).round) :
+    (Correct : Finset Validator).card ≤ 2 * (Arcs.coveredAt (MysticetiProperties.mysticetiRule (Payload := Payload))
+      (coreReliability Validator) U L δ).card
 ```
 
 — **every commit carries, at every round below it, blocks from at
@@ -5229,7 +5234,7 @@ one fact about extensions: an old block references only old
 identifiers (`Extends.old_refs_old`). `Timed/Extension.lean` states
 the refutation and the preservation once, for every rule; the core
 reads them at the fill's `Extends` witness, and Hydrozoan's copy fill
-reads the refutation at its own (`not_synchronisedOn_copyFillHZ`).
+reads the refutation at its own (`not_synchronisedOn_copyFill_hz`).
 
 **It fails for a reliable set containing the recovering validator, at
 the rounds that validator slept through.**
@@ -5301,7 +5306,7 @@ def HorizonStable (P : Policy R) (G d : ℕ)
 ```
 
 Under it a joiner computes exactly the leaders the network is using
-(`joiner_assign_agree`), so the two run one schedule seen from two
+(`Adaptive.joiner_assign_agree`), so the two run one schedule seen from two
 origins, and cross-cut agreement at that schedule, `Agree` and `Banded`
 through `decided_agree_rebased`, gives `joiner_run_decided_agree`:
 pruning does not split the ledger, even when the schedule is derived
@@ -5361,11 +5366,10 @@ to the validity rules, from a block the cut flattened.
 
 **I10.**
 ```lean
-def addGenesis (V : BlockUniverse Validator BlockId Payload) (v : Validator)
-    (g : BlockId) (p : Payload) (hg : g ∉ V.ids)
-    (hsev : ∀ b ∈ V.ids, (V.block b).creator ≠ v) :
-    BlockUniverse Validator BlockId Payload :=
-  BlockRecord.addGenesis V v g p hg hsev
+def addGenesis (U : BlockRecord Validator BlockId Payload P honest) (v : Validator)
+    (g : BlockId) (p : Payload) (hg : g ∉ U.ids)
+    (hsev : ∀ b ∈ U.ids, (U.block b).creator ≠ v) :
+    BlockRecord Validator BlockId Payload P honest where
 ```
 
 The record's re-genesis inserts `g` with the block `⟨0, v, ∅, p⟩` and
@@ -7734,8 +7738,8 @@ a block, so the dropped edges carry no votes and no certificates. And
 `FinWhale.Dag` is the block record (§2.3) at `ValidHere`, with
 non-equivocation asked of the correct validators only, since
 equivocating blocks are admitted of faulty validators; a view of it is
-the record's view, and `restrict`, the DAG a rule reads a view as, is
-the record's `View.toRecord`.
+the record's view, and the DAG a rule reads a view as is the record's
+`View.toRecord`.
 
 ### 20.3 The fast path, and Lemma 4
 
@@ -7884,7 +7888,7 @@ paper asks only for "a deterministic sort", and `mem_histOf` and
 
 **FW6** is safety with the views supplied rather than assumed. A view is
 a reference-closed subset of the universe's blocks and a `Dag` in its own
-right (`restrict`). Most of the vocabulary does not read the population —
+right (`View.toRecord`). Most of the vocabulary does not read the population —
 `parentsVoting`, `parentSet` and `SPCertificate` are computed from a
 block's references and are literally the same in a view — and closure
 carries a block into the view whenever anything in the view votes for it:
@@ -7998,9 +8002,9 @@ would give this in one round, and coverage is what the reactive schedule
 does not have.
 
 **And a view is a validator's holdings.** `PaceCore.holds` is what a
-validator has at an instant, and its two store clauses are exactly what
-`IsView` asks, so `isView_holds` makes the holdings a view and `restrict`
-makes them a DAG the rules run on. `held_of_pace` is what the network
+validator has at an instant, and its two store clauses are exactly a
+view's, so `holdsView` reads the holdings as the record's view and
+`View.toRecord` makes them a DAG the rules run on. `held_of_pace` is what the network
 delivers: past GST every reliable block of every round up to the horizon
 has arrived by one instant, `settled`. Byzantine authors are not covered
 and no schedule covers them, which is why the interface names its
@@ -9276,7 +9280,8 @@ Optimal-Hydrozoan is mirrored in the same shape (§23.7).
 below a horizon, and it may have recovered from a crash by one message.
 Both are universe transformers, and Hydrozoan takes them from the block
 record (§2.3), its universe being the record at its own validity: the
-cut `chopHZ` and the copy fill `copyFillHZ` are the record's, and what
+cut and the copy fill are the record's `BlockRecord.chop` and
+`BlockRecord.copyFill`, under no name of Hydrozoan's own, and what
 Hydrozoan supplies is that its validity has the four facts a predicate
 owes and does not read the creator.
 
@@ -9301,13 +9306,13 @@ while Hydrozoan's skip counts blames at the slot and the count does not
 move when no old block references a fresh identifier. In the
 properties' vocabulary that is `LeanDag.Hydrozoan.banded`, and the fill
 cell is `Persist.of_banded` at the `Extends` witness
-`extends_copyFillHZ`. Hydrozoan's prompt skip at the fill is
+`extends_copyFill`. Hydrozoan's prompt skip at the fill is
 `decided_none_fresh_hz` (§16.1), at the grade `qFast ≤ |T|` its
 `SkipsUnsupported` carries.
 
 Liveness across both is the generic `Support.live_of_truncates` and
-`Support.live_of_sustains` at `hzSupport`, and re-genesis is
-`addGenesisHZ`.
+`Support.live_of_sustains` at `hzSupport`, and re-genesis is the
+record's `addGenesis`.
 
 **What a deployment gets.** What a reader wants is a statement about one replica's situation: the
 DAG the network built, a recovery performed by one message, a horizon
@@ -9650,13 +9655,13 @@ carried to a re-indexed schedule.
 
 **Leader exclusion is a mechanised invariant on the record.**
 `Excluded` is the clause read at a record, and `Excluded.mechanised`
-is three facts: exclusion survives the cut (`leaderExcludedAll_chopHZ`:
+is three facts: exclusion survives the cut (`leaderExcludedAll_chop`:
 a block bound by exclusion sits two rounds above the horizon, so it
 keeps its parents, its parents keep theirs and their authors, and its
 candidates are old blocks at a rebased round); it survives the copy
-fill (`leaderExcludedAll_copyFillHZ`: a filled block's parents are the
+fill (`leaderExcludedAll_copyFill`: a filled block's parents are the
 donor's, so no edge is added); and it survives re-genesis
-(`leaderExcludedAll_addGenesisHZ`: the new block is bound by no
+(`leaderExcludedAll_addGenesis`: the new block is bound by no
 exclusion and is its author's only block). The carrier then reads as
 records under `Excluded` (`optOnRecord`),
 and every verdict cell of the cut (HI7), the copy fill (HI9) and
@@ -9665,7 +9670,7 @@ nothing written per cell. The core's `skipFill`, whose self reference
 grafts the recovering replica's anchor onto the donor's references,
 adds an edge and is not used here. Liveness across both is
 `Support.live_of_truncates` and `Support.live_of_sustains` at
-`optSupport`; re-genesis is `addGenesisOpt`.
+`optSupport`; re-genesis is the record's, through `optOnRecord`.
 
 **What a deployment gets** is the headline at the rule (HI10):
 `OptimalHydrozoanProperties.safety` across any stack of the two
@@ -9917,7 +9922,7 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `OptimalHydrozoan/Model/DirectRules.lean`, `OptimalHydrozoan/Model/IndirectRules.lean`, `OptimalHydrozoan/Model/Decided.lean` | fast evidence, the no-evidence skip, the evidence rung, the six-route decision relation without a tie-break |
 | `OptimalHydrozoan/ThresholdArithmetic/`, `OptimalHydrozoan/DirectSafety/`, `OptimalHydrozoan/SlotAgreement/`, `OptimalHydrozoan/PrefixAgreement/`, `OptimalHydrozoan/DirectLiveness/`, `OptimalHydrozoan/IndirectLiveness/`, `OptimalHydrozoan/EventualDecision/`, `OptimalHydrozoan/Grounding/` | the eight statements and their proofs (OH1–OH8) |
 | `OptimalHydrozoan/Helpers/` | the generated lemma layer |
-| `Quality/Coverage.lean` | `coveredAt`; per-commit and ledger coverage (CQ1–CQ3) |
+| `Quality/Coverage.lean` | per-commit and ledger coverage (CQ1–CQ3) at the core, over `Arcs.coveredAt` |
 | `Quality/Inclusion.lean` | post-`R` inclusion (CQ5, CQ6) |
 | `Quality/Capstone.lean` | the windowed bounds and `chain_quality` (CQ7) |
 | `LeanDagTest/` | the models of §24 and the witness files of every arc |
@@ -10826,8 +10831,8 @@ reused.
 | HI4 | Hydrozoan as a Barnacle base rule, with its laws | `Barnacle.Hydrozoan.holds` *(Barnacle/Hydrozoan/Proof)* |
 | HI5 | as a live rule: the descent laws at slack `f + c`, and round-robin liveness at `3(f + c) + 1 ≤ n` | `Barnacle.HydrozoanLive.holds` *(Barnacle/HydrozoanLive/Proof)* |
 | HI6 | the same two for Optimal-Hydrozoan, its validity clause restated without a schedule | `Barnacle.OptimalHydrozoan.holds`, `LeaderExcludedAll` *(Barnacle/OptimalHydrozoan/Proof, Barnacle/Helpers/OptimalHydrozoan)* |
-| HI7 | verdicts survive the cut, for both rules, on the base-slot premise alone | `DagRule.OnRecord.decided_chop_iff` at `Hydrozoan.onRecord` and `optOnRecord`; `leaderExcludedAll_chopHZ` *(Properties/Arcs/Record, Integration/OptimalMechanisms)* |
-| HI9 | verdicts survive the copy fill for both rules, with no quorum hypothesis; leader exclusion survives it | `DagRule.OnRecord.decided_agree_copyFill` at the two instances; `leaderExcludedAll_copyFillHZ` *(Properties/Arcs/Record, Integration/OptimalMechanisms)* |
+| HI7 | verdicts survive the cut, for both rules, on the base-slot premise alone | `DagRule.OnRecord.decided_chop_iff` at `Hydrozoan.onRecord` and `optOnRecord`; `leaderExcludedAll_chop` *(Properties/Arcs/Record, Integration/OptimalMechanisms)* |
+| HI9 | verdicts survive the copy fill for both rules, with no quorum hypothesis; leader exclusion survives it | `DagRule.OnRecord.decided_agree_copyFill` at the two instances; `leaderExcludedAll_copyFill` *(Properties/Arcs/Record, Integration/OptimalMechanisms)* |
 | HI10 | what a deployment gets: the headlines at both rules | `Hydrozoan.Properties.safety`, `Hydrozoan.Properties.progress`, `OptimalHydrozoanProperties.safety`, `OptimalHydrozoanProperties.progress` *(Hydrozoan/Properties/Proof, OptimalHydrozoan/Carrier)* |
 
 ---
@@ -10836,7 +10841,7 @@ reused.
 
 ## Appendix B. The definition reference
 
-The 336 definitions and structures the report names, in
+The 323 definitions and structures the report names, in
 the order a reader meets them. Each entry is the source text,
 unabridged, with the explanation the source carries. This
 appendix is generated from the compiled development by
@@ -11638,21 +11643,6 @@ The full-timeout discipline: `PaceCore` with P9 — the waiting floor — and th
 
 No promptness ceiling and no attainment clause appear: drift is derived from the trunk's catch-up rule (`driftOn_of_catchup`), which needs neither — the collapse argument runs on `converges`, `holds_own` and `catchup` alone.
 
-### Chain quality
-
-#### `coveredAt`
-
-*def, `Quality.Coverage.lean`*
-
-```lean
-def coveredAt (U : BlockUniverse Validator BlockId Payload)
-    (b : BlockId) (δ : ℕ) : Finset Validator :=
-  Arcs.coveredAt (MysticetiProperties.mysticetiRule (Payload := Payload))
-    (coreReliability Validator) U b δ
-```
-
-The correct validators whose round-`δ` block a cone carries — the complement, within `Correct`, of `missingAt`.
-
 ### Denial of service
 
 #### `ExposedIn`
@@ -11771,30 +11761,6 @@ D3's ordinary case as a protocol property: a correct validator's block reference
 
 ### Garbage collection
 
-#### `chop`
-
-*def, `GC.Chop.lean`*
-
-```lean
-def chop (U : BlockUniverse Validator BlockId Payload) (G : ℕ) :
-    BlockUniverse Validator BlockId Payload :=
-  BlockRecord.chop U G
-```
-
-**The cut**: the block record's, at the core.
-
-#### `View.chop`
-
-*def, `GC.ChopDecided.lean`*
-
-```lean
-def View.chop (V : View Validator BlockId Payload U) (G : ℕ) :
-    View Validator BlockId Payload (chop U G) :=
-  BlockRecord.View.chop V G
-```
-
-A validator's view, truncated at the horizon: keep what clears the cut. Closure survives: a retained block's references sit one round below it, hence at or above the cut — except at the base layer, where they are gone.
-
 #### `Slots.chop`
 
 *def, `GC.ChopDecided.lean`*
@@ -11844,26 +11810,26 @@ def chopD (D : Delivery U) (G : ℕ) : Delivery (chop U G) where
     intro v m i hi
     obtain ⟨h1, h2⟩ := D.held_spec v (G + m) i hi
     refine ⟨mem_chop_ids.mpr ⟨h1, by omega⟩, ?_⟩
-    rw [chop_block_eq, chopBlk_round]
+    rw [chop_block, chopBlk_round]
     omega
   accepted v m := D.accepted v (G + m)
   accepted_sub v m := D.accepted_sub v (G + m)
   accepted_inj := by
     intro v m i hi j hj hij
-    rw [chop_block_eq, chopBlk_creator, chopBlk_creator] at hij
+    rw [chop_block, chopBlk_creator, chopBlk_creator] at hij
     exact D.accepted_inj v (G + m) i hi j hj hij
   accepts_correct := by
     intro v hv m a ha hac
-    rw [chop_block_eq, chopBlk_creator] at hac
+    rw [chop_block, chopBlk_creator] at hac
     exact D.accepts_correct v hv (G + m) a ha hac
   includes := by
     intro v hv m b hb hbc hbr
     rw [mem_chop_ids] at hb
-    rw [chop_block_eq, chopBlk_creator] at hbc
-    rw [chop_block_eq, chopBlk_round] at hbr
+    rw [chop_block, chopBlk_creator] at hbc
+    rw [chop_block, chopBlk_round] at hbr
     have hsub := D.includes v hv (G + m) b hb.1 hbc (by omega)
     intro i hi
-    rw [chop_block_eq, chopBlk_refs_of_lt (by omega)]
+    rw [chop_block, chopBlk_refs_of_lt (by omega)]
     exact hsub hi
 ```
 
@@ -11888,7 +11854,7 @@ def joinView {R m t : ℕ} (hs : Synchronised U R)
       exact mem_chop_ids.mpr ⟨viewUpto_subset_ids hiv, by omega⟩
   complete := by
     intro i hi j hj
-    rw [chop_block_eq] at hj
+    rw [chop_block] at hj
     rcases Finset.mem_union.mp hi with h | h
     · obtain ⟨⟨hids, hround⟩, -⟩ := mem_base.mp h
       rw [chopBlk_refs_of_le (by omega)] at hj
@@ -12210,36 +12176,36 @@ def chopMsg (sk : SkipMsg U) (hG : G ≤ (U.block sk.B1).round)
   hB1uniq := by
     intro j hj hjc hjr
     rw [mem_chop_ids] at hj
-    simp only [chop_block_eq, chopBlk_creator] at hjc
-    simp only [chop_block_eq, chopBlk_round] at hjr
+    simp only [chop_block, chopBlk_creator] at hjc
+    simp only [chop_block, chopBlk_round] at hjr
     exact sk.hB1uniq j hj.1 hjc (by omega)
   hv12 := sk.hv12
   hB1 := mem_chop_ids.mpr ⟨sk.hB1, hG⟩
-  hB1c := by simp only [chop_block_eq, chopBlk_creator]; exact sk.hB1c
+  hB1c := by simp only [chop_block, chopBlk_creator]; exact sk.hB1c
   hline_mem := by
     intro k hk1 hk2
-    simp only [chop_block_eq, chopBlk_round] at hk1
+    simp only [chop_block, chopBlk_round] at hk1
     have hlm := sk.hline_mem (G + k) (by omega) (by omega)
     have hlr := sk.hline_round (G + k) (by omega) (by omega)
     exact mem_chop_ids.mpr ⟨hlm, by omega⟩
   hline_creator := by
     intro k hk1 hk2
-    simp only [chop_block_eq, chopBlk_round] at hk1
-    simp only [chop_block_eq, chopBlk_creator]
+    simp only [chop_block, chopBlk_round] at hk1
+    simp only [chop_block, chopBlk_creator]
     exact sk.hline_creator (G + k) (by omega) (by omega)
   hline_round := by
     intro k hk1 hk2
-    simp only [chop_block_eq, chopBlk_round] at hk1 ⊢
+    simp only [chop_block, chopBlk_round] at hk1 ⊢
     rw [sk.hline_round (G + k) (by omega) (by omega)]
     omega
   hline_chain := by
     intro k hk1 hk2
-    simp only [chop_block_eq, chopBlk_round] at hk1
+    simp only [chop_block, chopBlk_round] at hk1
     -- the line block sits strictly above the cut, so its references survive
     have hlm := sk.hline_mem (G + k) (by omega) (by omega)
     have hlr := sk.hline_round (G + k) (by omega) (by omega)
     have hgt : G < (U.block (sk.line (G + k))).round := by omega
-    rw [chop_block_eq, chopBlk_refs_of_lt hgt]
+    rw [chop_block, chopBlk_refs_of_lt hgt]
     have := sk.hline_chain (G + k) (by omega) (by omega)
     have hidx : G + k - 1 = G + (k - 1) := by omega
     rwa [hidx] at this
@@ -12255,28 +12221,12 @@ def chopMsg (sk : SkipMsg U) (hG : G ≤ (U.block sk.B1).round)
   hgap := by
     intro b hb hbc hb1 hb2
     rw [mem_chop_ids] at hb
-    simp only [chop_block_eq, chopBlk_creator] at hbc
-    simp only [chop_block_eq, chopBlk_round] at hb1 hb2
+    simp only [chop_block, chopBlk_creator] at hbc
+    simp only [chop_block, chopBlk_round] at hb1 hb2
     exact sk.hgap b hb.1 hbc (by omega) (by omega)
 ```
 
 **I7b.** With the anchor retained, a Safe Skip message over the original universe induces one over the truncation: same validators, same anchor, every round rebased by `−G`. A validator that pruned can still rejoin with one message.
-
-#### `addGenesis`
-
-*def, `Integration.ReGenesis.lean`*
-
-```lean
-def addGenesis (V : BlockUniverse Validator BlockId Payload) (v : Validator)
-    (g : BlockId) (p : Payload) (hg : g ∉ V.ids)
-    (hsev : ∀ b ∈ V.ids, (V.block b).creator ≠ v) :
-    BlockUniverse Validator BlockId Payload :=
-  BlockRecord.addGenesis V v g p hg hsev
-```
-
-**Re-genesis.** A universe extended with one reference-free block at round `0`, for a validator that has none.
-
-The hypotheses are exactly what the construction needs and no more: the identifier must be fresh, and the validator must be absent — which for a stranded validator is `severed_of_pruned_anchor`.
 
 #### `recoveryMsg`
 
@@ -13345,30 +13295,6 @@ structure Flush (U : BlockUniverse Validator BlockId Payload) where
 
 `step` is the descent's own shape — the anchor flushed at `ρ` is a reference of the anchor flushed at `ρ + 1` — and `dense` says the descent does not pass over a round whose anchor that reference set contains. Neither says anything about a round the descent skips, which is the case the paper's tie-break is for.
 
-#### `ledgerSet`
-
-*abbrev, `BlackMarlin.Model.Ledger.lean`*
-
-```lean
-abbrev ledgerSet (U : BlockUniverse Validator BlockId Payload) (f : Flush U) (n : ℕ) :
-    Set BlockId :=
-  LeanDag.ledgerSet U f.block n
-```
-
-The blocks a record has output through round `n`: everything in the causal history of an anchor it flushed below `n` — the record's ledger (`Ledger.lean`) at the flush's blocks. Ordering *within* a segment is the deterministic sort `τ`, which the rule does not constrain and this arc does not model, so the ledger is a set and the record's rounds are its positions.
-
-#### `OutputAt`
-
-*abbrev, `BlackMarlin.Model.Ledger.lean`*
-
-```lean
-abbrev OutputAt (U : BlockUniverse Validator BlockId Payload) (f : Flush U)
-    (b : BlockId) (ρ : ℕ) : Prop :=
-  LeanDag.OutputAt U f.block b ρ
-```
-
-`b` enters the ledger at round `ρ`: the first flushed anchor whose causal history holds it — the record's `OutputAt`. This is a block's position in the delivered sequence, at the granularity of segments.
-
 #### `StepUnique`
 
 *def, `BlackMarlin.Ledger.Statement.lean`*
@@ -13879,32 +13805,6 @@ def histOf [LinearOrder BlockId] (D : Dag Validator BlockId Payload) (l : BlockI
 
 The paper asks only for "a deterministic sort", and what Theorems 24 and 26 read is that the list is a function of the block and lists its causal history once each. Sorting by identifier is the cheapest such function and keeps the definition computable; a causal order would serve equally and is not what any result here consumes.
 
-#### `IsView`
-
-*structure, `FinWhale.Model.View.lean`*
-
-```lean
-structure IsView (D : Dag Validator BlockId Payload) (V : Finset BlockId) : Prop where
-  /-- Only blocks that exist. -/
-  subset : V ⊆ D.ids
-  /-- And everything they reference. -/
-  closed : ∀ i ∈ V, ∀ j ∈ (D.block i).refs, j ∈ V
-```
-
-**A view**: part of the universe, closed under references.
-
-#### `restrict`
-
-*def, `FinWhale.Model.View.lean`*
-
-```lean
-def restrict (D : Dag Validator BlockId Payload) (V : Finset BlockId) (hV : IsView D V) :
-    Dag Validator BlockId Payload :=
-  BlockRecord.View.toRecord (⟨V, hV.subset, hV.closed⟩ : D.View)
-```
-
-**A view is a DAG.** Validity and non-equivocation are inherited; the view's completeness is its closure.
-
 #### `Creation`
 
 *structure, `FinWhale.Model.Creation.lean`*
@@ -14052,6 +13952,19 @@ structure Run (Validator BlockId Payload : Type) [Fintype Validator] [DecidableE
 ```
 
 **A run of FinWhale.** The blocks every correct validator ever holds, the schedule and network that carried them, and the two rules a validator applies: the rotation that names leaders and the tie-break that resolves an anchor's candidates.
+
+#### `holdsView`
+
+*def, `FinWhale.Holdings.lean`*
+
+```lean
+def holdsView (pc : PaceCore U T M) (hids : D.ids = U.ids) (hblk : D.block = U.block)
+    {v : Validator} (hv : v ∈ T) (t : ℕ) : D.View :=
+  ⟨pc.holds v t, by rw [hids]; exact pc.holds_sub v t,
+    by rw [hblk, hids] at *; exact pc.holds_closed v hv t⟩
+```
+
+**A validator's holdings are a view.** `holds_sub` is the subset clause and `holds_closed` the closure clause.
 
 #### `Dag.ofDoSValid`
 
@@ -14761,18 +14674,6 @@ inductive Decided (U : BlockUniverse Replica BlockId) (V : View U) :
 ```
 
 The verdicts a replica holding view `V` may reach on slot `k`.
-
-#### `history`
-
-*def, `Hydrozoan.Helpers.History.lean`*
-
-```lean
-def history (U : BlockUniverse Replica BlockId) (b : BlockId) :
-    Finset BlockId :=
-  historyUpto U ((U.block b).round + 1) b
-```
-
-The causal history of `b`, as a `Finset`: fuel `round + 1` always suffices (references descend one round per step).
 
 #### `FastUniqueness`
 
@@ -15973,7 +15874,7 @@ Two clauses together.
 ```lean
 def DirectCommitIn {D : Dag Validator BlockId Payload}
     (V : (finWhaleRule (Payload := Payload)).View D) (L : BlockId) (_r : ℕ) : Prop :=
-  L ∈ V.ids ∧ LeanDag.FinWhale.DirectCommit (LeanDag.FinWhale.restrict D V.ids V.isView) L
+  L ∈ V.ids ∧ LeanDag.FinWhale.DirectCommit (V.toRecord) L
 ```
 
 **FinWhale's direct-commit predicate, as a view sees it**: the block is held, and the view's own restriction certifies it. The round is carried to match the property's shape and is not read — `IsCandidate` already says where the block sits.
@@ -15989,43 +15890,6 @@ def hzSupport : Support (rule (Replica := Replica) (BlockId := BlockId)) where
 ```
 
 **Hydrozoan's support**: wavelength two, certification the rule's own.
-
-#### `chopHZ`
-
-*def, `Integration.HydrozoanMechanisms.lean`*
-
-```lean
-def chopHZ (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) (G : ℕ) :
-    LeanDag.Hydrozoan.BlockUniverse Replica BlockId :=
-  LeanDag.Hydrozoan.onRecord.chop U G
-```
-
-**The cut, at Hydrozoan's universe**: the record's, through the adapter.
-
-#### `copyFillHZ`
-
-*def, `Integration.HydrozoanMechanisms.lean`*
-
-```lean
-def copyFillHZ (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId)
-    (sk : SkipData U.ids U.block) : LeanDag.Hydrozoan.BlockUniverse Replica BlockId :=
-  LeanDag.Hydrozoan.onRecord.copyFill U sk
-```
-
-**The copy fill, at Hydrozoan's universe**: the record's, through the adapter. One block per gap round, by the recovering replica, carrying the donor's refs at that round.
-
-#### `addGenesisHZ`
-
-*def, `Integration.HydrozoanMechanisms.lean`*
-
-```lean
-def addGenesisHZ (U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId) (v : Replica) (g : BlockId)
-    (hg : g ∉ U.ids) (hsev : ∀ b ∈ U.ids, (U.block b).creator ≠ v) :
-    LeanDag.Hydrozoan.BlockUniverse Replica BlockId :=
-  LeanDag.Hydrozoan.onRecord.addGenesis U v g () hg hsev
-```
-
-**Re-genesis, at Hydrozoan's universe**: the record's.
 
 #### `Excluded`
 
@@ -16061,20 +15925,6 @@ def optOnRecord :
 ```
 
 **Optimal-Hydrozoan's carrier, on the record**: Hydrozoan's adapter, under `Excluded`.
-
-#### `addGenesisOpt`
-
-*def, `Integration.OptimalMechanisms.lean`*
-
-```lean
-def addGenesisOpt (W : (OptimalHydrozoanProperties.optimalRule (Replica := Replica)
-    (BlockId := BlockId)).Universe) (v : Replica) (g : BlockId)
-    (hg : g ∉ W.val.ids) (hsev : ∀ b ∈ W.val.ids, (W.val.block b).creator ≠ v) :
-    (OptimalHydrozoanProperties.optimalRule (Replica := Replica) (BlockId := BlockId)).Universe :=
-  optOnRecord.addGenesis W v g () hg hsev
-```
-
-**Re-genesis, at Optimal-Hydrozoan's carrier**: the record's.
 
 #### `commitSeq`
 
@@ -16201,19 +16051,6 @@ def Agree (R : DagRule Validator BlockId Payload) : Prop :=
 ```
 
 **Agreement.** Under one schedule and over one universe, any two views' verdicts at a slot coincide.
-
-#### `coveredAt`
-
-*def, `Properties.Arcs.Quality.lean`*
-
-```lean
-def coveredAt (R : DagRule Validator BlockId Payload) (rel : Reliability Validator)
-    (U : R.Universe) (b : BlockId) (δ : ℕ) : Finset Validator :=
-  rel.correct.filter fun v =>
-    ∃ i ∈ historyFrom (R.block U) b, (R.block U i).creator = v ∧ (R.block U i).round = δ
-```
-
-The reliable validators whose round-`δ` block a cone carries — the complement, within the reliable set, of `missingAtFrom`.
 
 #### `Stack`
 
@@ -16995,7 +16832,7 @@ def OfCoverage (sp : Support R) (rel : Reliability Validator) : Prop :=
 
 ## Appendix C. The theorem reference
 
-The 530 theorems the body or Appendix A names, each
+The 523 theorems the body or Appendix A names, each
 the source statement, unabridged. Generated with Appendix B;
 a theorem the report does not name is a step of an argument
 rather than a result it presents, and the source is its
@@ -18313,7 +18150,8 @@ This is the field the storage development assumes; here it is a theorem about th
 ```lean
 theorem card_coveredAt_ge_of_decided {V : View Validator BlockId Payload U}
     {k : ℕ} (h : Decided U V k (some L)) (hδ : δ < (U.block L).round) :
-    (Correct : Finset Validator).card - F.f ≤ (coveredAt U L δ).card
+    (Correct : Finset Validator).card - F.f ≤ (Arcs.coveredAt (MysticetiProperties.mysticetiRule (Payload := Payload))
+      (coreReliability Validator) U L δ).card
 ```
 
 **CQ1.** A committed leader's flush covers all but at most `f` of the correct validators at every round below it — any route, any view, no synchrony.
@@ -18326,7 +18164,8 @@ theorem card_coveredAt_ge_of_decided {V : View Validator BlockId Payload U}
 theorem card_correct_le_two_mul_coveredAt_of_decided
     {V : View Validator BlockId Payload U} {k : ℕ}
     (h : Decided U V k (some L)) (hδ : δ < (U.block L).round) :
-    (Correct : Finset Validator).card ≤ 2 * (coveredAt U L δ).card
+    (Correct : Finset Validator).card ≤ 2 * (Arcs.coveredAt (MysticetiProperties.mysticetiRule (Payload := Payload))
+      (coreReliability Validator) U L δ).card
 ```
 
 **CQ2 (the half, exactly).** Every commit carries, at every round below it, blocks from at least half of the correct validators: `|Correct| ≤ 2·|covered|`, since `|Correct| ≥ 2f + 1`.
@@ -18421,7 +18260,9 @@ theorem chain_quality (hT : T ⊆ (Correct : Finset Validator))
     (∀ (U : BlockUniverse Validator BlockId Payload)
         (V : View Validator BlockId Payload U) (k : ℕ) (L : BlockId)
         (δ : ℕ), Decided U V k (some L) → δ < (U.block L).round →
-        (Correct : Finset Validator).card ≤ 2 * (coveredAt U L δ).card) ∧
+        (Correct : Finset Validator).card ≤
+          2 * (Properties.Arcs.coveredAt (MysticetiProperties.mysticetiRule (Payload := Payload))
+            (coreReliability Validator) U L δ).card) ∧
     ∀ v ∈ T, ∃ k', m ≤ S.slotRound k' ∧ S.leader k' = v ∧
       IncludesAt (Validator := Validator) BlockId Payload T m k'
 ```
@@ -19367,19 +19208,6 @@ theorem slotsChop_slotsOf_eq (hd : G ≤ S.slotRound d)
 ```
 
 **And as schedules.** Both sides are rebases of `slotsOf hinj a` by the same offset from the same base slot, so `Rebases.unique` would settle it; at the core the two constructions are definitionally equal.
-
-#### `joiner_assign_agree`
-
-*theorem, `Integration.Joiner.lean`*
-
-```lean
-theorem joiner_assign_agree (hs : HorizonStable P G d pick')
-    {V : View Validator BlockId Payload U} (R : AdaptiveRun P U V)
-    (V' : View Validator BlockId Payload (chop U G)) (k : ℕ) :
-    pick' (chop U G) V' (fun m => R.vdct (d + m)) k = R.assign (d + k)
-```
-
-**I5, the assignment half.** Under a horizon-stable rule a joiner computes exactly the leaders the network is using.
 
 #### `joiner_run_decided_agree`
 
@@ -20765,52 +20593,6 @@ theorem holds : Statement
 theorem holds : Statement
 ```
 
-#### `ledgerSet_mono`
-
-*theorem, `BlackMarlin.Helpers.Ledger.lean`*
-
-```lean
-theorem ledgerSet_mono (f : Flush U) {n m : ℕ} (h : n ≤ m) :
-    ledgerSet U f n ⊆ ledgerSet U f m
-```
-
-**Nothing is ever dropped.** The ledger only grows as the record reaches higher rounds.
-
-#### `ledgerSet_agree`
-
-*theorem, `BlackMarlin.Helpers.Ledger.lean`*
-
-```lean
-theorem ledgerSet_agree {f₁ f₂ : Flush U} {n : ℕ}
-    (h : ∀ ρ, ρ < n → f₁.block ρ = f₂.block ρ) :
-    ledgerSet U f₁ n = ledgerSet U f₂ n
-```
-
-**Two records that agree output the same blocks.**
-
-#### `outputAt_unique`
-
-*theorem, `BlackMarlin.Helpers.Ledger.lean`*
-
-```lean
-theorem outputAt_unique {f : Flush U} {b : BlockId} {ρ₁ ρ₂ : ℕ}
-    (h₁ : OutputAt U f b ρ₁) (h₂ : OutputAt U f b ρ₂) : ρ₁ = ρ₂
-```
-
-**A block enters the ledger once.** Its position is not merely stable over time — there is no second round it could have entered at.
-
-#### `outputAt_agree`
-
-*theorem, `BlackMarlin.Helpers.Ledger.lean`*
-
-```lean
-theorem outputAt_agree {f₁ f₂ : Flush U} {n : ℕ} {b : BlockId} {ρ : ℕ}
-    (h : ∀ σ, σ < n → f₁.block σ = f₂.block σ) (hρ : ρ < n)
-    (ho : OutputAt U f₁ b ρ) : OutputAt U f₂ b ρ
-```
-
-**And two records that agree concur on which round that is.**
-
 #### `holds`
 
 *theorem, `BlackMarlin.Ledger.Proof.lean`*
@@ -21368,19 +21150,19 @@ theorem mem_slotBlocks_of_decOf {D' : Dag Validator BlockId Payload} {N : ℕ}
 *theorem, `FinWhale.Pass.lean`*
 
 ```lean
-theorem safety_of_pass {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsView D V')
+theorem safety_of_pass {V V' : D.View}
     {choose : BlockId → ℕ → Option BlockId} (hch : ChooseSound S D choose) {N M : ℕ}
-    (hNV : ∀ b ∈ V, (D.block b).round ≤ N) (hNV' : ∀ b ∈ V', (D.block b).round ≤ N)
+    (hNV : ∀ b ∈ V.ids, (D.block b).round ≤ N) (hNV' : ∀ b ∈ V'.ids, (D.block b).round ≤ N)
     {k k' : ℕ}
-    (hk : ∀ s, s < k → decOf S Elig (restrict D V hV) choose M s ≠ Verdict.undecided)
-    (hk' : ∀ s, s < k' → decOf S Elig (restrict D V' hV') choose M s ≠ Verdict.undecided)
+    (hk : ∀ s, s < k → decOf S Elig (V.toRecord) choose M s ≠ Verdict.undecided)
+    (hk' : ∀ s, s < k' → decOf S Elig (V'.toRecord) choose M s ≠ Verdict.undecided)
     (hlt : ∀ r a, Elig r a → r < a) (hrle : ∀ r, S.slotRound r ≤ N → r ≤ M)
     (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ k, S.slotRound k = k)
     (hist : BlockId → List BlockId) :
-    linearise hist (commitSeq (decOf S Elig (restrict D V hV) choose M) k) <+:
-        linearise hist (commitSeq (decOf S Elig (restrict D V' hV') choose M) k') ∨
-      linearise hist (commitSeq (decOf S Elig (restrict D V' hV') choose M) k') <+:
-        linearise hist (commitSeq (decOf S Elig (restrict D V hV) choose M) k)
+    linearise hist (commitSeq (decOf S Elig (V.toRecord) choose M) k) <+:
+        linearise hist (commitSeq (decOf S Elig (V'.toRecord) choose M) k') ∨
+      linearise hist (commitSeq (decOf S Elig (V'.toRecord) choose M) k') <+:
+        linearise hist (commitSeq (decOf S Elig (V.toRecord) choose M) k)
 ```
 
 **Safety, with the verdicts computed rather than assumed.** Two validators running the reverse pass on their own views of one DAG deliver prefix-comparable sequences.
@@ -21392,9 +21174,9 @@ Three of `safety_of_views`' hypotheses are gone: `WellFormed`, because the pass 
 *theorem, `FinWhale.View.lean`*
 
 ```lean
-theorem mem_view_of_voters (hV : IsView D V) {c l : BlockId} (hc : c ∈ V)
+theorem mem_view_of_voters {c l : BlockId} (hc : c ∈ V.ids)
     (hcround : (D.block c).round = (D.block l).round + 2)
-    (hvote : spQuorum Validator ≤ (voters D l).card) : l ∈ V
+    (hvote : spQuorum Validator ≤ (voters D l).card) : l ∈ V.ids
 ```
 
 **Closure, in its counting form.** A view holding one round-`(r+2)` block holds every block a quorum of round-`(r+1)` validators votes for: that block carries `n − f` parents, which meet the quorum in `f + p` authors, one of them correct — and a correct author's round-`(r+1)` block is one block, so the parent and the vote are the same block.
@@ -21404,8 +21186,8 @@ theorem mem_view_of_voters (hV : IsView D V) {c l : BlockId} (hc : c ∈ V)
 *theorem, `FinWhale.View.lean`*
 
 ```lean
-theorem fpEvidence_restrict {b l : BlockId} (hb : b ∈ V) :
-    FPEvidence (restrict D V hV) b l ↔ FPEvidence D b l
+theorem fpEvidence_restrict {b l : BlockId} (hb : b ∈ V.ids) :
+    FPEvidence (V.toRecord) b l ↔ FPEvidence D b l
 ```
 
 **FP-evidence is view-independent** for a block the view holds. The equivocating branch bounds the parents voting for anything conflicting; a conflicting block outside the view has no such parents, and the bound holds of it for nothing.
@@ -21417,7 +21199,7 @@ theorem fpEvidence_restrict {b l : BlockId} (hb : b ∈ V) :
 ```lean
 theorem no_directSkip_of_commit_view {r : ℕ} {l : BlockId}
     (hl : l ∈ slotBlocks S D r) (hcom : DirectCommit D l) :
-    ¬ DirectSkip S (restrict D V hV) r
+    ¬ DirectSkip S (V.toRecord) r
 ```
 
 **A view's direct skip is incompatible with a direct commit.** The skip carries a quorum of round-`(r+2)` blocks, and a single one of them already puts the committed block in the view; then either Lemma 4 or Lemma 2 makes one of those blocks FP-evidence for it, which is what Non-FP-evidence denies.
@@ -21428,7 +21210,7 @@ theorem no_directSkip_of_commit_view {r : ℕ} {l : BlockId}
 
 ```lean
 theorem no_indirectCommit_of_directSkip_view {A : BlockId} {r : ℕ} {b : BlockId}
-    (hskip : DirectSkip S (restrict D V hV) r) : ¬ IndirectCommit S D A r b
+    (hskip : DirectSkip S (V.toRecord) r) : ¬ IndirectCommit S D A r b
 ```
 
 **A view's direct skip is incompatible with an indirect commit.** Either route puts the candidate in the view — an SP-certificate through the voter count, a quorum of evidence through the author the two quorums share — and then the skip's own conditions deny it.
@@ -21438,9 +21220,9 @@ theorem no_indirectCommit_of_directSkip_view {A : BlockId} {r : ℕ} {b : BlockI
 *theorem, `FinWhale.View.lean`*
 
 ```lean
-theorem exclusions_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsView D V')
+theorem exclusions_of_views {V V' : D.View}
     {choose : BlockId → ℕ → Option BlockId} (hch : ChooseSound S D choose) :
-    Exclusions (viewCommit S D V hV) (viewCommit S D V' hV') (viewSkip S D V hV) (viewSkip S D V' hV')
+    Exclusions (viewCommit S D V ) (viewCommit S D V' ) (viewSkip S D V ) (viewSkip S D V' )
       choose (fun r A => A ∈ D.ids ∧ S.slotRound r + 3 ≤ (D.block A).round)
 ```
 
@@ -21451,10 +21233,10 @@ theorem exclusions_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsV
 *theorem, `FinWhale.View.lean`*
 
 ```lean
-theorem safety_of_views {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsView D V')
+theorem safety_of_views {V V' : D.View}
     {choose : BlockId → ℕ → Option BlockId} {dec dec' : ℕ → Verdict BlockId}
-    (hwf : WellFormed Elig (viewCommit S D V hV) (viewSkip S D V hV) choose dec)
-    (hwf' : WellFormed Elig (viewCommit S D V' hV') (viewSkip S D V' hV') choose dec')
+    (hwf : WellFormed Elig (viewCommit S D V ) (viewSkip S D V ) choose dec)
+    (hwf' : WellFormed Elig (viewCommit S D V' ) (viewSkip S D V' ) choose dec')
     (hch : ChooseSound S D choose)
     (hslot : ∀ r A, dec r = Verdict.commit A → A ∈ slotBlocks S D r)
     (hslot' : ∀ r A, dec' r = Verdict.commit A → A ∈ slotBlocks S D r)
@@ -21878,17 +21660,6 @@ theorem Creation.theorem21 (cr : Creation U T N S.leader)
 
 **Theorem 21, from the creation rule.** Where at most `p` validators are Byzantine, the reliable validators' votes alone are a fast commit.
 
-#### `isView_holds`
-
-*theorem, `FinWhale.Holdings.lean`*
-
-```lean
-theorem isView_holds (pc : PaceCore U T M) (hids : D.ids = U.ids) (hblk : D.block = U.block)
-    {v : Validator} (hv : v ∈ T) (t : ℕ) : IsView D (pc.holds v t)
-```
-
-**A validator's holdings are a view.** `holds_sub` is the subset clause and `holds_closed` the closure clause.
-
 #### `held_of_pace`
 
 *theorem, `FinWhale.Holdings.lean`*
@@ -21918,7 +21689,7 @@ theorem all_decided_of_pass (pc : PaceCore U (Correct : Finset Validator) M)
     (hcommits : CommitsCorrectLeaders S D R N) (hrr : RoundRobin S.leader)
     (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ k, S.slotRound k = k) (hNM : N ≤ M)
     (hN : max r R + (3 * F.f + 5) ≤ N) :
-    decOf S Elig (restrict D (pc.holds v (settled pc)) (isView_holds pc hids hblk hv (settled pc)))
+    decOf S Elig (holdsView pc hids hblk hv (settled pc)).toRecord
       choose Np r ≠ Verdict.undecided
 ```
 
@@ -22527,19 +22298,6 @@ theorem Truncates.slotsOf {U U' : R.Universe} {S S' : Slots Validator} {G d : �
 
 And so a cut at the base schedule is a cut at the adaptive one.
 
-#### `joiner_assign_agree`
-
-*theorem, `Adaptive.Joiner.lean`*
-
-```lean
-theorem joiner_assign_agree (hs : HorizonStable P G d pick')
-    {U U' : R.Universe} (h : RebasedAbove R U U' G G)
-    {V : R.View U} (A : Run P U V) (V' : R.View U') (k : ℕ) :
-    pick' U' V' (fun m => A.vdct (d + m)) k = A.assign (d + k)
-```
-
-**The assignment half.** Under a horizon-stable rule a joiner computes exactly the leaders the network is using: its assignment at its own slot `k` is the full run's assignment at slot `d + k`.
-
 #### `joiner_run_decided_agree`
 
 *theorem, `Adaptive.Joiner.lean`*
@@ -23037,32 +22795,20 @@ theorem progress : LeanDag.Properties.Support.Progresses
     (hzSupport (Replica := Replica) (BlockId := BlockId)) (hzReliability Replica)
 ```
 
-#### `extends_copyFillHZ`
+#### `not_synchronisedOn_copyFill_hz`
 
 *theorem, `Integration.HydrozoanMechanisms.lean`*
 
 ```lean
-theorem extends_copyFillHZ :
-    Extends (LeanDag.Hydrozoan.rule (Replica := Replica) (BlockId := BlockId))
-      U (copyFillHZ U sk)
-```
-
-**The fill is an extension of Hydrozoan's carrier**: the record's witness, at the fill's own name.
-
-#### `not_synchronisedOn_copyFillHZ`
-
-*theorem, `Integration.HydrozoanMechanisms.lean`*
-
-```lean
-theorem not_synchronisedOn_copyFillHZ {sk : SkipData U.ids U.block} {T : Finset Replica}
+theorem not_synchronisedOn_copyFill_hz {sk : SkipData U.ids U.block} {T : Finset Replica}
     {R k : ℕ} (hv1 : sk.v1 ∈ T) (hk1 : sk.r0 < k) (hk2 : k ≤ sk.r) (hk : R ≤ k)
     {b : BlockId} (hb : b ∈ U.ids) (hbround : (U.block b).round = k + 1)
     (hbc : (U.block b).creator ∈ T) :
     ¬ Timed.SynchronisedOn (LeanDag.Hydrozoan.rule (Replica := Replica) (BlockId := BlockId))
-      (copyFillHZ U sk) T R
+      (BlockRecord.copyFill U sk) T R
 ```
 
-**The copy fill does not restore coverage either.** The generic refutation at `extends_copyFillHZ`: a reliable set holding the recovering replica is uncovered at every gap round, for the same reason the fill is safe.
+**The copy fill does not restore coverage either.** The generic refutation at the record's `extends_copyFill`: a reliable set holding the recovering replica is uncovered at every gap round, for the same reason the fill is safe.
 
 #### `decided_none_fresh_hz`
 
@@ -23075,42 +22821,42 @@ theorem decided_none_fresh_hz (S : Slots Replica) {V : LeanDag.Hydrozoan.View U}
     (hpres : PresentAt (LeanDag.Hydrozoan.rule (Replica := Replica) (BlockId := BlockId)) V T
       (S.slotRound k + 1)) :
     (LeanDag.Hydrozoan.rule (Replica := Replica) (BlockId := BlockId)).Decided S
-      (U := copyFillHZ U sk) (liftViewHZ sk V) k none
+      (U := BlockRecord.copyFill U sk) (V.liftCopy (sk := sk)) k none
 ```
 
 **SS3 for Hydrozoan**, from its `SkipsUnsupported`: the slot the recovering replica leads at a gap round is skipped at once, at the grade `qFast ≤ |T|`.
 
-#### `leaderExcludedAll_chopHZ`
+#### `leaderExcludedAll_chop`
 
 *theorem, `Integration.OptimalMechanisms.lean`*
 
 ```lean
-theorem leaderExcludedAll_chopHZ (hU : LeaderExcludedAll U) :
-    LeaderExcludedAll (chopHZ U G)
+theorem leaderExcludedAll_chop (hU : LeaderExcludedAll U) :
+    LeaderExcludedAll (BlockRecord.chop U G)
 ```
 
 **Leader exclusion survives the cut.** A block bound by exclusion sits two rounds above the horizon, so it keeps its refs, its refs keep theirs and their creators, and its candidates are old blocks at a rebased round.
 
-#### `leaderExcludedAll_copyFillHZ`
+#### `leaderExcludedAll_copyFill`
 
 *theorem, `Integration.OptimalMechanisms.lean`*
 
 ```lean
-theorem leaderExcludedAll_copyFillHZ (hU : LeaderExcludedAll U) :
-    LeaderExcludedAll (copyFillHZ U sk)
+theorem leaderExcludedAll_copyFill (hU : LeaderExcludedAll U) :
+    LeaderExcludedAll (BlockRecord.copyFill U sk)
 ```
 
 **Leader exclusion survives the copy fill.** A filled block's refs are the donor's; old blocks vote only for old blocks; so whatever a block of the fill witnesses, a block of the old universe with the same refs witnessed, and its refs were already excluded.
 
-#### `leaderExcludedAll_addGenesisHZ`
+#### `leaderExcludedAll_addGenesis`
 
 *theorem, `Integration.OptimalMechanisms.lean`*
 
 ```lean
-theorem leaderExcludedAll_addGenesisHZ {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
+theorem leaderExcludedAll_addGenesis {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
     (hU : LeaderExcludedAll U) {v : Replica} {g : BlockId} {hg : g ∉ U.ids}
     {hsev : ∀ b ∈ U.ids, (U.block b).creator ≠ v} :
-    LeaderExcludedAll (addGenesisHZ U v g hg hsev)
+    LeaderExcludedAll (BlockRecord.addGenesis U v g () hg hsev)
 ```
 
 **Leader exclusion survives re-genesis.** The new block sits at round zero, so it is bound by no exclusion; and it is its creator's only block, so it can be no second candidate of a witnessed equivocation and no parent of anything old. Every old block's witnesses and refs are unchanged.
@@ -24031,6 +23777,15 @@ theorem sustains_fill : Sustains R U (c.fill U sk B hB hI) 0 (sk.r + 1) where
 ```
 
 **And it sustains the carrier from the top of its gap.**
+
+#### `extends_copyFill`
+
+*theorem, `Properties.Record.lean`*
+
+```lean
+theorem extends_copyFill (U : R.Universe)
+    (sk : SkipData (c.toRec U).ids (c.toRec U).block) : Extends R U (c.copyFill U sk)
+```
 
 #### `extends_addGenesis`
 

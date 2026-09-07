@@ -632,7 +632,8 @@ conditions.
 
 A **view** is a reference-closed subset of the universe's blocks, and it
 is a `Dag` in its own right — validity and non-equivocation are
-inherited, and closure is its completeness. `restrict` builds it.
+inherited, and closure is its completeness. It is the block record's
+view, and `View.toRecord` builds the DAG.
 
 **Most of the vocabulary does not read the population.** `parentsVoting`,
 `parentSet` and `SPCertificate` are computed from a block's references,
@@ -675,9 +676,9 @@ rather than assumed.
 **And a view is a validator's holdings.** `Holdings.lean` closes the last
 of it. `PaceCore.holds` is what a validator has at an instant, and its
 two store clauses — holdings are part of the universe, holdings are
-closed under references — are exactly what `IsView` asks, so
-`isView_holds` makes the holdings a view and `restrict` makes them a DAG
-the rules run on. What the network delivers is `held_of_pace`: past GST
+closed under references — are exactly a view's, so `holdsView` reads
+the holdings as a view and `View.toRecord` makes them a DAG the rules
+run on. What the network delivers is `held_of_pace`: past GST
 every reliable block of every round up to the horizon has arrived by
 `settled`, one instant, by `holds_roundBlocks` and monotonicity. Byzantine
 authors are not covered and no schedule covers them, which is why the
@@ -1013,8 +1014,8 @@ definitions and is now proved beside the rest.
 
 **Four definitions sit outside `Model/`, each because it takes a proof as
 an argument.** `Run.verdicts` and `Run.delivers` run the reverse pass on
-`restrict`, which needs the holdings to be a view; that proof is
-`Run.isView`, and the two sit beside it in `Protocol.lean`.
+the holdings read as a view, which needs the holdings to be one; that
+view is `Run.viewOf`, and the two sit beside it in `Protocol.lean`.
 `Dag.ofDoSValid` and `Run.ofDoSValid` are built from
 `leaderClause_of_dosValid` and `selfParented_ofDoSValid`, and sit beside
 them in `DoSBridge.lean`.

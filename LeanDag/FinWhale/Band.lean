@@ -95,16 +95,16 @@ theorem chooseLeast_congr [LinearOrder BlockId] {S S' : Slots Validator}
 /-- **A view's direct rules read the schedule only at the slot they
 decide**, since the rules they restrict do. -/
 theorem viewCommit_congr {S S' : Slots Validator} {D : Dag Validator BlockId Payload}
-    {V : Finset BlockId} {hV : IsView D V} {r : ℕ} {l : BlockId}
+    {V : D.View} {r : ℕ} {l : BlockId}
     (hr : S.slotRound r = S'.slotRound r) (hl : S.leader r = S'.leader r) :
-    viewCommit S D V hV r l ↔ viewCommit S' D V hV r l := by
+    viewCommit S D V  r l ↔ viewCommit S' D V  r l := by
   unfold viewCommit; rw [slotBlocks_congr hr hl]
 
 /-- The skip half. -/
 theorem viewSkip_congr {S S' : Slots Validator} {D : Dag Validator BlockId Payload}
-    {V : Finset BlockId} {hV : IsView D V} {r : ℕ}
+    {V : D.View} {r : ℕ}
     (hr : S.slotRound r = S'.slotRound r) (hl : S.leader r = S'.leader r) :
-    viewSkip S D V hV r ↔ viewSkip S' D V hV r := by
+    viewSkip S D V  r ↔ viewSkip S' D V  r := by
   unfold viewSkip; exact directSkip_congr hr hl
 
 /-- **A band of rounds, in FinWhale's vocabulary.** `Properties.AgreeBand`

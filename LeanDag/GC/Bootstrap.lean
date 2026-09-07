@@ -163,7 +163,7 @@ def joinView {R m t : ℕ} (hs : Synchronised U R)
       exact mem_chop_ids.mpr ⟨viewUpto_subset_ids hiv, by omega⟩
   complete := by
     intro i hi j hj
-    rw [chop_block_eq] at hj
+    rw [chop_block] at hj
     rcases Finset.mem_union.mp hi with h | h
     · obtain ⟨⟨hids, hround⟩, -⟩ := mem_base.mp h
       rw [chopBlk_refs_of_le (by omega)] at hj

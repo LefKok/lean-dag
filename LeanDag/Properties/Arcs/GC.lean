@@ -175,7 +175,7 @@ theorem decided_chop_iff (hd : G ≤ S.slotRound d)
     S (S.chop G d hd) U (chop U G) G d (truncates_chop hd) V (V.chop G)
     (fun b hb hr => by
       show b ∈ V.ids ↔ b ∈ (V.chop G).ids
-      rw [View.chop_ids, Finset.mem_filter]
+      rw [BlockRecord.View.chop_ids, Finset.mem_filter]
       exact ⟨fun h => ⟨h, hr⟩, fun h => h.1⟩) k v
 
 /-- **The chopped view agrees with the original above the cut**, which
@@ -185,7 +185,7 @@ theorem viewAgreeAbove_chop {V : View Validator BlockId Payload U} :
       V (V.chop G) G :=
   fun b _ hr => by
     show b ∈ V.ids ↔ b ∈ (V.chop G).ids
-    rw [View.chop_ids, Finset.mem_filter]
+    rw [BlockRecord.View.chop_ids, Finset.mem_filter]
     exact ⟨fun h => ⟨h, hr⟩, fun h => h.1⟩
 
 /-- **G4 re-derived.** `GC/ChopDecided.decided_agree_chop` proves this

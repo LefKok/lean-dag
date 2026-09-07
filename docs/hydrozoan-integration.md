@@ -127,9 +127,10 @@ from the block record, Hydrozoan's universe being that record.
 `CopyStable` as the validity family `ValidAt` at `q` with the
 distinct-creators clause, and `Hydrozoan/Helpers/Record.lean` gives the carrier's
 `onRecord`, every map the identity with
-every equation `rfl`. The cut `chopHZ`, the copy fill `copyFillHZ` and
-re-genesis `addGenesisHZ` are then the record's constructions at
-`onRecord`, whose witnesses and verdict cells are the generic ones. The
+every equation `rfl`. The cut, the copy fill and re-genesis are then
+`BlockRecord.chop`, `BlockRecord.copyFill` and `BlockRecord.addGenesis`
+themselves, under no name of Hydrozoan's own, and their witnesses and
+verdict cells are the generic ones at `onRecord`. The
 verdict cells are then `LocalTruncate.of_banded` and `Persist.of_banded`
 at `banded`, with agreement from `agree`: `decided_chop_iff_hz`,
 `decided_agree_chop_hz`, `decided_copyFillHZ`, `decided_agree_copyFillHZ`.
@@ -139,19 +140,19 @@ when no old block references a fresh identifier; the prompt skip at the
 fill is `decided_none_fresh_hz`, at grade `qFast ≤ |T|`, with
 `decided_none_fresh_agree_hz` saying no view decides that slot
 otherwise. The same witness gives what the fill does to coverage:
-`not_synchronisedOn_copyFillHZ` is the generic refutation of
-`Timed/Extension.lean` at `extends_copyFillHZ`.
+`not_synchronisedOn_copyFill_hz` is the generic refutation of
+`Timed/Extension.lean` at the record's `extends_copyFill`.
 
 `Integration/OptimalMechanisms.lean` reads leader exclusion as an
 invariant on the record, `Excluded`, and shows it mechanised:
-`leaderExcludedAll_chopHZ` (a block bound by exclusion sits two rounds
+`leaderExcludedAll_chop` (a block bound by exclusion sits two rounds
 above the horizon, so it keeps its parents and its candidates are old
-blocks at a rebased round), `leaderExcludedAll_copyFillHZ` (a filled
+blocks at a rebased round), `leaderExcludedAll_copyFill` (a filled
 block's parents are the donor's, so it adds no edge) and
-`leaderExcludedAll_addGenesisHZ` (the new block is bound by no exclusion
+`leaderExcludedAll_addGenesis` (the new block is bound by no exclusion
 and is its author's only block). `optOnRecord` reads the carrier as
-records under `Excluded`, and `chopOpt`,
-`copyFillOpt` and `addGenesisOpt` are the record's constructions at it.
+records under `Excluded`, and the record's constructions at it are
+`optOnRecord.chop`, `optOnRecord.copyFill` and `optOnRecord.addGenesis`.
 Every verdict cell of both rules is `Properties/Arcs/Record.lean` at
 `Hydrozoan.onRecord` or `optOnRecord`, with nothing written per cell.
 

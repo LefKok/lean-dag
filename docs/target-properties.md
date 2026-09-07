@@ -4045,6 +4045,56 @@ rather than an optional block.
 
 Net: about two hundred Lean lines fewer, with two files added.
 
+### 11.28 Wrappers deleted: the common notions used directly
+
+A pass over every declaration whose body is one application of a
+generic declaration under a rule's own name. Forwarders that only
+renamed the record's constructions are deleted and their consumers use
+the record's names: Nemo's, FinWhale's, Hybrid's and Optimal's
+`chop*`, `skipFill*`, `copyFill*` and `addGenesis*`, and Hydrozoan's
+`chopHZ`, `copyFillHZ` and `addGenesisHZ` with the thirteen lemmas that
+restated `mem_chop_ids`, `chop_block`, `copyFill_block_old` and their
+kin. The stack results are stated at `nemoOnRecord.chop` and
+`finWhaleOnRecord.copyFill`; Optimal's three exclusion invariants are
+stated at `BlockRecord.chop`, `BlockRecord.copyFill` and
+`BlockRecord.addGenesis` and renamed `leaderExcludedAll_chop`,
+`_copyFill`, `_addGenesis`; Hybrid keeps `fillHybrid`, which fixes the
+self-referencing reading and is not a rename. The core's `chop`,
+`mem_chop_ids`, `chop_block`, `addGenesis` and its three lemmas are the
+record's, `export`ed into the core's namespace so that the spelling
+survives; `chop_block_eq` is the record's `chop_block`, and the core's
+`View.chop` is reached by dot notation.
+
+Black Marlin's `ledgerSet` and `OutputAt` abbreviations and their four
+ledger theorems are gone: `Ledger` is stated at `f.block` and proved by
+the record's theorems, and `mem_ledgerSet_of_some` moves to
+`Ledger.lean`. Hydrozoan's `Helpers/History.lean`, a fuel-indexed copy
+of the record's `history`, is deleted. The core's `coveredAt` wrapper
+and three forwarders are gone, CQ1–CQ3 stated over `Arcs.coveredAt` at
+the core's rule; `MysticetiProperties.exists_coversUpto_decides` and
+`decided_mono_of_band` are gone, the one consumer reading
+`Properties.decided_mono_of_banded`; `Integration.joiner_assign_agree`
+and `joiner_leader_agree` are gone, I5's assignment half being
+`Adaptive.joiner_assign_agree` at the core's `sustains_chop`.
+
+**FinWhale's views are the record's view throughout.** `IsView` and
+`restrict` are deleted with the `isView` shim: `viewCommit`, `viewSkip`,
+`Assignment`, `passOf` and every theorem of `View.lean`, `Pass.lean`
+and `Band.lean` take `V : D.View` and read the DAG as `V.toRecord`;
+`holdsView` reads a validator's holdings as a view and `Run.viewOf` a
+run's, and the tests build their views as `D.View` literals. FinWhale
+has nothing left that the record does not state; what it contributed
+to the common layer, `View.toRecord`, went there in §11.25.
+
+Kept, as instantiations rather than renames: the `OnRecord` bridges,
+each rule's `Populated`/`Synchronised` abbreviation at its honest set,
+the core's and Nemo's ledger agreement theorems at their `Decided`,
+`Quality/Coverage.lean`'s CQ results and `joiner_run_decided_agree`
+with their core witnesses, and `Adaptive/Mysticeti.lean`'s
+instantiations, which §11.26's last cluster will take.
+
+Net: about three hundred and fifty Lean lines fewer.
+
 ### 11.5 Next steps, in order
 
 1. **~~`Compose.lean`~~** (**done**, §11.3). The three composition
@@ -4084,6 +4134,7 @@ Net: about two hundred Lean lines fewer, with two files added.
     What it did not give is what item 3 is now for: `Causal` and
     `Banded` are per-rule, and `Banded` is the one that matters.
 11. **The six clusters of §11.26**: ~~counting on a view, the liveness
-    predicates and the ledger~~ (**done**, §11.27), then the anchored
+    predicates and the ledger~~ (**done**, §11.27; the forwarding
+    wrappers of the earlier steps deleted in §11.28), then the anchored
     decision procedure with the band and liveness proofs behind it,
     then the adaptive instantiations.

@@ -55,7 +55,7 @@ theorem honestNoEquiv_chop (hne : HonestNoEquiv U) :
     HonestNoEquiv (chop U G) := by
   intro i hi j hj hib hij hround
   rw [mem_chop_ids] at hi hj
-  simp only [chop_block_eq, chopBlk_creator, chopBlk_round] at hib hij hround
+  simp only [chop_block, chopBlk_creator, chopBlk_round] at hib hij hround
   -- rounds are rebased by `−G`; the filter pins both above the cut,
   -- where the subtraction is faithful
   exact hne i hi.1 j hj.1 hib hij (by omega)

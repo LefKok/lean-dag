@@ -39,16 +39,9 @@ variable {G : ℕ} {b i j : BlockId}
 
 /-! ## The core's universe -/
 
-/-- **The cut**: the block record's, at the core. -/
-def chop (U : BlockUniverse Validator BlockId Payload) (G : ℕ) :
-    BlockUniverse Validator BlockId Payload :=
-  BlockRecord.chop U G
-
-theorem mem_chop_ids :
-    i ∈ (chop U G).ids ↔ i ∈ U.ids ∧ G ≤ (U.block i).round :=
-  BlockRecord.mem_chop_ids
-
-theorem chop_block_eq : (chop U G).block = chopBlk U.block G := rfl
+/-! **The cut** is the block record's (`Record/Chop.lean`); `chop`,
+`mem_chop_ids` and `chop_block` are its names, read here at the core. -/
+export BlockRecord (chop mem_chop_ids chop_block)
 
 /-! ## Transfer lemmas: rounds, layers, reachability, cones -/
 
@@ -116,7 +109,7 @@ theorem exposedIn_of_exposedIn_chop {X : Validator}
   · have hxG := hx.2
     have hyG := hy.2
     have hr := hround
-    rw [chop_block_eq, chopBlk_round, chopBlk_round] at hr
+    rw [chop_block, chopBlk_round, chopBlk_round] at hr
     omega
 
 /-- **G1, DoS half — the one-way door.** The condition survives

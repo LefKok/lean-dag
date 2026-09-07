@@ -88,22 +88,10 @@ variable {P : AdaptivePolicy Validator BlockId Payload}
 variable {pick' : (U' : BlockUniverse Validator BlockId Payload) →
       View Validator BlockId Payload U' → (ℕ → Option BlockId) → ℕ → Validator}
 
-/-- **I5, the assignment half.** Under a horizon-stable rule a joiner
-computes exactly the leaders the network is using. -/
-theorem joiner_assign_agree (hs : HorizonStable P G d pick')
-    {V : View Validator BlockId Payload U} (R : AdaptiveRun P U V)
-    (V' : View Validator BlockId Payload (chop U G)) (k : ℕ) :
-    pick' (chop U G) V' (fun m => R.vdct (d + m)) k = R.assign (d + k) :=
-  Adaptive.joiner_assign_agree hs (Properties.Arcs.sustains_chop (U := U) (G := G)) R V' k
-
-/-- The joiner's schedule *is* the network's, seen from another origin. -/
-theorem joiner_leader_agree (hd : G ≤ S.slotRound d) (hs : HorizonStable P G d pick')
-    {V : View Validator BlockId Payload U} (R : AdaptiveRun P U V)
-    (V' : View Validator BlockId Payload (chop U G)) (k : ℕ) :
-    (slotsOf (S := S.chop G d hd) (injective_slotRound_chop hd P.inj)
-        (fun m => pick' (chop U G) V' (fun j => R.vdct (d + j)) m)).leader k
-      = (slotsOf P.inj R.assign).leader (d + k) :=
-  Adaptive.joiner_leader_agree hs (Properties.Arcs.truncates_chop hd) R V' k
+/-! The assignment half of I5 — under a horizon-stable rule a joiner
+computes exactly the leaders the network is using — and the schedule
+half are `Adaptive.joiner_assign_agree` and `Adaptive.joiner_leader_agree`
+at the core's `Properties.Arcs.sustains_chop` and `truncates_chop`. -/
 
 /-- **I5, whole.** A joiner that computed its own schedule from its own
 truncated view, under a horizon-stable rule, agrees with the network's

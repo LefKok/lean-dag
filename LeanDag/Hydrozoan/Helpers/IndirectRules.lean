@@ -1,5 +1,5 @@
 import LeanDag.Hydrozoan.Model.IndirectRules
-import LeanDag.Hydrozoan.Helpers.History
+import LeanDag.History
 
 /-!
 # Indirect-rule instances and the history characterizations

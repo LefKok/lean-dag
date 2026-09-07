@@ -136,37 +136,9 @@ theorem coneAnchors_succ_nonempty_of_committed (h : Committed U L ρ)
 
 /-! ## The ledger -/
 
-/-- **Nothing is ever dropped.** The ledger only grows as the record
-reaches higher rounds. -/
-theorem ledgerSet_mono (f : Flush U) {n m : ℕ} (h : n ≤ m) :
-    ledgerSet U f n ⊆ ledgerSet U f m :=
-  LeanDag.ledgerSet_mono h
-
-/-- **Two records that agree output the same blocks.** -/
-theorem ledgerSet_agree {f₁ f₂ : Flush U} {n : ℕ}
-    (h : ∀ ρ, ρ < n → f₁.block ρ = f₂.block ρ) :
-    ledgerSet U f₁ n = ledgerSet U f₂ n :=
-  ledgerSet_agree_of h
-
-/-- **A block enters the ledger once.** Its position is not merely stable
-over time — there is no second round it could have entered at. -/
-theorem outputAt_unique {f : Flush U} {b : BlockId} {ρ₁ ρ₂ : ℕ}
-    (h₁ : OutputAt U f b ρ₁) (h₂ : OutputAt U f b ρ₂) : ρ₁ = ρ₂ :=
-  LeanDag.outputAt_unique h₁ h₂
-
-/-- **And two records that agree concur on which round that is.** -/
-theorem outputAt_agree {f₁ f₂ : Flush U} {n : ℕ} {b : BlockId} {ρ : ℕ}
-    (h : ∀ σ, σ < n → f₁.block σ = f₂.block σ) (hρ : ρ < n)
-    (ho : OutputAt U f₁ b ρ) : OutputAt U f₂ b ρ :=
-  outputAt_agree_of h hρ ho
-
-/-- **A flushed anchor's cone is in the ledger.** The link between the
-record and what it delivers, and with the recurrence of committed anchors
-the sense in which the ledger extends. -/
-theorem mem_ledgerSet_of_block (f : Flush U)
-    (hL : f.block ρ = some L) {b : BlockId} (hb : Reaches U L b) :
-    b ∈ ledgerSet U f (ρ + 1) :=
-  ⟨ρ, by omega, L, hL, hb⟩
+/-! The ledger's own facts — monotone, agreed between agreeing records,
+one entry round per block, agreed — are the record's (`Ledger.lean`),
+at `f.block`. -/
 
 end BlackMarlin
 

@@ -45,22 +45,9 @@ def nemoOnRecord :
   viewIds_to := fun _ => rfl
   viewIds_of := fun _ => rfl
 
-/-- **The cut, at Nemo's universe**: the record's. -/
-def chopNemo (U : Nemo.Universe Validator BlockId Payload) (G : ℕ) :
-    Nemo.Universe Validator BlockId Payload :=
-  nemoOnRecord.chop U G
-
-/-- **The recovery, at Nemo's universe**: the record's copy fill. -/
-def skipFillNemo (U : Nemo.Universe Validator BlockId Payload)
-    (sk : SkipData U.ids U.block) : Nemo.Universe Validator BlockId Payload :=
-  nemoOnRecord.copyFill U sk
-
-/-- **Re-genesis, at Nemo's universe**: the record's. -/
-def addGenesisNemo (U : Nemo.Universe Validator BlockId Payload) (v : Validator)
-    (g : BlockId) (p : Payload) (hg : g ∉ U.ids)
-    (hsev : ∀ b ∈ U.ids, (U.block b).creator ≠ v) :
-    Nemo.Universe Validator BlockId Payload :=
-  nemoOnRecord.addGenesis U v g p hg hsev
+/-! The cut, the copy fill and re-genesis at Nemo's universe are the
+record's, through `nemoOnRecord`: `nemoOnRecord.chop`,
+`nemoOnRecord.copyFill`, `nemoOnRecord.addGenesis`. -/
 
 end Integration
 

@@ -57,15 +57,8 @@ variable {G : ℕ}
 
 /-! ## The truncated view -/
 
-/-- A validator's view, truncated at the horizon: keep what clears the cut.
-Closure survives: a retained block's references sit one round below it,
-hence at or above the cut — except at the base layer, where they are gone. -/
-def View.chop (V : View Validator BlockId Payload U) (G : ℕ) :
-    View Validator BlockId Payload (chop U G) :=
-  BlockRecord.View.chop V G
-
-theorem View.chop_ids (V : View Validator BlockId Payload U) :
-    (V.chop G).ids = V.ids.filter fun i => G ≤ (U.block i).round := rfl
+/-! A validator's view, truncated at the horizon, is the record's
+`View.chop` (`Record/Chop.lean`): keep what clears the cut. -/
 
 /-! ## The induced schedule -/
 

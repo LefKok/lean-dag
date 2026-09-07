@@ -93,7 +93,7 @@ example : fullFlush.block 0 = some 0 ∧ fullFlush.block 1 = some 5 ∧
 /-- **BMD6 on data**: validator `3`'s genesis block enters the ledger at
 round `1`, with the round-1 anchor — the first flushed anchor whose cone
 holds it. -/
-example : OutputAt Ufull fullFlush 3 1 := by
+example : OutputAt Ufull fullFlush.block 3 1 := by
   refine ⟨⟨5, by decide, (mem_history_iff (by decide)).mp (by decide)⟩, ?_⟩
   intro σ hσ L hL hr
   have hσ0 : σ = 0 := by omega
@@ -106,7 +106,7 @@ example : OutputAt Ufull fullFlush 3 1 := by
   exact absurd ((mem_history_iff (by decide)).mpr hr) (by decide)
 
 /-- And so it is in the ledger from round `2` on, but not before. -/
-example : (3 : Fin 16) ∈ ledgerSet Ufull fullFlush 2 :=
+example : (3 : Fin 16) ∈ ledgerSet Ufull fullFlush.block 2 :=
   (Ledger.holds (Fin 4) (Fin 16) Unit Ufull).2.2.2.2.2.2.2.2.2.2
     fullFlush 1 5 3 (by decide) ((mem_history_iff (by decide)).mp (by decide))
 

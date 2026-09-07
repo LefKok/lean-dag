@@ -611,15 +611,13 @@ has two blocks, and this view sees one. -/
 it, directly or through a parent. -/
 def Vpart : Finset (Fin 28) := Finset.univ \ {14, 15, 18, 20, 27}
 
-theorem isViewPart : IsView Dequiv Vpart := by
-  constructor
-  · decide
-  · decide
+/-- As a view of `Dequiv`. -/
+def VpartView : Dequiv.View := ⟨Vpart, by decide, by decide⟩
 
 /-- **The slot looks different from inside.** The universe has two blocks
 of slot `0`; the view has one. -/
 example : slotBlocks fwSched Dequiv 0 = {0, 27} ∧
-    slotBlocks fwSched (restrict Dequiv Vpart isViewPart) 0 = {0} := by decide
+    slotBlocks fwSched (VpartView.toRecord) 0 = {0} := by decide
 
 /-- The view is smaller, and genuinely so. -/
 example : (27 : Fin 28) ∈ Dequiv.ids ∧ (27 : Fin 28) ∉ Vpart := by decide
@@ -640,17 +638,17 @@ example {c : Fin 28} (hc : c ∈ Dequiv.ids) (h0 : (0 : Fin 28) ∈ (Dequiv.bloc
 /-- What a block's parents say does not change with the view, which is
 why FP-evidence transfers: block `19` reads the same parents either
 way. -/
-example : parentsVoting (restrict Dequiv Vpart isViewPart) 19 0 = parentsVoting Dequiv 19 0 :=
+example : parentsVoting (VpartView.toRecord) 19 0 = parentsVoting Dequiv 19 0 :=
   rfl
 
 /-- And the rules the view can evaluate agree with the universe's where
 the view holds the rounds they read. On `Dsync`, which holds everything,
 the whole DAG is a view and the direct commit is seen there. -/
-theorem isViewFull : IsView Dsync Finset.univ :=
-  ⟨fun _ _ => Finset.mem_univ _, fun _ _ _ _ => Finset.mem_univ _⟩
+def fullView : Dsync.View :=
+  ⟨Finset.univ, fun _ _ => Finset.mem_univ _, fun _ _ _ _ => Finset.mem_univ _⟩
 
-example : DirectCommit (restrict Dsync Finset.univ isViewFull) 2 :=
-  directCommit_of_holds (hV := isViewFull) (fun _ _ => Finset.mem_univ _)
+example : DirectCommit fullView.toRecord 2 :=
+  directCommit_of_holds (V := fullView) (fun _ _ => Finset.mem_univ _)
     (fun _ _ => Finset.mem_univ _) (Or.inl (by decide))
 
 /-! ## The pass, on data

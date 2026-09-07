@@ -39,7 +39,7 @@ def finWhale : BaseRule Validator BlockId Payload where
   waveLength := 3
   DirectCommitIn := fun V L r => FinWhaleProperties.DirectCommitIn V L r
   decDirect := fun V L _ => inferInstanceAs (Decidable
-    (L ∈ V.ids ∧ LeanDag.FinWhale.DirectCommit (LeanDag.FinWhale.restrict _ V.ids V.isView) L))
+    (L ∈ V.ids ∧ LeanDag.FinWhale.DirectCommit (V.toRecord) L))
 
 /-- **FinWhale as a live rule**: a DAG is good when a correct quorum is
 synchronised from `Rnd` and populates the rounds to `N`. -/

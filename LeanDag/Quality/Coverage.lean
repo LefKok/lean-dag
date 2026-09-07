@@ -40,33 +40,16 @@ variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 variable {U : BlockUniverse Validator BlockId Payload}
 variable {b L : BlockId} {δ : ℕ}
 
-/-- The correct validators whose round-`δ` block a cone carries — the
-complement, within `Correct`, of `missingAt`. -/
-def coveredAt (U : BlockUniverse Validator BlockId Payload)
-    (b : BlockId) (δ : ℕ) : Finset Validator :=
-  Arcs.coveredAt (MysticetiProperties.mysticetiRule (Payload := Payload))
-    (coreReliability Validator) U b δ
-
-theorem mem_coveredAt {v : Validator} :
-    v ∈ coveredAt U b δ ↔
-      v ∈ (Correct : Finset Validator) ∧
-        ∃ i ∈ history U b, (U.block i).creator = v ∧ (U.block i).round = δ :=
-  Arcs.mem_coveredAt (R := MysticetiProperties.mysticetiRule)
-
-theorem coveredAt_subset_correct :
-    coveredAt U b δ ⊆ (Correct : Finset Validator) :=
-  Arcs.coveredAt_subset_correct
-
-/-- Covered and missing partition the correct validators. -/
-theorem coveredAt_eq_sdiff :
-    coveredAt U b δ = (Correct : Finset Validator) \ missingAt U b δ :=
-  Arcs.coveredAt_eq_sdiff (R := MysticetiProperties.mysticetiRule)
+/-! The correct validators whose round-`δ` block a cone carries are
+`Arcs.coveredAt` at the core's rule and reliability — the complement,
+within `Correct`, of `missingAt` (`Arcs.coveredAt_eq_sdiff`). -/
 
 /-- **CQ1, the count.** A valid block's cone covers all but at most `f`
 of the correct validators, at every round below it. Purely structural:
 density (D25) plus the partition. -/
 theorem card_coveredAt_ge (hb : b ∈ U.ids) (hδ : δ < (U.block b).round) :
-    (Correct : Finset Validator).card - F.f ≤ (coveredAt U b δ).card :=
+    (Correct : Finset Validator).card - F.f ≤ (Arcs.coveredAt (MysticetiProperties.mysticetiRule (Payload := Payload))
+      (coreReliability Validator) U b δ).card :=
   Arcs.card_coveredAt_ge (R := MysticetiProperties.mysticetiRule)
     MysticetiProperties.quorate hb hδ
 
@@ -97,7 +80,8 @@ the correct validators at every round below it — any route, any view,
 no synchrony. -/
 theorem card_coveredAt_ge_of_decided {V : View Validator BlockId Payload U}
     {k : ℕ} (h : Decided U V k (some L)) (hδ : δ < (U.block L).round) :
-    (Correct : Finset Validator).card - F.f ≤ (coveredAt U L δ).card :=
+    (Correct : Finset Validator).card - F.f ≤ (Arcs.coveredAt (MysticetiProperties.mysticetiRule (Payload := Payload))
+      (coreReliability Validator) U L δ).card :=
   Arcs.card_coveredAt_ge_of_decided (R := MysticetiProperties.mysticetiRule)
     MysticetiProperties.quorate
     MysticetiProperties.commitsCandidate h hδ
@@ -108,7 +92,8 @@ below it, blocks from at least half of the correct validators:
 theorem card_correct_le_two_mul_coveredAt_of_decided
     {V : View Validator BlockId Payload U} {k : ℕ}
     (h : Decided U V k (some L)) (hδ : δ < (U.block L).round) :
-    (Correct : Finset Validator).card ≤ 2 * (coveredAt U L δ).card :=
+    (Correct : Finset Validator).card ≤ 2 * (Arcs.coveredAt (MysticetiProperties.mysticetiRule (Payload := Payload))
+      (coreReliability Validator) U L δ).card :=
   Arcs.card_correct_le_two_mul_coveredAt_of_decided
     (R := MysticetiProperties.mysticetiRule) MysticetiProperties.quorate
     MysticetiProperties.commitsCandidate

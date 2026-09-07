@@ -64,11 +64,11 @@ core's `BlockUniverse` (the core, Odontoceti, Mahi-Mahi) take the core's
 | file | rule | instance | constructions |
 |---|---|---|---|
 | `Properties/Arcs/GC.lean` | core, Odontoceti, Mahi-Mahi | `coreOnRecord`, `odontocetiOnRecord`, `mahiMahiOnRecord`, identity maps | the core's `chop`, `skipFill`, `addGenesis` |
-| `NemoMechanisms.lean` | Nemo | `nemoOnRecord`, identity maps | `chopNemo`, `skipFillNemo`, `addGenesisNemo` |
-| `FinWhaleMechanisms.lean` | FinWhale | `finWhaleOnRecord`, identity on universes, repacking on views | `chopFinWhale`, `skipFillFinWhale`, `addGenesisFinWhale` |
-| `HybridMechanisms.lean` | Orcaella | `hybridOnRecord`, under `HonestNoEquiv` | `chopHybrid`, `skipFillHybrid` (the self-referencing fill with `honestNoEquiv_fill`), `addGenesisHybrid`; the prompt skip `decided_none_fresh_hybrid` |
-| `HydrozoanMechanisms.lean` | Hydrozoan | `Hydrozoan.onRecord`, identity maps | `chopHZ`, `copyFillHZ`, `addGenesisHZ`; `decided_none_fresh_hz`; the coverage refutation |
-| `OptimalMechanisms.lean` | Optimal-Hydrozoan | `optOnRecord`, under `Excluded` (`leaderExcludedAll_chopHZ`, `_copyFillHZ`, `_addGenesisHZ`) | `chopOpt`, `copyFillOpt`, `addGenesisOpt` |
+| `NemoMechanisms.lean` | Nemo | `nemoOnRecord`, identity maps | the record's, through `nemoOnRecord` |
+| `FinWhaleMechanisms.lean` | FinWhale | `finWhaleOnRecord`, identity maps | the record's, through `finWhaleOnRecord` |
+| `HybridMechanisms.lean` | Orcaella | `hybridOnRecord`, under `HonestNoEquiv` | `fillHybrid` (the self-referencing fill with `honestNoEquiv_fill`); the prompt skip `decided_none_fresh_hybrid` |
+| `HydrozoanMechanisms.lean` | Hydrozoan | `Hydrozoan.onRecord`, identity maps | the record's own; `decided_none_fresh_hz`; the coverage refutation |
+| `OptimalMechanisms.lean` | Optimal-Hydrozoan | `optOnRecord`, under `Excluded` (`leaderExcludedAll_chop`, `_copyFill`, `_addGenesis`) | the record's, through `optOnRecord` |
 | `ReactiveMechanisms.lean` | reactive Mysticeti | — | `live_chop_reactive`, `live_skipFill_reactive`, `live_addGenesis_reactive`, `decidedBelow_of_run_chop_reactive`: the reactive precondition across each mechanism, through `coreSupport` |
 | `StackRules.lean` | core, Nemo, FinWhale | — | `stack_core`, `stack_nemo`, `stack_finwhale`: fill then cut as a `Stack`; the headline `Properties.Safe` reads any of them |
 | `AdaptiveHydrozoan.lean`, `AdaptiveReactive.lean` | Hydrozoan; reactive Mysticeti | — | the adaptive leader mechanism (`Adaptive.run_agree`, `run_exists`) at those rules' properties |
@@ -120,7 +120,7 @@ the `Sustains` witness). The core reads all three at Safe Skip
 (`not_synchronisedOn_skipFill`, I4, `synchronisedOn_skipFill_of_notMem`,
 `synchronisedOn_skipFill_above`) and the cut at a horizon offset
 (`synchronisedOn_chop`, I2); Hydrozoan reads the refutation at its copy
-fill (`not_synchronisedOn_copyFillHZ`).
+fill (`not_synchronisedOn_copyFill_hz`).
 
 What the fill restores is *production*, which is what liveness reads,
 and a recovering validator is outside every covered set for the
@@ -131,7 +131,7 @@ duration of its gap.
 **The joiner** (I5, `Adaptive/Joiner.lean`). A validator joining from a
 cut under an adaptive schedule computes the same leaders as the network
 exactly when the policy's rule is horizon-stable
-(`Adaptive.HorizonStable`, `joiner_assign_agree`), and its verdicts
+(`Adaptive.HorizonStable`, `Adaptive.joiner_assign_agree`), and its verdicts
 agree with the network's by cross-rebase agreement at the adaptive
 schedule (`Adaptive.joiner_run_decided_agree`, from `Agree` and
 `Banded`). Rebasing a schedule commutes with installing a shifted

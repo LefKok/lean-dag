@@ -105,8 +105,8 @@ theorem severed_of_pruned_anchor (sk : SkipMsg U)
     ∀ b ∈ (chop U G).ids, ((chop U G).block b).creator ≠ sk.v1 := by
   refine no_blocks_of_no_genesis (fun b hb hbc hbr => ?_)
   rw [mem_chop_ids] at hb
-  simp only [chop_block_eq, chopBlk_creator] at hbc
-  simp only [chop_block_eq, chopBlk_round] at hbr
+  simp only [chop_block, chopBlk_creator] at hbc
+  simp only [chop_block, chopBlk_round] at hbr
   -- a genesis block of the truncation sits exactly at the cut
   have hR0 : sk.r0 = (U.block sk.B1).round := rfl
   exact sk.hgap b hb.1 hbc (by omega) (by omega)
@@ -136,36 +136,36 @@ def chopMsg (sk : SkipMsg U) (hG : G ≤ (U.block sk.B1).round)
   hB1uniq := by
     intro j hj hjc hjr
     rw [mem_chop_ids] at hj
-    simp only [chop_block_eq, chopBlk_creator] at hjc
-    simp only [chop_block_eq, chopBlk_round] at hjr
+    simp only [chop_block, chopBlk_creator] at hjc
+    simp only [chop_block, chopBlk_round] at hjr
     exact sk.hB1uniq j hj.1 hjc (by omega)
   hv12 := sk.hv12
   hB1 := mem_chop_ids.mpr ⟨sk.hB1, hG⟩
-  hB1c := by simp only [chop_block_eq, chopBlk_creator]; exact sk.hB1c
+  hB1c := by simp only [chop_block, chopBlk_creator]; exact sk.hB1c
   hline_mem := by
     intro k hk1 hk2
-    simp only [chop_block_eq, chopBlk_round] at hk1
+    simp only [chop_block, chopBlk_round] at hk1
     have hlm := sk.hline_mem (G + k) (by omega) (by omega)
     have hlr := sk.hline_round (G + k) (by omega) (by omega)
     exact mem_chop_ids.mpr ⟨hlm, by omega⟩
   hline_creator := by
     intro k hk1 hk2
-    simp only [chop_block_eq, chopBlk_round] at hk1
-    simp only [chop_block_eq, chopBlk_creator]
+    simp only [chop_block, chopBlk_round] at hk1
+    simp only [chop_block, chopBlk_creator]
     exact sk.hline_creator (G + k) (by omega) (by omega)
   hline_round := by
     intro k hk1 hk2
-    simp only [chop_block_eq, chopBlk_round] at hk1 ⊢
+    simp only [chop_block, chopBlk_round] at hk1 ⊢
     rw [sk.hline_round (G + k) (by omega) (by omega)]
     omega
   hline_chain := by
     intro k hk1 hk2
-    simp only [chop_block_eq, chopBlk_round] at hk1
+    simp only [chop_block, chopBlk_round] at hk1
     -- the line block sits strictly above the cut, so its references survive
     have hlm := sk.hline_mem (G + k) (by omega) (by omega)
     have hlr := sk.hline_round (G + k) (by omega) (by omega)
     have hgt : G < (U.block (sk.line (G + k))).round := by omega
-    rw [chop_block_eq, chopBlk_refs_of_lt hgt]
+    rw [chop_block, chopBlk_refs_of_lt hgt]
     have := sk.hline_chain (G + k) (by omega) (by omega)
     have hidx : G + k - 1 = G + (k - 1) := by omega
     rwa [hidx] at this
@@ -181,8 +181,8 @@ def chopMsg (sk : SkipMsg U) (hG : G ≤ (U.block sk.B1).round)
   hgap := by
     intro b hb hbc hb1 hb2
     rw [mem_chop_ids] at hb
-    simp only [chop_block_eq, chopBlk_creator] at hbc
-    simp only [chop_block_eq, chopBlk_round] at hb1 hb2
+    simp only [chop_block, chopBlk_creator] at hbc
+    simp only [chop_block, chopBlk_round] at hb1 hb2
     exact sk.hgap b hb.1 hbc (by omega) (by omega)
 
 /-- The induced message keeps the anchor and the recovering validator,
@@ -204,7 +204,7 @@ to connect the two. -/
 lower, as it sees every round. -/
 theorem chopMsg_r0 (sk : SkipMsg U) (hG : G ≤ (U.block sk.B1).round)
     (hGr : G ≤ sk.r) : (chopMsg sk hG hGr).r0 = sk.r0 - G := by
-  simp only [SkipData.r0, chopMsg_B1, chop_block_eq, chopBlk_round]
+  simp only [SkipData.r0, chopMsg_B1, chop_block, chopBlk_round]
 
 /-! ## The deployment reading
 

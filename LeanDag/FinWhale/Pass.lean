@@ -300,20 +300,20 @@ slot blocks; and finiteness, because nothing above the horizon is
 decided. What is left is `hk` — how far each validator's sequence runs —
 which is a choice of horizon, and `all_decided` is what establishes
 it. -/
-theorem safety_of_pass {V V' : Finset BlockId} (hV : IsView D V) (hV' : IsView D V')
+theorem safety_of_pass {V V' : D.View}
     {choose : BlockId → ℕ → Option BlockId} (hch : ChooseSound S D choose) {N M : ℕ}
-    (hNV : ∀ b ∈ V, (D.block b).round ≤ N) (hNV' : ∀ b ∈ V', (D.block b).round ≤ N)
+    (hNV : ∀ b ∈ V.ids, (D.block b).round ≤ N) (hNV' : ∀ b ∈ V'.ids, (D.block b).round ≤ N)
     {k k' : ℕ}
-    (hk : ∀ s, s < k → decOf S Elig (restrict D V hV) choose M s ≠ Verdict.undecided)
-    (hk' : ∀ s, s < k' → decOf S Elig (restrict D V' hV') choose M s ≠ Verdict.undecided)
+    (hk : ∀ s, s < k → decOf S Elig (V.toRecord) choose M s ≠ Verdict.undecided)
+    (hk' : ∀ s, s < k' → decOf S Elig (V'.toRecord) choose M s ≠ Verdict.undecided)
     (hlt : ∀ r a, Elig r a → r < a) (hrle : ∀ r, S.slotRound r ≤ N → r ≤ M)
     (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ k, S.slotRound k = k)
     (hist : BlockId → List BlockId) :
-    linearise hist (commitSeq (decOf S Elig (restrict D V hV) choose M) k) <+:
-        linearise hist (commitSeq (decOf S Elig (restrict D V' hV') choose M) k') ∨
-      linearise hist (commitSeq (decOf S Elig (restrict D V' hV') choose M) k') <+:
-        linearise hist (commitSeq (decOf S Elig (restrict D V hV) choose M) k) :=
-  safety_of_views hV hV' (wellFormed_decOf hNV hlt hrle choose)
+    linearise hist (commitSeq (decOf S Elig (V.toRecord) choose M) k) <+:
+        linearise hist (commitSeq (decOf S Elig (V'.toRecord) choose M) k') ∨
+      linearise hist (commitSeq (decOf S Elig (V'.toRecord) choose M) k') <+:
+        linearise hist (commitSeq (decOf S Elig (V.toRecord) choose M) k) :=
+  safety_of_views   (wellFormed_decOf hNV hlt hrle choose)
     (wellFormed_decOf hNV' hlt hrle choose) hch
     (fun _ _ h => mem_slotBlocks_of_decOf (fun _ => slotBlocks_restrict) hch hlt h)
     (fun _ _ h => mem_slotBlocks_of_decOf (fun _ => slotBlocks_restrict) hch hlt h)

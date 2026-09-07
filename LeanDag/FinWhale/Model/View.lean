@@ -22,35 +22,25 @@ namespace FinWhale
 variable {Validator : Type*} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator] [P : Params Validator]
 variable {BlockId : Type*} [DecidableEq BlockId] {Payload : Type*}
-variable {D : Dag Validator BlockId Payload} {V : Finset BlockId}
+variable {D : Dag Validator BlockId Payload}
 variable {S : Slots Validator}
 
-/-- **A view**: part of the universe, closed under references. -/
-structure IsView (D : Dag Validator BlockId Payload) (V : Finset BlockId) : Prop where
-  /-- Only blocks that exist. -/
-  subset : V ⊆ D.ids
-  /-- And everything they reference. -/
-  closed : ∀ i ∈ V, ∀ j ∈ (D.block i).refs, j ∈ V
-
-/-- **A view is a DAG.** Validity and non-equivocation are inherited; the
-view's completeness is its closure. -/
-def restrict (D : Dag Validator BlockId Payload) (V : Finset BlockId) (hV : IsView D V) :
-    Dag Validator BlockId Payload :=
-  BlockRecord.View.toRecord (⟨V, hV.subset, hV.closed⟩ : D.View)
-
-variable {hV : IsView D V}
+/-! **A view** is the record's (`BlockRecord.View`): part of the universe,
+closed under references. **A view is a DAG** by `View.toRecord`: validity
+and non-equivocation are inherited, and the view's completeness is its
+closure. -/
 
 /-! ## The exclusions, on two views -/
 
 /-- The direct commit rule as a validator with view `V` evaluates it. -/
-def viewCommit (S : Slots Validator) (D : Dag Validator BlockId Payload) (V : Finset BlockId)
-    (hV : IsView D V) (r : ℕ) (l : BlockId) : Prop :=
-  l ∈ slotBlocks S (restrict D V hV) r ∧ DirectCommit (restrict D V hV) l
+def viewCommit (S : Slots Validator) (D : Dag Validator BlockId Payload) (V : D.View)
+    (r : ℕ) (l : BlockId) : Prop :=
+  l ∈ slotBlocks S V.toRecord r ∧ DirectCommit V.toRecord l
 
 /-- And the direct skip rule. -/
-def viewSkip (S : Slots Validator) (D : Dag Validator BlockId Payload) (V : Finset BlockId)
-    (hV : IsView D V) (r : ℕ) : Prop :=
-  DirectSkip S (restrict D V hV) r
+def viewSkip (S : Slots Validator) (D : Dag Validator BlockId Payload) (V : D.View)
+    (r : ℕ) : Prop :=
+  DirectSkip S V.toRecord r
 
 end FinWhale
 

@@ -47,32 +47,15 @@ variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable [F : Faults Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 
-/-- **Re-genesis.** A universe extended with one reference-free block at
-round `0`, for a validator that has none.
-
-The hypotheses are exactly what the construction needs and no more: the
-identifier must be fresh, and the validator must be absent — which for
-a stranded validator is `severed_of_pruned_anchor`. -/
-def addGenesis (V : BlockUniverse Validator BlockId Payload) (v : Validator)
-    (g : BlockId) (p : Payload) (hg : g ∉ V.ids)
-    (hsev : ∀ b ∈ V.ids, (V.block b).creator ≠ v) :
-    BlockUniverse Validator BlockId Payload :=
-  BlockRecord.addGenesis V v g p hg hsev
+/-! **Re-genesis** — a universe extended with one reference-free block at
+round `0`, for a validator that has none — is the block record's
+(`Record/Genesis.lean`). The hypotheses are exactly what the construction
+needs and no more: the identifier must be fresh, and the validator must
+be absent — which for a stranded validator is `severed_of_pruned_anchor`. -/
+export BlockRecord (addGenesis addGenesis_block_old addGenesis_block_new mem_addGenesis)
 
 variable {V : BlockUniverse Validator BlockId Payload} {v : Validator}
 variable {g : BlockId} {p : Payload}
-
-@[simp] theorem addGenesis_block_old {hg : g ∉ V.ids}
-    {hsev : ∀ b ∈ V.ids, (V.block b).creator ≠ v} {b : BlockId} (hb : b ∈ V.ids) :
-    (addGenesis V v g p hg hsev).block b = V.block b := if_pos hb
-
-@[simp] theorem addGenesis_block_new {hg : g ∉ V.ids}
-    {hsev : ∀ b ∈ V.ids, (V.block b).creator ≠ v} :
-    (addGenesis V v g p hg hsev).block g = ⟨0, v, ∅, p⟩ := if_neg hg
-
-theorem mem_addGenesis {hg : g ∉ V.ids}
-    {hsev : ∀ b ∈ V.ids, (V.block b).creator ≠ v} :
-    g ∈ (addGenesis V v g p hg hsev).ids := Finset.mem_insert_self _ _
 
 /-! ## Re-genesis through the properties
 
@@ -187,7 +170,7 @@ theorem stack_block_fresh_horizon (hG1 : sk.r0 < G) (hG2 : G ≤ sk.r) :
   have hround : (sk.skipFill.block (sk.fresh G)).round = G := by
     rw [sk.skipFill_block_fresh]; rfl
   refine ⟨mem_chop_ids.mpr ⟨hmem, by omega⟩, ?_⟩
-  rw [chop_block_eq]
+  rw [chop_block]
   unfold chopBlk
   rw [sk.skipFill_block_fresh]
   simp only [SkipData.fillBlock, le_refl, if_pos, Nat.sub_self]
@@ -214,7 +197,7 @@ theorem addGenesis_sub_stack (hG1 : sk.r0 < G) (hG2 : G ≤ sk.r)
     obtain ⟨hbU, hbr⟩ := mem_chop_ids.mp hbo
     have hfill : sk.skipFill.block b = U.block b := sk.skipFill_block_old hbU
     refine ⟨mem_chop_ids.mpr ⟨Finset.mem_union_left _ hbU, by rw [hfill]; exact hbr⟩, ?_⟩
-    rw [addGenesis_block_old hbo, chop_block_eq, chop_block_eq]
+    rw [addGenesis_block_old hbo, chop_block, chop_block]
     unfold chopBlk
     rw [hfill]
 
@@ -362,7 +345,7 @@ theorem chop_addGenesis (hd : 0 < d)
       exact ⟨Finset.mem_insert_of_mem hb, by rw [addGenesis_block_old hb]; exact hbr⟩
   · intro b hb
     rw [mem_chop_ids] at hb
-    simp only [chop_block_eq, chopBlk, addGenesis_block_old hb.1]
+    simp only [chop_block, chopBlk, addGenesis_block_old hb.1]
 
 /-- **The convergence.** A validator at horizon `G₁`, truncating on to a
 later horizon `G₂`, holds exactly the blocks of a validator that cut at

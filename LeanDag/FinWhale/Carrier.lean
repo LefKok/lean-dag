@@ -89,19 +89,13 @@ def VerdictIs (dec : ℕ → Verdict BlockId) (r : ℕ) (v : Option BlockId) : P
 /-- **What a validator's verdict assignment is**: well-formed on its own
 view, committing only blocks of the slot, and finite. -/
 structure Assignment (S : Slots Validator) (D : Dag Validator BlockId Payload)
-    (V : Finset BlockId) (hV : IsView D V) (dec : ℕ → Verdict BlockId) : Prop where
+    (V : D.View) (dec : ℕ → Verdict BlockId) : Prop where
   /-- The reverse pass, as a condition on the verdicts. -/
-  wf : WellFormed (S.Elig) (viewCommit S D V hV) (viewSkip S D V hV) (chooseLeast S D) dec
+  wf : WellFormed (S.Elig) (viewCommit S D V ) (viewSkip S D V ) (chooseLeast S D) dec
   /-- A commit names a block of the slot. -/
   slot : ∀ s A, dec s = Verdict.commit A → A ∈ slotBlocks S D s
   /-- Nothing above some round is decided — the DAG is finite. -/
   finite : ∃ N, ∀ s, N ≤ s → dec s = Verdict.undecided
-
-/-- A view of the record, as `IsView` of its ids: the two are the same
-data, and the carrier's view type is the record's. -/
-theorem _root_.LeanDag.BlockRecord.View.isView {D : Dag Validator BlockId Payload} (V : D.View) :
-    IsView D V.ids :=
-  ⟨V.subset_ids, V.complete⟩
 
 /-- **FinWhale as a carrier**, with the schedule passed through and
 nothing pinned. -/
@@ -115,7 +109,7 @@ def finWhaleRule : DagRule Validator BlockId Payload where
   viewComplete := fun V => V.complete
   causal := fun D => LeanDag.FinWhale.causalStructure D
   Decided := fun S D V k v =>
-    ∃ dec, Assignment (S) D V.ids V.isView dec ∧ VerdictIs dec k v
+    ∃ dec, Assignment S D V dec ∧ VerdictIs dec k v
 
 /-- **FinWhale's DAGs are quorate**: `ValidHere.quorum`, which asks for
 `n − f` distinct authors, read at the carrier. -/
@@ -147,7 +141,7 @@ theorem agree : Agree (finWhaleRule (Validator := Validator) (BlockId := BlockId
     rw [mem_slotBlocks] at hA
     exact ⟨hA.1.1, by rw [hA.1.2]; exact hra⟩
   have hkey := lemma12 ha₁.wf ha₂.wf
-    (exclusions_of_views V₁.isView V₂.isView chooseSound_least)
+    (exclusions_of_views (V := V₁) (V' := V₂) chooseSound_least)
     (fun r a h => by
       by_contra hge
       have := S.mono (Nat.le_of_not_lt hge)
@@ -208,21 +202,20 @@ theorem lt_of_elig {S : Slots Validator} {r a : ℕ}
   omega
 
 /-- A view is finite, so its blocks stop at a round. -/
-theorem view_bounded (D : Dag Validator BlockId Payload) (V : Finset BlockId)
-    (hV : IsView D V) :
-    ∀ b ∈ (LeanDag.FinWhale.restrict D V hV).ids,
-      ((LeanDag.FinWhale.restrict D V hV).block b).round ≤
+theorem view_bounded (D : Dag Validator BlockId Payload) (V : D.View) :
+    ∀ b ∈ (V.toRecord).ids,
+      ((V.toRecord).block b).round ≤
         D.ids.sup (fun c => (D.block c).round) :=
-  fun b hb => Finset.le_sup (f := fun c => (D.block c).round) (hV.subset hb)
+  fun b hb => Finset.le_sup (f := fun c => (D.block c).round) (V.subset_ids hb)
 
 /-- A view's slot blocks are the universe's. -/
 theorem slotBlocks_restrict_subset (S : Slots Validator)
-    (D : Dag Validator BlockId Payload) (V : Finset BlockId) (hV : IsView D V) (r : ℕ) :
-    LeanDag.FinWhale.slotBlocks S (LeanDag.FinWhale.restrict D V hV) r ⊆
+    (D : Dag Validator BlockId Payload) (V : D.View) (r : ℕ) :
+    LeanDag.FinWhale.slotBlocks S (V.toRecord) r ⊆
       LeanDag.FinWhale.slotBlocks S D r := by
   intro b hb
   rw [mem_slotBlocks] at hb ⊢
-  exact ⟨⟨hV.subset hb.1.1, hb.1.2⟩, hb.2⟩
+  exact ⟨⟨V.subset_ids hb.1.1, hb.1.2⟩, hb.2⟩
 
 /-- **The pass's horizon**: a slot index above every slot any view of
 the DAG can decide. `Slots.slot_lt_of_slotRound_le` is what makes one
@@ -242,8 +235,8 @@ the horizon above. Every verdict of this rule is witnessed by some
 assignment; this is the one that always exists, and `decided_iff` says
 it is the only one that matters. -/
 noncomputable def passOf (S : Slots Validator) (D : Dag Validator BlockId Payload)
-    (V : Finset BlockId) (hV : IsView D V) : ℕ → Verdict BlockId :=
-  decOf (S) (Slots.Elig S) (LeanDag.FinWhale.restrict D V hV)
+    (V : D.View) : ℕ → Verdict BlockId :=
+  decOf (S) (Slots.Elig S) (V.toRecord)
     (chooseLeast (S) D) (dagHorizon D)
 
 /-- Every slot the pass reaches sits at the schedule's round for it, so
@@ -256,20 +249,19 @@ theorem rle (S : Slots Validator) (D : Dag Validator BlockId Payload) :
 committing only blocks of the slot by `mem_slotBlocks_of_decOf`, and
 finite because nothing above the horizon is decided. -/
 theorem assignment_passOf {D : Dag Validator BlockId Payload} {S : Slots Validator}
-    {V : Finset BlockId} (hV : IsView D V) :
-    Assignment (S) D V hV (passOf S D V hV) where
-  wf := wellFormed_decOf (view_bounded D V hV) (fun _ _ => lt_of_elig) (rle S D)
+    (V : D.View) : Assignment S D V (passOf S D V) where
+  wf := wellFormed_decOf (view_bounded D V ) (fun _ _ => lt_of_elig) (rle S D)
     (chooseLeast (S) D)
   slot := fun _ _ h => mem_slotBlocks_of_decOf
-    (slotBlocks_restrict_subset (S) D V hV) chooseSound_least
+    (slotBlocks_restrict_subset (S) D V ) chooseSound_least
     (fun _ _ => lt_of_elig) h
   finite := ⟨dagHorizon D + 1, fun _ hs => decOf_of_gt (by omega)⟩
 
 /-- An assignment commits only below the horizon: a commit names a block
 of the slot, so the slot's round is one the view holds. -/
 theorem le_dagHorizon {D : Dag Validator BlockId Payload} {S : Slots Validator}
-    {V : Finset BlockId} {hV : IsView D V} {dec : ℕ → Verdict BlockId}
-    (ha : Assignment (S) D V hV dec) {a : ℕ} {A : BlockId}
+    {V : D.View} {dec : ℕ → Verdict BlockId}
+    (ha : Assignment (S) D V  dec) {a : ℕ} {A : BlockId}
     (h : dec a = Verdict.commit A) : a ≤ dagHorizon D := by
   have hA := ha.slot a A h
   rw [mem_slotBlocks] at hA
@@ -288,12 +280,12 @@ assignments has no induction on it; through this it has a normal form. -/
 theorem decided_iff {D : Dag Validator BlockId Payload} {S : Slots Validator}
     {V : (finWhaleRule (Payload := Payload)).View D} {k : ℕ} {v : Option BlockId} :
     (finWhaleRule (Payload := Payload)).Decided S V k v ↔
-      VerdictIs (passOf S D V.ids V.isView) k v := by
-  refine ⟨?_, fun h => ⟨passOf S D V.ids V.isView, assignment_passOf V.isView, h⟩⟩
+      VerdictIs (passOf S D V) k v := by
+  refine ⟨?_, fun h => ⟨passOf S D V, assignment_passOf V, h⟩⟩
   rintro ⟨dec, ha, hv⟩
   have hnu : dec k ≠ Verdict.undecided := by
     cases v <;> (rw [show dec k = _ from hv]; simp)
-  have := eq_of_wellFormed ha.wf (assignment_passOf V.isView).wf (fun _ _ => lt_of_elig)
+  have := eq_of_wellFormed ha.wf (assignment_passOf V).wf (fun _ _ => lt_of_elig)
     (fun a A h => le_dagHorizon ha h) k hnu
   cases v with
   | none => exact this.trans hv
@@ -302,13 +294,13 @@ theorem decided_iff {D : Dag Validator BlockId Payload} {S : Slots Validator}
 /-- **A direct commit in view is a verdict**, at any schedule and with
 no side condition. -/
 theorem decided_of_directCommit {D : Dag Validator BlockId Payload} {S : Slots Validator}
-    {V : Finset BlockId} (hV : IsView D V) {k : ℕ} {L : BlockId}
+    (V : D.View) {k : ℕ} {L : BlockId}
     (hslot : L ∈ LeanDag.FinWhale.slotBlocks (S)
-      (LeanDag.FinWhale.restrict D V hV) k)
-    (hcom : LeanDag.FinWhale.DirectCommit (LeanDag.FinWhale.restrict D V hV) L) :
-    (finWhaleRule (Payload := Payload)).Decided S (U := D) ⟨V, hV.subset, hV.closed⟩ k (some L) :=
-  decided_iff (V := ⟨V, hV.subset, hV.closed⟩) |>.2
-    ((assignment_passOf hV).wf.direct_commit k L ⟨hslot, hcom⟩)
+      (V.toRecord) k)
+    (hcom : LeanDag.FinWhale.DirectCommit (V.toRecord) L) :
+    (finWhaleRule (Payload := Payload)).Decided S (U := D) V k (some L) :=
+  decided_iff (V := V) |>.2
+    ((assignment_passOf V).wf.direct_commit k L ⟨hslot, hcom⟩)
 
 /-- A decided verdict, as the property layer's option. -/
 def optOf (w : Verdict BlockId) : Option BlockId :=
@@ -357,21 +349,21 @@ verdict names a block: a direct commit names the candidate, a direct
 skip names the blamers two rounds up, and an indirect verdict names the
 anchor's candidate three rounds up. -/
 theorem slotRound_le_of_decided {D : Dag Validator BlockId Payload} {S : Slots Validator}
-    {V : Finset BlockId} {hV : IsView D V} {m : ℕ}
-    (h : passOf S D V hV m ≠ Verdict.undecided) :
+    {V : D.View} {m : ℕ}
+    (h : passOf S D V  m ≠ Verdict.undecided) :
     S.slotRound m + 2 ≤ dagTop D := by
   classical
-  have ha := assignment_passOf (S := S) hV
-  have hsup : ∀ b ∈ V, (D.block b).round ≤ D.ids.sup (fun b => (D.block b).round) :=
-    fun b hbV => Finset.le_sup (f := fun b => (D.block b).round) (hV.subset hbV)
+  have ha := assignment_passOf (S := S) V
+  have hsup : ∀ b ∈ V.ids, (D.block b).round ≤ D.ids.sup (fun b => (D.block b).round) :=
+    fun b hbV => Finset.le_sup (f := fun b => (D.block b).round) (V.subset_ids hbV)
   unfold dagTop
-  by_cases hdc : ∃ l, LeanDag.FinWhale.viewCommit (S) D V hV m l
+  by_cases hdc : ∃ l, LeanDag.FinWhale.viewCommit (S) D V  m l
   · obtain ⟨l, hslot, -⟩ := hdc
     rw [mem_slotBlocks] at hslot
     have hlr : (D.block l).round = S.slotRound m := hslot.1.2
     have := hsup l hslot.1.1
     omega
-  · by_cases hds : LeanDag.FinWhale.viewSkip (S) D V hV m
+  · by_cases hds : LeanDag.FinWhale.viewSkip (S) D V  m
     · obtain ⟨-, nonev, hcard, hnon⟩ := hds
       have hpos : 0 < nonev.card := by
         have := LeanDag.FinWhale.params_arith (Validator := Validator)
@@ -383,9 +375,9 @@ theorem slotRound_le_of_decided {D : Dag Validator BlockId Payload} {S : Slots V
       have := hsup c hc.1
       omega
     · obtain ⟨a, hanc⟩ := ha.wf.has_anchor m hdc hds h
-      have hva : passOf S D V hV a ≠ Verdict.undecided := fun hu =>
+      have hva : passOf S D V  a ≠ Verdict.undecided := fun hu =>
         h (ha.wf.indirect_undecided m a hdc hds hanc hu)
-      rcases hq : passOf S D V hV a with A | - | -
+      rcases hq : passOf S D V  a with A | - | -
       · have hA := ha.slot a A hq
         rw [mem_slotBlocks] at hA
         have hle : (D.block A).round ≤ D.ids.sup (fun b => (D.block b).round) :=
@@ -419,35 +411,35 @@ theorem banded : Banded (finWhaleRule (Validator := Validator) (BlockId := Block
       block := fun b hbm h1 h2 => hab.block b hbm (Or.inl ⟨h1, h2⟩)
       block' := fun b hbm hbm' h1 h2 => hab.block b hbm (Or.inr ⟨hbm', h1, h2⟩)
       refs := fun b hbm h1 h2 => hab.refs b hbm h1 h2 }
-  have hbV : LeanDag.FinWhale.Band (LeanDag.FinWhale.restrict D V.ids V.isView)
-      (LeanDag.FinWhale.restrict D' V'.ids V'.isView)
+  have hbV : LeanDag.FinWhale.Band (V.toRecord)
+      (V'.toRecord)
       (S.slotRound k + g) (dagTop D + g) g g' :=
     { mem := fun b hbm h1 h2 => by
-        simp only [LeanDag.FinWhale.restrict_block] at h1 h2
+        simp only [BlockRecord.View.toRecord_block] at h1 h2
         refine hVsub b hbm ?_ ?_
         · change S.slotRound k ≤ (D.block b).round
           omega
         · change (D.block b).round ≤ dagTop D
           omega
-      block := fun b hbm h1 h2 => hab.block b (V.isView.subset hbm) (Or.inl ⟨h1, h2⟩)
+      block := fun b hbm h1 h2 => hab.block b (V.subset_ids hbm) (Or.inl ⟨h1, h2⟩)
       block' := fun b hbm hbm' h1 h2 =>
-        hab.block b (V.isView.subset hbm) (Or.inr ⟨V'.isView.subset hbm', h1, h2⟩)
-      refs := fun b hbm h1 h2 => hab.refs b (V.isView.subset hbm) h1 h2 }
-  have ha := assignment_passOf (S := S) (D := D) V.isView
+        hab.block b (V.subset_ids hbm) (Or.inr ⟨V'.subset_ids hbm', h1, h2⟩)
+      refs := fun b hbm h1 h2 => hab.refs b (V.subset_ids hbm) h1 h2 }
+  have ha := assignment_passOf (S := S) (D := D) V
   have wf := ha.wf
-  have wf' := (assignment_passOf (S := S') (D := D') V'.isView).wf
+  have wf' := (assignment_passOf (S := S') (D := D') V').wf
   have hex := LeanDag.FinWhale.exclusions_of_views (S := S') (D := D')
-    V'.isView V'.isView chooseSound_least
+    (V := V') (V' := V') chooseSound_least
   have key : ∀ n m m', dagHorizon D - m ≤ n → k ≤ m → m + d' = m' + d →
-      passOf S D V.ids V.isView m ≠ Verdict.undecided →
-      passOf S' D' V'.ids V'.isView m' = passOf S D V.ids V.isView m := by
+      passOf S D V m ≠ Verdict.undecided →
+      passOf S' D' V' m' = passOf S D V m := by
     intro n
     induction n using Nat.strong_induction_on with
     | _ n ih =>
       intro m m' hn hkm hmm hdec
       have IH : ∀ b b', m < b → b ≤ dagHorizon D → b + d' = b' + d →
-          passOf S D V.ids V.isView b ≠ Verdict.undecided →
-          passOf S' D' V'.ids V'.isView b' = passOf S D V.ids V.isView b := by
+          passOf S D V b ≠ Verdict.undecided →
+          passOf S' D' V' b' = passOf S D V b := by
         intro b b' hmb hbN hbb hbd
         have hn0 : n ≠ 0 := by rintro rfl; omega
         exact ih (n - 1) (by omega) b b' (by omega) (by omega) hbb hbd
@@ -467,38 +459,38 @@ theorem banded : Banded (finWhaleRule (Validator := Validator) (BlockId := Block
       have hmhi : S.slotRound m + g + 2 ≤ dagTop D + g := by
         change S.slotRound m + g + 2 ≤ dagTop D + g
         omega
-      by_cases hdc : ∃ l, LeanDag.FinWhale.viewCommit (S) D V.ids V.isView m l
+      by_cases hdc : ∃ l, LeanDag.FinWhale.viewCommit (S) D V m l
       · obtain ⟨l, hslot, hcom⟩ := hdc
         have hlmem : l ∈ V.ids ∧ (D.block l).round = S.slotRound m := by
           rw [mem_slotBlocks] at hslot; exact ⟨hslot.1.1, hslot.1.2⟩
         have hllo : S.slotRound k + g ≤
-            ((LeanDag.FinWhale.restrict D V.ids V.isView).block l).round + g := by
+            ((V.toRecord).block l).round + g := by
           change S.slotRound k + g ≤ (D.block l).round + g
           omega
-        have hlhi : ((LeanDag.FinWhale.restrict D V.ids V.isView).block l).round + g + 2 ≤
+        have hlhi : ((V.toRecord).block l).round + g + 2 ≤
             dagTop D + g := by
           change (D.block l).round + g + 2 ≤ dagTop D + g
           omega
         have hslot' := LeanDag.FinWhale.Band.slotBlocks_subset hbV hrm hlm hmlo hmhi0 hslot
         have hcom' := LeanDag.FinWhale.Band.directCommit hbV hlmem.1 hllo hlhi hcom
         rw [wf.direct_commit m l ⟨hslot, hcom⟩, wf'.direct_commit m' l ⟨hslot', hcom'⟩]
-      · by_cases hds : LeanDag.FinWhale.viewSkip (S) D V.ids V.isView m
+      · by_cases hds : LeanDag.FinWhale.viewSkip (S) D V m
         · have hds' := LeanDag.FinWhale.Band.directSkip hbV hrm hlm hmlo hmhi hds
           rw [wf.direct_skip m hds, wf'.direct_skip m' hds']
         · obtain ⟨a, hanc⟩ := wf.has_anchor m hdc hds hdec
-          have hva : passOf S D V.ids V.isView a ≠ Verdict.undecided := fun hu =>
+          have hva : passOf S D V a ≠ Verdict.undecided := fun hu =>
             hdec (wf.indirect_undecided m a hdc hds hanc hu)
-          rcases hq : passOf S D V.ids V.isView a with A | - | -
+          rcases hq : passOf S D V a with A | - | -
           · have haN : a ≤ dagHorizon D := le_dagHorizon ha hq
             have helig : S.slotRound m + 3 ≤ S.slotRound a := hanc.1
             have hma : m < a := lt_of_elig hanc.1
             obtain ⟨a', haa⟩ : ∃ a', a + d' = a' + d := ⟨a + d' - d, by omega⟩
             have hra : S.slotRound a + g = S'.slotRound a' + g' := hsch a a' haa
             have helig' : S'.slotRound m' + 3 ≤ S'.slotRound a' := by omega
-            have hqa' : passOf S' D' V'.ids V'.isView a' = Verdict.commit A := by
+            have hqa' : passOf S' D' V' a' = Verdict.commit A := by
               rw [IH a a' hma haN haa (by rw [hq]; simp), hq]
             have hanc' : LeanDag.FinWhale.Anchor (Slots.Elig S')
-                (passOf S' D' V'.ids V'.isView) m' a' := by
+                (passOf S' D' V') m' a' := by
               refine ⟨helig', by rw [hqa']; simp, fun b' heb' hlb' => ?_⟩
               have hmb' : m' < b' := lt_of_elig (S := S') heb'
               obtain ⟨b, hbb⟩ : ∃ b, b + d' = b' + d := ⟨b' + d - d', by omega⟩
@@ -524,12 +516,12 @@ theorem banded : Banded (finWhaleRule (Validator := Validator) (BlockId := Block
             have habove : A ∈ D'.ids ∧ S'.slotRound m' + 3 ≤ (D'.block A).round :=
               ⟨hAD', by omega⟩
             by_cases hdc' :
-                ∃ l, LeanDag.FinWhale.viewCommit (S') D' V'.ids V'.isView m' l
+                ∃ l, LeanDag.FinWhale.viewCommit (S') D' V' m' l
             · obtain ⟨l', hl'⟩ := hdc'
               obtain ⟨b, hbch⟩ := hex.commit_forces_choose m' l' A habove hl'
               have hbl := hex.commit_pins_choose m' l' A b hl' hbch
               rw [wf'.direct_commit m' l' hl', hval, ← hch, hbch, hbl]
-            · by_cases hds' : LeanDag.FinWhale.viewSkip (S') D' V'.ids V'.isView m'
+            · by_cases hds' : LeanDag.FinWhale.viewSkip (S') D' V' m'
               · rw [wf'.direct_skip m' hds', hval]
                 rcases hcv : LeanDag.FinWhale.chooseLeast (S) D A m with - | b
                 · rfl
@@ -537,10 +529,10 @@ theorem banded : Banded (finWhaleRule (Validator := Validator) (BlockId := Block
               · rw [wf'.indirect_commit m' a' A hdc' hds' hanc' hqa', hval, hch]
           · exact absurd hq hanc.2.1
           · exact absurd hq hva
-  have hdk : VerdictIs (passOf S D V.ids V.isView) k v := decided_iff.1 hd
+  have hdk : VerdictIs (passOf S D V) k v := decided_iff.1 hd
   exact decided_iff.2 (verdictIs_of_eq
     (key (dagHorizon D) k k' (by omega) (le_refl k) hkd
-      (by cases v <;> (rw [show passOf S D V.ids V.isView k = _ from hdk]; simp))) hdk)
+      (by cases v <;> (rw [show passOf S D V k = _ from hdk]; simp))) hdk)
 
 /-! ## The liveness property
 
@@ -680,10 +672,10 @@ theorem fwSupport_commits :
   have hLr' : (BlockRecord.block D L).round = S.slotRound k := hLr
   have hlV : L ∈ V.ids := hcov L hLmem
     (by change (BlockRecord.block D L).round ≤ S.slotRound k + 2; omega)
-  have hvc : LeanDag.FinWhale.viewCommit (S) D V.ids V.isView k L := by
+  have hvc : LeanDag.FinWhale.viewCommit (S) D V k L := by
     refine ⟨?_, Or.inr ⟨T, le_trans spQuorum_le_quorumCard hcard, fun v hv => ?_⟩⟩
     · rw [mem_slotBlocks]
-      simp only [LeanDag.FinWhale.restrict_ids, LeanDag.FinWhale.restrict_block]
+      simp only [BlockRecord.View.toRecord_ids, BlockRecord.View.toRecord_block]
       exact ⟨⟨hlV, hLr'⟩, hLc'⟩
     · obtain ⟨b, hb, hbc, hbr⟩ := hpop (S.slotRound k + 2) (by omega)
         (by change S.slotRound k + 2 ≤ S.slotRound k + 2; omega) v hv
@@ -692,15 +684,15 @@ theorem fwSupport_commits :
         (by change (BlockRecord.block D b).round ≤ S.slotRound k + 2; omega)
       refine ⟨b, ?_, hbc, hcert L ⟨hLmem, hLr, hLc⟩ v hv b hb hbc hbr⟩
       rw [mem_blocksAt]
-      simp only [LeanDag.FinWhale.restrict_ids, LeanDag.FinWhale.restrict_block]
+      simp only [BlockRecord.View.toRecord_ids, BlockRecord.View.toRecord_block]
       exact ⟨hbV, by rw [hbr', hLr']⟩
   refine ⟨L, by omega,
-    decided_iff.2 ((assignment_passOf V.isView).wf.direct_commit k L hvc),
+    decided_iff.2 ((assignment_passOf V).wf.direct_commit k L hvc),
     fun S' hround hlead' => ?_⟩
   have hr : S'.slotRound k = S.slotRound k := by
     change S'.slotRound k = S.slotRound k; rw [hround]
   have hvc' := (LeanDag.FinWhale.viewCommit_congr hr (hlead' k (by omega))).2 hvc
-  exact decided_iff.2 ((assignment_passOf V.isView).wf.direct_commit k L hvc')
+  exact decided_iff.2 ((assignment_passOf V).wf.direct_commit k L hvc')
 
 /-! ## FinWhale's fast path
 
@@ -742,13 +734,13 @@ theorem voteSupport_fast_commits (h : F.byzantine.card ≤ P.p) :
   have hLr' : (BlockRecord.block D L).round = S.slotRound k := hLr
   have hlV : L ∈ V.ids := hcov L hLmem
     (by change (BlockRecord.block D L).round ≤ S.slotRound k + 1; omega)
-  have hvc : LeanDag.FinWhale.viewCommit (S) D V.ids V.isView k L := by
+  have hvc : LeanDag.FinWhale.viewCommit (S) D V k L := by
     refine ⟨?_, Or.inl ?_⟩
     · rw [mem_slotBlocks]
-      simp only [LeanDag.FinWhale.restrict_ids, LeanDag.FinWhale.restrict_block]
+      simp only [BlockRecord.View.toRecord_ids, BlockRecord.View.toRecord_block]
       exact ⟨⟨hlV, hLr'⟩, hLc'⟩
     · change LeanDag.FinWhale.fastCard Validator ≤
-        (LeanDag.FinWhale.voters (LeanDag.FinWhale.restrict D V.ids V.isView) L).card
+        (LeanDag.FinWhale.voters (V.toRecord) L).card
       refine le_trans hcard (Finset.card_le_card ?_)
       intro v hv
       obtain ⟨b, hb, hbc, hbr⟩ := hpop (S.slotRound k + 1) (by omega)
@@ -759,15 +751,15 @@ theorem voteSupport_fast_commits (h : F.byzantine.card ≤ P.p) :
       unfold LeanDag.FinWhale.voters supporters creatorsOf
       refine Finset.mem_image.mpr ⟨b, ?_, hbc⟩
       rw [Finset.mem_filter, mem_blocksAt]
-      simp only [LeanDag.FinWhale.restrict_ids, LeanDag.FinWhale.restrict_block]
+      simp only [BlockRecord.View.toRecord_ids, BlockRecord.View.toRecord_block]
       exact ⟨⟨hbV, by rw [hbr', hLr']⟩, hcert L ⟨hLmem, hLr, hLc⟩ v hv b hb hbc hbr⟩
   refine ⟨L, by omega,
-    decided_iff.2 ((assignment_passOf V.isView).wf.direct_commit k L hvc),
+    decided_iff.2 ((assignment_passOf V).wf.direct_commit k L hvc),
     fun S' hround hlead' => ?_⟩
   have hr : S'.slotRound k = S.slotRound k := by
     change S'.slotRound k = S.slotRound k; rw [hround]
   have hvc' := (LeanDag.FinWhale.viewCommit_congr hr (hlead' k (by omega))).2 hvc
-  exact decided_iff.2 ((assignment_passOf V.isView).wf.direct_commit k L hvc')
+  exact decided_iff.2 ((assignment_passOf V).wf.direct_commit k L hvc')
 
 /-! ## The indirect rule
 
@@ -792,31 +784,31 @@ rule, because it reads the slot's round and leader — or the tie-break
 does, and it reads the anchor and the same slot. Taking `S' := S` gives
 the other half: the slot is decided at all. -/
 theorem pass_indirect {D : Dag Validator BlockId Payload} {S S' : Slots Validator}
-    {V : Finset BlockId} {hV : IsView D V} {i j : ℕ} {A : BlockId}
+    {V : D.View} {i j : ℕ} {A : BlockId}
     (hround : S'.slotRound = S.slotRound) (hleader : S'.leader i = S.leader i)
-    (hanc : LeanDag.FinWhale.Anchor (Slots.Elig S) (passOf S D V hV) i j)
-    (hjv : passOf S D V hV j = Verdict.commit A)
-    (hanc' : LeanDag.FinWhale.Anchor (Slots.Elig S') (passOf S' D V hV) i j)
-    (hjv' : passOf S' D V hV j = Verdict.commit A) :
-    passOf S' D V hV i = passOf S D V hV i ∧ passOf S D V hV i ≠ Verdict.undecided := by
+    (hanc : LeanDag.FinWhale.Anchor (Slots.Elig S) (passOf S D V ) i j)
+    (hjv : passOf S D V  j = Verdict.commit A)
+    (hanc' : LeanDag.FinWhale.Anchor (Slots.Elig S') (passOf S' D V ) i j)
+    (hjv' : passOf S' D V  j = Verdict.commit A) :
+    passOf S' D V  i = passOf S D V  i ∧ passOf S D V  i ≠ Verdict.undecided := by
   classical
-  have hwf := (assignment_passOf (S := S) hV).wf
-  have hwf' := (assignment_passOf (S := S') hV).wf
+  have hwf := (assignment_passOf (S := S) V).wf
+  have hwf' := (assignment_passOf (S := S') V).wf
   have hr : S'.slotRound i = S.slotRound i := by
     change S'.slotRound i = S.slotRound i; rw [hround]
   have hl : S'.leader i = S.leader i := hleader
-  by_cases hdc : ∃ l, LeanDag.FinWhale.viewCommit (S) D V hV i l
+  by_cases hdc : ∃ l, LeanDag.FinWhale.viewCommit (S) D V  i l
   · obtain ⟨l, hlc⟩ := hdc
     have h1 := hwf.direct_commit i l hlc
     have h2 := hwf'.direct_commit i l ((LeanDag.FinWhale.viewCommit_congr hr hl).2 hlc)
     exact ⟨by rw [h1, h2], by rw [h1]; simp⟩
-  · by_cases hds : LeanDag.FinWhale.viewSkip (S) D V hV i
+  · by_cases hds : LeanDag.FinWhale.viewSkip (S) D V  i
     · have h1 := hwf.direct_skip i hds
       have h2 := hwf'.direct_skip i ((LeanDag.FinWhale.viewSkip_congr hr hl).2 hds)
       exact ⟨by rw [h1, h2], by rw [h1]; simp⟩
-    · have hdc' : ¬ ∃ l, LeanDag.FinWhale.viewCommit (S') D V hV i l := by
+    · have hdc' : ¬ ∃ l, LeanDag.FinWhale.viewCommit (S') D V  i l := by
         rintro ⟨l, h⟩; exact hdc ⟨l, (LeanDag.FinWhale.viewCommit_congr hr hl).1 h⟩
-      have hds' : ¬ LeanDag.FinWhale.viewSkip (S') D V hV i := fun h =>
+      have hds' : ¬ LeanDag.FinWhale.viewSkip (S') D V  i := fun h =>
         hds ((LeanDag.FinWhale.viewSkip_congr hr hl).1 h)
       have h1 := hwf.indirect_commit i j A hdc hds hanc hjv
       have h2 := hwf'.indirect_commit i j A hdc' hds' hanc' hjv'
@@ -841,10 +833,10 @@ theorem indirect : Indirect
       (finWhaleRule (Payload := Payload)).Decided S₀ V j (some A) →
       (∀ i', i < i' → i' < j → finWhaleElig S.slotRound i i' →
         (finWhaleRule (Payload := Payload)).Decided S₀ V i' none) →
-      LeanDag.FinWhale.Anchor ((S₀).Elig) (passOf S₀ D V.ids V.isView) i j ∧
-        passOf S₀ D V.ids V.isView j = Verdict.commit A := by
+      LeanDag.FinWhale.Anchor ((S₀).Elig) (passOf S₀ D V) i j ∧
+        passOf S₀ D V j = Verdict.commit A := by
     intro S₀ hround hjd hmidd
-    have hjv : passOf S₀ D V.ids V.isView j = Verdict.commit A := decided_iff.1 hjd
+    have hjv : passOf S₀ D V j = Verdict.commit A := decided_iff.1 hjd
     refine ⟨⟨?_, by rw [hjv]; simp, fun a' hea' hlta' => ?_⟩, hjv⟩
     · change S₀.slotRound i + 3 ≤ S₀.slotRound j
       rw [hround]; exact helig
@@ -853,7 +845,7 @@ theorem indirect : Indirect
         rw [hround] at h; exact h
       exact decided_iff.1 (hmidd a' (lt_of_elig (S := S₀) hea') hlta' hea)
   obtain ⟨hancS, hjvS⟩ := hanc S rfl hj hmid
-  refine ⟨optOf (passOf S D V.ids V.isView i), fun S' hround hleader hjd' hmid' => ?_⟩
+  refine ⟨optOf (passOf S D V i), fun S' hround hleader hjd' hmid' => ?_⟩
   obtain ⟨hancS', hjvS'⟩ := hanc S' hround hjd' hmid'
   obtain ⟨heq, hne⟩ := pass_indirect hround hleader hancS hjvS hancS' hjvS'
   exact decided_iff.2 (verdictIs_of_eq heq (verdictIs_optOf hne))
@@ -873,7 +865,7 @@ carried to match the property's shape and is not read — `IsCandidate`
 already says where the block sits. -/
 def DirectCommitIn {D : Dag Validator BlockId Payload}
     (V : (finWhaleRule (Payload := Payload)).View D) (L : BlockId) (_r : ℕ) : Prop :=
-  L ∈ V.ids ∧ LeanDag.FinWhale.DirectCommit (LeanDag.FinWhale.restrict D V.ids V.isView) L
+  L ∈ V.ids ∧ LeanDag.FinWhale.DirectCommit (V.toRecord) L
 
 /-- **And a direct commit is a verdict**, at every schedule.
 `IsCandidate` places the block at the slot, `DirectCommitIn` puts it in
@@ -883,7 +875,7 @@ theorem commitsDirect : CommitsDirect
     (finWhaleRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
     (fun {_} V L r => DirectCommitIn V L r) := by
   rintro S D V k L ⟨-, hround, hcreator⟩ ⟨hmem, hdir⟩
-  exact decided_of_directCommit V.isView
+  exact decided_of_directCommit V
     (mem_slotBlocks.2 ⟨⟨hmem, hround⟩, hcreator⟩) hdir
 
 /-! ## The headlines

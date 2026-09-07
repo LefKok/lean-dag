@@ -30,15 +30,15 @@ theorem holds : Statement := by
   · intro L C ρ h hC hCr
     exact coneAnchors_succ_nonempty_of_committed h hC hCr
   · intro f n m h
-    exact ledgerSet_mono f h
+    exact ledgerSet_mono h
   · intro f₁ f₂ n h
-    exact ledgerSet_agree h
+    exact ledgerSet_agree_of h
   · intro f b ρ₁ ρ₂ h₁ h₂
     exact outputAt_unique h₁ h₂
   · intro f₁ f₂ n b ρ h hρ ho
-    exact outputAt_agree h hρ ho
+    exact outputAt_agree_of h hρ ho
   · intro f ρ L b hL hb
-    exact mem_ledgerSet_of_block f hL hb
+    exact mem_ledgerSet_of_some hL hb
 
 end Ledger
 

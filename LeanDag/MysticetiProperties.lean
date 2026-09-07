@@ -737,17 +737,6 @@ theorem coversUpto_eq {U : BlockUniverse Validator BlockId Payload}
     {V : View Validator BlockId Payload U} {N : ℕ} :
     Properties.CoversUpto mysticetiRule V N ↔ V.CoversUpto N := Iff.rfl
 
-/-- **A caught-up validator reaches every verdict.** Whatever any view
-decides, a view covering far enough decides too — the round being the
-band's own ceiling rather than a rule-specific `r + 2`. What a
-view-level mechanism has to deliver, for this protocol. -/
-theorem exists_coversUpto_decides [S : Slots Validator]
-    {U : BlockUniverse Validator BlockId Payload}
-    {W : View Validator BlockId Payload U} {k : ℕ} {v : Option BlockId}
-    (hW : Decided U W k v) :
-    ∃ N, ∀ V : View Validator BlockId Payload U, V.CoversUpto N → Decided U V k v :=
-  Properties.exists_coversUpto_decides banded hW
-
 /-- **A commit names the slot's candidate.** `isLeaderBlock_of_decided`
 under the property's name — one of seven such lemmas across the
 protocols, and the reason `Properties/Candidate.lean` exists. -/
@@ -774,16 +763,6 @@ protocol but the missing half of its skip rule. -/
 theorem persist : Persist
     (mysticetiRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
   Persist.of_banded banded
-
-/-- **L2 re-derived, with no induction of its own.** View monotonicity
-(`decided_mono`, four cases in `Liveness.lean`) is the band read at a
-fixed universe. The consumer test for `banded`: an existing induction
-recovered from the property. -/
-theorem decided_mono_of_band [S : Slots Validator]
-    {U : BlockUniverse Validator BlockId Payload}
-    {V V' : View Validator BlockId Payload U} (hsub : V.ids ⊆ V'.ids)
-    {k : ℕ} {v : Option BlockId} (hd : Decided U V k v) : Decided U V' k v :=
-  Properties.decided_mono_of_banded banded hsub hd
 
 end PersistProof
 
