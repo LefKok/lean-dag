@@ -1066,6 +1066,66 @@ now serves both: the theorems are proved for an arbitrary `UpdateRule`,
 because that is what makes safety unconditional, and restated at a
 `Score`, because that is what a designer holds.
 
+### D21, scoped — the two runs differ in one field
+
+Measured rather than guessed. Substitute each arc's own `start_succ` into
+its other fields and they coincide:
+
+| | Barnacle | this arc |
+|---|---|---|
+| `closed` reaches | `start (k+1)`, and `start (k+1) = roundOf (anchor k)` | `roundOf (anchor k)` |
+| anchor is past | `start k + interval` | `start (k+1)`, and `start (k+1) = start k + interval` |
+| `update` is handed | `spanVdct … (start k) (start (k+1))` | the same |
+
+So `closed`, `anchor_commits`, `anchor_least` and `update` are the same
+propositions in both, and eight of the ten fields are identical
+character for character. **The single difference is the value
+`start_succ` assigns**: Barnacle puts the next configuration in force at
+the anchor's round, this arc at the threshold. D19 is that choice, and it
+is the whole of the divergence.
+
+**The shape.** A boundary is a function of the configuration, the current
+start and the anchor, lying between the round the reconfiguration falls
+due and the round the anchor is found at:
+
+    structure Boundary (Validator) where
+      at           : Config Validator → ℕ → ℕ → ℕ
+      ge_threshold : ∀ C s a, s + C.interval ≤ at C s a
+      le_anchor    : ∀ C s a, s + C.interval < C.roundOf a → at C s a ≤ C.roundOf a
+
+`Run … (B : Boundary Validator)` carries `start_succ : start (k+1) =
+B.at (cfg k) (start k) (anchor k)` and is otherwise the current fields.
+Barnacle is `B.at C s a = C.roundOf a`, which meets `le_anchor` with
+equality; this arc is `B.at C s a = s + C.interval`, which meets
+`ge_threshold` with equality. `PartialRun` and `SegRun` become
+abbreviations.
+
+**What the proofs need.** `vdct_agree` is stated to `roundOf (anchor k)`
+and Barnacle's consumers reach it through `le_anchor`; `start_succ_agree`
+becomes one `congrArg` and is shorter than either arc's version;
+`round_of_mem_rangeLedger` reaches `closed` through `le_anchor` too.
+Nothing else in the helpers looks at the boundary.
+
+**Cost.** One `Boundary` file (~40 lines) and one `Run` (~60); the three
+helper files proved once instead of twice (≈340 lines retired); the five
+`Statement`/`Proof` pairs parameterised; 26 run constructions in the
+witness tree whose `start_succ` obligation changes shape; and report §12
+and §13, whose displayed statements `audit-report.py` checks verbatim.
+Barnacle is settled on `main` and carries BN1–BN12 and four protocol
+instantiations, so the risk is there rather than here.
+
+**The gain.** Seventeen theorem names proved once. One vocabulary for
+both arcs. And D19 stops being a fork: where the boundary goes becomes a
+parameter a designer chooses, so a third choice — a boundary some rounds
+past the threshold but below the anchor, which both papers leave open —
+costs an instance rather than an arc.
+
+**What it must not lose.** This arc proves the tighter step bound
+`start (K+1) ≤ start K + maxInterval` where Barnacle has
+`+ maxInterval + 1 + c`. Both state liveness against the same
+`Barnacle.horizon`, so nothing user-visible turns on it today; keeping it
+needs a `stride` field on `Boundary` and a `horizon` taking it.
+
 ### Step 13 — the record
 
 Report §13 gains the segmented arc and relabels the fixpoint one: AL3 is
