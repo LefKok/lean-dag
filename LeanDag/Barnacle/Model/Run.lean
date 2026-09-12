@@ -54,9 +54,9 @@ committed slot whose round exceeds `start k + (cfg k).interval`.
 `update` is `UpdateLeaders`, for an arbitrary rule. `bounds` is a clause
 of the run because the rule is arbitrary; for the AIMD rule it is a
 theorem. -/
-structure PartialRun (R : BaseRule Validator BlockId Payload) (P : Params)
-    (upd : UpdateRule R) (C₀ : Config Validator) (U : R.Universe) (V : R.View U)
-    (K : ℕ) where
+structure Run (R : BaseRule Validator BlockId Payload) (P : Params)
+    (B : Boundary Validator) (upd : UpdateRule R) (C₀ : Config Validator)
+    (U : R.Universe) (V : R.View U) (K : ℕ) where
   /-- The round after which configuration `k` is in force. -/
   start : ℕ → ℕ
   /-- Configuration `k`: its leaders, its slots per round, its interval. -/
@@ -72,29 +72,44 @@ structure PartialRun (R : BaseRule Validator BlockId Payload) (P : Params)
   init : start 0 = 0 ∧ cfg 0 = C₀ ∧ backoff 0 = 0
   /-- Every configuration is within the parameters. -/
   bounds : ∀ k, (cfg k).InBounds P
-  /-- Every slot of the range — after `start k`, through the anchor's
-  round — decided against the configuration's schedule (`TryDecide`). -/
+  /-- **Decisions run to the anchor** (`TryDecide`): every slot after
+  `start k` and at or below the anchor's round is decided against the
+  configuration's schedule — the schedule in force throughout, since the
+  anchor has not been found and the switch has not happened. -/
   closed : ∀ k, k < K → ∀ κ, start k < (cfg k).roundOf κ →
-    (cfg k).roundOf κ ≤ start (k + 1) → R.Decided (cfg k).sched V κ (vdct k κ)
-  /-- The anchor is committed, past the threshold … -/
+    (cfg k).roundOf κ ≤ (cfg k).roundOf (anchor k) →
+      R.Decided (cfg k).sched V κ (vdct k κ)
+  /-- The anchor is committed, past the round the reconfiguration falls
+  due … (`TryCommit`) -/
   anchor_commits : ∀ k, k < K →
     (∃ A, vdct k (anchor k) = some A) ∧
       start k + (cfg k).interval < (cfg k).roundOf (anchor k)
   /-- … and is the least such slot. -/
   anchor_least : ∀ k, k < K → ∀ κ, κ < anchor k →
     start k + (cfg k).interval < (cfg k).roundOf κ → vdct k κ = none
-  /-- The next configuration is in force after the anchor's round. -/
-  start_succ : ∀ k, k < K → start (k + 1) = (cfg k).roundOf (anchor k)
-  /-- The next configuration is the rule's. -/
+  /-- The next configuration takes force where the boundary says
+  (`UpdateLeaders`). This is the **only** field the two mechanisms differ
+  in: `Boundary.atAnchor` takes the anchor's round, `Boundary.atThreshold`
+  the round the reconfiguration fell due. -/
+  start_succ : ∀ k, k < K → start (k + 1) = B.next (cfg k) (start k) (anchor k)
+  /-- The next configuration is the rule's, on the anchor's block and the
+  verdicts of the range just output. -/
   update : ∀ k, k < K → ∀ A, vdct k (anchor k) = some A →
     (cfg (k + 1), backoff (k + 1)) = upd (cfg k) (backoff k) U V
       (spanVdct (cfg k) (start k) (start (k + 1)) (vdct k)) A
 
-variable {R : BaseRule Validator BlockId Payload} {P : Params}
+/-- **Barnacle's run**: the next configuration in force at the anchor's
+own round, so the range it orders is the range it decided. -/
+abbrev PartialRun (R : BaseRule Validator BlockId Payload) (P : Params)
+    (upd : UpdateRule R) (C₀ : Config Validator) (U : R.Universe) (V : R.View U)
+    (K : ℕ) : Type :=
+  Run R P Boundary.atAnchor upd C₀ U V K
+
+variable {R : BaseRule Validator BlockId Payload} {P : Params} {B : Boundary Validator}
 variable {upd : UpdateRule R} {C₀ : Config Validator} {U : R.Universe} {V : R.View U}
 
 /-- The schedule of configuration `k`. -/
-abbrev PartialRun.sched {K : ℕ} (Rn : PartialRun R P upd C₀ U V K) (k : ℕ) :
+abbrev Run.sched {K : ℕ} (Rn : Run R P B upd C₀ U V K) (k : ℕ) :
     Slots Validator :=
   (Rn.cfg k).sched
 
@@ -104,7 +119,7 @@ abbrev PartialRun.sched {K : ℕ} (Rn : PartialRun R P upd C₀ U V K) (k : ℕ)
 it decided, `(start k, start (k + 1)]`, and `none` outside. The `update`
 field names this function; `spanVdct_agree` is why two validators name
 one function. -/
-def PartialRun.spanOf {K : ℕ} (Rn : PartialRun R P upd C₀ U V K) (k : ℕ) :
+def Run.spanOf {K : ℕ} (Rn : Run R P B upd C₀ U V K) (k : ℕ) :
     ℕ → Option BlockId :=
   spanVdct (Rn.cfg k) (Rn.start k) (Rn.start (k + 1)) (Rn.vdct k)
 
@@ -115,14 +130,14 @@ def ledgerOf (v : ℕ → Option BlockId) (lo hi : ℕ) : List BlockId :=
 /-- The ledger of configuration `k`: its range's committed blocks, from
 the first slot after `start k` to the last slot of round `start (k + 1)`.
 Meaningful for the closed configurations, `k < K`. -/
-def PartialRun.rangeLedger {K : ℕ} (Rn : PartialRun R P upd C₀ U V K) (k : ℕ) :
+def Run.rangeLedger {K : ℕ} (Rn : Run R P B upd C₀ U V K) (k : ℕ) :
     List BlockId :=
   ledgerOf (Rn.vdct k) ((Rn.cfg k).cum (Rn.start k + 1))
     ((Rn.cfg k).cum (Rn.start (k + 1) + 1))
 
 /-- The ledger through configuration `K' − 1`: the ranges' ledgers,
 concatenated in configuration order. Meaningful for `K' ≤ K`. -/
-def PartialRun.ledgerUpto {K : ℕ} (Rn : PartialRun R P upd C₀ U V K) (K' : ℕ) :
+def Run.ledgerUpto {K : ℕ} (Rn : Run R P B upd C₀ U V K) (K' : ℕ) :
     List BlockId :=
   (List.range K').flatMap Rn.rangeLedger
 

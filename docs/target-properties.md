@@ -256,7 +256,7 @@ theorem, once per mechanism:
 | garbage collection | `Truncates` | `LocalTruncate.of_banded`, `decided_agree_truncate` | `Support.live_of_truncates` |
 | crash recovery, re-genesis | `Extends`, `Sustains` | `Persist.of_banded`, `decided_agree_extends` | `Support.live_of_sustains` |
 | any stack of them | `Stack` | `Stack.safe_and_live` | the same |
-| adaptive leader schedule | — | `Adaptive.Agreement.holds` | `Adaptive.Progress.holds` |
+| adaptive leader schedule | — | `Barnacle.Agreement.holds` | `Barnacle.Progress.holds` |
 | adaptive leader count | — | `Agree`, `CommitsCandidate`, `CommitsDirect` | `Descent`, built by `Timed.descent_of_support` |
 | prompt skip | `Extends` + `SkipsUnsupported` | `decided_none_of_novel` | — |
 | chain quality | — | `card_coveredAt_ge` | `committed_of_correct_block` |
@@ -1636,7 +1636,7 @@ theorem:
   supplies for it is the round-structure hypothesis and `c`.
 
 `Adaptive/` is stated over `BaseRule` and these, and names no protocol.
-`Adaptive.Agreement.holds` uses `Agree` alone.
+`Barnacle.Agreement.holds` uses `Agree` alone.
 
 ### 4.2 The staged precondition
 
@@ -1678,7 +1678,7 @@ model, not of the rule.
   was a corollary of the generic theorem at that rule's carrier, so the
   per-rule files are gone and the mechanism is read at the generic
   theorems directly. Hammerhead over reactive Mysticeti — the result the
-  bespoke development did not have — is `Adaptive.Progress.holds` with
+  bespoke development did not have — is `Barnacle.Progress.holds` with
   `coreSupport_live_of_reactiveLive` supplying the precondition, and
   nothing else changed.
 
@@ -1744,8 +1744,8 @@ depends on.
 
 | | Needs | Result |
 |---|---|---|
-| safety | `Agree` | `Adaptive.Agreement.holds` |
-| liveness | `LiveRule.LiveOn`, `Descent` | `Adaptive.Progress.holds` |
+| safety | `Agree` | `Barnacle.Agreement.holds` |
+| liveness | `LiveRule.LiveOn`, `Descent` | `Barnacle.Progress.holds` |
 
 Safety holds under no synchrony, fairness, window or population
 hypothesis, for any anchored update rule including adversarial ones.
@@ -2192,7 +2192,7 @@ induction deleted (§11.4e): `decided_fillHZ`, `decided_chopHZ`,
 `directCommit_chop` for liveness, and the adaptive arc entire, AL3 and
 AL5 standing verbatim as corollaries. One result the bespoke
 development did not have: Hammerhead over reactive Mysticeti
-(`Adaptive.Progress.holds` and `Run.commits_of_support`, the
+(`Barnacle.Progress.holds` and `Run.commits_of_support`, the
 reactive bridge supplying the precondition).
 
 What part 2 does not yet deliver:

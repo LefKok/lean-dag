@@ -166,6 +166,45 @@ def spanVdct (C : Config Validator) (lo hi : ℕ) (v : ℕ → Option BlockId) :
     ℕ → Option BlockId :=
   fun κ => if lo < C.roundOf κ ∧ C.roundOf κ ≤ hi then v κ else none
 
+/-- **Where the next configuration takes force.** A reconfiguration falls
+due at `s + C.interval`, and is detected at the anchor — the first slot
+committed past that round. Between those two rounds a protocol has a
+choice, and `Boundary` is that choice as a parameter.
+
+Both ends are taken. Barnacle installs the next configuration at the
+anchor's own round (`Boundary.atAnchor`), which is what its paper does;
+HammerHead installs it at the round the reconfiguration fell due
+(`Boundary.atThreshold`), and orders nothing above it — which is what
+makes its output independent of when the anchor happened to appear
+(`adaptive-leaders.md` D19). Nothing else in a run distinguishes the two.
+
+The two clauses are conditional on the anchor lying past the threshold,
+which is exactly what a run's `anchor_commits` provides; unconditionally
+neither end would satisfy the other's. -/
+structure Boundary (Validator : Type) where
+  /-- The round after which the next configuration is in force. -/
+  next : Config Validator → ℕ → ℕ → ℕ
+  /-- Not before the reconfiguration falls due. -/
+  ge_threshold : ∀ (C : Config Validator) (s a : ℕ),
+    s + C.interval < C.roundOf a → s + C.interval ≤ next C s a
+  /-- And not after the anchor that closes the span. -/
+  le_anchor : ∀ (C : Config Validator) (s a : ℕ),
+    s + C.interval < C.roundOf a → next C s a ≤ C.roundOf a
+
+/-- **At the anchor's round**: the span ends where it was detected to
+end. Barnacle's. -/
+def Boundary.atAnchor : Boundary Validator where
+  next := fun C _ a => C.roundOf a
+  ge_threshold := fun _ _ _ h => le_of_lt h
+  le_anchor := fun _ _ _ _ => le_rfl
+
+/-- **At the round the reconfiguration fell due**: the span ends where it
+was always going to, whatever the network did. HammerHead's. -/
+def Boundary.atThreshold : Boundary Validator where
+  next := fun C s _ => s + C.interval
+  ge_threshold := fun _ _ _ _ => le_rfl
+  le_anchor := fun _ _ _ h => le_of_lt h
+
 /-- **A rule a validator can run without disagreeing.** The step depends
 on the configuration, the back-off and the anchor, and on the *view* only through
 what every view holding the anchor shares.

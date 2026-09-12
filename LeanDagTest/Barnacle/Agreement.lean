@@ -226,11 +226,11 @@ abbrev candidates32 : Properties.CommitsCandidate bnRule32.toDagRule :=
 /-- BN3 on `run2` and `run2'`: the two views hold one configuration `1`
 and one anchor. -/
 example : run2.cfg 1 = run2'.cfg 1 ∧ run2.start 1 = run2'.start 1 :=
-  let h := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnP bnUpd32 bnC1
+  let h := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnP _ bnUpd32 bnC1
     (fun _ _ _ _ _ _ _ => rfl)) Usun Vsun Vsun' 1 1 run2 run2' 1 (by decide)
   ⟨h.2.1, h.1⟩
 example : run2.anchor 0 = run2'.anchor 0 :=
-  ((Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnP bnUpd32 bnC1
+  ((Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnP _ bnUpd32 bnC1
     (fun _ _ _ _ _ _ _ => rfl))
     Usun Vsun Vsun' 1 1 run2 run2' 0 (by decide)).2.2.2 (by decide) |>.1
 
@@ -348,7 +348,7 @@ def run2x : PartialRun bnRule32 bnP bnUpd32 bnC1 Usun Vsun' 1 where
     rfl
 
 example : run2.vdct 0 3 = run2x.vdct 0 3 :=
-  ((Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnP bnUpd32 bnC1
+  ((Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnP _ bnUpd32 bnC1
     (fun _ _ _ _ _ _ _ => rfl))
     Usun Vsun Vsun' 1 1 run2 run2x 0 (by decide)).2.2.2 (by decide) |>.2 3 (by decide) (by decide)
 example : run2.vdct 0 9 ≠ run2x.vdct 0 9 := by decide
@@ -461,11 +461,11 @@ example : runP1.start 1 = 2 ∧ runP1.start 2 = 4 := ⟨rfl, rfl⟩
 -- pinned by `init` — and on the verdicts of range `0`; `k = 2` is not offered
 -- (`2 ≤ min 2 1` fails).
 example : runP1.cfg 1 = runP1'.cfg 1 ∧ runP1.start 1 = runP1'.start 1 :=
-  let h := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnPI1 bnUpdC bnC1I1
+  let h := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnPI1 _ bnUpdC bnC1I1
     (fun _ _ _ _ _ _ _ => rfl)) Usun Vsun Vsun' 2 1 runP1 runP1' 1 (by decide)
   ⟨h.2.1, h.1⟩
 example : runP1.vdct 0 2 = runP1'.vdct 0 2 :=
-  ((Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnPI1 bnUpdC bnC1I1
+  ((Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnPI1 _ bnUpdC bnC1I1
     (fun _ _ _ _ _ _ _ => rfl))
     Usun Vsun Vsun' 2 1 runP1 runP1' 0 (by decide)).2.2.2 (by decide) |>.2 2 (by decide) (by decide)
 
@@ -480,19 +480,19 @@ without repetition. -/
 example : run2.rangeLedger 0 = [5, 10, 15, 16, 21] := by decide
 example : run2.ledgerUpto 1 = [5, 10, 15, 16, 21] := by decide
 example : run2.ledgerUpto 1 = run2'.ledgerUpto 1 :=
-  ((Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 candidates32 bnP bnUpd32 bnC1 (fun _ _ _ _ _ _ _ => rfl)).1
+  ((Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 candidates32 bnP _ bnUpd32 bnC1 (fun _ _ _ _ _ _ _ => rfl)).1
     Usun Vsun Vsun' 1 1 run2 run2').2 1 (by decide)
 example : run2.ledgerUpto 0 <+: run2.ledgerUpto 1 :=
-  (Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 candidates32 bnP bnUpd32 bnC1 (fun _ _ _ _ _ _ _ => rfl)).2.1
+  (Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 candidates32 bnP _ bnUpd32 bnC1 (fun _ _ _ _ _ _ _ => rfl)).2.1
     Usun Vsun 1 run2 0 1 (by decide)
 example : (run2.ledgerUpto 1).Nodup :=
-  (Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 candidates32 bnP bnUpd32 bnC1 (fun _ _ _ _ _ _ _ => rfl)).2.2
+  (Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 candidates32 bnP _ bnUpd32 bnC1 (fun _ _ _ _ _ _ _ => rfl)).2.2
     Usun Vsun 1 run2 1 le_rfl
 -- Two ranges at interval one: `[5, 10]` then `[15, 16]`, one list without
 -- repetition.
 example : runP1.ledgerUpto 2 = [5, 10, 15, 16] := by decide
 example : (runP1.ledgerUpto 2).Nodup :=
-  (Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 candidates32 bnPI1 bnUpdC bnC1I1 (fun _ _ _ _ _ _ _ => rfl)).2.2
+  (Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 candidates32 bnPI1 _ bnUpdC bnC1I1 (fun _ _ _ _ _ _ _ => rfl)).2.2
     Usun Vsun 2 runP1 2 le_rfl
 
 /-! ## Conservativity, through the theorem -/
@@ -541,9 +541,9 @@ def run1c : PartialRun bnRule bnPI1 (constRule bnRule) bnC1I1 U7 V7 1 where
     rfl
 
 example : run1c.cfg 1 = bnC1I1 ∧ run1c.backoff 1 = 0 :=
-  (Conservativity.holds (Fin 4) (Fin 24) Unit bnRule bnPI1 bnC1I1).1 U7 V7 1 run1c 1 le_rfl
+  (Conservativity.holds (Fin 4) (Fin 24) Unit bnRule bnPI1 _ bnC1I1).1 U7 V7 1 run1c 1 le_rfl
 example : bnRule.Decided bnC1I1.sched V7 2 (run1c.vdct 0 2) :=
-  (Conservativity.holds (Fin 4) (Fin 24) Unit bnRule bnPI1 bnC1I1).2 U7 V7 1 run1c 0
+  (Conservativity.holds (Fin 4) (Fin 24) Unit bnRule bnPI1 _ bnC1I1).2 U7 V7 1 run1c 0
     (by decide) 2 (by decide) (by decide)
 
 #print axioms run2

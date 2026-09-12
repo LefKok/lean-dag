@@ -1,7 +1,7 @@
-import LeanDag.Adaptive.Agreement.Proof
-import LeanDag.Adaptive.Ledger.Proof
-import LeanDag.Adaptive.Progress.Proof
 import LeanDag.Adaptive.Score.Proof
+import LeanDag.Barnacle.Agreement.Proof
+import LeanDag.Barnacle.Ledger.Proof
+import LeanDag.Barnacle.Progress.Proof
 /-!
 # What the arc guarantees a reputation score
 
@@ -19,8 +19,10 @@ and for whatever clause the schedules it emits must satisfy.
 
 There is no new content here: each is a generic theorem of the arc with
 the score's own clause supplied, which is the step that removes the
-hypothesis. The content is in `Agreement/`, `Ledger/`, `Progress/` and
-`Score/`.
+hypothesis. The content is in `Barnacle/{Agreement,Ledger,Progress}` —
+this mechanism's run is `Barnacle.Run` at `Boundary.atThreshold`, and its
+theorems are Barnacle's at that boundary (`adaptive-leaders.md` D21) —
+and in `Score/`.
 -/
 
 namespace LeanDag
@@ -59,7 +61,7 @@ theorem score_safe (hR : Properties.Agree R.toDagRule) (score : Score R)
         ∀ κ, R₁.start k < (R₁.cfg k).roundOf κ →
           (R₁.cfg k).roundOf κ ≤ (R₁.cfg k).roundOf (R₁.anchor k) →
             R₁.vdct k κ = R₂.vdct k κ) :=
-  Agreement.holds _ _ _ R hR P (rule score) C₀ (Score.rule_anchored score)
+  Agreement.holds _ _ _ R hR P _ (rule score) C₀ (Score.rule_anchored score)
     U V₁ V₂ K₁ K₂ R₁ R₂ k hk
 
 /-- **AL18b — and they read one ledger.** Agreed across validators as far
@@ -76,7 +78,7 @@ theorem score_ledger (hR : Properties.Agree R.toDagRule)
       (K₁ K₂ : ℕ), K₁ ≤ K₂ → Rn.ledgerUpto K₁ <+: Rn.ledgerUpto K₂) ∧
     (∀ (U : R.Universe) (V : R.View U) (K : ℕ) (Rn : SegRun R P (rule score) C₀ U V K)
       (K' : ℕ), K' ≤ K → (Rn.ledgerUpto K').Nodup) :=
-  let h := Ledger.holds _ _ _ R hR hc P (rule score) C₀ (Score.rule_anchored score)
+  let h := Ledger.holds _ _ _ R hR hc P _ (rule score) C₀ (Score.rule_anchored score)
   ⟨fun U V₁ V₂ K₁ K₂ R₁ R₂ => (h.1 U V₁ V₂ K₁ K₂ R₁ R₂).2, h.2.1, h.2.2⟩
 
 end Safety
@@ -103,9 +105,9 @@ theorem score_live (hR : Properties.Agree RL.toBaseRule.toDagRule)
     (hQ : ∀ (U : RL.Universe) (V : RL.View U) (v : ℕ → Option BlockId)
       (C : Config Validator), Q C → Q (score U V v C))
     (C₀ : Config Validator) (c : ℕ) :
-    Progress.ConfigProgress RL P (rule score) C₀ c ∧
-      Progress.EveryHeight RL P (rule score) C₀ Q c :=
-  Progress.holds _ _ _ RL hR P (rule score) (Score.rule_bounded P score hkeep) C₀ Q
+    Progress.ConfigProgress RL P Boundary.atThreshold (rule score) C₀ c ∧
+      Progress.EveryHeight RL P Boundary.atThreshold (rule score) C₀ Q c :=
+  Progress.holds _ _ _ RL hR P _ (rule score) (Score.rule_bounded P score hkeep) C₀ Q
     (Score.rule_keeps score Q hQ) c
 
 end Liveness

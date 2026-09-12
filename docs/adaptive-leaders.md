@@ -768,7 +768,7 @@ should transfer:
 The port went through as traced, and the stop condition did not fire:
 `anchor_agree` needs **no** hypothesis relating the two runs' anchors.
 `Adaptive.Agreement.SegRunAgreement` is the statement,
-`Adaptive.Agreement.holds` the proof,
+`Barnacle.Agreement.holds` the proof, now shared with Barnacle (D21),
 `Adaptive/Helpers/Agreement.lean` the induction, on the standard three
 axioms. `Anchored` is the only clause on the rule; there is no synchrony,
 no fairness and no window.
@@ -873,7 +873,7 @@ configuration whose heads permute a schedule with runs of heads is live
 at that schedule's own gap. They hold on `propext` and `Quot.sound`
 alone, and none of them mentions how the configuration was chosen.
 
-**6b, progress and every height.** `Adaptive.Progress.holds`, from
+**6b, progress and every height.** `Barnacle.Progress.holds`, from
 `Barnacle/Helpers/Progress.lean`. The construction changes where
 Barnacle's did not: the new segment starts at
 `start K + (cfg K).interval`, a round known before the anchor is found,
@@ -1066,7 +1066,7 @@ now serves both: the theorems are proved for an arbitrary `UpdateRule`,
 because that is what makes safety unconditional, and restated at a
 `Score`, because that is what a designer holds.
 
-### D21, scoped — the two runs differ in one field
+### D21 — built
 
 Measured rather than guessed. Substitute each arc's own `start_succ` into
 its other fields and they coincide:
@@ -1106,13 +1106,21 @@ becomes one `congrArg` and is shorter than either arc's version;
 `round_of_mem_rangeLedger` reaches `closed` through `le_anchor` too.
 Nothing else in the helpers looks at the boundary.
 
-**Cost.** One `Boundary` file (~40 lines) and one `Run` (~60); the three
-helper files proved once instead of twice (≈340 lines retired); the five
-`Statement`/`Proof` pairs parameterised; 26 run constructions in the
-witness tree whose `start_succ` obligation changes shape; and report §12
-and §13, whose displayed statements `audit-report.py` checks verbatim.
-Barnacle is settled on `main` and carries BN1–BN12 and four protocol
-instantiations, so the risk is there rather than here.
+**Built.** `Barnacle.Run` carries the `Boundary`; `PartialRun` and
+`SegRun` are abbreviations for it at `atAnchor` and `atThreshold`. The
+three helper files and the five `Statement`/`Proof` pairs are proved once
+— **1,323 lines deleted from `Adaptive/`, which is now seven files: the
+score, the joiner, the mechanisms, the headline, and a four-line run.**
+`Barnacle/Helpers/Bounds.lean` is new and holds the two facts a boundary
+gives a run; everything that used to read `closed` at the boundary now
+reads it through `closed_of_le_succ`.
+
+Two proofs came out shorter than either arc's. `start_succ_agree` is a
+`congrArg` — the next start is the boundary's own function of data the
+runs already agree on — and `decided_and_not_output`, which Barnacle had
+no counterpart for, is now stated at any boundary: empty at `atAnchor`,
+where there is nothing between the boundary and the anchor, and the whole
+point at `atThreshold`.
 
 **The gain.** Seventeen theorem names proved once. One vocabulary for
 both arcs. And D19 stops being a fork: where the boundary goes becomes a
@@ -1120,11 +1128,14 @@ parameter a designer chooses, so a third choice — a boundary some rounds
 past the threshold but below the anchor, which both papers leave open —
 costs an instance rather than an arc.
 
-**What it must not lose.** This arc proves the tighter step bound
-`start (K+1) ≤ start K + maxInterval` where Barnacle has
-`+ maxInterval + 1 + c`. Both state liveness against the same
-`Barnacle.horizon`, so nothing user-visible turns on it today; keeping it
-needs a `stride` field on `Boundary` and a `horizon` taking it.
+**What was given up.** The tighter step bound this arc used to prove —
+`start (K+1) ≤ start K + maxInterval`, against Barnacle's
+`+ maxInterval + 1 + c` — is gone: the unified construction bounds the
+new start through `le_anchor`, which is Barnacle's. Nothing user-visible
+turns on it, both arcs having always stated liveness against the same
+`Barnacle.horizon`; recovering it would need a `stride` field on
+`Boundary` and a `horizon` taking it, which is a cost the tighter bound
+does not currently pay for.
 
 ### Step 13 — the record
 

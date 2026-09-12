@@ -15,7 +15,7 @@ namespace Barnacle
 namespace Progress
 
 theorem holds : Statement := by
-  intro Validator BlockId Payload _ _ _ R hR P upd hupd C₀ Q hupdh c
+  intro Validator BlockId Payload _ _ _ R hR P B upd hupd C₀ Q hupdh c
   refine ⟨?_, ?_⟩
   · intro U V Rnd N K hcov Rn hlive hgood hRnd hN
     exact progress hR hupd hcov Rn hlive hgood hRnd hN

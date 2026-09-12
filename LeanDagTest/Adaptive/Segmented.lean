@@ -1,9 +1,6 @@
 import LeanDag.Adaptive.Score.Proof
-import LeanDag.Adaptive.Agreement.Proof
-import LeanDag.Adaptive.Ledger.Proof
-import LeanDag.Adaptive.Conservativity.Proof
-import LeanDag.Adaptive.Validity.Proof
-import LeanDag.Adaptive.Progress.Proof
+import LeanDag.Barnacle.Conservativity.Proof
+import LeanDag.Barnacle.Validity.Proof
 import LeanDag.Barnacle.Helpers.Heads
 import LeanDag.Adaptive.Headline
 /-!
@@ -63,14 +60,14 @@ one, and the back-off never moves. -/
 example (C₀ : Config Validator) (U : R.Universe) (V : R.View U) (K : ℕ)
     (Rn : SegRun R P (constRule R) C₀ U V K) (k : ℕ) (hk : k ≤ K) :
     Rn.cfg k = C₀ ∧ Rn.backoff k = 0 :=
-  (Conservativity.holds _ _ _ R P C₀).1 U V K Rn k hk
+  (Conservativity.holds _ _ _ R P Boundary.atThreshold C₀).1 U V K Rn k hk
 
 /-- **AL15b**: and its verdicts are verdicts of the genesis schedule. -/
 example (C₀ : Config Validator) (U : R.Universe) (V : R.View U) (K : ℕ)
     (Rn : SegRun R P (constRule R) C₀ U V K) (k : ℕ) (hk : k < K) (κ : ℕ)
     (h1 : Rn.start k < C₀.roundOf κ) (h2 : C₀.roundOf κ ≤ C₀.roundOf (Rn.anchor k)) :
     R.Decided C₀.sched V κ (Rn.vdct k κ) :=
-  (Conservativity.holds _ _ _ R P C₀).2 U V K Rn k hk κ h1 h2
+  (Conservativity.holds _ _ _ R P Boundary.atThreshold C₀).2 U V K Rn k hk κ h1 h2
 
 /-- **AL15c at any score.** A good author's block two rounds below a
 closed configuration's boundary is in the history of the block that
@@ -79,8 +76,8 @@ never lead again. -/
 example {RL : LiveRule Validator BlockId Payload}
     (hc : Properties.CommitsCandidate RL.toBaseRule.toDagRule) (score : Score RL.toBaseRule)
     (C₀ : Config Validator) (slack : ℕ) :
-    Validity.Delivered RL P (rule score) C₀ slack :=
-  Validity.holds _ _ _ RL hc P (rule score) C₀ slack
+    Validity.Delivered RL P Boundary.atThreshold (rule score) C₀ slack :=
+  Validity.holds _ _ _ RL hc P Boundary.atThreshold (rule score) C₀ slack
 
 /-! ## AL16 at a permuting score
 

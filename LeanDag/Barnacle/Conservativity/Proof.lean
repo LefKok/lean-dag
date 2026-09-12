@@ -15,9 +15,9 @@ namespace Barnacle
 namespace Conservativity
 
 theorem holds : Statement := by
-  intro Validator BlockId Payload _ _ _ R P C₀
+  intro Validator BlockId Payload _ _ _ R P B C₀
   have hcount : ∀ (U : R.Universe) (V : R.View U) (K : ℕ)
-      (Rn : PartialRun R P (constRule R) C₀ U V K),
+      (Rn : Run R P B (constRule R) C₀ U V K),
       ∀ k, k ≤ K → Rn.cfg k = C₀ ∧ Rn.backoff k = 0 := by
     intro U V K Rn k
     induction k with

@@ -28,12 +28,13 @@ conclusion: on a DAG good from genesis, every height whose horizon fits
 under `N` is reached — on any view caught up to `N`, which is what a
 validator that has received everything up to the horizon holds. -/
 def RunsExist (R : LiveRule Validator BlockId Payload) (P : Params)
-    (upd : UpdateRule R.toBaseRule) (C₀ : Config Validator) (c : ℕ) : Prop :=
+    (B : Boundary Validator) (upd : UpdateRule R.toBaseRule) (C₀ : Config Validator)
+    (c : ℕ) : Prop :=
   C₀.InBounds P →
   ∀ (U : R.Universe) (V : R.View U) (Rnd N : ℕ), R.Good U Rnd N →
     R.toBaseRule.CoversUpto U V N → Rnd ≤ 1 →
     ∀ K, horizon P R c K ≤ N →
-      Nonempty (PartialRun R.toBaseRule P upd C₀ U V K)
+      Nonempty (Run R.toBaseRule P B upd C₀ U V K)
 
 /-- **BN11 — every height, for any rule and any schedule.** A rule with
 agreement and the descent laws reaches every height under a schedule whose
@@ -46,10 +47,10 @@ def Statement : Prop :=
     R.Descent slack → 0 < R.waveLength →
     (∀ T : Finset Validator, Fintype.card Validator ≤ T.card + slack →
       HeadsRun head T R.waveLength c₀) →
-    ∀ (P : Params) (upd : UpdateRule R.toBaseRule), UpdBounded P upd →
-      UpdKeeps upd (fun C => C.head = head) →
+    ∀ (P : Params) (B : Boundary Validator) (upd : UpdateRule R.toBaseRule),
+      UpdBounded P upd → UpdKeeps upd (fun C => C.head = head) →
       -- on a genesis configuration whose heads are the schedule's
-      ∀ C₀ : Config Validator, C₀.head = head → RunsExist R P upd C₀ c₀
+      ∀ C₀ : Config Validator, C₀.head = head → RunsExist R P B upd C₀ c₀
 
 
 end Live

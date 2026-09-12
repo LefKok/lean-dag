@@ -413,7 +413,6 @@ def run1 : PartialRun bnRule bnPI1 bnUpd bnC1I1 U7 V7 1 where
     have hk0 : k = 0 := by omega
     subst hk0
     simp only [if_true, bnC1I1, bnCfg, Config.uniform_roundOf, Nat.div_one] at h1 h2
-    simp only [show (0 : ℕ) + 1 = 1 from rfl, one_ne_zero, if_false] at h2
     have : κ = 1 ∨ κ = 2 := by omega
     simp only [if_true]
     rcases this with rfl | rfl

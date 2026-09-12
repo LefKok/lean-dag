@@ -1,5 +1,5 @@
 import LeanDagTest.Barnacle.Progress
-import LeanDag.Adaptive.Ledger.Proof
+import LeanDag.Barnacle.Ledger.Proof
 import LeanDag.Adaptive.Score.Proof
 import LeanDagTest.Adaptive.Segmented
 import LeanDag.Adaptive.Helpers.Mechanisms
@@ -81,7 +81,8 @@ def segRun : SegRun bnRule32 bnPI1 (constRule bnRule32) bnC1I1 Usk (View.full Us
     · exact ⟨⟨16, rfl⟩, by decide⟩
   anchor_least := by
     intro k hk κ hκ h
-    simp only [bnC1I1, bnCfg, Config.uniform_roundOf, Nat.div_one] at h
+    simp only [bnC1I1, bnCfg, Config.uniform_roundOf, Config.uniform_interval,
+      Nat.div_one] at h
     have hkk : k = 0 ∨ k = 1 ∨ k = 2 := by omega
     rcases hkk with rfl | rfl | rfl
     · simp only [show ¬((0 : ℕ) = 2) from by decide, if_false] at hκ
@@ -202,7 +203,7 @@ example (U : bnRule32.Universe) (V₁ V₂ : bnRule32.View U) (K₁ K₂ : ℕ)
     (Rn₁ : SegRun bnRule32 bnPI1 (rule commitScore) bnC1I1 U V₁ K₁)
     (Rn₂ : SegRun bnRule32 bnPI1 (rule commitScore) bnC1I1 U V₂ K₂)
     (k : ℕ) (hk : k ≤ min K₁ K₂) : Rn₁.cfg k = Rn₂.cfg k :=
-  (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnPI1 (rule commitScore) bnC1I1
+  (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnPI1 _ (rule commitScore) bnC1I1
     commitScore_anchored U V₁ V₂ K₁ K₂ Rn₁ Rn₂ k hk).2.1
 
 /-- It keeps the shape and stays in D22's family, so AL11b and AL16b read

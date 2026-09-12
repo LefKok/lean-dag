@@ -96,8 +96,8 @@ move the committee — `n ≥ 5f+1` for two-round commitment,
   separation is what makes safety unconditional: two runs from one
   genesis configuration agree under **no synchrony, fairness or window
   hypothesis**, for arbitrary scores including adversarial ones
-  (`Adaptive.Agreement.holds`). Liveness is the horizon of the timed arc
-  with one more configuration supplied (`Adaptive.Progress.holds`), and
+  (`Barnacle.Agreement.holds`). Liveness is the horizon of the timed arc
+  with one more configuration supplied (`Barnacle.Progress.holds`), and
   what a reputation score owes the mechanism is four clauses and no more
   (`Adaptive.Score.holds`). The arc composes with the other mechanisms at
   any rule that reads its universes as block records, not per protocol:

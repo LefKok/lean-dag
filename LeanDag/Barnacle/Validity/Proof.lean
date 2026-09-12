@@ -1,5 +1,6 @@
 import LeanDag.Barnacle.Validity.Statement
 import LeanDag.Barnacle.Helpers.Schedule
+import LeanDag.Barnacle.Helpers.Bounds
 /-!
 # BN14 — proof
 
@@ -17,7 +18,7 @@ namespace Barnacle
 namespace Validity
 
 theorem holds : Statement := by
-  intro Validator BlockId Payload _ _ _ R hR P upd C₀ slack hdel U V K Rn Rnd N hgood
+  intro Validator BlockId Payload _ _ _ R hR P B upd C₀ slack hdel U V K Rn Rnd N hgood
   obtain ⟨T, hcard, hT⟩ := hdel.reaches U Rnd N hgood
   refine ⟨T, hcard, ?_⟩
   intro b hb hbT hRnd hN k hkK hround
@@ -25,13 +26,14 @@ theorem holds : Statement := by
   refine ⟨A, hA, ?_⟩
   -- the anchor's block is a candidate of its slot, so it sits at the round
   -- the next configuration starts
-  have hdec := Rn.closed k hkK (Rn.anchor k) (by omega) (by rw [Rn.start_succ k hkK])
+  have hdec := Rn.closed k hkK (Rn.anchor k) (by omega) le_rfl
   rw [hA] at hdec
   obtain ⟨hAids, hAr, -⟩ := hR _ _ _ _ A hdec
   refine hT b hb hbT hRnd hN A hAids ?_
   have hlink : (R.toBaseRule.toDagRule.block U A).round = (R.block U A).round := rfl
-  rw [← hlink, hAr, Config.sched_slotRound, ← Rn.start_succ k hkK]
-  exact hround
+  have hsucc := succ_le_anchor Rn hkK
+  rw [← hlink, hAr, Config.sched_slotRound]
+  omega
 
 end Validity
 

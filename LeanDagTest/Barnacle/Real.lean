@@ -75,7 +75,7 @@ theorem real_runs (K : ℕ) :
     Nonempty (PartialRun realRule.toBaseRule bnP realUpd bnC1
       (Ugrow (11 * K + 9)) (realRule.full (Ugrow (11 * K + 9))) K) :=
   Live.runsExist_roundRobin (by omega) realRule MysticetiProperties.agree
-    (MysticetiLive.descent (Fin 4) ℕ Unit) (Nat.succ_pos 2) (by decide) bnP realUpd
+    (MysticetiLive.descent (Fin 4) ℕ Unit) (Nat.succ_pos 2) (by decide) bnP _ realUpd
     realUpd_bounded realUpd_heads bnC1 bnC1_head
     ⟨fun _ => (by decide : (1 : ℕ) ≤ 4), by decide, by decide⟩
     (Ugrow (11 * K + 9)) (realRule.full (Ugrow (11 * K + 9))) 0 (11 * K + 9)
@@ -102,7 +102,7 @@ example (K k : ℕ) (hk : k < K) (κ : ℕ)
     (h₂ : ((real_runs K).some.cfg k).roundOf κ ≤ (real_runs K).some.start (k + 1)) :
     realRule.Decided ((real_runs K).some.cfg k).sched
       (realRule.full (Ugrow (11 * K + 9))) κ ((real_runs K).some.vdct k κ) :=
-  (real_runs K).some.closed k hk κ h₁ h₂
+  closed_of_le_succ (real_runs K).some hk h₁ h₂
 
 /-! ## BN14 on the same run: a correct validator's block is delivered
 
@@ -120,7 +120,7 @@ theorem real_delivers (K : ℕ) :
             b ∈ historyFrom (Ugrow (11 * K + 9)).block A := by
   obtain ⟨T, hcard, hT⟩ :=
     Validity.holds (Fin 4) ℕ Unit realRule
-      MysticetiProperties.commitsCandidate bnP realUpd bnC1
+      MysticetiProperties.commitsCandidate bnP _ realUpd bnC1
       (Faults.f (Fin 4)) (delivers_core _) (Ugrow (11 * K + 9))
       (realRule.full (Ugrow (11 * K + 9))) K (real_runs K).some 0 (11 * K + 9)
       (ugrow_good _)

@@ -133,8 +133,10 @@ def varRun : PartialRun bnRule32 varP varUpd bnC1I1 Usun Vsun 2 where
       have : κ = 1 ∨ κ = 2 := by omega
       rcases this with rfl | rfl <;>
         exact Decided.directCommit (S := bnC1I1.sched) (by decide) (by decide)
-    · -- range `1`, at `varC`: the round bounds are read through `cum`
+    · -- range `1`, at `varC`: the round bounds are read through `cum`, and
+      -- the anchor's round is the boundary's, this being Barnacle's
       norm_num at h1 h2 ⊢
+      rw [show varC.roundOf 6 = 5 from by decide] at h2
       have hlo : (3 : ℕ) ≤ κ := by
         have h3 : varC.cum 3 = 3 := by decide
         have := (Config.cum_le_iff_le_roundOf varC (r := 3) (g := κ)).2 (by omega)
@@ -207,8 +209,10 @@ def varRun' : PartialRun bnRule32 varP varUpd bnC1I1 Usun Vsun' 2 where
       have : κ = 1 ∨ κ = 2 := by omega
       rcases this with rfl | rfl <;>
         exact Decided.directCommit (S := bnC1I1.sched) (by decide) (by decide)
-    · -- range `1`, at `varC`: the round bounds are read through `cum`
+    · -- range `1`, at `varC`: the round bounds are read through `cum`, and
+      -- the anchor's round is the boundary's, this being Barnacle's
       norm_num at h1 h2 ⊢
+      rw [show varC.roundOf 6 = 5 from by decide] at h2
       have hlo : (3 : ℕ) ≤ κ := by
         have h3 : varC.cum 3 = 3 := by decide
         have := (Config.cum_le_iff_le_roundOf varC (r := 3) (g := κ)).2 (by omega)
@@ -295,30 +299,30 @@ whole of it. -/
 
 example : varRun.start 1 = varRun'.start 1 ∧ varRun.cfg 1 = varRun'.cfg 1 ∧
     varRun.backoff 1 = varRun'.backoff 1 :=
-  let h := Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 varP varUpd bnC1I1
+  let h := Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 varP _ varUpd bnC1I1
     varUpd_anchored Usun Vsun Vsun' 2 2 varRun varRun' 1 (by decide)
   ⟨h.1, h.2.1, h.2.2.1⟩
 
 -- The anchor of the varying range, and the verdicts of its slots.
 example : varRun.anchor 1 = varRun'.anchor 1 :=
-  ((Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 varP varUpd bnC1I1
+  ((Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 varP _ varUpd bnC1I1
     varUpd_anchored Usun Vsun Vsun' 2 2 varRun varRun' 1 (by decide)).2.2.2
     (by decide)).1
 example : varRun.vdct 1 5 = varRun'.vdct 1 5 :=
-  ((Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 varP varUpd bnC1I1
+  ((Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 varP _ varUpd bnC1I1
     varUpd_anchored Usun Vsun Vsun' 2 2 varRun varRun' 1 (by decide)).2.2.2
     (by decide)).2 5 (by decide) (by decide)
 
 -- BN5: one ledger, without repetition, across a reconfiguration that
 -- changed the widths.
 example : varRun.ledgerUpto 2 = varRun'.ledgerUpto 2 :=
-  ((Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 candidates32 varP varUpd bnC1I1
+  ((Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 candidates32 varP _ varUpd bnC1I1
     varUpd_anchored).1 Usun Vsun Vsun' 2 2 varRun varRun').2 2 (by decide)
 example : (varRun.ledgerUpto 2).Nodup :=
-  (Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 candidates32 varP varUpd bnC1I1
+  (Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 candidates32 varP _ varUpd bnC1I1
     varUpd_anchored).2.2 Usun Vsun 2 varRun 2 le_rfl
 example : varRun.ledgerUpto 1 <+: varRun.ledgerUpto 2 :=
-  (Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 candidates32 varP varUpd bnC1I1
+  (Ledger.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 candidates32 varP _ varUpd bnC1I1
     varUpd_anchored).2.1 Usun Vsun 2 varRun 1 2 (by decide)
 
 #print axioms varRun
