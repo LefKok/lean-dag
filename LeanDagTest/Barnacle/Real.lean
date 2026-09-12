@@ -102,7 +102,7 @@ example (K k : ℕ) (hk : k < K) (κ : ℕ)
     (h₂ : ((real_runs K).some.cfg k).roundOf κ ≤ (real_runs K).some.start (k + 1)) :
     realRule.Decided ((real_runs K).some.cfg k).sched
       (realRule.full (Ugrow (11 * K + 9))) κ ((real_runs K).some.vdct k κ) :=
-  closed_of_le_succ (real_runs K).some hk h₁ h₂
+  closed_on_range (real_runs K).some hk h₁ h₂
 
 /-! ## BN14 on the same run: a correct validator's block is delivered
 

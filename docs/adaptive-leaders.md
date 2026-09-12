@@ -1137,7 +1137,39 @@ turns on it, both arcs having always stated liveness against the same
 `Boundary` and a `horizon` taking it, which is a cost the tighter bound
 does not currently pay for.
 
-### Step 13 — the record
+### Step 13 — reviewing the unification
+
+Four things.
+
+**The port dropped a theorem.** `update_spanOf` tied `spanOf` — "the
+verdicts the rule is handed" — to the `update` field that actually
+supplies them, and it lived in a file the unification deleted. Without it
+the accessor is a second definition a reader has to trust. Restored at
+`Barnacle.update_spanOf`, now generic in the boundary.
+
+**Three names read as arithmetic.** `le_start_succ`, `succ_le_anchor` and
+`closed_of_le_succ` say, respectively, that a configuration governs at
+least its interval, that its output never outruns its decisions, and that
+every slot it outputs is decided by it. Renamed `threshold_le_boundary`,
+`boundary_le_anchor` and `closed_on_range` — the first two after the
+`Boundary` clauses they come from, the third after the thing a consumer
+wants.
+
+**The boundary was presented as a binary.** D19 read as a choice between
+two papers. `Boundary.afterThreshold d` is the family between them: the
+switch `d` rounds after the reconfiguration falls due, capped at the
+anchor. Raising `d` orders more under each configuration and makes more of
+that output wait on the anchor. Safety and the ledger hold at every `d`,
+witnessed in `LeanDagTest/Adaptive/Mechanisms.lean` — which is the honest
+form of "a third choice costs an instance rather than an arc".
+
+**Stale prose.** `Model/Run.lean`'s header and report §13.1 still
+described the boundary as the anchor's round, which is now only one
+instance. Both rewritten around the two bounds and the parameter between
+them; §21.2 gains the boxed statement that where the switch goes is a
+deployment choice and not a safety question.
+
+### Step 14 — the record
 
 Report §13 gains the segmented arc and relabels the fixpoint one: AL3 is
 safety for policies that read verdicts, under a window condition

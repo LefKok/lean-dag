@@ -13,7 +13,7 @@ the `candidates` law), and two ranges commit blocks of disjoint rounds.
 
 The range a run outputs is `(start k, start (k + 1)]` and `closed`
 reaches the anchor's round, which lies at or above it — so every use of
-`closed` here goes through `closed_of_le_succ`.
+`closed` here goes through `closed_on_range`.
 -/
 
 namespace LeanDag
@@ -69,7 +69,7 @@ theorem round_of_mem_rangeLedger (hR : Properties.CommitsCandidate R.toDagRule)
     Rn.start k < (R.block U L).round ∧ (R.block U L).round ≤ Rn.start (k + 1) := by
   obtain ⟨κ, h1, h2, hv⟩ := mem_ledgerOf.mp h
   obtain ⟨hlo, hhi⟩ := round_of_mem_interval Rn h1 h2
-  have hd := closed_of_le_succ Rn hk hlo hhi
+  have hd := closed_on_range Rn hk hlo hhi
   rw [hv] at hd
   have hc := hR _ _ _ κ L hd
   have hlink : (R.toDagRule.block U L).round = (R.block U L).round := rfl
@@ -88,8 +88,8 @@ theorem slot_unique_of_rangeLedger (hR : Properties.CommitsCandidate R.toDagRule
     (hv₁ : Rn.vdct k κ₁ = some L) (hv₂ : Rn.vdct k κ₂ = some L) : κ₁ = κ₂ := by
   obtain ⟨hlo₁, hhi₁⟩ := round_of_mem_interval Rn h₁ h₁'
   obtain ⟨hlo₂, hhi₂⟩ := round_of_mem_interval Rn h₂ h₂'
-  have d₁ := closed_of_le_succ Rn hk hlo₁ hhi₁
-  have d₂ := closed_of_le_succ Rn hk hlo₂ hhi₂
+  have d₁ := closed_on_range Rn hk hlo₁ hhi₁
+  have d₂ := closed_on_range Rn hk hlo₂ hhi₂
   rw [hv₁] at d₁
   rw [hv₂] at d₂
   have c₁ := hR _ _ _ κ₁ L d₁
@@ -135,7 +135,7 @@ theorem decided_and_not_output (Rn : Run R P B upd C₀ U V K) {k : ℕ} (hk : k
     R.Decided (Rn.cfg k).sched V κ (Rn.vdct k κ) ∧
       (Rn.cfg k).cum (Rn.start (k + 1) + 1) ≤ κ := by
   have hstart := start_lt_succ Rn hk
-  have hanc := succ_le_anchor Rn hk
+  have hanc := boundary_le_anchor Rn hk
   refine ⟨Rn.closed k hk κ (by omega) hhi, ?_⟩
   exact (Config.cum_le_iff_le_roundOf (Rn.cfg k)).2 (by omega)
 

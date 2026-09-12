@@ -101,7 +101,7 @@ theorem spanVdct_agree (hR : Properties.Agree R.toDagRule)
   simp only [spanVdct, hs, hc, hs']
   split
   · rename_i hk
-    have h₂ := succ_le_anchor R₂ hk₂
+    have h₂ := boundary_le_anchor R₂ hk₂
     refine vdct_agree hR R₁ R₂ hc hk₁ hk₂ ?_ ?_ hk.1 (by omega)
     · rw [hs, hc]; exact hk.1
     · rw [hc, ha]; omega

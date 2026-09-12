@@ -30,7 +30,7 @@ theorem holds : Statement := by
       unfold Run.rangeLedger
       rw [← hs, ← hc, ← hs']
       exact ledgerOf_congr (fun κ h1 h2 => hv κ (round_of_mem_interval R₁ h1 h2).1
-        (le_trans (round_of_mem_interval R₁ h1 h2).2 (succ_le_anchor R₁ (by omega))))
+        (le_trans (round_of_mem_interval R₁ h1 h2).2 (boundary_le_anchor R₁ (by omega))))
     refine ⟨hrange, fun K hK => ?_⟩
     induction K with
     | zero => rfl

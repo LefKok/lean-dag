@@ -1,20 +1,46 @@
 import LeanDag.Barnacle.Model.Window
 /-!
-# Barnacle: the run
+# The run, at any boundary
 
-Configuration `k` (`barnacle.md` §5) is in force above round `start k`,
-and its range runs to the next anchor's round; every slot of the range
-is decided against the configuration's own schedule `(cfg k).sched`,
-which is what makes the dependency on `k` well-founded. A configuration
-carries its leaders, its slots per round and its interval together
-(`Model/Config.lean`), so a reconfiguration replaces all three at once.
-`PartialRun` closes configurations `0, …, K` from a genesis
-configuration `C₀`: their ranges decided in full, `K` itself only determined — there is no total run, since a
-universe holds finitely many blocks. The run starts after round `0`, so
-round `0` lies in no range, matching Algorithm 2.
+Configuration `k` (`barnacle.md` §5) is in force above round `start k`.
+It **decides** every slot through the round its anchor sits at, and
+**outputs** the rounds `(start k, start (k + 1)]`. Where `start (k + 1)`
+falls between those two is the `Boundary` the run is taken at, and it is
+the only thing the two mechanisms of this development disagree about
+(`adaptive-leaders.md` D19, D21): Barnacle switches at the anchor's own
+round, so the range it outputs is the range it decided; HammerHead
+switches where the reconfiguration fell due, and re-derives the rounds
+between under the next configuration.
+
+A configuration carries its leaders, its slots per round and its interval
+together (`Model/Config.lean`), so a reconfiguration replaces all three
+at once. A run closes configurations `0, …, K` from a genesis
+configuration `C₀`: their ranges decided in full, `K` itself only
+determined — there is no total run, since a universe holds finitely many
+blocks. The run starts after round `0`, so round `0` lies in no range,
+matching Algorithm 2.
+
+**The ranges partition the rounds.** Consecutive ranges abut by
+construction — configuration `k + 1` starts where `k` stopped — so no
+round is output twice, whatever the boundary. `rangeLedger` reads exactly
+the range and `round_of_mem_ledgerUpto` says the ledger to any height
+stops at that height's start round.
+
+**The schedule above a range names anchors only.** `(cfg k).sched` is
+total, and names a leader at every round above the range as well as
+inside it. That is deliberate and it is what the algorithm does: a
+validator settles configuration `k` while `cfg k` is still its active
+schedule at every round, reading slots above the range as anchors when an
+indirect decision needs them, and only then finds the anchor and
+switches. So the extension is the schedule in force when those
+derivations are performed, and the anchors it names are agreed for the
+same reason the range's verdicts are. What is never done is to *output* a
+slot above the range under `cfg k`; that slot belongs to a later range
+and is decided again for the ledger.
 
 **Trusted core of the arc: definitions only.**
 -/
+
 
 namespace LeanDag
 
@@ -23,37 +49,17 @@ namespace Barnacle
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 
-/-- **A run closed up to height `K`.** Configurations `0, …, K` are
-determined, and the ranges of configurations below `K` are decided in
-full.
+/-- **A run closed up to height `K`**, at the boundary `B`.
+Configurations `0, …, K` are determined, and the spans of configurations
+below `K` are decided in full.
 
-**The ranges partition the rounds, and the schedule above a range names
-anchors only.** Configuration `k` governs the rounds
-`(start k, start (k + 1)]`, and `start (k + 1)` is the anchor's own
-round, so consecutive ranges abut and no round belongs to two of them.
-`rangeLedger` reads exactly the range, and `round_of_mem_ledgerUpto`
-says the ledger to any height stops at that height's start round.
-
-`(cfg k).sched` is nevertheless total, and names a leader at every round
-above the range as well as inside it. That is deliberate and it is what
-the algorithm does: a validator settles configuration `k`'s range while
-`cfg k` is still its active schedule at every round, reading slots above
-the range as anchors when an indirect decision needs them, and only then
-finds the anchor that closes the range and switches. So the extension is
-the schedule in force when those derivations are performed, and the
-anchors it names are agreed for the same reason the range's verdicts
-are. What is never done is to *output* a slot above the range under
-`cfg k`; that slot belongs to configuration `k + 1`'s range and is
-decided again, under `cfg (k + 1)`, for the ledger.
-
-`closed` is the paper's `TryDecide`: every slot of the range — the
-rounds after `start k`, through the anchor's round `start (k + 1)` —
-decided against the configuration's schedule. `anchor_commits`
-and `anchor_least` are `TryCommit`'s trigger: the anchor is the least
-committed slot whose round exceeds `start k + (cfg k).interval`.
-`update` is `UpdateLeaders`, for an arbitrary rule. `bounds` is a clause
-of the run because the rule is arbitrary; for the AIMD rule it is a
-theorem. -/
+`closed` is the paper's `TryDecide` and `anchor_commits`/`anchor_least`
+are `TryCommit`'s trigger: the anchor is the least committed slot whose
+round exceeds `start k + (cfg k).interval`, the round the reconfiguration
+falls due. `start_succ` is the only field the two mechanisms differ in.
+`update` is `UpdateLeaders`, for an arbitrary rule, handed the verdicts
+of the range just output. `bounds` is a clause of the run because the
+rule is arbitrary; for the AIMD rule it is a theorem. -/
 structure Run (R : BaseRule Validator BlockId Payload) (P : Params)
     (B : Boundary Validator) (upd : UpdateRule R) (C₀ : Config Validator)
     (U : R.Universe) (V : R.View U) (K : ℕ) where

@@ -1,5 +1,7 @@
 import LeanDag.Adaptive.Helpers.Mechanisms
 import LeanDag.Integration.Joiner
+import LeanDag.Barnacle.Agreement.Proof
+import LeanDag.Barnacle.Ledger.Proof
 /-!
 # The segmented arc across the mechanisms, applied
 
@@ -63,6 +65,33 @@ example (hL : R.Laws) (score : Score R)
       ∀ v C, score U V v C = score U' V' v C) :
     UpdStable (rule score) :=
   updStable_rule (Score.stable_of_readsHistory hL score h)
+
+/-! ## The boundary is a dial, not a fork
+
+D19 asked where the next configuration should take force: Barnacle's
+paper says at the anchor's round, HammerHead's at the round the
+reconfiguration fell due. `Boundary` makes that a parameter, and the
+safety and ledger theorems are quantified over it — so a deployer may
+sit anywhere on the line between, and the results follow with nothing
+re-proved. -/
+
+section Boundaries
+
+variable {R : BaseRule Validator BlockId Payload} {P : Params}
+
+/-- **Safety at every boundary**, including ones neither paper names. -/
+example (hR : Properties.Agree R.toDagRule) (d : ℕ) (upd : UpdateRule R)
+    (C₀ : Config Validator) :
+    Agreement.RunAgreement R P (Boundary.afterThreshold d) upd C₀ :=
+  Agreement.holds _ _ _ R hR P _ upd C₀
+
+/-- **And one ledger at every boundary.** -/
+example (hR : Properties.Agree R.toDagRule) (hc : Properties.CommitsCandidate R.toDagRule)
+    (d : ℕ) (upd : UpdateRule R) (hanc : Anchored R upd) (C₀ : Config Validator) :
+    Ledger.LedgerAgreement R P (Boundary.afterThreshold d) upd C₀ :=
+  (Ledger.holds _ _ _ R hR hc P _ upd C₀ hanc).1
+
+end Boundaries
 
 end Scores
 

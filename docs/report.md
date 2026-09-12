@@ -4373,40 +4373,44 @@ two clauses are what a designer supplies.
 
 Results carry **AL**-labels. The arc reuses the Barnacle arc's
 vocabulary — `Config`, `UpdateRule`, `Anchored`, `Config.InBounds`,
-`ledgerOf` — and restates none of it; what differs is that a
-configuration's output stops at its boundary while its decisions reach
-its anchor, where Barnacle's boundary is the anchor's own round
-(§21, `adaptive-leaders.md` D19).
+`ledgerOf` — and restates none of it. It reuses the **run** too: a
+segmented run is `Barnacle.Run` at `Boundary.atThreshold`, and the
+mechanism is that one word. Safety, the ledger, conservativity, validity
+and progress are §21's theorems at that boundary, quantified over every
+boundary and so proved once for both (`adaptive-leaders.md` D21). What
+this section adds is the score, the joiner and the witnesses.
 
 ### 13.1 The run, and its two bounds
 
-A segmented run closed to height `K` (`AL12`, `Adaptive.SegRun`) holds a
-start round, a configuration, a back-off and an anchor at each height,
-with the two bounds that make the mechanism asynchrony-tolerant:
+A segmented run closed to height `K` (`AL12`) is
 
 ```lean
-  closed : ∀ k, k < K → ∀ κ, start k < (cfg k).roundOf κ →
-    (cfg k).roundOf κ ≤ (cfg k).roundOf (anchor k) →
-      R.Decided (cfg k).sched V κ (vdct k κ)
-  anchor_commits : ∀ k, k < K →
-    (∃ A, vdct k (anchor k) = some A) ∧ start (k + 1) < (cfg k).roundOf (anchor k)
-  start_succ : ∀ k, k < K → start (k + 1) = start k + (cfg k).interval
+abbrev SegRun (R : BaseRule Validator BlockId Payload) (P : Params)
+    (upd : UpdateRule R) (C₀ : Config Validator) (U : R.Universe) (V : R.View U)
+    (K : ℕ) : Type :=
+  Run R P Boundary.atThreshold upd C₀ U V K
 ```
 
-`start_succ` fixes the next boundary from the current one and the
-interval alone, so the boundaries are known before any commit;
-`anchor_commits` puts the anchor strictly past the boundary, however far
-past; and `closed` decides everything up to it. `rangeLedger` reads the
-rounds `(start k, start (k + 1)]` and no others, so the rounds between
-the boundary and the anchor are decided by this configuration and output
-by a later one — `decided_and_not_output` is that statement, and
-`round_of_mem_ledgerUpto` says the ledger to any height stops at that
-height's start round.
+and `Boundary.atThreshold` is the whole of the mechanism's difference
+from §21's. Every run decides through its anchor's round and outputs the
+rounds `(start k, start (k + 1)]`; the boundary says where `start (k + 1)`
+falls between the round the reconfiguration became due and the round the
+anchor turned up. Barnacle takes the anchor's round, so it orders what it
+decided. This arc takes the round the reconfiguration became due, and
+**that is what makes it asynchrony-tolerant**: the boundary is fixed
+before any commit, while the anchor's round moves with the network.
+
+The rounds in between are decided by this configuration and output by a
+later one, against a different schedule — `decided_and_not_output` is that
+statement, empty at Barnacle's boundary and the point of this one. The
+bounds a boundary gives are `threshold_le_boundary` and
+`boundary_le_anchor`, and `round_of_mem_ledgerUpto` says the ledger to
+any height stops at that height's start round.
 
 **The structure records what a validator has done, not how fast.** Its
 only existential is a commit the validator has witnessed. A validator
 that has closed two configurations has a height-`2` run; one that has
-closed none has `SegRun.zero`, which exists unconditionally.
+closed none has `Run.zero`, which exists unconditionally.
 
 ### 13.2 Safety, for any update rule
 
@@ -8121,14 +8125,26 @@ def observed (R : BaseRule Validator BlockId Payload)
 
 ### 21.2 Safety, for any update rule
 
-A run closed to height `K` (`PartialRun`) starts from a genesis
-configuration `C₀` and holds `K` configurations — start round,
-configuration, back-off, anchor — each **within the parameters**
-(`Config.InBounds`: no round wider than `maxLeaders`, an interval of at
-least one round and at most `maxInterval`), with every slot of each
-range decided against the configuration's schedule, the anchor the least
-committed slot past the threshold, and the next configuration the update
-rule's.
+A run closed to height `K` (`Run`) starts from a genesis configuration
+`C₀` and holds `K` configurations — start round, configuration,
+back-off, anchor — each **within the parameters** (`Config.InBounds`: no
+round wider than `maxLeaders`, an interval of at least one round and at
+most `maxInterval`), with every slot decided against the configuration's
+schedule as far as its anchor, the anchor the least committed slot past
+the threshold, and the next configuration the update rule's.
+
+**Where the next configuration takes force is a parameter.** A
+reconfiguration falls due at `start k + interval` and is detected at the
+anchor; `Boundary` is the round in between at which the switch happens.
+`Boundary.atAnchor` is this mechanism's — the range it orders is the
+range it decided — and `Boundary.atThreshold` is §13's, which orders only
+to the round the reconfiguration fell due and re-derives the rest.
+`Boundary.afterThreshold d` is the family between them. `PartialRun` is
+`Run` at `atAnchor`.
+
+> Everything below holds at **every** boundary. Where a mechanism puts
+> the switch is a deployment choice about how much output waits on the
+> anchor; it is not a safety question (`adaptive-leaders.md` D19, D21).
 **BN3** — two runs over one universe from one genesis configuration,
 from any two views, to any two heights, agree:
 
@@ -10301,7 +10317,7 @@ reused.
 |:---|:---|:---|
 | AL10 | a verdict is local in the rounds as well as the leaders: every decided slot has a round below which any schedule agreeing on rounds and leaders decides it the same way, and a directly decided slot's is its own round plus a wave | `Properties.exists_roundLocal` *(Properties/Derived/FromBand)*, `AnchoredRule.banded_direct` *(Common/Anchored/Band)*, `Barnacle.cfg_local` *(Barnacle/Helpers/Schedule)* |
 | AL11 | what a reputation score owes: anchored, bounded from `Score.Keeps`, preserving whatever clause liveness names, and the constant score is the constant rule. A score reads the anchor's history **and** the verdicts of the span just closed, and owes nothing for the second | `Score.rule_anchored`, `Score.rule_bounded`, `Score.rule_keeps`, `Score.rule_const`, `Score.holds` *(Adaptive/Score)*, `Run.spanOf` *(Barnacle/Model/Run)*, `Barnacle.spanVdct_agree` *(Barnacle/Helpers/Agreement)* |
-| AL12 | the segmented run: decisions to the anchor, output to the boundary — `Barnacle.Run` at `Boundary.atThreshold`, the one field the two mechanisms differ in | `Barnacle.Boundary`, `Boundary.atAnchor`, `Boundary.atThreshold` *(Barnacle/Model/Rule)*, `Barnacle.Run` *(Barnacle/Model/Run)*, `Adaptive.SegRun` *(Adaptive/Model/Segment)*, `le_start_succ`, `succ_le_anchor` *(Barnacle/Helpers/Bounds)*, `decided_and_not_output`, `round_of_mem_ledgerUpto` *(Barnacle/Helpers/Ledger)* |
+| AL12 | the segmented run: decisions to the anchor, output to the boundary — `Barnacle.Run` at `Boundary.atThreshold`, the one field the two mechanisms differ in | `Barnacle.Run` *(Barnacle/Model/Run)*, `Adaptive.SegRun` *(Adaptive/Model/Segment)*, `threshold_le_boundary`, `boundary_le_anchor`, `closed_on_range` *(Barnacle/Helpers/Bounds)*, `decided_and_not_output`, `round_of_mem_ledgerUpto` *(Barnacle/Helpers/Ledger)* |
 | AL13 | safety: two segmented runs from one genesis configuration agree, for any anchored rule, with no window and no synchrony — BN3 at this boundary, the statement never naming one | `Barnacle.Agreement.RunAgreement`, `Barnacle.Agreement.holds` *(Barnacle/Agreement)*, `configAgree`, `anchor_agree`, `start_succ_agree` *(Barnacle/Helpers/Agreement)* |
 | AL14 | the segmented ledger: agreed, growing, without repetition — BN5 at this boundary | `Barnacle.Ledger.holds` *(Barnacle/Ledger)* |
 | AL15 | conservativity at the constant rule, and validity — BN6 and BN14 at this boundary | `Barnacle.Conservativity.holds` *(Barnacle/Conservativity)*, `Barnacle.Validity.holds` *(Barnacle/Validity)* |
@@ -10449,7 +10465,7 @@ reused.
 | Label | Statement | Lean |
 |:---|:---|:---|
 | BN2 | the window is agreed: a view holding the anchor holds its history, and two views restrict it to one set | `Barnacle.Window.holds` *(Barnacle/Window/Proof)* |
-| BN3 | the configuration sequence is agreed, for any update rule: two runs to any heights agree on every configuration and verdict of their common ranges, and so on the verdict function the rule is handed | `Barnacle.Agreement.holds` *(Barnacle/Agreement/Proof)*, `spanVdct`, `PartialRun.spanOf` *(Barnacle/Model)*, `spanVdct_agree` *(Barnacle/Helpers/Agreement)* |
+| BN3 | the configuration sequence is agreed, for any update rule **and at every boundary**: two runs to any heights agree on every configuration and verdict of their common ranges, and so on the verdict function the rule is handed | `Barnacle.Boundary`, `Boundary.atAnchor`, `Boundary.atThreshold`, `Boundary.afterThreshold` *(Barnacle/Model/Rule)*, `Barnacle.Agreement.holds` *(Barnacle/Agreement/Proof)*, `spanVdct`, `Run.spanOf`, `update_spanOf` *(Barnacle/Model, Barnacle/Helpers/Bounds)*, `spanVdct_agree`, `start_succ_agree` *(Barnacle/Helpers/Agreement)* |
 | BN5 | the ledger is agreed as far as both runs reach, grows by prefixes, and holds each block once | `Barnacle.Ledger.holds` *(Barnacle/Ledger/Proof)* |
 | BN6 | under the constant rule the count never moves and every verdict is a one-leader verdict | `Barnacle.Conservativity.holds` *(Barnacle/Conservativity/Proof)* |
 | BN7 | the AIMD rule keeps its count in range, steps as the paper says, is the integer test, and is anchored — it does not read the view, so two validators take one step | `Barnacle.Aimd.holds` *(Barnacle/Aimd/Proof)* |
@@ -10505,7 +10521,7 @@ reused.
 
 ## Appendix B. The definition reference
 
-The 324 definitions and structures the report names, in
+The 326 definitions and structures the report names, in
 the order a reader meets them. Each entry is the source text,
 unabridged, with the explanation the source carries. This
 appendix is generated from the compiled development by
@@ -12796,6 +12812,28 @@ def spanVdct (C : Config Validator) (lo hi : ℕ) (v : ℕ → Option BlockId) :
 
 **The verdicts of a closed range**, and nothing else: slot `κ`'s verdict where the round of `κ` lies in `(lo, hi]`, and `none` outside. What a run hands an update rule. Junking the outside is what makes the object agreed — a run constrains its verdicts only inside the range it closed.
 
+#### `Boundary`
+
+*structure, `Barnacle.Model.Rule.lean`*
+
+```lean
+structure Boundary (Validator : Type) where
+  /-- The round after which the next configuration is in force. -/
+  next : Config Validator → ℕ → ℕ → ℕ
+  /-- Not before the reconfiguration falls due. -/
+  ge_threshold : ∀ (C : Config Validator) (s a : ℕ),
+    s + C.interval < C.roundOf a → s + C.interval ≤ next C s a
+  /-- And not after the anchor that closes the span. -/
+  le_anchor : ∀ (C : Config Validator) (s a : ℕ),
+    s + C.interval < C.roundOf a → next C s a ≤ C.roundOf a
+```
+
+**Where the next configuration takes force.** A reconfiguration falls due at `s + C.interval`, and is detected at the anchor — the first slot committed past that round. Between those two rounds a protocol has a choice, and `Boundary` is that choice as a parameter.
+
+Both ends are taken. Barnacle installs the next configuration at the anchor's own round (`Boundary.atAnchor`), which is what its paper does; HammerHead installs it at the round the reconfiguration fell due (`Boundary.atThreshold`), and orders nothing above it — which is what makes its output independent of when the anchor happened to appear (`adaptive-leaders.md` D19). Nothing else in a run distinguishes the two.
+
+The two clauses are conditional on the anchor lying past the threshold, which is exactly what a run's `anchor_commits` provides; unconditionally neither end would satisfy the other's.
+
 #### `Boundary.atAnchor`
 
 *def, `Barnacle.Model.Rule.lean`*
@@ -12821,6 +12859,21 @@ def Boundary.atThreshold : Boundary Validator where
 ```
 
 **At the round the reconfiguration fell due**: the span ends where it was always going to, whatever the network did. HammerHead's.
+
+#### `Boundary.afterThreshold`
+
+*def, `Barnacle.Model.Rule.lean`*
+
+```lean
+def Boundary.afterThreshold (d : ℕ) : Boundary Validator where
+  next := fun C s a => min (s + C.interval + d) (C.roundOf a)
+  ge_threshold := fun _ _ _ h => le_min (by omega) (le_of_lt h)
+  le_anchor := fun _ _ _ _ => min_le_right _ _
+```
+
+**Anywhere between the two**, at a fixed delay past the round the reconfiguration falls due and never past the anchor. `atThreshold` is `d = 0`'s behaviour and `atAnchor` is the limit; every `d` between is a deployable choice, which is what makes D19 a dial rather than a fork.
+
+Raising `d` orders more under each configuration, so fewer rounds are re-derived under the next one; it also makes those `d` rounds of output wait for the anchor, whose round moves with the network. A deployer picks where on that line to sit, and the safety and ledger theorems do not notice.
 
 #### `Anchored`
 
@@ -12940,13 +12993,9 @@ structure Run (R : BaseRule Validator BlockId Payload) (P : Params)
       (spanVdct (cfg k) (start k) (start (k + 1)) (vdct k)) A
 ```
 
-**A run closed up to height `K`.** Configurations `0, …, K` are determined, and the ranges of configurations below `K` are decided in full.
+**A run closed up to height `K`**, at the boundary `B`. Configurations `0, …, K` are determined, and the spans of configurations below `K` are decided in full.
 
-**The ranges partition the rounds, and the schedule above a range names anchors only.** Configuration `k` governs the rounds `(start k, start (k + 1)]`, and `start (k + 1)` is the anchor's own round, so consecutive ranges abut and no round belongs to two of them. `rangeLedger` reads exactly the range, and `round_of_mem_ledgerUpto` says the ledger to any height stops at that height's start round.
-
-`(cfg k).sched` is nevertheless total, and names a leader at every round above the range as well as inside it. That is deliberate and it is what the algorithm does: a validator settles configuration `k`'s range while `cfg k` is still its active schedule at every round, reading slots above the range as anchors when an indirect decision needs them, and only then finds the anchor that closes the range and switches. So the extension is the schedule in force when those derivations are performed, and the anchors it names are agreed for the same reason the range's verdicts are. What is never done is to *output* a slot above the range under `cfg k`; that slot belongs to configuration `k + 1`'s range and is decided again, under `cfg (k + 1)`, for the ledger.
-
-`closed` is the paper's `TryDecide`: every slot of the range — the rounds after `start k`, through the anchor's round `start (k + 1)` — decided against the configuration's schedule. `anchor_commits` and `anchor_least` are `TryCommit`'s trigger: the anchor is the least committed slot whose round exceeds `start k + (cfg k).interval`. `update` is `UpdateLeaders`, for an arbitrary rule. `bounds` is a clause of the run because the rule is arbitrary; for the AIMD rule it is a theorem.
+`closed` is the paper's `TryDecide` and `anchor_commits`/`anchor_least` are `TryCommit`'s trigger: the anchor is the least committed slot whose round exceeds `start k + (cfg k).interval`, the round the reconfiguration falls due. `start_succ` is the only field the two mechanisms differ in. `update` is `UpdateLeaders`, for an arbitrary rule, handed the verdicts of the range just output. `bounds` is a clause of the run because the rule is arbitrary; for the AIMD rule it is a theorem.
 
 #### `PartialRun`
 
@@ -12983,19 +13032,6 @@ def ledgerOf (v : ℕ → Option BlockId) (lo hi : ℕ) : List BlockId :=
 ```
 
 The committed blocks of the slots `[lo, hi)`, in slot order.
-
-#### `Run.rangeLedger`
-
-*def, `Barnacle.Model.Run.lean`*
-
-```lean
-def Run.rangeLedger {K : ℕ} (Rn : Run R P B upd C₀ U V K) (k : ℕ) :
-    List BlockId :=
-  ledgerOf (Rn.vdct k) ((Rn.cfg k).cum (Rn.start k + 1))
-    ((Rn.cfg k).cum (Rn.start (k + 1) + 1))
-```
-
-The ledger of configuration `k`: its range's committed blocks, from the first slot after `start k` to the last slot of round `start (k + 1)`. Meaningful for the closed configurations, `k < K`.
 
 #### `LiveRule.LiveOn`
 
@@ -13084,6 +13120,31 @@ def RuleAnchored (R : BaseRule Validator BlockId Payload) (P : Params)
 ```
 
 **BN7e, the rule is anchored.** It does not read the view, so two validators holding the anchor take the same step — the condition BN3 asks of an update rule.
+
+#### `Run.zero`
+
+*def, `Barnacle.Helpers.Progress.lean`*
+
+```lean
+def Run.zero (R : BaseRule Validator BlockId Payload) (P : Params)
+    (B : Boundary Validator) (upd : UpdateRule R) (C₀ : Config Validator)
+    (h₀ : C₀.InBounds P) (U : R.Universe) (V : R.View U) :
+    Run R P B upd C₀ U V 0 where
+  start := fun _ => 0
+  cfg := fun _ => C₀
+  backoff := fun _ => 0
+  anchor := fun _ => 0
+  vdct := fun _ _ => none
+  init := ⟨rfl, rfl, rfl⟩
+  bounds := fun _ => h₀
+  closed := fun _ h => absurd h (Nat.not_lt_zero _)
+  anchor_commits := fun _ h => absurd h (Nat.not_lt_zero _)
+  anchor_least := fun _ h => absurd h (Nat.not_lt_zero _)
+  start_succ := fun _ h => absurd h (Nat.not_lt_zero _)
+  update := fun _ h => absurd h (Nat.not_lt_zero _)
+```
+
+The height-`0` run: `init` only.
 
 ### Hydrozoan: the dual-path rule under hybrid faults
 
@@ -16051,7 +16112,7 @@ def Good (R : DagRule Validator BlockId Payload) (rel : Reliability Validator)
 
 ## Appendix C. The theorem reference
 
-The 485 theorems the body or Appendix A names, each
+The 487 theorems the body or Appendix A names, each
 the source statement, unabridged. Generated with Appendix B;
 a theorem the report does not name is a step of an argument
 rather than a result it presents, and the source is its
@@ -20543,27 +20604,53 @@ theorem rebases_chop : Properties.Rebases C.sched (C.chop G).sched G (C.cum G) w
 theorem holds : Statement
 ```
 
-#### `le_start_succ`
+#### `threshold_le_boundary`
 
 *theorem, `Barnacle.Helpers.Bounds.lean`*
 
 ```lean
-theorem le_start_succ (Rn : Run R P B upd C₀ U V K) {k : ℕ} (hk : k < K) :
+theorem threshold_le_boundary (Rn : Run R P B upd C₀ U V K) {k : ℕ} (hk : k < K) :
     Rn.start k + (Rn.cfg k).interval ≤ Rn.start (k + 1)
 ```
 
-**A configuration governs at least its interval**: the next one does not take force before the reconfiguration falls due.
+**A configuration governs at least its interval**: the next one does not take force before the reconfiguration falls due, wherever the boundary is put. A deployer reading `interval` as "how long a configuration lasts" is reading a lower bound, not an equality.
 
-#### `succ_le_anchor`
+#### `boundary_le_anchor`
 
 *theorem, `Barnacle.Helpers.Bounds.lean`*
 
 ```lean
-theorem succ_le_anchor (Rn : Run R P B upd C₀ U V K) {k : ℕ} (hk : k < K) :
+theorem boundary_le_anchor (Rn : Run R P B upd C₀ U V K) {k : ℕ} (hk : k < K) :
     Rn.start (k + 1) ≤ (Rn.cfg k).roundOf (Rn.anchor k)
 ```
 
-**And it decides at least what it outputs**: the boundary is at or below the anchor's round, which is how far `closed` reaches.
+**And it decides at least what it outputs**: the boundary is at or below the anchor's round, which is how far `closed` reaches. The two together are the whole of what a `Boundary` gives a run.
+
+#### `closed_on_range`
+
+*theorem, `Barnacle.Helpers.Bounds.lean`*
+
+```lean
+theorem closed_on_range (Rn : Run R P B upd C₀ U V K) {k : ℕ} (hk : k < K) {κ : ℕ}
+    (hlo : Rn.start k < (Rn.cfg k).roundOf κ)
+    (hhi : (Rn.cfg k).roundOf κ ≤ Rn.start (k + 1)) :
+    R.Decided (Rn.cfg k).sched V κ (Rn.vdct k κ)
+```
+
+**Every slot a configuration outputs is decided by it.** A run records decisions to the anchor and output to the boundary; this is the half a ledger needs, and it is where every consumer that used to read `closed` at the boundary now goes.
+
+#### `update_spanOf`
+
+*theorem, `Barnacle.Helpers.Bounds.lean`*
+
+```lean
+theorem update_spanOf (Rn : Run R P B upd C₀ U V K) (k : ℕ) (hk : k < K)
+    (A : BlockId) (hA : Rn.vdct k (Rn.anchor k) = some A) :
+    (Rn.cfg (k + 1), Rn.backoff (k + 1))
+      = upd (Rn.cfg k) (Rn.backoff k) U V (Rn.spanOf k) A
+```
+
+**The rule is applied to exactly the range's verdicts.** `Run.spanOf` and the structure's own `update` field name one function, so a reader chasing what a reputation rule sees can read `spanOf` and stop.
 
 #### `coversUpto_full`
 

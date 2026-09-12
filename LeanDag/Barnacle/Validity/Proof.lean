@@ -31,7 +31,7 @@ theorem holds : Statement := by
   obtain ⟨hAids, hAr, -⟩ := hR _ _ _ _ A hdec
   refine hT b hb hbT hRnd hN A hAids ?_
   have hlink : (R.toBaseRule.toDagRule.block U A).round = (R.block U A).round := rfl
-  have hsucc := succ_le_anchor Rn hkK
+  have hsucc := boundary_le_anchor Rn hkK
   rw [← hlink, hAr, Config.sched_slotRound]
   omega
 
