@@ -205,15 +205,14 @@ def Boundary.atThreshold : Boundary Validator where
   ge_threshold := fun _ _ _ _ => le_rfl
   le_anchor := fun _ _ _ h => le_of_lt h
 
-/-- **Anywhere between the two**, at a fixed delay past the round the
-reconfiguration falls due and never past the anchor. `atThreshold` is
-`d = 0`'s behaviour and `atAnchor` is the limit; every `d` between is a
-deployable choice, which is what makes D19 a dial rather than a fork.
+/-- **Anywhere between the two**: switch `d` rounds after the
+reconfiguration falls due, and never past the anchor. So where the switch
+goes is a choice along a range, not between two points.
 
 Raising `d` orders more under each configuration, so fewer rounds are
 re-derived under the next one; it also makes those `d` rounds of output
 wait for the anchor, whose round moves with the network. A deployer picks
-where on that line to sit, and the safety and ledger theorems do not
+where on that range to sit, and the safety and ledger theorems do not
 notice. -/
 def Boundary.afterThreshold (d : ℕ) : Boundary Validator where
   next := fun C s a => min (s + C.interval + d) (C.roundOf a)

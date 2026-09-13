@@ -9,7 +9,7 @@ configuration governs a fixed span of rounds, decisions are taken under
 it as far as the anchor that closes the span, and **output stops at the
 span's own boundary**.
 
-That is the whole of the difference from Barnacle, and it is one field:
+That is the only difference from Barnacle, and it is one field:
 `Boundary.atThreshold` against `Boundary.atAnchor` (D19, D21). Naming an
 anchor may run past the boundary, because that is how the switch is
 detected and every validator detects it at the same anchor; ordering

@@ -24,6 +24,21 @@ variable {R : BaseRule Validator BlockId Payload} {P : Params} {B : Boundary Val
 variable {upd : UpdateRule R} {C₀ : Config Validator} {U : R.Universe} {V : R.View U}
 variable {K : ℕ}
 
+/-- At `d = 0` the family switches where the reconfiguration fell due. -/
+theorem Boundary.afterThreshold_zero (C : Config Validator) (s a : ℕ)
+    (h : s + C.interval < C.roundOf a) :
+    (Boundary.afterThreshold 0).next C s a = (Boundary.atThreshold (Validator := Validator)).next C s a := by
+  show min (s + C.interval + 0) (C.roundOf a) = s + C.interval
+  omega
+
+/-- And once `d` reaches the anchor it switches there, which is the other
+end. -/
+theorem Boundary.afterThreshold_anchor (d : ℕ) (C : Config Validator) (s a : ℕ)
+    (h : C.roundOf a ≤ s + C.interval + d) :
+    (Boundary.afterThreshold d).next C s a = (Boundary.atAnchor (Validator := Validator)).next C s a := by
+  show min (s + C.interval + d) (C.roundOf a) = C.roundOf a
+  omega
+
 /-- **A configuration governs at least its interval**: the next one does
 not take force before the reconfiguration falls due, wherever the
 boundary is put. A deployer reading `interval` as "how long a

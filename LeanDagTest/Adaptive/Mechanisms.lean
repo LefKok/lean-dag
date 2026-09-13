@@ -114,9 +114,10 @@ example [Pv.CopyStable] (ha : Properties.Banded R.toDagRule)
     (hc : Properties.CommitsCandidate R.toDagRule)
     (sk : SkipData (c.toRec U).ids (c.toRec U).block)
     (hu : UpdStable upd) {V : R.View U} {K : ℕ} (Rn : SegRun R P upd C₀ U V K) (K' : ℕ) :
-    (Rn.extend (Persist.of_banded ha) hc (c.extends_copyFill U sk)
-      (le_of_eq (c.viewIds_liftViewCopy sk V).symm) hu).ledgerUpto K' = Rn.ledgerUpto K' :=
-  SegRun.extend_ledgerUpto _ _ _ _ _ _ _
+    (extendRun (Persist.of_banded ha) hc (c.extends_copyFill U sk)
+      (le_of_eq (c.viewIds_liftViewCopy sk V).symm) hu Rn).ledgerUpto K'
+      = Rn.ledgerUpto K' :=
+  extendRun_ledgerUpto _ _ _ _ _ _ _
 
 /-- **Nor does a re-genesis**, on any view of it holding the old one. -/
 example (ha : Properties.Banded R.toDagRule)
@@ -127,9 +128,9 @@ example (ha : Properties.Banded R.toDagRule)
     {V' : R.View (c.addGenesis U v g p hg hsev)}
     (hsub : R.toDagRule.viewIds V ⊆ R.toDagRule.viewIds V')
     {K : ℕ} (Rn : SegRun R P upd C₀ U V K) (K' : ℕ) :
-    (Rn.extend (Persist.of_banded ha) hc c.extends_addGenesis hsub hu).ledgerUpto K'
+    (extendRun (Persist.of_banded ha) hc c.extends_addGenesis hsub hu Rn).ledgerUpto K'
       = Rn.ledgerUpto K' :=
-  SegRun.extend_ledgerUpto _ _ _ _ _ _ _
+  extendRun_ledgerUpto _ _ _ _ _ _ _
 
 end OnRecord
 

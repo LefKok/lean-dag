@@ -19,7 +19,9 @@ this development formalises. The three theorems, at a reputation score
   one genesis configuration adopt the same configuration at every height
   both reach, the same anchor, and the same verdict at every slot of
   every range both closed. **No synchrony, no fairness, no window, and no
-  clause on the score** — `Score.rule_anchored` is `rfl`.
+  clause on the score** — `Score.rule_anchored` is `rfl`. The one thing
+  consumed is `Properties.Agree`: that the base protocol's own verdicts
+  agree across views.
 * **`score_ledger`.** And they read one ledger: agreed as far as both
   reach, a prefix of itself as it grows, holding no block twice.
 * **`score_live`.** And the sequence does not stop, under `Score.Keeps`
@@ -28,11 +30,11 @@ this development formalises. The three theorems, at a reputation score
 
 Two more against the rest of the system: `joiner_run_decided_agree` —
 pruning does not split the ledger, even when the schedule is derived from
-it — and `SegRun.extend_ledgerUpto` — a recovery changes nothing already
+it — and `extendRun_ledgerUpto` — a recovery changes nothing already
 ordered.
 
-**Three deployment constraints** fall out, and none is a safety
-condition on the protocol: a score must read a window of rounds the
+**Three deployment constraints** follow, and none is a safety condition
+on the protocol: a score must read a window of rounds the
 horizon has not cut; it must read nothing about the universe that adding
 blocks changes (its size, say); and where the configuration switch falls
 between the round it becomes due and the anchor's round is a choice about
@@ -963,8 +965,8 @@ reads at a schedule the run itself chose. The core's fill is
 `stack_core_config` is assembled per rule.
 
 For the mechanisms that only add blocks the schedule does not move and
-neither does the run: `SegRun.extend` carries the configurations,
-anchors, boundaries and verdicts across, and `SegRun.extend_ledgerUpto`
+neither does the run: `extendRun` carries the configurations,
+anchors, boundaries and verdicts across, and `extendRun_ledgerUpto`
 says the ledger is the same list. The one obligation is `UpdStable` —
 `Anchored` across two universes rather than two views of one, asked only
 at anchors the smaller universe holds. A score meets it through
@@ -1113,7 +1115,7 @@ propositions in both, and eight of the ten fields are identical
 character for character. **The single difference is the value
 `start_succ` assigns**: Barnacle puts the next configuration in force at
 the anchor's round, this arc at the threshold. D19 is that choice, and it
-is the whole of the divergence.
+is the only divergence.
 
 **The shape.** A boundary is a function of the configuration, the current
 start and the anchor, lying between the round the reconfiguration falls
@@ -1267,7 +1269,34 @@ with §13; §24's witness row and prose name all four scores; and the axiom
 audit lists the headline theorems, which a reader checking what rests on
 what would otherwise not find.
 
-### Step 16 — the record
+### Step 16 — plain language, and two claims that were not checkable
+
+**`afterThreshold` was described, not proved.** Its docstring said
+`atThreshold` "is `d = 0`'s behaviour" and `atAnchor` "is the limit" —
+neither holds as a term, and a reader checking would find the three
+definitions unrelated. `afterThreshold_zero` and `afterThreshold_anchor`
+say it exactly: at `d = 0` the family agrees with `atThreshold`, and once
+`d` reaches the anchor it agrees with `atAnchor`, both under the
+hypothesis a run supplies. Two lines each, and they replace a metaphor
+("a dial rather than a fork") with a statement.
+
+**`SegRun.extend` was stated more narrowly than it holds.** Nothing in it
+reads the boundary — a fill and a re-genesis move no slot whatever the
+boundary — so it is now `extendRun` at any `Boundary`, and Barnacle's run
+has it too. The proof got shorter: `start k < roundOf (anchor k)` comes
+straight from `anchor_commits` and never needed `start_succ`.
+
+**Report §13.2 still said the rule is handed "the span's verdicts junked
+outside the span"**, which stopped being true when the window narrowed to
+the range output, and said integrity's cross-range half is "easier than
+Barnacle's", when after D21 it *is* Barnacle's. Both corrected; the
+paragraph is split in two and shorter.
+
+"What is proved" now names what safety consumes — `Properties.Agree`,
+that the base protocol's verdicts agree across views — rather than
+leaving "unconditional" to be taken on trust.
+
+### Step 17 — the record
 
 Report §13 gains the segmented arc and relabels the fixpoint one: AL3 is
 safety for policies that read verdicts, under a window condition

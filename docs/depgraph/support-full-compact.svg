@@ -527,7 +527,7 @@
 <g><title>LeanDag.Barnacle.Run — the segmented run: decisions to the anchor, output to the boundary — `Barnacle.Run` at `Boundary.atThreshold`, the one field the two mechanisms differ in</title>
 <rect x="134.0" y="861.0" width="62" height="24" rx="5" fill="#f4e3f0" stroke="#a45a92" stroke-width="1.2"/>
 <text class="lbl" x="165.0" y="873.0" text-anchor="middle">AL12</text></g>
-<g><title>LeanDag.Adaptive.Score.rule_anchored — what a reputation score owes: anchored, bounded from `Score.Keeps`, preserving whatever clause liveness names, and the constant score is the constant rule. A score reads the anchor&#x27;s history **and** the verdicts of the span just closed, and owes nothing for the second</title>
+<g><title>LeanDag.Adaptive.Score.rule_anchored — what a reputation score owes: anchored, bounded from `Score.Keeps`, preserving whatever clause liveness names, and the constant score is the constant rule. A score reads the anchor&#x27;s history **and** the verdicts of the range just output, and owes nothing for the second</title>
 <rect x="134.0" y="894.0" width="62" height="24" rx="5" fill="#f4e3f0" stroke="#a45a92" stroke-width="1.2"/>
 <text class="lbl" x="165.0" y="906.0" text-anchor="middle">AL11</text></g>
 <g><title>LeanDag.Properties.Arcs.decided_of_truncate — verdicts across a cut, a fill, and any stack of mechanisms</title>

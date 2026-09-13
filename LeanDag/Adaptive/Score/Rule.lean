@@ -35,8 +35,8 @@ variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 
 /-- **A reputation score**: from the anchor's causal history read as a
-view, the verdicts of the span just closed, and the configuration in
-force, the configuration to install.
+view, the verdicts of the range the configuration just output, and the
+configuration in force, the configuration to install.
 
 The verdict argument is what makes this HammerHead's rule rather than a
 weaker one. `UPDATESCHEDULE` scores the validators whose blocks voted for

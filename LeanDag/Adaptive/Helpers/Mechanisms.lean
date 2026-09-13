@@ -179,7 +179,7 @@ case, and the one the obligation exists for: a reputation rule reads the
 blocks the anchor reaches, and a mechanism that only adds blocks leaves
 those exactly as they were (`historyFrom_congr`). So the rule installs
 one configuration on a validator that recovered a crashed peer and on one
-that did not, and `SegRun.extend` applies to it.
+that did not, and `extendRun` applies to it.
 
 The hypothesis is what "reads the history" means: the score's answer
 depends on the view only through the ids it holds and what those ids
@@ -207,17 +207,18 @@ theorem Score.stable_of_readsHistory (hL : R.Laws) (score : Score R)
     (Score.permute (R := R) σ).Stable :=
   Score.stable_of_ignores _ (fun _ _ _ _ => rfl)
 
-variable {upd : UpdateRule R} {C₀ : Config Validator}
+variable {upd : UpdateRule R} {C₀ : Config Validator} {B : Boundary Validator}
 
-/-- **A segmented run survives any mechanism that only adds blocks.**
-The configurations, anchors and verdicts are carried over unchanged —
-only the view the decisions are read on moves — so the run on the
-extended universe is the same run. -/
-def SegRun.extend {U U' : R.Universe} {V : R.View U} {V' : R.View U'} {K : ℕ}
+/-- **A run survives any mechanism that only adds blocks.** The
+configurations, anchors and verdicts are carried over unchanged — only
+the view the decisions are read on moves — so the run on the extended
+universe is the same run. The boundary plays no part, so this holds of
+Barnacle's run as well as this arc's. -/
+def extendRun {U U' : R.Universe} {V : R.View U} {V' : R.View U'} {K : ℕ}
     (hp : Persist R.toDagRule) (hc : CommitsCandidate R.toDagRule)
     (he : Extends R.toDagRule U U')
     (hsub : R.toDagRule.viewIds V ⊆ R.toDagRule.viewIds V') (hu : UpdStable upd)
-    (Rn : SegRun R P upd C₀ U V K) : SegRun R P upd C₀ U' V' K where
+    (Rn : Run R P B upd C₀ U V K) : Run R P B upd C₀ U' V' K where
   start := Rn.start
   cfg := Rn.cfg
   backoff := Rn.backoff
@@ -231,7 +232,6 @@ def SegRun.extend {U U' : R.Universe} {V : R.View U} {V' : R.View U'} {K : ℕ}
   start_succ := Rn.start_succ
   update := fun k hk A hA => by
     have hstart : Rn.start k < (Rn.cfg k).roundOf (Rn.anchor k) := by
-      have := Rn.start_succ k hk
       have := (Rn.anchor_commits k hk).2
       omega
     have hd := Rn.closed k hk (Rn.anchor k) hstart le_rfl
@@ -243,12 +243,12 @@ def SegRun.extend {U U' : R.Universe} {V : R.View U} {V' : R.View U'} {K : ℕ}
 DAG and changes nothing a validator has already ordered — the claim a
 recovery or a re-genesis has to make, now at a schedule the run itself
 chose. -/
-@[simp] theorem SegRun.extend_ledgerUpto {U U' : R.Universe} {V : R.View U} {V' : R.View U'}
+@[simp] theorem extendRun_ledgerUpto {U U' : R.Universe} {V : R.View U} {V' : R.View U'}
     {K : ℕ} (hp : Persist R.toDagRule) (hc : CommitsCandidate R.toDagRule)
     (he : Extends R.toDagRule U U')
     (hsub : R.toDagRule.viewIds V ⊆ R.toDagRule.viewIds V') (hu : UpdStable upd)
-    (Rn : SegRun R P upd C₀ U V K) (K' : ℕ) :
-    (Rn.extend hp hc he hsub hu).ledgerUpto K' = Rn.ledgerUpto K' := rfl
+    (Rn : Run R P B upd C₀ U V K) (K' : ℕ) :
+    (extendRun hp hc he hsub hu Rn).ledgerUpto K' = Rn.ledgerUpto K' := rfl
 
 end Extend
 

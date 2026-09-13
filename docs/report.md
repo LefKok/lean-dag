@@ -4426,30 +4426,28 @@ D21: **safety does not depend on the choice D19 makes.**
 
 The only clause on the rule is `Anchored` — that it does not read the
 view — and the only law of the protocol consumed is `Properties.Agree`.
-There is no synchrony, no fairness and no bound on how far a derivation
-reaches. The verdict half of the conclusion is what lets a rule read the
-committed sequence: `update` hands it `Barnacle.spanVdct`, the span's
-verdicts junked outside the span, and `spanVdct_agree` turns the pointwise
-agreement above into equality of that one function, established *before*
-either validator applies the rule. The anchors need no hypothesis relating them: the lesser of two
-lies inside the other run's reach by `Config.roundOf_mono`, where that
-run's `anchor_least` makes it a skip and the first run's
-`anchor_commits` makes it a commit.
+There is no synchrony, no fairness, and no bound on how far a derivation
+reaches.
+
+The verdict half of the conclusion is what lets a rule read the committed
+sequence. `update` hands the rule `spanVdct`: the verdicts of the range
+the configuration output, and `none` outside it. `spanVdct_agree` turns
+the agreement above into equality of that one function, and it is
+established *before* either validator applies the rule.
 
 **AL14** reads the ledger off it in the three parts M7 states: agreed
 across validators as far as both reach, growing, and holding each block
-once. Integrity's cross-range half is easier than Barnacle's, since
-consecutive output ranges abut by `start_succ` and so partition the
-rounds by construction. **AL15** is conservativity and validity — under
-the constant rule every configuration is the genesis one, and a good
-author's block two rounds below a boundary is in the history of the
-block that configuration commits.
+once. Consecutive ranges abut by `start_succ`, so they partition the
+rounds and no block is output twice. **AL15** is conservativity and
+validity — under the constant rule every configuration is the genesis
+one, and a good author's block two rounds below a boundary is in the
+history of the block that configuration commits.
 
 ### 13.3 The score, and what it owes
 
 A score reads the anchor's causal history **as a view**, the shape
-`Barnacle.observed` uses, together with the verdicts of the span just
-closed, and returns the configuration to install:
+`Barnacle.observed` uses, together with the verdicts of the range the
+configuration just output, and returns the configuration to install:
 
 ```lean
 def rule (score : Score R) : UpdateRule R :=
@@ -4582,8 +4580,8 @@ and it moves the leaders when it did. `commitScore_anchored` is `rfl`, so
 AL13 applies to it unchanged — **a policy reading the committed sequence
 is safe with no window, no synchrony and no fairness.** That is what the
 fixpoint arc could establish only inside a two-epoch window asynchrony
-can falsify (`adaptive-leaders.md` §7), and it is the whole gain of
-bounding the span at both ends.
+can falsify (`adaptive-leaders.md` §7), and it is what bounding the span
+at both ends gains.
 
 Two things remain. No concrete reputation rule is written and shown to
 cap accumulation, so AL16's liveness clause is discharged for the
@@ -5443,10 +5441,11 @@ The joiner is generic in the carrier too
 every rule with a record carrier and not only of the core.
 
 *The mechanisms that only add blocks.* A fill and a re-genesis move no
-slot, so a segmented run does not move either: `SegRun.extend` carries
-the configurations, anchors, boundaries and verdicts across unchanged —
+slot, so a run does not move either: `extendRun` carries the
+configurations, anchors, boundaries and verdicts across unchanged —
 `Persist` moving the decisions to the larger view — and
-`SegRun.extend_ledgerUpto` is `rfl`.
+`extendRun_ledgerUpto` is `rfl`. Neither looks at the boundary, so both
+hold of §21's run as well.
 
 > A recovery or a re-genesis changes nothing a validator has already
 > ordered, even when the schedule is derived from what it ordered.
@@ -8145,7 +8144,11 @@ anchor; `Boundary` is the round in between at which the switch happens.
 `Boundary.atAnchor` is this mechanism's — the range it orders is the
 range it decided — and `Boundary.atThreshold` is §13's, which orders only
 to the round the reconfiguration fell due and re-derives the rest.
-`Boundary.afterThreshold d` is the family between them. `PartialRun` is
+`Boundary.afterThreshold d` is the family between them: switch `d` rounds
+after the reconfiguration falls due, and never past the anchor. It agrees
+with `atThreshold` at `d = 0` and with `atAnchor` once `d` reaches the
+anchor (`afterThreshold_zero`, `afterThreshold_anchor`), so the switch is
+a choice along a range rather than between two points. `PartialRun` is
 `Run` at `atAnchor`.
 
 > Everything below holds at **every** boundary. Where a mechanism puts
@@ -10326,7 +10329,7 @@ reused.
 | Label | Statement | Lean |
 |:---|:---|:---|
 | AL10 | a verdict is local in the rounds as well as the leaders: every decided slot has a round below which any schedule agreeing on rounds and leaders decides it the same way, and a directly decided slot's is its own round plus a wave | `Properties.exists_roundLocal` *(Properties/Derived/FromBand)*, `AnchoredRule.banded_direct` *(Common/Anchored/Band)*, `Barnacle.cfg_local` *(Barnacle/Helpers/Schedule)* |
-| AL11 | what a reputation score owes: anchored, bounded from `Score.Keeps`, preserving whatever clause liveness names, and the constant score is the constant rule. A score reads the anchor's history **and** the verdicts of the span just closed, and owes nothing for the second | `Score.rule_anchored`, `Score.rule_bounded`, `Score.rule_keeps`, `Score.rule_const`, `Score.holds` *(Adaptive/Score)*, `Run.spanOf` *(Barnacle/Model/Run)*, `Barnacle.spanVdct_agree` *(Barnacle/Helpers/Agreement)* |
+| AL11 | what a reputation score owes: anchored, bounded from `Score.Keeps`, preserving whatever clause liveness names, and the constant score is the constant rule. A score reads the anchor's history **and** the verdicts of the range just output, and owes nothing for the second | `Score.rule_anchored`, `Score.rule_bounded`, `Score.rule_keeps`, `Score.rule_const`, `Score.holds` *(Adaptive/Score)*, `Run.spanOf` *(Barnacle/Model/Run)*, `Barnacle.spanVdct_agree` *(Barnacle/Helpers/Agreement)* |
 | AL12 | the segmented run: decisions to the anchor, output to the boundary — `Barnacle.Run` at `Boundary.atThreshold`, the one field the two mechanisms differ in | `Barnacle.Run` *(Barnacle/Model/Run)*, `Adaptive.SegRun` *(Adaptive/Model/Segment)*, `threshold_le_boundary`, `boundary_le_anchor`, `closed_on_range` *(Barnacle/Helpers/Bounds)*, `decided_and_not_output`, `round_of_mem_ledgerUpto` *(Barnacle/Helpers/Ledger)* |
 | AL13 | safety: two segmented runs from one genesis configuration agree, for any anchored rule, with no window and no synchrony — BN3 at this boundary, the statement never naming one | `Barnacle.Agreement.RunAgreement`, `Barnacle.Agreement.holds` *(Barnacle/Agreement)*, `configAgree`, `anchor_agree`, `start_succ_agree` *(Barnacle/Helpers/Agreement)* |
 | AL14 | the segmented ledger: agreed, growing, without repetition — BN5 at this boundary | `Barnacle.Ledger.holds` *(Barnacle/Ledger)* |
@@ -10449,7 +10452,7 @@ reused.
 | I17 | the budget needs a donor, not the author | `card_novelty_le_of_donor` *(Integration/Margin)* |
 | I18 | severance costs liveness margin: at most `f` at once | `notMem_of_no_blocks`, `card_severed_le` *(Integration/Margin)* |
 | I19 | a common-core target makes the fill transmission-free | `CommonAt`, `exists_commonAt`, `fill_refs_available` *(Integration/CommonTarget)* |
-| I20 | the segmented arc across every mechanism, at any record carrier: cuts compose beneath a configuration and stack with the fill; a fill and a re-genesis carry a whole run across and leave its ledger alone, under one obligation on the update rule | `Config.chop_chop` *(Barnacle/Chop)*, `Adaptive.truncates_chop_config`, `stack_chop_config`, `stack_chop_chop_config`, `stack_copyFill_chop_config`, `Adaptive.UpdStable`, `Adaptive.Score.Stable`, `Adaptive.updStable_rule`, `Adaptive.updStable_constRule`, `Score.stable_of_readsHistory`, `Score.stable_of_ignores`, `Adaptive.SegRun.extend`, `Adaptive.SegRun.extend_ledgerUpto` *(Adaptive/Helpers/Mechanisms)*, `historyFrom_congr` *(Common/Causality)*, `stack_core_config` *(Integration/Joiner)* |
+| I20 | the segmented arc across every mechanism, at any record carrier: cuts compose beneath a configuration and stack with the fill; a fill and a re-genesis carry a whole run across and leave its ledger alone, under one obligation on the update rule | `Config.chop_chop` *(Barnacle/Chop)*, `Adaptive.truncates_chop_config`, `stack_chop_config`, `stack_chop_chop_config`, `stack_copyFill_chop_config`, `Adaptive.UpdStable`, `Adaptive.Score.Stable`, `Adaptive.updStable_rule`, `Adaptive.updStable_constRule`, `Score.stable_of_readsHistory`, `Score.stable_of_ignores`, `Adaptive.extendRun`, `Adaptive.extendRun_ledgerUpto` *(Adaptive/Helpers/Mechanisms)*, `historyFrom_congr` *(Common/Causality)*, `stack_core_config` *(Integration/Joiner)* |
 
 **FinWhale** (§20):
 
@@ -10475,7 +10478,7 @@ reused.
 | Label | Statement | Lean |
 |:---|:---|:---|
 | BN2 | the window is agreed: a view holding the anchor holds its history, and two views restrict it to one set | `Barnacle.Window.holds` *(Barnacle/Window/Proof)* |
-| BN3 | the configuration sequence is agreed, for any update rule **and at every boundary**: two runs to any heights agree on every configuration and verdict of their common ranges, and so on the verdict function the rule is handed | `Barnacle.Boundary`, `Boundary.atAnchor`, `Boundary.atThreshold`, `Boundary.afterThreshold` *(Barnacle/Model/Rule)*, `Barnacle.Agreement.holds` *(Barnacle/Agreement/Proof)*, `spanVdct`, `Run.spanOf`, `update_spanOf` *(Barnacle/Model, Barnacle/Helpers/Bounds)*, `spanVdct_agree`, `start_succ_agree` *(Barnacle/Helpers/Agreement)* |
+| BN3 | the configuration sequence is agreed, for any update rule **and at every boundary**: two runs to any heights agree on every configuration and verdict of their common ranges, and so on the verdict function the rule is handed | `Barnacle.Boundary`, `Boundary.atAnchor`, `Boundary.atThreshold`, `Boundary.afterThreshold`, `afterThreshold_zero`, `afterThreshold_anchor` *(Barnacle/Model/Rule, Barnacle/Helpers/Bounds)*, `Barnacle.Agreement.holds` *(Barnacle/Agreement/Proof)*, `spanVdct`, `Run.spanOf`, `update_spanOf` *(Barnacle/Model, Barnacle/Helpers/Bounds)*, `spanVdct_agree`, `start_succ_agree` *(Barnacle/Helpers/Agreement)* |
 | BN5 | the ledger is agreed as far as both runs reach, grows by prefixes, and holds each block once | `Barnacle.Ledger.holds` *(Barnacle/Ledger/Proof)* |
 | BN6 | under the constant rule the count never moves and every verdict is a one-leader verdict | `Barnacle.Conservativity.holds` *(Barnacle/Conservativity/Proof)* |
 | BN7 | the AIMD rule keeps its count in range, steps as the paper says, is the integer test, and is anchored — it does not read the view, so two validators take one step | `Barnacle.Aimd.holds` *(Barnacle/Aimd/Proof)* |
@@ -12881,9 +12884,9 @@ def Boundary.afterThreshold (d : ℕ) : Boundary Validator where
   le_anchor := fun _ _ _ _ => min_le_right _ _
 ```
 
-**Anywhere between the two**, at a fixed delay past the round the reconfiguration falls due and never past the anchor. `atThreshold` is `d = 0`'s behaviour and `atAnchor` is the limit; every `d` between is a deployable choice, which is what makes D19 a dial rather than a fork.
+**Anywhere between the two**: switch `d` rounds after the reconfiguration falls due, and never past the anchor. So where the switch goes is a choice along a range, not between two points.
 
-Raising `d` orders more under each configuration, so fewer rounds are re-derived under the next one; it also makes those `d` rounds of output wait for the anchor, whose round moves with the network. A deployer picks where on that line to sit, and the safety and ledger theorems do not notice.
+Raising `d` orders more under each configuration, so fewer rounds are re-derived under the next one; it also makes those `d` rounds of output wait for the anchor, whose round moves with the network. A deployer picks where on that range to sit, and the safety and ledger theorems do not notice.
 
 #### `Anchored`
 
@@ -14139,16 +14142,16 @@ def Score.Stable (score : Score R) : Prop :=
 
 **What a score owes the same mechanisms.** On the anchor's history, read in a universe and in an extension of it, the score returns one configuration. The counterpart of `HorizonStable` for the mechanisms that add blocks rather than remove them, and the reason it is an obligation and not a theorem is that the two histories are views of different universes: `Extends` makes them hold the same blocks, and a score reading only what a block says has the equality, but the type does not force it.
 
-#### `SegRun.extend`
+#### `extendRun`
 
 *def, `Adaptive.Helpers.Mechanisms.lean`*
 
 ```lean
-def SegRun.extend {U U' : R.Universe} {V : R.View U} {V' : R.View U'} {K : ℕ}
+def extendRun {U U' : R.Universe} {V : R.View U} {V' : R.View U'} {K : ℕ}
     (hp : Persist R.toDagRule) (hc : CommitsCandidate R.toDagRule)
     (he : Extends R.toDagRule U U')
     (hsub : R.toDagRule.viewIds V ⊆ R.toDagRule.viewIds V') (hu : UpdStable upd)
-    (Rn : SegRun R P upd C₀ U V K) : SegRun R P upd C₀ U' V' K where
+    (Rn : Run R P B upd C₀ U V K) : Run R P B upd C₀ U' V' K where
   start := Rn.start
   cfg := Rn.cfg
   backoff := Rn.backoff
@@ -14162,7 +14165,6 @@ def SegRun.extend {U U' : R.Universe} {V : R.View U} {V' : R.View U'} {K : ℕ}
   start_succ := Rn.start_succ
   update := fun k hk A hA => by
     have hstart : Rn.start k < (Rn.cfg k).roundOf (Rn.anchor k) := by
-      have := Rn.start_succ k hk
       have := (Rn.anchor_commits k hk).2
       omega
     have hd := Rn.closed k hk (Rn.anchor k) hstart le_rfl
@@ -14171,7 +14173,7 @@ def SegRun.extend {U U' : R.Universe} {V : R.View U} {V' : R.View U'} {K : ℕ}
     exact Rn.update k hk A hA
 ```
 
-**A segmented run survives any mechanism that only adds blocks.** The configurations, anchors and verdicts are carried over unchanged — only the view the decisions are read on moves — so the run on the extended universe is the same run.
+**A run survives any mechanism that only adds blocks.** The configurations, anchors and verdicts are carried over unchanged — only the view the decisions are read on moves — so the run on the extended universe is the same run. The boundary plays no part, so this holds of Barnacle's run as well as this arc's.
 
 #### `Score.Keeps`
 
@@ -16122,7 +16124,7 @@ def Good (R : DagRule Validator BlockId Payload) (rel : Reliability Validator)
 
 ## Appendix C. The theorem reference
 
-The 487 theorems the body or Appendix A names, each
+The 489 theorems the body or Appendix A names, each
 the source statement, unabridged. Generated with Appendix B;
 a theorem the report does not name is a step of an argument
 rather than a result it presents, and the source is its
@@ -20558,21 +20560,21 @@ theorem Score.stable_of_readsHistory (hL : R.Laws) (score : Score R)
       ∀ v C, score U V v C = score U' V' v C) : score.Stable
 ```
 
-**A score that reads the anchor's history is stable.** The realistic case, and the one the obligation exists for: a reputation rule reads the blocks the anchor reaches, and a mechanism that only adds blocks leaves those exactly as they were (`historyFrom_congr`). So the rule installs one configuration on a validator that recovered a crashed peer and on one that did not, and `SegRun.extend` applies to it.
+**A score that reads the anchor's history is stable.** The realistic case, and the one the obligation exists for: a reputation rule reads the blocks the anchor reaches, and a mechanism that only adds blocks leaves those exactly as they were (`historyFrom_congr`). So the rule installs one configuration on a validator that recovered a crashed peer and on one that did not, and `extendRun` applies to it.
 
 The hypothesis is what "reads the history" means: the score's answer depends on the view only through the ids it holds and what those ids denote. A score consulting anything else about the universe — its size, say — does not qualify, and should not.
 
-#### `SegRun.extend_ledgerUpto`
+#### `extendRun_ledgerUpto`
 
 *theorem, `Adaptive.Helpers.Mechanisms.lean`*
 
 ```lean
-@[simp] theorem SegRun.extend_ledgerUpto {U U' : R.Universe} {V : R.View U} {V' : R.View U'}
+@[simp] theorem extendRun_ledgerUpto {U U' : R.Universe} {V : R.View U} {V' : R.View U'}
     {K : ℕ} (hp : Persist R.toDagRule) (hc : CommitsCandidate R.toDagRule)
     (he : Extends R.toDagRule U U')
     (hsub : R.toDagRule.viewIds V ⊆ R.toDagRule.viewIds V') (hu : UpdStable upd)
-    (Rn : SegRun R P upd C₀ U V K) (K' : ℕ) :
-    (Rn.extend hp hc he hsub hu).ledgerUpto K' = Rn.ledgerUpto K'
+    (Rn : Run R P B upd C₀ U V K) (K' : ℕ) :
+    (extendRun hp hc he hsub hu Rn).ledgerUpto K' = Rn.ledgerUpto K'
 ```
 
 **And it outputs the same ledger.** The mechanism adds blocks to the DAG and changes nothing a validator has already ordered — the claim a recovery or a re-genesis has to make, now at a schedule the run itself chose.
@@ -20613,6 +20615,30 @@ theorem rebases_chop : Properties.Rebases C.sched (C.chop G).sched G (C.cum G) w
 ```lean
 theorem holds : Statement
 ```
+
+#### `Boundary.afterThreshold_zero`
+
+*theorem, `Barnacle.Helpers.Bounds.lean`*
+
+```lean
+theorem Boundary.afterThreshold_zero (C : Config Validator) (s a : ℕ)
+    (h : s + C.interval < C.roundOf a) :
+    (Boundary.afterThreshold 0).next C s a = (Boundary.atThreshold (Validator := Validator)).next C s a
+```
+
+At `d = 0` the family switches where the reconfiguration fell due.
+
+#### `Boundary.afterThreshold_anchor`
+
+*theorem, `Barnacle.Helpers.Bounds.lean`*
+
+```lean
+theorem Boundary.afterThreshold_anchor (d : ℕ) (C : Config Validator) (s a : ℕ)
+    (h : C.roundOf a ≤ s + C.interval + d) :
+    (Boundary.afterThreshold d).next C s a = (Boundary.atAnchor (Validator := Validator)).next C s a
+```
+
+And once `d` reaches the anchor it switches there, which is the other end.
 
 #### `threshold_le_boundary`
 

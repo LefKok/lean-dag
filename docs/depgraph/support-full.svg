@@ -552,7 +552,7 @@
 <rect x="294.0" y="1244.0" width="158" height="36" rx="5" fill="#f4e3f0" stroke="#a45a92" stroke-width="1.2"/>
 <text class="lbl" x="373.0" y="1256.0" text-anchor="middle">AL12</text>
 <text class="nm" x="373.0" y="1270.0" text-anchor="middle">Run</text></g>
-<g><title>LeanDag.Adaptive.Score.rule_anchored — what a reputation score owes: anchored, bounded from `Score.Keeps`, preserving whatever clause liveness names, and the constant score is the constant rule. A score reads the anchor&#x27;s history **and** the verdicts of the span just closed, and owes nothing for the second</title>
+<g><title>LeanDag.Adaptive.Score.rule_anchored — what a reputation score owes: anchored, bounded from `Score.Keeps`, preserving whatever clause liveness names, and the constant score is the constant rule. A score reads the anchor&#x27;s history **and** the verdicts of the range just output, and owes nothing for the second</title>
 <rect x="294.0" y="1292.0" width="158" height="36" rx="5" fill="#f4e3f0" stroke="#a45a92" stroke-width="1.2"/>
 <text class="lbl" x="373.0" y="1304.0" text-anchor="middle">AL11</text>
 <text class="nm" x="373.0" y="1318.0" text-anchor="middle">rule_anchored</text></g>
