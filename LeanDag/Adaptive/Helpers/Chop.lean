@@ -19,9 +19,8 @@ before:
   condition rules out is a score whose *choice* of reassignment is read
   from rounds the horizon has removed.
 
-The fixpoint arc stated the schedule half over a `pick` reading the whole
-verdict function, and re-indexed that function. Here the object being
-re-indexed is the configuration, and `Config.chop` is the re-indexing.
+What a cut re-indexes is the configuration, and `Config.chop` is that
+re-indexing.
 -/
 
 namespace LeanDag
@@ -58,11 +57,10 @@ end Verdicts
 /-! ## The schedule half
 
 `HorizonStable` is stated on the bare score-shaped function over a
-`DagRule` rather than on `Score R` for a `BaseRule`, for the reason the
-fixpoint arc stated it on a bare `pick`: the cut re-indexes, and a
-statement tied to the interface a score is installed through would have
-to be transported across the re-indexing. An `Adaptive.Score R` for a
-`BaseRule R` has exactly this shape at `R.toDagRule`. -/
+`DagRule` rather than on `Score R`: the cut re-indexes, and a statement
+tied to the interface a score is installed through would have to be
+transported across that re-indexing. An `Adaptive.Score R` has exactly
+this shape at `R.toDagRule`. -/
 
 section Schedule
 

@@ -113,7 +113,7 @@ everything is proved from A1–A4 and not from Mysticeti.
 | A3 direct decision predicate | `BaseRule.DirectCommitIn` (§2) |
 | A4 base safety | `BaseRule.agree` (§2) |
 | A4 base liveness | `BaseRule.LiveOn S` (§7), discharged in Phases 4–5 |
-| Algorithm 2 (`TryCommit`, `TryDecide`) | `PartialRun` (§5) |
+| Algorithm 2 (`TryCommit`, `TryDecide`) | `Run` at `Boundary.atAnchor`, which `PartialRun` abbreviates (§5) |
 | Algorithm 3 (`UpdateLeaders`, `GetSubDag`, `CountDirectCommits`, `ExpectedCommits`) | `window`, `observed`, `expected`, `Aimd.update` (§4) |
 | Window Agreement | BN2 |
 | Leader-Count Agreement | BN3 |
@@ -373,31 +373,38 @@ Mysticeti in Phase 5 rather than assumed of the interface.
 
 ## 5. The run
 
-What a validator holds mid-execution is a *partial run* closed up to a
-configuration height; the object safety and liveness are stated on.
+What a validator holds mid-execution is a run closed up to a
+configuration height; the object safety and liveness are stated on. A run
+**decides** through the round its anchor sits at and **outputs** the
+rounds `(start k, start (k + 1)]`; where the boundary falls between the
+round the reconfiguration becomes due and the anchor's round is a
+parameter, and `PartialRun` is the run at this arc's choice of it.
 
 ```lean
-structure PartialRun (R : BaseRule Validator BlockId Payload) (P : Params)
+structure Boundary (Validator : Type) where
+  next : Config Validator → ℕ → ℕ → ℕ
+  ge_threshold : ∀ (C : Config Validator) (s a : ℕ),
+    s + C.interval < C.roundOf a → s + C.interval ≤ next C s a
+  le_anchor : ∀ (C : Config Validator) (s a : ℕ),
+    s + C.interval < C.roundOf a → next C s a ≤ C.roundOf a
+
+abbrev PartialRun (R : BaseRule Validator BlockId Payload) (P : Params)
     (upd : UpdateRule R) (C₀ : Config Validator) (U : R.Universe) (V : R.View U)
-    (K : ℕ) where
-  start : ℕ → ℕ
-  cfg : ℕ → Config Validator
-  backoff : ℕ → ℕ
-  anchor : ℕ → ℕ
-  vdct : ℕ → ℕ → Option BlockId
-  init : start 0 = 0 ∧ cfg 0 = C₀ ∧ backoff 0 = 0
-  bounds : ∀ k, (cfg k).InBounds P
-  closed : ∀ k, k < K → ∀ κ, start k < (cfg k).roundOf κ →
-    (cfg k).roundOf κ ≤ start (k + 1) → R.Decided (cfg k).sched V κ (vdct k κ)
-  anchor_commits : ∀ k, k < K →
-    (∃ A, vdct k (anchor k) = some A) ∧
-      start k + (cfg k).interval < (cfg k).roundOf (anchor k)
-  anchor_least : ∀ k, k < K → ∀ κ, κ < anchor k →
-    start k + (cfg k).interval < (cfg k).roundOf κ → vdct k κ = none
-  start_succ : ∀ k, k < K → start (k + 1) = (cfg k).roundOf (anchor k)
-  update : ∀ k, k < K → ∀ A, vdct k (anchor k) = some A →
-    (cfg (k + 1), backoff (k + 1)) = upd (cfg k) (backoff k) U V A
+    (K : ℕ) : Type :=
+  Run R P Boundary.atAnchor upd C₀ U V K
 ```
+
+`Boundary.atAnchor` is this arc's: the next configuration takes force at
+the anchor's own round, so the range it orders is the range it decided.
+The other end, `Boundary.atThreshold`, is the adaptive-leaders arc's
+(report §13, `adaptive-leaders.md` D19), and `Boundary.afterThreshold d`
+is the family between. **Every result of this section holds at every
+boundary** — the choice is about how much output waits on the anchor, not
+about safety — which is why the two mechanisms share one run and one set
+of proofs (`adaptive-leaders.md` D21). `Run`'s fields are `start`, `cfg`,
+`backoff`, `anchor` and `vdct`, with `init`, `bounds`, `closed`,
+`anchor_commits`, `anchor_least`, `start_succ` and `update`
+(`Barnacle/Model/Run.lean`).
 
 `start k` is the round after which configuration `k` is in force,
 `anchor k` the slot index in `(cfg k).sched` of the anchor that closes

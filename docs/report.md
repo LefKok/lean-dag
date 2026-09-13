@@ -4463,7 +4463,7 @@ already identified the two validators' copies when the rule is applied.
 
 The verdicts handed over are the configuration's **output**,
 `(start k, start (k + 1)]`, and not the whole span it decided
-(`SegRun.spanOf`). A configuration decides past its boundary to find its
+(`Run.spanOf`). A configuration decides past its boundary to find its
 anchor, and those verdicts are discarded — the rounds are decided again
 under configuration `k + 1`, against a different schedule, and it is the
 later derivation that reaches the ledger. Handing them to the score would
@@ -4574,7 +4574,7 @@ whose span contains round `3`. `anchor_least` is non-vacuous there — slot
 on what it finds exhibit reassignment that is a function of the DAG.
 
 `commitScore` is the verdict-reading case on data: it reads no block and
-no view, only whether the span just closed committed a particular slot,
+no view, only whether the range just output committed a particular slot,
 and it moves the leaders when it did. `commitScore_anchored` is `rfl`, so
 AL13 applies to it unchanged — **a policy reading the committed sequence
 is safe with no window, no synchrony and no fairness.** That is what the
@@ -4582,11 +4582,13 @@ fixpoint arc could establish only inside a two-epoch window asynchrony
 can falsify (`adaptive-leaders.md` §7), and it is the whole gain of
 bounding the span at both ends.
 
-One thing remains. No concrete reputation rule is written and shown to
+Two things remain. No concrete reputation rule is written and shown to
 cap accumulation, so AL16's liveness clause is discharged for the
 permuted rotations and not yet for a re-weighting rule; deriving the cap
 from HammerHead's own `|B| = |G| ≤ f` is arithmetic about that rule
-rather than about the mechanism.
+rather than about the mechanism. And conservativity and validity are
+applied at an arbitrary score but never on a concrete run, where the
+other clauses have `decide` witnesses.
 
 ## 14. Hybrid fault tolerance: Byzantine and crash faults apart
 

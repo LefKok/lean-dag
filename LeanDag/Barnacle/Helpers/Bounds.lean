@@ -8,11 +8,10 @@ the round the anchor is found at, and a run's `anchor_commits` supplies
 the hypothesis both clauses want. These are those two facts at a run,
 which is the only form the rest of the development uses them in.
 
-The pair is what relates the two bounds of a run: `boundary_le_anchor`
-says the output never outruns the decisions, `threshold_le_boundary` that
-a configuration governs at least its interval. Every consumer that wants
-a verdict for a slot the configuration *output* goes through
-`closed_on_range`.
+The pair relates the two bounds of a run: `boundary_le_anchor` says the
+output never outruns the decisions, `threshold_le_boundary` that a
+configuration governs at least its interval. A consumer wanting a verdict
+for a slot the configuration *output* goes through `closed_on_range`.
 -/
 
 namespace LeanDag
@@ -59,8 +58,7 @@ theorem start_mono (Rn : Run R P B upd C₀ U V K) {k k' : ℕ} (h : k ≤ k')
 
 /-- **Every slot a configuration outputs is decided by it.** A run
 records decisions to the anchor and output to the boundary; this is the
-half a ledger needs, and it is where every consumer that used to read
-`closed` at the boundary now goes. -/
+half a ledger needs. -/
 theorem closed_on_range (Rn : Run R P B upd C₀ U V K) {k : ℕ} (hk : k < K) {κ : ℕ}
     (hlo : Rn.start k < (Rn.cfg k).roundOf κ)
     (hhi : (Rn.cfg k).roundOf κ ≤ Rn.start (k + 1)) :

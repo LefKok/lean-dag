@@ -7,38 +7,63 @@
 > and whether the surrounding prose is faithful to what is proved, has
 > only human-plus-LLM review behind it. Read critically.
 
-> **Status (September 2026).** Built, and since generalised. The
-> mechanism planned below is now `Adaptive.Policy` over any
-> `Properties.DagRule` (`Adaptive/Policy.lean`, `Adaptive/Basic.lean`,
-> `Adaptive/Liveness.lean`); the core's bounded relation `DecidedWithin`
-> is `AnchoredRule.DecidedWithin` (`Common/Anchored/Bounded.lean`), and
-> every statement planned here stands verbatim in
-> `Integration/AdaptiveMysticeti.lean` and
-> `Integration/AdaptiveOdontoceti.lean` as corollaries of the generic
-> theorems, the mechanism itself naming no protocol. §5's module plan is
-> the plan as written.
+## What is proved
+
+A HammerHead-style adaptive leader schedule — on committing the anchor
+that closes a configuration, reassign the leaders ahead from what the DAG
+and the committed sequence show — is safe and live over any base protocol
+this development formalises. The three theorems, at a reputation score
+(`Adaptive/Headline.lean`):
+
+* **`score_safe`.** Two validators running *any* score over one DAG from
+  one genesis configuration adopt the same configuration at every height
+  both reach, the same anchor, and the same verdict at every slot of
+  every range both closed. **No synchrony, no fairness, no window, and no
+  clause on the score** — `Score.rule_anchored` is `rfl`.
+* **`score_ledger`.** And they read one ledger: agreed as far as both
+  reach, a prefix of itself as it grows, holding no block twice.
+* **`score_live`.** And the sequence does not stop, under `Score.Keeps`
+  and a clause the score preserves whose configurations are live. The one
+  place a score is asked for anything.
+
+Two more against the rest of the system: `joiner_run_decided_agree` —
+pruning does not split the ledger, even when the schedule is derived from
+it — and `SegRun.extend_ledgerUpto` — a recovery changes nothing already
+ordered.
+
+**Three deployment constraints** fall out, and none is a safety
+condition on the protocol: a score must read a window of rounds the
+horizon has not cut; it must read nothing about the universe that adding
+blocks changes (its size, say); and where the configuration switch falls
+between the round it becomes due and the anchor's round is a choice about
+how much output waits on the network, not about safety.
+
+A segmented run is `Barnacle.Run` at `Boundary.atThreshold`, and the
+mechanism is that one word: safety, the ledger, conservativity, validity
+and progress are the Barnacle arc's theorems at that boundary (D21).
+`LeanDag/Adaptive/` holds the score, the joiner, the mechanism
+composition and the headline, and nothing else.
+
+## How to read this document
+
+> **Provenance of the record below.** §1–§6 describe a **different
+> mechanism** — a schedule-and-verdict fixpoint over epochs, with AL1–AL9
+> — which was built, found to need a window asynchrony can falsify, and
+> **deleted** in September 2026. They are kept because §7's findings are
+> stated against them and because AL9's refutation is the reason the
+> current arc exists. Nothing in §1–§6 names a file that still exists.
 >
-> **§7 and §8 were added after reading the Hammerhead paper itself.**
-> They record what the paper does that this arc does not — the
-> reputation score reads parent edges rather than verdicts, and a
-> schedule governs a bounded range of rounds — and plan the change. §1
-> to §6 describe what is built; §7 says what it assumes of the network
-> without saying so. §8 was rewritten once the Barnacle arc merged,
-> because most of what §7 asks for is that arc's run.
+> §7 records what the HammerHead paper does that the fixpoint arc did
+> not. §8 plans the replacement. §9 is the build log, step by step, with
+> the design decisions D19–D25 and four review passes.
 
-This document is the design record for the **adaptive-leaders** arc,
-written before the development rather than after it: the definitions and
-theorems below are a plan, and the Lean signatures are proposals. The
-question is whether a Hammerhead-style adaptive leader schedule — after
-a commit, validators consult the agreed information and reassign the
-leaders ahead, to favour validators observed live and fast — is safe and
-live for both commit rules of this development, Mysticeti (report §3)
-and Odontoceti (report §10). Results will carry **AL**-labels,
-continuing the house scheme; everything will live in `LeanDag/Adaptive/`
-with `decide` witnesses in `LeanDagTest/Adaptive/Model.lean`, consuming the
-core read-only like every other arc.
+This document is the design record for the **adaptive-leaders** arc.
+Results carry **AL**-labels, continuing the house scheme; the mechanism
+lives in `LeanDag/Adaptive/` with `decide` witnesses in
+`LeanDagTest/Adaptive/`, consuming the core read-only like every other
+arc.
 
-## 1. The problem
+## 1. The problem *(superseded — the fixpoint arc)*
 
 In the base development the schedule is a `Slots` instance: `slotRound`
 and `leader` are arbitrary *fixed* functions, and every result — the
@@ -73,7 +98,7 @@ by the mechanism itself. The whole design problem is to stratify the
 dependency so the fixpoint is forced unique, without giving up the
 anchors liveness needs.
 
-## 2. The design
+## 2. The design *(superseded)*
 
 **Epochs, and a lag of two.** Slots are grouped into epochs of `W`
 consecutive slots (`epochOf k := k / W`; `W` a parameter, constrained
@@ -183,7 +208,7 @@ development's split between the `Decided` relation and `decided_unique`:
 A partial variant (`closed`/`coherent` for epochs `< E` only) states
 prefix agreement for validators that have not decided equally far.
 
-## 3. The theorems
+## 3. The theorems *(superseded — AL1–AL9, deleted)*
 
 **AL1 (instance).** `slotsOf` yields a lawful `Slots` instance;
 `keyed` from injective `slotRound` in the single-leader case.
@@ -272,7 +297,7 @@ that small models admit none would also be informative. Open, and not
 promised: the interaction between an anchor's leader and the verdict it
 anchors is delicate, and the answer may need more than four validators.
 
-## 4. What liveness constrains
+## 4. What liveness constrains *(superseded)*
 
 Safety is indifferent to `W`; liveness is not. Anchors for epoch `e`
 live below the start of epoch `e + 2`, so the eligibility gap (three
@@ -284,7 +309,7 @@ witness will pin a workable `W` for the pipelined round-robin base
 (expected single digits); the theorems will carry `W`'s lower bound as
 an explicit hypothesis rather than a chosen constant.
 
-## 5. Module plan
+## 5. Module plan *(superseded)*
 
 | Module | Contents |
 |:---|:---|
@@ -295,7 +320,7 @@ an explicit hypothesis rather than a chosen constant.
 | `Adaptive/Odontoceti.lean` | the two-round mirror (AL7) |
 | `LeanDagTest/Adaptive/Model.lean` | demote-on-skip on the round-robin base (AL8) |
 
-## 6. Out of scope
+## 6. Out of scope *(superseded)*
 
 - **Composition with garbage collection** — whether `chop` commutes with
   the adaptive fixpoint. Expected from G2-style invariance plus AL3, but
@@ -312,7 +337,7 @@ an explicit hypothesis rather than a chosen constant.
   only; the round structure of the schedule stays fixed, as it does in
   Hammerhead.
 
-## 7. What the Hammerhead paper does that this arc does not
+## 7. What the Hammerhead paper does that the fixpoint arc did not
 
 *(Added September 2026, after reading `papers/hammerhead.pdf`
 — Tsimos, Kichidis, Sonnino and Kokoris-Kogias, *HammerHead:
@@ -708,7 +733,13 @@ anchor's round.
   paper's rule is the remaining piece, and it is a fact about that rule
   rather than about the mechanism.
 
-## 9. Step by step
+## 9. The build log
+
+> **File locations in steps 1–9 are as-built.** D21 later moved the run,
+> agreement, the ledger, conservativity, validity and progress into the
+> Barnacle arc, where they are proved once for both mechanisms at every
+> boundary. Steps 1–9 name the files they were written into at the time;
+> the theorems are the same, under `LeanDag/Barnacle/`.
 
 Ordered by risk, not by dependency: step 2 is the one that can end the
 plan, and it comes as early as a structure to test it against allows.
@@ -1006,7 +1037,7 @@ step 9 added. Generalised, and `commitScore_stable` follows.
 ledger's clauses were labelled BN5a–c, which are Barnacle's. `ProgressStmt`
 is named after the file it lives in, not after the property, and is now
 `ConfigProgress` in both arcs — the paper's own term. AL11d's clause is
-now `ConstScoreIsConstRule`, which says what it claims. `SegRun.spanOf`
+now `ConstScoreIsConstRule`, which says what it claims. `Run.spanOf`
 was disconnected from the `update` field it claimed to name;
 `update_spanOf` is the identification.
 
@@ -1169,7 +1200,41 @@ instance. Both rewritten around the two bounds and the parameter between
 them; §21.2 gains the boxed statement that where the switch goes is a
 deployment choice and not a safety question.
 
-### Step 14 — the record
+### Step 14 — the prose
+
+A pass over the docstrings, the design records and the report, asking of
+each whether it is current, whether it puts what is *proved* in front of
+a reviewer, and whether it earns its length.
+
+**This document opened with a status block naming five deleted files.**
+It asserted the arc was "built, and since generalised" into
+`Adaptive.Policy`, `Adaptive/Basic.lean`, `Adaptive/Liveness.lean` and
+two integration files, none of which exists. Behind it sat 250 lines —
+§§1–6 — describing the fixpoint mechanism as though it were the current
+one, AL1–AL9 included. The audits do not catch this: they check
+backticked declaration names, and a two-segment name resolves by its
+tail, so `Adaptive.Policy` passed on some unrelated `Policy`.
+
+Replaced by **What is proved** — the three theorems, the two composition
+claims, the three deployment constraints, and the sentence that a
+segmented run is `Barnacle.Run` at one boundary — followed by a reading
+guide that says plainly which sections describe a deleted design.
+§§1–6 are marked *superseded* in their own headings, and §9 opens with a
+note that its file locations are as-built and were later unified.
+
+**`barnacle.md` §5 still displayed `PartialRun` as a structure** with the
+boundary hard-coded into `start_succ`. It now shows `Boundary` and the
+abbreviation, and says that every result of the section holds at every
+boundary.
+
+**Three Lean docstrings compared against the deleted arc** — the
+standing rule is that a docstring says what a declaration means, not what
+some other file used to do. Trimmed.
+
+Report §13.7 said `commitScore` reads "the span just closed", which stopped
+being true when the rule's window narrowed to the range output.
+
+### Step 15 — the record
 
 Report §13 gains the segmented arc and relabels the fixpoint one: AL3 is
 safety for policies that read verdicts, under a window condition
