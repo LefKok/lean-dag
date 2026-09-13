@@ -134,7 +134,7 @@ What the fill restores is *production*, which is what liveness reads,
 and a recovering validator is outside every covered set for the
 duration of its gap.
 
-### 3.2 Where a horizon may be put (`Joiner.lean`, `Adaptive/Joiner.lean`, `Retention.lean`)
+### 3.2 Where a horizon may be put (`Joiner.lean`, `Adaptive/Helpers/Chop.lean`, `Retention.lean`)
 
 **The joiner** (I5, `Adaptive/Helpers/Chop.lean`). A validator joining
 from a cut under an adaptive schedule computes the same configuration as

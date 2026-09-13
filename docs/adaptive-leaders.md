@@ -1234,7 +1234,40 @@ some other file used to do. Trimmed.
 Report §13.7 said `commitScore` reads "the span just closed", which stopped
 being true when the rule's window narrowed to the range output.
 
-### Step 15 — the record
+### Step 15 — the second prose pass
+
+**The report's abstract and introduction still described the fixpoint
+mechanism.** Both said adaptivity is safe because "the schedule-and-verdict
+fixpoint is unique" — the two paragraphs a reader meets first, describing
+an arc deleted five commits earlier. §21 also said the fixpoint machinery
+"of §13" was not needed, when §13 is now the same run at a different
+boundary and needs none either.
+
+**The report contradicted itself about its own size**, claiming 83,000
+lines in the abstract and 78,000 in §25 against an actual 67,603. Both
+were stale before this branch. Now 68,000, with the library and witness
+split corrected too, and the dependency graph's declaration and edge
+counts refreshed.
+
+**`README.md` still carried the retracted deployment constraint** — "a
+horizon must fall on an epoch boundary of an adaptive schedule" — which
+report §16 dropped when `Config.chop` replaced the epoch numbering. It
+now carries the two that replaced it. It also described `Adaptive/` as
+generalised over any `Properties.DagRule`, which was the fixpoint arc's
+shape.
+
+**Two current docs pointed at `Adaptive/Joiner.lean`**, deleted:
+`integration.md` §3.2's own heading, and `target-properties.md` §0, the
+part of that document that describes the arc as it stands. Its §1–§11 name
+the same files and are covered by its own note that they describe earlier
+states.
+
+Smaller: §25's module rows now name `Boundary` and say the run is shared
+with §13; §24's witness row and prose name all four scores; and the axiom
+audit lists the headline theorems, which a reader checking what rests on
+what would otherwise not find.
+
+### Step 16 — the record
 
 Report §13 gains the segmented arc and relabels the fixpoint one: AL3 is
 safety for policies that read verdicts, under a window condition

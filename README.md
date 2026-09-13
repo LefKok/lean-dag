@@ -148,8 +148,9 @@ move the committee — `n ≥ 5f+1` for two-round commitment,
   once still cannot disagree about a verdict (`hybrid_agree_stack`).
   The deployment constraints only the composition reveals: garbage
   collection at lag `Λ` supports one-message recovery from outages of
-  up to `Λ` rounds and no more; a horizon must fall on an epoch
-  boundary of an adaptive schedule; and a validator pruned past its own
+  up to `Λ` rounds and no more; an adaptive score must read a window of
+  rounds the horizon has not cut, and nothing about the universe that
+  adding blocks changes; and a validator pruned past its own
   history can read but not produce until it **re-genesises** — a
   provision that needs no exemption from the self-parent rule and no
   agreement on where anyone's cut falls.
@@ -383,8 +384,8 @@ them: the universe and the rule under `Model/`, what it shows in
   chain quality; `DoS/` — equivocation and the novelty budget; `GC/` —
   garbage collection; `Odontoceti/` — the two-round protocol;
   `Reactive/` — the reactive schedule; `SafeSkip/` — crash recovery in
-  one message; `Adaptive/` — adaptive leader schedules, generalised over
-  any `Properties.DagRule`; `Hybrid/` — Byzantine and crash faults
+  one message; `Adaptive/` — adaptive leader schedules, a reputation
+  score over `Barnacle/`'s run; `Hybrid/` — Byzantine and crash faults
   apart; `Nemo/` — crash-fault consensus at a majority quorum;
   `Minnow/` — the minimal commit rule and its counterexamples;
   `FinWhale/` — the fast path at `n = 3f + 2p − 1`, whose `Model/` holds

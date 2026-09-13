@@ -383,7 +383,7 @@ inclusion. Black Marlin is out of scope by decision.
 mechanism relations (`Extends`, `Sustain`, `Truncate`, `Compose`), and
 `Arcs/` (`GC`, `SafeSkip`, `Liveness`, `Quality`, `Stack`, `Headline`).
 `Timed/Coverage.lean` — the timed model, and `Timed/Extension.lean` —
-coverage under an extension; `Adaptive/Joiner.lean` — the joiner
+coverage under an extension; `Adaptive/Helpers/Chop.lean` — the joiner
 across a cut. `BlockRecord.lean` and `Record/` — the block record every
 universe is, and the cut, fill and re-genesis built once at it;
 `Properties/Record.lean` — a carrier read as records, with every

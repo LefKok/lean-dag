@@ -56,11 +56,12 @@ for every missed round — a donor's references plus a forced self
 reference — with production restored, no commit conjured for slots the
 network already passed, and every verdict reached before the fill
 re-derived and agreed after it. Sixth, **adaptive leader schedules**:
-Hammerhead-style reassignment of the leaders ahead, computed from the
-agreed prefix, is proved safe unconditionally — the schedule-and-verdict
-fixpoint is unique under no synchrony assumption, for arbitrary adapted
-policies — and live exactly when the policy keeps placing runs of
-reliable leaders. Seventh, **hybrid fault tolerance**: separating `fb`
+HammerHead-style reassignment of the leaders ahead, computed from the
+agreed prefix, is proved safe unconditionally — two validators running
+*any* reputation score adopt one configuration sequence and one ledger,
+under no synchrony, fairness or window hypothesis, and the score is
+asked for nothing — and live exactly when the score keeps placing runs
+of reliable leaders. Seventh, **hybrid fault tolerance**: separating `fb`
 Byzantine from `fc` crash-prone validators, the two-round rule is
 proved safe and live at `n ≥ 5fb + 3fc + 1` — four validators suffice
 for two-round finality under a single crash — with the committee bound
@@ -91,7 +92,7 @@ of rounds a horizon does not cut, and a validator pruned past its own history is
 a reader until it re-genesises, counting against the fault budget
 meanwhile.
 
-The development comprises roughly 83,000 lines of Lean 4 over Mathlib, of which 21,000 are witnesses. Every
+The development comprises roughly 68,000 lines of Lean 4 over Mathlib, of which 22,000 are witnesses. Every
 principal result depends on exactly Lean's three standard axioms; every
 definition is exercised on concrete models by `decide` before anything is
 proved from it. All displayed Lean in this report is drawn from the source
@@ -124,8 +125,10 @@ under which consensus proceeds at network speed, with the timeout as a
 fallback that a fast network never triggers; and Safe Skip, by which a
 crashed validator rejoins production with a single message, with every
 prior verdict proved to survive the recovery; adaptive leader
-schedules, with the reassignment fixpoint proved unique — safety
-needing no synchrony at all — and live under a run-placing policy; and
+schedules, where a configuration orders a range fixed before any commit
+while deciding as far as the anchor that closes it — safety needing no
+synchrony, no window and no clause on the score — and live under a
+score that keeps placing runs of reliable leaders; and
 hybrid fault tolerance, separating Byzantine from crash faults, with
 the tight two-round committee bound machine-checked in both
 directions; and an integration account in which the arcs are shown to
@@ -8060,8 +8063,9 @@ the paper's own schedule needs of its base protocols. Its results carry
 algorithm **decides under the count in force and only then switches**:
 the verdicts of one configuration's range are derivations of the base
 relation against one fixed schedule, so the dependency between
-configurations is well-founded by induction, and the fixpoint
-machinery of §13 is not needed.
+configurations is well-founded by induction, and no fixpoint over the
+schedule and the verdicts is needed. §13 is this run at a different
+boundary, and needs none either.
 
 ### 21.1 The interface
 
@@ -9412,7 +9416,7 @@ every theorem above it vacuous, and vacuity is not otherwise detectable.
 | `Ucrash N`, `ucrashMsg` | `SkipMsg`: a crashed line, the message against it, and the fill (SS7) |
 | `Usun`, `Usk`, `U44`, `U3` | `PartialRun` with a rising count, a skipped slot past the threshold, the real `Good` with the theorems yielding verdicts, and a bare majority under attack (BN3, BN8, BN9, BN10) |
 | `ucrashJump` | `JumpMsg`: the compact core of `ucrashMsg`, elaborating to the same fill (SS11) |
-| `swapScore`, `segRun` | a score that reassigns from the anchor's history, and the three-segment run whose anchor sits two rounds past its boundary (AL17) |
+| `segRun`, `swapScore`, `commitScore`, `zeroIntervalScore` | the three-segment run whose anchor sits two rounds past its boundary; a score reassigning from the anchor's history; one reassigning from the committed sequence alone; and one that fails `Score.Keeps` and leaves a configuration out of bounds (AL17) |
 | `Uhyb4`, `Uhyb9` | `HybridFaults`, `HonestNoEquiv`: one crash at four validators; the tight hybrid committee (H9) |
 | `UtightA`, `UtightB` | the one-short committee: agreement refuted at every threshold (H10) |
 | `Unemo` | `CrashFaults` at the tight crash committee: three validators, one halted line, every decidable rule settled by `decide` (NN9) |
@@ -9464,8 +9468,10 @@ whose first configuration decides as far as an anchor two rounds past
 its own boundary, outputs the boundary round alone, and leaves a block
 decided under that configuration to reach the ledger only from the
 segment whose span contains its round — the separation of §13.1 on
-data rather than as a hypothesis, with `swapScore` supplying
-reassignment that is a function of the DAG.
+data rather than as a hypothesis. `swapScore` supplies reassignment that
+is a function of the DAG and `commitScore` one that is a function of the
+committed sequence alone, and `zeroIntervalScore` refutes `Score.Keeps`
+by taking a configuration out of the parameters.
 The hybrid model is witnessed at both of §14.7's committees (H9), and
 the one-short committee's two attack universes carry the tightness
 refutation (H10). The crash arc is witnessed on `Unemo` (NN9), §15.5's
@@ -9490,8 +9496,8 @@ rather than an unsatisfiable hypothesis.
 
 ## 25. Mechanisation
 
-The development comprises approximately 78,000 lines of Lean 4 (v4.32.2)
-against Mathlib, of which some 57,000 constitute the library and 21,000
+The development comprises approximately 68,000 lines of Lean 4 (v4.32.2)
+against Mathlib, of which some 46,000 constitute the library and 22,000
 the models of §24 and the witness files of the arcs. A full build reports
 no errors.
 
@@ -9506,8 +9512,10 @@ no errors.
 `Odontoceti.all_decided_below_of_fairRun`, `chain_quality`,
 `committed_of_correct_block`, `decided_fill_of_persist` (SS5) and
 `decided_fill_agree_of_properties` (SS6), `SkipMsg.skipFill_eq_of_core` (SS9)
-and `JumpMsg.denote_eq_of_core` (SS10), `Barnacle.Agreement.holds` (AL13) and
-`Barnacle.Progress.holds` (AL16), `Hybrid.hybridLaws` (H6),
+and `JumpMsg.denote_eq_of_core` (SS10), `Barnacle.Agreement.holds` and
+`Barnacle.Progress.holds` (BN3 and BN8, and AL13 and AL16 at §13's
+boundary), `Adaptive.score_safe`, `Adaptive.score_ledger` and
+`Adaptive.score_live` (AL18), `Hybrid.hybridLaws` (H6),
 `HybridProperties.safety`, `hybrid_bound_necessary` (H10), `Nemo.nemoLaws`
 (NN5), `Nemo.outputAt_agree` (NN6) and
 `Nemo.all_decided_below_of_fairRun` (NN8), and
@@ -9628,13 +9636,13 @@ Lean 4. No result depends on `sorryAx`, on any bespoke axiom, or on
 | `BlackMarlin/Model/Repair.lean` | the support-preferring side-condition, and a descent that meets it |
 | `BlackMarlin/Safety/`, `BlackMarlin/Liveness/`, `BlackMarlin/Reactive/`, `BlackMarlin/Agreement/`, `BlackMarlin/Ledger/`, `BlackMarlin/Descent/`, `BlackMarlin/Order/`, `BlackMarlin/Repair/` | the eight statements and their proofs (BM1–BM7, BML1–BML5, BMR1–BMR6, BMA1–BMA4, BMD1–BMD6, BME1–BME5, BMO1–BMO9, BMP1–BMP13, BMV1–BMV3, BMT1–BMT3) |
 | `BlackMarlin/Helpers/` | the generated lemma layer |
-| `Barnacle/Model/Rule.lean` | the base-protocol interface: data and laws (A1–A4), the candidate predicate, update rules |
-| `Barnacle/Model/Schedule.lean`, `Barnacle/Model/Window.lean`, `Barnacle/Model/Run.lean` | the schedule of a configuration; the window count and the AIMD rule; the run and the ledger |
+| `Barnacle/Model/Rule.lean` | the base-protocol interface: data and laws (A1–A4), the candidate predicate, update rules, and `Boundary` — where a reconfiguration takes force |
+| `Barnacle/Model/Schedule.lean`, `Barnacle/Model/Window.lean`, `Barnacle/Model/Run.lean` | the schedule of a configuration; the window count and the AIMD rule; the run at any boundary, shared with §13, and the ledger |
 | `Barnacle/Model/Live.lean`, `Barnacle/Model/Heads.lean` | the liveness clause with its gap; the descent laws and runs of heads |
 | `Barnacle/Model/Anchored.lean` | an anchored rule as a base rule and as a live rule, at a fault model |
 | `Barnacle/Window/`, `Barnacle/Agreement/`, `Barnacle/Healthy/`, `Barnacle/Validity/`, `Barnacle/Ledger/`, `Barnacle/Conservativity/`, `Barnacle/Aimd/`, `Barnacle/Progress/`, `Barnacle/Heads/` | the seven statements and their proofs (BN2, BN3, BN5, BN6, BN7, BN8, BN9) |
 | `LeanDagTest/Barnacle/Rules/` | the rules as base and, where stated, live rules, their laws and their liveness under round-robin (BN10) — instantiations of the generic results, so they sit with the witnesses that consume them |
-| `Barnacle/Helpers/` | the generated lemma layer |
+| `Barnacle/Helpers/` | the generated lemma layer; `Bounds.lean` is the two facts a boundary gives a run |
 | `Hydrozoan/Model/Faults.lean` | the hybrid fault model, the five thresholds, the two pools |
 | `Hydrozoan/Model/Block.lean`, `Hydrozoan/Model/BlockUniverse.lean`, `Hydrozoan/Model/View.lean` | the shared block with no payload, and Hydrozoan's validity; the universe with non-equivocation for non-Byzantine authors; views; reachability |
 | `Hydrozoan/Model/DirectRules.lean`, `Hydrozoan/Model/IndirectRules.lean`, `Hydrozoan/Model/Decided.lean` | votes, certificates, the three direct rules, on the record's counting vocabulary; the rung tests; Hydrozoan as a two-rung anchored rule |
@@ -20639,7 +20647,7 @@ theorem closed_on_range (Rn : Run R P B upd C₀ U V K) {k : ℕ} (hk : k < K) {
     R.Decided (Rn.cfg k).sched V κ (Rn.vdct k κ)
 ```
 
-**Every slot a configuration outputs is decided by it.** A run records decisions to the anchor and output to the boundary; this is the half a ledger needs, and it is where every consumer that used to read `closed` at the boundary now goes.
+**Every slot a configuration outputs is decided by it.** A run records decisions to the anchor and output to the boundary; this is the half a ledger needs.
 
 #### `update_spanOf`
 
