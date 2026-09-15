@@ -92,14 +92,15 @@ runs the network's leaders and derives the network's verdict at every
 slot both hold: **pruning does not split the ledger, even when the
 schedule is derived from it.** -/
 theorem joiner_run_decided_agree (ha : Agree R) (hb : Banded R)
-    {score : (U : R.Universe) → R.View U → Config Validator → Config Validator}
-    (hs : HorizonStable score G) (C : Config Validator)
+    {score : (U : R.Universe) → R.View U → (ℕ → Option BlockId) →
+      Config Validator → Config Validator}
+    (hs : HorizonStable score G) (C : Config Validator) (vd : ℕ → Option BlockId)
     {V : R.View U} {V' : R.View (c.chop U G)} (hv : ViewAgreeAbove R V V' G)
     {W : R.View (c.chop U G)} {k : ℕ} {w v : Option BlockId}
-    (hW : R.Decided (score (c.chop U G) V' (C.chop G)).sched W k w)
-    (hV : R.Decided (score U V C).sched V ((score U V C).cum G + k) v) : w = v := by
-  rw [joiner_config_agree hs hv C] at hW
-  exact joiner_decided_agree_chop c ha hb (score U V C) hW hV
+    (hW : R.Decided (score (c.chop U G) V' (fun κ => vd (C.cum G + κ)) (C.chop G)).sched W k w)
+    (hV : R.Decided (score U V vd C).sched V ((score U V vd C).cum G + k) v) : w = v := by
+  rw [joiner_config_agree hs hv C vd] at hW
+  exact joiner_decided_agree_chop c ha hb (score U V vd C) hW hV
 
 section Fill
 

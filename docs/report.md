@@ -4525,11 +4525,22 @@ What a score owes pruning is horizon-stability:
 
 ```lean
 def HorizonStable
-    (score : (U : R.Universe) → R.View U → Config Validator → Config Validator)
+    (score : (U : R.Universe) → R.View U → (ℕ → Option BlockId) →
+      Config Validator → Config Validator)
     (G : ℕ) : Prop :=
   ∀ (U U' : R.Universe) (V : R.View U) (V' : R.View U'), ViewAgreeAbove R V V' G →
-    ∀ C : Config Validator, score U' V' (C.chop G) = (score U V C).chop G
+    ∀ (C : Config Validator) (v : ℕ → Option BlockId),
+      score U' V' (fun κ => v (C.cum G + κ)) (C.chop G) = (score U V v C).chop G
 ```
+
+**Both of the score's readings are re-indexed.** A joiner numbers its
+slots from the first slot of round `G`, so where the network's score
+reads verdict `v κ` the joiner reads `v (C.cum G + κ)` — the same
+verdicts, at its own indices. Asking both sides for the same `v` would
+ask the joiner for a function over slots it does not hold, and would make
+the obligation look satisfied by scores that cannot meet it:
+`commitScore_not_horizonStable` refutes it for a score that names an
+absolute slot.
 
 A score that only reassigns leaders has it at every cut
 (`horizonStable_relabel`) — relabelling commutes with dropping rounds,
@@ -5382,14 +5393,19 @@ configuration, which is
 
 ```lean
 def HorizonStable
-    (score : (U : R.Universe) → R.View U → Config Validator → Config Validator)
+    (score : (U : R.Universe) → R.View U → (ℕ → Option BlockId) →
+      Config Validator → Config Validator)
     (G : ℕ) : Prop :=
   ∀ (U U' : R.Universe) (V : R.View U) (V' : R.View U'), ViewAgreeAbove R V V' G →
-    ∀ C : Config Validator, score U' V' (C.chop G) = (score U V C).chop G
+    ∀ (C : Config Validator) (v : ℕ → Option BlockId),
+      score U' V' (fun κ => v (C.cum G + κ)) (C.chop G) = (score U V v C).chop G
 ```
 
-Under it a joiner computes exactly the configuration the network
-installed, with the pruned rounds dropped (`joiner_config_agree`), and
+The joiner's verdict function is the network's at the joiner's indices —
+its slot `κ` is the network's `C.cum G + κ` — so both of the score's
+readings are re-indexed by the cut, not just the configuration. Under
+this a joiner computes exactly the configuration the network installed,
+with the pruned rounds dropped (`joiner_config_agree`), and
 so runs the network's leaders on every round both hold
 (`joiner_leader_agree`). The verdict half needs nothing about
 adaptivity: `rebases_chop` makes the cut a truncation at that schedule,
@@ -9518,7 +9534,8 @@ no errors.
 and `JumpMsg.denote_eq_of_core` (SS10), `Barnacle.Agreement.holds` and
 `Barnacle.Progress.holds` (BN3 and BN8, and AL13 and AL16 at §13's
 boundary), `Adaptive.score_safe`, `Adaptive.score_ledger` and
-`Adaptive.score_live` (AL18), `Hybrid.hybridLaws` (H6),
+`Adaptive.score_live` (AL18), `Integration.joiner_run_decided_agree` (I5),
+`Hybrid.hybridLaws` (H6),
 `HybridProperties.safety`, `hybrid_bound_necessary` (H10), `Nemo.nemoLaws`
 (NN5), `Nemo.outputAt_agree` (NN6) and
 `Nemo.all_decided_below_of_fairRun` (NN8), and
@@ -10336,7 +10353,7 @@ reused.
 | AL15 | conservativity at the constant rule, and validity — BN6 and BN14 at this boundary | `Barnacle.Conservativity.holds` *(Barnacle/Conservativity)*, `Barnacle.Validity.holds` *(Barnacle/Validity)* |
 | AL16 | liveness: one more configuration, and runs of every height under the horizon; runs of heads counted over positions, so a reassigning rule owes a cap on accumulation rather than a permutation | `Barnacle.Progress.holds` *(Barnacle/Progress)*, `Barnacle.headsRun_of_cycle`, `Barnacle.headsRun_of_cycle_weighted`, `Barnacle.headsRun_perm_of_all`, `Barnacle.liveOn_of_permuted_heads` *(Barnacle/Helpers/Heads)* |
 | AL18 | the arc at a reputation score, its clauses discharged: safety and the ledger asking the score for nothing, liveness asking `Score.Keeps` and a preserved clause | `Adaptive.score_safe`, `Adaptive.score_ledger`, `Adaptive.score_live` *(Adaptive/Headline)* |
-| AL17 | the asynchronous segment on data: an anchor two rounds past the boundary, the ledger stopping at it, and two scores that reassign — one off the DAG, one off the committed sequence alone | `segRun`, `swapScore`, `commitScore`, `commitScore_anchored` witnesses *(LeanDagTest/Adaptive/Asynchronous)* |
+| AL17 | the asynchronous segment on data: an anchor two rounds past the boundary, the ledger stopping at it, and two scores that reassign — one off the DAG, one off the committed sequence alone, with the history-reading one shown stable and the slot-naming one shown not horizon-stable | `segRun`, `swapScore`, `swapScore_stable`, `commitScore`, `commitScore_anchored`, `commitScore_stable`, `commitScore_not_horizonStable`, `zeroIntervalScore` witnesses *(LeanDagTest/Adaptive/Asynchronous)* |
 
 **Hybrid fault tolerance** (§14):
 
@@ -10437,7 +10454,7 @@ reused.
 | I1 | honest non-equivocation survives truncation and the fill | `honestNoEquiv_chop`, `honestNoEquiv_skipFill` *(Integration/Preservation)* |
 | I2 | coverage survives truncation, at a horizon offset | `synchronisedOn_chop` *(Integration/Coverage)* |
 | I4 | coverage under the fill: refuted for a set including the recovering validator, preserved otherwise, restored above the fill | `not_synchronisedOn_skipFill`, `synchronisedOn_skipFill_of_notMem`, `synchronisedOn_skipFill_above` *(Integration/Coverage)*, from `not_synchronisedOn_of_extends`, `synchronisedOn_of_extends` *(Timed/Extension)* |
-| I5 | the joiner across a cut: a configuration chopped, what a score owes pruning, and a reassigning score meeting it at every cut | `Config.chop`, `Config.rebases_chop` *(Barnacle/Chop)*, `Adaptive.HorizonStable`, `Adaptive.joiner_config_agree`, `Adaptive.joiner_leader_agree`, `Adaptive.joiner_decided_agree`, `Adaptive.horizonStable_relabel` *(Adaptive/Helpers/Chop)*, `Adaptive.joiner_decided_agree_chop`, `Adaptive.joiner_run_decided_agree` at any record carrier *(Adaptive/Helpers/Mechanisms)*, at the core in *Integration/Joiner* |
+| I5 | the joiner across a cut: a configuration chopped, what a score owes pruning — both its readings re-indexed, so a score naming an absolute slot is refuted — and a reassigning score meeting it at every cut | `Config.chop`, `Config.rebases_chop` *(Barnacle/Chop)*, `Adaptive.HorizonStable`, `Adaptive.joiner_config_agree`, `Adaptive.joiner_leader_agree`, `Adaptive.joiner_decided_agree`, `Adaptive.horizonStable_relabel` *(Adaptive/Helpers/Chop)*, `commitScore_not_horizonStable` *(LeanDagTest/Adaptive/Asynchronous)*, `Adaptive.joiner_decided_agree_chop`, `Adaptive.joiner_run_decided_agree` at any record carrier *(Adaptive/Helpers/Mechanisms)*, at the core in *Integration/Joiner* |
 | I6 | anchor retention, and the lag bounds the outage | `anchor_pruned`, `chopMsg`, `outage_bounded_by_lag` *(Integration/Retention)* |
 | I7 | the headlines at the core: safety across any stack, liveness at the support | `MysticetiProperties.safety`, `MysticetiProperties.liveness`, `stack_core` *(MysticetiProperties, Integration/StackRules)* |
 | I8 | a severed chain cannot restart | `no_blocks_of_no_genesis`, `severed_of_pruned_anchor` *(Integration/Retention)* |
@@ -18105,16 +18122,18 @@ theorem stack_core_config (sk : SkipMsg U) (C : Config Validator) :
 ```lean
 theorem joiner_run_decided_agree
     {score : (U : BlockUniverse Validator BlockId Payload) →
-      View Validator BlockId Payload U → Config Validator → Config Validator}
+      View Validator BlockId Payload U → (ℕ → Option BlockId) →
+      Config Validator → Config Validator}
     (hs : Adaptive.HorizonStable
       (R := MysticetiProperties.mysticetiRule (Payload := Payload)) score G)
-    (C : Config Validator)
+    (C : Config Validator) (vd : ℕ → Option BlockId)
     {V : View Validator BlockId Payload U}
     {V' : View Validator BlockId Payload (chop U G)}
     (hv : ViewAgreeAbove (MysticetiProperties.mysticetiRule (Payload := Payload)) V V' G)
     {W : View Validator BlockId Payload (chop U G)} {k : ℕ} {w v : Option BlockId}
-    (hW : Decided (S := (score (chop U G) V' (C.chop G)).sched) (chop U G) W k w)
-    (hV : Decided (S := (score U V C).sched) U V ((score U V C).cum G + k) v) :
+    (hW : Decided (S := (score (chop U G) V' (fun κ => vd (C.cum G + κ)) (C.chop G)).sched)
+      (chop U G) W k w)
+    (hV : Decided (S := (score U V vd C).sched) U V ((score U V vd C).cum G + k) v) :
     w = v
 ```
 
@@ -20395,11 +20414,13 @@ theorem joiner_decided_agree (ha : Agree R) (hb : Banded R)
 
 ```lean
 theorem joiner_config_agree
-    {score : (U : R.Universe) → R.View U → Config Validator → Config Validator}
+    {score : (U : R.Universe) → R.View U → (ℕ → Option BlockId) →
+      Config Validator → Config Validator}
     {G : ℕ} (hs : HorizonStable score G)
     {U U' : R.Universe} {V : R.View U} {V' : R.View U'}
-    (hv : ViewAgreeAbove R V V' G) (C : Config Validator) :
-    score U' V' (C.chop G) = (score U V C).chop G
+    (hv : ViewAgreeAbove R V V' G) (C : Config Validator)
+    (v : ℕ → Option BlockId) :
+    score U' V' (fun κ => v (C.cum G + κ)) (C.chop G) = (score U V v C).chop G
 ```
 
 **The joiner installs the network's configuration.** Under a horizon-stable score, what a joiner computes from its own truncated view is exactly what the network installed, with the pruned rounds dropped — so the two run the same leaders on every round both have.
@@ -20410,12 +20431,14 @@ theorem joiner_config_agree
 
 ```lean
 theorem joiner_leader_agree
-    {score : (U : R.Universe) → R.View U → Config Validator → Config Validator}
+    {score : (U : R.Universe) → R.View U → (ℕ → Option BlockId) →
+      Config Validator → Config Validator}
     {G : ℕ} (hs : HorizonStable score G)
     {U U' : R.Universe} {V : R.View U} {V' : R.View U'}
-    (hv : ViewAgreeAbove R V V' G) (C : Config Validator) (k : ℕ) :
-    (score U' V' (C.chop G)).sched.leader k
-      = (score U V C).sched.leader ((score U V C).cum G + k)
+    (hv : ViewAgreeAbove R V V' G) (C : Config Validator)
+    (v : ℕ → Option BlockId) (k : ℕ) :
+    (score U' V' (fun κ => v (C.cum G + κ)) (C.chop G)).sched.leader k
+      = (score U V v C).sched.leader ((score U V v C).cum G + k)
 ```
 
 And so the joiner's schedule is the network's, seen from the cut's own origin.
@@ -20426,7 +20449,7 @@ And so the joiner's schedule is the network's, seen from the cut's own origin.
 
 ```lean
 theorem horizonStable_const (G : ℕ) :
-    HorizonStable (R := R) (fun _ _ C => C) G
+    HorizonStable (R := R) (fun _ _ _ C => C) G
 ```
 
 The score that installs what it was given is horizon-stable at every cut: what it was given was already chopped. `Adaptive.Score.const` is this one, and AL15's conservativity is its consequence.
@@ -20440,7 +20463,7 @@ theorem horizonStable_relabel (σ : Validator → Validator)
     (hinj : ∀ (C : Config Validator) r i j, i < C.slotsAt r → j < C.slotsAt r →
       σ (C.lead r i) = σ (C.lead r j) → i = j) (G : ℕ) :
     HorizonStable (R := R)
-      (fun _ _ C =>
+      (fun _ _ _ C =>
         { slotsAt := C.slotsAt, slotsAt_pos := C.slotsAt_pos
           lead := fun r i => σ (C.lead r i)
           keyed := fun r i j hi hj h => hinj C r i j hi hj h
@@ -20449,7 +20472,7 @@ theorem horizonStable_relabel (σ : Validator → Validator)
 
 **A score that only reassigns leaders is horizon-stable**, at every cut and with no condition on the cut. Relabelling who leads commutes with dropping the rounds below a horizon, because both act on the leader function pointwise and neither moves a round. This is the case the obligation exists for — `Score.permute` is AL11's reassignment family, so a joiner running a permuting score computes the network's leaders whatever the horizon.
 
-The condition bites for a score whose *choice* of reassignment is read off the DAG: it then has to make that choice from what survives the cut, which is what `ViewAgreeAbove` gives it above `G` and nothing gives it below.
+The condition bites for a score whose *choice* of reassignment is read off the DAG or off the verdicts: it then has to make that choice from what survives the cut, and at its own indices. `ViewAgreeAbove` gives it the DAG above `G`; nothing gives it either below.
 
 #### `truncates_chop_config`
 
@@ -20504,12 +20527,13 @@ theorem joiner_decided_agree_chop (ha : Agree R) (hb : Banded R) (C : Config Val
 
 ```lean
 theorem joiner_run_decided_agree (ha : Agree R) (hb : Banded R)
-    {score : (U : R.Universe) → R.View U → Config Validator → Config Validator}
-    (hs : HorizonStable score G) (C : Config Validator)
+    {score : (U : R.Universe) → R.View U → (ℕ → Option BlockId) →
+      Config Validator → Config Validator}
+    (hs : HorizonStable score G) (C : Config Validator) (vd : ℕ → Option BlockId)
     {V : R.View U} {V' : R.View (c.chop U G)} (hv : ViewAgreeAbove R V V' G)
     {W : R.View (c.chop U G)} {k : ℕ} {w v : Option BlockId}
-    (hW : R.Decided (score (c.chop U G) V' (C.chop G)).sched W k w)
-    (hV : R.Decided (score U V C).sched V ((score U V C).cum G + k) v) : w = v
+    (hW : R.Decided (score (c.chop U G) V' (fun κ => vd (C.cum G + κ)) (C.chop G)).sched W k w)
+    (hV : R.Decided (score U V vd C).sched V ((score U V vd C).cum G + k) v) : w = v
 ```
 
 **I5, whole, at any carrier.** A joiner that recomputed its configuration from its own truncated view, under a horizon-stable score, runs the network's leaders and derives the network's verdict at every slot both hold: **pruning does not split the ledger, even when the schedule is derived from it.**

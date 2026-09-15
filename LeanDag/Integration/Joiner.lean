@@ -55,19 +55,21 @@ runs the network's leaders and derives the network's verdict at every
 slot both hold. -/
 theorem joiner_run_decided_agree
     {score : (U : BlockUniverse Validator BlockId Payload) →
-      View Validator BlockId Payload U → Config Validator → Config Validator}
+      View Validator BlockId Payload U → (ℕ → Option BlockId) →
+      Config Validator → Config Validator}
     (hs : Adaptive.HorizonStable
       (R := MysticetiProperties.mysticetiRule (Payload := Payload)) score G)
-    (C : Config Validator)
+    (C : Config Validator) (vd : ℕ → Option BlockId)
     {V : View Validator BlockId Payload U}
     {V' : View Validator BlockId Payload (chop U G)}
     (hv : ViewAgreeAbove (MysticetiProperties.mysticetiRule (Payload := Payload)) V V' G)
     {W : View Validator BlockId Payload (chop U G)} {k : ℕ} {w v : Option BlockId}
-    (hW : Decided (S := (score (chop U G) V' (C.chop G)).sched) (chop U G) W k w)
-    (hV : Decided (S := (score U V C).sched) U V ((score U V C).cum G + k) v) :
+    (hW : Decided (S := (score (chop U G) V' (fun κ => vd (C.cum G + κ)) (C.chop G)).sched)
+      (chop U G) W k w)
+    (hV : Decided (S := (score U V vd C).sched) U V ((score U V vd C).cum G + k) v) :
     w = v :=
   Adaptive.joiner_run_decided_agree MysticetiProperties.onRecord
-    MysticetiProperties.agree MysticetiProperties.banded hs C hv hW hV
+    MysticetiProperties.agree MysticetiProperties.banded hs C vd hv hW hV
 
 end Integration
 

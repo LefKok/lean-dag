@@ -632,7 +632,7 @@
 <rect x="294.0" y="2204.0" width="158" height="36" rx="5" fill="#fbe9d7" stroke="#b5652a" stroke-width="1.2"/>
 <text class="lbl" x="373.0" y="2216.0" text-anchor="middle">BN3</text>
 <text class="nm" x="373.0" y="2230.0" text-anchor="middle">Boundary</text></g>
-<g><title>LeanDag.Barnacle.Config.chop — the joiner across a cut: a configuration chopped, what a score owes pruning, and a reassigning score meeting it at every cut</title>
+<g><title>LeanDag.Barnacle.Config.chop — the joiner across a cut: a configuration chopped, what a score owes pruning — both its readings re-indexed, so a score naming an absolute slot is refuted — and a reassigning score meeting it at every cut</title>
 <rect x="294.0" y="2252.0" width="158" height="36" rx="5" fill="#dbe7e0" stroke="#5f8a76" stroke-width="1.2"/>
 <text class="lbl" x="373.0" y="2264.0" text-anchor="middle">I5</text>
 <text class="nm" x="373.0" y="2278.0" text-anchor="middle">chop</text></g>

@@ -157,6 +157,17 @@ theorem swapScore_keeps : swapScore.Keeps := by
 
 example : UpdBounded bnPI1 (rule swapScore) := Score.rule_bounded bnPI1 swapScore swapScore_keeps
 
+/-- **And it survives a recovery.** `swapScore` reads the anchor's history
+and nothing else about the universe, so a fill or a re-genesis leaves what
+it installs untouched. This is `Score.stable_of_readsHistory` at a
+concrete score: the history-reading case the obligation exists for, not
+one of the scores that ignore the DAG. -/
+theorem swapScore_stable : swapScore.Stable :=
+  Score.stable_of_readsHistory laws32 swapScore
+    (fun _ _ _ _ hids _ _ _ => by unfold swapScore; rw [hids]; split <;> rfl)
+
+example : UpdStable (rule swapScore) := updStable_rule swapScore_stable
+
 /-- It stays inside D22's family, so `Permuted` is preserved and AL16b's
 liveness hypothesis is discharged by `liveOn_of_permuted`. -/
 theorem swapScore_permuted {head : ℕ → Fin 4} (U : bnRule32.Universe)
@@ -193,18 +204,33 @@ def commitScore : Score bnRule32 := fun U V v C =>
   if v 1 = some (5 : Fin 32) then Score.permute swap01 U V v C else C
 
 /-- **AL13 covers it.** Nothing beyond `Anchored` is asked, and `Anchored`
-is `rfl`: the score reads its argument, not its view. So two validators
-running a verdict-reading policy adopt one configuration sequence, with
-no window, no synchrony and no fairness. -/
+is `rfl`: the score reads its argument, not its view. `Adaptive.score_safe`
+at this score is therefore two validators running a verdict-reading policy
+and adopting one configuration sequence, with no window, no synchrony and
+no fairness. -/
 theorem commitScore_anchored : Anchored bnRule32 (rule commitScore) :=
   Score.rule_anchored commitScore
 
-example (U : bnRule32.Universe) (V₁ V₂ : bnRule32.View U) (K₁ K₂ : ℕ)
-    (Rn₁ : SegRun bnRule32 bnPI1 (rule commitScore) bnC1I1 U V₁ K₁)
-    (Rn₂ : SegRun bnRule32 bnPI1 (rule commitScore) bnC1I1 U V₂ K₂)
-    (k : ℕ) (hk : k ≤ min K₁ K₂) : Rn₁.cfg k = Rn₂.cfg k :=
-  (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnPI1 _ (rule commitScore) bnC1I1
-    commitScore_anchored U V₁ V₂ K₁ K₂ Rn₁ Rn₂ k hk).2.1
+/-- **But it is not horizon-stable, and that is the point of the
+rebasing.** `commitScore` names an *absolute* slot of the verdict
+function. A joiner numbers its slots from the cut, so where the network
+reads slot `1` the joiner reads slot `1 + G` of the network's — a
+different verdict. Here the network sees the commit and reassigns; the
+joiner, reading its own slot `1`, sees nothing and leaves the leaders
+alone. The two then run different schedules.
+
+A verdict-reading score compatible with pruning must read the verdicts
+relative to the configuration it is closing, not by absolute index. With
+`v` frozen across the cut rather than rebased this refutation would not
+be expressible, and the obligation would look satisfied. -/
+theorem commitScore_not_horizonStable :
+    ¬ HorizonStable (R := bnRule32.toDagRule) commitScore 1 := by
+  intro h
+  have he := h Usk Usk (View.full Usk) (View.full Usk) (fun _ _ _ => Iff.rfl) bnC1I1
+    (fun κ => if κ = 1 then some (5 : Fin 32) else none)
+  have := congrArg (fun C => C.head 0) he
+  revert this
+  decide
 
 /-- It keeps the shape and stays in D22's family, so AL11b and AL16b read
 at it exactly as they do at `swapScore`. -/

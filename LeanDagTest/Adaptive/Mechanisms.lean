@@ -42,16 +42,16 @@ example : UpdStable (rule (Score.const R)) := updStable_rule Score.const_stable
 /-- The constant score is horizon-stable at every cut, so the same score
 discharges both obligations — the one for mechanisms that remove blocks
 and the one for mechanisms that add them. -/
-example (G : ℕ) (v : ℕ → Option BlockId) :
-    HorizonStable (R := R.toDagRule) (fun U V C => Score.const R U V v C) G :=
+example (G : ℕ) :
+    HorizonStable (R := R.toDagRule) (Score.const R) G :=
   horizonStable_const G
 
 /-- **And so is a permuting score**, which is the case worth having: it
 moves the leaders, and a joiner running it still computes the network's
 schedule whatever the horizon. Both obligations are discharged for
 AL11's reassignment family, not only for the score that does nothing. -/
-example (σ : Equiv.Perm Validator) (G : ℕ) (v : ℕ → Option BlockId) :
-    HorizonStable (R := R.toDagRule) (fun U V C => Score.permute (R := R) σ U V v C) G :=
+example (σ : Equiv.Perm Validator) (G : ℕ) :
+    HorizonStable (R := R.toDagRule) (Score.permute (R := R) σ) G :=
   horizonStable_relabel σ (fun C r i j hi hj h => C.keyed r i j hi hj (σ.injective h)) G
 
 /-- **A score that reads the anchor's history is stable.** The obligation
@@ -110,7 +110,7 @@ variable {upd : UpdateRule R} {C₀ : Config Validator} {U : R.Universe}
 /-- **A recovery does not change what a segmented run has ordered.** The
 fill is the record's, the rule's only obligation is `UpdStable`, and the
 ledger is the same list. -/
-example [Pv.CopyStable] (ha : Properties.Banded R.toDagRule)
+theorem ledger_across_fill [Pv.CopyStable] (ha : Properties.Banded R.toDagRule)
     (hc : Properties.CommitsCandidate R.toDagRule)
     (sk : SkipData (c.toRec U).ids (c.toRec U).block)
     (hu : UpdStable upd) {V : R.View U} {K : ℕ} (Rn : SegRun R P upd C₀ U V K) (K' : ℕ) :
@@ -120,7 +120,7 @@ example [Pv.CopyStable] (ha : Properties.Banded R.toDagRule)
   extendRun_ledgerUpto _ _ _ _ _ _ _
 
 /-- **Nor does a re-genesis**, on any view of it holding the old one. -/
-example (ha : Properties.Banded R.toDagRule)
+theorem ledger_across_regenesis (ha : Properties.Banded R.toDagRule)
     (hc : Properties.CommitsCandidate R.toDagRule)
     {v : Validator} {g : BlockId} {p : Payload} {hg : g ∉ (c.toRec U).ids}
     {hsev : ∀ b ∈ (c.toRec U).ids, ((c.toRec U).block b).creator ≠ v}
@@ -133,6 +133,9 @@ example (ha : Properties.Banded R.toDagRule)
   extendRun_ledgerUpto _ _ _ _ _ _ _
 
 end OnRecord
+
+#print axioms ledger_across_fill
+#print axioms ledger_across_regenesis
 
 end Adaptive
 

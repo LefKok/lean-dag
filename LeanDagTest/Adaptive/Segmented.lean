@@ -51,9 +51,6 @@ stay within its parameters. -/
 example (score : Score R) (hk : score.Keeps) : UpdBounded P (rule score) :=
   Score.rule_bounded P score hk
 
-/-- **AL11d.** Under the constant score the rule is `constRule`. -/
-example : rule (Score.const R) = constRule R := Score.rule_const
-
 /-- **AL15a at the constant rule**, which `Score.rule_const` says is the
 constant score: every configuration the run determines is the genesis
 one, and the back-off never moves. -/

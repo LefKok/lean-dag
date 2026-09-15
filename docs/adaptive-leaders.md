@@ -1296,7 +1296,46 @@ paragraph is split in two and shorter.
 that the base protocol's verdicts agree across views — rather than
 leaving "unconditional" to be taken on trust.
 
-### Step 17 — the record
+### Step 17 — review comments on PR #28
+
+Six, one of them a hole between two of this branch's own claims.
+
+**`HorizonStable` froze the verdict function across the cut.** It was
+stated on a score-*shaped* function with no verdict argument, so writing a
+`Score` in that shape meant partially applying it at some `v` bound
+outside — the same `v` on both sides. A joiner numbers its slots from the
+first slot of round `G`: where the network reads `v κ` it reads
+`v (C.cum G + κ)`. It cannot supply the network's indexing, because it
+does not hold those slots.
+
+So the obligation could not be met by exactly the scores step 9 added.
+The fix carries `v` and relates the sides by the shift. Two signs it was
+the right shape: the witnesses got *simpler* — `HorizonStable
+(Score.const R) G` rather than a partial application — and the condition
+became refutable. `commitScore_not_horizonStable` is that refutation: a
+score naming an absolute slot of the verdict function reassigns on the
+network and not on the joiner, and the two then run different schedules.
+With `v` frozen the refutation was not expressible and the obligation
+looked satisfied.
+
+**`swapScore` had no stability witness.** The reviewer asked for a
+concrete score in place of a hypothesis, and the hole was real: only the
+scores that ignore the DAG had one, never the history-reading case the
+obligation exists for. `swapScore_stable` is `stable_of_readsHistory` at
+`swapScore`.
+
+**Two examples proved nothing.** One re-derived agreement at
+`commitScore` through `Agreement.holds` when `score_safe` covers every
+score; the other was `example : X := proof_of_X`, `ConstScoreIsConstRule`
+being defined as the equation it stated. Both deleted.
+
+**Two asked for printed axioms.** No `Integration/` file carries them —
+the project checks axioms in report §25 — so the joiner is added to that
+list instead. The test file could not carry them: it was nine `example`s
+and no named declaration. Its two mechanism claims are now
+`ledger_across_fill` and `ledger_across_regenesis`, and printed.
+
+### Step 18 — the record
 
 Report §13 gains the segmented arc and relabels the fixpoint one: AL3 is
 safety for policies that read verdicts, under a window condition
