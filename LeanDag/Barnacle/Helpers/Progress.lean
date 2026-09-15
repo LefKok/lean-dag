@@ -19,15 +19,15 @@ variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 
 section Progress
 
-variable {R : LiveRule Validator BlockId Payload} {P : Params}
+variable {R : LiveRule Validator BlockId Payload} {P : Params} {B : Boundary Validator}
 variable {upd : UpdateRule R.toBaseRule} {C₀ : Config Validator}
 variable {Q : Config Validator → Prop} {U : R.Universe}
 
 /-- The height-`0` run: `init` only. -/
-def PartialRun.zero (R : BaseRule Validator BlockId Payload) (P : Params)
-    (upd : UpdateRule R) (C₀ : Config Validator) (h₀ : C₀.InBounds P)
-    (U : R.Universe) (V : R.View U) :
-    PartialRun R P upd C₀ U V 0 where
+def Run.zero (R : BaseRule Validator BlockId Payload) (P : Params)
+    (B : Boundary Validator) (upd : UpdateRule R) (C₀ : Config Validator)
+    (h₀ : C₀.InBounds P) (U : R.Universe) (V : R.View U) :
+    Run R P B upd C₀ U V 0 where
   start := fun _ => 0
   cfg := fun _ => C₀
   backoff := fun _ => 0
@@ -46,11 +46,11 @@ open Classical in
 theorem progress_exists (hR : Properties.Agree R.toBaseRule.toDagRule) (hupd : UpdBounded P upd)
     (hupdh : UpdKeeps upd Q) {c K Rnd N : ℕ}
     {V : R.View U} (hcov : R.toBaseRule.CoversUpto U V N)
-    (Rn : PartialRun R.toBaseRule P upd C₀ U V K)
+    (Rn : Run R.toBaseRule P B upd C₀ U V K)
     (hlive : R.LiveOn (Rn.cfg K).sched c) (hQK : Q (Rn.cfg K))
     (hgood : R.Good U Rnd N) (hRnd : Rnd ≤ Rn.start K + 1)
     (hN : Rn.start K + P.maxInterval + 1 + 2 * c + R.waveLength ≤ N) :
-    ∃ Rn' : PartialRun R.toBaseRule P upd C₀ U V (K + 1),
+    ∃ Rn' : Run R.toBaseRule P B upd C₀ U V (K + 1),
       Rn'.start (K + 1) ≤ Rn.start K + P.maxInterval + 1 + c ∧ Q (Rn'.cfg (K + 1)) := by
   obtain ⟨h1, h2⟩ := hlive U V Rnd N hgood hcov
   have hIle := (Rn.bounds K).2.2
@@ -92,17 +92,18 @@ theorem progress_exists (hR : Properties.Agree R.toBaseRule.toDagRule) (hupd : U
     omega
   -- The next configuration, by the rule at the anchor block.
   let next : Config Validator × ℕ :=
-    (v a).elim (Rn.cfg K, Rn.backoff K) (fun A => upd (Rn.cfg K) (Rn.backoff K) U V A)
+    (v a).elim (Rn.cfg K, Rn.backoff K) (fun A => upd (Rn.cfg K) (Rn.backoff K) U V
+      (spanVdct (Rn.cfg K) (Rn.start K) (B.next (Rn.cfg K) (Rn.start K) a) v) A)
   have hnext : next.1.InBounds P := by
     obtain ⟨_, A, hA⟩ := ha_spec
     simp only [next, hA, Option.elim_some]
-    exact hupd _ _ _ _ _ (Rn.bounds K)
+    exact hupd _ _ _ _ _ _ (Rn.bounds K)
   have hnexth : Q next.1 := by
     obtain ⟨_, A, hA⟩ := ha_spec
     simp only [next, hA, Option.elim_some]
-    exact hupdh _ _ _ _ _ hQK
+    exact hupdh _ _ _ _ _ _ hQK
   refine ⟨{
-    start := fun k => if k ≤ K then Rn.start k else (Rn.cfg K).roundOf a
+    start := fun k => if k ≤ K then Rn.start k else B.next (Rn.cfg K) (Rn.start K) a
     cfg := fun k => if k ≤ K then Rn.cfg k else next.1
     backoff := fun k => if k ≤ K then Rn.backoff k else if k = K + 1 then next.2 else 0
     anchor := fun k => if k = K then a else Rn.anchor k
@@ -174,10 +175,11 @@ theorem progress_exists (hR : Properties.Agree R.toBaseRule.toDagRule) (hupd : U
       have hk1' : k + 1 ≠ K + 1 := by omega
       simp only [hkK', hk1, hkK, if_true, if_false] at hA ⊢
       exact Rn.update k (by omega) A hA
-  · -- the bound on the new start
+  · -- the bound on the new start: at or below the anchor's round, wherever
+    -- the boundary falls
     have hk1 : ¬ (K + 1 ≤ K) := by omega
     simp only [hk1, if_false]
-    exact ha_round
+    exact le_trans (B.le_anchor _ _ _ ha_spec.1) ha_round
   · -- the new configuration is one the rule emits
     have hk1 : ¬ (K + 1 ≤ K) := by omega
     simp only [hk1, if_false]
@@ -186,12 +188,12 @@ theorem progress_exists (hR : Properties.Agree R.toBaseRule.toDagRule) (hupd : U
 theorem progress (hR : Properties.Agree R.toBaseRule.toDagRule) (hupd : UpdBounded P upd)
     {c K Rnd N : ℕ}
     {V : R.View U} (hcov : R.toBaseRule.CoversUpto U V N)
-    (Rn : PartialRun R.toBaseRule P upd C₀ U V K)
+    (Rn : Run R.toBaseRule P B upd C₀ U V K)
     (hlive : R.LiveOn (Rn.cfg K).sched c)
     (hgood : R.Good U Rnd N) (hRnd : Rnd ≤ Rn.start K + 1)
     (hN : Rn.start K + P.maxInterval + 1 + 2 * c + R.waveLength ≤ N) :
-    Nonempty (PartialRun R.toBaseRule P upd C₀ U V (K + 1)) :=
-  let ⟨Rn', _⟩ := progress_exists (Q := fun _ => True) hR hupd (fun _ _ _ _ _ _ => trivial)
+    Nonempty (Run R.toBaseRule P B upd C₀ U V (K + 1)) :=
+  let ⟨Rn', _⟩ := progress_exists (Q := fun _ => True) hR hupd (fun _ _ _ _ _ _ _ => trivial)
     hcov Rn hlive trivial hgood hRnd hN
   ⟨Rn'⟩
 
@@ -203,9 +205,9 @@ theorem everyHeight_bound (hR : Properties.Agree R.toBaseRule.toDagRule) (hupd :
     {Rnd N : ℕ} {V : R.View U} (hcov : R.toBaseRule.CoversUpto U V N)
     (hgood : R.Good U Rnd N) (hRnd : Rnd ≤ 1) :
     ∀ K, horizon P R c K ≤ N →
-      ∃ Rn : PartialRun R.toBaseRule P upd C₀ U V K,
+      ∃ Rn : Run R.toBaseRule P B upd C₀ U V K,
         Rn.start K ≤ K * (P.maxInterval + 1 + c) ∧ Q (Rn.cfg K)
-  | 0, _ => ⟨PartialRun.zero _ P upd C₀ h₀ U V, Nat.zero_le _, hQ₀⟩
+  | 0, _ => ⟨Run.zero _ P B upd C₀ h₀ U V, Nat.zero_le _, hQ₀⟩
   | K + 1, hN => by
     have hN' : (K + 1) * (P.maxInterval + 1 + c) + c + R.waveLength ≤ N := hN
     rw [Nat.succ_mul] at hN'
@@ -224,7 +226,7 @@ theorem everyHeight (hR : Properties.Agree R.toBaseRule.toDagRule) (hupd : UpdBo
     {Rnd N : ℕ} {V : R.View U} (hcov : R.toBaseRule.CoversUpto U V N)
     (hgood : R.Good U Rnd N) (hRnd : Rnd ≤ 1) (K : ℕ)
     (hK : horizon P R c K ≤ N) :
-    Nonempty (PartialRun R.toBaseRule P upd C₀ U V K) :=
+    Nonempty (Run R.toBaseRule P B upd C₀ U V K) :=
   let ⟨Rn, _⟩ := everyHeight_bound hR hupd hupdh hlive h₀ hQ₀ hcov hgood hRnd K hK
   ⟨Rn⟩
 

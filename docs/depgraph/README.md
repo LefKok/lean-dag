@@ -90,4 +90,4 @@ and renders SVG natively, so no separate converter is involved.
 All four SVGs are checked in, but they are build products: re-run the
 two commands above after adding results or renaming lemmas. `deps.tsv`
 is also useful on its own — it is the full declaration-level dependency
-graph of the development (≈9,900 declarations, ≈82,500 edges).
+graph of the development (≈9,650 declarations, ≈79,400 edges).

@@ -31,13 +31,14 @@ variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 
 /-- **BN8a, progress**: a run past the synchrony round extends by one
 configuration. -/
-def ProgressStmt (R : LiveRule Validator BlockId Payload) (P : Params)
+def ConfigProgress (R : LiveRule Validator BlockId Payload) (P : Params)
+    (B : Boundary Validator)
     (upd : UpdateRule R.toBaseRule) (C₀ : Config Validator) (c : ℕ) : Prop :=
   -- A run of height `K` on any view of `U` caught up to the horizon —
   -- what a validator that has received everything up to `N` holds …
   ∀ (U : R.Universe) (V : R.View U) (Rnd N K : ℕ),
     R.toBaseRule.CoversUpto U V N →
-    ∀ (Rn : PartialRun R.toBaseRule P upd C₀ U V K),
+    ∀ (Rn : Run R.toBaseRule P B upd C₀ U V K),
     -- … whose current configuration's schedule is live with gap `c` …
     R.LiveOn (Rn.cfg K).sched c →
     -- … on a DAG good from `Rnd` to `N`, where the current configuration's
@@ -47,11 +48,12 @@ def ProgressStmt (R : LiveRule Validator BlockId Payload) (P : Params)
     -- anchor, and the gap and one wave above it:
     Rn.start K + P.maxInterval + 1 + 2 * c + R.waveLength ≤ N →
     -- there is a run of height `K + 1`.
-    Nonempty (PartialRun R.toBaseRule P upd C₀ U V (K + 1))
+    Nonempty (Run R.toBaseRule P B upd C₀ U V (K + 1))
 
 /-- **BN8b, every height**: from a synchrony round at genesis, a run of
 every height exists under the horizon that height needs. -/
 def EveryHeight (R : LiveRule Validator BlockId Payload) (P : Params)
+    (B : Boundary Validator)
     (upd : UpdateRule R.toBaseRule) (C₀ : Config Validator)
     (Q : Config Validator → Prop) (c : ℕ) : Prop :=
   -- If the schedule of every configuration within the bounds that the rule
@@ -65,7 +67,7 @@ def EveryHeight (R : LiveRule Validator BlockId Payload) (P : Params)
     -- … every height whose horizon fits under `N` is reached, on any view
     -- caught up to `N`.
     ∀ K, horizon P R c K ≤ N →
-      Nonempty (PartialRun R.toBaseRule P upd C₀ U V K)
+      Nonempty (Run R.toBaseRule P B upd C₀ U V K)
 
 /-- Progress and every height, for every live rule satisfying the laws,
 every parameter set, every update rule that keeps a configuration within
@@ -75,9 +77,9 @@ def Statement : Prop :=
   ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
     [DecidableEq BlockId] (R : LiveRule Validator BlockId Payload),
     Properties.Agree R.toBaseRule.toDagRule →
-    ∀ (P : Params) (upd : UpdateRule R.toBaseRule), UpdBounded P upd →
+    ∀ (P : Params) (B : Boundary Validator) (upd : UpdateRule R.toBaseRule), UpdBounded P upd →
       ∀ (C₀ : Config Validator) (Q : Config Validator → Prop), UpdKeeps upd Q →
-        ∀ c : ℕ, ProgressStmt R P upd C₀ c ∧ EveryHeight R P upd C₀ Q c
+        ∀ c : ℕ, ConfigProgress R P B upd C₀ c ∧ EveryHeight R P B upd C₀ Q c
 
 end Progress
 

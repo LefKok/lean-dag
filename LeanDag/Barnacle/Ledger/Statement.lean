@@ -41,11 +41,12 @@ seven-clause `R.Laws`. -/
 same committed sequence from every range both have closed, hence the
 same list to every height both reach. -/
 def LedgerAgreement (R : BaseRule Validator BlockId Payload) (P : Params)
+    (B : Boundary Validator)
     (upd : UpdateRule R) (C₀ : Config Validator) : Prop :=
   -- One universe; two validators' runs, from any two views, closed to
   -- heights `K₁` and `K₂`.
   ∀ (U : R.Universe) (V₁ V₂ : R.View U) (K₁ K₂ : ℕ)
-    (R₁ : PartialRun R P upd C₀ U V₁ K₁) (R₂ : PartialRun R P upd C₀ U V₂ K₂),
+    (R₁ : Run R P B upd C₀ U V₁ K₁) (R₂ : Run R P B upd C₀ U V₂ K₂),
     -- Every range both have closed yields the same committed blocks, in the
     -- same order …
     (∀ k, k < min K₁ K₂ → R₁.rangeLedger k = R₂.rangeLedger k) ∧
@@ -56,9 +57,10 @@ def LedgerAgreement (R : BaseRule Validator BlockId Payload) (P : Params)
 /-- **BN5b, the ledger grows**: to a lower height it is a prefix of itself
 to a higher one — nothing committed is ever reordered or withdrawn. -/
 def LedgerPrefix (R : BaseRule Validator BlockId Payload) (P : Params)
+    (B : Boundary Validator)
     (upd : UpdateRule R) (C₀ : Config Validator) : Prop :=
   -- One run, any height;
-  ∀ (U : R.Universe) (V : R.View U) (K : ℕ) (Rn : PartialRun R P upd C₀ U V K)
+  ∀ (U : R.Universe) (V : R.View U) (K : ℕ) (Rn : Run R P B upd C₀ U V K)
     -- its ledger to a lower height is a prefix (`<+:`) of its ledger to a
     -- higher one: later ranges only append.
     (K₁ K₂ : ℕ), K₁ ≤ K₂ → Rn.ledgerUpto K₁ <+: Rn.ledgerUpto K₂
@@ -66,9 +68,10 @@ def LedgerPrefix (R : BaseRule Validator BlockId Payload) (P : Params)
 /-- **BN5c, integrity**: no block appears twice in the ledger, to any
 height the run reaches. -/
 def LedgerNodup (R : BaseRule Validator BlockId Payload) (P : Params)
+    (B : Boundary Validator)
     (upd : UpdateRule R) (C₀ : Config Validator) : Prop :=
   -- One run of height `K`;
-  ∀ (U : R.Universe) (V : R.View U) (K : ℕ) (Rn : PartialRun R P upd C₀ U V K)
+  ∀ (U : R.Universe) (V : R.View U) (K : ℕ) (Rn : Run R P B upd C₀ U V K)
     -- its ledger to any height it has closed holds no block twice — within
     -- a range by `Slots.keyed`, across ranges by disjoint rounds.
     (K' : ℕ), K' ≤ K → (Rn.ledgerUpto K').Nodup
@@ -79,9 +82,10 @@ def Statement : Prop :=
   ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
     [DecidableEq BlockId] (R : BaseRule Validator BlockId Payload),
     Properties.Agree R.toDagRule → Properties.CommitsCandidate R.toDagRule →
-    ∀ (P : Params) (upd : UpdateRule R) (C₀ : Config Validator), Anchored R upd →
-      LedgerAgreement R P upd C₀ ∧ LedgerPrefix R P upd C₀ ∧
-        LedgerNodup R P upd C₀
+    ∀ (P : Params) (B : Boundary Validator) (upd : UpdateRule R) (C₀ : Config Validator),
+      Anchored R upd →
+      LedgerAgreement R P B upd C₀ ∧ LedgerPrefix R P B upd C₀ ∧
+        LedgerNodup R P B upd C₀
 
 end Ledger
 

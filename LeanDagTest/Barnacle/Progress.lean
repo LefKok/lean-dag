@@ -130,16 +130,16 @@ theorem bnLive_liveOn : bnLive.LiveOn sched1 0 := by
 abbrev bnUpdL : UpdateRule bnLive.toBaseRule := Aimd.rule bnRule32 bnP bnLead bnLeadKeyed
 
 theorem bnUpdL_bounded : UpdBounded bnP bnUpdL := by
-  intro C b U V A h
+  intro C b U V v A h
   exact ⟨fun r => Aimd.count_le bnP _ _ _, h.2.1, h.2.2⟩
 
 theorem bnUpdL_uniform : UpdKeeps bnUpdL BnUniform := by
-  intro C b U V A _
+  intro C b U V v A _
   exact ⟨_, _, Aimd.count_pos bnP _ _ _, Aimd.count_le bnP _ _ _, rfl⟩
 
 /-- The height-`0` run. -/
 def run0 : PartialRun bnLive.toBaseRule bnP bnUpdL bnC1 Usun (bnLive.full Usun) 0 :=
-  PartialRun.zero _ bnP bnUpdL bnC1 ⟨fun _ => (by decide : (1 : ℕ) ≤ 4), by decide, by decide⟩
+  Run.zero _ bnP _ bnUpdL bnC1 ⟨fun _ => (by decide : (1 : ℕ) ≤ 4), by decide, by decide⟩
     Usun (bnLive.full Usun)
 
 /-- BN8a applied on data: a height-`1` run exists, and BN3 identifies its
@@ -147,15 +147,15 @@ configuration `1` with `run2`'s — two leaders after round `5`. -/
 example :
     ∃ Rn1 : PartialRun bnLive.toBaseRule bnP bnUpdL bnC1 Usun (bnLive.full Usun) 1,
     (Rn1.cfg 1).slotsAt 0 = 2 ∧ Rn1.start 1 = 5 ∧ Rn1.anchor 0 = 5 := by
-  obtain ⟨Rn1⟩ := (Progress.holds (Fin 4) (Fin 32) Unit bnLive MysticetiProperties.agree bnP
+  obtain ⟨Rn1⟩ := (Progress.holds (Fin 4) (Fin 32) Unit bnLive MysticetiProperties.agree bnP _
     bnUpdL bnUpdL_bounded bnC1 BnUniform bnUpdL_uniform 0).1 Usun (bnLive.full Usun) 1 8 0
     (coversUpto_full laws32.full_ids Usun 8) run0 bnLive_liveOn
     (show bnLive.Good Usun 1 8 from ⟨rfl, rfl, rfl⟩) (by decide) (by decide)
   refine ⟨Rn1, ?_⟩
-  have h := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnP bnUpdL bnC1
-    (fun _ _ _ _ _ _ => rfl)) Usun (bnLive.full Usun) Vsun 1 1 Rn1 run2 1 (by decide)
-  have h0 := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnP bnUpdL bnC1
-    (fun _ _ _ _ _ _ => rfl)) Usun (bnLive.full Usun) Vsun 1 1 Rn1 run2 0 (by decide)
+  have h := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnP _ bnUpdL bnC1
+    (fun _ _ _ _ _ _ _ => rfl)) Usun (bnLive.full Usun) Vsun 1 1 Rn1 run2 1 (by decide)
+  have h0 := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnP _ bnUpdL bnC1
+    (fun _ _ _ _ _ _ _ => rfl)) Usun (bnLive.full Usun) Vsun 1 1 Rn1 run2 0 (by decide)
   exact ⟨by rw [h.2.1]; decide, h.1, (h0.2.2.2 (by decide)).1⟩
 
 -- The bound form too.
@@ -224,13 +224,13 @@ example : Nonempty (PartialRun bnLive.toBaseRule bnP bnUpdL bnC1 Usun (bnLive.fu
 
 -- Through `holds`.
 example : Nonempty (PartialRun bnLive.toBaseRule bnP bnUpdL bnC1 Usun (bnLive.full Usun) 1) :=
-  ((Progress.holds (Fin 4) (Fin 32) Unit bnLive MysticetiProperties.agree bnP bnUpdL
+  ((Progress.holds (Fin 4) (Fin 32) Unit bnLive MysticetiProperties.agree bnP _ bnUpdL
     bnUpdL_bounded bnC1 BnUniform bnUpdL_uniform 0).2
     (fun C _ hC => bnLive_liveOn_all C hC)
     ⟨fun _ => (by decide : (1 : ℕ) ≤ 4), by decide, by decide⟩ bnC1_uniform Usun (bnLive.full Usun) 1 8 ⟨rfl, rfl, rfl⟩
     (coversUpto_full laws32.full_ids Usun 8) le_rfl 1 (by decide))
 example : Nonempty (PartialRun bnLive.toBaseRule bnP bnUpdL bnC1 Usun (bnLive.full Usun) 1) :=
-  ((Progress.holds (Fin 4) (Fin 32) Unit bnLive MysticetiProperties.agree bnP bnUpdL
+  ((Progress.holds (Fin 4) (Fin 32) Unit bnLive MysticetiProperties.agree bnP _ bnUpdL
     bnUpdL_bounded bnC1 BnUniform bnUpdL_uniform 0).1
     Usun (bnLive.full Usun) 1 8 0 (coversUpto_full laws32.full_ids Usun 8) run0 bnLive_liveOn
     ⟨rfl, rfl, rfl⟩ (by decide) (by decide))
@@ -248,16 +248,16 @@ a rule can still do is emit an interval outside `[1, maxInterval]`. -/
 /-- A rule that reconfigures to a zero interval: the interval is no
 longer positive, so the emitted configuration is out of bounds. -/
 example : ¬ UpdBounded bnP
-    (fun _ b _ _ _ => (Config.uniform bnLead bnLeadKeyed 4 (by decide) (by decide) 0, b)
+    (fun _ b _ _ _ _ => (Config.uniform bnLead bnLeadKeyed 4 (by decide) (by decide) 0, b)
       : UpdateRule bnRule32) :=
-  fun h => absurd (h bnC1 0 Usun (View.full Usun) 0
+  fun h => absurd (h bnC1 0 Usun (View.full Usun) (fun _ => none) 0
     ⟨fun _ => (by decide : (1 : ℕ) ≤ 4), by decide, by decide⟩).2.1 (by decide)
 
 /-- A rule that reconfigures past the interval bound: likewise. -/
 example : ¬ UpdBounded bnP
-    (fun _ b _ _ _ => (Config.uniform bnLead bnLeadKeyed 4 (by decide) (by decide) 5, b)
+    (fun _ b _ _ _ _ => (Config.uniform bnLead bnLeadKeyed 4 (by decide) (by decide) 5, b)
       : UpdateRule bnRule32) :=
-  fun h => absurd (h bnC1 0 Usun (View.full Usun) 0
+  fun h => absurd (h bnC1 0 Usun (View.full Usun) (fun _ => none) 0
     ⟨fun _ => (by decide : (1 : ℕ) ≤ 4), by decide, by decide⟩).2.2 (by decide)
 
 /-! ## Progress from height one, at interval one
@@ -286,9 +286,9 @@ theorem bnLive_liveOn1 : bnLive.LiveOn sched1 1 := by
 
 /-! ## (i) Progress from height `1` at interval `1` on `Usun` -/
 
-theorem bnUpdC_bounded : UpdBounded bnPI1 bnUpdC := fun _ _ _ _ _ h => h
+theorem bnUpdC_bounded : UpdBounded bnPI1 bnUpdC := fun _ _ _ _ _ _ h => h
 
-theorem bnUpdC_keeps (Q : Config (Fin 4) → Prop) : UpdKeeps bnUpdC Q := fun _ _ _ _ _ h => h
+theorem bnUpdC_keeps (Q : Config (Fin 4) → Prop) : UpdKeeps bnUpdC Q := fun _ _ _ _ _ _ h => h
 
 /-- `runP1'` on the full view, under the constant rule — the same rule
 `runP1` follows, so BN3 can identify the two. -/
@@ -336,15 +336,15 @@ def runP1v : PartialRun bnLive.toBaseRule bnPI1 bnUpdC bnC1I1 Usun (bnLive.full 
 example :
     ∃ Rn2 : PartialRun bnLive.toBaseRule bnPI1 bnUpdC bnC1I1 Usun (bnLive.full Usun) 2,
     Rn2.start 2 = 4 ∧ Rn2.cfg 2 = bnC1I1 ∧ Rn2.backoff 2 = 0 ∧ Rn2.anchor 1 = 4 := by
-  obtain ⟨Rn2⟩ := (Progress.holds (Fin 4) (Fin 32) Unit bnLive MysticetiProperties.agree bnPI1
+  obtain ⟨Rn2⟩ := (Progress.holds (Fin 4) (Fin 32) Unit bnLive MysticetiProperties.agree bnPI1 _
     bnUpdC bnUpdC_bounded bnC1I1 BnUniform (bnUpdC_keeps _) 0).1 Usun (bnLive.full Usun) 1 8 1
     (coversUpto_full laws32.full_ids Usun 8) runP1v bnLive_liveOn
     ⟨rfl, rfl, rfl⟩ (by decide) (by decide)
   refine ⟨Rn2, ?_⟩
-  have h := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnPI1 bnUpdC bnC1I1
-    (fun _ _ _ _ _ _ => rfl)) Usun (bnLive.full Usun) Vsun 2 2 Rn2 runP1 2 (by decide)
-  have h1 := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnPI1 bnUpdC bnC1I1
-    (fun _ _ _ _ _ _ => rfl)) Usun (bnLive.full Usun) Vsun 2 2 Rn2 runP1 1 (by decide)
+  have h := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnPI1 _ bnUpdC bnC1I1
+    (fun _ _ _ _ _ _ _ => rfl)) Usun (bnLive.full Usun) Vsun 2 2 Rn2 runP1 2 (by decide)
+  have h1 := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnPI1 _ bnUpdC bnC1I1
+    (fun _ _ _ _ _ _ _ => rfl)) Usun (bnLive.full Usun) Vsun 2 2 Rn2 runP1 1 (by decide)
   exact ⟨h.1, h.2.1, h.2.2.1, (h1.2.2.2 (by decide)).1⟩
 
 -- Gap 1 does not fit at height 1: the margin `2 · c + w` above the
@@ -358,7 +358,7 @@ example : ¬ (runP1.start 2 + bnPI1.maxInterval + 1 + 0 + bnLive.waveLength ≤ 
 example : horizon bnPI1 bnLive 0 2 = 7 := by decide
 example :
     Nonempty (PartialRun bnLive.toBaseRule bnPI1 bnUpdC bnC1I1 Usun (bnLive.full Usun) 2) :=
-  ((Progress.holds (Fin 4) (Fin 32) Unit bnLive MysticetiProperties.agree bnPI1 bnUpdC
+  ((Progress.holds (Fin 4) (Fin 32) Unit bnLive MysticetiProperties.agree bnPI1 _ bnUpdC
     bnUpdC_bounded bnC1I1 BnUniform (bnUpdC_keeps _) 0).2
     (fun C _ hC => bnLive_liveOn_all C hC)
     ⟨fun _ => (by decide : (1 : ℕ) ≤ 4), by decide, by decide⟩ bnC1I1_uniform
@@ -497,28 +497,31 @@ theorem bnLiveSk_liveOn1 : bnLiveSk.LiveOn sched1 1 := by
 abbrev bnUpdSk : UpdateRule bnLiveSk.toBaseRule := Aimd.rule bnRule32 bnPI1 bnLead bnLeadKeyed
 
 theorem bnUpdSk_bounded : UpdBounded bnPI1 bnUpdSk := by
-  intro C b U V A h
+  intro C b U V v A h
   exact ⟨fun r => Aimd.count_le bnPI1 _ _ _, h.2.1, h.2.2⟩
 
 theorem bnUpdSk_uniform : UpdKeeps bnUpdSk BnUniform := by
-  intro C b U V A _
+  intro C b U V v A _
   exact ⟨_, _, Aimd.count_pos bnPI1 _ _ _, Aimd.count_le bnPI1 _ _ _, rfl⟩
 
 def run0sk : PartialRun bnLiveSk.toBaseRule bnPI1 bnUpdSk bnC1I1 Usk (bnLiveSk.full Usk) 0 :=
-  PartialRun.zero _ bnPI1 bnUpdSk bnC1I1 ⟨fun _ => (by decide : (1 : ℕ) ≤ 4), by decide, by decide⟩
+  Run.zero _ bnPI1 _ bnUpdSk bnC1I1 ⟨fun _ => (by decide : (1 : ℕ) ≤ 4), by decide, by decide⟩
     Usk (bnLiveSk.full Usk)
 
+def vdSk : ℕ → ℕ → Option (Fin 32) :=
+  fun _ κ => if κ = 1 then some 5 else if κ = 3 then some 15 else none
+
+/-- The verdicts the rule is handed: configuration `0`'s range, `(0, 3]`. -/
+abbrev skSpan : ℕ → Option (Fin 32) := spanVdct bnC1I1 0 3 (vdSk 0)
+
 /-- The configuration the anchor of range `0` produces. -/
-abbrev skNext : Config (Fin 4) × ℕ := bnUpdSk bnC1I1 0 Usk (bnLiveSk.full Usk) 15
+abbrev skNext : Config (Fin 4) × ℕ := bnUpdSk bnC1I1 0 Usk (bnLiveSk.full Usk) skSpan 15
 
 -- The rule at anchor 15, interval 1: nothing scores, but at an interval
 -- below one wave nothing is expected either, so the count rises.
 example : observed bnRule32 bnC1I1 Usk 15 = 0 := by decide
 example : expected bnRule32 bnC1I1 3 = 0 := by decide
 example : skNext.1.slotsAt 0 = 2 ∧ skNext.2 = 0 := by decide
-
-def vdSk : ℕ → ℕ → Option (Fin 32) :=
-  fun _ κ => if κ = 1 then some 5 else if κ = 3 then some 15 else none
 
 /-- Anchor at slot `3`, past the skipped slot `2`: `anchor_least` is
 non-vacuous at `κ = 2`. -/
@@ -544,7 +547,6 @@ def runSk :
     have hk0 : k = 0 := by omega
     subst hk0
     simp only [if_true, bnC1I1, bnCfg, Config.uniform_roundOf, Nat.div_one] at h1 h2 ⊢
-    simp at h1 h2
     have : κ = 1 ∨ κ = 2 ∨ κ = 3 := by omega
     rcases this with rfl | rfl | rfl
     · exact Decided.directCommit (S := bnC1I1.sched) (by decide) (by decide)
@@ -584,19 +586,19 @@ example :
     Rn1.anchor 0 = 3 ∧ Rn1.start 1 = 3 ∧ Rn1.cfg 1 = skNext.1 ∧ Rn1.backoff 1 = skNext.2 ∧
       Rn1.vdct 0 2 = none ∧
       Rn1.start 0 + (Rn1.cfg 0).interval < (Rn1.cfg 0).roundOf 2 := by
-  obtain ⟨Rn1⟩ := (Progress.holds (Fin 4) (Fin 32) Unit bnLiveSk MysticetiProperties.agree bnPI1
+  obtain ⟨Rn1⟩ := (Progress.holds (Fin 4) (Fin 32) Unit bnLiveSk MysticetiProperties.agree bnPI1 _
     bnUpdSk bnUpdSk_bounded bnC1I1 BnUniform bnUpdSk_uniform 1).1 Usk (bnLiveSk.full Usk) 1 8 0
     (coversUpto_full laws32.full_ids Usk 8) run0sk bnLiveSk_liveOn1 ⟨rfl, rfl, rfl⟩
     (by decide) (by decide)
   refine ⟨Rn1, ?_⟩
-  have h := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnPI1 bnUpdSk bnC1I1
-    (fun _ _ _ _ _ _ => rfl))
+  have h := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnPI1 _ bnUpdSk bnC1I1
+    (fun _ _ _ _ _ _ _ => rfl))
     Usk (bnLiveSk.full Usk) (bnLiveSk.full Usk) 1 1 Rn1 runSk 1 (by decide)
-  have h0 := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnPI1 bnUpdSk bnC1I1
-    (fun _ _ _ _ _ _ => rfl))
+  have h0 := (Agreement.holds (Fin 4) (Fin 32) Unit bnRule32 agree32 bnPI1 _ bnUpdSk bnC1I1
+    (fun _ _ _ _ _ _ _ => rfl))
     Usk (bnLiveSk.full Usk) (bnLiveSk.full Usk) 1 1 Rn1 runSk 0 (by decide)
   have hv := (h0.2.2.2 (by decide)).2 2
-  rw [h0.1, h0.2.1, h.1] at hv
+  rw [h0.1, h0.2.1, (h0.2.2.2 (by decide)).1] at hv
   refine ⟨(h0.2.2.2 (by decide)).1, h.1, h.2.1, h.2.2.1, hv (by decide) (by decide), ?_⟩
   rw [h0.1, h0.2.1]
   decide

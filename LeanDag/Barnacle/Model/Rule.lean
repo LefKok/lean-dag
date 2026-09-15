@@ -9,9 +9,10 @@ import LeanDag.Properties.Optional.Direct
 
 **A schedule mechanism** (`Schedules`), not a protocol: Barnacle
 varies **how many** leaders a round has, by the AIMD rule of
-`Model/Window.lean`, and leaves the DAG alone — no file of this arc
-mentions the cut, the fill or re-genesis. It reads a rule through the
-interface below and writes a `Slots`.
+`Model/Window.lean`, and leaves the DAG alone. It reads a rule through
+the interface below and writes a `Slots`. The one file of this arc that
+names a mechanism is `Chop.lean`, and it names only what a cut does to a
+configuration's numbering — no rule and no universe.
 
 The paper abstracts the protocol it runs on as four assumptions, A1–A4
 (`barnacle.md` §2): rounds and slots, causal completeness, a
@@ -140,12 +141,83 @@ structure Laws (R : BaseRule Validator BlockId Payload) : Prop where
 end BaseRule
 
 /-- **An update rule**: from the current configuration and back-off, the
-universe and the anchor block, the next configuration and back-off.
-Safety is stated for every such function (`barnacle.md` §1); the paper's
-AIMD rule is one instance (`Model/Window.lean`). -/
+universe, the verdicts of the range just closed and the anchor block, the
+next configuration and back-off. Safety is stated for every such function
+(`barnacle.md` §1); the paper's AIMD rule is one instance
+(`Model/Window.lean`), and a reputation rule reading the committed
+leaders of the range is another.
+
+The verdicts are an *argument* rather than something the rule digs out of
+the view, and that is the whole reason a rule may read them: a run hands
+over `spanVdct`, which two validators agree on before either applies the
+rule, so reading it costs no hypothesis. A rule deriving verdicts from
+its own view would be reading a subjective object and `Anchored` would
+fail. -/
 abbrev UpdateRule (R : BaseRule Validator BlockId Payload) : Type :=
-  Config Validator → ℕ → (U : R.Universe) → R.View U → BlockId →
+  Config Validator → ℕ → (U : R.Universe) → R.View U → (ℕ → Option BlockId) → BlockId →
     Config Validator × ℕ
+
+/-- **The verdicts of a closed range**, and nothing else: slot `κ`'s
+verdict where the round of `κ` lies in `(lo, hi]`, and `none` outside.
+What a run hands an update rule. Junking the outside is what makes the
+object agreed — a run constrains its verdicts only inside the range it
+closed. -/
+def spanVdct (C : Config Validator) (lo hi : ℕ) (v : ℕ → Option BlockId) :
+    ℕ → Option BlockId :=
+  fun κ => if lo < C.roundOf κ ∧ C.roundOf κ ≤ hi then v κ else none
+
+/-- **Where the next configuration takes force.** A reconfiguration falls
+due at `s + C.interval`, and is detected at the anchor — the first slot
+committed past that round. Between those two rounds a protocol has a
+choice, and `Boundary` is that choice as a parameter.
+
+Both ends are taken. Barnacle installs the next configuration at the
+anchor's own round (`Boundary.atAnchor`), which is what its paper does;
+HammerHead installs it at the round the reconfiguration fell due
+(`Boundary.atThreshold`), and orders nothing above it — which is what
+makes its output independent of when the anchor happened to appear
+(`adaptive-leaders.md` D19). Nothing else in a run distinguishes the two.
+
+The two clauses are conditional on the anchor lying past the threshold,
+which is exactly what a run's `anchor_commits` provides; unconditionally
+neither end would satisfy the other's. -/
+structure Boundary (Validator : Type) where
+  /-- The round after which the next configuration is in force. -/
+  next : Config Validator → ℕ → ℕ → ℕ
+  /-- Not before the reconfiguration falls due. -/
+  ge_threshold : ∀ (C : Config Validator) (s a : ℕ),
+    s + C.interval < C.roundOf a → s + C.interval ≤ next C s a
+  /-- And not after the anchor that closes the span. -/
+  le_anchor : ∀ (C : Config Validator) (s a : ℕ),
+    s + C.interval < C.roundOf a → next C s a ≤ C.roundOf a
+
+/-- **At the anchor's round**: the span ends where it was detected to
+end. Barnacle's. -/
+def Boundary.atAnchor : Boundary Validator where
+  next := fun C _ a => C.roundOf a
+  ge_threshold := fun _ _ _ h => le_of_lt h
+  le_anchor := fun _ _ _ _ => le_rfl
+
+/-- **At the round the reconfiguration fell due**: the span ends where it
+was always going to, whatever the network did. HammerHead's. -/
+def Boundary.atThreshold : Boundary Validator where
+  next := fun C s _ => s + C.interval
+  ge_threshold := fun _ _ _ _ => le_rfl
+  le_anchor := fun _ _ _ h => le_of_lt h
+
+/-- **Anywhere between the two**: switch `d` rounds after the
+reconfiguration falls due, and never past the anchor. So where the switch
+goes is a choice along a range, not between two points.
+
+Raising `d` orders more under each configuration, so fewer rounds are
+re-derived under the next one; it also makes those `d` rounds of output
+wait for the anchor, whose round moves with the network. A deployer picks
+where on that range to sit, and the safety and ledger theorems do not
+notice. -/
+def Boundary.afterThreshold (d : ℕ) : Boundary Validator where
+  next := fun C s a => min (s + C.interval + d) (C.roundOf a)
+  ge_threshold := fun _ _ _ h => le_min (by omega) (le_of_lt h)
+  le_anchor := fun _ _ _ _ => min_le_right _ _
 
 /-- **A rule a validator can run without disagreeing.** The step depends
 on the configuration, the back-off and the anchor, and on the *view* only through
@@ -162,8 +234,8 @@ whole and restricts identically. A rule computing from its own copy of
 that history satisfies this; the AIMD rule of `Model/Window.lean` does,
 by not reading the view at all. -/
 def Anchored (R : BaseRule Validator BlockId Payload) (upd : UpdateRule R) : Prop :=
-  ∀ (U : R.Universe) (V₁ V₂ : R.View U) (C : Config Validator) (b : ℕ) (A : BlockId),
-    upd C b U V₁ A = upd C b U V₂ A
+  ∀ (U : R.Universe) (V₁ V₂ : R.View U) (C : Config Validator) (b : ℕ)
+    (v : ℕ → Option BlockId) (A : BlockId), upd C b U V₁ v A = upd C b U V₂ v A
 
 end Barnacle
 

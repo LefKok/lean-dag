@@ -41,14 +41,14 @@ verdict of the range. The paper's Leader-Count Agreement, with the
 "same value" half the outline found missing; the configuration is data,
 so agreeing on it is agreeing on the leaders, the widths and the
 interval at once. -/
-def PartialRunAgreement (R : BaseRule Validator BlockId Payload) (P : Params)
-    (upd : UpdateRule R) (C₀ : Config Validator) : Prop :=
+def RunAgreement (R : BaseRule Validator BlockId Payload) (P : Params)
+    (B : Boundary Validator) (upd : UpdateRule R) (C₀ : Config Validator) : Prop :=
   -- One universe and one genesis configuration; two validators, holding
   -- views `V₁` and `V₂` of it, whose runs are closed up to heights `K₁`
   -- and `K₂` — they need not have decided equally far.
   Anchored R upd →
   ∀ (U : R.Universe) (V₁ V₂ : R.View U) (K₁ K₂ : ℕ)
-    (R₁ : PartialRun R P upd C₀ U V₁ K₁) (R₂ : PartialRun R P upd C₀ U V₂ K₂),
+    (R₁ : Run R P B upd C₀ U V₁ K₁) (R₂ : Run R P B upd C₀ U V₂ K₂),
     -- For every configuration both have reached …
     ∀ k, k ≤ min K₁ K₂ →
       -- … they agree on when it starts, on the configuration itself, and
@@ -58,11 +58,13 @@ def PartialRunAgreement (R : BaseRule Validator BlockId Payload) (P : Params)
       (k < min K₁ K₂ →
         -- they agree on which slot the anchor is …
         R₁.anchor k = R₂.anchor k ∧
-        -- … and on the verdict of every slot `κ` of the range: rounds
-        -- strictly after `start k`, up to and including the anchor's round,
-        -- which is `start (k + 1)`.
-        ∀ κ, R₁.start k < (R₁.cfg k).roundOf κ → (R₁.cfg k).roundOf κ ≤ R₁.start (k + 1) →
-          R₁.vdct k κ = R₂.vdct k κ)
+        -- … and on the verdict of every slot `κ` of the decided span:
+        -- rounds strictly after `start k`, through the anchor's own round,
+        -- which reaches at or past the boundary `start (k + 1)` that bounds
+        -- the output.
+        ∀ κ, R₁.start k < (R₁.cfg k).roundOf κ →
+          (R₁.cfg k).roundOf κ ≤ (R₁.cfg k).roundOf (R₁.anchor k) →
+            R₁.vdct k κ = R₂.vdct k κ)
 
 /-- Agreement of the configuration sequence and the verdicts, for every
 base rule satisfying the laws, every parameter set and **every update
@@ -71,8 +73,8 @@ def Statement : Prop :=
   ∀ (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
     [DecidableEq BlockId] (R : BaseRule Validator BlockId Payload),
     Properties.Agree R.toDagRule →
-    ∀ (P : Params) (upd : UpdateRule R) (C₀ : Config Validator),
-      PartialRunAgreement R P upd C₀
+    ∀ (P : Params) (B : Boundary Validator) (upd : UpdateRule R) (C₀ : Config Validator),
+      RunAgreement R P B upd C₀
 
 end Agreement
 
