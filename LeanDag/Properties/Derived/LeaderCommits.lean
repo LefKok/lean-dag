@@ -3,20 +3,13 @@ import LeanDag.Properties.Derived.Bounded
 /-!
 # `LeaderCommits`, from a support
 
-`docs/target-properties.md` §11.8. `LeaderCommits R Live` was an
-obligation: under the rule's own precondition `Live`, a reliably-led
-slot commits within a bound one above it. With `Support` it is a
-consequence. `Support.live` is the precondition in the support's own
-terms — a quorum certifying every candidate of every quorum-led slot in
-the window, on a populated DAG a view is caught up to — and Law 3 is
-exactly what turns it into the verdict.
-
-The definition stays, because it is what the schedule mechanisms
-consume (`Derived/Progress.lean`, `Arcs/Quality.lean`, Barnacle): a
-mechanism reads `LeaderCommits` and never a support. A rule with a
-precondition of its own — coverage, or a reactive execution — reaches
-this one by a bridge, and its old `LeaderCommits` theorem becomes a
-corollary.
+`docs/target-properties.md` §11.8. `LeaderCommits R Live` is now a
+consequence of `Support`, not an obligation: `Support.live` is the
+precondition in the support's own terms — certification of every
+candidate of every quorum-led slot in the window, on a caught-up view —
+and Law 3 turns it into the verdict. The definition stays, since the
+schedule mechanisms (`Derived/Progress.lean`, `Arcs/Quality.lean`,
+Barnacle) read `LeaderCommits` and never a support directly.
 -/
 
 namespace LeanDag
@@ -47,9 +40,10 @@ quorum-led slot of the window production and certification. -/
 def live (rel : Reliability Validator) (S : Slots Validator) {U : R.Universe}
     (V : R.View U) (T : Finset Validator) (lo K : ℕ) : Prop :=
   rel.IsQuorum T ∧
-    ∃ N, CoversUpto R V N ∧ (∀ k, k < K → S.slotRound k + sp.wave ≤ N) ∧
+    ∃ N, CoversUpto R V N ∧ (∀ k, k < K → S.slotRound k + sp.waveAt (S.slotRound k) ≤ N) ∧
       ∀ k, lo ≤ k → k < K → S.leader k ∈ T →
-        (∀ n, S.slotRound k ≤ n → n ≤ S.slotRound k + sp.wave → PopulatedOn R U T n) ∧
+        (∀ n, S.slotRound k ≤ n → n ≤ S.slotRound k + sp.waveAt (S.slotRound k) →
+          PopulatedOn R U T n) ∧
         ∀ L, R.IsCandidate S U k L → sp.certifiesAt U T (S.slotRound k) L
 
 /-- **`LeaderCommits`, from Law 3.** -/

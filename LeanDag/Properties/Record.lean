@@ -6,21 +6,15 @@ import LeanDag.GC.ChopDecided
 /-!
 # A carrier on the block record, and the witnesses every mechanism owes
 
-A rule whose universes are block records — every rule with a carrier —
-gets its cut, fill and re-genesis from `Record/`, and the witnesses
-those mechanisms owe the properties (`Truncates`, `Extends`,
-`Sustains`) are proved here once, for any such rule.
-
+A rule whose universes are block records gets its cut, fill and
+re-genesis from `Record/`, and the witnesses those mechanisms owe the
+properties (`Truncates`, `Extends`, `Sustains`) are proved here once.
 `DagRule.OnRecord` says how a carrier's universes and views are read as
-records: a map each way for universes and for views, with the
-carrier's ids, block map and view ids agreeing with the record's, and
-an invariant `I` the carrier adds — `Any` for the core, Nemo, FinWhale
-and Hydrozoan, `HonestNoEquiv` for Orcaella, leader exclusion for
-Optimal-Hydrozoan — that the record's constructions preserve
-(`Invariant.Mechanised`). For the core, Nemo and FinWhale every map is
-the identity; for Hydrozoan they are the block adapter and its inverse.
-Nothing here mentions verdicts, which is why one structure serves rules
-with different view types; the verdict cells are `Arcs/Record.lean`.
+records, with an invariant `I` the carrier adds that the record's
+constructions preserve (`Invariant.Mechanised`) — `Any` for most rules,
+`HonestNoEquiv` for Orcaella. Nothing here mentions verdicts, so one
+structure serves rules with different view types; the verdict cells are
+`Arcs/Record.lean`.
 -/
 
 namespace LeanDag
@@ -44,6 +38,12 @@ structure DagRule.OnRecord (R : DagRule Validator BlockId Payload)
   block_to : ∀ U, (toRec U).block = R.block U
   ids_of : ∀ W h, R.ids (ofRec W h) = W.ids
   block_of : ∀ W h, R.block (ofRec W h) = W.block
+  /-- **The maps are inverse on the record side.** Reading a record as a
+  universe and back is the identity, which is what lets a construction
+  that starts on the record — a joiner assembling a view out of what it
+  fetched — be read as the rule's. Every carrier here discharges it by
+  `rfl`. -/
+  toRec_ofRec : ∀ W h, toRec (ofRec W h) = W
   /-- A view, as a view of the record. -/
   toView : ∀ {U : R.Universe}, R.View U → (toRec U).View
   /-- A view of a record, as a view of the universe it makes. -/
@@ -91,6 +91,17 @@ theorem ids_chop (U : R.Universe) :
 
 theorem block_chop (U : R.Universe) : R.block (c.chop U G) = chopBlk (R.block U) G := by
   rw [chop, c.block_of, BlockRecord.chop_block, c.block_to]
+
+/-- **Cutting a record read as a universe is reading the cut record.**
+The round trip is what makes the two agree, and it is what lets a
+construction that starts on the record side — a joiner assembling a view
+out of what it fetched — be read as the rule's. -/
+theorem chop_ofRec (W : BlockRecord Validator BlockId Payload P honest) (h : I W) :
+    c.chop (c.ofRec W h) G = c.ofRec (W.chop G)
+      (by rw [← c.toRec_ofRec W h]; exact Invariant.Mechanised.chop G (c.inv _)) := by
+  unfold DagRule.OnRecord.chop
+  congr 1
+  · rw [c.toRec_ofRec W h]
 
 /-- **The cut sustains the carrier from its horizon.** -/
 theorem sustains_chop (U : R.Universe) : Sustains R U (c.chop U G) G G where

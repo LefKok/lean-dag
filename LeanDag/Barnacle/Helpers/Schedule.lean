@@ -1,4 +1,6 @@
 import LeanDag.Barnacle.Model.Schedule
+import LeanDag.Barnacle.Config
+import LeanDag.Properties.Derived.FromBand
 import Mathlib.Data.Nat.ModEq
 
 /-!
@@ -101,13 +103,72 @@ theorem Sched_leader (getLeader : ℕ → Validator) {w : ℕ} (hk : Keyed getLe
     (m : ℕ) (hm : 0 < m) (hmax : m ≤ w) (κ : ℕ) :
     (Sched getLeader hk m hm hmax).leader κ = getLeader (κ / m + κ % m) := rfl
 
-/-- Two schedules with equal counts are equal, whatever their proof
-arguments — the transport every agreement argument needs, since a run's
-count is a projection and cannot be substituted. -/
-theorem Sched_congr (getLeader : ℕ → Validator) {w : ℕ} (hk : Keyed getLeader w)
-    {m₁ m₂ : ℕ} (h : m₁ = m₂) (h₁ : 0 < m₁) (h₁' : m₁ ≤ w) (h₂ : 0 < m₂) (h₂' : m₂ ≤ w) :
-    Sched getLeader hk m₁ h₁ h₁' = Sched getLeader hk m₂ h₂ h₂' := by
-  subst h; rfl
+/-- **A configuration's verdicts do not depend on what comes after it.**
+Every slot decided under a configuration's schedule has a round bound
+below which that configuration settles it; above the bound the schedule
+may be anything, and in particular it may be the one the next
+configuration installs. `Properties.exists_roundLocal` at a `Config`.
+
+**No clause of `PartialRun` needs this, and nothing consumes it.** A run
+records configuration `k`'s verdicts as decided against `(cfg k).sched`
+extended above the range, and that extension is the schedule in force
+while those derivations are performed: the range is settled before the
+anchor that closes it is found, so `cfg k` names every round at that
+moment (`Model/Run.lean`). The locality below is a fact about the
+relation, useful to a mechanism that has to transport a verdict across a
+schedule it did not derive it under — which this arc does not do. -/
+theorem cfg_local [Fintype Validator] [DecidableEq Validator]
+    {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
+    {R : Properties.DagRule Validator BlockId Payload} (hb : Properties.Banded R)
+    {C : Config Validator} {U : R.Universe} {V : R.View U} {g : ℕ} {v : Option BlockId}
+    (hd : R.Decided C.sched V g v) :
+    ∃ B, C.roundOf g < B ∧
+      ∀ S' : Slots Validator,
+        (∀ κ, C.roundOf κ < B → S'.slotRound κ = C.roundOf κ) →
+        (∀ κ, C.roundOf κ < B → S'.leader κ = C.sched.leader κ) →
+        R.Decided S' V g v :=
+  Properties.exists_roundLocal hb hd
+
+/-! ## The present arc as a configuration -/
+
+/-- The paper's leader function as a configuration's: slot `i` of round
+`r` is led by `getLeader (r + i)`. -/
+def leadOf (getLeader : ℕ → Validator) : ℕ → ℕ → Validator := fun r i => getLeader (r + i)
+
+/-- `Keyed` gives the obligation a `Config` makes. -/
+theorem leadKeyed_of_keyed {getLeader : ℕ → Validator} {w : ℕ} (hw : 0 < w)
+    (hk : Keyed getLeader w) : LeadKeyed (leadOf getLeader) w := by
+  intro r i j hi hj h
+  have e1 : (i + r * w) / w = r := by
+    rw [Nat.add_mul_div_right _ _ hw, Nat.div_eq_of_lt hi]
+    omega
+  have e2 : (j + r * w) / w = r := by
+    rw [Nat.add_mul_div_right _ _ hw, Nat.div_eq_of_lt hj]
+    omega
+  have m1 : (i + r * w) % w = i := by
+    rw [Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt hi]
+  have m2 : (j + r * w) % w = j := by
+    rw [Nat.add_mul_mod_self_right, Nat.mod_eq_of_lt hj]
+  have := hk w hw le_rfl (i + r * w) (j + r * w) (by rw [e1, e2])
+    (by rw [e1, e2, m1, m2]; exact h)
+  omega
+
+/-- **The bridge.** A uniform configuration's schedule is the schedule
+the arc ran on before configurations carried their leaders, so every
+clause stated at `Sched` is the same clause at a `Config`. -/
+theorem Config.uniform_sched (getLeader : ℕ → Validator) {w : ℕ} (hw : 0 < w)
+    (hk : Keyed getLeader w) (m : ℕ) (hm : 0 < m) (hmax : m ≤ w) (I : ℕ) :
+    (Config.uniform (leadOf getLeader) (leadKeyed_of_keyed hw hk) m hm hmax I).sched
+      = Sched getLeader hk m hm hmax := by
+  refine Slots.ext' (funext fun g => ?_) (funext fun g => ?_)
+  · rw [Config.sched_slotRound, Config.uniform_roundOf, Sched_slotRound]
+  · rw [Sched_leader, Config.sched_leader, Config.uniform_lead,
+      Config.uniform_roundOf, Config.uniform_cum]
+    show getLeader (g / m + (g - g / m * m)) = _
+    congr 1
+    have hdm := Nat.div_add_mod g m
+    have hc : g / m * m = m * (g / m) := Nat.mul_comm _ _
+    omega
 
 end Barnacle
 

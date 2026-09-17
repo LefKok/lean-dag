@@ -1,5 +1,4 @@
 import LeanDag.Integration.Coverage
-import LeanDag.Integration.Joiner
 import LeanDag.Integration.Retention
 import LeanDag.Integration.ReGenesis
 import LeanDag.Integration.Exposure
@@ -8,6 +7,7 @@ import LeanDag.Integration.Margin
 import LeanDag.Integration.CommonTarget
 import LeanDag.Integration.HydrozoanMechanisms
 import LeanDagTest.SafeSkip.Model
+import Mathlib.Tactic.IntervalCases
 /-!
 # The integration lemmas, witnessed
 
@@ -170,10 +170,6 @@ example : urecover.r = 1 := by
 
 #print axioms ucut_severed
 
-#print axioms LeanDag.Integration.slotsChop_slotsOf
-#print axioms LeanDag.Adaptive.joiner_assign_agree
-#print axioms LeanDag.epochOf_add_of_dvd
-#print axioms LeanDag.Adaptive.joiner_run_decided_agree
 #print axioms LeanDag.Timed.not_synchronisedOn_of_extends
 #print axioms LeanDag.Timed.synchronisedOn_of_extends
 #print axioms LeanDag.Integration.not_synchronisedOn_copyFill_hz

@@ -1,5 +1,8 @@
 import LeanDagTest.Mysticeti.Growth
 import LeanDag.FinWhale.DoSBridge
+import Mathlib.Data.Fin.VecNotation
+import Mathlib.Tactic.IntervalCases
+import LeanDag.FinWhale.Procedure.DoSBridge
 /-!
 # FinWhale witnesses — a DoS-valid execution with a real equivocation
 
@@ -31,8 +34,6 @@ namespace LeanDagTest
 namespace FinWhaleEquiv
 
 open LeanDag LeanDag.FinWhale
-
-set_option maxRecDepth 40000
 
 /-- The fast-path budget: `n + 1 = 3f + 2p = 5`. -/
 local instance eqParams : Params (Fin 4) where

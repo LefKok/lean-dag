@@ -42,8 +42,9 @@ eight, all Optimal's — were closed the same way as the original 35:
 `SlotAgreement.holds` and the constructors,
 `Barnacle.OptimalHydrozoanLive` is `descent_of_properties` over
 `LeaderCommits` and `Indirect`, and
-`Integration.Hydrozoan.decidedOpt_chopHZ` is `LocalTruncate.of_banded`
-over a `Truncates` — two more inductions over a decision relation
+Optimal-Hydrozoan's own cut/fill verdict cells are the generic
+`Properties/Arcs/Record.lean` cells applied at `OptimalHydrozoanProperties.onRecord`, with no
+bespoke name left to route — two more inductions over a decision relation
 deleted. Every rule with a carrier now shows the six, so the audit's
 separate column has nothing left to report.
 
@@ -52,8 +53,8 @@ separate column has nothing left to report.
 `Hydrozoan.agree` replaces `SlotAgreement.holds` at the stack capstones
 and in `ViaProperties`, and `Deployment.{agrees,safe}` follow through
 them. `OdontocetiProperties.agree` replaces `Odontoceti.decided_unique`
-in the adaptive arc, taking `partialRun_agree`, `adaptiveRun_agree` and
-`adaptiveRun_exists` with it.
+in the adaptive arc, taking `partialRun_agree`, `run_agree` and
+`run_exists_of_support` with it.
 
 `SkipMsg.decided_fill_agree` was **deleted** rather than rerouted. Like
 garbage collection and Hydrozoan's two transformers, the bespoke

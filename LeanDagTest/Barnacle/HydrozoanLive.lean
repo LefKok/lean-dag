@@ -1,5 +1,5 @@
 import LeanDagTest.Hydrozoan.DirectLiveness
-import LeanDag.Barnacle.HydrozoanLive.Proof
+import LeanDagTest.Barnacle.Rules.HydrozoanLive.Proof
 /-!
 # Barnacle over Hydrozoan — the live witnesses
 
@@ -52,7 +52,7 @@ example : LeanDagTest.Hydrozoan.fourReplicas.f
 is quorum-sized, synchronised from `0`, and populates every round. -/
 theorem good_U7 : (LeanDag.Barnacle.hydrozoanLive
     (Replica := Fin 4) (BlockId := Fin 9)).Good LeanDagTest.Hydrozoan.U7 0 2 :=
-  ⟨(LeanDag.Hydrozoan.Correct : Finset (Fin 4)), Finset.Subset.refl _, by decide,
+  ⟨(LeanDag.Hydrozoan.Correct : Finset (Fin 4)), ⟨Finset.Subset.refl _, by decide⟩,
     LeanDagTest.Hydrozoan.u7_synchronised, by
       intro r _ hr
       have h : r = 0 ∨ r = 1 ∨ r = 2 := by omega

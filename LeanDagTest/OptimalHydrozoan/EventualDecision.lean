@@ -47,8 +47,6 @@ open LeanDagTest.Hydrozoan
 
 open LeanDag LeanDag.Hydrozoan LeanDag.OptimalHydrozoan
 
-set_option maxRecDepth 16384
-
 /-- Twenty-two blocks over seven rounds: ids 0–3 genesis; round
 `r ≥ 1` holds ids `3r + 1, 3r + 2, 3r + 3` by replicas `1`, `2`, `3`, each
 referencing the three correct blocks of round `r − 1`. -/
@@ -78,7 +76,7 @@ def US : BlockUniverse (Fin 4) (Fin 22) where
 
 /-- ... as an `OptUniverse` (no equivocation anywhere). -/
 def OS : OptUniverse (Fin 4) (Fin 22) :=
-  { US with leader_excluded := leaderExcluded_of_noEquivocation US (by decide) }
+  OptUniverse.ofNoEquivocation US (by decide)
 
 -- The run's candidates: slot 2 → 7 (by 1), slot 3 → 11 (by 2), slot 4 → 15
 -- (by 3); slots 1 and 5 have none.
@@ -169,7 +167,7 @@ example : DecidedOpt OS VS 1 none := DecidedOpt.directSkip (by decide)
 
 -- Slot 6 has a candidate but no voting round: no direct route, and no
 -- anchor above — the table does not decide everything.
-example : IsLeaderBlock US 6 19 ∧ LeanDag.Hydrozoan.supporters US 19 7 = ∅ ∧ ¬ SkippedLeaderOpt US 6 := by
+example : IsLeaderBlock US 6 19 ∧ supporters US 19 7 = ∅ ∧ ¬ SkippedLeaderOpt US 6 := by
   decide
 
 -- Synchrony from R > 0 only: replica 1's round-1 block references the
@@ -189,7 +187,7 @@ def US' : BlockUniverse (Fin 4) (Fin 22) where
 
 /-- ... as an `OptUniverse`. -/
 def OS' : OptUniverse (Fin 4) (Fin 22) :=
-  { US' with leader_excluded := leaderExcluded_of_noEquivocation US' (by decide) }
+  OptUniverse.ofNoEquivocation US' (by decide)
 
 -- Not synchronised from round 0 (block 4 omits the T-block 1 of round 0)
 -- ...
@@ -228,7 +226,7 @@ example : ∀ i, i < 2 → ∃ v, DecidedOpt OS' (View.full US') i v :=
 
 -- A fairness negative: consecutive slots never share a leader, so a
 -- singleton T is starved at c = 2 — FairRunOn is not trivially true.
-example : ¬ Hydrozoan.EventualDecision.FairRunOn (Fin 4) {0} 2 := fun h => by
+example : ¬ FairRunOn ({0} : Finset (Fin 4)) 2 := fun h => by
   obtain ⟨k', -, hl⟩ := h 0
   have h0 : ((k' + 0 + 3) % 4 : ℕ) = 0 :=
     congrArg Fin.val (Finset.mem_singleton.mp (hl 0 (by omega)))
@@ -240,7 +238,7 @@ example : ¬ Hydrozoan.EventualDecision.FairRunOn (Fin 4) {0} 2 := fun h => by
 `c = 3`: a run starts at every `4m + 2` (leaders `1`, `2`, `3`). Proved
 from the definition — finite enumeration cannot reach a ∀-over-ℕ claim. -/
 theorem fairRun_fourOpt :
-    Hydrozoan.EventualDecision.FairRunOn (Fin 4) ({1, 2, 3} : Finset (Fin 4)) 3 := by
+    FairRunOn ({1, 2, 3} : Finset (Fin 4)) 3 := by
   intro k
   refine ⟨4 * k + 2, by omega, fun i hi => ?_⟩
   have hmem : ∀ m : Fin 4, m ≠ 0 → m ∈ ({1, 2, 3} : Finset (Fin 4)) := by decide

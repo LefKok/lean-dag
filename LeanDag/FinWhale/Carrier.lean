@@ -1,6 +1,7 @@
 import LeanDag.FinWhale.View
 import LeanDag.FinWhale.Band
-import LeanDag.FinWhale.Pass
+import LeanDag.FinWhale.Least
+import LeanDag.FinWhale.Procedure.Pass
 import LeanDag.Common.Anchored.Band
 import LeanDag.Properties.Agree
 import LeanDag.Properties.Candidate
@@ -14,18 +15,12 @@ import LeanDag.Properties.Arcs.Headline
 /-!
 # FinWhale as a carrier
 
-`docs/porting-plan.md` step 4. FinWhale's carrier is the anchored
-relation's (`Model/Decided.lean`): the direct rules on a view, one rung
-reading the anchor's history, the least candidate as the tie. The
-reverse pass a validator runs lands in the relation
-(`decided_of_wellFormed`), so what the properties say of the relation
-they say of the pass — `passOf` below is the pass at the carrier's
-schedule and the DAG's horizon, and `decided_of_passOf` is that fact.
-
-The safety properties are the relation's at FinWhale's laws
-(`View.lean`) and band laws (`Band.lean`); the liveness properties are
-the slow path's support and the fast path's, with the rule's schedule
-congruence supplying the bound `Properties.Indirect` asks for.
+FinWhale's carrier is the anchored
+relation's (`Model/Decided.lean`), and the reverse pass a validator
+runs lands in it (`decided_of_wellFormed`), so the properties transfer
+to the pass through `passOf` and `decided_of_passOf`. Safety comes from
+FinWhale's laws and band laws; liveness from the slow path's support
+and the fast path's.
 -/
 
 namespace LeanDag
@@ -74,10 +69,28 @@ theorem commitsDirect : CommitsDirect
     (fun {_} V L _ => LeanDag.FinWhale.DirectCommit (V.toRecord) L) :=
   AnchoredRule.commitsDirect
 
+/-! ## Totality and the descent, relationally
+
+The two statements every other arc makes of its anchored rule, from the
+same choice at every nonempty rung. Neither mentions a verdict
+assignment or the reverse pass: they are facts about the relation, so
+they stand whether or not a procedure computing them is present. -/
+
+/-- **The graded rule is total**: a nearest eligible committed anchor
+always returns a verdict. -/
+theorem total {D : Dag Validator BlockId Payload} {S : Slots Validator} :
+    (finWhaleAnchored Validator BlockId Payload).Total (S := S) D :=
+  AnchoredRule.total_of_least LeanDag.FinWhale.exists_least
+
+/-- **Every slot below a committed run is decided.** -/
+theorem decidedBelowRun {D : Dag Validator BlockId Payload} {S : Slots Validator} :
+    (finWhaleAnchored Validator BlockId Payload).DecidedBelowRun (S := S) D :=
+  AnchoredRule.decidedBelowRun_of_least LeanDag.FinWhale.exists_least
+
 /-- **FinWhale reads a band**: the relation's band at its band laws. -/
 theorem banded : Banded (finWhaleRule (Validator := Validator) (BlockId := BlockId)
     (Payload := Payload)) :=
-  AnchoredRule.banded LeanDag.FinWhale.finWhaleBandLaws
+  AnchoredRule.banded LeanDag.FinWhale.finWhaleBandLaws (fun _ _ => rfl)
 
 /-- **The indirect rule, with its bound.** The relation's indirect
 property at the rung's choice, read at the three-round eligibility:
@@ -88,16 +101,14 @@ theorem indirect : Indirect
     (fun sr i j => sr i + 3 ≤ sr j) :=
   (AnchoredRule.indirect LeanDag.FinWhale.finWhaleLaws.link_congr
     fun hi h => LeanDag.FinWhale.exists_least hi h).congr
-    (fun _ _ _ => by simp only [LeanDag.FinWhale.finWhaleAnchored_wave])
+    (fun _ _ _ => by simp only [LeanDag.FinWhale.finWhaleAnchored_waveAt])
 
 /-! ## The pass a view runs
 
-The reverse pass at the carrier's schedule and the DAG's horizon. A
-view bounds *rounds* and the pass recurses down over *slots*, and only
-`Slots.slot_lt_of_slotRound_le` relates the two: `keyed` and a finite
-validator set stop a schedule from fitting unboundedly many slots below
-a round. With that the pass is well formed at every schedule, and every
-verdict it reaches is the relation's. -/
+The reverse pass at the carrier's schedule and the DAG's horizon,
+well formed at every schedule since a finite validator set stops a
+schedule from fitting unboundedly many slots below a round
+(`Slots.slot_lt_of_slotRound_le`). -/
 
 /-- A view is finite, so its blocks stop at a round. -/
 theorem view_bounded (D : Dag Validator BlockId Payload) (V : D.View) :
@@ -117,32 +128,12 @@ theorem rle (S : Slots Validator) (D : Dag Validator BlockId Payload) :
     ∀ r, S.slotRound r ≤ D.ids.sup (fun b => (D.block b).round) → r ≤ dagHorizon D :=
   fun _ h => Nat.le_of_lt (LeanDag.Slots.slot_lt_of_slotRound_le (S := S) h)
 
-/-- **The pass a view runs.** -/
-noncomputable def passOf (S : Slots Validator) (D : Dag Validator BlockId Payload)
-    (V : D.View) : ℕ → Verdict BlockId :=
-  decOf S (EligibleAt (S := S) 2) (V.toRecord) (chooseLeast S D) (dagHorizon D)
-
-/-- It is well formed, at every schedule. -/
-theorem wellFormed_passOf {D : Dag Validator BlockId Payload} {S : Slots Validator}
-    (V : D.View) :
-    WellFormed (EligibleAt (S := S) 2) (viewCommit S D V) (viewSkip S D V) (chooseLeast S D)
-      (passOf S D V) :=
-  wellFormed_decOf (view_bounded D V) (fun _ _ => lt_of_eligibleAt) (rle S D) (chooseLeast S D)
-
-/-- **And every verdict it reaches is the relation's.** -/
-theorem decided_of_passOf {D : Dag Validator BlockId Payload} {S : Slots Validator}
-    {V : D.View} {k : ℕ} (h : passOf S D V k ≠ Verdict.undecided) :
-    (finWhaleRule (Payload := Payload)).Decided S V k (passOf S D V k).optOf :=
-  decided_of_wellFormed (wellFormed_passOf V) (N := dagHorizon D + 1)
-    (fun _ hs => decOf_of_gt (by omega)) k h
-
 /-! ## The liveness property
 
-`LeaderCommits` is `Support.leaderCommits` at `fwSupport` below. What
-FinWhale supplies here is the slow-path quorum's place inside the correct
-set, and the reading of its certificate condition from coverage. Both are
-stated in rounds rather than in slot indices, which is what lets them be
-read at a general schedule at all. -/
+`LeaderCommits` is `Support.leaderCommits` at `fwSupport` below.
+FinWhale supplies the slow-path quorum's place inside the correct set
+and its certificate condition from coverage, both stated in rounds so
+they read at a general schedule. -/
 
 /-- **The slow-path quorum fits inside the correct set.** `n + 1 = 3f + 2p`
 with `p ≥ 1` gives `2f + p ≤ n − f`. -/
@@ -157,12 +148,8 @@ theorem spQuorum_le_card_correct :
   omega
 
 /-- **Every correct validator certifies a correct leader**, on a
-synchronised and populated DAG. The leader's block sits at round `r`;
-every correct block at `r + 1` references it, because coverage says a
-correct block holds every correct block below it, so every one of them
-votes; and a correct block at `r + 2` references all of those, so its
-parents voting for the leader are all of `Correct`, which carries the
-slow-path quorum. -/
+synchronised and populated DAG: coverage makes every correct block two
+rounds up vote for it through the block one round up. -/
 theorem spCommitBy_of_synchronisedOn {D : Dag Validator BlockId Payload} {Rnd r : ℕ}
     (hs : SynchronisedFrom D.block D.ids (Correct : Finset Validator) Rnd)
     (hpop1 : PopulatedFrom D.block D.ids (Correct : Finset Validator) (r + 1))
@@ -186,9 +173,9 @@ theorem spCommitBy_of_synchronisedOn {D : Dag Validator BlockId Payload} {Rnd r 
 
 /-! ## FinWhale's support shape
 
-`Properties/Support.lean`. The slow path: SP-certificates two rounds
-above the candidate, each a block `spQuorum` of whose parents vote. The
-fast path is latency and is not a liveness shape. -/
+The slow path: SP-certificates two rounds above the candidate, each a
+block `spQuorum` of whose parents vote. The fast path is latency and
+not a liveness shape. -/
 
 /-- The slow-path quorum fits inside any quorum of the fault model:
 `n + 1 = 3f + 2p` with `p ≥ 1` gives `2f + p ≤ n − f`. -/
@@ -204,7 +191,7 @@ theorem spQuorum_le_quorumCard :
 /-- **FinWhale's support**: wavelength two, certification the slow path's. -/
 def fwSupport : Support (finWhaleRule (Validator := Validator) (BlockId := BlockId)
     (Payload := Payload)) where
-  wave := 2
+  waveAt := fun _ => 2
   Certifies := fun D c l => LeanDag.FinWhale.SPCertificate D c l
 
 /-- **Law 1.** A certifier two rounds above the settling round keeps its
@@ -290,11 +277,21 @@ theorem fwSupport_commits :
     (isLeaderBlock_congr (S₁ := S) (S₂ := S') (congrFun hround k).symm
       (hlead' k (by omega)).symm hL) hcom
 
+/-- **FinWhale has the descent laws** at the core fault model's slack. -/
+theorem descent :
+    Properties.Descent (finWhaleRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload))
+      (Timed.Good (finWhaleRule (Validator := Validator) (BlockId := BlockId)
+        (Payload := Payload)) (coreReliability Validator))
+      3 (coreReliability Validator).slack :=
+  Timed.descent_of_support _ _ 3 fwSupport fwSupport_ofCoverage fwSupport_commits
+    indirect (fun _ => by change 2 ≤ 3; omega) fun _ _ _ h => h
+
 /-! ## FinWhale's fast path
 
-`voteSupport`: `n − p` votes one round up. Its fault model is at most
+`voteSupport`: `n − p` votes one round up, at a fault model of at most
 `p` Byzantine validators, which `Params` bounds by `f` but does not
-demand; `fwFastReliability` takes the bound as a hypothesis. -/
+demand; `fwFastReliability` takes it as a hypothesis. -/
 
 /-- **The fast path's fault model**: at most `p` Byzantine validators. -/
 def fwFastReliability (Validator : Type) [Fintype Validator] [DecidableEq Validator]
@@ -340,7 +337,7 @@ theorem voteSupport_fast_commits (h : F.byzantine.card ≤ P.p) :
       have hbr' : (BlockRecord.block D b).round = S.slotRound k + 1 := hbr
       have hbV : b ∈ V.ids := hcov b hb
         (by change (BlockRecord.block D b).round ≤ S.slotRound k + 1; omega)
-      unfold LeanDag.FinWhale.voters supporters creatorsOf
+      unfold LeanDag.FinWhale.voters supporters votesFor creatorsOf
       refine Finset.mem_image.mpr ⟨b, ?_, hbc⟩
       rw [Finset.mem_filter, mem_blocksAt]
       simp only [BlockRecord.View.toRecord_ids, BlockRecord.View.toRecord_block]
@@ -354,7 +351,7 @@ theorem voteSupport_fast_commits (h : F.byzantine.card ≤ P.p) :
 /-! ## The headlines
 
 FinWhale's DAG carries no self-parent clause at the carrier, so it
-shows progress and not inclusion. -/
+shows progress, not inclusion. -/
 
 theorem safety : Properties.Safe (finWhaleRule (Validator := Validator) (BlockId := BlockId)
     (Payload := Payload)) :=

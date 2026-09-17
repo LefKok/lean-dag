@@ -1,5 +1,5 @@
 import LeanDagTest.Hybrid.Model
-import LeanDag.Barnacle.Orcaella.Proof
+import LeanDagTest.Barnacle.Rules.Orcaella.Proof
 /-!
 # Barnacle over Orcaella — the indirect rule, witnessed
 
@@ -42,7 +42,7 @@ namespace Barnacle
 
 namespace OrcaellaIndirect
 
-set_option maxRecDepth 2000000
+set_option maxRecDepth 2048
 
 open LeanDag LeanDag.Barnacle LeanDag.Hybrid
 
@@ -258,7 +258,7 @@ five rounds. -/
 theorem x9_good :
     (orcaellaLive (Validator := Fin 9) (BlockId := Fin 40) (Payload := Unit) 4).Good
       OX 0 4 := by
-  refine ⟨{1, 2, 3, 4, 5, 6, 7}, by decide, by decide, ?_, fun r h1 h2 => by
+  refine ⟨{1, 2, 3, 4, 5, 6, 7}, ⟨by decide, by decide⟩, ?_, fun r h1 h2 => by
     interval_cases r <;> decide⟩
   change SynchronisedOn UhybX {1, 2, 3, 4, 5, 6, 7} 0
   intro n hn b hb hround hbT a ha hround' haT

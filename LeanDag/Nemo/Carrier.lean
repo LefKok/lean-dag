@@ -7,25 +7,19 @@ import LeanDag.Properties.Optional.SelfParent
 /-!
 # Nemo as a carrier, and the three properties its own rules give
 
-`docs/target-properties.md` §8, `docs/porting-plan.md` step 1. The
+`docs/target-properties.md` §8. The
 carrier and the properties whose proof is a single Nemo theorem apiece:
 `Agree` is Nemo's `decided_unique`, `CommitsCandidate` is
 `isLeaderBlock_of_decided`, `CommitsDirect` is the direct constructor.
 
-**Nemo's agreement is hypothesis-free**, which is not true of every rule
-here — non-equivocation is a field of Nemo's `Universe` rather than a
-premise, because the model is crash-only. That is what lets `Agree`
-hold at the bare universe; Hybrid, whose faults are Byzantine, needs a
-subtype carrier for the same property.
+Nemo's agreement is hypothesis-free — non-equivocation is a field of
+Nemo's `Universe` rather than a premise, since the model is crash-only —
+where Hybrid, Byzantine, needs a subtype carrier for the same property.
+`SkipsUnsupported` is not owed: Nemo has three constructors and no
+direct skip, a slot with no candidate waiting for an anchor instead.
 
-**`SkipsUnsupported` is not owed.** Nemo has three constructors and no
-direct skip: a slot with no candidate waits for an anchor rather than
-being settled at once. The property is optional precisely for this case
-(§11.4c).
-
-This file sits upstream of every mechanism, which is not optional — a
-conformance layer downstream of a mechanism cannot serve one
-(`docs/bespoke-links.md`).
+This file sits upstream of every mechanism, which a conformance layer
+downstream of one cannot serve (`docs/bespoke-links.md`).
 -/
 
 namespace LeanDag

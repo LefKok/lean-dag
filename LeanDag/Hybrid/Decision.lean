@@ -1,19 +1,15 @@
 import LeanDag.Hybrid.Rules
 import LeanDag.Common.Anchored.Bounded
+import LeanDag.Common.Rules
 /-!
 # The hybrid decision relation
 
 The Odontoceti decision layer at the hybrid thresholds: the anchored
-relation (`Anchored.lean`) at wavelength one, the view-relative direct
-rules at `q`, and one rung of link, `ThickLink` at the indirect
-threshold `k`, with the least linked candidate committed — retained
-unchanged, since a *Byzantine* leader can still plant two passing
-candidates in one anchor's cone, and nothing about the crash class
-closes that gap.
-
-The laws hold under `HonestNoEquiv` and an admissible `k`: `hybridLaws`
-threads both, and agreement (H6) is the relation's at them. The relation
-itself is a definition and carries neither.
+relation at wavelength one, the view-relative direct rules at `q`, and
+`ThickLink` at threshold `k`, with the least linked candidate committed
+— unchanged, since a Byzantine leader can still plant two passing
+candidates in one anchor's cone. The laws hold under `HonestNoEquiv`
+and an admissible `k`.
 -/
 
 namespace LeanDag
@@ -29,60 +25,38 @@ variable {L A : BlockId} {r k : ℕ}
 
 /-! ## The view-relative direct rules -/
 
-/-- Direct commit, as judged from a single view: the record's
-`supportersIn`, at the round above `L`. -/
-def DirectCommitIn (U : BlockUniverse Validator BlockId Payload)
+/-- Direct commit, as judged from a single view: the view holds votes for
+`L` at the round above it from a hybrid quorum of validators. -/
+abbrev DirectCommitIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  q Validator ≤ (supportersIn U V L (r + 1)).card
+  supportCommit (q Validator) U V L r
 
-/-- Direct skip, as judged from a single view: the record's `blamesIn`. -/
-def DirectSkipIn (U : BlockUniverse Validator BlockId Payload)
+/-- Direct skip, as judged from a single view: the view holds blocks at
+the round above `L` that omit it, from a hybrid quorum of validators. -/
+abbrev DirectSkipIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  q Validator ≤ (blamesIn U V L (r + 1)).card
+  HoldsAtLeast U V (q Validator) (omissionsOf U L (r + 1))
 
 /-! The voting-round blocks that reference no candidate of the slot are
 the core's `slotBlamers`: the same set, over the same `IsLeaderBlock`. -/
 
 /-- **The slot is directly skipped, as judged from a view**: a hybrid
-quorum of distinct validators holds a voting-round block, in view, that
-references no candidate of the slot.
-
-Strictly stronger than the per-candidate `DirectSkipIn`, which it
-implies and which a slot with no candidate satisfies for nothing. The
-core and Odontoceti were repaired the same way and for the same reason
-(`docs/target-properties.md` §3.2): a rule whose skip quantifies over
-the candidates that happen to exist is not invariant under a mechanism
-that adds one, so it cannot be `Banded`. -/
-def DirectSkipSlotIn (U : BlockUniverse Validator BlockId Payload)
+quorum of voting-round blocks, in view, reference no candidate of the
+slot. Strictly stronger than the per-candidate `DirectSkipIn`, needed
+for the same reason the core and Odontoceti were repaired
+(`docs/target-properties.md` §3.2): a skip over the candidates that
+happen to exist is not `Banded`. -/
+abbrev DirectSkipSlotIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (s : ℕ) : Prop :=
-  q Validator ≤ (creatorsOf U.block (slotBlamers U s ∩ V.ids)).card
-
-instance decidableDirectSkipSlotIn (V : View Validator BlockId Payload U) (s : ℕ) :
-    Decidable (DirectSkipSlotIn U V s) :=
-  inferInstanceAs (Decidable (q Validator ≤
-    (creatorsOf U.block (slotBlamers U s ∩ V.ids)).card))
+  blameSkip (q Validator) U V s
 
 /-- **The slot-level skip implies the per-candidate one**, so every
 theorem stated over `DirectSkipIn` — H3 in particular — applies to it
 unchanged. A block referencing no candidate references not `L`. -/
 theorem directSkipIn_of_directSkipSlotIn {V : View Validator BlockId Payload U} {s : ℕ}
     (h : DirectSkipSlotIn U V s) {L : BlockId} (hL : IsLeaderBlock U s L) :
-    DirectSkipIn U V L (S.slotRound s) := by
-  refine le_trans h (Finset.card_le_card (Finset.image_subset_image ?_))
-  intro p hp
-  rw [Finset.mem_inter] at hp
-  obtain ⟨hpb, hpV⟩ := hp
-  rw [slotBlamers, Finset.mem_filter] at hpb
-  rw [Finset.mem_inter, Finset.mem_filter]
-  exact ⟨⟨hpb.1, fun hmem => hpb.2 L hmem hL⟩, hpV⟩
-
-instance {V : View Validator BlockId Payload U} :
-    Decidable (DirectCommitIn U V L r) :=
-  inferInstanceAs (Decidable (_ ≤ _))
-
-instance {V : View Validator BlockId Payload U} :
-    Decidable (DirectSkipIn U V L r) :=
-  inferInstanceAs (Decidable (_ ≤ _))
+    DirectSkipIn U V L (S.slotRound s) :=
+  h.of_subset (slotBlamers_subset_omissionsOf hL)
 
 /-- A view can only under-report: its direct commit is genuine. -/
 theorem directCommit_of_directCommitIn
@@ -146,21 +120,6 @@ theorem eq_of_directCommitIn_of_thickLink (hne : HonestNoEquiv U)
   eq_of_directCommit_of_thickLink hne hka
     (directCommit_of_directCommitIn h₁) ht (by rw [hL₁.2.2, hL₂.2.2])
 
-/-- A larger view can only see more blockers. -/
-theorem directSkipSlotIn_mono {V V' : View Validator BlockId Payload U} {s : ℕ}
-    (hsub : V.ids ⊆ V'.ids) (h : DirectSkipSlotIn U V s) : DirectSkipSlotIn U V' s :=
-  le_trans h (Finset.card_le_card (Finset.image_subset_image
-    (Finset.inter_subset_inter Finset.Subset.rfl hsub)))
-
-omit S in
-/-- The slot-level skip reads the schedule only at its own slot. -/
-theorem directSkipSlotIn_congr {S₁ S₂ : Slots Validator}
-    {V : View Validator BlockId Payload U} {s : ℕ}
-    (hround : S₁.slotRound s = S₂.slotRound s) (hk : S₁.leader s = S₂.leader s)
-    (h : DirectSkipSlotIn (S := S₁) U V s) : DirectSkipSlotIn (S := S₂) U V s := by
-  unfold DirectSkipSlotIn at h ⊢
-  rwa [slotBlamers_congr hround hk] at h
-
 /-! ## The relation -/
 
 omit S in
@@ -168,16 +127,17 @@ omit S in
 def hybridAnchored (Validator BlockId Payload : Type) [Fintype Validator]
     [DecidableEq Validator] [HybridFaults Validator] [LinearOrder BlockId] (k : ℕ) :
     AnchoredRule Validator BlockId Payload ValidWrt Correct where
-  wave := 1
+  waveAt := fun _ => 1
   Commit := fun U V L r => Hybrid.DirectCommitIn U V L r
+  decCommit := fun _ _ _ _ => inferInstance
   Skip := fun U V S s => Hybrid.DirectSkipSlotIn (S := S) U V s
   rungs := 1
   Link := fun _ U A L S s => ThickLink k U A L (S.slotRound s)
   tie := fun _ L L' => L < L'
 
 omit S in
-@[simp] theorem hybridAnchored_wave (k : ℕ) :
-    (hybridAnchored Validator BlockId Payload k).wave = 1 := rfl
+@[simp] theorem hybridAnchored_waveAt (k r : ℕ) :
+    (hybridAnchored Validator BlockId Payload k).waveAt r = 1 := rfl
 omit S in
 @[simp] theorem hybridAnchored_rungs (k : ℕ) :
     (hybridAnchored Validator BlockId Payload k).rungs = 1 := rfl
@@ -205,13 +165,6 @@ export AnchoredRule.Decided (directCommit directSkip indirectCommit indirectSkip
 end Decided
 
 omit S in
-/-- The rung reads the schedule only at its slot's round. -/
-theorem linkCongr {k : ℕ} : (hybridAnchored Validator BlockId Payload k).LinkCongr :=
-  fun hround _ h => by
-    change ThickLink _ _ _ _ _ at h ⊢
-    rwa [← hround]
-
-omit S in
 /-- **Hybrid's laws**, under `HonestNoEquiv` at an admissible threshold:
 the direct/direct cases by H2 and twin uniqueness, the crossings by
 H3/H4/H5, and two tie-break choices equal by antisymmetry. -/
@@ -223,7 +176,7 @@ theorem hybridLaws {k : ℕ} (hk : Admissible Validator k) :
   commit_link := fun hne _ h hA helig => ⟨0, Nat.one_pos,
     thickLink_of_directCommitIn hne hk.2 h hA.1 (by
       have := (hybridAnchored Validator BlockId Payload k).anchor_round_le hA helig
-      simp only [hybridAnchored_wave] at this; omega)⟩
+      simp only [hybridAnchored_waveAt] at this; omega)⟩
   commit_link_unique := by
     intro S U V k j i L₁ L₂ A hne hL₁ hL₂ h _ _ _ _ hlink _
     exact eq_of_directCommitIn_of_thickLink hne hk.1 hL₁ hL₂ h hlink
@@ -233,10 +186,11 @@ theorem hybridLaws {k : ℕ} (hk : Admissible Validator k) :
     intro S U k j i L₁ L₂ A _ hL₁ hL₂ _ _ _ _ hl₁ hl₂ hm₁ hm₂
     exact le_antisymm (not_lt.mp (show ¬ L₂ < L₁ from hm₁ L₂ hL₂ hl₂))
       (not_lt.mp (show ¬ L₁ < L₂ from hm₂ L₁ hL₁ hl₁))
-  commit_mono := fun _ hsub h => le_trans h (Finset.card_le_card (supportersIn_mono hsub))
-  skip_mono := fun _ hsub h => directSkipSlotIn_mono hsub h
-  skip_congr := fun _ hround hk h => directSkipSlotIn_congr hround hk h
-  link_congr := linkCongr
+  commit_mono := fun _ hsub h => HoldsAtLeast.mono hsub h
+  skip_mono := fun _ hsub h => HoldsAtLeast.mono hsub h
+  skip_congr := fun _ hround hk h => blameSkip_congr hround hk h
+  link_congr := (hybridAnchored Validator BlockId Payload k).linkCongr_of_round
+    (fun _ U A L r => ThickLink k U A L r) fun _ _ _ _ _ _ => rfl
 
 omit S in
 /-- The rung's tie is the order, so a nonempty rung has a least

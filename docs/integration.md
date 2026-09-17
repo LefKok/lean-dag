@@ -59,19 +59,27 @@ threshold and clause (`Mechanised.of_iff`); a carrier read as records
 the properties read. The core, Nemo, FinWhale and Hydrozoan are records
 by definition, Hydrozoan's block being the shared block with no payload. Rules on the
 core's `BlockUniverse` (the core, Odontoceti, Mahi-Mahi) take the core's
-`chop` and `skipFill` directly, in `Properties/Arcs/`.
+`chop` and `skipFill` directly.
+
+**Each witness sits with its protocol.** A `<Protocol>/Record.lean`
+holds the one instance saying that protocol's universe is a block
+record, in the same namespace as its carrier and under the same name,
+`onRecord`. `Integration/` keeps what needs two arcs at once: a schedule
+over a rule, or mechanisms composed with one another.
 
 | file | rule | instance | constructions |
 |---|---|---|---|
-| `Properties/Arcs/GC.lean` | core, Odontoceti, Mahi-Mahi | `coreOnRecord`, `odontocetiOnRecord`, `mahiMahiOnRecord`, identity maps | the core's `chop`, `skipFill`, `addGenesis` |
-| `NemoMechanisms.lean` | Nemo | `nemoOnRecord`, identity maps | the record's, through `nemoOnRecord` |
-| `FinWhaleMechanisms.lean` | FinWhale | `finWhaleOnRecord`, identity maps | the record's, through `finWhaleOnRecord` |
-| `HybridMechanisms.lean` | Orcaella | `hybridOnRecord`, under `HonestNoEquiv` | `fillHybrid` (the self-referencing fill with `honestNoEquiv_fill`); the prompt skip `decided_none_fresh_hybrid` |
+| `Mysticeti/Record.lean` | core | `MysticetiProperties.onRecord`, identity maps | the core's `chop`, `skipFill`, `addGenesis`, and the cut's `Truncates` witness |
+| `Odontoceti/Record.lean` | Odontoceti | `OdontocetiProperties.onRecord`, identity maps | the core's, through it |
+| `MahiMahi/Record.lean` | Mahi-Mahi | `MahiMahiProperties.onRecord`, identity maps | the core's, through it |
+| `Nemo/Record.lean` | Nemo | `NemoProperties.onRecord`, identity maps | the record's, through `NemoProperties.onRecord` |
+| `FinWhale/Record.lean` | FinWhale | `FinWhaleProperties.onRecord`, identity maps | the record's, through `FinWhaleProperties.onRecord` |
+| `Hybrid/Record.lean` | Orcaella | `HybridProperties.onRecord`, under `HonestNoEquiv` | `HybridProperties.fill` (the self-referencing fill with `honestNoEquiv_fill`); the prompt skip `HybridProperties.decided_none_fresh` |
 | `HydrozoanMechanisms.lean` | Hydrozoan | `Hydrozoan.onRecord`, identity maps | the record's own; `decided_none_fresh_hz`; the coverage refutation |
-| `OptimalMechanisms.lean` | Optimal-Hydrozoan | `optOnRecord`, under `Excluded` (`leaderExcludedAll_chop`, `_copyFill`, `_addGenesis`) | the record's, through `optOnRecord` |
+| `OptimalHydrozoan/Record.lean` | Optimal-Hydrozoan | `OptimalHydrozoanProperties.onRecord`, under `BlockRecord.Any` (leader exclusion is a validity clause, preserved automatically) | the record's, through `OptimalHydrozoanProperties.onRecord` |
 | `ReactiveMechanisms.lean` | reactive Mysticeti | — | `live_chop_reactive`, `live_skipFill_reactive`, `live_addGenesis_reactive`, `decidedBelow_of_run_chop_reactive`: the reactive precondition across each mechanism, through `coreSupport` |
 | `StackRules.lean` | core, Nemo, FinWhale | — | `stack_core`, `stack_nemo`, `stack_finwhale`: fill then cut as a `Stack`; the headline `Properties.Safe` reads any of them |
-| `AdaptiveHydrozoan.lean`, `AdaptiveReactive.lean` | Hydrozoan; reactive Mysticeti | — | the adaptive leader mechanism (`Adaptive.run_agree`, `run_exists`) at those rules' properties |
+| `Joiner.lean` | the core | — | the adaptive schedule across the core's own fill: `stack_core_config`; `joiner_run_decided_agree` at the core's carrier |
 
 Every witness (`truncates_chop`, `sustains_chop`, `extends_fill`,
 `sustains_fill`, `extends_addGenesis`, `sustains_addGenesis`) and every
@@ -87,16 +95,16 @@ The Hydrozoan and Optimal cells are described in more detail in
 instance is a dozen `rfl`s, the constructions are one line each, and
 the file proves nothing about the rule's decision relation.
 
-Orcaella and Optimal-Hydrozoan each carry one invariant that is not a
-property, and each shows it survives the cut, the copy fill and
-re-genesis once (`Invariant.Mechanised`). Honest non-equivocation
-survives because the cut removes blocks, any fill adds blocks only at
-gap rounds the crash left empty, and re-genesis adds a block by an
-author with none. Leader exclusion survives the cut because a block
-bound by it sits two rounds above the horizon, so it keeps its parents
-and its parents keep theirs; the copy fill because a filled block's
-parents are the donor's, so no edge is added; and re-genesis because
-the new block is bound by no exclusion and is its author's only block.
+Orcaella carries one invariant that is not a property, and shows it
+survives the cut, the copy fill and re-genesis once
+(`Invariant.Mechanised`). Honest non-equivocation survives because the
+cut removes blocks, any fill adds blocks only at gap rounds the crash
+left empty, and re-genesis adds a block by an author with none.
+Optimal-Hydrozoan carries no such invariant: leader exclusion is a
+clause of its validity (`ValidOpt`) rather than a separate predicate,
+so `OptimalHydrozoanProperties.onRecord` reads it under the trivial invariant `BlockRecord.Any`
+and every mechanism preserves it clause by clause, with nothing
+proved per mechanism.
 
 ## 3. What the properties do not state
 
@@ -126,22 +134,25 @@ What the fill restores is *production*, which is what liveness reads,
 and a recovering validator is outside every covered set for the
 duration of its gap.
 
-### 3.2 Where a horizon may be put (`Joiner.lean`, `Adaptive/Joiner.lean`, `Retention.lean`)
+### 3.2 Where a horizon may be put (`Joiner.lean`, `Adaptive/Helpers/Chop.lean`, `Retention.lean`)
 
-**The joiner** (I5, `Adaptive/Joiner.lean`). A validator joining from a
-cut under an adaptive schedule computes the same leaders as the network
-exactly when the policy's rule is horizon-stable
-(`Adaptive.HorizonStable`, `Adaptive.joiner_assign_agree`), and its verdicts
-agree with the network's by cross-rebase agreement at the adaptive
-schedule (`Adaptive.joiner_run_decided_agree`, from `Agree` and
-`Banded`). Rebasing a schedule commutes with installing a shifted
-assignment (`Rebases.slotsOf`), so any rule's cut is a cut at the
-adaptive schedule (`Truncates.slotsOf`); the core's `Joiner.lean` is
-these at `truncates_chop`, where the two constructions are equal by
-`rfl` (`slotsChop_slotsOf_eq`). Epochs align only when the base slot is
-a multiple of the epoch width (`epochOf_add_of_dvd`): **a
-garbage-collection base slot must be a multiple of the adaptive epoch
-width.**
+**The joiner** (I5, `Adaptive/Helpers/Chop.lean`). A validator joining
+from a cut under an adaptive schedule computes the same configuration as
+the network exactly when the score is horizon-stable
+(`Adaptive.HorizonStable`, `Adaptive.joiner_config_agree`), and so runs
+the network's leaders on every round both hold
+(`Adaptive.joiner_leader_agree`). Its verdicts agree with the network's
+by cross-rebase agreement at that configuration's own schedule
+(`Adaptive.joiner_decided_agree`, from `Agree` and `Banded`). What makes
+the cut a truncation there is `Config.rebases_chop`: chopping a
+configuration at round `G` drops rounds by `G`, keeps the leaders, and
+bases at `C.cum G`, with no fixed slot-numbering instance in it — so the
+cut may be taken at a schedule whose rounds differ in width. The core's
+`Integration/Joiner.lean` is these at `truncates_chop`
+(`truncates_chop_config`, `joiner_run_decided_agree`). **A garbage
+collector and an adaptive score are compatible exactly when the score
+reads a window of rounds the horizon has not cut**; the constant score
+meets that at every cut (`horizonStable_const`).
 
 **The anchor** (I6, I8). A recovery message needs its anchor retained,
 and `chop` retains it exactly when the horizon has not passed the crash
@@ -204,7 +215,7 @@ nothing but the target's name.
 `Preservation.lean` holds the one invariant of a carrier that is not a
 property: Orcaella's `HonestNoEquiv` survives the cut and the fill
 (`honestNoEquiv_chop`, `honestNoEquiv_skipFill`, I1), which is what lets
-`HybridMechanisms.lean` build its universes.
+`Hybrid/Record.lean` build its universes.
 
 ## 4. Conditions for a deployment
 

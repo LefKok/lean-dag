@@ -32,8 +32,6 @@ open LeanDagTest.Hydrozoan
 open LeanDag LeanDag.Hydrozoan LeanDag.OptimalHydrozoan
 open Hydrozoan.PrefixAgreement OptimalHydrozoan.PrefixAgreement
 
-set_option maxRecDepth 16384
-
 /-- The seven settled verdicts of `OD` as a decision function: slots 0, 2,
 3, 6 commit (ids 3, 8, 13, 22), slots 1, 4, 5 are skipped. -/
 def gD : ℕ → Option (Fin 30)
@@ -79,7 +77,7 @@ example : DecidesBelow OD VD gD 7 := by
 example : commitSeq gD 7 = [3, 8, 13, 22] := rfl
 
 -- The shorter replica, in the one-vote-short view: slot 0 fast, slot 1
--- skipped, both directly; slot 2 has no direct route there (its LeanDag.Hydrozoan.blames
+-- skipped, both directly; slot 2 has no direct route there (its slotBlames
 -- pass, its no-evidence quorum fails, no certificate, one vote) and no
 -- anchor (the view cannot fast-commit 22), so the replica stops there.
 theorem vds_gDs : DecidesBelow OD VDs' gDs 2 := by
@@ -126,7 +124,7 @@ theorem vd_gD : DecidesBelow OD VD gD 7 := by
         subst this
         rcases i with _ | _ | i
         · exact fun hcert =>
-            absurd ((certifiedIn_iff_history (by decide)).mp hcert) (by decide)
+            absurd ((linkedVia_iff_history (by decide)).mp hcert) (by decide)
         · exact fun hev =>
             absurd ((evidenceLinked_iff_history (by decide)).mp hev) (by decide)
         · exact absurd hi (by change ¬ (i + 1 + 1 < 2); omega))
@@ -204,7 +202,7 @@ def UC : BlockUniverse (Fin 3) (Fin 9) where
 
 /-- ... as an `OptUniverse` (no equivocation: nobody is Byzantine). -/
 def OC : OptUniverse (Fin 3) (Fin 9) :=
-  { UC with leader_excluded := leaderExcluded_of_noEquivocation UC (by decide) }
+  OptUniverse.ofNoEquivocation UC (by decide)
 
 /-- The full view, typed at the projection. -/
 def VC : LeanDag.Hydrozoan.View OC.toBlockRecord := View.full UC
@@ -232,9 +230,9 @@ theorem vc_gC : DecidesBelow OC VC gC 3 := by
   · exact DecidedOpt.directCommit (by decide) (Or.inl (by decide))
 
 -- Slot 0 also slow-commits (two certifiers), and the crashed leader's
--- slot is skipped by two LeanDag.Hydrozoan.blames and two vacuous no-evidence blocks.
+-- slot is skipped by two slotBlames and two vacuous no-evidence blocks.
 example : DecidedOpt OC VC 0 (some 2) := DecidedOpt.directCommit (by decide) (Or.inr (by decide))
-example : LeanDag.Hydrozoan.blames UC 1 = {1, 2} ∧ (∀ L, ¬ IsLeaderBlock UC 1 L) := by decide
+example : slotBlames UC 1 = {1, 2} ∧ (∀ L, ¬ IsLeaderBlock UC 1 L) := by decide
 
 -- The Optimal headline theorems at f = 0: no view skips slot 0, and
 -- every replica that has decided below 3 outputs [2, 5].

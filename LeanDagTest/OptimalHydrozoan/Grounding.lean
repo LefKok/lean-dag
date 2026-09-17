@@ -64,17 +64,17 @@ example : (LeanDag.Hydrozoan.Correct : Finset (Fin 3)) = {1, 2} := by decide
 
 -- End-to-end: fairness, premise-free, at both configurations — the
 -- reused Hydrozoan claim read at an `OptimalFaults` instance.
-example : EventualDecision.FairRunOn (Fin 7)
+example : FairRunOn
     (S := waveRobin 7 (by omega)) (LeanDag.Hydrozoan.Correct : Finset (Fin 7)) 3 :=
   OptimalHydrozoan.Grounding.holds.1 7 (by omega)
 
-example : EventualDecision.FairRunOn (Fin 4)
+example : FairRunOn
     (S := waveRobin 4 (by omega)) (LeanDag.Hydrozoan.Correct : Finset (Fin 4)) 3 :=
   OptimalHydrozoan.Grounding.holds.1 4 (by omega)
 
 -- ... and at the smallest committee the class admits (n = 1, 2 carry no
 -- `OptimalFaults` instance), crash-only.
-example : EventualDecision.FairRunOn (Fin 3)
+example : FairRunOn
     (S := waveRobin 3 (by omega)) (LeanDag.Hydrozoan.Correct : Finset (Fin 3)) 3 :=
   OptimalHydrozoan.Grounding.holds.1 3 (by omega)
 
@@ -145,7 +145,7 @@ example : ¬ ∃ U : OptUniverse (Fin 4) ℕ,
     PopulatedOn U.toBlockRecord {1, 2} 1 := by
   rintro ⟨U, hT, hpop⟩
   obtain ⟨b, hb, -, hround⟩ := hpop 1 (by decide)
-  have hq := (U.valid b hb).quorum (by rw [hround]; exact Nat.one_pos)
+  have hq := (U.valid b hb).1.quorum (by change 0 < (U.toBlockRecord.block b).round; rw [hround]; exact Nat.one_pos)
   have hsub : creators U.block (U.block b) ⊆ {1, 2} := by
     intro a ha
     obtain ⟨j, hj, rfl⟩ := Finset.mem_image.mp ha

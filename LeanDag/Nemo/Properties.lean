@@ -13,17 +13,12 @@ import LeanDag.Properties.Arcs.Headline
 /-!
 # Nemo conforms to the target properties
 
-`docs/porting-plan.md` step 1, and the first rule ported after the
-audit that closed the mechanism side. `Nemo/Carrier.lean` has the
-carrier and the three properties that are one Nemo theorem apiece; here
-is `Banded`, the one induction the rule owes, and the liveness pair on
-top of it.
-
-**Nemo is the cheapest of the four**, and deliberately so: three
-constructors, no direct skip, a wave of two, and rules that read one
-round above the slot. The band helpers it needs are the generic ones
-now in `Properties/Band.lean`, which is what porting Nemo was meant to
-establish.
+`Nemo/Carrier.lean` has the carrier and
+the three properties that are one Nemo theorem apiece; here is
+`Banded`, the one induction the rule owes, and the liveness pair on top
+of it. Nemo is the cheapest of the four rules — three constructors, no
+direct skip, a wave of two, rules reading one round above the slot —
+and needs only the generic band helpers of `Properties/Band.lean`.
 -/
 
 namespace LeanDag
@@ -39,40 +34,6 @@ variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 section Band
 
 variable {U U' : Nemo.Universe Validator BlockId Payload} {lo hi g g' : ℕ}
-
-/-- **The supporters a view holds transport.** A voting-round block the
-view held is a block of the shifted universe at the shifted round, and
-it references the candidate still. -/
-theorem supportersIn_band (h : AgreeBand (nemoRule (Payload := Payload)) U U' lo hi g g')
-    {V : Nemo.View Validator BlockId Payload U} {V' : Nemo.View Validator BlockId Payload U'}
-    {r r' : ℕ} (hrr : r + g = r' + g') (hr : lo ≤ r + g) (hhi : r + 1 + g ≤ hi)
-    (hV : ∀ b, b ∈ V.ids → lo ≤ (U.block b).round + g → (U.block b).round + g ≤ hi →
-      b ∈ V'.ids)
-    {L : BlockId} :
-    supportersIn U V L (r + 1) ⊆ supportersIn U' V' L (r' + 1) := by
-  intro w hw
-  obtain ⟨q, hq, hvq⟩ := Finset.mem_image.mp hw
-  obtain ⟨hqf, hqV⟩ := Finset.mem_inter.mp hq
-  obtain ⟨hqA, hqL⟩ := Finset.mem_filter.mp hqf
-  have hqU : q ∈ U.ids := (mem_blocksAt.mp hqA).1
-  have hqr : (U.block q).round = r + 1 := (mem_blocksAt.mp hqA).2
-  refine Finset.mem_image.mpr ⟨q, Finset.mem_inter.mpr ⟨Finset.mem_filter.mpr ⟨?_, ?_⟩,
-    hV q hqV (by omega) (by omega)⟩, ?_⟩
-  · exact mem_blocksAt.mpr
-      ⟨AnchoredRule.band_mem h hqU (by omega) (by omega),
-       by have := AnchoredRule.band_block h hqU (by omega) (by omega); omega⟩
-  · rw [AnchoredRule.band_refs h hqU (by omega) (by omega)]; exact hqL
-  · rw [(AnchoredRule.band_block h hqU (by omega) (by omega)).2]; exact hvq
-
-/-- **And so does the direct commit.** -/
-theorem directCommitIn_band (h : AgreeBand (nemoRule (Payload := Payload)) U U' lo hi g g')
-    {V : Nemo.View Validator BlockId Payload U} {V' : Nemo.View Validator BlockId Payload U'}
-    {r r' : ℕ} (hrr : r + g = r' + g') (hr : lo ≤ r + g) (hhi : r + 1 + g ≤ hi)
-    (hV : ∀ b, b ∈ V.ids → lo ≤ (U.block b).round + g → (U.block b).round + g ≤ hi →
-      b ∈ V'.ids)
-    {L : BlockId} (hc : Nemo.DirectCommitIn U V L r) :
-    Nemo.DirectCommitIn U' V' L r' :=
-  le_trans hc (Finset.card_le_card (supportersIn_band h hrr hr hhi hV))
 
 /-- **The anchor certifies what it certified.** Both directions: a
 certificate inside an old anchor's history is old, by `reaches_old`, and
@@ -124,18 +85,19 @@ across a band covering the slot's wave, and a candidate the band did not
 carry is certified from no old anchor. -/
 theorem nemoBandLaws : (Nemo.nemoAnchored Validator BlockId Payload).BandLaws where
   commit_band := fun h hkk _ hlo hhi hV _ hc =>
-    directCommitIn_band h hkk (by omega) (by simp only [Nemo.nemoAnchored_wave] at hhi; omega) hV hc
+    AnchoredRule.holdsAtLeast_votesFor_band h hV (by omega) (by omega)
+      (by simp only [Nemo.nemoAnchored_waveAt] at hhi; omega) hc
   skip_band := fun _ _ _ _ _ _ h => h.elim
   link_band := fun h hA hAlo hAhi hkk _ hlo hhi _ _ =>
-    certifiedIn_band h hA hAlo hAhi hkk hlo (by simp only [Nemo.nemoAnchored_wave] at hhi; omega)
+    certifiedIn_band h hA hAlo hAhi hkk hlo (by simp only [Nemo.nemoAnchored_waveAt] at hhi; omega)
   link_novel := fun h hA hAlo hAhi hkk _ hlo hhi _ _ hL =>
     not_certifiedIn_band_novel h hA hAlo hAhi hkk hlo
-      (by simp only [Nemo.nemoAnchored_wave] at hhi; omega) hL
+      (by simp only [Nemo.nemoAnchored_waveAt] at hhi; omega) hL
 
 /-- **Nemo is banded**: the relation's band at Nemo's laws. -/
 theorem banded : Banded (nemoRule (Validator := Validator) (BlockId := BlockId)
     (Payload := Payload)) :=
-  AnchoredRule.banded nemoBandLaws
+  AnchoredRule.banded nemoBandLaws (fun _ _ => rfl)
 
 /-! ## The liveness properties
 
@@ -175,8 +137,22 @@ theorem voteSupport_commits (hn : 0 < Fintype.card Validator) :
 to break. -/
 theorem indirect :
     Indirect (nemoRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
-      (fun sr i j => sr i + (Nemo.nemoAnchored Validator BlockId Payload).wave + 1 ≤ sr j) :=
+      (fun sr i j => sr i + (Nemo.nemoAnchored Validator BlockId Payload).waveAt (sr i) + 1
+        ≤ sr j) :=
   AnchoredRule.indirect Nemo.nemoLaws.link_congr fun _ ⟨L, hL, hl⟩ => ⟨L, hL, hl, fun _ _ _ h => h⟩
+
+/-- **Nemo-Nemo has the descent laws** at the majority slack, at its
+two-round wave. -/
+theorem descent [Nemo.CrashFaults Validator] :
+    Properties.Descent (nemoRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload))
+      (Timed.Good (nemoRule (Validator := Validator) (BlockId := BlockId)
+        (Payload := Payload)) (nemoReliability Validator Nemo.CrashFaults.card_pos))
+      ((Nemo.nemoAnchored Validator BlockId Payload).waveAt 0 + 1)
+      (nemoReliability Validator Nemo.CrashFaults.card_pos).slack :=
+  Timed.descent_of_support _ _ _ (Properties.voteSupport _) (Timed.voteSupport_ofCoverage _)
+    (voteSupport_commits Nemo.CrashFaults.card_pos) indirect (fun _ => by change 1 ≤ 1 + 1; omega)
+    fun _ _ _ h => h
 
 /-- **And a committed run decides everything below it**, from `Indirect`
 with no induction of its own. -/
@@ -194,9 +170,7 @@ namespace Nemo
 /-! ## Liveness, composed
 
 `Timed.decidedBelow_of_fairRun` at Nemo's vote support, under the
-majority fault model `nemoReliability`. The direct proof this replaced
-committed each slot of the run and ran the crash descent; both are the
-generic theorems now. -/
+majority fault model `nemoReliability`. -/
 
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
@@ -204,12 +178,11 @@ variable [C : CrashFaults Validator] [S : Slots Validator] {T : Finset Validator
 
 /-- **Liveness.** Under post-`R` coverage, growth to the horizon, and a
 recurring run of `c` reliable-led slots, every slot below the run is
-decided — the run placed past both the target and `R` by fairness.
-
-The quantifier order is the content: the slot `b` is fixed by the *schedule*
-alone, before any universe is named, so "eventually" means "any DAG grown
-past this schedule-fixed slot". Crashed-leader slots are settled here and
-only here: they descend onto the run via `indirectSkip`. -/
+decided, the run placed past both the target and `R` by fairness. The
+slot `b` is fixed by the schedule alone, before any universe is named,
+so "eventually" means any DAG grown past this schedule-fixed slot;
+crashed-leader slots are settled here and only here, via
+`indirectSkip`. -/
 theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
     (hT : T ⊆ Live Validator)
     (hcard : majority Validator ≤ T.card)
@@ -232,7 +205,8 @@ theorem all_decided_below_of_fairRun {c : ℕ} (hc : 0 < c)
         change Fintype.card Validator - (Fintype.card Validator - majority Validator) ≤ T.card
         omega⟩ fair R s
   refine ⟨b, hb, hRb, fun U N V hpop hs hN hcov i hi => ?_⟩
-  obtain ⟨v, hv⟩ := h V N hs (fun r _ h2 => PopulatedOn.mono hT (hpop r h2)) hcov hN i hi
+  obtain ⟨v, hv⟩ := h V N hs (fun r _ h2 => PopulatedOn.mono hT (hpop r h2)) hcov
+    (Timed.slotBound_of_top _ (fun _ => le_rfl) hN) i hi
   exact ⟨v, hv.2.1⟩
 
 /-- **Liveness at `T := Live`** — the whole live class, which the tight

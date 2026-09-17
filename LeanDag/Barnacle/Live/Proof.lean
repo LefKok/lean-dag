@@ -1,15 +1,12 @@
 import LeanDag.Barnacle.Live.Statement
 import LeanDag.Barnacle.Progress.Proof
-import LeanDag.Barnacle.Mysticeti.Proof
-import LeanDag.Barnacle.MysticetiLive.Proof
-import LeanDag.Barnacle.Odontoceti.Proof
-import LeanDag.Barnacle.Nemo.Proof
+import LeanDag.Barnacle.Helpers.Heads
 /-!
 # BN11 — proof
 
-Generated proof layer; not part of the audit surface. Each conjunct is
-BN8b applied to BN10's liveness clause for the same rule, with the laws
-from BN10's first conjunct.
+Generated proof layer; not part of the audit surface. `holds` is BN8b with
+its liveness clause discharged from a schedule's heads runs;
+`runsExist_roundRobin` is round-robin as one such schedule.
 -/
 
 namespace LeanDag
@@ -19,19 +16,24 @@ namespace Barnacle
 namespace Live
 
 theorem holds : Statement := by
-  refine ⟨?_, ?_, ?_⟩
-  · intro n hn F BlockId Payload _ P hk upd hbnd
-    exact (Progress.holds (Fin n) BlockId Payload mysticetiLive
-      MysticetiProperties.agree P (roundRobin n hn) hk upd hbnd (n + 2)).2
-      (fun m hm hmax => MysticetiLive.holds.2 n hn BlockId Payload _ hk m hm hmax)
-  · intro n hn F BlockId Payload _ P hk upd hbnd
-    exact (Progress.holds (Fin n) BlockId Payload odontocetiLive
-      OdontocetiProperties.agree P (roundRobin n hn) hk upd hbnd (n + 1)).2
-      (fun m hm hmax => Odontoceti.holds.2.2 n hn BlockId Payload _ hk m hm hmax)
-  · intro n hn F BlockId Payload _ P hk upd hbnd
-    exact (Progress.holds (Fin n) BlockId Payload nemoLive
-      NemoProperties.agree P (roundRobin n hn) hk upd hbnd (n + 1)).2
-      (fun m hm hmax => Nemo.holds.2.2 n hn BlockId Payload _ hk m hm hmax)
+  intro Validator BlockId Payload _ _ _ R slack c₀ head hagree hD hw hheads P B upd hbnd hbh C₀ hC₀
+  intro h₀
+  exact (Progress.holds Validator BlockId Payload R hagree P B upd hbnd C₀ _ hbh c₀).2
+    (fun C _ hCh => liveOn_of_headsRun C hD hw (by rw [hCh]; exact hheads)) h₀ hC₀
+
+/-- **Round-robin meets the heads-run hypothesis** once the committee bound
+`waveLength * slack + 1 ≤ n` holds, at gap `n + waveLength - 1`. -/
+theorem runsExist_roundRobin {n : ℕ} (hn : 0 < n) {BlockId Payload : Type}
+    [DecidableEq BlockId] (R : LiveRule (Fin n) BlockId Payload) {slack : ℕ}
+    (hagree : Properties.Agree R.toBaseRule.toDagRule) (hD : R.Descent slack)
+    (hw : 0 < R.waveLength) (hbound : R.waveLength * slack + 1 ≤ n)
+    (P : Params) (B : Boundary (Fin n)) (upd : UpdateRule R.toBaseRule)
+    (hbnd : UpdBounded P upd) (hbh : UpdKeeps upd (fun C => C.head = roundRobin n hn))
+    (C₀ : Config (Fin n)) (hC₀ : C₀.head = roundRobin n hn) :
+    RunsExist R P B upd C₀ (n + R.waveLength - 1) :=
+  holds (Fin n) BlockId Payload R slack _ (roundRobin n hn) hagree hD hw
+    (fun T hT => roundRobin_headsRun n hn T slack R.waveLength (by simpa using hT) hbound)
+    P B upd hbnd hbh C₀ hC₀
 
 end Live
 

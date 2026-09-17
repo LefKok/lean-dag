@@ -25,18 +25,9 @@ variable {U : BlockUniverse Validator BlockId Payload}
 
 /-! ## Lifting a direct commit to the full view -/
 
-theorem certificatesIn_full {w : ℕ} {L : BlockId} {r : ℕ} :
-    certificatesIn U (View.full U) w L r = certificates U w L r := by
-  unfold certificatesIn
-  apply Finset.inter_eq_left.mpr
-  intro C hC
-  exact (mem_certificates.mp hC).1
-
 theorem directCommitIn_full {w : ℕ} {L : BlockId} {r : ℕ} (h : DirectCommit U w L r) :
-    DirectCommitIn U (View.full U) w L r := by
-  unfold DirectCommitIn
-  rw [certificatesIn_full]
-  exact h
+    DirectCommitIn U (View.full U) w L r :=
+  (HoldsAtLeast.full fun _ hC => (mem_certificatesAt.mp hC).1).mpr h
 
 section Slots
 
@@ -68,13 +59,8 @@ theorem allDecidedBelow {w c d N : ℕ}
   have hd : 1 ≤ d := by
     have := (mahiMahiAnchored Validator BlockId Payload w).lt_of_eligible (hspan 1 0 (by omega))
     omega
-  refine ⟨k', hk1, ?_⟩
-  refine AnchoredRule.decided_below_of_committed_run (fun hi h => exists_least hi h)
-    (b := k') (n := k' + d - 1) (by omega) (fun i hi => hspan k' i hi) ?_
-  intro j hj1 hj2
-  have hj : S.leader j ∈ good U w j := by
-    have := hgood (j - k') (by omega)
-    rwa [Nat.add_sub_cancel' hj1] at this
+  refine ⟨k', hk1, AnchoredRule.decided_below_of_run (fun hi h => exists_least hi h) hd hspan
+    (Led := fun j => S.leader j ∈ good U w j) hgood fun j _ _ hj => ?_⟩
   obtain ⟨L, -, hdec⟩ := decided_of_mem_good hj
   exact ⟨L, hdec⟩
 
@@ -113,10 +99,8 @@ theorem localCommit {w : ℕ} (hw : 1 ≤ w) {T : Finset Validator} {N : ℕ} (p
   refine Decided.directCommit hL (le_trans hcard (Finset.card_le_card ?_))
   intro u hu
   obtain ⟨c, hc, hcc, hcr⟩ := hpop u hu
-  refine mem_creatorsOf.mpr ⟨c, ?_, hcc⟩
-  rw [certificatesIn, Finset.mem_inter]
-  refine ⟨mem_certificates.mpr ⟨hc, hcr, hcert u hu c hc hcc hcr⟩, ?_⟩
-  exact pc.mem_viewAt (holds_roundBlocks_eventually pc hN v hv c hc (hcc ▸ hu) hcr)
+  exact mem_heldAuthors.mpr ⟨c, mem_certificatesAt.mpr ⟨hc, hcr, hcert u hu c hc hcc hcr⟩,
+    pc.mem_viewAt (holds_roundBlocks_eventually pc hN v hv c hc (hcc ▸ hu) hcr), hcc⟩
 
 end Slots
 
@@ -193,7 +177,7 @@ theorem AgreeUpto.votesIn_eq (h : AgreeUpto U₁ U₂ d) {C L : BlockId}
     (hC : C ∈ U₁.ids) (hCr : (U₁.block C).round ≤ d)
     (hL : L ∈ U₁.ids) (hLr : (U₁.block L).round ≤ d) :
     votesIn U₁ C L = votesIn U₂ C L := by
-  unfold votesIn
+  unfold votesIn carriedVotes
   rw [← h.block C hC hCr]
   apply Finset.filter_congr
   intro q hq
@@ -216,10 +200,11 @@ theorem AgreeUpto.certifies_iff (h : AgreeUpto U₁ U₂ d) {C L : BlockId}
     (hC : C ∈ U₁.ids) (hCr : (U₁.block C).round ≤ d)
     (hL : L ∈ U₁.ids) (hLr : (U₁.block L).round ≤ d) :
     Certifies U₁ C L ↔ Certifies U₂ C L := by
-  unfold Certifies
-  rw [h.votesIn_eq hC hCr hL hLr, ← h.creatorsOf_eq]
+  unfold Certifies CarriesVotes
+  rw [show carriedVotes U₁ (Votes U₁) C L = carriedVotes U₂ (Votes U₂) C L from
+    h.votesIn_eq hC hCr hL hLr, ← h.creatorsOf_eq]
   intro q hq
-  rw [mem_votesIn] at hq
+  rw [mem_carriedVotes] at hq
   rw [← h.block C hC hCr] at hq
   have hqids := U₁.complete C hC q hq.1
   have hqr := U₁.round_of_mem_refs hC hq.1
@@ -228,7 +213,7 @@ theorem AgreeUpto.certifies_iff (h : AgreeUpto U₁ U₂ d) {C L : BlockId}
 theorem AgreeUpto.certificates_eq (h : AgreeUpto U₁ U₂ d) {w : ℕ} {L : BlockId} {r : ℕ}
     (hd : decisionRoundAt w r ≤ d) (hL : L ∈ U₁.ids) (hLr : (U₁.block L).round ≤ d) :
     certificates U₁ w L r = certificates U₂ w L r := by
-  unfold certificates
+  unfold certificates certificatesAt
   rw [h.blocksAt_eq hd]
   apply Finset.filter_congr
   intro C hC
@@ -242,7 +227,7 @@ theorem AgreeUpto.directCommit_iff (h : AgreeUpto U₁ U₂ d) {w : ℕ} {L : Bl
   unfold DirectCommit
   rw [h.certificates_eq hd hL hLr, ← h.creatorsOf_eq]
   intro C hC
-  obtain ⟨hC₂, hCr₂, -⟩ := mem_certificates.mp hC
+  obtain ⟨hC₂, hCr₂, -⟩ := mem_certificatesAt.mp hC
   obtain ⟨hC₁, hCr₁⟩ := (h.ids C).mpr ⟨hC₂, by omega⟩
   exact ⟨hC₁, hCr₁⟩
 

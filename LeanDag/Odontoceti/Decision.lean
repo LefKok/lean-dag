@@ -1,28 +1,31 @@
 import LeanDag.Odontoceti.Rules
 import LeanDag.Common.Anchored.Bounded
+import LeanDag.Common.Rules
 /-!
 # Odontoceti: the decision relation
 
-`odontoceti.md` §4, OP3. Odontoceti decides by the anchored relation
-(`Anchored.lean`) at its data: wavelength one — supports at the decision
-round are the whole story, there is no certificate round — the
-supporter-quorum direct commit, the core's slot-level direct skip, and
-one rung of link, `ThickLink`, with the **least** linked candidate
-committed. That tie-break is not decoration — it is a gap in the thesis
-made explicit. Lemma 5's proof asserts that sharing an anchor yields
-agreement, but nothing in the quorum arithmetic prevents two
-equivocating candidates from *both* passing `ThickLink` at one anchor
-(the witness file realises exactly that configuration on data at
-`n = 5f+1`); the implementation's determinism — the iteration order of
-`GetLeaderBlocks` — is what actually arbitrates, and the tie is that
-determinism as mathematics, under `[LinearOrder BlockId]`.
+**A commit rule** (`Protocols`). Two rounds rather than the core's
+three, on the core's universes and validity — Odontoceti extends the
+core rather than replacing it. The rule is `odontocetiAnchored`; the
+carrier and the properties are `Properties.lean`; the record witness,
+the cut and the prompt skip are `Record.lean`.
 
-What Odontoceti proves is `odontocetiLaws`: the direct/direct cases by
-O1/O1′, the direct-versus-indirect crossings by O2/O3/O4′ — a directly
-committed block is the unique candidate that can pass the test
-anywhere, which is why the direct verdicts need no tie — and two
-tie-break choices equal by antisymmetry. Agreement (O5), the band and
-the descent are the relation's.
+`odontoceti.md` §4, OP3. Odontoceti decides by the anchored relation
+(`Anchored.lean`) at its data: wavelength one, the supporter-quorum
+direct commit, the core's slot-level direct skip, and one rung of link,
+`ThickLink`, with the **least** linked candidate committed. That
+tie-break is a genuine gap in the thesis made explicit: Lemma 5 asserts
+that sharing an anchor yields agreement, but nothing in the quorum
+arithmetic prevents two equivocating candidates from both passing
+`ThickLink` at one anchor (realised on data at `n = 5f+1`); the
+implementation's iteration order is what actually arbitrates, and the
+tie-break is that determinism as mathematics, under
+`[LinearOrder BlockId]`.
+
+`odontocetiLaws` gives the direct/direct cases by O1/O1′, the
+direct-versus-indirect crossings by O2/O3/O4′, and two tie-break choices
+equal by antisymmetry. Agreement (O5), the band and the descent are the
+relation's.
 -/
 
 namespace LeanDag
@@ -38,38 +41,27 @@ variable {L A : BlockId} {r k : ℕ}
 
 /-! ## The view-relative direct rules -/
 
-/-- Direct commit, as judged from a single view: the record's
-`supportersIn`, at the round above `L`. -/
-def DirectCommitIn (U : BlockUniverse Validator BlockId Payload)
+/-- Direct commit, as judged from a single view: the view holds votes for
+`L` at the round above it from a quorum of validators. -/
+abbrev DirectCommitIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  quorumCard Validator ≤ (supportersIn U V L (r + 1)).card
+  supportCommit (quorumCard Validator) U V L r
 
-/-- Direct skip, as judged from a single view: the record's `blamesIn`. -/
-def DirectSkipIn (U : BlockUniverse Validator BlockId Payload)
+/-- Direct skip, as judged from a single view: the view holds blocks at
+the round above `L` that omit it, from a quorum of validators. -/
+abbrev DirectSkipIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  quorumCard Validator ≤ (blamesIn U V L (r + 1)).card
-
-instance {V : View Validator BlockId Payload U} :
-    Decidable (DirectCommitIn U V L r) :=
-  inferInstanceAs (Decidable (_ ≤ _))
-
-instance {V : View Validator BlockId Payload U} :
-    Decidable (DirectSkipIn U V L r) :=
-  inferInstanceAs (Decidable (_ ≤ _))
+  HoldsAtLeast U V (quorumCard Validator) (omissionsOf U L (r + 1))
 
 /-- A view can only under-report: its direct commit is genuine. -/
 theorem directCommit_of_directCommitIn
     {V : View Validator BlockId Payload U}
-    (h : DirectCommitIn U V L r) : DirectCommit U L r :=
-  le_trans h (Finset.card_le_card
-    (Finset.image_subset_image Finset.inter_subset_left))
+    (h : DirectCommitIn U V L r) : DirectCommit U L r := h.le
 
 /-- A view can only under-report: its direct skip is genuine. -/
 theorem directSkip_of_directSkipIn
     {V : View Validator BlockId Payload U}
-    (h : DirectSkipIn U V L r) : DirectSkip U L r :=
-  le_trans h (Finset.card_le_card
-    (Finset.image_subset_image Finset.inter_subset_left))
+    (h : DirectSkipIn U V L r) : DirectSkip U L r := h.le
 
 /-! ## The safety lemmas, lifted to views -/
 
@@ -119,16 +111,17 @@ omit S in
 def odontocetiAnchored (Validator BlockId Payload : Type) [Fintype Validator]
     [DecidableEq Validator] [Faults5 Validator] [LinearOrder BlockId] :
     AnchoredRule Validator BlockId Payload ValidWrt Correct where
-  wave := 1
+  waveAt := fun _ => 1
   Commit := fun U V L r => Odontoceti.DirectCommitIn U V L r
+  decCommit := fun _ _ _ _ => inferInstance
   Skip := fun U V S k => DirectSkipSlotIn (S := S) U V k
   rungs := 1
   Link := fun _ U A L S k => ThickLink U A L (S.slotRound k)
   tie := fun _ L L' => L < L'
 
 omit S in
-@[simp] theorem odontocetiAnchored_wave :
-    (odontocetiAnchored Validator BlockId Payload).wave = 1 := rfl
+@[simp] theorem odontocetiAnchored_waveAt (r : ℕ) :
+    (odontocetiAnchored Validator BlockId Payload).waveAt r = 1 := rfl
 omit S in
 @[simp] theorem odontocetiAnchored_rungs :
     (odontocetiAnchored Validator BlockId Payload).rungs = 1 := rfl
@@ -171,7 +164,7 @@ theorem odontocetiLaws : (odontocetiAnchored Validator BlockId Payload).Laws whe
     not_directSkipIn_of_directCommitIn h (directSkipIn_of_directSkipSlotIn hskip hL)
   commit_link := fun _ _ h hA helig => ⟨0, Nat.one_pos, thickLink_of_directCommitIn h hA.1 (by
     have := (odontocetiAnchored Validator BlockId Payload).anchor_round_le hA helig
-    simp only [odontocetiAnchored_wave] at this; omega)⟩
+    simp only [odontocetiAnchored_waveAt] at this; omega)⟩
   commit_link_unique := by
     intro S U V k j i L₁ L₂ A _ hL₁ hL₂ h _ _ _ _ hlink _
     exact eq_of_directCommitIn_of_thickLink hL₁ hL₂ h hlink
@@ -181,12 +174,11 @@ theorem odontocetiLaws : (odontocetiAnchored Validator BlockId Payload).Laws whe
     intro S U k j i L₁ L₂ A _ hL₁ hL₂ _ _ _ _ hl₁ hl₂ hm₁ hm₂
     exact le_antisymm (not_lt.mp (show ¬ L₂ < L₁ from hm₁ L₂ hL₂ hl₂))
       (not_lt.mp (show ¬ L₁ < L₂ from hm₂ L₁ hL₁ hl₁))
-  commit_mono := fun _ hsub h => le_trans h (Finset.card_le_card (supportersIn_mono hsub))
-  skip_mono := fun _ hsub h => directSkipSlotIn_mono hsub h
-  skip_congr := fun _ hround hk h => directSkipSlotIn_congr hround hk h
-  link_congr := fun hround _ h => by
-    change ThickLink _ _ _ _ at h ⊢
-    rwa [← hround]
+  commit_mono := fun _ hsub h => HoldsAtLeast.mono hsub h
+  skip_mono := fun _ hsub h => HoldsAtLeast.mono hsub h
+  skip_congr := fun _ hround hk h => blameSkip_congr hround hk h
+  link_congr := (odontocetiAnchored Validator BlockId Payload).linkCongr_of_round
+    (fun _ U A L r => ThickLink U A L r) fun _ _ _ _ _ _ => rfl
 
 omit S in
 /-- The rung's tie is the order, so a nonempty rung has a least

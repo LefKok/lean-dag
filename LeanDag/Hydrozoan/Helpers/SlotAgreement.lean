@@ -1,6 +1,6 @@
 import LeanDag.Hydrozoan.Model.Decided
 import LeanDag.Hydrozoan.Helpers.Counting
-import LeanDag.Hydrozoan.Helpers.CausalHistory
+import LeanDag.Common.CausalHistory
 import LeanDag.Hydrozoan.Helpers.DirectRules
 import LeanDag.Hydrozoan.Helpers.IndirectRules
 /-!
@@ -103,11 +103,11 @@ private theorem certifiedIn_of_slowCommit_base {L : BlockId} {r : ℕ}
     (h : SlowCommit U L r) {A : BlockId} (hA : A ∈ U.ids)
     (hAr : (U.block A).round = r + 3) : CertifiedIn U A L r := by
   obtain ⟨C, hC₁, hC₂⟩ :=
-    exists_common_mem_of_creator_quorums (s := (U.block A).refs)
-      (t := certificates U L r) (r := r + 2)
+    exists_common_block U.noEquivOn_honest card_compl_nonByzantine_le
+      (s := (U.block A).refs) (t := certificates U L r) (n := r + 2)
       (fun b hb => ⟨U.complete A hA b hb, by
-        have := round_of_mem_refs hA hb; omega⟩)
-      (fun b hb => ⟨(mem_certificates.mp hb).1, (mem_certificates.mp hb).2.1⟩)
+        have := BlockRecord.round_of_mem_refs hA hb; omega⟩)
+      (fun b hb => ⟨(mem_certificatesAt.mp hb).1, (mem_certificatesAt.mp hb).2.1⟩)
       (by
         have hq : q Replica ≤ (creatorsOf U.block (U.block A).refs).card :=
           (U.valid A hA).quorum (by omega)
@@ -127,7 +127,7 @@ private theorem certifiedIn_of_slowCommit_aux {L : BlockId} {r : ℕ}
       intro A hA hAr
       obtain ⟨b, hb⟩ := refs_nonempty hA (by omega)
       have hbi : b ∈ U.ids := U.complete A hA b hb
-      have hbr := round_of_mem_refs hA hb
+      have hbr := BlockRecord.round_of_mem_refs hA hb
       exact certifiedIn_of_reaches (Reaches.single hb) (ih b hbi (by omega))
 
 /-- **Rung 1 fires.** A slow commit's certificate lies in the causal
@@ -147,7 +147,7 @@ private theorem weakLinked_of_fastCommit_base {L : BlockId} {r : ℕ}
   · intro b hb
     obtain ⟨hbp, hbv⟩ := Finset.mem_filter.mp hb
     have hbi : b ∈ U.ids := U.complete A hA b hbp
-    have hbr := round_of_mem_refs hA hbp
+    have hbr := BlockRecord.round_of_mem_refs hA hbp
     exact ⟨mem_blocksAt.mpr ⟨hbi, by omega⟩, hbv, Reaches.single hbp⟩
   · have hsub :
         (creatorsOf U.block (U.block A).refs ∩ supporters U L (r + 1)) \
@@ -160,7 +160,7 @@ private theorem weakLinked_of_fastCommit_base {L : BlockId} {r : ℕ}
       obtain ⟨p', hp', hpc⟩ := mem_creatorsOf.mp hvP
       obtain ⟨b, hbi, hbr, hbv, hbc⟩ := mem_supporters.mp hvS
       have hpi : p' ∈ U.ids := U.complete A hA p' hp'
-      have hpr := round_of_mem_refs hA hp'
+      have hpr := BlockRecord.round_of_mem_refs hA hp'
       have hnb : (U.block p').creator ∈ (NonByzantine : Finset Replica) := by
         rw [mem_nonByzantine, hpc]; exact hvnb
       have hpb : p' = b :=
@@ -193,7 +193,7 @@ private theorem weakLinked_of_fastCommit_aux {L : BlockId} {r : ℕ}
       intro A hA hAr
       obtain ⟨b, hb⟩ := refs_nonempty hA (by omega)
       have hbi : b ∈ U.ids := U.complete A hA b hb
-      have hbr := round_of_mem_refs hA hb
+      have hbr := BlockRecord.round_of_mem_refs hA hb
       exact weakLinked_of_reaches (Reaches.single hb) (ih b hbi (by omega))
 
 /-- **Rung 2 fires.** A fast commit's weak footprint is visible from
@@ -210,18 +210,8 @@ private theorem supporters_capped_of_fastCommit {L L' : BlockId} {r : ℕ}
     (h : FastCommit U L r) :
     (supporters U L' (r + 1)).card + qFast Replica ≤
       Fintype.card Replica + F.f := by
-  have hsub : supporters U L' (r + 1) ∩ supporters U L (r + 1) ⊆
-      F.byzantine := by
-    intro v hv
-    obtain ⟨h₁, h₂⟩ := Finset.mem_inter.mp hv
-    exact byzantine_of_votes_two hne hcreator h₁ h₂
-  have h1 := Finset.card_union_add_card_inter
-    (supporters U L' (r + 1)) (supporters U L (r + 1))
-  have h2 : (supporters U L' (r + 1) ∪ supporters U L (r + 1)).card ≤
-      Fintype.card Replica := by
-    rw [← Finset.card_univ]; exact Finset.card_le_univ _
-  have h3 := Finset.card_le_card hsub
-  have h4 := F.card_byzantine
+  have := card_supporters_add_card_supporters_le U.noEquivOn_honest card_compl_nonByzantine_le
+    hne hcreator (n := r + 1)
   simp only [FastCommit] at h
   omega
 
@@ -250,13 +240,13 @@ theorem certificates_eq_empty_of_fastCommit {L L' : BlockId} {r : ℕ}
     (h : FastCommit U L r) : certificates U L' r = ∅ := by
   rw [Finset.eq_empty_iff_forall_notMem]
   intro C hC
-  obtain ⟨hCi, hCr, hcert⟩ := mem_certificates.mp hC
+  obtain ⟨hCi, hCr, hcert⟩ := mem_certificatesAt.mp hC
   have hle := Finset.card_le_card
-    (creators_voteBlocks_subset_supporters (L := L') hCi hCr)
+    (creatorsOf_carriedVotes_subset_supporters (L := L') hCi hCr)
   have h2 := supporters_capped_of_fastCommit hne hcreator h
   have hqc := qWeak_le_qCert (Replica := Replica)
   have h5 := nf_lt_qFast_add_qWeak (Replica := Replica)
-  simp only [IsCertificate] at hcert
+  simp only [CarriesVotes] at hcert
   omega
 
 /-- Starvation of same-creator rivals, rung-1 phrasing. -/
@@ -264,6 +254,7 @@ theorem not_certifiedIn_of_fastCommit {L L' : BlockId} {r : ℕ} {A : BlockId}
     (hne : L' ≠ L) (hcreator : (U.block L').creator = (U.block L).creator)
     (h : FastCommit U L r) : ¬ CertifiedIn U A L' r := by
   rintro ⟨C, hC, -⟩
+  change C ∈ certificates U L' r at hC
   rw [certificates_eq_empty_of_fastCommit hne hcreator h] at hC
   exact Finset.notMem_empty C hC
 
@@ -277,23 +268,9 @@ private theorem supporters_capped_of_skipped {k : ℕ} {L : BlockId}
     (hL : IsLeaderBlock U k L) (h : SkippedLeader U k) :
     (supporters U L (S.slotRound k + 1)).card + qFast Replica ≤
       Fintype.card Replica + F.f := by
-  have h' : (supporters U L (votingRound Replica k)).card + qFast Replica ≤
-      Fintype.card Replica + F.f := by
-    have hsub : supporters U L (votingRound Replica k) ∩ blames U k ⊆
-        F.byzantine := by
-      intro v hv
-      obtain ⟨h₁, h₂⟩ := Finset.mem_inter.mp hv
-      exact byzantine_of_votes_and_blames hL h₁ h₂
-    have h1 := Finset.card_union_add_card_inter
-      (supporters U L (votingRound Replica k)) (blames U k)
-    have h2 : (supporters U L (votingRound Replica k) ∪ blames U k).card ≤
-        Fintype.card Replica := by
-      rw [← Finset.card_univ]; exact Finset.card_le_univ _
-    have h3 := Finset.card_le_card hsub
-    have h4 := F.card_byzantine
-    simp only [SkippedLeader] at h
-    omega
-  exact h'
+  have := card_supporters_add_card_slotBlames_le U.noEquivOn_honest card_compl_nonByzantine_le hL
+  simp only [SkippedLeader] at h
+  omega
 
 /-- A skipped slot's candidates never reach the weak rung. -/
 theorem not_weakLinked_of_skipped {k : ℕ} {L : BlockId} {A : BlockId}
@@ -317,13 +294,13 @@ theorem certificates_eq_empty_of_skipped {k : ℕ} {L : BlockId}
     certificates U L (S.slotRound k) = ∅ := by
   rw [Finset.eq_empty_iff_forall_notMem]
   intro C hC
-  obtain ⟨hCi, hCr, hcert⟩ := mem_certificates.mp hC
+  obtain ⟨hCi, hCr, hcert⟩ := mem_certificatesAt.mp hC
   have hle := Finset.card_le_card
-    (creators_voteBlocks_subset_supporters (L := L) hCi hCr)
+    (creatorsOf_carriedVotes_subset_supporters (L := L) hCi hCr)
   have h2 := supporters_capped_of_skipped hL h
   have hqc := qWeak_le_qCert (Replica := Replica)
   have h5 := nf_lt_qFast_add_qWeak (Replica := Replica)
-  simp only [IsCertificate] at hcert
+  simp only [CarriesVotes] at hcert
   omega
 
 /-- Skip-side, rung-1 phrasing. -/
@@ -331,6 +308,7 @@ theorem not_certifiedIn_of_skipped {k : ℕ} {L : BlockId} {A : BlockId}
     (hL : IsLeaderBlock U k L) (h : SkippedLeader U k) :
     ¬ CertifiedIn U A L (S.slotRound k) := by
   rintro ⟨C, hC, -⟩
+  change C ∈ certificates U L (S.slotRound k) at hC
   rw [certificates_eq_empty_of_skipped hL h] at hC
   exact Finset.notMem_empty C hC
 
@@ -347,7 +325,7 @@ theorem anchor_round {k j : ℕ} {A : BlockId} (hA : IsLeaderBlock U j A)
     (helig : (hydrozoanAnchored Replica BlockId).Eligible k j) :
     S.slotRound k + 3 ≤ (U.block A).round := by
   have := (hydrozoanAnchored Replica BlockId).anchor_round_le hA helig
-  simp only [hydrozoanAnchored_wave] at this
+  simp only [hydrozoanAnchored_waveAt] at this
   omega
 
 /-- A slow commit in any view is certified at every candidate of an

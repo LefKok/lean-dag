@@ -1,18 +1,14 @@
 import LeanDag.Properties.Bounded
+import LeanDag.Properties.Carrier
 /-!
 # The indirect rule
 
 `docs/target-properties.md` §4 and §11.8. The one liveness-side
-obligation that is a *property*: an anchor eligible for a slot,
-committed, with every eligible slot between them skipped, decides it,
-at a bound and under any reassignment of the other leaders. What the
-indirect rule gives — `Descends`, and with it everything below a
-committed run — is derived in `Derived/Descent.lean`.
-
-`LeaderCommits` stood here as a second obligation. It is now a
-consequence of `Support` (`Derived/LeaderCommits.lean`): a rule that
-says what its commit counts, and that a quorum's certificates commit,
-has `LeaderCommits` at `Support.live` with no proof of its own.
+obligation that is a property: an anchor eligible for a slot, committed,
+with every eligible slot between them skipped, decides it, at a bound
+and under any reassignment of the other leaders. `Derived/Descent.lean`
+derives `Descends` from it; `Derived/LeaderCommits.lean` derives
+`LeaderCommits` from `Support`, so neither is a second obligation.
 -/
 
 namespace LeanDag
@@ -71,6 +67,28 @@ theorem Indirect.decided {R : DagRule Validator BlockId Payload}
     ∃ v, R.Decided S V i v := by
   obtain ⟨v, hv⟩ := h S V i j A he hj hmid
   exact ⟨v, hv S rfl rfl hj hmid⟩
+
+/-- **The descent laws** at gap `g` and slack `slack`, under a goodness
+predicate on the universe: what a protocol owes a schedule mechanism on
+the liveness side. `goodLeaders` is A4's direct half, `indirect` the
+indirect rule read at the gap. -/
+structure Descent (R : DagRule Validator BlockId Payload)
+    (Good : R.Universe → ℕ → ℕ → Prop) (g slack : ℕ) : Prop where
+  /-- **A4, direct commits.** On a good DAG some `slack`-missing set of
+  validators commits every slot it leads whose gap fits under `N`, on any
+  view caught up to `N`. -/
+  goodLeaders : ∀ (U : R.Universe) (Rnd N : ℕ), Good U Rnd N →
+    ∃ T : Finset Validator, Fintype.card Validator ≤ T.card + slack ∧
+      ∀ (S : Slots Validator) (V : R.View U) (κ : ℕ), R.CoversUpto U V N →
+        Rnd ≤ S.slotRound κ → S.slotRound κ + g ≤ N →
+        S.leader κ ∈ T → ∃ L, R.Decided S V κ (some L)
+  /-- **A3, the indirect rule.** A committed slot a gap above `i`, with
+  every gap-eligible slot between them skipped, decides `i`. -/
+  indirect : ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (i j : ℕ) (A : BlockId),
+    S.slotRound i + g ≤ S.slotRound j → R.Decided S V j (some A) →
+    (∀ i', i < i' → i' < j → S.slotRound i + g ≤ S.slotRound i' →
+      R.Decided S V i' none) →
+    ∃ v, R.Decided S V i v
 
 end Properties
 

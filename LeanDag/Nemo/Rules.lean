@@ -1,23 +1,21 @@
-import LeanDag.Nemo.Support
+import LeanDag.Nemo.Basic
+import LeanDag.Common.Support
+import LeanDag.Common.History
 /-!
 # Nemo-Nemo: the commit rule
 
-The crash commit rule at wave length two. The implementation collapses the
-certificate onto the vote: with voting and decision on the same round `r+1`,
-a "certificate" for a leader block `L` is literally a round-`(r+1)` block
-referencing `L` (`is_certificate` reduces to `is_vote`). Direct commit is a
-majority of such voters — the existing `supporters` set — and the indirect
-test, at link size one, asks for a *single* vote inside the anchor's cone.
+The crash commit rule at wave length two. Voting and decision share
+round `r+1`, so a certificate for a leader block `L` is literally a
+round-`(r+1)` block referencing `L`. Direct commit is a majority of
+such voters — the existing `supporters` set — and the indirect test, at
+link size one, asks for a single vote inside the anchor's cone.
 
 Deliberately absent, compared to the Byzantine core and the hybrid arc:
-
-* **No `DirectSkip`.** The implementation pins the direct-skip quorum to the
-  full stake, unreachable in practice — a crashed leader never yields a
-  full-census blame at round `r+1` — so leaders are skipped only indirectly
-  and the direct-skip rule is not modeled.
-* **No twin counting.** Universal `no_equivocation` makes the candidate
-  leader block of a slot unique outright (`Universe.eq_of_creator_eq`), so
-  the M5′/H5-style uniqueness lemmas have nothing left to prove.
+no `DirectSkip`, since the implementation pins the direct-skip quorum
+to the full stake, unreachable once a leader has crashed, so leaders
+are skipped only indirectly; and no twin counting, since universal
+`no_equivocation` makes the candidate leader block of a slot unique
+outright.
 -/
 
 namespace LeanDag
@@ -68,8 +66,9 @@ theorem exists_vote_ref_of_directCommit {L c : BlockId} {r : ℕ}
     (hdc : DirectCommit U L r) (hc : c ∈ U.ids) (hcr : (U.block c).round = r + 2) :
     ∃ p ∈ (U.block c).refs, (U.block p).round = r + 1 ∧ L ∈ (U.block p).refs := by
   obtain ⟨p, hp_mem, hp_P⟩ :=
-    exists_mem_refs_of_correct_support_of_card (P := fun q => L ∈ (U.block q).refs)
-      (fun v hv => mem_supporters.mp hv) hdc hc (by omega)
+    exists_mem_refs_of_honest_support_of_card (Q := fun q => L ∈ (U.block q).refs)
+      (fun v hv => mem_supporters.mp hv) (fun _ _ => Finset.mem_univ _)
+      (lt_card_add_majority hdc) hc (by omega)
   refine ⟨p, hp_mem, ?_, hp_P⟩
   have := U.round_of_mem_refs hc hp_mem
   omega
@@ -83,7 +82,7 @@ theorem certifiedIn_of_directCommit {L A : BlockId} {r : ℕ}
     CertifiedIn U A L r := by
   obtain ⟨p, ⟨hp_ids, hp_round, hp_L⟩, hreach⟩ :=
     reaches_pred_of_round_le
-      (P := fun p => p ∈ U.ids ∧ (U.block p).round = r + 1 ∧ L ∈ (U.block p).refs)
+      (Q := fun p => p ∈ U.ids ∧ (U.block p).round = r + 1 ∧ L ∈ (U.block p).refs)
       (fun c hc hcr => by
         obtain ⟨p, hp_mem, hp_round, hp_L⟩ := exists_vote_ref_of_directCommit hdc hc hcr
         exact ⟨p, ⟨U.complete c hc p hp_mem, hp_round, hp_L⟩, Reaches.single hp_mem⟩)

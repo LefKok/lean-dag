@@ -30,8 +30,6 @@ namespace Hydrozoan
 
 open LeanDag LeanDag.Hydrozoan
 
-set_option maxRecDepth 8192
-
 /-- Thirty-two blocks over five rounds. Ids 0–6: genesis (creator = id).
 Ids 7–13: round 1 — the equivocating pair 7/8 by Byzantine 0, then 9–13
 by replicas 2–6; every round-1 block votes for genesis 2. Ids 14–19:
@@ -112,7 +110,7 @@ example : WeakLinked U3 24 2 0 :=
 -- Negative rungs: the withheld equivocation id 8 gathers no votes at
 -- all, so neither rung can ever fire for it.
 example : ¬ LeanDag.Hydrozoan.CertifiedIn U3 24 8 1 := fun h =>
-  absurd ((certifiedIn_iff_history (by decide)).mp h) (by decide)
+  absurd ((linkedVia_iff_history (by decide)).mp h) (by decide)
 example : ¬ WeakLinked U3 24 8 1 := fun h =>
   absurd ((weakLinked_iff_history (by decide)).mp h) (by decide)
 

@@ -1,28 +1,15 @@
-import LeanDag.FinWhale.Pass
+import LeanDag.FinWhale.Procedure.Pass
 import LeanDag.FinWhale.Model.Liveness
 import LeanDag.Mysticeti.ViewPace
 /-!
 # FinWhale — a validator's holdings are its view
 
-`View.lean` takes a view to be any reference-closed part of the DAG, and
-the liveness results ask that a validator's view hold the reliable blocks
-up to the horizon. Neither is tied to a schedule: a view is a `Finset`,
-and holding the blocks is a hypothesis.
-
-This file ties both to the pacing trunk. `PaceCore.holds` is what a
-validator has at a time, and its two store clauses — holdings are part of
-the universe, and holdings are closed under references — are exactly what
-`IsView` asks. So a validator's holdings *are* a view, at every instant,
-and `restrict` turns them into a DAG the decision rules run on.
-
-The second half is what the network gives. `PaceCore.holds_roundBlocks`
-says every reliable validator's round-`n` block reaches every reliable
-validator by `latest n + delay`, past GST. Taking the largest such time
-below the horizon and `holds_mono` gives one instant at which the view
-holds every reliable block of every round from the coverage round up —
-which is the condition `all_decided_of_view` reads, and nothing more is
-available: no clause of any schedule obliges a validator to hold a
-Byzantine author's block.
+This file ties the schedule-free `View.lean` and liveness results to the
+pacing trunk. `PaceCore.holds` — a validator's holdings at a time — is a
+view at every instant, since its store clauses are exactly what `IsView`
+asks; `PaceCore.holds_roundBlocks` then gives an instant at which the
+view holds every reliable block from the coverage round up, which is
+what `all_decided_of_view` reads.
 -/
 
 namespace LeanDag
@@ -68,35 +55,6 @@ theorem held_of_pace (pc : PaceCore U T M) (hids : D.ids = U.ids) (hblk : D.bloc
 /-! ## The capstone: a validator, with nothing about it assumed -/
 
 variable [LinearOrder BlockId]
-
-/-- **Every slot below the horizon is decided**, by a validator whose
-view is its own holdings and whose verdicts are the reverse pass.
-
-Nothing about the validator is a hypothesis here. Its view is
-`pc.holds v` — the store clauses make that a view — its verdicts are
-`decOf`, which `wellFormed_decOf` makes well formed, and what it holds is
-what the network delivered. What is left is about the schedule and the
-DAG: that the pace reaches the rounds (`hle`, `hcard`), that the coverage
-round is past GST, that the liveness interface holds, and that the
-rotation is round robin. -/
-theorem all_decided_of_pass (pc : PaceCore U (Correct : Finset Validator) M)
-    (hids : D.ids = U.ids) (hblk : D.block = U.block)
-    (hle : ∀ u ∈ (Correct : Finset Validator), ∀ n ≤ pc.top u, n ≤ pc.built u n)
-    {R : ℕ} (hgst : pc.gst ≤ R) {v : Validator} (hv : v ∈ (Correct : Finset Validator))
-    {choose : BlockId → ℕ → Option BlockId} {Np N r : ℕ}
-    (hhorizon : ∀ b ∈ pc.holds v (settled pc), (D.block b).round ≤ Np)
-    (hcommits : CommitsCorrectLeaders S D R N) (hrr : RoundRobin S.leader)
-    (hEl : ∀ r a, Elig r a ↔ r + 2 < a) (hid : ∀ k, S.slotRound k = k) (hNM : N ≤ M)
-    (hN : max r R + (3 * F.f + 5) ≤ N) :
-    decOf S Elig (holdsView pc hids hblk hv (settled pc)).toRecord
-      choose Np r ≠ Verdict.undecided := by
-  have hlt : ∀ r a, Elig r a → r < a := fun r a h => by have := (hEl r a).1 h; omega
-  have hrle : ∀ r, S.slotRound r ≤ Np → r ≤ Np := fun r h => by rwa [hid] at h
-  exact all_decided_of_view (V := holdsView pc hids hblk hv (settled pc))
-    (wellFormed_decOf hhorizon hlt hrle choose)
-    (fun n hRn hnN b hb hbc =>
-      held_of_pace pc hids hblk hle card_correct hgst hv n hRn (by omega) b hb hbc)
-    hcommits hrr hEl hid hN
 
 end FinWhale
 

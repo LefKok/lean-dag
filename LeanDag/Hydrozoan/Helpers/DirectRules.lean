@@ -25,24 +25,12 @@ instance decidableSlowCommit (L : BlockId) (r : ℕ) :
     Decidable (SlowCommit U L r) :=
   inferInstanceAs (Decidable (qSlow Replica ≤ (certifiers U L r).card))
 
-instance decidableFastCommitInView (V : View U) (L : BlockId) (r : ℕ) :
-    Decidable (FastCommitInView U V L r) :=
-  inferInstanceAs (Decidable (qFast Replica ≤ (supportersInView U V L (r + 1)).card))
-
-instance decidableSlowCommitInView (V : View U) (L : BlockId) (r : ℕ) :
-    Decidable (SlowCommitInView U V L r) :=
-  inferInstanceAs (Decidable (qSlow Replica ≤ (certifiersInView U V L r).card))
-
 section Skip
 
 variable [S : Slots Replica]
 
 instance decidableSkippedLeader (k : ℕ) : Decidable (SkippedLeader U k) :=
-  inferInstanceAs (Decidable (qFast Replica ≤ (blames U k).card))
-
-instance decidableSkippedLeaderInView (V : View U) (k : ℕ) :
-    Decidable (SkippedLeaderInView U V k) :=
-  inferInstanceAs (Decidable (qFast Replica ≤ (blamesInView U V k).card))
+  inferInstanceAs (Decidable (qFast Replica ≤ (slotBlames U k).card))
 
 end Skip
 
@@ -70,7 +58,8 @@ section Rule
 
 variable [LinearOrder BlockId]
 
-@[simp] theorem hydrozoanAnchored_wave : (hydrozoanAnchored Replica BlockId).wave = 2 := rfl
+@[simp] theorem hydrozoanAnchored_waveAt (r : ℕ) :
+    (hydrozoanAnchored Replica BlockId).waveAt r = 2 := rfl
 
 @[simp] theorem hydrozoanAnchored_rungs : (hydrozoanAnchored Replica BlockId).rungs = 2 := rfl
 
@@ -84,54 +73,7 @@ instance (V : View U) (S : Slots Replica) (k : ℕ) :
 
 end Rule
 
-/-! ## Views only grow -/
-
-/-- A larger view holds every supporter the smaller one does. -/
-theorem fastCommitInView_mono {V V' : View U} (hsub : V.ids ⊆ V'.ids)
-    {L : BlockId} {r : ℕ} (h : FastCommitInView U V L r) :
-    FastCommitInView U V' L r :=
-  le_trans h (Finset.card_le_card (Finset.image_subset_image
-    (Finset.inter_subset_inter Finset.Subset.rfl hsub)))
-
-/-- A larger view holds every certificate the smaller one does. -/
-theorem slowCommitInView_mono {V V' : View U} (hsub : V.ids ⊆ V'.ids)
-    {L : BlockId} {r : ℕ} (h : SlowCommitInView U V L r) :
-    SlowCommitInView U V' L r :=
-  le_trans h (Finset.card_le_card (Finset.image_subset_image
-    (Finset.inter_subset_inter Finset.Subset.rfl hsub)))
-
-/-- A larger view holds every blame the smaller one does. -/
-theorem skippedLeaderInView_mono [S : Slots Replica] {V V' : View U}
-    (hsub : V.ids ⊆ V'.ids) {k : ℕ} (h : SkippedLeaderInView U V k) :
-    SkippedLeaderInView U V' k :=
-  le_trans h (Finset.card_le_card (Finset.image_subset_image
-    (Finset.inter_subset_inter Finset.Subset.rfl hsub)))
-
 /-! ## The skip reads the schedule at its slot -/
-
-/-- The blames of a slot are the same under any two schedules naming the
-same round and leader there. -/
-theorem blamesInView_congr {S₁ S₂ : Slots Replica} {V : View U} {k : ℕ}
-    (hround : S₁.slotRound k = S₂.slotRound k) (hk : S₁.leader k = S₂.leader k) :
-    blamesInView (S := S₁) U V k = blamesInView (S := S₂) U V k := by
-  unfold blamesInView
-  congr 1
-  ext b
-  simp only [Finset.mem_inter, Finset.mem_filter, blocksAt, votingRound, hround]
-  constructor
-  · rintro ⟨⟨⟨hbm, hbr⟩, hbn⟩, hbV⟩
-    exact ⟨⟨⟨hbm, hbr⟩, fun j hj hjL => hbn j hj (isLeaderBlock_congr hround.symm hk.symm hjL)⟩,
-      hbV⟩
-  · rintro ⟨⟨⟨hbm, hbr⟩, hbn⟩, hbV⟩
-    exact ⟨⟨⟨hbm, hbr⟩, fun j hj hjL => hbn j hj (isLeaderBlock_congr hround hk hjL)⟩, hbV⟩
-
-/-- And so is the direct skip. -/
-theorem skippedLeaderInView_congr {S₁ S₂ : Slots Replica} {V : View U} {k : ℕ}
-    (hround : S₁.slotRound k = S₂.slotRound k) (hk : S₁.leader k = S₂.leader k)
-    (h : SkippedLeaderInView (S := S₁) U V k) : SkippedLeaderInView (S := S₂) U V k := by
-  unfold SkippedLeaderInView at h ⊢
-  rw [← blamesInView_congr hround hk]
-  exact h
 
 end Hydrozoan
 

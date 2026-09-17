@@ -1,30 +1,16 @@
+import LeanDag.Properties.Commit
 import LeanDag.Barnacle.Model.Live
 /-!
 # Barnacle: the descent laws and runs of heads
 
-What the liveness clause of a base protocol rests on, under multiple
-leaders per round (`barnacle.md` §8). The development's own
-liveness route — a run of consecutive correct-led slots spanning a wave
-(`FairRunOn`) — has no instance under the paper's rotation
-`GetLeader(r + l)` at two or more leaders and four validators: three
-consecutive rounds name every validator. What does exist is a run of
-correct-led *heads*, first slots of consecutive rounds, and a head
-committed a wave above a slot decides it with no eligible slot between.
-
-Two facts of the base protocol carry the argument, stated here as a
-second law structure, `Descent`, over a live rule: on a good DAG the
-slots led by a set of validators missing at most `slack` commit
-directly, whatever the schedule (the paper's A4, "an honest leader's
-slot is decided directly after GST"); and the indirect rule — the
-nearest committed slot a full wave above a slot decides it (A3). The
-eligibility gap of every rule of this development is its wave length,
-so no separate gap is stated.
-
-`HeadsRun` is the schedule clause: `g` consecutive `T`-led round heads
-within `c₀` rounds of any round. Under `Sched m` the head of round `ρ`
-is slot `m · ρ`, led by `getLeader ρ` whatever the count, so one clause
-serves every configuration; round-robin satisfies it by pigeonhole
-(`Heads/Statement.lean`).
+What a base protocol owes for liveness under multiple leaders per round
+(`barnacle.md` §8). The development's own run-of-consecutive-slots route
+has no instance under the paper's rotation at several leaders and few
+validators, so the argument instead runs on *heads*, first slots of
+consecutive rounds. `LiveRule.Descent` packages the two facts this
+needs — A4's direct-commit clause and A3's indirect rule — and
+`HeadsRun` is the schedule clause a run of heads satisfies; round-robin
+meets it by pigeonhole (`Heads/Statement.lean`).
 
 **Trusted core of the arc: definitions only.**
 -/
@@ -36,33 +22,18 @@ namespace Barnacle
 variable {Validator : Type} [Fintype Validator] [DecidableEq Validator]
 variable {BlockId : Type} [DecidableEq BlockId] {Payload : Type}
 
-/-- **The descent laws** of a live rule, with `slack` the number of
+/-- **The descent laws** of a live rule: `Properties.Descent` at the
+rule's own gap and goodness predicate, with `slack` the number of
 validators the good set may miss. -/
-structure LiveRule.Descent (R : LiveRule Validator BlockId Payload) (slack : ℕ) : Prop where
-  /-- **A4, direct commits.** On a DAG good from `Rnd` to `N` there is a
-  set `T` of validators, all but at most `slack`, such that on any
-  schedule a `T`-led slot at a round from `Rnd` whose wave fits under
-  `N` is committed — on any view caught up to `N`, the full view
-  included, the commit's evidence lying a wave below `N`. -/
-  goodLeaders : ∀ (U : R.Universe) (Rnd N : ℕ), R.Good U Rnd N →
-    ∃ T : Finset Validator, Fintype.card Validator ≤ T.card + slack ∧
-      ∀ (S : Slots Validator) (V : R.View U) (κ : ℕ), R.toBaseRule.CoversUpto U V N →
-        Rnd ≤ S.slotRound κ → S.slotRound κ + R.waveLength ≤ N →
-        S.leader κ ∈ T → ∃ L, R.Decided S V κ (some L)
-  /-- **A3, the indirect rule.** If slot `j`, a full wave above slot `i`,
-  is committed on `V`, and every slot strictly between them that is a
-  full wave above `i` is skipped on `V`, then `i` is decided on `V`. -/
-  indirect : ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (i j : ℕ) (A : BlockId),
-    S.slotRound i + R.waveLength ≤ S.slotRound j → R.Decided S V j (some A) →
-    (∀ i', i < i' → i' < j → S.slotRound i + R.waveLength ≤ S.slotRound i' →
-      R.Decided S V i' none) →
-    ∃ v, R.Decided S V i v
+abbrev LiveRule.Descent (R : LiveRule Validator BlockId Payload) (slack : ℕ) : Prop :=
+  Properties.Descent R.toBaseRule.toDagRule R.Good R.waveLength slack
 
 /-- **A run of heads**: from every round `r`, within `c₀` rounds, `g`
-consecutive rounds whose heads — first slots, led by `getLeader` of the
-round — are led by members of `T`. -/
-def HeadsRun (getLeader : ℕ → Validator) (T : Finset Validator) (g c₀ : ℕ) : Prop :=
-  ∀ r, ∃ ρ, r ≤ ρ ∧ ρ + g ≤ r + c₀ ∧ ∀ i, i < g → getLeader (ρ + i) ∈ T
+consecutive rounds whose heads — first slots, led by `head` of the
+round — are led by members of `T`. A configuration's own head function
+is `Config.head`. -/
+def HeadsRun (head : ℕ → Validator) (T : Finset Validator) (g c₀ : ℕ) : Prop :=
+  ∀ r, ∃ ρ, r ≤ ρ ∧ ρ + g ≤ r + c₀ ∧ ∀ i, i < g → head (ρ + i) ∈ T
 
 end Barnacle
 

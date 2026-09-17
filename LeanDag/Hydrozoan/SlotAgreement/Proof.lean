@@ -5,15 +5,7 @@ import LeanDag.Hydrozoan.DirectSafety.Proof
 /-!
 # Slot agreement — proof
 
-Generated proof layer; not part of the audit surface. Slot agreement is
-the anchored relation's `decided_unique` at Hydrozoan's laws. What the
-laws ask is exactly what the arc had proved: direct-versus-direct
-pairings close by `DirectSafety`, a direct commit is linked at some rung
-from any candidate of an eligible slot (the rung-fires lemmas of
-`Helpers/SlotAgreement.lean`), and cannot coexist with a rung choice for
-a different block (the starvation lemmas), a skipped slot links nothing,
-and two choices at one rung agree — certificate uniqueness at rung `0`,
-antisymmetry of the order at rung `1`.
+Generated proof layer; not part of the audit surface.
 -/
 
 namespace LeanDag
@@ -89,19 +81,13 @@ theorem hydrozoanLaws : (hydrozoanAnchored Replica BlockId).Laws where
   commit_mono := by
     intro S U V V' L r _ hsub h
     rcases h with h | h
-    · exact Or.inl (fastCommitInView_mono hsub h)
-    · exact Or.inr (slowCommitInView_mono hsub h)
-  skip_mono := fun _ hsub h => skippedLeaderInView_mono hsub h
-  skip_congr := fun _ hround hk h => skippedLeaderInView_congr hround hk h
-  link_congr := by
-    intro S₁ S₂ U A L i k hround _ h
-    rcases i with _ | i
-    · change CertifiedIn U A L (S₁.slotRound k) at h
-      change CertifiedIn U A L (S₂.slotRound k)
-      rw [← hround]; exact h
-    · change WeakLinked U A L (S₁.slotRound k) at h
-      change WeakLinked U A L (S₂.slotRound k)
-      rw [← hround]; exact h
+    · exact Or.inl (HoldsAtLeast.mono hsub h)
+    · exact Or.inr (HoldsAtLeast.mono hsub h)
+  skip_mono := fun _ hsub h => HoldsAtLeast.mono hsub h
+  skip_congr := fun _ hround hk h => blameSkip_congr hround hk h
+  link_congr := (hydrozoanAnchored Replica BlockId).linkCongr_of_round
+    (fun i U A L r => match i with | 0 => CertifiedIn U A L r | _ => WeakLinked U A L r)
+    fun i _ _ _ _ _ => by rcases i with _ | i <;> rfl
 
 variable [S : Slots Replica] {U : BlockUniverse Replica BlockId}
 

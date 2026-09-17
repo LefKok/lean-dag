@@ -1,6 +1,10 @@
+import Mathlib.Tactic.Linarith
+import Mathlib.Order.Basic
+import Mathlib.Data.Nat.Find
 import Mathlib.Order.Monotone.Basic
 import Mathlib.Logic.Function.Basic
 import Mathlib.Data.Fin.Basic
+import Mathlib.Data.Finset.Basic
 
 /-!
 # The slot schedule
@@ -15,23 +19,14 @@ Optimal-Hydrozoan all take `[S : Slots Validator]`.
 namespace LeanDag
 
 /-- The leader schedule: which validator proposes at which round, as a
-sequence of slots.
-
-Slots need **not** be three rounds apart. Under pipelining consecutive slots
-are one round apart, and under multiple leaders per round they share a round,
-so all that is required of `slotRound` is that it be monotone. The three-round
-separation M4's commit half needs is no longer a property of *consecutive*
-slots and is therefore not derivable here; it is required instead of the
-particular pairs that use it, by `Eligible` below.
-
-`unbounded` was a theorem under three-round spacing (`3 * k ≤
-slotRound k`) and is underivable from `mono` alone — a schedule parking every
-slot at one round is monotone. Liveness needs it, so it is assumed.
-
-`keyed` says distinct slots differ in round or in leader. It too held under three-round spacing, which makes `slotRound` injective outright. Under
-multiple leaders it is a real condition on the schedule: the proposers of a
-round must be distinct validators. Without it one block would be the candidate
-for two slots, and the ledger would deliver it twice. -/
+sequence of slots. Slots need not be three rounds apart — under
+pipelining they are one round apart, and under multiple leaders per
+round they share one — so `slotRound` need only be monotone, and the
+separation M4's commit half needs is required instead at `Eligible`
+below. `unbounded` is assumed, not derivable from `mono` alone. `keyed`
+is a real condition once several leaders share a round: without it one
+block would be the candidate for two slots, and the ledger would
+deliver it twice. -/
 class Slots (Validator : Type*) where
   /-- The round at which slot `k` is proposed. -/
   slotRound : ℕ → ℕ
@@ -50,17 +45,79 @@ class Slots (Validator : Type*) where
 Stated here, below every protocol, so that a rule's grounding witness can
 take a concrete schedule without importing the core. -/
 
+/-- **A fair schedule offers runs**: past any slot, `c` consecutive `T`-led
+slots. An assumption about the schedule, not a theorem: `leader` may
+name faulty validators for ever. -/
+def FairRunOn {Validator : Type*} [S : Slots Validator] (T : Finset Validator) (c : ℕ) : Prop :=
+  ∀ k, ∃ k', k ≤ k' ∧ ∀ i, i < c → S.leader (k' + i) ∈ T
+
+/-- The schedule names a correct leader arbitrarily far out. Without it no
+recurrence statement holds: `Slots.leader` is an arbitrary function and could
+name Byzantine validators forever, however synchronous the network. -/
+def FairScheduleOn {Validator : Type*} [S : Slots Validator] (T : Finset Validator) : Prop :=
+  ∀ k, ∃ k', k ≤ k' ∧ S.leader k' ∈ T
+
+/-- A run of `c` slots contains a `T`-led slot, so `FairRunOn` refines
+`FairScheduleOn` and everything proved from the latter still applies. -/
+theorem FairRunOn.fairScheduleOn {Validator : Type*} [S : Slots Validator]
+    {T : Finset Validator} {c : ℕ} (hc : 0 < c) (h : FairRunOn T c) :
+    FairScheduleOn T := by
+  intro k
+  obtain ⟨k', hk', hrun⟩ := h k
+  exact ⟨k', hk', by simpa using hrun 0 hc⟩
+
+/-- **Every member of `T` leads arbitrarily far out** — per-validator
+fairness, strictly stronger than `FairScheduleOn`. Round-robin supplies
+it, and the rotation-inclusion result of report §11.5 consumes it: a
+straggler's block enters the ledger when its own author leads. -/
+def FairToEach {Validator : Type*} [S : Slots Validator] (T : Finset Validator) : Prop :=
+  ∀ v ∈ T, ∀ k, ∃ k', k ≤ k' ∧ S.leader k' = v
+
+/-- The least slot proposed at or after round `n`, named explicitly
+since under multiple leaders slot `n` itself may sit far below round
+`n`. -/
+def slotAt (Validator : Type*) [S : Slots Validator] (n : ℕ) : ℕ := Nat.find (S.unbounded n)
+
+/-- `slotAt n` names a slot at or past round `n` — the defining property
+of the index. -/
+theorem le_slotRound_slotAt {Validator : Type*} [S : Slots Validator] (n : ℕ) :
+    n ≤ S.slotRound (slotAt Validator n) :=
+  Nat.find_spec (S.unbounded n)
+
+/-- Round `0` is served by slot `0`. -/
+@[simp]
+theorem slotAt_zero {Validator : Type*} [S : Slots Validator] :
+    slotAt Validator 0 = 0 := by
+  rw [slotAt, Nat.find_eq_zero]
+  omega
+
+/-- Consecutive slots are at most `s` rounds apart — the upper companion
+to such a field. Every real schedule has one; the class omits it because
+no safety result ever asks. -/
+def BoundedSpacing {Validator : Type*} [S : Slots Validator] (s : ℕ) : Prop :=
+  ∀ k, S.slotRound (k + 1) ≤ S.slotRound k + s
+
+/-- Bounded spacing accumulates: `d` slots on costs at most `s * d` rounds. -/
+theorem slotRound_le_of_boundedSpacing {Validator : Type*} [S : Slots Validator] {s : ℕ}
+    (hs : BoundedSpacing (Validator := Validator) s) (k d : ℕ) :
+    S.slotRound (k + d) ≤ S.slotRound k + s * d := by
+  induction d with
+  | zero => simp
+  | succ d ih =>
+      have hstep := hs (k + d)
+      have hmul : s * (d + 1) = s * d + s := Nat.mul_succ s d
+      have hassoc : k + (d + 1) = (k + d) + 1 := by omega
+      rw [hassoc]
+      omega
+
 namespace Slots
 
 variable {Validator : Type*}
 
 /-- **The uniform schedule**: `m` leaders in every `p`-th round, slot `k`
-proposed by `elect k`.
-
-`hblock` is the one real condition — the `m` proposers sharing a round are
-distinct validators. Round-robin `elect k = k % n` satisfies it whenever
-`m ≤ n`. Without it a single block would be the candidate for two slots and
-the ledger would deliver it twice. -/
+proposed by `elect k`. `hblock` is the one real condition — the `m`
+proposers of a round are distinct validators — which round-robin
+satisfies whenever `m ≤ n`. -/
 @[reducible]
 def uniform (p m : ℕ) (hp : 0 < p) (hm : 0 < m) (elect : ℕ → Validator)
     (hblock : ∀ k₁ k₂, k₁ / m = k₂ / m → elect k₁ = elect k₂ → k₁ = k₂) :
@@ -108,6 +165,15 @@ theorem uniformSingle_slotRound {p : ℕ} {hp : 0 < p} {elect : ℕ → Validato
     (uniformSingle p hp elect).slotRound k = p * k := by
   simp
 
+/-- **Fairness places a run past any slot and any round.** -/
+theorem exists_run_past [S : Slots Validator] {T : Finset Validator} {c : ℕ}
+    (fair : FairRunOn T c) (k R : ℕ) :
+    ∃ b, k ≤ b ∧ R ≤ S.slotRound b ∧ ∀ i, i < c → S.leader (b + i) ∈ T := by
+  obtain ⟨k₀, hk₀⟩ := S.unbounded R
+  obtain ⟨b, hb, hlead⟩ := fair (max k k₀)
+  exact ⟨b, le_trans (le_max_left _ _) hb,
+    le_trans hk₀ (S.mono (le_trans (le_max_right _ _) hb)), hlead⟩
+
 end Slots
 
 /-- **The identity schedule** with a given leader map: one slot per round.
@@ -116,14 +182,10 @@ The three laws are immediate. -/
 def Slots.identity {Validator : Type*} (leader : ℕ → Validator) : Slots Validator :=
   ⟨id, leader, fun _ _ h => h, fun n => ⟨n, le_rfl⟩, fun _ _ h => congrArg Prod.fst h⟩
 
-/-- **The wave-aligned round-robin schedule** on `n` validators: pipelined
-(one slot per round), with the leader holding for a whole wave — three
-consecutive slots — before the rotation advances.
-
-Written out field by field so that `slotRound k = k` holds by `rfl`, which
-Hydrozoan's grounding reads definitionally. A `def` rather than an
-`instance`, like `rrSlots` in the witness files: a second `Slots` instance
-on the same type would make synthesis ambiguous, so every use passes
+/-- **The wave-aligned round-robin schedule** on `n` validators:
+pipelined, with the leader holding for a whole wave of three slots
+before the rotation advances. A `def`, not an `instance` — a second
+`Slots` instance would make synthesis ambiguous — so every use passes
 `(S := waveRobin n hn)` explicitly. -/
 @[reducible]
 def waveRobin (n : ℕ) (hn : 0 < n) : Slots (Fin n) where
@@ -142,5 +204,11 @@ theorem waveRobin_slotRound {n : ℕ} {hn : 0 < n} (k : ℕ) :
 cycle are led by validator `v`. -/
 theorem waveRobin_leader_val {n : ℕ} {hn : 0 < n} (k : ℕ) :
     ((waveRobin n hn).leader k).val = k / 3 % n := rfl
+
+/-- Two schedules with the same rounds and the same leaders are the same
+schedule: what remains of `Slots` is propositions. -/
+theorem Slots.ext' {Validator : Type*} {S T : Slots Validator}
+    (hr : S.slotRound = T.slotRound) (hl : S.leader = T.leader) : S = T := by
+  cases S; cases T; cases hr; cases hl; rfl
 
 end LeanDag

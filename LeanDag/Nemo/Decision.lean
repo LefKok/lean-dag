@@ -1,5 +1,6 @@
 import LeanDag.Nemo.Rules
 import LeanDag.Common.Anchored.Band
+import LeanDag.Common.Rules
 /-!
 # Nemo: the decision relation
 
@@ -24,38 +25,19 @@ variable {U : Universe Validator BlockId Payload}
 variable [S : Slots Validator]
 
 omit [DecidableEq BlockId] in
-/-- **A slot has at most one candidate.** -/
-theorem isLeaderBlock_unique {k : ℕ} {L₁ L₂ : BlockId}
-    (h₁ : IsLeaderBlock U k L₁) (h₂ : IsLeaderBlock U k L₂) : L₁ = L₂ :=
-  U.eq_of_creator_eq h₁.1 h₂.1 (by rw [h₁.2.2, h₂.2.2]) (by rw [h₁.2.1, h₂.2.1])
-
 /-! ## The view-relative direct rule -/
 
-/-- Direct commit, as judged from a single view: the record's
-`supportersIn`, at the round above `L`. -/
-def DirectCommitIn (U : Universe Validator BlockId Payload)
+/-- Direct commit, as judged from a single view: the view holds votes for
+`L` at the round above it from a majority of validators. -/
+abbrev DirectCommitIn (U : Universe Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (L : BlockId) (r : ℕ) : Prop :=
-  majority Validator ≤ (supportersIn U V L (r + 1)).card
-
-instance {V : View Validator BlockId Payload U} (L : BlockId) (r : ℕ) :
-    Decidable (DirectCommitIn U V L r) :=
-  inferInstanceAs (Decidable (_ ≤ _))
+  supportCommit (majority Validator) U V L r
 
 omit S in
 /-- A view can only under-report: its direct commit is genuine. -/
 theorem directCommit_of_directCommitIn
     {V : View Validator BlockId Payload U} {L : BlockId} {r : ℕ}
-    (h : DirectCommitIn U V L r) : DirectCommit U L r :=
-  le_trans h (Finset.card_le_card
-    (Finset.image_subset_image Finset.inter_subset_left))
-
-omit S in
-/-- A larger view can only see more supporters. -/
-theorem directCommitIn_mono {V V' : View Validator BlockId Payload U}
-    (hsub : V.ids ⊆ V'.ids) {L : BlockId} {r : ℕ} (h : DirectCommitIn U V L r) :
-    DirectCommitIn U V' L r :=
-  le_trans h (Finset.card_le_card (Finset.image_subset_image
-    (Finset.inter_subset_inter Finset.Subset.rfl hsub)))
+    (h : DirectCommitIn U V L r) : DirectCommit U L r := h.le
 
 /-! ## The relation -/
 
@@ -66,15 +48,17 @@ stake, so skips only ever arrive via an anchor — and one rung, a vote in
 the anchor's cone, with no tie to break since a slot has one candidate. -/
 def nemoAnchored (Validator BlockId Payload : Type) [Fintype Validator] [DecidableEq Validator]
     [DecidableEq BlockId] : AnchoredRule Validator BlockId Payload ValidWrt Finset.univ where
-  wave := 1
+  waveAt := fun _ => 1
   Commit := fun U V L r => Nemo.DirectCommitIn U V L r
+  decCommit := fun _ _ _ _ => inferInstance
   Skip := fun _ _ _ _ => False
   rungs := 1
   Link := fun _ U A L S k => CertifiedIn U A L (S.slotRound k)
   tie := fun _ _ _ => False
 
 omit S in
-@[simp] theorem nemoAnchored_wave : (nemoAnchored Validator BlockId Payload).wave = 1 := rfl
+@[simp] theorem nemoAnchored_waveAt (r : ℕ) :
+    (nemoAnchored Validator BlockId Payload).waveAt r = 1 := rfl
 omit S in
 @[simp] theorem nemoAnchored_rungs : (nemoAnchored Validator BlockId Payload).rungs = 1 := rfl
 
@@ -112,25 +96,24 @@ theorem certifiedIn_of_directCommitIn_at_anchor
   certifiedIn_of_directCommit (directCommit_of_directCommitIn h) hA.1
     (by
       have := (nemoAnchored Validator BlockId Payload).anchor_round_le hA helig
-      simp only [nemoAnchored_wave] at this; omega)
+      simp only [nemoAnchored_waveAt] at this; omega)
 
 omit S in
 /-- **Nemo's laws**, every commit-against-commit case by candidate
 uniqueness and the crossings by visibility. -/
 theorem nemoLaws : (nemoAnchored Validator BlockId Payload).Laws where
-  commit_unique := fun _ hL₁ hL₂ _ _ => isLeaderBlock_unique hL₁ hL₂
+  commit_unique := fun _ hL₁ hL₂ _ _ => isLeaderBlock_unique_of_honest (Finset.mem_univ _) hL₁ hL₂
   commit_skip := fun _ _ _ h => h.elim
   commit_link := fun _ _ h hA helig => ⟨0, Nat.one_pos,
     Nemo.certifiedIn_of_directCommitIn_at_anchor (show Nemo.DirectCommitIn _ _ _ _ from h) hA helig⟩
-  commit_link_unique := fun _ hL₁ hL₂ _ _ _ _ _ _ _ => isLeaderBlock_unique hL₁ hL₂
+  commit_link_unique := fun _ hL₁ hL₂ _ _ _ _ _ _ _ => isLeaderBlock_unique_of_honest (Finset.mem_univ _) hL₁ hL₂
   skip_link := fun _ h _ _ => h.elim
-  link_unique := fun _ hL₁ hL₂ _ _ _ _ _ _ _ _ => isLeaderBlock_unique hL₁ hL₂
-  commit_mono := fun _ hsub h => directCommitIn_mono hsub h
+  link_unique := fun _ hL₁ hL₂ _ _ _ _ _ _ _ _ => isLeaderBlock_unique_of_honest (Finset.mem_univ _) hL₁ hL₂
+  commit_mono := fun _ hsub h => HoldsAtLeast.mono hsub h
   skip_mono := fun _ _ h => h
   skip_congr := fun _ _ _ h => h
-  link_congr := fun hround _ h => by
-    change Nemo.CertifiedIn _ _ _ _ at h ⊢
-    rwa [← hround]
+  link_congr := (nemoAnchored Validator BlockId Payload).linkCongr_of_round
+    (fun _ U A L r => Nemo.CertifiedIn U A L r) fun _ _ _ _ _ _ => rfl
 
 end Nemo
 

@@ -19,7 +19,7 @@ Case 1: the fast path leaves only its weak footprint for the indirect
 rule.
 
 The view `V4` withholds one voter (id 13), so slot 0's **direct rules
-all fail in view** — no fast quorum, no LeanDag.Hydrozoan.certificates, no LeanDag.Hydrozoan.blames — and
+all fail in view** — no fast quorum, no LeanDag.Hydrozoan.certificates, no slotBlames — and
 the weak rung is exercised end to end as the *only*
 route, with its rung-1-empty and tie-break premises discharged
 non-vacuously.
@@ -34,8 +34,6 @@ namespace LeanDagTest
 namespace Hydrozoan
 
 open LeanDag LeanDag.Hydrozoan
-
-set_option maxRecDepth 8192
 
 /-- Thirty-two blocks over five rounds. Ids 0–6: genesis (creator = id).
 Round 1: id 7 (creator 0) votes leader 2; **id 8 (creator 0), the
@@ -87,7 +85,7 @@ def V4 : View U4 where
 
 -- The universe fast-commits slot 0's candidate: six of seven creators
 -- vote (the equivocator counts once, through its voting copy).
-example : LeanDag.Hydrozoan.supporters U4 2 1 = {0, 2, 3, 4, 5, 6} := by decide
+example : supporters U4 2 1 = {0, 2, 3, 4, 5, 6} := by decide
 example : FastCommit U4 2 0 := by decide
 
 -- THE STRUCTURAL FACT: zero LeanDag.Hydrozoan.certificates for the fast-committed leader
@@ -130,7 +128,7 @@ example : Decided U4 V4 0 (some 2) := by
       subst this
       have : i = 0 := by omega
       subst this
-      exact absurd ((certifiedIn_iff_history (by decide)).mp hcert) (by decide))
+      exact absurd ((linkedVia_iff_history (by decide)).mp hcert) (by decide))
     (by decide)
     (show WeakLinked U4 24 2 0 from (weakLinked_iff_history (by decide)).mpr (by decide))
     (fun L' hL' _ => by

@@ -43,8 +43,6 @@ open LeanDagTest.Hydrozoan
 
 open LeanDag LeanDag.Hydrozoan LeanDag.OptimalHydrozoan
 
-set_option maxRecDepth 16384
-
 -- LeanDag.Hydrozoan.Correct = {1, 2}; every round up to 3 is filled by both.
 example : (LeanDag.Hydrozoan.Correct : Finset (Fin 3)) = {1, 2} := by decide
 example : LeanDag.Hydrozoan.Populated UC 0 ∧ LeanDag.Hydrozoan.Populated UC 1 ∧ LeanDag.Hydrozoan.Populated UC 2 ∧ LeanDag.Hydrozoan.Populated UC 3 := by decide
@@ -72,8 +70,8 @@ example :
 
 -- Skip liveness on slot 1 (leader 0, crashed, no candidate): guaranteed
 -- by the correct pair alone — no synchrony, no fault-count premise.
--- Hydrozoan's rule would need qFast = 3 LeanDag.Hydrozoan.blames and never fires here.
-example : (∀ L, ¬ IsLeaderBlock UC 1 L) ∧ LeanDag.Hydrozoan.blames UC 1 = {1, 2} ∧ ¬ SkippedLeader UC 1 := by
+-- Hydrozoan's rule would need qFast = 3 slotBlames and never fires here.
+example : (∀ L, ¬ IsLeaderBlock UC 1 L) ∧ slotBlames UC 1 = {1, 2} ∧ ¬ SkippedLeader UC 1 := by
   decide
 example : SkippedLeaderOpt UC 1 ∧ DecidedOpt OC (View.full UC) 1 none :=
   (OptimalHydrozoan.DirectLiveness.holds (Fin 3) (Fin 9) OC).2 (LeanDag.Hydrozoan.Correct : Finset (Fin 3)) 1
@@ -119,7 +117,7 @@ example : ¬ SynchronisedOn UD {1, 2, 3} 0 := fun h =>
 /-- Fifteen blocks over four rounds. Ids 0–3: genesis. Round 1: 4 by `0`
 (slot 1's candidate) and 5, 6, 7 by `1`, `2`, `3`, all referencing
 `{0, 1, 2}`. Round 2: 8 by `0` references `{4, 5, 6}` — the Byzantine
-vote for 4; 9, 10, 11 by `1`, `2`, `3` reference `{5, 6, 7}` — LeanDag.Hydrozoan.blames.
+vote for 4; 9, 10, 11 by `1`, `2`, `3` reference `{5, 6, 7}` — slotBlames.
 Round 3: 12, 13, 14 by `1`, `2`, `3` reference `{8, 9, 10}`. -/
 def lkA : Fin 15 → Block (Fin 4) (Fin 15) := fun i =>
   if h : (i : ℕ) < 4 then
@@ -144,7 +142,7 @@ def UA : BlockUniverse (Fin 4) (Fin 15) where
 /-- ... as an `OptUniverse` (one block per creator per round: no
 equivocation is witnessed). -/
 def OA : OptUniverse (Fin 4) (Fin 15) :=
-  { UA with leader_excluded := leaderExcluded_of_noEquivocation UA (by decide) }
+  OptUniverse.ofNoEquivocation UA (by decide)
 
 -- Every premise of SkipLiveness but the candidate-less one holds for
 -- T = {1, 2, 3} at slot 1 ...
@@ -154,13 +152,13 @@ example :
   decide
 
 -- ... the correct replicas all blame the candidate, at exactly qCert ...
-example : LeanDag.Hydrozoan.blames UA 1 = {1, 2, 3} ∧ qCert (Fin 4) ≤ (LeanDag.Hydrozoan.blames UA 1).card := by decide
+example : slotBlames UA 1 = {1, 2, 3} ∧ qCert (Fin 4) ≤ (slotBlames UA 1).card := by decide
 
 -- ... yet the slot is not skipped: the single Byzantine vote 8, referenced
 -- by every correct decision-round block, makes each of them fast evidence
 -- for the candidate, so no no-evidence quorum exists.
 example :
-    votesFor UA 12 4 = {0} ∧ IsFastEvidence UA 1 12 4 ∧ ¬ IsNoFastEvidence UA 1 12 ∧
+    votersOf UA 12 4 = {0} ∧ IsFastEvidence UA 1 12 4 ∧ ¬ IsNoFastEvidence UA 1 12 ∧
       ¬ NoEvidenceQuorum UA 1 ∧ ¬ SkippedLeaderOpt UA 1 := by
   decide
 

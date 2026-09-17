@@ -1,6 +1,9 @@
 import LeanDagTest.Hybrid.Model
-import LeanDag.Barnacle.Orcaella.Proof
+import LeanDagTest.Barnacle.Rules.Orcaella.Proof
 import LeanDag.Barnacle.Helpers.Cover
+import LeanDag.Barnacle.Aimd.Rule
+import Mathlib.Tactic.FinCases
+import Mathlib.Tactic.IntervalCases
 /-!
 # Barnacle over Orcaella — the base witnesses
 
@@ -45,8 +48,6 @@ namespace Barnacle
 
 namespace OrcaellaBase
 
-set_option maxRecDepth 2000000
-
 open LeanDag LeanDag.Barnacle LeanDag.Hybrid
 
 /-! ## The instance pins: the derived hybrid classes are in force -/
@@ -73,28 +74,37 @@ def Ohyb4 : bnOrc.Universe := ⟨Uhyb4, by decide⟩
 
 /-! ## The window count at wave length two -/
 
-/-- Three-round interval, at most four leaders. -/
-def orcPo : Params := ⟨3, 4, 96, 100, by decide, by decide⟩
+/-- At most four leaders and a three-round interval. -/
+def orcPo : Params := ⟨4, 3, 96, 100, by decide⟩
 
 def orcLeader4 : ℕ → Fin 4 := roundRobin 4 (by omega)
 
 theorem orcWin4 : Keyed orcLeader4 4 := roundRobin_keyed 4 (by omega)
+
+def orcLead4 : ℕ → ℕ → Fin 4 := leadOf orcLeader4
+
+theorem orcLeadKeyed4 : LeadKeyed orcLead4 4 := leadKeyed_of_keyed (by omega) orcWin4
+
+/-- The configuration at count `m`, three-round interval. -/
+def orcCfg (m : ℕ) (hm : 0 < m) (hmax : m ≤ 4) : Config (Fin 4) :=
+  Config.uniform orcLead4 orcLeadKeyed4 m hm hmax 3
+
+abbrev orcC1 : Config (Fin 4) := orcCfg 1 (by decide) (by decide)
+abbrev orcC4 : Config (Fin 4) := orcCfg 4 (by decide) (by decide)
 
 -- Anchor `10` (round `3`, author `0`); the window is rounds `0` to `3`.
 -- At count one, rounds `0` and `1` score — round `2`'s only supporter in
 -- the window is the anchor itself, and round `3` has no next round. At
 -- count four, the same two rounds score at every leader but the crashed
 -- one: six commits against an expected eight.
-example : observed bnOrc orcPo orcLeader4 orcWin4 Ohyb4 10 1 (by decide) (by decide) = 2 := by
-  decide
-example : observed bnOrc orcPo orcLeader4 orcWin4 Ohyb4 10 4 (by decide) (by decide) = 6 := by
-  decide
-example : expected bnOrc orcPo 1 = 2 := by decide
-example : expected bnOrc orcPo 4 = 8 := by decide
-example : Aimd.rule bnOrc orcPo orcLeader4 orcWin4 1 0 Ohyb4 (bnOrc.full Ohyb4) 10 = (2, 0) := by
-  decide
-example : Aimd.rule bnOrc orcPo orcLeader4 orcWin4 4 0 Ohyb4 (bnOrc.full Ohyb4) 10 = (3, 1) := by
-  decide
+example : observed bnOrc orcC1 Ohyb4 10 = 2 := by decide
+example : observed bnOrc orcC4 Ohyb4 10 = 6 := by decide
+example : expected bnOrc orcC1 3 = 2 := by decide
+example : expected bnOrc orcC4 3 = 8 := by decide
+example : (Aimd.rule bnOrc orcPo orcLead4 orcLeadKeyed4 orcC1 0 Ohyb4
+    (bnOrc.full Ohyb4) (fun _ => none) 10).1.slotsAt 0 = 2 := by decide
+example : (Aimd.rule bnOrc orcPo orcLead4 orcLeadKeyed4 orcC4 0 Ohyb4
+    (bnOrc.full Ohyb4) (fun _ => none) 10).1.slotsAt 0 = 3 := by decide
 
 /-! ## Orcaella's `Good` on `Ohyb4`, and its descent law -/
 
@@ -109,7 +119,7 @@ theorem ohyb4_sync : SynchronisedOn Uhyb4 {0, 1, 2} 0 := by
 theorem ohyb4_good :
     (orcaellaLive (Validator := Fin 4) (BlockId := Fin 13) (Payload := Unit) 2).Good
       Ohyb4 0 3 :=
-  ⟨{0, 1, 2}, by decide, by decide, ohyb4_sync, fun r h1 h2 => by interval_cases r <;> decide⟩
+  ⟨{0, 1, 2}, ⟨by decide, by decide⟩, ohyb4_sync, fun r h1 h2 => by interval_cases r <;> decide⟩
 
 /-- Through `Orcaella.holds`: the good set commits a round-`1` slot.
 `goodLeaders` bounds `T` by cardinality only — three of four — so `T`
@@ -117,14 +127,13 @@ may contain the crashed validator, whose slots never commit; but `T`
 must also meet `{0, 1, 2}`, and at count `4` every validator leads a
 slot of round `1`. -/
 theorem ohyb4_commit :
-    ∃ κ, (Sched orcLeader4 orcWin4 4 (by decide) (by decide)).slotRound κ = 1 ∧
-      ∃ L, bnOrc.Decided (Sched orcLeader4 orcWin4 4 (by decide) (by decide))
-        (bnOrc.full Ohyb4) κ (some L) := by
+    ∃ κ, orcC4.sched.slotRound κ = 1 ∧
+      ∃ L, bnOrc.Decided orcC4.sched (bnOrc.full Ohyb4) κ (some L) := by
   obtain ⟨T, hcard, hT0⟩ :=
     (LeanDag.Barnacle.Orcaella.holds.2.1 (Fin 4) (Fin 13) Unit 2 (by decide)).goodLeaders
       Ohyb4 0 3 ohyb4_good
   have hT := fun (S : Slots (Fin 4)) κ => hT0 S (bnOrc.full Ohyb4) κ
-    (coversUpto_full (LeanDag.Barnacle.Orcaella.holds.1 (Fin 4) (Fin 13) Unit 2 (by decide))
+    (coversUpto_full (LeanDag.Barnacle.Orcaella.holds.1 (Fin 4) (Fin 13) Unit 2 (by decide)).full_ids
       Ohyb4 3)
   have h3 : 3 ≤ T.card := by
     have h := hcard
@@ -162,7 +171,7 @@ example : ∀ (V : bnOrc.View Ohyb4) (v : Option (Fin 13)),
 example :
     ¬ (orcaellaLive (Validator := Fin 4) (BlockId := Fin 13) (Payload := Unit) 2).Good
       Ohyb4 0 4 := by
-  rintro ⟨T, hsub, hcard, hsync, hpop⟩
+  rintro ⟨T, ⟨hsub, hcard⟩, hsync, hpop⟩
   have hne : T.Nonempty := Finset.card_pos.mp (by change 3 ≤ T.card at hcard; omega)
   obtain ⟨v, hv⟩ := hne
   obtain ⟨b, hb, hbc, hbr⟩ := hpop 4 (by omega) (by omega) v hv
@@ -183,11 +192,11 @@ theorem not_descent_zero :
   have hTuniv : T = Finset.univ :=
     Finset.eq_univ_of_card T (le_antisymm (Finset.card_le_univ T) (by simpa using hcard))
   obtain ⟨L, hL⟩ := hT (Sched orcLeader4 orcWin4 4 (by decide) (by decide)) (bnOrc.full Ohyb4) 6
-    (coversUpto_full (LeanDag.Barnacle.Orcaella.holds.1 (Fin 4) (Fin 13) Unit 2 (by decide))
+    (coversUpto_full (LeanDag.Barnacle.Orcaella.holds.1 (Fin 4) (Fin 13) Unit 2 (by decide)).full_ids
       Ohyb4 3)
     (by omega) (by decide) (by rw [hTuniv]; exact Finset.mem_univ _)
   have hcand := (LeanDag.Barnacle.Orcaella.holds.1 (Fin 4) (Fin 13) Unit 2 (by decide)).candidates
-    _ _ 6 L hL
+    _ _ _ 6 L hL
   have hall : ∀ L : Fin 13, ¬ bnOrc.IsLeaderBlock
       (Sched orcLeader4 orcWin4 4 (by decide) (by decide)) Ohyb4 6 L := by decide
   exact hall L hcand

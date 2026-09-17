@@ -1,4 +1,5 @@
 import LeanDagTest.Minnow.Deadlock
+import Mathlib.Data.Fin.VecNotation
 /-!
 # Minnow — the dead zone is a defect of the pair, not of the rule alone
 
@@ -42,8 +43,6 @@ namespace LeanDagTest
 namespace Minnow
 
 open LeanDag LeanDag.Minnow
-
-set_option maxRecDepth 4000000
 
 /-- **Round robin at `l = 1`**, one leader a round. The offset is chosen
 so that the round-1 leader is a process the Byzantine one did **not**

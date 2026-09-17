@@ -5,23 +5,14 @@ import Mathlib.Data.Finset.Union
 /-!
 # Causal history, over the raw block data
 
-Reachability and the finite causal cone, stated over a block assignment and
-an id population rather than over a universe type — the same hoist
-`Participation.lean` performs for production and coverage, and for the same
-reason: neither notion mentions validity, quorums, equivocation or a fault
-model, so pinning them to a universe type would force every universe to
-restate them.
-
-What the layer does consume is two structural facts, packaged as
-`CausalStructure`: references stay inside the population, and a reference
-sits one round below its referrer. Every other fact this file needs follows
-from those two. In particular a round-`0` block has no references at all —
-one would have to sit at round `-1` — so the fuelled search's base case
-needs no separate validity clause.
-
-The Byzantine `BlockUniverse` and the crash `Nemo.Universe` each supply a
-`CausalStructure`, and their `Reaches`/`history` are this file's notions at
-their own data. What used to be two copies of the same 280 lines is now one.
+Reachability and the finite causal cone, stated over a block assignment
+and an id population rather than over a universe type, since neither
+notion mentions validity, quorums, equivocation or a fault model. The
+layer consumes two structural facts, packaged as `CausalStructure`:
+references stay inside the population, and sit one round below their
+referrer; everything else follows from those two. The Byzantine
+`BlockUniverse` and the crash `Nemo.Universe` each supply one, and their
+`Reaches`/`history` are this file's notions at their own data.
 -/
 
 namespace LeanDag
@@ -195,6 +186,29 @@ def historyFrom (blk : BlockId → Block Validator BlockId Payload) (b : BlockId
 @[simp]
 theorem mem_historyFrom_self {b : BlockId} : b ∈ historyFrom blk b :=
   mem_historyUptoFrom_self
+
+/-- **A history is a function of the blocks it names.** Two block maps
+agreeing on a causally closed population give one causal history to every
+block of it. What a mechanism that *adds* blocks does not disturb: the
+blocks an anchor reaches are the same before and after, so anything read
+off them — a reputation score's window, say — is the same too. -/
+theorem historyUptoFrom_congr {blk blk' : BlockId → Block Validator BlockId Payload}
+    {ids : Finset BlockId} (hcl : ∀ i ∈ ids, ∀ j ∈ (blk i).refs, j ∈ ids)
+    (hb : ∀ i ∈ ids, blk i = blk' i) :
+    ∀ (n : ℕ) (b : BlockId), b ∈ ids → historyUptoFrom blk n b = historyUptoFrom blk' n b
+  | 0, _, _ => rfl
+  | n + 1, b, hbi => by
+      rw [historyUptoFrom_succ, historyUptoFrom_succ, ← hb b hbi]
+      exact congrArg (insert b) (Finset.biUnion_congr rfl
+        (fun j hj => historyUptoFrom_congr hcl hb n j (hcl b hbi j hj)))
+
+/-- **And so is the causal history itself.** -/
+theorem historyFrom_congr {blk blk' : BlockId → Block Validator BlockId Payload}
+    {ids : Finset BlockId} (hcl : ∀ i ∈ ids, ∀ j ∈ (blk i).refs, j ∈ ids)
+    (hb : ∀ i ∈ ids, blk i = blk' i) {b : BlockId} (hbi : b ∈ ids) :
+    historyFrom blk b = historyFrom blk' b := by
+  rw [historyFrom, historyFrom, ← hb b hbi]
+  exact historyUptoFrom_congr hcl hb _ b hbi
 
 namespace CausalStructure
 

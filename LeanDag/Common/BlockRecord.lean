@@ -1,29 +1,17 @@
 import LeanDag.Common.Block
+import Mathlib.Data.Finset.Union
 /-!
 # The block record
 
-**One universe shape for every rule.** A universe is a set of
-identifiers, a block map, closure under references, validity of every
-block against a rule's own predicate, and one block per author per
-round for the authors the rule's fault model constrains. The core, Nemo
-and FinWhale *are* this record at their own validity predicate and
-honest set; Hydrozoan is it through its block adapter
-(`Hydrozoan/Helpers/Record.lean`); Orcaella and Optimal-Hydrozoan are a
-neighbour's record under one further invariant.
-
-**What a validity predicate owes the mechanisms** is `Validity.Mechanised`:
-references sit one round below, the predicate reads only referenced
-blocks, a reference-free round-zero block is valid, and validity
-survives the cut strictly above the horizon. With those four facts the
-cut (`Record/Chop.lean`), the fill (`Record/Fill.lean`) and re-genesis
-(`Record/Genesis.lean`) are built once, and a rule's mechanism cell is
-the generic construction at its instance. A predicate that does not
-read the author (`Validity.CopyStable`) also gets the copy fill's
-validity for free; the core's fill adds a self reference for its
-self-parent clause and proves that block valid itself.
-
-The block-level cut `chopBlk` lives here because it is what the
-`chops` obligation is stated against.
+**One universe shape for every rule**: a set of identifiers, a block
+map, closure under references, validity against the rule's own
+predicate, and one block per author per round for the authors its fault
+model constrains. A validity predicate owes the mechanisms
+`Validity.Mechanised` — references sit one round below, the predicate
+reads only referenced blocks, a reference-free round-zero block is
+valid, and validity survives the cut above the horizon — from which the
+cut, the fill and re-genesis are built once. `chopBlk`, the block-level
+cut, lives here because the `chops` obligation is stated against it.
 -/
 
 namespace LeanDag
@@ -304,6 +292,76 @@ instance : CopyStable (distinct (Validator := Validator) (BlockId := BlockId)
     (Payload := Payload)) where
   copy := fun _ _ _ h => h
 
+/-- **Leader exclusion**: for every validator, either the parents are
+consistent about it — no two of their references are distinct blocks by
+it — or no parent is by it. A block that has watched a validator
+equivocate references nothing by that validator. -/
+def leaderExcluded : Clause Validator BlockId Payload := fun blk b =>
+  ∀ v : Validator,
+    (∀ i ∈ b.refs, ∀ j ∈ b.refs, ∀ x ∈ (blk i).refs, ∀ y ∈ (blk j).refs,
+      (blk x).creator = v → (blk y).creator = v → x = y)
+    ∨ (∀ i ∈ b.refs, (blk i).creator ≠ v)
+
+/-- The clause decided over the parents' references **collected once**.
+`x` and `y` range over the same union whichever parents they come
+through, so the four nested loops over `b.refs × b.refs × refs × refs`
+are one double loop over `b.refs.biUnion (fun i => (blk i).refs)`. The
+proposition is unchanged; only the decision procedure is, which is what
+a `decide` witness over a concrete DAG pays for. -/
+instance [Fintype Validator] [DecidableEq Validator] [DecidableEq BlockId]
+    (blk : BlockId → Block Validator BlockId Payload) (b : Block Validator BlockId Payload) :
+    Decidable (leaderExcluded blk b) :=
+  decidable_of_iff
+    (∀ v : Validator,
+      (∀ x ∈ b.refs.biUnion (fun i => (blk i).refs),
+        ∀ y ∈ b.refs.biUnion (fun i => (blk i).refs),
+          (blk x).creator = v → (blk y).creator = v → x = y)
+      ∨ (∀ i ∈ b.refs, (blk i).creator ≠ v)) <| by
+    unfold leaderExcluded
+    refine forall_congr' fun v => or_congr ?_ Iff.rfl
+    constructor
+    · intro h i hi j hj x hx y hy
+      exact h x (Finset.mem_biUnion.mpr ⟨i, hi, hx⟩) y (Finset.mem_biUnion.mpr ⟨j, hj, hy⟩)
+    · intro h x hx y hy
+      obtain ⟨i, hi, hx'⟩ := Finset.mem_biUnion.mp hx
+      obtain ⟨j, hj, hy'⟩ := Finset.mem_biUnion.mp hy
+      exact h i hi j hj x hx' y hy'
+
+/-- The clause reads two levels of references and no creator of `b`. -/
+instance : Mechanised (leaderExcluded (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)) where
+  reads := by
+    intro blk blk' ids b hcl hb hagree h v
+    rcases h v with h1 | h2
+    · left
+      intro i hi j hj x hx y hy hxv hyv
+      rw [hagree i (hb i hi)] at hx
+      rw [hagree j (hb j hj)] at hy
+      rw [hagree x (hcl i (hb i hi) x hx)] at hxv
+      rw [hagree y (hcl j (hb j hj) y hy)] at hyv
+      exact h1 i hi j hj x hx y hy hxv hyv
+    · right
+      intro i hi
+      rw [hagree i (hb i hi)]
+      exact h2 i hi
+  base := fun _ b _ hr v => Or.inr fun i hi => by
+    rw [hr] at hi; exact absurd hi (Finset.notMem_empty i)
+  chops := by
+    intro blk G b h _ _ v
+    rcases h v with h1 | h2
+    · left
+      intro i hi j hj x hx y hy hxv hyv
+      simp only [chopBlk_creator] at hxv hyv
+      exact h1 i hi j hj x (chopBlk_refs_subset hx) y (chopBlk_refs_subset hy) hxv hyv
+    · right
+      intro i hi
+      rw [chopBlk_creator]
+      exact h2 i hi
+
+instance : CopyStable (leaderExcluded (Validator := Validator) (BlockId := BlockId)
+    (Payload := Payload)) where
+  copy := fun _ _ _ h => h
+
 /-- A non-genesis block references a block by its own creator. Read by
 the core; not `CopyStable`, which is why the core's fill adds a self
 reference. -/
@@ -378,5 +436,129 @@ instance ValidAt.copyStable [Clause.CopyStable C] : Validity.CopyStable (ValidAt
   copy := fun blk b v h => ⟨h.predecessor, h.quorum, Clause.CopyStable.copy blk b v h.clause⟩
 
 end ValidAtMechanised
+
+/-! ## Quorate validity
+
+A validity predicate is **quorate at `q`** when every non-genesis block
+it admits references `q` distinct creators — all that the hitting lemma,
+coverage and persistence need of validity. -/
+
+namespace Validity
+
+/-- Non-genesis blocks reference `q` distinct creators, and `q` is
+positive, so a non-genesis block references something. -/
+class Quorate [DecidableEq Validator] (P : Validity Validator BlockId Payload)
+    (q : outParam ℕ) : Prop where
+  quorum : ∀ (blk : BlockId → Block Validator BlockId Payload)
+    (b : Block Validator BlockId Payload), P blk b → 0 < b.round → q ≤ (creators blk b).card
+  pos : 0 < q
+
+/-- References have distinct creators: the clause the counting arguments
+read when two votes of one validator must be one vote. -/
+class Distinct (P : Validity Validator BlockId Payload) : Prop where
+  distinct : ∀ (blk : BlockId → Block Validator BlockId Payload)
+    (b : Block Validator BlockId Payload), P blk b →
+    ∀ i ∈ b.refs, ∀ j ∈ b.refs, (blk i).creator = (blk j).creator → i = j
+
+/-- A predicate equivalent to the family with a clause implying distinct
+creators has them. -/
+theorem Distinct.of_validAt [DecidableEq Validator] {P : Validity Validator BlockId Payload}
+    {q : ℕ} {C : Clause Validator BlockId Payload}
+    (h : ∀ blk b, P blk b ↔ ValidAt q C blk b)
+    (hC : ∀ blk b, C blk b → Clause.distinct blk b) : P.Distinct where
+  distinct := fun blk b hp => hC blk b ((h blk b).mp hp).clause
+
+/-- A predicate equivalent to the family at `q` is quorate at `q`. -/
+theorem Quorate.of_validAt [DecidableEq Validator] {P : Validity Validator BlockId Payload}
+    {q : ℕ} {C : Clause Validator BlockId Payload} (hq : 0 < q)
+    (h : ∀ blk b, P blk b ↔ ValidAt q C blk b) : P.Quorate q where
+  quorum := fun blk b hp hr => ((h blk b).mp hp).quorum hr
+  pos := hq
+
+end Validity
+
+/-! ## Facts of any record
+
+What completeness, the predecessor clause, non-equivocation and the
+quorum clause say about a block the record holds. -/
+
+namespace BlockRecord
+
+variable {P : Validity Validator BlockId Payload} {honest : Finset Validator}
+variable {U : BlockRecord Validator BlockId Payload P honest}
+
+/-- A reference sits in the round immediately below its referrer. -/
+theorem round_of_mem_refs [P.Mechanised] {i j : BlockId} (hi : i ∈ U.ids)
+    (hj : j ∈ (U.block i).refs) : (U.block j).round + 1 = (U.block i).round :=
+  Validity.Mechanised.pred U.block (U.block i) (U.valid i hi) j hj
+
+/-- **T1.** Two blocks of the record by one honest author at one round
+are one block; phrased around the author, as a quorum intersection
+delivers it. -/
+theorem eq_of_creator_eq {v : Validator} {i j : BlockId}
+    (hi : i ∈ U.ids) (hj : j ∈ U.ids) (hv : v ∈ honest)
+    (hic : (U.block i).creator = v) (hjc : (U.block j).creator = v)
+    (hround : (U.block i).round = (U.block j).round) : i = j :=
+  U.no_equivocation i hi j hj (hic ▸ hv) (hic.trans hjc.symm) hround
+
+/-- Two references of one block by one author are one reference. -/
+theorem distinct_creators [P.Distinct] {i j k : BlockId} (hi : i ∈ U.ids)
+    (hj : j ∈ (U.block i).refs) (hk : k ∈ (U.block i).refs)
+    (hc : (U.block j).creator = (U.block k).creator) : j = k :=
+  Validity.Distinct.distinct U.block (U.block i) (U.valid i hi) j hj k hk hc
+
+variable [DecidableEq Validator]
+
+/-- References of a non-genesis block carry the record's quorum of
+distinct authors. -/
+theorem creators_quorum {q : ℕ} [P.Quorate q] {i : BlockId} (hi : i ∈ U.ids)
+    (hround : 0 < (U.block i).round) :
+    q ≤ (creatorsOf U.block (U.block i).refs).card :=
+  Validity.Quorate.quorum U.block (U.block i) (U.valid i hi) hround
+
+/-- A non-genesis block references at least one block. -/
+theorem refs_nonempty {q : ℕ} [P.Quorate q] {i : BlockId} (hi : i ∈ U.ids)
+    (hround : 0 < (U.block i).round) : (U.block i).refs.Nonempty :=
+  nonempty_of_creatorsOf_card_pos
+    (lt_of_lt_of_le (Validity.Quorate.pos (P := P)) (creators_quorum hi hround))
+
+end BlockRecord
+
+/-! ## Non-equivocation on a set
+
+The counting arguments read non-equivocation on a set: the record's
+honest set, or a larger one a rule proves it for, as the hybrid model
+does for its crash-prone validators. -/
+
+namespace BlockRecord
+
+variable {P : Validity Validator BlockId Payload} {honest : Finset Validator}
+variable {U : BlockRecord Validator BlockId Payload P honest}
+
+/-- The validators of `Hon` author at most one block per round in `U`. -/
+def NoEquivOn (U : BlockRecord Validator BlockId Payload P honest) (Hon : Finset Validator) :
+    Prop :=
+  ∀ i ∈ U.ids, ∀ j ∈ U.ids, (U.block i).creator ∈ Hon →
+    (U.block i).creator = (U.block j).creator →
+    (U.block i).round = (U.block j).round → i = j
+
+instance [DecidableEq Validator] [DecidableEq BlockId]
+    (U : BlockRecord Validator BlockId Payload P honest) (Hon : Finset Validator) :
+    Decidable (U.NoEquivOn Hon) :=
+  inferInstanceAs (Decidable (∀ _ ∈ _, ∀ _ ∈ _, _ → _ → _ → _))
+
+/-- The record's honest set does not equivocate: its own clause. -/
+theorem noEquivOn_honest (U : BlockRecord Validator BlockId Payload P honest) :
+    U.NoEquivOn honest :=
+  U.no_equivocation
+
+/-- T1 on the set: two ids with one author from `Hon` and one round are one id. -/
+theorem NoEquivOn.eq_of_creator_eq {Hon : Finset Validator} (hne : U.NoEquivOn Hon)
+    {v : Validator} {i j : BlockId} (hi : i ∈ U.ids) (hj : j ∈ U.ids) (hv : v ∈ Hon)
+    (hic : (U.block i).creator = v) (hjc : (U.block j).creator = v)
+    (hround : (U.block i).round = (U.block j).round) : i = j :=
+  hne i hi j hj (hic ▸ hv) (hic.trans hjc.symm) hround
+
+end BlockRecord
 
 end LeanDag

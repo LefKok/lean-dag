@@ -1,25 +1,15 @@
 import LeanDag.MahiMahi.Model.Rules
 import LeanDag.Common.Anchored
+import LeanDag.Common.History
 /-!
 # Mahi-Mahi — the decision relation at wave `w`
 
 The slot-indexed layer: eligibility, the view-relative direct rules, the
-indirect test, and `Decided`. Everything is the core's
-(`Mysticeti.lean`, Stages B and C) with the wave length substituted —
-which is what the core's `decisionRound` docstring anticipated — and one
-deliberate departure recorded at `Decided.directSkip`.
-
-**Definitions only**, as in `Rules.lean`. `CertifiedIn` and `Decided`
-have no `Decidable` instance, as in the core: the witnesses build
-`Decided` by its constructors, discharging each decidable premise by
-`decide` and exhibiting a certificate for the indirect test.
-
-**No canonicity clause.** The Odontoceti arc's indirect rule commits the
-`≤`-least passing candidate because two twins can both pass its test.
-Here the indirect test is "a certificate in the anchor's cone", and two
-certificates at one slot name the same candidate (`mahi-mahi.md` §3,
-MM1b), exactly as in the core; `[LinearOrder BlockId]` is consumed by
-`Votes` alone.
+indirect test, and `Decided` — the core's Stages B and C with the wave
+length substituted, apart from one departure at `Decided.directSkip`.
+Definitions only; unlike the Odontoceti arc there is no canonicity
+clause, since two certificates at one slot already name the same
+candidate (MM1b).
 -/
 
 namespace LeanDag
@@ -37,58 +27,42 @@ A validator applies the direct rules to what it holds. Stated on a
 `View` by intersecting with `V.ids`, so that a view can only
 under-report the universe-level rule. -/
 
-/-- The certificates for `L` that a view holds. -/
-def certificatesIn (U : BlockUniverse Validator BlockId Payload)
-    (V : View Validator BlockId Payload U) (w : ℕ) (L : BlockId) (r : ℕ) : Finset BlockId :=
-  certificates U w L r ∩ V.ids
-
-/-- Direct commit, as judged from a single view. -/
-def DirectCommitIn (U : BlockUniverse Validator BlockId Payload)
+/-- Direct commit, as judged from a single view: the view holds
+certificates for `L` from a quorum of distinct validators. -/
+abbrev DirectCommitIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (w : ℕ) (L : BlockId) (r : ℕ) : Prop :=
-  quorumCard Validator ≤ (creatorsOf U.block (certificatesIn U V w L r)).card
+  HoldsAtLeast U V (quorumCard Validator) (certificates U w L r)
 
-/-- The blamers of the slot `(a, r)` whose voting block a view holds. -/
-def blamersIn (U : BlockUniverse Validator BlockId Payload)
-    (V : View Validator BlockId Payload U) (w : ℕ) (a : Validator) (r : ℕ) : Finset Validator :=
-  creatorsOf U.block
-    (((blocksAt U (votingRound w r)).filter (fun q => Blames U q a r)) ∩ V.ids)
-
-/-- Direct skip, as judged from a single view. -/
-def DirectSkipIn (U : BlockUniverse Validator BlockId Payload)
+/-- Direct skip, as judged from a single view: the view holds
+voting-round blocks blaming the slot `(a, r)` from a quorum of distinct
+validators. -/
+abbrev DirectSkipIn (U : BlockUniverse Validator BlockId Payload)
     (V : View Validator BlockId Payload U) (w : ℕ) (a : Validator) (r : ℕ) : Prop :=
-  quorumCard Validator ≤ (blamersIn U V w a r).card
-
-instance (V : View Validator BlockId Payload U) (w : ℕ) (L : BlockId) (r : ℕ) :
-    Decidable (DirectCommitIn U V w L r) :=
-  inferInstanceAs (Decidable (_ ≤ _))
-
-instance (V : View Validator BlockId Payload U) (w : ℕ) (a : Validator) (r : ℕ) :
-    Decidable (DirectSkipIn U V w a r) :=
-  inferInstanceAs (Decidable (_ ≤ _))
+  HoldsAtLeast U V (quorumCard Validator)
+    ((blocksAt U (votingRound w r)).filter (fun q => Blames U q a r))
 
 /-- **The indirect test**: a certificate for `L` lies in the causal
 history of the anchor `A`. The core's `CertifiedIn` at wave `w`. Not
 decidable as stated — `Reaches` is a `Prop` — and not made so: the
 witnesses exhibit the certificate. -/
-def CertifiedIn (U : BlockUniverse Validator BlockId Payload)
+abbrev CertifiedIn (U : BlockUniverse Validator BlockId Payload)
     (w : ℕ) (A L : BlockId) (r : ℕ) : Prop :=
-  ∃ C ∈ certificates U w L r, Reaches U A C
+  LinkedVia U A (certificates U w L r)
 
 /-! ## The relation -/
 
-/-- **Mahi-Mahi as an anchored rule** at wave `w`: wavelength `w − 1`
-above the proposal — certificates live at `slotRound k + w − 1` — the
-certificate-quorum direct commit, the slot's blame as direct skip, and
-one rung of link, a certificate in the anchor's cone, with no tie to
-break since two certificates at one slot name the same candidate
-(`mahi-mahi.md` §3, MM1b). The one departure from the core is the skip,
-taken on the slot: `DirectSkipIn U V w (S.leader k) (S.slotRound k)`,
-where the core quantifies over the slot's candidates. -/
+/-- **Mahi-Mahi as an anchored rule** at wave `w`: certificate-quorum
+direct commit, slot-level direct skip, and one rung of link (a
+certificate in the anchor's cone), with no tie needed since two
+certificates at one slot already name the same candidate (MM1b). The
+one departure from the core: skip is judged on the slot as a whole,
+not per candidate. -/
 def mahiMahiAnchored (Validator BlockId Payload : Type) [Fintype Validator]
     [DecidableEq Validator] [Faults Validator] [LinearOrder BlockId] (w : ℕ) :
     AnchoredRule Validator BlockId Payload ValidWrt Correct where
-  wave := w - 1
+  waveAt := fun _ => w - 1
   Commit := fun U V L r => MahiMahi.DirectCommitIn U V w L r
+  decCommit := fun _ _ _ _ => inferInstance
   Skip := fun U V S k => MahiMahi.DirectSkipIn U V w (S.leader k) (S.slotRound k)
   rungs := 1
   Link := fun _ U A L S k => MahiMahi.CertifiedIn U w A L (S.slotRound k)

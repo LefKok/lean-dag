@@ -76,12 +76,12 @@ theorem slowCommit_of_certifiesAt {U : LeanDag.Hydrozoan.BlockUniverse Replica B
     intro v hv
     obtain ⟨C, hC, hCa, hCr⟩ := hpop2 v hv
     exact LeanDag.mem_creatorsOf.mpr
-      ⟨C, LeanDag.Hydrozoan.mem_certificates.mpr ⟨hC, hCr, hcert v hv C hC hCa hCr⟩, hCa⟩
+      ⟨C, mem_certificatesAt.mpr ⟨hC, hCr, hcert v hv C hC hCa hCr⟩, hCa⟩
   exact le_trans LeanDag.Hydrozoan.qSlow_le_q (le_trans hcard (Finset.card_le_card hsub))
 
 /-- **Hydrozoan's support**: wavelength two, certification the rule's own. -/
 def hzSupport : Support (rule (Replica := Replica) (BlockId := BlockId)) where
-  wave := 2
+  waveAt := fun _ => 2
   Certifies := fun U C L => LeanDag.Hydrozoan.IsCertificate U C L
 
 /-- **Law 1.** A certifier two rounds above the settling round keeps its
@@ -100,9 +100,9 @@ theorem hzSupport_local :
     exact ⟨h.refs b hbU (by change R₀ < (U.block b).round; omega),
       h.creator b hbU (by change R₀ ≤ (U.block b).round; omega)⟩
   change LeanDag.Hydrozoan.IsCertificate U' c L ↔ LeanDag.Hydrozoan.IsCertificate U c L
-  unfold LeanDag.Hydrozoan.IsCertificate LeanDag.Hydrozoan.voteBlocks LeanDag.creatorsOf
+  unfold LeanDag.Hydrozoan.IsCertificate CarriesVotes carriedVotes LeanDag.creatorsOf
   rw [hrefs, Finset.filter_congr (fun b hb => by
-      unfold LeanDag.Hydrozoan.IsVote; rw [(hpar b hb).1]),
+      unfold IsVote; rw [(hpar b hb).1]),
     Finset.image_congr (fun b hb => (hpar b (Finset.mem_of_mem_filter b hb)).2)]
 
 /-- **Law 2.** Coverage toward the candidate over two layers makes every
@@ -216,16 +216,9 @@ commit in the universe is a fast commit in that view. -/
 theorem fastCommitInView_of_coversUpto {U : LeanDag.Hydrozoan.BlockUniverse Replica BlockId}
     {V : LeanDag.Hydrozoan.View U} {L : BlockId} {r : ℕ}
     (h : LeanDag.Hydrozoan.FastCommit U L r) (hcov : V.CoversUpto (r + 1)) :
-    LeanDag.Hydrozoan.FastCommitInView U V L r := by
-  have hsub : (LeanDag.Hydrozoan.blocksAt U (r + 1)).filter
-      (fun b => LeanDag.Hydrozoan.IsVote U b L) ⊆ V.ids := by
-    intro b hb
-    obtain ⟨hbA, -⟩ := Finset.mem_filter.mp hb
-    obtain ⟨hbU, hbr⟩ := LeanDag.Hydrozoan.mem_blocksAt.mp hbA
-    exact hcov b hbU (le_of_eq hbr)
-  unfold LeanDag.Hydrozoan.FastCommitInView LeanDag.Hydrozoan.supportersInView
-  rw [Finset.inter_eq_left.2 hsub]
-  exact h
+    LeanDag.Hydrozoan.FastCommitInView U V L r :=
+  HoldsAtLeast.of_coversUpto
+    (fun b hb => ⟨(mem_votesFor.mp hb).1, (mem_votesFor.mp hb).2.1.le⟩) hcov h
 
 /-- **Law 3 of `voteSupport`, for Hydrozoan's fast path**, under the fast
 fault model: `q_fast` votes one round up are a fast commit, and a view
@@ -245,11 +238,11 @@ theorem voteSupport_fast_commits
     (by change S.slotRound k ≤ S.slotRound k + 1; omega) (S.leader k) hlead
   have hL : LeanDag.IsLeaderBlock U k L := ⟨hLmem, hLr, hLc⟩
   have hfast : LeanDag.Hydrozoan.FastCommit U L (S.slotRound k) := by
-    have hsub : T ⊆ LeanDag.Hydrozoan.supporters U L (S.slotRound k + 1) := by
+    have hsub : T ⊆ supporters U L (S.slotRound k + 1) := by
       intro v hv
       obtain ⟨b, hb, hba, hbr⟩ := hpop (S.slotRound k + 1) (by omega)
         (by change S.slotRound k + 1 ≤ S.slotRound k + 1; omega) v hv
-      exact LeanDag.Hydrozoan.mem_supporters.mpr
+      exact mem_supporters.mpr
         ⟨b, hb, hbr, hcert L ⟨hLmem, hLr, hLc⟩ v hv b hb hba hbr, hba⟩
     exact le_trans hcard (Finset.card_le_card hsub)
   have hin : LeanDag.Hydrozoan.FastCommitInView U V L (S.slotRound k) :=
@@ -274,7 +267,15 @@ theorem indirect :
     Indirect (rule (Replica := Replica) (BlockId := BlockId))
       (fun sr i j => sr i + 3 ≤ sr j) :=
   (AnchoredRule.indirect SlotAgreement.hydrozoanLaws.link_congr fun hi h => exists_least hi h).congr
-    (fun _ _ _ => by simp only [hydrozoanAnchored_wave])
+    (fun _ _ _ => by simp only [hydrozoanAnchored_waveAt])
+
+/-- **Hydrozoan has the descent laws** at the hybrid fault model's slack. -/
+theorem descent :
+    Properties.Descent (rule (Replica := Replica) (BlockId := BlockId))
+      (Timed.Good (rule (Replica := Replica) (BlockId := BlockId)) (hzReliability Replica))
+      3 (hzReliability Replica).slack :=
+  Timed.descent_of_support _ _ 3 hzSupport hzSupport_ofCoverage hzSupport_commits
+    indirect (fun _ => by change 2 ≤ 3; omega) fun _ _ _ h => h
 
 /-- **The descent as a property.** Was two lemmas — the graded rule at a
 bound and a downward induction over the run; both are now
@@ -284,7 +285,7 @@ theorem descends {S : LeanDag.Slots Replica} {c : ℕ} (hc : 0 < c)
     Descends (rule (Replica := Replica) (BlockId := BlockId)) S c :=
   Descends.of_indirect indirect hc (fun b i hi => by
     have := (hydrozoanAnchored Replica BlockId).eligible_iff.mp (hspans b i hi)
-    simp only [hydrozoanAnchored_wave] at this
+    simp only [hydrozoanAnchored_waveAt] at this
     omega)
 
 /-- **A commit names the slot's candidate.** -/

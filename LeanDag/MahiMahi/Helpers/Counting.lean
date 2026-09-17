@@ -36,7 +36,7 @@ theorem exists_commonCore {r : ℕ} {c₀ : BlockId}
       ∀ c ∈ U.ids, r + 2 ≤ (U.block c).round → Reaches U c b := by
   obtain ⟨b, hb, hbr, hbc, hreach⟩ := exists_common_correct_ancestor hc₀ hc₀r
   refine ⟨b, hb, hbr, hbc, fun c hc hcr => ?_⟩
-  obtain ⟨b', rfl, hreach'⟩ := reaches_pred_of_round_le (P := fun x => x = b) (N := r + 2)
+  obtain ⟨b', rfl, hreach'⟩ := reaches_pred_of_round_le (U := U) (Q := fun x => x = b) (N := r + 2)
     (fun c' hc' hc'r => ⟨b, rfl, hreach c' hc' hc'r⟩) hc hcr
   exact hreach'
 
@@ -63,8 +63,8 @@ theorem certifies_of_refs_reach {w r : ℕ} {C L : BlockId} (hw : 2 ≤ w)
     apply Finset.filter_true_of_mem
     intro q hq
     exact votes_of_reaches (U.complete C hC q hq) hL hLc (hall q hq)
-  unfold Certifies
-  rw [heq]
+  unfold Certifies CarriesVotes
+  rw [show carriedVotes U (Votes U) C L = (U.block C).refs from heq]
   exact U.creators_quorum hC (by unfold decisionRoundAt at hCr; omega)
 
 /-- If every voting-round block reaches a correct candidate, and a quorum
@@ -80,7 +80,7 @@ theorem directCommit_of_voting_reach {w r : ℕ} {L : BlockId} {T : Finset Valid
   intro v hv
   obtain ⟨C, hC, hCc, hCr⟩ := hpop v hv
   rw [mem_creatorsOf]
-  refine ⟨C, mem_certificates.mpr ⟨hC, hCr, ?_⟩, hCc⟩
+  refine ⟨C, mem_certificatesAt.mpr ⟨hC, hCr, ?_⟩, hCc⟩
   refine certifies_of_refs_reach hw hC hCr hL hLc ?_
   intro q hq
   have hqids := U.complete C hC q hq

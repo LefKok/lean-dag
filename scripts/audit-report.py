@@ -1,5 +1,12 @@
 #!/usr/bin/env python3
-"""Two mechanical checks on docs/report.md, per docs/style.md section 4.
+"""Two mechanical checks on the design documents, per docs/style.md section 4.
+
+Run over docs/report.md whole, and over docs/target-properties.md §0 —
+the part that document declares to be "the arc as it stands". Its §1
+onward is the record of how the arc got here and describes earlier
+states, so auditing it against the present would report its own history
+as failures; the section-number set is still read from the whole file, so
+§0 may name any section.
 
   1. every section cross-reference names a section that exists;
   2. every backticked Lean identifier names a declaration that exists;
@@ -50,6 +57,10 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 # a dotted or underscored identifier, not a file path and not English prose.
 IDENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_.'′]*$")
 FILE_SUFFIX = re.compile(r"\.(lean|md|py|sh|tsv|svg|pdf|toml|yml|json)$")
+# A lower-then-upper run marks a camelCase or PascalCase Lean name, which
+# the underscore-or-dot test alone lets through: `descendSupp` named a
+# declaration that had been deleted and no check saw it.
+INNER_CAPS = re.compile(r"[a-z][A-Z]")
 # Words that are legitimately backticked in the report but are not declarations.
 ALLOW = {
     "sorry", "decide", "omega", "simp", "rfl", "native_decide", "propext",
@@ -60,6 +71,17 @@ ALLOW = {
     "Finset.filter", "Finset.min", "Finset.max", "Finset.min'", "lt_trichotomy", "Correct.card", "Finset.max'", "Nat.succ", "refs.card",
     "LeanDagTest.Mysticeti.Growth", "LeanDagTest.Mysticeti.Unbounded", "Environment.constants",
     "le_antisymm", "not_lt", "List.finRange", "Finset.sort",
+    # Scoped notation, not a declaration, so the extraction cannot see it.
+    "quorumCard",
+    # Lean core and Mathlib names with no underscore or dot, which the
+    # camelCase check now reaches.
+    "LinearOrder", "sorryAx",
+    # Pseudocode names of the papers the arcs read, quoted as the papers
+    # write them: Black Marlin's Algorithm 1 and Mysticeti's.
+    "GetLeader", "GetSubDag", "TryDecide", "TryCommit", "UpdateLeaders",
+    "LinearizeSubDags", "ExposesEquivocation", "ExpectedCommits",
+    # Prose names for a clause or a hypothesis, not declarations.
+    "leaderClause", "noEvidence", "hN",
     # Names of the reference implementation (the `mysticeti` repository, Rust)
     # that the Mahi-Mahi arc's docstrings quote.
     "enough_leader_blame", "is_certificate", "try_indirect_decide",
@@ -70,6 +92,21 @@ ALLOW = {
     "q_fast", "q_cert", "q_slow", "q_weak", "parents.card", "Nat.find",
     "t_plain", "t_equiv",
 }
+
+
+def current_scope(text, heading):
+    """The slice a document declares to be its current state.
+
+    `docs/target-properties.md` says of itself that §0 is the arc as it
+    stands and §1 onward "describe earlier states and say so", so the
+    identifier and displayed-statement checks read §0 alone. Auditing the
+    record against the present would report its own history as failures.
+    """
+    lines = text.splitlines(keepends=True)
+    lo = next(i for i, l in enumerate(lines) if l.startswith(heading))
+    hi = next((i for i in range(lo + 1, len(lines))
+               if re.match(r"^## ", lines[i])), len(lines))
+    return "".join(lines[lo:hi])
 
 
 def sections(text):
@@ -95,13 +132,30 @@ def declarations(tsv):
 def resolves(name, decls, suffixes):
     """A report name resolves if it is a declaration or a suffix of one.
 
-    The report also writes projections applied to a variable — `U.block` for
-    `BlockUniverse.block`, `V.ids` for `View.ids` — so a dotted name whose
-    tail resolves is accepted too.
+    Two looser forms are admitted, and one is refused.
+
+    A *two-segment* name resolves when its tail does. The report writes
+    projections applied to a variable — `U.block` for `BlockRecord.block`,
+    `V.ids` for `View.ids` — and reaches a structure's field through an
+    abbreviation or a parent, `BlockUniverse.complete` for the record's and
+    `ViewPace.advances` for `PaceCore`'s; it also names a generic theorem by
+    the arc that applies it, `Nemo.ledgerSet_agree`. None of those is a path
+    the extraction can see.
+
+    A name of *three or more* segments is refused that licence: it must
+    resolve whole. `BlackMarlin.Safety.holds` names an arc as well as a
+    module and a declaration, and its arc can be deleted while some
+    unrelated `holds` — there are forty-two, four of them under a `Safety`
+    — keeps the citation looking sound.
     """
     if name in decls or name in suffixes:
         return True
-    return "." in name and name.split(".")[-1] in suffixes
+    if "." not in name:
+        return False
+    parts = name.split(".")
+    if len(parts) >= 3:
+        return False
+    return parts[-1] in suffixes
 
 
 DECL_START = re.compile(r"^(?:@\[[^\]]*\]\s*)?(?:private\s+|protected\s+|noncomputable\s+)?"
@@ -120,7 +174,8 @@ def source_declarations(root):
     matters.
     """
     decls = {}
-    for f in (root / "LeanDag").rglob("*.lean"):
+    for f in [*(root / "LeanDag").rglob("*.lean"),
+              *(root / "LeanDagTest").rglob("*.lean")]:
         lines = f.read_text().split("\n")
         starts = [i for i, l in enumerate(lines) if DECL_START.match(l)]
         for n, i in enumerate(starts):
@@ -294,13 +349,27 @@ def audit_register(path):
     return len(failures)
 
 
-def audit(path, decls, suffixes):
+def audit(path, decls, suffixes, current_heading=None):
     text = path.read_text()
     failures = []
 
+    # Sections may be named from anywhere in the document, so the set of
+    # section numbers that exist is read from all of it; every other check
+    # reads only what the document declares to be current.
     have = sections(text)
+    if current_heading is not None:
+        text = current_scope(text, current_heading)
+
+    # A reference naming another document, "`docs/common-layer.md` §1.2",
+    # is qualified and resolves against that document, not this one.
+    elsewhere = set()
+    for doc, ref in re.findall(
+            r"`docs/([a-z-]+\.md)`[^\n]{0,40}?§([0-9]+(?:\.[0-9]+)*)", text):
+        other = ROOT / "docs" / doc
+        if other.exists() and ref in sections(other.read_text()):
+            elsewhere.add(ref)
     for ref in sorted(set(re.findall(r"§([0-9]+(?:\.[0-9]+)*|[A-Z]\b)", text))):
-        if ref not in have:
+        if ref not in have and ref not in elsewhere:
             # a bare "§10" is satisfied by the existence of section 10
             failures.append(("xref", ref))
 
@@ -314,7 +383,7 @@ def audit(path, decls, suffixes):
             continue
         if FILE_SUFFIX.search(tok) or "/" in tok:
             continue
-        if "_" not in tok and "." not in tok:
+        if "_" not in tok and "." not in tok and not INNER_CAPS.search(tok):
             continue  # a single English word, not a Lean name
         if not resolves(tok, decls, suffixes):
             failures.append(("ident", tok))
@@ -372,6 +441,17 @@ def audit(path, decls, suffixes):
     for name, disp in shown.items():
         src = sigs.get(name)
         if src is None:
+            # the display may qualify a name the source leaves bare inside a
+            # namespace, or leave bare one the source qualifies
+            short = name.rsplit(".", 1)[-1]
+            src = sigs.get(short)
+            if src is None:
+                cands = [v for k, v in sigs.items() if k.rsplit(".", 1)[-1] == short]
+                src = cands[0] if len(cands) == 1 else None
+        if src is None:
+            # a displayed statement whose declaration is nowhere in the source:
+            # the drift a deletion leaves behind, which no other check sees
+            failures.append(("nosource", f"`{name}` is displayed but declared nowhere"))
             continue
         for tok in set(re.findall(r"[A-Za-z_][A-Za-z0-9_.'\u2032]*", disp)):
             if tok == name or tok in ALLOW:
@@ -398,7 +478,7 @@ def audit(path, decls, suffixes):
                                  f"{name} displays `{gaps[0]}`, which the source "
                                  f"does not have at that point"))
 
-    print(f"{path.relative_to(ROOT)}: {len(have)} sections, "
+    print(f"{path.resolve().relative_to(ROOT)}: {len(have)} sections, "
           f"{len(seen)} distinct backticked tokens, {len(shown)} displayed "
           f"statements ({checked} compared verbatim)")
     for kind, item in failures:
@@ -424,16 +504,18 @@ def main(argv):
             suffixes.add(n)
 
     if argv[1:]:
-        paths, register_only = [pathlib.Path(a) for a in argv[1:]], []
+        paths = [(pathlib.Path(a), None) for a in argv[1:]]
+        register_only = []
     else:
-        paths = [ROOT / "docs/report.md"]
+        paths = [(ROOT / "docs/report.md", None),
+                 (ROOT / "docs/target-properties.md", "## 0.")]
         # The register check covers every document in `docs/` except
         # `style.md`, which quotes the banned phrases in order to ban
         # them. A new design record is covered the moment it is added.
         register_only = sorted(
             q for q in (ROOT / "docs").glob("*.md")
             if q.name not in ("report.md", "style.md"))
-    bad = sum(audit(p, decls, suffixes) for p in paths)
+    bad = sum(audit(p, decls, suffixes, h) for p, h in paths)
     bad += sum(audit_register(q) for q in register_only)
     sys.exit(1 if bad else 0)
 

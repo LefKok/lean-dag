@@ -33,42 +33,15 @@ theorem creator_eq_of_isAnchor {L₁ L₂ : BlockId} {r : ℕ}
   rw [h₁.2.2, h₂.2.2]
 
 omit Rot in
-/-- A validator supporting two distinct blocks of one author and round is
-not correct: one supporting block cannot reference both, since that would
-cite one author twice, and two supporting blocks are an equivocation. -/
-theorem not_correct_of_supports_two {L₁ L₂ : BlockId} {v : Validator} {n : ℕ}
-    (hne : L₁ ≠ L₂) (hcr : (U.block L₁).creator = (U.block L₂).creator)
-    (h₁ : v ∈ supporters U L₁ n) (h₂ : v ∈ supporters U L₂ n) :
-    v ∉ (Correct : Finset Validator) := by
-  intro hv
-  obtain ⟨q₁, hq₁, hq₁r, hq₁L, hq₁c⟩ := mem_supporters.mp h₁
-  obtain ⟨q₂, hq₂, hq₂r, hq₂L, hq₂c⟩ := mem_supporters.mp h₂
-  have hq : q₁ = q₂ := U.eq_of_creator_eq hq₁ hq₂ hv hq₁c hq₂c (by omega)
-  subst hq
-  exact hne ((U.valid q₁ hq₁).distinct_creators L₁ hq₁L L₂ hq₂L hcr)
-
-omit Rot in
 /-- **The paper's Lemma 3.** Two supported blocks of one author at one
 round are the same block: their support quorums share `n − 2f ≥ f + 1`
 authors, each supporting both, and all of them equivocators. Needs only
 `n ≥ 3f + 1`, which is the whole committee of this arc. -/
 theorem eq_of_supported {L₁ L₂ : BlockId} {r : ℕ}
     (h₁ : Supported U L₁ r) (h₂ : Supported U L₂ r)
-    (hcr : (U.block L₁).creator = (U.block L₂).creator) : L₁ = L₂ := by
-  by_contra hne
-  have hsub : supporters U L₁ (r + 1) ∩ supporters U L₂ (r + 1) ⊆ F.byzantine := by
-    intro v hv
-    obtain ⟨hv₁, hv₂⟩ := Finset.mem_inter.mp hv
-    have := not_correct_of_supports_two hne hcr hv₁ hv₂
-    simpa [mem_correct] using this
-  have h3 := Finset.card_union_add_card_inter
-    (supporters U L₁ (r + 1)) (supporters U L₂ (r + 1))
-  have h4 := Finset.card_le_univ (supporters U L₁ (r + 1) ∪ supporters U L₂ (r + 1))
-  have h5 := Finset.card_le_card hsub
-  have h6 := F.card_byzantine
-  have h7 := F.card_validators
-  unfold Supported at h₁ h₂
-  omega
+    (hcr : (U.block L₁).creator = (U.block L₂).creator) : L₁ = L₂ :=
+  eq_of_card_supporters U.noEquivOn_honest card_compl_correct_le hcr (n := r + 1)
+    (by unfold Supported at h₁ h₂; have := F.card_validators; omega)
 
 /-- Lemma 3 for anchors: at most one anchor block of a round is
 supported, so at most one is committed there. -/
@@ -78,15 +51,11 @@ theorem eq_of_isAnchor_of_supported {L₁ L₂ : BlockId} {r : ℕ}
   eq_of_supported h₁ h₂ (creator_eq_of_isAnchor ha₁ ha₂)
 
 omit Rot in
-/-- **The paper's Lemma 5.** A supported block is in the causal history of
-**every** block two rounds above it or higher — Byzantine-authored
-included, since validity is structural.
-
-The quorum behind the support contains `f + 1` correct authors, each with
-one round-`(r + 1)` block, and a round-`(r + 2)` block names `n − f` of
-the at most `n` authors of that round, so it cannot miss all of them. The
-core's `reaches_of_correct_support_of_card` is that step and
-`reaches_pred_of_round_le` carries it upward. -/
+/-- **The paper's Lemma 5.** A supported block is in the causal history
+of every block two rounds above it or higher — Byzantine-authored
+included, since validity is structural — via the core's
+`reaches_of_honest_support_of_card`, carried upward by
+`reaches_pred_of_round_le`. -/
 theorem reaches_of_supported {L : BlockId} {r : ℕ} (h : Supported U L r)
     {c : BlockId} (hc : c ∈ U.ids) (hcr : r + 2 ≤ (U.block c).round) :
     Reaches U c L := by
@@ -94,22 +63,17 @@ theorem reaches_of_supported {L : BlockId} {r : ℕ} (h : Supported U L r)
     card_inter_correct_of_quorum h
   have hbase : ∀ c ∈ U.ids, (U.block c).round = r + 2 → ∃ b, b = L ∧ Reaches U c b := by
     intro c hc hcr
-    refine ⟨L, rfl, reaches_of_correct_support_of_card
+    refine ⟨L, rfl, reaches_of_honest_support_of_card
       (S := correctSupporters U L (r + 1)) (fun v hv => ?_)
-      (fun v hv => correctSupporters_correct hv) hcard hc hcr⟩
+      (fun v hv => correctSupporters_correct hv) (lt_card_add_quorumCard hcard) hc hcr⟩
     exact mem_supporters.mp (correctSupporters_subset hv)
   obtain ⟨b, hb, hreach⟩ := reaches_pred_of_round_le hbase hc hcr
   exact hb ▸ hreach
 
 /-- **The paper's Lemma 6**, in the form the round comparison gives: of
 two committed anchors, the lower lies in the causal history of the
-higher.
-
-Three cases, one per clause of the rule. At equal rounds Lemma 3 makes
-them the same block. At a gap of one the linking anchor of the lower is
-supported at the same round as the higher one, so Lemma 3 identifies the
-two and the link is a direct reference. At a gap of two or more Lemma 5
-applies to the higher block itself. -/
+higher — by Lemma 3 at equal rounds or a gap of one via the shared
+linking anchor, by Lemma 5 at a gap of two or more. -/
 theorem reaches_of_committed_of_le {L₁ L₂ : BlockId} {r₁ r₂ : ℕ}
     (h₁ : Committed U L₁ r₁) (h₂ : Committed U L₂ r₂) (hr : r₁ ≤ r₂) :
     L₁ = L₂ ∨ Reaches U L₂ L₁ := by

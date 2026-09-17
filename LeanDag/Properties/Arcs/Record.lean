@@ -3,17 +3,16 @@ import LeanDag.Properties.Derived.Truncate
 import LeanDag.Properties.Derived.FromBand
 import LeanDag.Properties.Arcs.GC
 import LeanDag.Properties.Arcs.SafeSkip
+import LeanDag.Properties.Arcs.Stack
 /-!
 # The verdict cells, at any carrier on the record
 
 A carrier read as records with `Banded` and `Agree` has every verdict
-cell of the cut, the fill and re-genesis: transport of a verdict across
-the mechanism at the same validator, and agreement between a validator
-that ran the mechanism and one that did not, from any view. Each is one
-generic transport theorem at the carrier bridge's witness and view lift.
-A rule's mechanism cell is therefore the `OnRecord` instance and
-nothing else; `scripts/audit-mechanisms.py` reads an instance as the
-cell.
+cell of the cut, the fill and re-genesis for free: transport of a
+verdict at the same validator, and agreement between a validator that
+ran the mechanism and one that did not. A rule's mechanism cell is
+therefore the `OnRecord` instance and nothing else;
+`scripts/audit-mechanisms.py` reads an instance as the cell.
 -/
 
 namespace LeanDag
@@ -86,6 +85,15 @@ theorem decided_agree_copyFill (ha : Agree R) (hb : Banded R)
     {W : R.View (c.copyFill U sk)} {k : ℕ} {v w : Option BlockId}
     (hV : R.Decided S V k v) (hW : R.Decided S W k w) : v = w :=
   c.decided_agree_fill ha hb hV hW
+
+/-- **Fill then cut is a stack.** The composition asks nothing of the
+rule: the two steps are the witnesses the mechanisms already have, and
+`Stack.safe_and_live` reads the result. -/
+theorem stack_copyFill_chop (sk : SkipData (c.toRec U).ids (c.toRec U).block)
+    (hd : G ≤ S.slotRound d) :
+    Stack R U S (c.chop (c.copyFill U sk) G) (S.chop G d hd) G (max (sk.r + 1) G) d := by
+  simpa using Stack.step (Rebased.of_sustains (S := S) (c.sustains_copyFill U sk))
+    (Stack.step (Rebased.of_truncates (c.truncates_chop (c.copyFill U sk) hd)) Stack.nil)
 
 end Copy
 

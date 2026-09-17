@@ -35,8 +35,6 @@ namespace Hydrozoan
 
 open LeanDag LeanDag.Hydrozoan
 
-set_option maxRecDepth 16384
-
 /-- Thirty-eight blocks over six rounds (id 38 is junk, outside the
 universe). Ids 0–6: genesis (creator = id). Ids 7/8: the equivocating
 pair by Byzantine 0 (both vote for genesis 2). Ids 9–13: round 1 by
@@ -126,10 +124,10 @@ example : IsLeaderBlock U5 0 2 := by decide
 example : LeanDag.Hydrozoan.certificates U5 2 0 = {14, 15, 16, 17, 18, 19} := by decide
 
 -- Slot 1's candidate id 10 is voteless: no round-2 block references
--- it, so it has no LeanDag.Hydrozoan.supporters, no LeanDag.Hydrozoan.certificates — nothing either rung
+-- it, so it has no supporters, no LeanDag.Hydrozoan.certificates — nothing either rung
 -- could ever find.
 example : IsLeaderBlock U5 1 10 := by decide
-example : LeanDag.Hydrozoan.supporters U5 10 2 = ∅ := by decide
+example : supporters U5 10 2 = ∅ := by decide
 example : LeanDag.Hydrozoan.certificates U5 10 1 = ∅ := by decide
 
 -- The second view genuinely differs: the equivocation's second copy is
@@ -173,7 +171,7 @@ example : Decided U5 Vfull5 1 none := by
       subst this
       rcases i with _ | _ | i
       · exact fun hcert =>
-          absurd ((certifiedIn_iff_history (by decide)).mp hcert) (by decide)
+          absurd ((linkedVia_iff_history (by decide)).mp hcert) (by decide)
       · exact fun hweak =>
           absurd ((weakLinked_iff_history (by decide)).mp hweak) (by decide)
       · exact absurd hi (by change ¬ (i + 1 + 1 < 2); omega))

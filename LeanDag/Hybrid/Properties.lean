@@ -7,25 +7,17 @@ import LeanDag.Hybrid.Liveness
 import LeanDag.Mysticeti.Properties
 import LeanDag.Properties.Band
 import LeanDag.Properties.Derived.Descent
+import LeanDag.Timed.Coverage
 import LeanDag.Properties.Derived.Bounded
 import LeanDag.Properties.Arcs.Headline
 /-!
 # Hybrid conforms to the target properties
 
-`docs/porting-plan.md` step 2. `Hybrid/Carrier.lean` has the carrier at
-each threshold and the three properties that are one Hybrid theorem
-apiece; here is `Banded` and the liveness pair.
-
-**The band forced a repair before it could be proved.** Hybrid's skip
-quantified over the candidates a slot happens to have, which a mechanism
-adding one defeats; `DirectSkipSlotIn` replaced it, as it replaced the
-core's and Odontoceti's. That is recorded where it happened, in
-`Hybrid/Decision.lean`.
-
-**The universe is the core's**, so the band helpers are the core's too,
-reached through `toCore` — the carrier's universe is a subtype of the
-core's, and `AgreeBand` at the subtype is `AgreeBand` at the underlying
-universe by its three fields.
+`Banded` and the liveness pair, alongside
+the three one-theorem properties in `Carrier.lean`. Hybrid's skip needed
+the same slot-level repair as the core's and Odontoceti's
+(`Hybrid/Decision.lean`); the band helpers are the core's, reached
+through `toCore` since the carrier's universe is a subtype.
 -/
 
 namespace LeanDag
@@ -44,143 +36,6 @@ variable {k : ℕ}
 variable {U U' : BlockUniverse Validator BlockId Payload}
 variable {lo hi g g' : ℕ}
 
-/-- **Supporters survive the band.** -/
-theorem supportersIn_band (h : AgreeBand (Hybrid.hybridAnchored Validator BlockId Payload k).toDagRule U U' lo hi g g')
-    {V : View Validator BlockId Payload U} {V' : View Validator BlockId Payload U'}
-    {r r' : ℕ} (hrr : r + g = r' + g') (hr : lo ≤ r + g) (hhi : r + 1 + g ≤ hi)
-    (hV : ∀ b, b ∈ V.ids → lo ≤ (U.block b).round + g →
-      (U.block b).round + g ≤ hi → b ∈ V'.ids)
-    {L : BlockId} :
-    supportersIn U V L (r + 1) ⊆ supportersIn U' V' L (r' + 1) := by
-  intro w hw
-  obtain ⟨q, hq, hvq⟩ := Finset.mem_image.mp hw
-  obtain ⟨hqf, hqV⟩ := Finset.mem_inter.mp hq
-  obtain ⟨hqA, hqL⟩ := Finset.mem_filter.mp hqf
-  have hqU : q ∈ U.ids := (mem_blocksAt.mp hqA).1
-  have hqr : (U.block q).round = r + 1 := (mem_blocksAt.mp hqA).2
-  refine Finset.mem_image.mpr ⟨q, Finset.mem_inter.mpr ⟨Finset.mem_filter.mpr ⟨?_, ?_⟩,
-    hV q hqV (by omega) (by omega)⟩, ?_⟩
-  · exact AnchoredRule.blocksAt_band h (by omega) (by omega) (by omega) hqA
-  · rw [AnchoredRule.band_refs h hqU (by omega) (by omega)]; exact hqL
-  · rw [(AnchoredRule.band_block h hqU (by omega) (by omega)).2]; exact hvq
-
-/-- **And so does the direct commit.** -/
-theorem directCommitIn_band (h : AgreeBand (Hybrid.hybridAnchored Validator BlockId Payload k).toDagRule U U' lo hi g g')
-    {V : View Validator BlockId Payload U} {V' : View Validator BlockId Payload U'}
-    {r r' : ℕ} (hrr : r + g = r' + g') (hr : lo ≤ r + g) (hhi : r + 1 + g ≤ hi)
-    (hV : ∀ b, b ∈ V.ids → lo ≤ (U.block b).round + g →
-      (U.block b).round + g ≤ hi → b ∈ V'.ids)
-    {L : BlockId} (hc : Hybrid.DirectCommitIn U V L r) :
-    Hybrid.DirectCommitIn U' V' L r' :=
-  le_trans hc (Finset.card_le_card (supportersIn_band h hrr hr hhi hV))
-
-/-- **The anchor's cone of supporters is the cone it was.** -/
-theorem coneSupports_band (h : AgreeBand (Hybrid.hybridAnchored Validator BlockId Payload k).toDagRule U U' lo hi g g')
-    {A L : BlockId} {r r' : ℕ} (hA : A ∈ U.ids)
-    (hAlo : lo ≤ (U.block A).round + g) (hAhi : (U.block A).round + g ≤ hi)
-    (hrr : r + g = r' + g') (hr : lo ≤ r + g) (hhi : r + 1 + g ≤ hi) :
-    Hybrid.coneSupports U' A L r' = Hybrid.coneSupports U A L r := by
-  have hset : (blocksAt U' (r' + 1)).filter
-        (fun q => L ∈ (U'.block q).refs ∧ q ∈ history U' A)
-      = (blocksAt U (r + 1)).filter
-        (fun q => L ∈ (U.block q).refs ∧ q ∈ history U A) := by
-    have hA' : A ∈ U'.ids := AnchoredRule.band_mem h hA hAlo hAhi
-    ext q
-    simp only [Finset.mem_filter, mem_blocksAt]
-    constructor
-    · rintro ⟨⟨hqU', hqr'⟩, hqL, hqh⟩
-      have hqre : ReachesFrom U'.block A q := (mem_history_iff (U := U') hA').mp hqh
-      obtain ⟨hqU, hqreU, hqeq⟩ :=
-        AgreeBand.reaches_old h hA hAlo hAhi hqre
-          (by show lo ≤ (U'.block q).round + g'; omega)
-      have hqeq' : (U.block q).round + g = (U'.block q).round + g' := hqeq
-      refine ⟨⟨hqU, by omega⟩, ?_, (mem_history_iff (U := U) hA).mpr hqreU⟩
-      rwa [AnchoredRule.band_refs h hqU (by omega) (by omega)] at hqL
-    · rintro ⟨⟨hqU, hqr⟩, hqL, hqh⟩
-      have hqre : ReachesFrom U.block A q := (mem_history_iff (U := U) hA).mp hqh
-      refine ⟨?_, ?_, ?_⟩
-      · exact mem_blocksAt.mp (AnchoredRule.blocksAt_band h
-          (by omega) (by omega) (by omega) (mem_blocksAt.mpr ⟨hqU, hqr⟩))
-      · rw [AnchoredRule.band_refs h hqU (by omega) (by omega)]; exact hqL
-      · exact (mem_history_iff (U := U') hA').mpr
-          (AgreeBand.reaches_of h hA hAhi hqre
-            (by show lo ≤ (U.block q).round + g; omega))
-  unfold Hybrid.coneSupports
-  rw [hset]
-  refine AnchoredRule.creatorsOf_band h ?_
-  intro b hb
-  obtain ⟨hbA, -⟩ := Finset.mem_filter.mp hb
-  have hbU : b ∈ U.ids := (mem_blocksAt.mp hbA).1
-  have hbr : (U.block b).round = r + 1 := (mem_blocksAt.mp hbA).2
-  exact ⟨hbU, by omega, by omega⟩
-
-/-- **So the indirect test reads the same.** -/
-theorem thickLink_band (h : AgreeBand (Hybrid.hybridAnchored Validator BlockId Payload k).toDagRule U U' lo hi g g')
-    {A L : BlockId} {r r' : ℕ} (hA : A ∈ U.ids)
-    (hAlo : lo ≤ (U.block A).round + g) (hAhi : (U.block A).round + g ≤ hi)
-    (hrr : r + g = r' + g') (hr : lo ≤ r + g) (hhi : r + 1 + g ≤ hi) :
-    Hybrid.ThickLink k U' A L r' ↔ Hybrid.ThickLink k U A L r := by
-  unfold Hybrid.ThickLink
-  rw [coneSupports_band h hA hAlo hAhi hrr hr hhi]
-
-/-- **A candidate the band did not carry passes the indirect test from
-no old anchor.** Its supporters would sit in the anchor's cone, which is
-old, and an old block references only old blocks — so the cone supports
-nothing, and an admissible threshold is positive. -/
-theorem not_thickLink_band_novel
-    (h : AgreeBand (Hybrid.hybridAnchored Validator BlockId Payload k).toDagRule U U' lo hi g g')
-    {A L : BlockId} {r r' : ℕ} (hA : A ∈ U.ids)
-    (hAlo : lo ≤ (U.block A).round + g) (hAhi : (U.block A).round + g ≤ hi)
-    (hrr : r + g = r' + g') (hr : lo ≤ r + g) (hhi : r + 1 + g ≤ hi)
-    (hL : L ∉ U.ids) (hpos : 0 < k) : ¬ Hybrid.ThickLink k U' A L r' := by
-  intro ht
-  rw [thickLink_band h hA hAlo hAhi hrr hr hhi] at ht
-  unfold Hybrid.ThickLink Hybrid.coneSupports at ht
-  have hempty : (blocksAt U (r + 1)).filter
-      (fun q => L ∈ (U.block q).refs ∧ q ∈ history U A) = ∅ := by
-    rw [Finset.eq_empty_iff_forall_notMem]
-    intro q hq
-    obtain ⟨hqA, hqL, -⟩ := Finset.mem_filter.mp hq
-    exact hL (U.complete q (mem_blocksAt.mp hqA).1 L hqL)
-  rw [hempty] at ht
-  simp only [creatorsOf, Finset.image_empty, Finset.card_empty, Nat.le_zero] at ht
-  omega
-
-/-- **And the slot-level skip transports**, which is what the repair was
-for. Blockers stay blockers: a voting-round block referencing no
-candidate of the old slot references none of the new one either, since a
-candidate the band already had is a candidate at either end and a
-candidate it did not have is referenced by no old block. -/
-theorem directSkipSlotIn_band (h : AgreeBand (Hybrid.hybridAnchored Validator BlockId Payload k).toDagRule U U' lo hi g g')
-    {S S' : Slots Validator}
-    {V : View Validator BlockId Payload U} {V' : View Validator BlockId Payload U'}
-    {s s' : ℕ} (hkk : S.slotRound s + g = S'.slotRound s' + g')
-    (hlead : S.leader s = S'.leader s') (hlo : lo = S.slotRound s + g)
-    (hhi : S.slotRound s + 1 + g ≤ hi)
-    (hV : ∀ b, b ∈ V.ids → lo ≤ (U.block b).round + g →
-      (U.block b).round + g ≤ hi → b ∈ V'.ids)
-    (hs : Hybrid.DirectSkipSlotIn (S := S) U V s) :
-    Hybrid.DirectSkipSlotIn (S := S') U' V' s' := by
-  unfold Hybrid.DirectSkipSlotIn at hs ⊢
-  refine le_trans hs (Finset.card_le_card ?_)
-  intro w hw
-  obtain ⟨q, hq, hvq⟩ := Finset.mem_image.mp hw
-  obtain ⟨hqf, hqV⟩ := Finset.mem_inter.mp hq
-  simp only [slotBlamers, Finset.mem_filter] at hqf
-  obtain ⟨hqA, hqn⟩ := hqf
-  have hqU : q ∈ U.ids := (mem_blocksAt.mp hqA).1
-  have hqr : (U.block q).round = S.slotRound s + 1 := (mem_blocksAt.mp hqA).2
-  refine Finset.mem_image.mpr ⟨q, ?_, ?_⟩
-  · simp only [Finset.mem_inter, slotBlamers, Finset.mem_filter]
-    refine ⟨⟨AnchoredRule.blocksAt_band h (by omega) (by omega) (by omega) hqA,
-      ?_⟩, hV q hqV (by omega) (by omega)⟩
-    rw [AnchoredRule.band_refs h hqU (by omega) (by omega)]
-    intro j hj hjL
-    have hjU : j ∈ U.ids := U.complete q hqU j hj
-    exact hqn j hj (AnchoredRule.isLeaderBlock_band_old h hkk hlead
-      (by omega) (by omega) hjU hjL)
-  · rw [(AnchoredRule.band_block h hqU (by omega) (by omega)).2]; exact hvq
-
 end Band
 
 /-- **What Hybrid owes the band**, at a positive threshold: its direct
@@ -190,38 +45,41 @@ thick-linked from no old anchor. -/
 theorem hybridBandLaws {kt : ℕ} (hpos : 0 < kt) :
     (Hybrid.hybridAnchored Validator BlockId Payload kt).BandLaws where
   commit_band := fun h hkk _ hlo hhi hV _ hc =>
-    directCommitIn_band h hkk (by omega)
-      (by simp only [Hybrid.hybridAnchored_wave] at hhi; omega) hV hc
+    AnchoredRule.holdsAtLeast_votesFor_band h hV (by omega) (by omega)
+      (by simp only [Hybrid.hybridAnchored_waveAt] at hhi; omega) hc
   skip_band := fun h hkk hlk hlo hhi hV hs =>
-    directSkipSlotIn_band h hkk hlk hlo
-      (by simp only [Hybrid.hybridAnchored_wave] at hhi; omega) hV hs
-  link_band := fun h hA hAlo hAhi hkk _ hlo hhi _ _ =>
-    thickLink_band h hA hAlo hAhi hkk hlo
-      (by simp only [Hybrid.hybridAnchored_wave] at hhi; omega)
-  link_novel := fun h hA hAlo hAhi hkk _ hlo hhi _ _ hL =>
-    not_thickLink_band_novel h hA hAlo hAhi hkk hlo
-      (by simp only [Hybrid.hybridAnchored_wave] at hhi; omega) hL hpos
+    le_trans hs (Finset.card_le_card (AnchoredRule.slotBlamesIn_band h hkk hlk hlo.le
+      (by simp only [Hybrid.hybridAnchored_waveAt] at hhi; omega) hV))
+  link_band := by
+    intro S S' U U' lo hi g g' A L k k' i h hA hAlo hAhi hkk _ hlo hhi _ _
+    simp only [Hybrid.hybridAnchored_waveAt] at hhi
+    show Hybrid.ThickLink kt U' A L (S'.slotRound k') ↔ Hybrid.ThickLink kt U A L (S.slotRound k)
+    unfold Hybrid.ThickLink coneLink
+    rw [AnchoredRule.coneSupporters_band h hA hAlo hAhi (n := S.slotRound k + 1) (by omega) (by omega)
+      (by omega)]
+  link_novel := by
+    intro S S' U U' lo hi g g' A L k k' i h hA hAlo hAhi hkk _ hlo hhi _ _ hL ht
+    simp only [Hybrid.hybridAnchored_waveAt] at hhi
+    change Hybrid.ThickLink kt U' A L (S'.slotRound k') at ht
+    unfold Hybrid.ThickLink coneLink at ht
+    rw [AnchoredRule.coneSupporters_band_novel h hA hAlo hAhi (n := S.slotRound k + 1)
+      (by omega) (by omega) (by omega) hL, Finset.card_empty] at ht
+    omega
 
 /-- **Hybrid is banded**, at a positive threshold: the relation's band
 under `HonestNoEquiv`. -/
 theorem banded {kt : ℕ} (hpos : 0 < kt) :
     Banded (hybridRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload) kt) :=
-  AnchoredRule.bandedOn (hybridBandLaws hpos)
+  AnchoredRule.bandedOn (hybridBandLaws hpos) (fun _ _ => rfl)
 
 /-! ## The two liveness properties, and the skip -/
 
-/-- **Hybrid skips an unsupported slot from a hybrid quorum.**
-
-The liveness half of the repair, and the reason to believe it was a
-repair rather than a tightening: making the skip a count of blockers
-made it strictly harder to satisfy, and a rule no quorum can trigger
-would be sound and useless. This says the repaired rule is still
-reachable — a set meeting the hybrid quorum whose voting-round blocks
-reference no candidate skips the slot, with no anchor and no synchrony.
-
-The blamer set is the core's shape, so the containment argument is the
-core's; only the threshold differs. -/
+/-- **Hybrid skips an unsupported slot from a hybrid quorum.** The
+liveness half of the slot-level repair: a set meeting the hybrid quorum
+whose voting-round blocks reference no candidate skips the slot, with
+no anchor and no synchrony needed — confirming the repaired rule is
+still reachable, not merely tightened. -/
 theorem skipsUnsupported (kt : ℕ) :
     SkipsUnsupported (hybridRule (Validator := Validator) (BlockId := BlockId)
       (Payload := Payload) kt) (fun T => Hybrid.q Validator ≤ T.card) := by
@@ -268,8 +126,23 @@ the least thick-linked candidate. -/
 theorem indirect (kt : ℕ) :
     Indirect (hybridRule (Validator := Validator) (BlockId := BlockId) (Payload := Payload) kt)
       (fun sr i j =>
-        sr i + (Hybrid.hybridAnchored Validator BlockId Payload kt).wave + 1 ≤ sr j) :=
-  AnchoredRule.indirectOn Hybrid.linkCongr fun hi h => Hybrid.exists_least hi h
+        sr i + (Hybrid.hybridAnchored Validator BlockId Payload kt).waveAt (sr i) + 1 ≤ sr j) :=
+  AnchoredRule.indirectOn ((Hybrid.hybridAnchored Validator BlockId Payload kt).linkCongr_of_round
+    (fun _ U A L r => Hybrid.ThickLink kt U A L r) fun _ _ _ _ _ _ => rfl)
+    fun hi h => Hybrid.exists_least hi h
+
+/-- **Orcaella has the descent laws** at the mixed bound's slack, at its
+two-round wave. -/
+theorem descent (kt : ℕ) :
+    Properties.Descent (hybridRule (Validator := Validator) (BlockId := BlockId)
+      (Payload := Payload) kt)
+      (Timed.Good (hybridRule (Validator := Validator) (BlockId := BlockId)
+        (Payload := Payload) kt) (coreReliability Validator))
+      ((Hybrid.hybridAnchored Validator BlockId Payload kt).waveAt 0 + 1)
+      (coreReliability Validator).slack :=
+  Timed.descent_of_support _ _ _ (Properties.voteSupport _) (Timed.voteSupport_ofCoverage _)
+    (voteSupport_commits kt) (indirect kt) (fun _ => by change 1 ≤ 1 + 1; omega)
+    fun _ _ _ h => h
 
 /-- **And a committed run decides everything below it.** -/
 theorem descends {kt : ℕ} {S : Slots Validator} {c : ℕ} (hc : 0 < c)

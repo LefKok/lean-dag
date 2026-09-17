@@ -3,20 +3,22 @@ import LeanDag.Common.BlockRecord
 /-!
 # Nemo-Nemo: the crash-fault DAG foundation
 
-"Finding Nemo-Nemo: CFT DAG-based Consensus in the WAN."
+**A commit rule** (`Protocols`), with a universe of its own: crash
+faults only, at a majority quorum, so its `ValidWrt` is not the core's.
+The rule is `nemoAnchored`; the carrier and properties are
+`Properties.lean`; the record witness is `Record.lean`.
 
-Nemo-Nemo is crash-fault-tolerant: `n ≥ 2f+1` validators, all honest — they may
-halt, but never equivocate. Its quorum is a bare **majority** `n/2+1`, which is
-mathematically outside the core Byzantine model (`Faults` forces `n − f`, a
-`~2n/3` supermajority). So this arc builds a self-contained crash foundation
-consuming only the fault-agnostic parts of the core (`Block`, `creatorsOf`).
+"Finding Nemo-Nemo: CFT DAG-based Consensus in the WAN." Crash-fault
+tolerant: `n ≥ 2f+1` validators, all honest, may halt but never
+equivocate. Its bare-majority quorum `n/2+1` is outside the core's
+Byzantine model, so this arc builds a self-contained crash foundation
+consuming only the fault-agnostic parts of the core. Non-equivocation
+is universal here, so the single quorum fact is that two majorities
+intersect.
 
-The crash setting is *leaner* than the Byzantine one: there is no `byzantine`
-set, every validator is correct, so non-equivocation is universal and the single
-quorum fact is that **two majorities intersect** — no correct-member filtering.
-
-This file provides the majority quorum, its intersection lemma, crash block
-validity, the crash universe, and the block-level lemmas the commit rule needs.
+This file provides the majority quorum, its intersection lemma, crash
+block validity, the crash universe, and the block-level lemmas the
+commit rule needs.
 -/
 
 namespace LeanDag
@@ -30,27 +32,19 @@ variable {BlockId : Type*} {Payload : Type*}
 def majority (Validator : Type*) [Fintype Validator] : ℕ :=
   Fintype.card Validator / 2 + 1
 
-/-- **The one quorum fact.** Two majorities always intersect —
-`(n/2+1) + (n/2+1) > n` — and, all validators being honest, the shared member is
-consistent. This is the crash analogue of the core's `exists_correct_mem_inter`,
-with the correctness filtering gone. -/
-theorem exists_mem_inter {Q₁ Q₂ : Finset Validator}
-    (h₁ : majority Validator ≤ Q₁.card) (h₂ : majority Validator ≤ Q₂.card) :
-    (Q₁ ∩ Q₂).Nonempty := by
-  rw [← Finset.card_pos]
-  have hunion : (Q₁ ∪ Q₂).card ≤ Fintype.card Validator := by
-    rw [← Finset.card_univ]; exact Finset.card_le_univ _
-  have hadd := Finset.card_union_add_card_inter Q₁ Q₂
-  unfold majority at h₁ h₂
+/-- **A majority is more than a block can miss**: a block references a
+majority of distinct creators, so it misses fewer than a majority. This
+turns a majority of backers into the form the hitting lemma reads. -/
+theorem lt_card_add_majority {T : Finset Validator} (h : majority Validator ≤ T.card) :
+    Fintype.card Validator < T.card + majority Validator := by
+  unfold majority at *
   omega
 
-/-- Crash block validity: like the core `ValidWrt`, but the parents quorum is the
-majority `n/2+1` rather than `n − f`, and the core's `self_parent` and
-`distinct_creators` fields are gone. The implementation's block verifier imposes
-neither: there is no self-parent check, and duplicate-author includes are
-deduplicated by the stake aggregator, not rejected. Under crash the second is
-also derivable — universal non-equivocation makes duplicate creators among refs
-impossible (`Universe.eq_of_mem_refs_of_creator_eq`). -/
+/-- Crash block validity: like the core `ValidWrt`, but the parents quorum is
+the majority `n/2+1` rather than `n − f`, and `self_parent` and
+`distinct_creators` are gone — the implementation's verifier imposes
+neither, and under crash the second is derivable from universal
+non-equivocation anyway. -/
 structure ValidWrt (blk : BlockId → Block Validator BlockId Payload)
     (b : Block Validator BlockId Payload) : Prop where
   /-- Every reference sits in the immediately preceding round. -/
@@ -91,6 +85,13 @@ instance ValidWrt.mechanised :
       (ValidWrt (Validator := Validator) (BlockId := BlockId) (Payload := Payload)) :=
   Validity.Mechanised.of_iff ValidWrt.iff_validAt
 
+/-- **And quorate at the majority.** -/
+instance ValidWrt.quorate :
+    Validity.Quorate
+      (ValidWrt (Validator := Validator) (BlockId := BlockId) (Payload := Payload))
+      (majority Validator) :=
+  Validity.Quorate.of_validAt (by unfold majority; omega) ValidWrt.iff_validAt
+
 /-- **And does not read the creator.** -/
 instance ValidWrt.copyStable :
     Validity.CopyStable
@@ -113,32 +114,6 @@ namespace Universe
 
 variable {U : Universe Validator BlockId Payload}
 
-/-- Two ids with the same author and round are the same id — universal, no
-correctness hypothesis (the crash simplification of the core's T1). -/
-theorem eq_of_creator_eq {i j : BlockId} (hi : i ∈ U.ids) (hj : j ∈ U.ids)
-    (hc : (U.block i).creator = (U.block j).creator)
-    (hround : (U.block i).round = (U.block j).round) : i = j :=
-  U.no_equivocation i hi j hj (Finset.mem_univ _) hc hround
-
-/-- Completeness, as a subset statement. -/
-theorem refs_subset {i : BlockId} (hi : i ∈ U.ids) : (U.block i).refs ⊆ U.ids :=
-  fun _ hj => U.complete i hi _ hj
-
-/-- A reference sits in the round immediately below its referrer. -/
-theorem round_of_mem_refs {i j : BlockId} (hi : i ∈ U.ids) (hj : j ∈ (U.block i).refs) :
-    (U.block j).round + 1 = (U.block i).round :=
-  (U.valid i hi).predecessor j hj
-
-/-- References of a non-genesis block carry a majority of distinct authors. -/
-theorem creators_quorum {i : BlockId} (hi : i ∈ U.ids) (hround : 0 < (U.block i).round) :
-    majority Validator ≤ (creatorsOf U.block (U.block i).refs).card :=
-  (U.valid i hi).quorum hround
-
-/-- A non-genesis block references at least one block. -/
-theorem refs_nonempty {i : BlockId} (hi : i ∈ U.ids) (hround : 0 < (U.block i).round) :
-    (U.block i).refs.Nonempty :=
-  (U.valid i hi).refs_nonempty hround
-
 /-- Distinct creators among references are automatic under crash: two refs of
 the same block sharing a creator sit at the same round (`predecessor`), so
 universal `no_equivocation` identifies them. This is why the crash `ValidWrt`
@@ -148,25 +123,8 @@ theorem eq_of_mem_refs_of_creator_eq {i j k : BlockId} (hi : i ∈ U.ids)
     (hc : (U.block j).creator = (U.block k).creator) : j = k := by
   have h1 := U.round_of_mem_refs hi hj
   have h2 := U.round_of_mem_refs hi hk
-  exact U.eq_of_creator_eq (U.refs_subset hi hj) (U.refs_subset hi hk) hc (by omega)
-
-/-- **Two majority-backed sets of round-`n` blocks share a block.** The crash
-analogue of the core's `exists_common_mem_of_quorums`: majority intersection
-(all honest) plus universal non-equivocation. -/
-theorem exists_common_mem_of_quorums {s t : Finset BlockId} {n : ℕ}
-    (hs : ∀ q ∈ s, q ∈ U.ids ∧ (U.block q).round = n)
-    (ht : ∀ q ∈ t, q ∈ U.ids ∧ (U.block q).round = n)
-    (hsq : majority Validator ≤ (creatorsOf U.block s).card)
-    (htq : majority Validator ≤ (creatorsOf U.block t).card) :
-    ∃ q, q ∈ s ∧ q ∈ t := by
-  obtain ⟨v, hv⟩ := exists_mem_inter hsq htq
-  rw [Finset.mem_inter, mem_creatorsOf, mem_creatorsOf] at hv
-  obtain ⟨⟨q₁, hq₁, hq₁c⟩, q₂, hq₂, hq₂c⟩ := hv
-  obtain ⟨hq₁i, hq₁r⟩ := hs q₁ hq₁
-  obtain ⟨hq₂i, hq₂r⟩ := ht q₂ hq₂
-  have : q₁ = q₂ :=
-    U.eq_of_creator_eq hq₁i hq₂i (hq₁c.trans hq₂c.symm) (by omega)
-  exact ⟨q₁, hq₁, this ▸ hq₂⟩
+  exact U.eq_of_creator_eq (U.refs_subset hi hj) (U.refs_subset hi hk) (Finset.mem_univ _)
+    hc rfl (by omega)
 
 end Universe
 

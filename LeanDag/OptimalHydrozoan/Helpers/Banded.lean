@@ -5,7 +5,7 @@ import LeanDag.OptimalHydrozoan.Helpers.SlotAgreement
 
 Not part of the audit surface. What `Properties.Banded` needs of this
 protocol, on top of Hydrozoan's band file: Optimal shares Hydrozoan's
-blocks, votes, LeanDag.Hydrozoan.certificates and LeanDag.Hydrozoan.blames, so `Hydrozoan/Helpers/Banded.lean`
+blocks, votes, LeanDag.Hydrozoan.certificates and slotBlames, so `Hydrozoan/Helpers/Banded.lean`
 carries the whole direct layer and rung 1 unchanged, and what is left is
 the fast path — fast evidence, the no-evidence quorum, and the anchored
 evidence rung.
@@ -49,12 +49,16 @@ reads the refs' own refs. -/
 theorem votesFor_bnd (h : AgreeBand R.toDagRule U U' lo hi g g') {C : BlockId}
     (hC : C ∈ U.ids) (h1 : lo + 1 < (U.block C).round + g)
     (h2 : (U.block C).round + g ≤ hi) (L : BlockId) :
-    votesFor U' C L = votesFor U C L := by
-  unfold votesFor
-  rw [voteBlocks_bnd h hC h1 h2, AnchoredRule.creatorsOf_band h]
+    votersOf U' C L = votersOf U C L := by
+  unfold votersOf LeanDag.Hydrozoan.voteBlocks
+  rw [AnchoredRule.carriedVotes_band h hC (by omega) h2 (fun b hb =>
+      AnchoredRule.isVote_band h (U.complete C hC b hb)
+        (by have := U.round_of_mem_refs hC hb; omega)
+        (by have := U.round_of_mem_refs hC hb; omega)),
+    AnchoredRule.creatorsOf_band h]
   intro b hb
-  have hbp := (Finset.mem_filter.mp hb).1
-  have := (U.valid C hC).predecessor b hbp
+  have hbp := (mem_carriedVotes.mp hb).1
+  have := U.round_of_mem_refs hC hbp
   exact ⟨U.complete C hC b hbp, by omega, by omega⟩
 
 /-- **And a candidate the band added collects none.** An old block's
@@ -62,14 +66,14 @@ refs are old and reference only old blocks. -/
 theorem votesFor_eq_empty_of_novel (h : AgreeBand R.toDagRule U U' lo hi g g') {C L : BlockId}
     (hC : C ∈ U.ids) (h1 : lo + 1 < (U.block C).round + g)
     (h2 : (U.block C).round + g ≤ hi) (hL : L ∉ U.ids) :
-    votesFor U' C L = ∅ := by
+    votersOf U' C L = ∅ := by
   rw [votesFor_bnd h hC h1 h2]
   have hempty : LeanDag.Hydrozoan.voteBlocks U C L = ∅ := by
     rw [Finset.eq_empty_iff_forall_notMem]
     intro b hb
-    obtain ⟨hbp, hbv⟩ := Finset.mem_filter.mp hb
+    obtain ⟨hbp, hbv⟩ := mem_carriedVotes.mp hb
     exact hL (U.complete b (U.complete C hC b hbp) L hbv)
-  unfold votesFor
+  unfold votersOf
   rw [hempty]
   simp [LeanDag.creatorsOf]
 
@@ -92,8 +96,8 @@ theorem witnessesEquivocation_bnd (h : AgreeBand R.toDagRule U U' lo hi g g')
     rw [hpar] at hj₁ hj₂
     obtain ⟨hj₁U, hj₁r⟩ := hold j₁ hj₁
     obtain ⟨hj₂U, hj₂r⟩ := hold j₂ hj₂
-    have hv₁U : LeanDag.Hydrozoan.IsVote U j₁ L₁ := (isVote_bnd h hj₁U (by omega) (by omega)).mp hv₁
-    have hv₂U : LeanDag.Hydrozoan.IsVote U j₂ L₂ := (isVote_bnd h hj₂U (by omega) (by omega)).mp hv₂
+    have hv₁U : IsVote U j₁ L₁ := (isVote_bnd h hj₁U (by omega) (by omega)).mp hv₁
+    have hv₂U : IsVote U j₂ L₂ := (isVote_bnd h hj₂U (by omega) (by omega)).mp hv₂
     exact ⟨L₁, L₂,
       AnchoredRule.isLeaderBlock_band_old h hkk hlead hk1 hk2 (U.complete j₁ hj₁U L₁ hv₁U) hL₁,
       AnchoredRule.isLeaderBlock_band_old h hkk hlead hk1 hk2 (U.complete j₂ hj₂U L₂ hv₂U) hL₂,
@@ -183,8 +187,8 @@ theorem fastCommitOptInView_bnd (h : AgreeBand R.toDagRule U U' lo hi g g')
     {L : BlockId} {n n' : ℕ} (hnn : n + g = n' + g') (h1 : lo ≤ n + g)
     (h2 : n + 1 + g ≤ hi) (hc : FastCommitOptInView U V L n) :
     FastCommitOptInView U' V' L n' :=
-  le_trans hc (Finset.card_le_card
-    (supportersInView_bnd h hv (n := n + 1) (n' := n' + 1) (by omega) (by omega) (by omega)))
+  AnchoredRule.holdsAtLeast_votesFor_band h hv (n := n + 1) (n' := n' + 1) (by omega) (by omega)
+    (by omega) hc
 
 /-- **The no-evidence quorum is carried across.** Each block of it stays
 at the decision round, stays in view, and stays evidence for no
@@ -229,8 +233,7 @@ theorem skippedLeaderOptInView_bnd (h : AgreeBand R.toDagRule U U' lo hi g g')
     (h1 : lo ≤ S.slotRound k + g) (h2 : S.slotRound k + 2 + g ≤ hi)
     (hs : SkippedLeaderOptInView (S := S) U V k) :
     SkippedLeaderOptInView (S := S') U' V' k' :=
-  ⟨le_trans hs.1 (Finset.card_le_card
-      (blamesInView_bnd h hv hkk hlead h1 (by omega))),
+  ⟨AnchoredRule.holdsAtLeast_slotBlamers_band h hkk hlead h1 (by omega) hv hs.1,
     noEvidenceQuorumInView_bnd h hv hkk hlead h1 h2 hs.2⟩
 
 /-! ## The anchored evidence rung
@@ -349,32 +352,33 @@ omit S in
 theorem optimalBandLaws : (optimalAnchored Replica BlockId).BandLaws where
   commit_band := by
     intro S S' U U' lo hi g g' V V' k k' L h hkk hlk hlo hhi hV _ hc
-    simp only [optimalAnchored_wave] at hhi
+    simp only [optimalAnchored_waveAt] at hhi
     rcases hc with hc | hc
     · exact Or.inl (fastCommitOptInView_bnd h (fun b hb h1 h2 => hV b hb (by omega) (by omega))
         (n := S.slotRound k) (n' := S'.slotRound k') (by omega) (by omega) (by omega) hc)
-    · exact Or.inr (le_trans hc (Finset.card_le_card
-        (certifiersInView_bnd h (fun b hb h1 h2 => hV b hb (by omega) (by omega))
-          (n := S.slotRound k) (n' := S'.slotRound k') (by omega) (by omega) (by omega))))
+    · exact Or.inr (AnchoredRule.holdsAtLeast_certificatesAt_band h hV (by omega) (by omega)
+        (by omega) (AnchoredRule.isVote_band_at h (by omega) (by omega)) hc)
   skip_band := by
     intro S S' U U' lo hi g g' V V' k k' h hkk hlk hlo hhi hV hs
-    simp only [optimalAnchored_wave] at hhi
+    simp only [optimalAnchored_waveAt] at hhi
     exact skippedLeaderOptInView_bnd h (fun b hb h1 h2 => hV b hb (by omega) (by omega))
       hkk hlk (by omega) (by omega) hs
   link_band := by
     intro S S' U U' lo hi g g' A L k k' i h hA hAlo hAhi hkk hlk hlo hhi hi _
-    simp only [optimalAnchored_wave] at hhi
+    simp only [optimalAnchored_waveAt] at hhi
     rcases i with _ | _ | i
-    · exact ⟨fun h' => certifiedIn_bnd_old h hA hAlo hAhi hkk (by omega) (by omega) h',
-        fun h' => certifiedIn_bnd h hA hAlo hAhi hkk (by omega) (by omega) h'⟩
+    · exact AnchoredRule.linkedVia_certificatesAt_band h hA hAlo hAhi (by omega) (by omega)
+        (by omega) (AnchoredRule.isVote_band_at h (by omega) (by omega))
     · exact ⟨fun h' => evidenceLinked_bnd_old h hkk hlk (by omega) (by omega) hA hAlo hAhi h',
         fun h' => evidenceLinked_bnd h hkk hlk (by omega) (by omega) hA hAlo hAhi h'⟩
     · exact absurd hi (by change ¬ (i + 1 + 1 < 2); omega)
   link_novel := by
     intro S S' U U' lo hi g g' A L k k' i h hA hAlo hAhi hkk hlk hlo hhi hi _ hLo
-    simp only [optimalAnchored_wave] at hhi
+    simp only [optimalAnchored_waveAt] at hhi
     rcases i with _ | _ | i
-    · exact not_certifiedIn_bnd_novel h hA hAlo hAhi hkk (by omega) (by omega) hLo
+    · exact AnchoredRule.not_linkedVia_certificatesAt_band_novel h hA hAlo hAhi
+        (n := S.slotRound k + 2) (by omega) (by omega) (by omega)
+        (AnchoredRule.not_isVote_band_novel h hLo) (by unfold qCert; omega)
     · exact not_evidenceLinked_bnd_novel h hkk hlk (by omega) (by omega) hA hAlo hAhi hLo
     · exact absurd hi (by change ¬ (i + 1 + 1 < 2); omega)
 

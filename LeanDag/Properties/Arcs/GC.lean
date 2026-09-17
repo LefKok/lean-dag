@@ -1,32 +1,16 @@
 import LeanDag.Properties.Truncate
 import LeanDag.Properties.Sustain
-import LeanDag.GC.Chop
-import LeanDag.GC.ChopDecided
-import LeanDag.Mysticeti.Properties
-import LeanDag.Odontoceti.Properties
-import LeanDag.MahiMahi.Properties
 import LeanDag.Properties.Band
 import LeanDag.Properties.Derived.Truncate
 import LeanDag.Properties.Record
 /-!
 # Garbage collection, for any protocol with a band
 
-`docs/target-properties.md` G2, the garbage-collection half.
-
-**This file is thin on purpose, and it was not always going to be.** An
-earlier version composed a locality property with a re-indexing one and
-looked like it was doing work; the composition had hypotheses nothing
-could satisfy, because restriction and renumbering are not separately
-realisable (`Properties/Truncate.lean` records why). What replaced it
-is a single statement, `LocalTruncate`, so garbage collection *is* that
-statement applied, and the two corollaries below are the directions a
-deployment uses.
-
-A protocol no longer proves `LocalTruncate`. Once the band carries a
-round offset, `Properties.LocalTruncate.of_banded` derives it from
-`Banded` and `ViewSound`, so the depth sits in the band a protocol was
-already proving for persistence and locality. What a mechanism still
-owes is the witness that its cut stands in the `Truncates` relation.
+`docs/target-properties.md` G2. Garbage collection is `LocalTruncate`
+applied; the two corollaries below are the directions a deployment
+uses. `Properties.LocalTruncate.of_banded` derives it from `Banded` and
+`ViewSound`, so a protocol proves nothing new — what a mechanism owes
+is the witness that its cut stands in the `Truncates` relation.
 -/
 
 namespace LeanDag
@@ -57,19 +41,10 @@ theorem decided_of_truncated (h : LocalTruncate R) (ht : Truncates R U U' S S' G
 
 /-! ## The agreement half
 
-`decided_of_truncate` and its converse compare a verdict with *the same
-validator's* verdict. What a deployment asks is different and stronger:
-a validator that joined from the truncation holds an **arbitrary** view
-of it, with no history below the cut and no relation to anyone's
-full-history view, and must still agree.
-
-`GC/ChopDecided.lean` proves that for the core (G4) and `GC/Horizon.lean`
-across two horizons (G8), each by hand; `Integration/Hydrozoan` has its
-own copy. None of that was necessary. `Agree` compares two views of one
-universe, `LocalTruncate` puts the full-history verdict into the
-truncation, and the two compose — so every rule with a band and
-agreement has cross-cut agreement, and neither protocol needed to prove
-it. -/
+A deployment needs more than `decided_of_truncate`: a validator that
+joined from the truncation holds an arbitrary view of it and must still
+agree with a full-history one. `Agree` and `LocalTruncate` compose to
+give this for any rule with both, with nothing proved per protocol. -/
 
 /-- **Cross-cut agreement.** A validator holding any view of the
 truncation agrees, slot for slot, with a full-history validator. -/
@@ -94,186 +69,10 @@ theorem decided_agree_horizons (ha : Agree R) (hlt : LocalTruncate R)
   (decided_agree_truncate ha hlt ht₁ hv₁ hW₁ hV).trans
     (decided_agree_truncate ha hlt ht₂ hv₂ hW₂ (halign ▸ hV)).symm
 
-/-! ## The liveness half, for the core
-
-Garbage collection is a mechanism, so on the liveness side it *owes*
-`Sustains` rather than consuming it, and the core's carrier is where the
-obligation can be discharged against a real consumer. This section
-imports the mechanism it is about and the protocol it serves, and no
-other mechanism. -/
-
-section Core
-
-variable [Faults Validator] {U : BlockUniverse Validator BlockId Payload} {G : ℕ}
-
-/-- **The core's carrier, read as block records**: both maps are the
-identity. -/
-def coreOnRecord :
-    (MysticetiProperties.mysticetiRule (Validator := Validator) (BlockId := BlockId)
-      (Payload := Payload)).OnRecord ValidWrt (Correct : Finset Validator) BlockRecord.Any where
-  toRec := fun U => U
-  inv := fun _ => True.intro
-  ofRec := fun W _ => W
-  ids_to := fun _ => rfl
-  block_to := fun _ => rfl
-  ids_of := fun _ _ => rfl
-  block_of := fun _ _ => rfl
-  toView := fun V => V
-  ofView := fun V => V
-  viewIds_to := fun _ => rfl
-  viewIds_of := fun _ => rfl
-
-/-- **The cut sustains the core from its horizon.** The record's witness. -/
-theorem sustains_chop :
-    Sustains (MysticetiProperties.mysticetiRule (Payload := Payload)) U (chop U G) G G :=
-  coreOnRecord.sustains_chop U
-
-/-- **The reactive commit survives the cut** — the consumer test, from
-the obligation rather than from `chop` directly. -/
-theorem directCommit_chop {T : Finset Validator} {r : ℕ} {L : BlockId}
-    (hr : G ≤ r) (hcard : quorumCard Validator ≤ T.card)
-    (hpop : LeanDag.PopulatedOn U T (r + 2)) (hc : CertifiesAt U T r L) :
-    DirectCommit (chop U G) L (r - G) :=
-  MysticetiProperties.directCommit_of_sustains sustains_chop hr hr hcard hpop hc
-
-end Core
 
 
-/-! ## The canonical cut is a truncation, and the arc's theorems follow
-
-With the band carrying an offset, truncation invariance is no longer an
-obligation: `Properties.LocalTruncate.of_banded` derives it for any rule
-with a band. What is left for this file is the **witness** — that the
-cut the mechanism builds stands in the `Truncates` relation — and the
-observation that the arc's own two transport theorems come back out of
-the property with no induction.
-
-That is the consumer test the arc asks for, and it measures what the
-offset removed: `GC/ChopDecided.lean` proves those two by structural
-induction over the decision relation, and here they are again, from a
-property proved once for other reasons. -/
-
-section CoreTruncate
-
-variable [Faults Validator] {U : BlockUniverse Validator BlockId Payload}
-variable {S : Slots Validator} {G d : ℕ}
-
-/-- **The cut is a truncation.** The witness `Truncates` was written to
-have, exhibited before anything is proved from it. -/
-theorem truncates_chop (hd : G ≤ S.slotRound d) :
-    Truncates (MysticetiProperties.mysticetiRule (Payload := Payload))
-      U (chop U G) S (S.chop G d hd) G d :=
-  coreOnRecord.truncates_chop U hd
-
-/-- **G3 re-derived, with no induction of its own.** Both directions of
-the cut's verdict transport, from the band. -/
-theorem decided_chop_iff (hd : G ≤ S.slotRound d)
-    {V : View Validator BlockId Payload U} {k : ℕ} {v : Option BlockId} :
-    Decided U V (d + k) v ↔ Decided (S := S.chop G d hd) (chop U G) (V.chop G) k v :=
-  LocalTruncate.of_banded MysticetiProperties.banded
-    S (S.chop G d hd) U (chop U G) G d (truncates_chop hd) V (V.chop G)
-    (fun b hb hr => by
-      show b ∈ V.ids ↔ b ∈ (V.chop G).ids
-      rw [BlockRecord.View.chop_ids, Finset.mem_filter]
-      exact ⟨fun h => ⟨h, hr⟩, fun h => h.1⟩) k v
-
-/-- **The chopped view agrees with the original above the cut**, which
-is the view hypothesis the two theorems below need. -/
-theorem viewAgreeAbove_chop {V : View Validator BlockId Payload U} :
-    ViewAgreeAbove (MysticetiProperties.mysticetiRule (Payload := Payload))
-      V (V.chop G) G :=
-  fun b _ hr => by
-    show b ∈ V.ids ↔ b ∈ (V.chop G).ids
-    rw [BlockRecord.View.chop_ids, Finset.mem_filter]
-    exact ⟨fun h => ⟨h, hr⟩, fun h => h.1⟩
-
-/-- **G4 re-derived.** `GC/ChopDecided.decided_agree_chop` proves this
-by running the core's uniqueness inside the truncation and carrying the
-verdict across by induction. Here it is two properties applied. -/
-theorem decided_agree_chop (hd : G ≤ S.slotRound d)
-    {W : View Validator BlockId Payload (chop U G)}
-    {V : View Validator BlockId Payload U} {k : ℕ} {w v : Option BlockId}
-    (hW : Decided (S := S.chop G d hd) (chop U G) W k w)
-    (hV : Decided U V (d + k) v) : w = v :=
-  decided_agree_truncate MysticetiProperties.agree
-    (LocalTruncate.of_banded MysticetiProperties.banded)
-    (truncates_chop hd) viewAgreeAbove_chop hW hV
-
-/-- **G8 re-derived.** Validators at different horizons agree. -/
-theorem decided_agree_horizons_chop {G₁ G₂ d₁ d₂ : ℕ}
-    (hd₁ : G₁ ≤ S.slotRound d₁) (hd₂ : G₂ ≤ S.slotRound d₂)
-    {W₁ : View Validator BlockId Payload (chop U G₁)}
-    {W₂ : View Validator BlockId Payload (chop U G₂)}
-    {V : View Validator BlockId Payload U}
-    {k₁ k₂ : ℕ} (halign : d₁ + k₁ = d₂ + k₂) {w₁ w₂ v : Option BlockId}
-    (hW₁ : Decided (S := S.chop G₁ d₁ hd₁) (chop U G₁) W₁ k₁ w₁)
-    (hW₂ : Decided (S := S.chop G₂ d₂ hd₂) (chop U G₂) W₂ k₂ w₂)
-    (hV : Decided U V (d₁ + k₁) v) : w₁ = w₂ :=
-  decided_agree_horizons MysticetiProperties.agree
-    (LocalTruncate.of_banded MysticetiProperties.banded)
-    (truncates_chop hd₁) (truncates_chop hd₂)
-    viewAgreeAbove_chop viewAgreeAbove_chop halign hW₁ hW₂ hV
-
-/-- **And so does non-equivocation**, from the truncation. -/
-theorem noEquivOn_chop (hd : G ≤ S.slotRound d) {T : Finset Validator}
-    (hne : NoEquivOn (MysticetiProperties.mysticetiRule (Payload := Payload)) U T) :
-    NoEquivOn (MysticetiProperties.mysticetiRule (Payload := Payload)) (chop U G) T :=
-  noEquivOn_of_truncates (truncates_chop hd) hne
-
-end CoreTruncate
 
 
-/-! ## The rules on the core's record
-
-Odontoceti and Mahi-Mahi run on the core's universes, so their carriers
-read as records by the identity maps, and every mechanism cell — the
-cut, the fill, re-genesis, and the verdict theorems across each — is
-`Arcs/Record.lean` at the instance. Nothing is written per cell. -/
-
-section OdontocetiRecord
-
-variable [Faults5 Validator] {B : Type} [LinearOrder B]
-
-/-- **Odontoceti's carrier, read as block records**: the core's, at its
-fault model. -/
-def odontocetiOnRecord :
-    (OdontocetiProperties.odontocetiRule (Validator := Validator) (BlockId := B)
-      (Payload := Payload)).OnRecord ValidWrt (Correct : Finset Validator) BlockRecord.Any where
-  toRec := fun U => U
-  inv := fun _ => True.intro
-  ofRec := fun W _ => W
-  ids_to := fun _ => rfl
-  block_to := fun _ => rfl
-  ids_of := fun _ _ => rfl
-  block_of := fun _ _ => rfl
-  toView := fun V => V
-  ofView := fun V => V
-  viewIds_to := fun _ => rfl
-  viewIds_of := fun _ => rfl
-
-end OdontocetiRecord
-
-section MahiMahiRecord
-
-variable [Faults Validator] {B : Type} [LinearOrder B]
-
-/-- **Mahi-Mahi's carrier, read as block records**, at each wave width. -/
-def mahiMahiOnRecord (w : ℕ) :
-    (MahiMahiProperties.mahiMahiRule (Validator := Validator) (BlockId := B)
-      (Payload := Payload) w).OnRecord ValidWrt (Correct : Finset Validator) BlockRecord.Any where
-  toRec := fun U => U
-  inv := fun _ => True.intro
-  ofRec := fun W _ => W
-  ids_to := fun _ => rfl
-  block_to := fun _ => rfl
-  ids_of := fun _ _ => rfl
-  block_of := fun _ _ => rfl
-  toView := fun V => V
-  ofView := fun V => V
-  viewIds_to := fun _ => rfl
-  viewIds_of := fun _ => rfl
-
-end MahiMahiRecord
 
 end Arcs
 

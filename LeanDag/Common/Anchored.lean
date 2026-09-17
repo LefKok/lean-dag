@@ -1,81 +1,26 @@
 import LeanDag.Common.Ledger
-import LeanDag.Common.Slots
+import LeanDag.Common.Rules
+import LeanDag.Common.Leader
 /-!
 # The anchored decision relation
 
-Every leader-based rule of this development decides a slot the same way.
-A *direct* rule reads the slot's own rounds from a view and commits a
-candidate or skips the slot outright. When the direct evidence is
-inconclusive, the rule looks up to an **anchor** — the nearest eligible
-slot above that is itself committed — and asks what that anchor's causal
-history says about the slot's candidates, through one or more graded
-*rungs* of link: a candidate linked at the first rung is committed; if no
-candidate is linked at the first rung, one linked at the second is
-committed; and so on; if no candidate is linked at any rung, the slot is
-skipped. Where a rung may hold several candidates a tie-break names the
-least.
-
-What varies between the rules is only the data below: the wave offset in
-eligibility, the direct commit and skip predicates, and the rungs with
-their ties. What every rule proves about that data is `Laws`, eight facts
-each rule has under its own name. From them, agreement across views,
-monotonicity in the view, and the ledger's agreement follow once, here.
-
-"Nearest" is stated positively: every eligible slot strictly between the
-slot and its anchor is decided `none`. The negative reading would be a
-negative premise, which an inductive definition cannot carry; the
-positive form is equivalent, since the sweep decides every slot it
-passes, and it keeps every recursive occurrence strictly positive.
+Every leader-based rule decides a slot the same way: a direct rule reads
+the slot's own rounds and commits or skips outright; failing that, it
+looks to the nearest eligible committed **anchor** above and asks what
+its causal history says through one or more graded **rungs** of link,
+the first rung with a linked candidate winning, a tie-break naming the
+least where several qualify. Only the data varies per rule — the wave
+offset, read at the slot's round so that one rule may decide different
+rounds at different waves, the direct predicates, the rungs and their
+ties — and `Laws`, eight facts each rule proves under its own name, is
+what yields agreement across views, monotonicity in the view, and the
+ledger's agreement, proved once here.
 -/
 
 namespace LeanDag
 
 variable {Validator : Type*} {BlockId : Type*} {Payload : Type*}
 variable {P : Validity Validator BlockId Payload} {honest : Finset Validator}
-
-/-! ## Candidates -/
-
-section Candidates
-
-variable [S : Slots Validator]
-
-/-- `L` is a candidate block for slot `k`: the right round, the right author.
-A correct leader has at most one such block; a Byzantine one may have
-several, which is why the rules quantify over candidates rather than
-selecting one. -/
-@[reducible]
-def IsLeaderBlock (U : BlockRecord Validator BlockId Payload P honest) (k : ℕ) (L : BlockId) :
-    Prop :=
-  L ∈ U.ids ∧ (U.block L).round = S.slotRound k ∧ (U.block L).creator = S.leader k
-
-variable {U : BlockRecord Validator BlockId Payload P honest}
-
-omit S in
-/-- Decidable, so concrete models can settle it by `decide`. The
-schedule is a plain implicit, found by unification, so the instance
-applies at any schedule a statement names and not only the ambient
-one. -/
-instance decidableIsLeaderBlock [DecidableEq Validator] [DecidableEq BlockId]
-    {S : Slots Validator} (k : ℕ) (L : BlockId) : Decidable (IsLeaderBlock (S := S) U k L) :=
-  inferInstanceAs (Decidable (L ∈ U.ids ∧ (U.block L).round = S.slotRound k ∧
-    (U.block L).creator = S.leader k))
-
-/-- **A block is the candidate of at most one slot** — what `Slots.keyed`
-yields: two slots sharing a round are told apart by their leaders. -/
-theorem slot_eq_of_isLeaderBlock {k₁ k₂ : ℕ} {L : BlockId}
-    (h₁ : IsLeaderBlock U k₁ L) (h₂ : IsLeaderBlock U k₂ L) : k₁ = k₂ :=
-  S.keyed (by simp only [← h₁.2.1, ← h₂.2.1, ← h₁.2.2, ← h₂.2.2])
-
-omit S in
-/-- Only the leader clause of `IsLeaderBlock` consults the schedule's
-leaders, at the slot itself. -/
-theorem isLeaderBlock_congr {S₁ S₂ : Slots Validator} {k : ℕ} {L : BlockId}
-    (hround : S₁.slotRound k = S₂.slotRound k) (hk : S₁.leader k = S₂.leader k)
-    (h : IsLeaderBlock (S := S₁) U k L) : IsLeaderBlock (S := S₂) U k L := by
-  obtain ⟨h1, h2, h3⟩ := h
-  exact ⟨h1, by rw [← hround]; exact h2, by rw [← hk]; exact h3⟩
-
-end Candidates
 
 /-! ## Eligibility, at a wave
 
@@ -140,12 +85,19 @@ end EligibleAt
 /-- **An anchored rule**: what a leader-based decision rule supplies. -/
 structure AnchoredRule (Validator : Type*) (BlockId : Type*) (Payload : Type*)
     (P : Validity Validator BlockId Payload) (honest : Finset Validator) where
-  /-- The rounds a slot's direct rules read above its proposal, less one:
-  an anchor must sit strictly above `slotRound k + wave`. -/
-  wave : ℕ
+  /-- The rounds a slot's direct rules read above its proposal, less one, as
+  a function of the slot's round: an anchor of a slot proposed at round `r`
+  must sit strictly above `r + waveAt r`. Constant for every rule in the
+  tree; a rule whose wavelength alternates with the round supplies a
+  function of it. -/
+  waveAt : ℕ → ℕ
   /-- The direct commit, judged from a view: `Commit U V L r` says the
   candidate `L` proposed at round `r` is committed by what `V` holds. -/
   Commit : (U : BlockRecord Validator BlockId Payload P honest) → U.View → BlockId → ℕ → Prop
+  /-- The direct commit is decidable: a validator computes it from its
+  view, and so does a witness. -/
+  decCommit : ∀ (U : BlockRecord Validator BlockId Payload P honest) (V : U.View) (L : BlockId)
+    (r : ℕ), Decidable (Commit U V L r)
   /-- The direct skip of a slot, judged from a view. -/
   Skip : (U : BlockRecord Validator BlockId Payload P honest) → U.View → Slots Validator → ℕ → Prop
   /-- The number of rungs of the indirect test. -/
@@ -160,43 +112,52 @@ structure AnchoredRule (Validator : Type*) (BlockId : Type*) (Payload : Type*)
 
 namespace AnchoredRule
 
+/-- The rule's own decidability of its direct commit, as an instance. -/
+instance instDecidableCommit {R : AnchoredRule Validator BlockId Payload P honest}
+    (U : BlockRecord Validator BlockId Payload P honest) (V : U.View) (L : BlockId) (r : ℕ) :
+    Decidable (R.Commit U V L r) :=
+  R.decCommit U V L r
+
 variable (R : AnchoredRule Validator BlockId Payload P honest)
 variable [S : Slots Validator]
 
 /-! ## Eligibility -/
 
 /-- The round at which a slot's direct verdict is settled. -/
-def decisionRound (k : ℕ) : ℕ := S.slotRound k + R.wave
+def decisionRound (k : ℕ) : ℕ := S.slotRound k + R.waveAt (S.slotRound k)
 
-/-- **`j` may anchor `k`**: eligibility at the rule's wave. -/
-abbrev Eligible (k j : ℕ) : Prop := EligibleAt (S := S) R.wave k j
+/-- **`j` may anchor `k`**: eligibility at the wave of `k`'s round. -/
+abbrev Eligible (k j : ℕ) : Prop := EligibleAt (S := S) (R.waveAt (S.slotRound k)) k j
 
 theorem eligible_iff {k j : ℕ} :
-    R.Eligible k j ↔ S.slotRound k + R.wave + 1 ≤ S.slotRound j :=
+    R.Eligible k j ↔ S.slotRound k + R.waveAt (S.slotRound k) + 1 ≤ S.slotRound j :=
   eligibleAt_iff
 
 /-- An eligible anchor is a later slot. -/
 theorem lt_of_eligible {k j : ℕ} (h : R.Eligible k j) : k < j := lt_of_eligibleAt h
 
 /-- Every slot has an eligible anchor somewhere. -/
-theorem exists_eligible (k : ℕ) : ∃ j, R.Eligible k j := exists_eligibleAt R.wave k
+theorem exists_eligible (k : ℕ) : ∃ j, R.Eligible k j := exists_eligibleAt _ k
 
-/-- **A run of `c` slots reaches past everything below it**, at the
-rule's wave. -/
-abbrev SpansEligible (c : ℕ) : Prop := SpansEligibleAt (S := S) R.wave c
+/-- **A run of `c` slots reaches past everything below it**, each slot at
+the wave of its own round. -/
+abbrev SpansEligible (c : ℕ) : Prop := ∀ b i : ℕ, i < b → R.Eligible i (b + c - 1)
 
-/-- Under an identity-round schedule, `wave + 1` consecutive slots span. -/
-theorem spansEligible_of_identity (hid : ∀ s, S.slotRound s = s) :
-    R.SpansEligible (R.wave + 1) := by
+/-- Under an identity-round schedule, `w + 1` consecutive slots span, for
+any `w` the wave never exceeds. -/
+theorem spansEligible_of_identity (hid : ∀ s, S.slotRound s = s) {w : ℕ}
+    (hw : ∀ r, R.waveAt r ≤ w) : R.SpansEligible (w + 1) := by
   intro b i hi
-  rw [eligibleAt_iff, hid, hid]
+  have := hw i
+  rw [eligible_iff, hid, hid]
   omega
 
 variable {U : BlockRecord Validator BlockId Payload P honest}
 
 /-- The anchor's round clears the slot's decision round. -/
 theorem anchor_round_le {k j : ℕ} {A : BlockId} (hA : IsLeaderBlock U j A)
-    (helig : R.Eligible k j) : S.slotRound k + R.wave + 1 ≤ (U.block A).round := by
+    (helig : R.Eligible k j) :
+    S.slotRound k + R.waveAt (S.slotRound k) + 1 ≤ (U.block A).round := by
   rw [hA.2.1]
   exact R.eligible_iff.mp helig
 
@@ -268,6 +229,21 @@ theorem Decided.indirectSkip_single {U : BlockRecord Validator BlockId Payload P
     have : i = 0 := by omega
     subst this; exact hnone L hL)
 
+/-- **The indirect rule is total**: a nearest eligible committed anchor
+gives the slot a verdict. -/
+def Total (U : BlockRecord Validator BlockId Payload P honest) : Prop :=
+  ∀ (V : U.View) (k j : ℕ) (A : BlockId), R.Eligible (S := S) k j →
+    R.Decided (S := S) U V j (some A) →
+    (∀ i, k < i → i < j → R.Eligible (S := S) k i → R.Decided (S := S) U V i none) →
+    ∃ v, R.Decided (S := S) U V k v
+
+/-- **A committed run decides everything below it**: `c` committed slots
+from `b`, spanning eligibility, give every slot below `b` a verdict. -/
+def DecidedBelowRun (U : BlockRecord Validator BlockId Payload P honest) : Prop :=
+  ∀ (V : U.View) (b c : ℕ), 0 < c → R.SpansEligible (S := S) c →
+    (∀ j, b ≤ j → j ≤ b + c - 1 → ∃ B, R.Decided (S := S) U V j (some B)) →
+    ∀ i, i < b → ∃ v, R.Decided (S := S) U V i v
+
 /-! ## What a rule owes -/
 
 omit S in
@@ -276,6 +252,17 @@ abbrev LinkCongr : Prop :=
   ∀ {S₁ S₂ : Slots Validator} {U : BlockRecord Validator BlockId Payload P honest}
     {A L : BlockId} {i k : ℕ}, S₁.slotRound k = S₂.slotRound k → S₁.leader k = S₂.leader k →
     R.Link i U A L S₁ k → R.Link i U A L S₂ k
+
+omit S in
+/-- A link that reads the schedule only through the slot's round is
+congruent. -/
+theorem linkCongr_of_round
+    (f : ℕ → (U : BlockRecord Validator BlockId Payload P honest) → BlockId → BlockId → ℕ → Prop)
+    (h : ∀ i U A L (S : Slots Validator) k, R.Link i U A L S k = f i U A L (S.slotRound k)) :
+    R.LinkCongr := by
+  intro S₁ S₂ U A L i k hround _ hl
+  rw [h] at hl ⊢
+  rwa [← hround]
 
 /-- **The laws of an anchored rule** — what the direct predicates and the
 rungs must satisfy for agreement, on the records satisfying an invariant
@@ -352,12 +339,10 @@ theorem slot_eq_of_decided_commit {V₁ V₂ : U.View} {k₁ k₂ : ℕ} {L : Bl
   slot_eq_of_isLeaderBlock (isLeaderBlock_of_decided h₁) (isLeaderBlock_of_decided h₂)
 
 /-- **The anchor comparison.** Two indirect decisions for one slot each
-name an anchor, together with the premise that every eligible slot
-strictly between the slot and that anchor was decided `none`. Whichever
-anchor is the earlier is then decided `none` by the other side and `some`
-by its own, so the anchors coincide — and with them the blocks they name.
-The statement carries no consensus content: `Dec` and `Elig` are arbitrary
-predicates. -/
+name an anchor and the premise that every eligible slot between it and
+the slot decided `none`; whichever anchor is earlier is then `none` on
+the other side and `some` on its own, so the anchors — and their blocks —
+coincide. Carries no consensus content: `Dec` and `Elig` are arbitrary. -/
 theorem anchor_eq {W : Type*} {Dec : W → ℕ → Option BlockId → Prop}
     {Elig : ℕ → Prop} {k j j₂ : ℕ} {A A₂ : BlockId} {V₂ : W}
     (hkj : k < j) (helig : Elig j) (hkj₂ : k < j₂) (helig₂ : Elig j₂)
@@ -389,11 +374,9 @@ theorem eq_of_indirect (hl : R.Laws I) (hI : I S U) {k j i₁ i₂ : ℕ} {L₁ 
   · exact absurd hlink₂ (hemp₁ i₂ hgt L₂ hL₂)
 
 /-- **Agreement.** No two validators reach conflicting decisions for a
-slot, whatever views they hold and whichever routes they took. Structural
-induction on the first derivation: every commit-against-commit case
-closes by a uniqueness law, the direct-against-indirect crossings by
-visibility or by the skip law, and the one real case — indirect against
-indirect — by comparing the two anchors. -/
+slot. Structural induction on the first derivation: commit-against-commit
+closes by a uniqueness law, direct-against-indirect by visibility or the
+skip law, and indirect-against-indirect by comparing the two anchors. -/
 theorem decided_unique (hl : R.Laws I) (hI : I S U) {V₁ : U.View} {k : ℕ} {v₁ : Option BlockId}
     (h₁ : R.Decided U V₁ k v₁) :
     ∀ (V₂ : U.View) (v₂ : Option BlockId), R.Decided U V₂ k v₂ → v₁ = v₂ := by
@@ -460,9 +443,8 @@ theorem not_decided_skip_of_decided_commit (hl : R.Laws I) (hI : I S U)
 
 /-! ## Monotonicity in the view -/
 
-/-- **Decisions are monotone in the view.** The direct cases are the
-monotonicity laws; the indirect cases rebuild themselves from the
-inductive hypotheses, their link premises unchanged. -/
+/-- **Decisions are monotone in the view**: the direct cases are the
+monotonicity laws, the indirect cases rebuild from the link premises. -/
 theorem decided_mono (hl : R.Laws I) (hI : I S U) {V V' : U.View} (hsub : V.ids ⊆ V'.ids) {k : ℕ}
     {v : Option BlockId} (h : R.Decided U V k v) : R.Decided U V' k v := by
   induction h with

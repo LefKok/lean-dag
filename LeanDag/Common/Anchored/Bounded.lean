@@ -5,14 +5,11 @@ import Mathlib.Data.Finset.Max
 /-!
 # The bounded relation, and the descent
 
-`DecidedWithin` is the anchored relation with every slot the derivation
-mentions — the decided slot, the anchor, the eligible intermediates —
-strictly below a bound. It is a rule's own tool rather than part of any
-interface: the mechanisms read `Properties.DecidedBelow`, and
-`decidedBelow_of_decidedWithin` carries this into that. What it adds is
-a **tight** bound, which the semantic form cannot recover; the bound
-lives in the relation because a `Decided` derivation is a proof of a
-`Prop` and its anchors cannot be recovered from it.
+`DecidedWithin` is `Decided` with every slot the derivation mentions
+strictly below a bound `B` — added because a `Decided` derivation is a
+proof of a `Prop`, and its anchors cannot be recovered from it after the
+fact. `decidedBelow_of_decidedWithin` carries it into
+`Properties.DecidedBelow`, which the mechanisms read instead.
 
 Every derivation is bounded (`exists_bound`), and **the descent** — a
 committed run of eligible span decides everything below it — is one
@@ -345,6 +342,42 @@ theorem decided_below_of_committed_run
   obtain ⟨v, hv⟩ := decidedWithin_below_of_committed_run hleast (B := B) hbn (by omega)
     hspan hrun' i hi
   exact ⟨v, hv.toDecided⟩
+
+/-- **The descent below a run**: `c` slots from `b` whose leaders satisfy
+`Led`, each of which commits when its leader does, decide every slot below
+`b`. -/
+theorem decided_below_of_run
+    (hleast : ∀ {A : BlockId} {i k : ℕ}, i < R.rungs →
+      (∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k) →
+      ∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k ∧
+        R.Least (S := S) U A i k L)
+    {V : U.View} {b c : ℕ} (hc : 0 < c) (hspan : R.SpansEligible (S := S) c)
+    {Led : ℕ → Prop} (hrun : ∀ i, i < c → Led (b + i))
+    (commit : ∀ j, b ≤ j → j ≤ b + c - 1 → Led j → ∃ L, R.Decided (S := S) U V j (some L)) :
+    ∀ i, i < b → ∃ v, R.Decided (S := S) U V i v :=
+  decided_below_of_committed_run hleast (b := b) (n := b + c - 1) (by omega)
+    (fun i hi => hspan b i hi) fun j h1 h2 => commit j h1 h2 (by
+      have := hrun (j - b) (by omega)
+      rwa [Nat.add_sub_cancel' h1] at this)
+
+/-- Totality, from a choice at every nonempty rung. -/
+theorem total_of_least
+    (hleast : ∀ {A : BlockId} {i k : ℕ}, i < R.rungs →
+      (∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k) →
+      ∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k ∧
+        R.Least (S := S) U A i k L) :
+    R.Total (S := S) U :=
+  fun _ _ _ _ helig hj hmid => exists_decided_of_anchor hleast helig hj hmid
+
+/-- The descent below a committed run, from a choice at every nonempty rung. -/
+theorem decidedBelowRun_of_least
+    (hleast : ∀ {A : BlockId} {i k : ℕ}, i < R.rungs →
+      (∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k) →
+      ∃ L, IsLeaderBlock (S := S) U k L ∧ R.Link i U A L S k ∧
+        R.Least (S := S) U A i k L) :
+    R.DecidedBelowRun (S := S) U :=
+  fun _ b _ hc hspan hrun i hi =>
+    decided_below_of_committed_run hleast (by omega) (fun i hi => hspan b i hi) hrun i hi
 
 end AnchoredRule
 

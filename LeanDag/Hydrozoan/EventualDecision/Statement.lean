@@ -3,28 +3,12 @@ import LeanDag.Hydrozoan.Model.Liveness
 /-!
 # Statement: eventual decision — the ledger does not stall
 
-The liveness headline, composing the two previous claims. Direct
-liveness commits any synchronised, populated, correct-led wave; indirect
-liveness settles everything below a committed run. The one ingredient
-still missing is fairness: the schedule must actually *offer* runs of
-correct-led slots.
-
-Two Props, factored so each is about one thing:
-
-- `RunDecidesBelow`: the per-universe workhorse with the run location
-  `b` explicit — a synchronised quorum whose members lead the `c` slots
-  `b, …, b + c − 1` and fill every round of the run's span decides every
-  slot below `b`. No fairness: where the run sits is a hypothesis.
-- `RunsRecur`: the schedule-only claim — fairness places a `T`-led run
-  past any slot and any round. No universe: pure `Slots` arithmetic.
-
-The two compose by direct application (get the run location from
-`RunsRecur`, hand it to `RunDecidesBelow`): for every slot `k` there is
-a bound `b ≥ k` with every slot below `b` decided at the eventual view —
-verdicts march past any point, which is exactly "the ledger does not
-stall". That composed form is stated and proven on the generated side
-(`ledgerProgress` in `Proof.lean`); the audited content is exactly the
-two Props above.
+The liveness headline, composing direct liveness (commits a
+synchronised, populated, correct-led wave) with indirect liveness
+(settles everything below a committed run). `RunDecidesBelow` takes the
+run's location as a hypothesis; `RunsRecur` is the schedule-only claim
+that fairness places one past any point. `ledgerProgress` in
+`Proof.lean` composes them.
 -/
 
 namespace LeanDag
@@ -36,25 +20,12 @@ section Schedule
 
 variable (Replica : Type*) [S : Slots Replica]
 
-/-- Fair leader election, in the only form liveness needs: the schedule
-places `c` consecutive `T`-led slots arbitrarily far out (`k` is
-universal, so such runs recur forever). A round-robin schedule satisfies
-this exactly when its rotation contains `c` consecutive `T`-members —
-always true for `c = 3` at the classical bound `n = 3f + 1`, but NOT
-guaranteed at the hybrid bound (many crashed replicas can be spaced so
-no three correct ones are adjacent) — which is why fairness is a stated
-hypothesis on the schedule rather than a theorem about it. Which leader
-schedules provide it is a separate concern, outside this development. -/
-def FairRunOn (T : Finset Replica) (c : ℕ) : Prop :=
-  ∀ k, ∃ k', k ≤ k' ∧ ∀ i, i < c → S.leader (k' + i) ∈ T
-
 /-- **Fairness places a run wherever needed**: past any slot `k` and any
 round `R`, some run of `c` consecutive `T`-led slots begins. Pure
-schedule arithmetic — no universe appears; feeding the produced location
-to `RunDecidesBelow` is the liveness composition. -/
+schedule arithmetic. -/
 def RunsRecur : Prop :=
   ∀ (T : Finset Replica) (c k R : ℕ),
-    FairRunOn Replica T c →              -- given a fair schedule:
+    FairRunOn T c →                      -- given a fair schedule:
     ∃ b, k ≤ b ∧                         -- a run location past k ...
       R ≤ S.slotRound b ∧                -- ... at or after round R ...
       ∀ i, i < c → S.leader (b + i) ∈ T  -- ... with every slot T-led.

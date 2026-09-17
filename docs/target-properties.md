@@ -108,8 +108,10 @@ its certifiers sit, and what certifying is.
 
 ```lean
 structure Support (R : DagRule Validator BlockId Payload) where
-  /-- The wavelength: certifiers sit `wave` rounds above the candidate. -/
-  wave : ℕ
+  /-- The wavelength at a candidate's round: certifiers of a candidate proposed at `r` sit
+  `waveAt r` rounds above it. Constant for every rule in the tree; a rule whose wavelength
+  alternates with the round supplies a function of it. -/
+  waveAt : ℕ → ℕ
   /-- `Certifies U c L`: block `c` certifies candidate `L`. -/
   Certifies : R.Universe → BlockId → BlockId → Prop
 ```
@@ -121,8 +123,8 @@ old certifier is unchanged across any `RebasedAbove` (§0.6), which is
 ```lean
 def Local : Prop :=
   ∀ {U U' : R.Universe} {G R₀ : ℕ}, RebasedAbove R U U' G R₀ →
-    ∀ c L, c ∈ R.ids U → R₀ + sp.wave ≤ (R.block U c).round →
-      L ∈ R.ids U → (R.block U L).round + sp.wave = (R.block U c).round →
+    ∀ c L, c ∈ R.ids U → R₀ + sp.waveAt (R.block U L).round ≤ (R.block U c).round →
+      L ∈ R.ids U → (R.block U L).round + sp.waveAt (R.block U L).round = (R.block U c).round →
       (sp.Certifies U' c L ↔ sp.Certifies U c L)
 ```
 
@@ -135,9 +137,9 @@ the leaders at or above `k + 1`.
 def Commits (rel : Reliability Validator) : Prop :=
   ∀ (S : Slots Validator) {U : R.Universe} (V : R.View U) (T : Finset Validator) (k : ℕ),
     rel.IsQuorum T →
-    (∀ n, S.slotRound k ≤ n → n ≤ S.slotRound k + sp.wave → PopulatedOn R U T n) →
+    (∀ n, S.slotRound k ≤ n → n ≤ S.slotRound k + sp.waveAt (S.slotRound k) → PopulatedOn R U T n) →
     (∀ L, R.IsCandidate S U k L → sp.certifiesAt U T (S.slotRound k) L) →
-    CoversUpto R V (S.slotRound k + sp.wave) →
+    CoversUpto R V (S.slotRound k + sp.waveAt (S.slotRound k)) →
     S.leader k ∈ T →
     ∃ L, DecidedBelow R S (k + 1) V k (some L)
 ```
@@ -174,6 +176,15 @@ transport across any `Truncates`, both ways) from `Banded`;
 `LeaderCommits` at `Support.live` from Law 2; `Descends` (a committed
 run of `c` slots decides everything below it) from `Indirect`.
 
+A fifth, `Descent` (`Properties/Commit.lean`), is derived the same way —
+from the support's two laws with `Indirect`, by
+`Timed.descent_of_support`, which is stated over a bare `DagRule` at a
+gap and a goodness predicate. It differs only in being named per
+protocol: a schedule mechanism consumes it at a rule, so each of the
+eight discharges its own instance in its own folder, in one call to that
+theorem. The obligation is a property; the discharge is generic; nothing
+of the mechanism appears on either side.
+
 ### 0.5 Synchrony is not a property
 
 Nothing under `Properties/` names synchrony. `SynchronisedOn`,
@@ -186,9 +197,10 @@ enters through one bridge:
 theorem live_of_coverage (sp : Support R) {rel : Reliability Validator}
     (hcov : OfCoverage sp rel) {U : R.Universe} {T : Finset Validator}
     (hq : rel.IsQuorum T) {Rnd N : ℕ} (hs : SynchronisedOn R U T Rnd)
-    (hpop : ∀ r, Rnd ≤ r → r ≤ N → PopulatedOn R U T r)
+    (hpop : ∀ r, Rnd ≤ r → r ≤ N → Properties.PopulatedOn R U T r)
     (S : Slots Validator) (V : R.View U) {lo K : ℕ} (hV : CoversUpto R V N)
-    (hRnd : Rnd ≤ S.slotRound lo) (hN : ∀ k, k < K → S.slotRound k + sp.wave ≤ N) :
+    (hRnd : Rnd ≤ S.slotRound lo)
+    (hN : ∀ k, k < K → S.slotRound k + sp.waveAt (S.slotRound k) ≤ N) :
     sp.live rel S V T lo K
 ```
 
@@ -247,8 +259,8 @@ theorem, once per mechanism:
 | garbage collection | `Truncates` | `LocalTruncate.of_banded`, `decided_agree_truncate` | `Support.live_of_truncates` |
 | crash recovery, re-genesis | `Extends`, `Sustains` | `Persist.of_banded`, `decided_agree_extends` | `Support.live_of_sustains` |
 | any stack of them | `Stack` | `Stack.safe_and_live` | the same |
-| adaptive leader schedule | — | `Adaptive.run_agree` | `Adaptive.run_exists` |
-| adaptive leader count | — | Barnacle's `Laws` | `descent_of_support` |
+| adaptive leader schedule | — | `Barnacle.Agreement.holds` | `Barnacle.Progress.holds` |
+| adaptive leader count | — | `Agree`, `CommitsCandidate`, `CommitsDirect` | `Descent`, built by `Timed.descent_of_support` |
 | prompt skip | `Extends` + `SkipsUnsupported` | `decided_none_of_novel` | — |
 | chain quality | — | `card_coveredAt_ge` | `committed_of_correct_block` |
 
@@ -374,14 +386,14 @@ inclusion. Black Marlin is out of scope by decision.
 mechanism relations (`Extends`, `Sustain`, `Truncate`, `Compose`), and
 `Arcs/` (`GC`, `SafeSkip`, `Liveness`, `Quality`, `Stack`, `Headline`).
 `Timed/Coverage.lean` — the timed model, and `Timed/Extension.lean` —
-coverage under an extension; `Adaptive/Joiner.lean` — the joiner
+coverage under an extension; `Adaptive/Helpers/Chop.lean` — the joiner
 across a cut. `BlockRecord.lean` and `Record/` — the block record every
 universe is, and the cut, fill and re-genesis built once at it;
 `Properties/Record.lean` — a carrier read as records, with every
 mechanism's witnesses. Each rule's conformance in
-its `*Properties.lean` or `Carrier.lean`; each rule's mechanism cells
-in `Integration/*Mechanisms.lean` and `Properties/Arcs/`, each an
-`OnRecord` instance with the constructions named.
+its `*Properties.lean` or `Carrier.lean`; each rule's mechanism cells in
+its own `Record.lean`, an `OnRecord` instance with the constructions
+named, with the cross-protocol pairings in `Integration/`.
 
 Six scripts keep it honest and run in CI: `audit-conformance.py` (what
 each rule shows, and the headlines), `audit-mechanisms.py` (which
@@ -724,7 +736,13 @@ four naturals through every band lemma of both protocols, paid once.
 **What could still fail it.** A rule that reads an *absolute* round — a
 genesis special case, a hardcoded first slot — has no offset band, and
 would have to state its own truncation property or exclude the bottom of
-the DAG from the offset. Neither protocol has such a rule today.
+the DAG from the offset. Neither protocol has such a rule today. The
+relation's own band theorem carries the condition as a hypothesis: an
+anchored rule's wave is a function of the slot's round (`waveAt`), and
+`AnchoredRule.banded` asks that it take the same value at every round,
+which every rule with a constant wave discharges by `rfl`. A rule whose
+wave alternates with the round reads an absolute round through it, and
+has no offset band from the relation.
 
 #### 3.4c Which rules can read a band with an offset
 
@@ -863,7 +881,7 @@ anything is proved from the relation.
 **And this does not cover everything.** A mechanism can preserve every
 vote and every producer and still cost a protocol its progress, by
 adding a *candidate* the protocol can neither commit nor skip — which is
-what a fill does to Hydrozoan and not to Optimal-Hydrozoan (§5.1). That
+what a fill does to Hydrozoan and not to Optimal-Hydrozoan. That
 residue is §3.7. It predicts that re-genesis carries the same question,
 since it too adds a block with an author; nobody has looked.
 
@@ -1261,7 +1279,7 @@ the bridge that recovers a blame against a specific candidate from a
 blame against the slot. `Adaptive/Odontoceti.lean`'s bounded relation
 `DecidedWithin` mirrors the constructor and needed the same change,
 with `directSkipSlotIn_congr` for the schedule-reassignment case, where
-the old form used `isLeaderBlock_slotsOf_congr`. The safety development
+the old form used a congruence lemma per rule. The safety development
 is otherwise untouched, which is what the core's repair predicted:
 where a candidate exists the two forms agree.
 
@@ -1572,7 +1590,13 @@ reactive execution, whose clauses read the schedule; the adaptive
 fixpoint needs both, so the family below is stated separately and
 shares `Agree` with it.
 
-### 4.1 What the adaptive fixpoint consumes
+### 4.1 What the adaptive fixpoint consumed
+
+*The fixpoint arc this section records was deleted in September 2026 and
+replaced by the segmented arc of `adaptive-leaders.md` §8, which has no
+window and no fixpoint. The five properties it named are unchanged and
+are what the segmented arc consumes; the account below is why they are
+the five.*
 
 Read off the proof bodies of `Adaptive/Run.lean` and
 `Adaptive/Liveness.lean` before the generalisation, the fixpoint used
@@ -1620,8 +1644,8 @@ theorem:
   (`Properties/Derived/Descent.lean`, §11.2b), and what a protocol
   supplies for it is the round-structure hypothesis and `c`.
 
-`Adaptive/{Policy,Run,Liveness}.lean` are stated over `DagRule` and
-these, and name no protocol. `Adaptive.run_agree` uses `Agree` alone.
+`Adaptive/` is stated over `BaseRule` and these, and names no protocol.
+`Barnacle.Agreement.holds` uses `Agree` alone.
 
 ### 4.2 The staged precondition
 
@@ -1629,7 +1653,7 @@ The existence theorems ask for `Live` at every height `E`, under the
 schedule the policy computes from a height-`E` partial run's verdicts,
 over the slots `[W, W·(E+2))`. For the timed core this is a
 restatement: `coreLive` reads no leader, and the global hypotheses of
-the old `adaptiveRun_exists` produce it at every height, which is all
+the old per-rule existence theorem produce it at every height, which is all
 `Adaptive/Mysticeti.lean` does. For a reactive execution it is the
 statement: `ReactiveM`'s `cert_or_wait` reads `S.leader k`, so its
 clauses hold only under the schedule the validators followed, and an
@@ -1659,15 +1683,13 @@ model, not of the rule.
   `leaderCommits_reactive` under `reactiveLive`, from
   `ReactiveM.directCommit`. This is the case `Live` was made a
   parameter for.
-- **Consumers.** `Adaptive/Mysticeti.lean` restates every statement of
-  the arc before the generalisation verbatim — `AdaptivePolicy`,
-  `PartialRun`, `AdaptiveRun`, `partialRun_agree`, `adaptiveRun_agree`,
-  `epoch_closes`, `exists_partialRun`, `adaptiveRun_exists`,
-  `decidedWithin_congr` — each a corollary of the generic theorem at the
-  core instance. `Integration/AdaptiveReactive.lean` is the result the
-  bespoke development did not have: `adaptiveRun_exists_reactive`,
-  Hammerhead over reactive Mysticeti, from `Adaptive.run_exists` fed
-  with `leaderCommits_reactive` and nothing else changed.
+- **Consumers.** There are none. Every per-rule restatement of the arc
+  was a corollary of the generic theorem at that rule's carrier, so the
+  per-rule files are gone and the mechanism is read at the generic
+  theorems directly. Hammerhead over reactive Mysticeti — the result the
+  bespoke development did not have — is `Barnacle.Progress.holds` with
+  `coreSupport_live_of_reactiveLive` supplying the precondition, and
+  nothing else changed.
 
 ### 4.4 Commits, and growth
 
@@ -1680,9 +1702,8 @@ a live window of the run's own schedule the verdict is `some L`, by
 adds that under `PlacesRuns` every epoch past the first holds `c`
 consecutive commits. `Run.live_of_staged` reads the staged precondition
 at the total run's schedule, since that schedule is the policy's
-(`Run.assign_eq`). For the core, `adaptiveRun_commits_in_epoch` is the
-liveness statement AL5 was standing in for; for reactive Mysticeti,
-`adaptiveRun_commits_reactive`.
+(`Run.assign_eq`). `Run.commits_in_epoch` is the liveness statement AL5 was standing in
+for, at any rule and either execution model.
 
 **The fixpoint under growth** (`Adaptive/Growth.lean`). `run_agree` is
 agreement over one universe; a running system's DAG grows.
@@ -1694,8 +1715,7 @@ induction of `partialRun_agree` with one extra step per epoch: the
 smaller run's verdict is carried to the larger view by `Persist` at the
 smaller run's schedule, where the larger run's verdict also lives after
 `SchedLocal`, and `Agree` closes. So `Ok` is asked for at the smaller
-run's schedule; for the core that is `Quorate` there
-(`adaptiveRun_agree_extends`).
+run's schedule; for the core that is `Quorate` there.
 
 It needed one clause the policy owes and nothing else does. `adapted`
 says the leader of a slot reads the verdict prefix and not the view,
@@ -1733,12 +1753,12 @@ depends on.
 
 | | Needs | Result |
 |---|---|---|
-| safety | `Agree` | `adaptiveRun_agree_hz` |
-| liveness | `Agree`, `LeaderCommits`, `Descends`, `PlacesRuns` | `adaptiveRun_exists_hz` |
+| safety | `Agree` | `Barnacle.Agreement.holds` |
+| liveness | `LiveRule.LiveOn`, `Descent` | `Barnacle.Progress.holds` |
 
-Safety holds under no synchrony, fairness or population hypothesis, for
-any adapted policy including adversarial ones. Liveness adds the policy
-clause that prices reassignment.
+Safety holds under no synchrony, fairness, window or population
+hypothesis, for any anchored update rule including adversarial ones.
+Liveness adds the clause that prices reassignment.
 
 **And progress survives whatever a mechanism adds.**
 `Properties/Derived/Progress.lean` composes `LeaderCommits` with
@@ -1827,8 +1847,7 @@ whose rungs are unique need not carry one.
 It is nonetheless the wrong foundation:
 
 - It cannot describe FinWhale, whose rule is a function with laws.
-- It makes the arc depend on a schema that a protocol might not fit,
-  which was §2.4's own first risk.
+- It makes the arc depend on a schema that a protocol might not fit.
 - The properties are what the mechanisms need. The schema is one way to
   discharge them, not a thing worth depending on.
 
@@ -1889,10 +1908,11 @@ LeanDag/Properties/
   Arcs/Quality.lean     chain quality, given fairness and self-reference  (planned)
   Compose.lean          RebasedAbove/Rebases/Truncates compose
 
-LeanDag/Adaptive/{Basic,Policy,Run,Liveness}.lean   the mechanism, over BoundedRule
-LeanDag/Adaptive/Growth.lean             the fixpoint under Extends (§4.4)
-LeanDag/Adaptive/Mysticeti.lean          the core instance; the old statements as corollaries
-LeanDag/Integration/AdaptiveReactive.lean   Hammerhead over reactive Mysticeti
+LeanDag/Adaptive/Model/Segment.lean      the segmented run, over BaseRule
+LeanDag/Adaptive/Score/                  what a reputation score owes
+LeanDag/Adaptive/{Agreement,Ledger,Conservativity,Validity,Progress}/  the arc
+LeanDag/Adaptive/Helpers/Chop.lean       the joiner across a cut
+LeanDag/Integration/Joiner.lean          the joiner at the core
 
 LeanDag/Hydrozoan/Properties/{Statement,Proof}.lean
 LeanDag/OptimalHydrozoan/Properties/{Statement,Proof}.lean
@@ -1906,9 +1926,8 @@ LeanDag/Reactive/MysticetiProperties.lean
 The adaptive mechanism has no `Arcs/` bridge file, unlike garbage
 collection and crash recovery: those mechanisms are stated over
 concrete universes and the bridge applies a property to them, whereas
-`Adaptive/{Policy,Run,Liveness}.lean` are themselves stated over
-`BoundedRule`, so the mechanism *is* the generic theorem and the bridge
-is the instance file.
+`Adaptive/` is itself stated over `BaseRule`, so the mechanism *is* the
+generic theorem and the bridge is the instance file.
 
 Conformance belongs with the protocol. For the six arcs in
 `check-arc-holes.py`'s `ARCS` the statement/proof partition applies, and
@@ -1977,7 +1996,7 @@ directory, hence the one flat module.
   reactive**): `BoundedRule`, `Agree`, `Bounded`, `SchedLocal`,
   `LeaderCommits`, `Descends`; `Adaptive/{Policy,Run,Liveness}` generic
   over them with the old statements as corollaries; the core and
-  reactive instances; `adaptiveRun_exists_reactive`; `Run.commits` and
+  reactive instances; the reactive bridge; `Run.commits` and
   `run_agree_extends` (§4.4). Remaining: collapse
   the `Adaptive` and `Reactive` Odontoceti mirrors onto instances;
   Hydrozoan's bounded relation.
@@ -2182,7 +2201,8 @@ induction deleted (§11.4e): `decided_fillHZ`, `decided_chopHZ`,
 `directCommit_chop` for liveness, and the adaptive arc entire, AL3 and
 AL5 standing verbatim as corollaries. One result the bespoke
 development did not have: Hammerhead over reactive Mysticeti
-(`adaptiveRun_exists_reactive`, `adaptiveRun_commits_reactive`).
+(`Barnacle.Progress.holds` and `Run.commits_of_support`, the
+reactive bridge supplying the precondition).
 
 What part 2 does not yet deliver:
 
@@ -2351,8 +2371,8 @@ why `skipFill` is out of scope for it and not owed.
 ### 11.2e What a rule with its own universe record supplies
 
 Nemo and FinWhale close their four cells in
-`Integration/NemoMechanisms.lean` and
-`Integration/FinWhaleMechanisms.lean`. Two things were changed to make
+`Nemo/Record.lean` and
+`FinWhale/Record.lean`. Two things were changed to make
 that possible, and both are the same change.
 
 **The cut's block operator moved off the universe.** `chopBlk blk G` is
@@ -2420,7 +2440,7 @@ fixpoint under `Extends`.
 **Adaptive leaders under garbage collection (I5) closed too.** The
 joiner arc proved that a pruned validator computes the same *leaders* as
 the network — the premise an agreement argument needs — and stopped
-there. `adaptiveRun_agree` could not supply the argument, since it
+there. `run_agree` could not supply the argument, since it
 quantifies over runs of one policy over **one** universe and the
 joiner's run is over another under a re-indexed schedule.
 `joiner_decided_agree` supplies it from `decided_agree_chop`,
@@ -3313,16 +3333,17 @@ fill, and the mechanism has two.
 **Mahi-Mahi and FinWhale × adaptive leaders.** The reason was "no
 `BaseRule` instance", and after §11.8a a `LiveRule` is a small thing:
 `Good` is `GoodOf` at the fault model and the descent laws come from
-the support. What was genuinely per rule was the `BaseRule` record —
-the history view, the direct predicate at the view with its
-decidability, the wave length — and `Barnacle/MahiMahi/` and
-`Barnacle/FinWhale/` supply it in the shape the six others have. Every
-law is a property already proved: `Agree`, `CommitsDirect`,
-`CommitsCandidate` for the base laws; the support's `OfCoverage` and
-`Commits` with `Indirect` for the descent. FinWhale's history view is
-the anchor's causal history, closed by construction; Mahi-Mahi carries
-its wave `w` throughout and takes the round-robin committee bound
-`w · f + 1 ≤ n` as a hypothesis, the fault model giving only `3f + 1`.
+the support. What is genuinely per rule is the `BaseRule` record — the
+history view, the direct predicate at the view with its decidability,
+the wave length — and every law it needs is a property already proved:
+`Agree`, `CommitsDirect`, `CommitsCandidate` for the base laws; the
+support's `OfCoverage` and `Commits` with `Indirect` for the descent.
+FinWhale's history view is the anchor's causal history, closed by
+construction; Mahi-Mahi carries its wave `w` throughout and takes the
+round-robin committee bound `w · f + 1 ≤ n` as a hypothesis, the fault
+model giving only `3f + 1`. Neither instance is built: the mechanism's
+results are generic in the rule, so an instance earns its place only
+where a witness consumes it, and none does for these two.
 
 With these, the only `--` left in the matrix is Black Marlin's row.
 
@@ -3429,7 +3450,7 @@ moved here from `OptimalFill.lean`. Both theorems are
 `LeanDag.Hydrozoan.banded`; the self-parent clause is not needed because
 nothing is transported. Optimal-Hydrozoan takes the same two witnesses
 with leader exclusion carried across each
-(`Integration/OptimalMechanisms.lean`: `chopOpt` from
+(`OptimalHydrozoan/Record.lean`: `chopOpt` from
 `leaderExcludedAll_chopHZ`, the copy fill from
 `leaderExcludedAll_copyFillHZ`), so both of Optimal's cells are native
 too. `leaderExcludedAll_chopHZ` is the one proof written fresh: a block
@@ -3683,7 +3704,7 @@ block references a novel id, so nothing supports the slot, and the rule
 skips it. The instances are the fill cells the rules already have:
 `decided_none_fresh` (the core, and so its reactive execution),
 `decided_none_fresh_odontoceti` at the core's fill,
-`decided_none_fresh_hybrid` at `skipFillHybrid`, and
+`HybridProperties.decided_none_fresh` at `skipFillHybrid`, and
 `decided_none_fresh_hz` at Hydrozoan's copy fill through a lifted view
 `liftViewHZ`, each with the grade the rule's property carries (a
 quorum, Hybrid's `q`, Hydrozoan's `qFast`). `audit-mechanisms.py` shows
@@ -3703,7 +3724,7 @@ no view of the fill, and no view of any extension a caught-up view
 reaches, decides that slot other than `none`. That answer is stated
 directly as `decided_none_of_novel_agree` in `Arcs/SafeSkip.lean`,
 with instances `decided_none_fresh_agree` (core),
-`decided_none_fresh_agree_odontoceti`, `decided_none_fresh_agree_hybrid`
+`decided_none_fresh_agree_odontoceti`, `HybridProperties.decided_none_fresh_agree`
 and `decided_none_fresh_agree_hz`.
 
 **What the audits show.** `audit-mechanisms.py` reads the same matrix
@@ -3797,8 +3818,8 @@ the carrier's ids and block map agreeing with the record's, and at any
 such carrier `truncates_chop`, `sustains_chop`, `extends_fill`,
 `sustains_fill`, `extends_copyFill`, `sustains_copyFill`,
 `extends_addGenesis` and `sustains_addGenesis` hold. The core, Nemo and
-FinWhale have the identity maps (`coreOnRecord`, `nemoOnRecord`,
-`finWhaleOnRecord`); Hydrozoan has `toRecord` and `ofRecord`
+FinWhale have the identity maps (`MysticetiProperties.onRecord`, `NemoProperties.onRecord`,
+`FinWhaleProperties.onRecord`); Hydrozoan has `toRecord` and `ofRecord`
 (`Hydrozoan.onRecord`). A rule's mechanism cell is now one line per
 construction and one per witness; Orcaella and Optimal-Hydrozoan, which
 take a neighbour's construction under one further invariant, are
@@ -3844,12 +3865,12 @@ adds — `Any` for the core, Nemo, FinWhale and Hydrozoan — and
 re-genesis; the general fill takes the invariant by hand, since a
 reading other than the copy is the rule's own. `HonestNoEquiv` is
 mechanised in `Integration/Preservation.lean`, with `honestNoEquiv_fill`
-now at any reading, so Orcaella's carrier is `hybridOnRecord` and its
+now at any reading, so Orcaella's carrier is `HybridProperties.onRecord` and its
 self-referencing fill supplies that lemma; leader exclusion is
-`Excluded` in `Integration/OptimalMechanisms.lean`, mechanised by the
+`Excluded` in `OptimalHydrozoan/Record.lean`, mechanised by the
 three lemmas that already existed, so Optimal's carrier is
-`optOnRecord`. Odontoceti and Mahi-Mahi, on the core's record, have
-`odontocetiOnRecord` and `mahiMahiOnRecord` in place of projected
+`OptimalHydrozoanProperties.onRecord`. Odontoceti and Mahi-Mahi, on the core's record, have
+`OdontocetiProperties.onRecord` and `MahiMahiProperties.onRecord` in place of projected
 witnesses. `Integration/ReGenesisRules.lean` is deleted, each rule's
 re-genesis being one line in its own file.
 
@@ -3870,7 +3891,7 @@ BlockId` is `LeanDag.Block Replica BlockId Unit`, so `author` is
 is the record at `Hydrozoan.ValidWrt` with `NonByzantine` as the honest
 set, `Hydrozoan.View` the record's view. The adapter — `adaptBlock`,
 `unadapt`, `hzBlk`, `toRecord`, `ofRecord`, Barnacle's `adapt` and
-`adaptBlk` — is deleted, `Hydrozoan.onRecord` and `optOnRecord` are
+`adaptBlk` — is deleted, `Hydrozoan.onRecord` and `OptimalHydrozoanProperties.onRecord` are
 identity maps, and Hydrozoan's `Model/CausalHistory.lean` and
 `chopBlkHZ` go with it. What Hydrozoan keeps of its own is its validity
 predicate, its fault model and its rules. The one cost is name
@@ -3950,7 +3971,7 @@ what the copies occupy; the order is the order to take them in.
 | the ledger (**done**, §11.27) | `commitSeq`, `ledgerSet`, `OutputAt` and their theorems in `Mysticeti.lean`, `Nemo/Decision.lean`, `BlackMarlin/*/Ledger.lean`, `FinWhale/Model/Order.lean` | ~330 |
 | the anchored decision procedure (**done**, §11.29) | `Decided`, `decisionRound`, `Eligible`, `anchor_round_le`, `decided_unique`, `decided_agree` in `Nemo/Decision.lean`, `Odontoceti/Decision.lean`, `Hybrid/Decision.lean`, `MahiMahi/*/Decision.lean`, `Mysticeti.lean` | ~1,900 |
 | band and liveness proofs per rule (**done**, §11.29) | `banded_aux`, `directCommitIn_band`, `supportersIn_band`, `certifiedIn_band`, `all_decided_below_of_fairRun` in the five `*Properties.lean` files; `decided_of_leader_mem`, `decided_below_of_committed_run` in the `*/Liveness.lean` files | ~4,800 |
-| adaptive instantiations | `toPartial`, `partialRun_agree`, `epoch_closes`, `exists_partialRun`, `adaptiveRun_exists` in `Adaptive/Mysticeti.lean` and `Adaptive/Odontoceti.lean` | ~750 |
+| adaptive instantiations (**done**) | the per-rule restatements of the arc, since deleted: the mechanism is read at the generic theorems | ~750 |
 
 **Counting on a view** follows from `View.toRecord` (§11.25): every
 `supportersIn V L r` is `supporters` at the view read as a record, and
@@ -4055,11 +4076,11 @@ the record's names: Nemo's, FinWhale's, Hybrid's and Optimal's
 `chop*`, `skipFill*`, `copyFill*` and `addGenesis*`, and Hydrozoan's
 `chopHZ`, `copyFillHZ` and `addGenesisHZ` with the thirteen lemmas that
 restated `mem_chop_ids`, `chop_block`, `copyFill_block_old` and their
-kin. The stack results are stated at `nemoOnRecord.chop` and
-`finWhaleOnRecord.copyFill`; Optimal's three exclusion invariants are
+kin. The stack results are stated at `NemoProperties.onRecord.chop` and
+`FinWhaleProperties.onRecord.copyFill`; Optimal's three exclusion invariants are
 stated at `BlockRecord.chop`, `BlockRecord.copyFill` and
 `BlockRecord.addGenesis` and renamed `leaderExcludedAll_chop`,
-`_copyFill`, `_addGenesis`; Hybrid keeps `fillHybrid`, which fixes the
+`_copyFill`, `_addGenesis`; Hybrid keeps `HybridProperties.fill`, which fixes the
 self-referencing reading and is not a rename. The core's `chop`,
 `mem_chop_ids`, `chop_block`, `addGenesis` and its three lemmas are the
 record's, `export`ed into the core's namespace so that the spelling
@@ -4221,6 +4242,430 @@ at the root are in the directory of the arc they exercise: `Adaptive/`,
 `Integration/` and `Nemo/`, each as `Model.lean` where the library's
 directory has one carrier. The root of the test tree now holds only
 directories, as the library's does.
+
+### 11.31 The substrate, once: quorate records, the hitting lemma, and blame
+
+The first step of the plan in `docs/common-layer.md`. Three things were
+proved at every record that had been proved at the core's, Nemo's and
+Hydrozoan's separately.
+
+**Quorate records.** `Validity.Quorate P q` (`Common/BlockRecord.lean`)
+says a validity predicate admits only blocks referencing `q` distinct
+creators, `q` positive; the core, Nemo, Hydrozoan and FinWhale register
+theirs at `n − f`, the majority, `q` and `n − f` from their equivalence
+with the family. On it, `creators_quorum` and `refs_nonempty` are the
+record's; so are `refs_subset`, `round_of_mem_refs` and T1
+(`eq_of_creator_eq`, with `honest` where the core wrote `Correct`).
+The hitting lemma, propagation and the two coverage forms
+(`Common/Support.lean`) are stated once at any quorate record, with the
+honest set in place of `Correct`; the participation-sensitive threshold
+reads `|pool| + 1 ≤ |T| + q`, and the uniform one `n < |T| + q`, of which
+the core's `f + 1 ≤ |T|` is the reading at `q = n − f`
+(`lt_card_add_quorumCard`) and Nemo's `majority ≤ |T|` the reading at
+the majority (`lt_card_add_majority`). `Nemo/Support.lean` and the core's
+copies are gone.
+
+**Blame.** `Common/Leader.lean` now holds what a schedule says about a
+record: the candidates of a slot as a predicate and as a set, an honest
+leader's single candidate (`isLeaderBlock_unique_of_honest`, which Nemo
+had at `honest = univ`), the voting round, and the blamers of a slot
+(`slotBlamers`, `slotBlames`, `slotBlamesIn`) with their membership,
+monotonicity, the full view, congruence across schedules, and the
+no-candidate case. The core's `DirectSkipSlotIn`, Hybrid's, and
+Hydrozoan's `SkippedLeader` are each one threshold on that count, and
+the band lemma for blame is one subset statement
+(`slotBlamesIn_band`), where three copies of a thirty-line proof stood.
+
+**Hydrozoan reads the substrate.** Its `blocksAt`, `supporters`,
+`supportersInView`, `blames`, `blamesInView`, the three membership
+unfoldings, `votingRound` and the predecessor fact were the record's
+under other names and are deleted; `decisionRound` stays as the paper's
+name for `slotRound + 2`. Optimal inherits the change.
+
+**Measure.** The step removes 914 lines and adds 536, most of the
+additions being the docstrings of the shared notions. The library and
+tests stand at 77,775 lines against 78,397 at the branch point.
+
+### 11.32 One count for every direct rule: what a view holds
+
+The second step of `docs/common-layer.md`. Every direct rule of every
+protocol has one shape: the view holds blocks of some set from at least
+`t` distinct authors — the supporters, certifiers or blamers the
+validator has actually seen. That count is now one definition,
+`heldAuthors U V s` (`Common/Support.lean`), and the predicate
+`HoldsAtLeast U V t s` is what a rule is: the core's `DirectCommitIn` is
+`HoldsAtLeast U V (n − f) (certificates U L r)`, its `DirectSkipSlotIn`
+is `HoldsAtLeast U V (n − f) (slotBlamers U k)`, Nemo's commit is the
+same at the majority over `votesFor U L (r + 1)`, Hybrid's at `q`,
+Hydrozoan's fast, slow and skip rules at `qFast`, `qSlow` and `qFast`
+over votes, certificates and blamers, and Optimal's fast commit and the
+blame half of its skip likewise. The block sets themselves are named
+once (`votesFor`, `omissionsOf`, `certificates`, `slotBlamers`), and
+`supporters`, `blames`, `supportersIn`, `blamesIn` and `slotBlamesIn`
+are their author counts.
+
+**What is proved once.** That the count only grows with the view
+(`HoldsAtLeast.mono`), that what a view holds the record has
+(`HoldsAtLeast.le`), that the full view holds everything
+(`HoldsAtLeast.full`), and that a view covering the set's rounds holds
+all of it (`HoldsAtLeast.of_coversUpto`), with one `Decidable` instance.
+The view rules are `abbrev`s, so these apply to them directly: every
+`commit_mono` and `skip_mono` law of the eight rules is
+`HoldsAtLeast.mono hsub h`; every "a view can only under-report" lemma
+is `h.le`; every "a view caught up to the round sees the commit" lemma
+is `of_coversUpto` with the set's round bound, one line each where they
+had been six to ten. The per-rule `_mono` lemmas, the per-rule
+`Decidable` instances of the view rules, the core's and Hydrozoan's
+`certificatesIn`/`certificatesInView`/`certifiersInView`, Mahi-Mahi's
+`blamersIn`, and the six named subset lemmas on `supportersIn`,
+`blamesIn` and `slotBlamesIn` are deleted.
+
+**Left for later.** FinWhale evaluates its rules on `V.toRecord` rather
+than by intersection, so its `_mono` and `_restrict` families stay
+(step 11). Optimal's no-evidence quorum is stated as an existential over
+a block set; it is the same count and will be restated when its skip is
+built from combinators (step 7).
+
+**Measure.** The step removes 506 lines and adds 308; the library and
+tests stand at 77,577 lines.
+
+### 11.33 One intersection lemma, and the counting trio at any record
+
+The third step of `docs/common-layer.md`. Every direct-safety argument of
+every rule makes one counting move: two author sets whose sizes sum past
+`n + m` share a member outside any set of at most `m`, and, read the
+other way, two sets that meet only inside a set of at most `m` sum to at
+most `n + m`. `Common/Counting.lean` states both once
+(`exists_mem_inter_notMem`, `card_add_card_le_of_inter_subset`). The
+core's T0, Hybrid's honest intersection, Hydrozoan's, Nemo's two
+majorities, FinWhale's additive form and the checkpoint arc's
+reliable-signer intersection were seven proofs of it.
+
+**Non-equivocation on a set.** `BlockRecord.NoEquivOn U Hon` says the
+validators of `Hon` author one block per round in `U`; the record's own
+clause is `U.noEquivOn_honest`, and Hybrid's `HonestNoEquiv` is now this
+at the honest class by definition. `Validity.Distinct` names the
+distinct-creators clause the way `Quorate` names the quorum, and the
+core, Hydrozoan and FinWhale register theirs.
+
+**The trio, once** (`Common/Support.lean`, on any `Hon` with `m` outside
+it): a validator cannot both vote for a block and omit it
+(`not_mem_of_supports_of_blames`), so supporters and blamers together
+number at most `n + m` (`card_supporters_add_card_blames_le`); with
+distinct creators it cannot vote for two blocks of one author
+(`not_mem_of_supports_two`), so two same-author blocks each voted for
+past the bound are one block (`eq_of_card_supporters`); and two
+same-round block sets whose author counts exceed the bound share a block
+(`exists_common_block`). `Common/Leader.lean` adds the slot form,
+supporters of a candidate against blamers of its slot.
+
+**What each rule keeps.** One arithmetic row per conflict pair, and the
+statement in its own thresholds: the core's M1 and M5, Odontoceti's O1,
+O1′ and O2, Hybrid's H2 and H3 at `fb`, Black Marlin's Lemma 3,
+Hydrozoan's five direct-safety cores and its starvation caps, Optimal's
+four, are each `omega` on the shared bound and the row. Odontoceti's and
+Hybrid's forty-line disjoint-union arguments for the supporters of a
+skipped leader, and the fourteen hand-written intersection blocks in the
+Hydrozoan and Optimal safety files, are gone.
+
+**Measure.** The step removes 683 lines and adds 322; the library and
+tests stand at 77,260 lines.
+
+### 11.34 One certificate stack, and the band lemmas once
+
+The fourth step of `docs/common-layer.md`.
+
+**Votes, certificates and links.** `Common/Support.lean` now states the
+certificate stack once, over a vote relation: `IsVote U b L` is the plain
+vote (a reference), `carriedVotes U Vote C L` the references of `C` that
+vote for `L`, `CarriesVotes U Vote t C L` that `C` carries votes for `L`
+from `t` distinct authors, and `certificatesAt U Vote t L n` the round-`n`
+blocks that do. `Common/History.lean` adds `LinkedVia U A s`, some block
+of `s` in `A`'s cone, and `coneSupporters U A L n`, the authors of the
+round-`n` votes for `L` in the cone. The core's `votesIn`, `Certifies`,
+`certificates` and `CertifiedIn`, Hydrozoan's `voteBlocks`,
+`IsCertificate`, `certificates` and `CertifiedIn`, Mahi-Mahi's at its
+own vote, and Odontoceti's and Hybrid's `coneSupports` are each one line,
+an abbreviation of the shared notion at the rule's parameters; their
+membership lemmas, the certificate-to-supporter lemma and the history
+reading of the link are the shared ones.
+
+**The band lemmas.** `Common/Anchored/Band.lean` proves the transports
+once: a plain vote across the band (`isVote_band`), the votes for a
+candidate at a round (`votesFor_band`), what a view holds of an in-band
+set (`heldAuthors_band`, `holdsAtLeast_band`), the carried votes and the
+certificate of an in-band block (`carriedVotes_band`,
+`carriesVotes_band`, `mem_certificatesAt_band`), the link to the
+certificates in both directions (`linkedVia_certificatesAt_band`), that a
+candidate the band did not carry is linked from no old anchor
+(`not_linkedVia_certificatesAt_band_novel`, with the plain vote's
+`not_isVote_band_novel`), and the cone of supporters
+(`coneSupporters_band`, `coneSupporters_band_novel`). Each rule's
+`commit_band`, `link_band` and `link_novel` law is now one application
+of these; the vote relation is the one thing a rule supplies, and for
+every rule but Mahi-Mahi it is `isVote_band_at`. The three verbatim
+`supportersIn_band`, the two `coneSupports_band` with their `thickLink`
+and `not_thickLink` companions, four `certifiedIn_band` and
+`not_certifiedIn_band_novel`, and eleven of Hydrozoan's own band helpers
+are deleted; Mahi-Mahi keeps its vote's transport and the novel case its
+vote needs.
+
+**Left in place.** Nemo's one-rung link over `history` and Hydrozoan's
+`WeakLinked` keep their own transports; both are `coneSupporters` or
+`LinkedVia` at one more step, which the rule cards of step 7 take up.
+FinWhale's `parentsVoting` and `SPCertificate` wait for step 11.
+
+**Measure.** The step removes 995 lines and adds 771; the library and
+tests stand at 77,035 lines.
+
+### 11.35 The adaptive arc proved once
+
+Step 8 of `docs/common-layer.md`. The adaptive mechanism was generic over
+a carrier with `Agree`, `LeaderCommits` and `Descends`, and the core read
+it as corollaries, but `Adaptive/Odontoceti.lean` did not: it
+re-declared the partial and total runs against the bounded relation and
+re-proved the strong induction for agreement, the epoch closure, the run
+construction and the diagonal gluing, line for line. It is now the same
+file as the core's, one hundred and thirty-seven lines against two
+hundred and ninety-one: its policy, runs, agreement and existence are
+`Adaptive.Policy`, `Adaptive.Run`, `run_agree` and `run_exists` at
+`odontocetiRule`, with Odontoceti's `Agree`, its `LeaderCommits` read
+off its vote support through the timed bridge (`Timed.live_of_coverage`),
+and its `Descends`. What was Odontoceti's own in the old file is one
+number: its precondition asks the view to cover one round past a slot
+where the core asks two.
+
+**What moved to the generic layer.** An induced schedule fixes the round
+structure, so `Adaptive/Basic.lean` now states once that the spanning
+clause transfers to every induced schedule (`spansEligible_slotsOf`,
+proved by `h`) and that bounded verdicts transfer between assignments
+agreeing below the bound (`AnchoredRule.decidedWithin_slotsOf_congr`);
+`Adaptive/Liveness.lean` states once that a rule's indirect property
+gives its descent at every induced schedule (`descends_slotsOf`). The
+core's, Hydrozoan's and the reactive arc's copies are gone. The core's
+five staged-liveness constructions go through one `coreLive_of`.
+
+**Measure.** The step removes 286 lines and adds 156; the library and
+tests stand at 76,905 lines.
+
+### 11.36 Barnacle proved once
+
+Step 9 of `docs/common-layer.md`. Barnacle's interface was instantiated
+eight times by hand: each rule's `Statement.lean` built a `BaseRule`
+field by field — the full view, the anchor's history as a view with its
+closure proof, a wave length, the direct predicate and its decidability —
+and each `Proof.lean` or helper discharged the five laws from the rule's
+properties, bridged the rule's `Good` to the properties' packaged
+synchrony by re-tupling, and applied `descent_of_support`. Twenty-two
+files and 1,466 lines before the step.
+
+Every commit rule is an `AnchoredRule`, and `Barnacle.ofAnchored R`
+(`Barnacle/Model/Anchored.lean`) reads a base rule off one: `R.toDagRule`
+as the carrier, `View.full` and `BlockRecord.historyView` — the history
+as a view, once, in `Common/History.lean` — for the two views,
+`R.waveAt 0 + 1` for the wave length, `R.Commit` for the direct predicate.
+`ofAnchoredOn R I` is the same over the records satisfying an invariant,
+for Orcaella and Optimal-Hydrozoan. `ofAnchored_laws` proves the laws
+once, from the agreement, candidate and direct-commit properties of
+`Common/Anchored/Band.lean`. `liveOfAnchored R rel` adds
+`Good := Timed.Good R.toDagRule rel` — a quorum of the fault model
+synchronised and populating, a definition of `Timed/Coverage.lean` now
+rather than Barnacle's `GoodOf` — so the eight `goodOf` bridges are the
+identity. Each `Statement.lean` is now its anchored rule, its fault
+model, and one committee inequality; each `Proof.lean` is
+`ofAnchored_laws`, `descent_of_support` at the rule's support, and
+`liveOn_roundRobin`.
+
+**Three departures from the plan of §3.2.** `Good` stays a field of
+`LiveRule` and no `rel` field is added: the witnesses of
+`LeanDagTest/Barnacle/Progress.lean` build live rules whose `Good` pins
+one universe, which is what makes BN8 runnable on data. The two `Laws`
+fields with no consumers are kept: `full_ids` and `historyView_ids` are
+the laws of the two view fields, without which the fields would be
+unconstrained. What changed is the type of the other three — `agree`,
+`commitsDirect` and `candidates` *are* `Properties.Agree`,
+`CommitsDirect` and `CommitsCandidate` at the carrier, not restatements
+of them. And `AnchoredRule` gained a field, `decCommit`, the
+decidability of the direct commit, which each rule supplies by
+`inferInstance`: the base rule's `decDirect` reads it, and every
+anchored rule's commit is decidable wherever it is stated
+(`AnchoredRule.instDecidableCommit`).
+
+**What else moved.** `Delivers` is one theorem, `delivers_core`, for
+every anchored rule over the block universe at the core's fault model;
+Mysticeti's and Odontoceti's copies are gone. Hydrozoan's
+`causalStructure` bridge is gone: a Hydrozoan universe is a block record
+and `BlockRecord.causal` is its causal structure, which is where HI3 now
+points. `Properties.PopulatedOn`, `Reliability.IsQuorum` and
+`DagRule.IsCandidate` are decidable, so the witnesses settle
+`Timed.Good` by `decide`. Nemo's good DAGs are any synchronised,
+populated majority rather than one inside the live set: the live-set
+clause was consumed by no proof and the reliable set of Nemo's fault
+model is everyone, so the descent law is the stronger statement, and
+`LeanDagTest/Barnacle/Instances.lean` shows the horizon still bites.
+
+**Measure.** The step removes 1,082 lines of Lean and adds 591;
+`Barnacle/` goes from 4,901 to 4,348 lines and seven helper files are
+deleted; the library and tests stand at 76,414 lines.
+
+### 11.37 The docstring norm
+
+Comment and docstring lines were 38% of the non-blank lines of
+`LeanDag/`, about twice Mathlib's share, and the Barnacle instantiations
+of §11.36 inverted the ratio. `docs/style.md` §3 now fixes the norm: one
+sentence, at most two, per declaration; a module docstring of a few
+lines; one line for a `Proof.lean`; no history, no comparison with other
+files, no restatement of an argument the report makes. This pass applies
+it to what the common-layer branch added, in `Common/`, `Adaptive/` and
+`Barnacle/`: 546 comment lines become 222, with no statement changed.
+
+### 11.38 Liveness once
+
+Step 6 of `docs/common-layer.md`. The liveness chain of each rule ended
+in the same two moves, written by hand five times: place a run past the
+target and the synchrony round (`S.unbounded`, `max`, monotonicity),
+then turn `c` `T`-led slots into `c` commits by
+`Nat.add_sub_cancel'` and hand them to `decided_below_of_committed_run`.
+The first is `Slots.exists_run_past` at the one `FairRunOn`, now in
+`Common/Slots.lean`; the core's and Hydrozoan's copies are gone, and
+`Timed.decidedBelow_of_fairRun` and `Support.decidedBelow_of_fairRun`
+take it by name. The second is `AnchoredRule.decided_below_of_run`
+(`Common/Anchored/Bounded.lean`): a run whose leaders satisfy a
+predicate, each slot committing when its leader does, decides every
+slot below. Hybrid, Hydrozoan, Optimal-Hydrozoan and Mahi-Mahi are on
+it; the core, Odontoceti and Nemo were already on the timed chain.
+
+Hydrozoan's `AnchoredTotality` and `DecidedBelowRun`, and Optimal's
+twins, are one pair of statements over any anchored rule,
+`AnchoredRule.Total` and `AnchoredRule.DecidedBelowRun`
+(`Common/Anchored.lean`), proved once from a choice at every nonempty
+rung (`total_of_least`, `decidedBelowRun_of_least`); HZ6 and OH6 are
+those at `exists_least`.
+
+**What did not move.** Hybrid's chain stays at the anchored rule rather
+than at its support: `hybridRule` is the carrier under `HonestNoEquiv`,
+and the timed chain at that carrier would put the invariant on a
+liveness theorem that does not need it. The four `decided_of_leader_mem`
+theorems stay as the rules' numbered results.
+
+**Measure.** The step removes 194 lines of Lean and adds 131; the
+library and tests stand at 76,027 lines.
+
+### 11.39 The rule shapes
+
+Step 7 of `docs/common-layer.md`. `Common/Rules.lean` names the five
+shapes every direct rule and rung of the development takes:
+`supportCommit t`, `certCommit Vote t t' off`, `blameSkip t`,
+`certifiedLink Vote t' off` and `coneLink t`. Each is a threshold on a
+set the record already defines, and each rule's predicates are now the
+shapes at its thresholds: the core, Odontoceti, Nemo, Orcaella,
+Hydrozoan and Optimal-Hydrozoan read as cards. The congruence a rule
+owed for its skip is `blameSkip_congr`, once, and the congruence of any
+link that reads the schedule through the slot's round is
+`AnchoredRule.linkCongr_of_round`; the four per-rule copies are gone.
+
+**What the study overestimated.** §4.3 counted 250 lines of `_band`
+lemmas and 60 of law fields against this step; steps 2 to 4 had already
+moved the band lemmas into `Common/`, and the technical fields of
+`Laws` and `BandLaws` were one-liners at them before this step began.
+The step therefore adds more than it removes: 138 lines in, 93 out, the
+shape layer being 60 of the additions. Its value is the presentation —
+a rule is its thresholds — not the count. What remains per rule is the
+residue of `docs/common-layer.md` §1.2: Mahi-Mahi's per-candidate skip
+and its decision-round arithmetic, FinWhale's evidence rules, and the
+second rungs of Hydrozoan and Optimal-Hydrozoan, none of which is a
+threshold on a record-defined set.
+
+**Measure.** The library and tests stand at 76,072 lines.
+
+### 11.40 Optimal-Hydrozoan's exclusion rule as block validity
+
+Step 11 of `docs/common-layer.md`, the Optimal half. Leader exclusion
+was a property of the universe: `OptUniverse` extended Hydrozoan's
+record with a schedule-indexed field, the carrier was the subtype of
+Hydrozoan universes satisfying a schedule-free restatement
+(`LeaderExcludedAll`), a bridge related the two, and each mechanism
+proved by hand that it preserved the restatement — three proofs, about
+a hundred and forty lines, in `OptimalHydrozoan/Record.lean`.
+
+The rule is a fact about a block and its parents' references, so it is
+a clause of validity. `Clause.leaderExcluded` (`Common/BlockRecord.lean`)
+is FinWhale's leader clause, moved: for every replica, the parents are
+consistent about it or none is by it; it is `Mechanised` and
+`CopyStable` once. `ValidOpt` is Hydrozoan's validity with that clause,
+`OptUniverse` the block record at it, and `OptUniverse.toBlockRecord`
+the projection that forgets the clause, through which Hydrozoan's rules
+and lemmas read an Optimal universe. Exclusion at any schedule, the
+invariant the relation's laws hold under, is one theorem from the
+clause (`OptUniverse.leader_excluded`); the three preservation proofs
+are gone, `OptimalHydrozoanProperties.onRecord` has every map the identity, and the witnesses
+build a universe by `decide` on the clause or by
+`OptUniverse.ofNoEquivocation`.
+
+**What it took in the common layer.** `AnchoredRule.toDagRuleVia f`
+reads a rule at one validity as a carrier over any type projecting to
+its records, with `agreeVia`, `commitsCandidateVia`,
+`commitsDirectVia`, `indirectVia` and `bandedVia`; `toDagRuleOn I` is
+the projection from a subtype, and `Barnacle.ofAnchoredVia` follows.
+The crown lemmas of `OptimalHydrozoan/Helpers/SlotAgreement.lean` take
+exclusion as a hypothesis, as Hybrid's take non-equivocation.
+
+**Measure.** The step removes 621 lines of Lean and adds 424; the
+library and tests stand at 75,875 lines.
+
+### 11.41 FinWhale's validity names its clause
+
+FinWhale's `ValidHere` restated the leader clause verbatim in its fourth
+field, and `leaderClause_of_dosValid` restated it again in its
+conclusion — three copies of the same six lines, one of them now living
+in `Common/BlockRecord.lean` as `Clause.leaderExcluded` (§11.40). Both
+are the clause by name: the field is `Clause.leaderExcluded blk b`, and
+the denial-of-service bridge concludes it, so FW13 reads as producing
+the clause rather than a disjunction that happens to match it.
+
+**What the arc's partition forbids.** The four validity instances each
+carry the equivalence with `ValidAt` inline, twelve lines where one
+named `iff_validAt` would do, as the core and Nemo have. The shared
+theorem cannot be written: `Model/Rule.lean` is a `Model/` file and
+`scripts/check-arc-holes.py` admits definitions and instances only.
+Hydrozoan and Optimal-Hydrozoan carry the same four copies for the same
+reason. Extracting them would mean either moving validity out of the
+trusted core or defining `ValidHere` as `ValidAt` outright, which costs
+the named fields every proof and the report read off it; neither is
+worth twelve lines, and the file now says so.
+
+**Measure.** The step removes 28 lines of Lean and adds 20; the library
+and tests stand at 75,867 lines.
+
+### 11.42 FinWhale counts with the record
+
+Step 11 of `docs/common-layer.md`, the FinWhale half. Three of
+FinWhale's sets were parallel copies of the record's: `voters` is
+`supporters` at the round above the candidate, `nonVoters` is `blames`
+there, and `slotBlocks` is `leaderBlocksAt`. All three are now those,
+and the restriction and monotonicity facts they carried move to
+`Common/Support.lean` as `blocksAt_toRecord_subset`,
+`supporters_toRecord_subset`, `blames_toRecord_subset` and their three
+`_mono` companions, each a line from `heldAuthors_subset` or
+`heldAuthors_mono`. FinWhale's six copies are gone, and
+`not_nonVoter_of_voter` — a correct validator votes or declines, never
+both — is `not_mem_of_supports_of_blames` applied.
+
+**What it cost.** The three were `def`s that about twenty proofs
+unfolded by name in `simp only [slotBlocks, blocksAt, …]`, and none of
+those calls fires at an abbreviation of a common set. Each needed the
+common name added to its simp set or the membership lemma in place of
+the unfolding; the rewrite is mechanical but wide, and it is most of
+this step's diff. The count is therefore modest, 109 lines removed
+against 97 added: what the step yields is that FinWhale's counting is
+the record's counting and not a second implementation of it.
+
+**What stays FinWhale's.** The evidence apparatus — `parentsVoting`,
+`SPCertificate`, `ExposesEquivocationBy`, `FPEvidence` and the
+view-independence results about them — counts against a block's parents
+rather than against a round, and no other rule has it.
+
+**Measure.** The library and tests stand at 75,855 lines.
 
 ### 11.5 Next steps, in order
 

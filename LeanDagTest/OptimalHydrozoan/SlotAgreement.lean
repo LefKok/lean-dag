@@ -42,8 +42,6 @@ open LeanDagTest.Hydrozoan
 
 open LeanDag LeanDag.Hydrozoan LeanDag.OptimalHydrozoan
 
-set_option maxRecDepth 16384
-
 /-- Slot 2 of `OD` commits 8 through the evidence rung (the derivation of
 `LeanDagTest/OptimalHydrozoan/Decided.lean`, named so it can be fed to the
 theorem). -/
@@ -63,7 +61,7 @@ theorem od_slot2_evidence : DecidedOpt OD VD 2 (some 8) := by
       subst this
       have : i = 0 := by omega
       subst this
-      exact absurd ((certifiedIn_iff_history (by decide)).mp hcert) (by decide))
+      exact absurd ((linkedVia_iff_history (by decide)).mp hcert) (by decide))
     (by decide)
     (show EvidenceLinked UD 22 8 2 from (evidenceLinked_iff_history (by decide)).mpr (by decide))
     (fun _ _ _ h => h)
@@ -161,11 +159,7 @@ def UE : BlockUniverse (Fin 4) (Fin 22) where
 /-- ... as an `OptUniverse`: the witnessing blocks 13, 14, 15 omit the
 leader's block 9. Discharged through the bounded bridge (rounds stop at
 5). -/
-def OE : OptUniverse (Fin 4) (Fin 22) :=
-  { UE with
-    leader_excluded :=
-      leaderExcluded_of_bounded UE 5 5 (fun k hk => by change k + 2 ≤ 5 at hk; omega)
-        (by decide) (by decide) }
+def OE : OptUniverse (Fin 4) (Fin 22) := OptUniverse.ofExcluded UE (by decide)
 
 /-- The full view, typed at the projection. -/
 def VE : LeanDag.Hydrozoan.View OE.toBlockRecord := View.full UE
@@ -176,14 +170,14 @@ def VE : LeanDag.Hydrozoan.View OE.toBlockRecord := View.full UE
 -- omits the leader's block; no certificate for either copy exists.
 example :
     WitnessesEquivocation UE 1 13 ∧ IsFastEvidence UE 1 13 4 ∧ ¬ IsFastEvidence UE 1 13 5 ∧
-      votesFor UE 13 4 = {1, 3} ∧ votesFor UE 13 5 = {2} ∧ ¬ IsCertificate UE 13 4 ∧
+      votersOf UE 13 4 = {1, 3} ∧ votersOf UE 13 5 = {2} ∧ ¬ IsCertificate UE 13 4 ∧
       (∀ j ∈ (UE.block 13).refs, (UE.block j).creator ≠ 0) ∧
       LeanDag.Hydrozoan.certificates UE 4 1 = ∅ ∧ LeanDag.Hydrozoan.certificates UE 5 1 = ∅ := by
   decide
 
 -- Slot 4's candidate 18 is the anchor, fast-committed by three votes; it
 -- reaches the three witnessing evidence blocks.
-example : IsLeaderBlock UE 4 18 ∧ LeanDag.Hydrozoan.supporters UE 18 5 = {1, 2, 3} := by decide
+example : IsLeaderBlock UE 4 18 ∧ supporters UE 18 5 = {1, 2, 3} := by decide
 example : EvidenceLinked UE 18 4 1 :=
   (evidenceLinked_iff_history (by decide)).mpr (by decide)
 
@@ -203,8 +197,8 @@ theorem oe_slot1_evidence : DecidedOpt OE VE 1 (some 4) := by
       have : i = 0 := by omega
       subst this
       rcases hall L' hL' with rfl | rfl
-      · exact absurd ((certifiedIn_iff_history (by decide)).mp hcert) (by decide)
-      · exact absurd ((certifiedIn_iff_history (by decide)).mp hcert) (by decide))
+      · exact absurd ((linkedVia_iff_history (by decide)).mp hcert) (by decide)
+      · exact absurd ((linkedVia_iff_history (by decide)).mp hcert) (by decide))
     (by decide)
     (show EvidenceLinked UE 18 4 1 from (evidenceLinked_iff_history (by decide)).mpr (by decide))
     (fun _ _ _ h => h)

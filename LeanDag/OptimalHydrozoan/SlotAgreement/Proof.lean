@@ -4,16 +4,7 @@ import LeanDag.OptimalHydrozoan.Helpers.IndirectRules
 /-!
 # Optimal-Hydrozoan: slot agreement — proof
 
-Generated proof layer; not part of the audit surface. Slot agreement is
-the anchored relation's `decided_unique` at Optimal's laws, which hold
-under leader exclusion at the schedule. What the laws ask is what the
-arc had proved: direct-versus-direct pairings close by the direct-safety
-cores, a direct commit is linked at some rung from any candidate of an
-eligible slot and cannot coexist with a rung choice for a different
-block (the "rung fires" / starvation lemmas of
-`Optimal/Helpers/SlotAgreement.lean`), a skipped slot links nothing, and
-two choices at one rung agree — certificate uniqueness at rung `0`,
-`evidenceLinked_unique` at rung `1`, so no tie-break is needed.
+Generated proof layer; not part of the audit surface.
 -/
 
 namespace LeanDag
@@ -55,9 +46,9 @@ theorem optimalLaws :
     intro S U V k j L A hI hL h hA helig
     rcases h with h | h
     · exact ⟨1, Nat.one_lt_two,
-        evidenceLinked_of_fastCommitOptInView_at_anchor (U := ⟨U, hI⟩) hL h hA helig⟩
+        evidenceLinked_of_fastCommitOptInView_at_anchor hI hL h hA helig⟩
     · exact ⟨0, Nat.zero_lt_two,
-        certifiedIn_of_slowCommitInView_at_anchor_opt (U := ⟨U, hI⟩) h hA helig⟩
+        certifiedIn_of_slowCommitInView_at_anchor_opt h hA helig⟩
   commit_link_unique := by
     intro S U V k j i L₁ L₂ A hI hL₁ hL₂ h hA helig hi hemp hlink _
     have hc : (U.block L₁).creator = (U.block L₂).creator := by rw [hL₁.2.2, hL₂.2.2]
@@ -71,10 +62,10 @@ theorem optimalLaws :
           (LeanDag.Hydrozoan.certificates_nonempty_of_certifiedIn hlink)
     · rcases h with h | h
       · by_contra hne
-        exact not_evidenceLinked_of_fastCommitOpt (U := ⟨U, hI⟩) (fun e => hne e.symm) hL₁ hL₂
+        exact not_evidenceLinked_of_fastCommitOpt hI (fun e => hne e.symm) hL₁ hL₂
           (fastCommitOpt_of_fastCommitOptInView h) hlink
       · exact (hemp 0 Nat.zero_lt_one L₁ hL₁
-          (certifiedIn_of_slowCommitInView_at_anchor_opt (U := ⟨U, hI⟩) h hA helig)).elim
+          (certifiedIn_of_slowCommitInView_at_anchor_opt h hA helig)).elim
     · exact absurd hi (by change ¬ (i + 1 + 1 < 2); omega)
   skip_link := by
     intro S U V k i L A _ hskip hL hi
@@ -93,8 +84,8 @@ theorem optimalLaws :
   commit_mono := by
     intro S U V V' L r _ hsub h
     rcases h with h | h
-    · exact Or.inl (fastCommitOptInView_mono hsub h)
-    · exact Or.inr (slowCommitInView_mono hsub h)
+    · exact Or.inl (HoldsAtLeast.mono hsub h)
+    · exact Or.inr (HoldsAtLeast.mono hsub h)
   skip_mono := fun _ hsub h => skippedLeaderOptInView_mono hsub h
   skip_congr := fun _ hround hk h => skippedLeaderOptInView_congr hround hk h
   link_congr := by
